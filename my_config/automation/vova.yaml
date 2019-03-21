@@ -1,0 +1,190 @@
+# #####################################################################################
+#
+# VOVA
+#
+# #####################################################################################
+# Vova Table Lamp (Yeelight Color E27) On
+# ##################################
+- alias: vova_table_lamp_on_if_lamp_off
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d00016bdb4a
+        click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.wall_switch_left_158d00026eb820
+        click_type: single
+  condition:
+    condition: state
+    entity_id: light.led_color_v
+    state: 'off'    
+  action:
+  - service: light.turn_on
+    entity_id: light.led_color_v
+    data_template:
+      brightness_pct: 100
+      kelvin: 6500
+# ##################################
+# Vova Table Lamp (Yeelight Color E27) Off
+# ##################################
+- alias: vova_table_lamp_off_if_lamp_on
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d00016bdb4a
+        click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.wall_switch_left_158d00026eb820
+        click_type: single
+  condition:
+    condition: state
+    entity_id: light.led_color_v
+    state: 'on'    
+  action:
+  - service: light.turn_off
+    entity_id: light.led_color_v
+# ##################################
+# Vova Table Lamp (Yeelight Color E27) - Switch to Bright
+# ##################################
+- alias: vova_table_lamp_bright
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d00016bdb4a
+      click_type: double
+  action:
+    service: light.turn_on
+    entity_id: light.led_color_v
+    data_template:
+      brightness_pct: 100
+      kelvin: 6500
+# ##################################
+# Vova Table Lamp (Yeelight Color E27) - Switch to Mid-Night
+# ##################################
+- alias: vova_table_lamp_night
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d00016bdb4a
+      click_type: long_click_press
+  action:
+    service: light.turn_on
+    entity_id: light.led_color_v
+    data_template:
+      brightness_pct: 5
+      kelvin: 3000
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - On 100%\6500k
+# ##################################
+- alias: vova_main_lamp_on_if_lamp_off
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_left_158d0001712d55
+      click_type: single
+  condition:
+    condition: state
+    entity_id: light.square_led_v
+    state: 'off'    
+  action:
+    service: light.turn_on
+    entity_id: light.square_led_v
+    data_template:
+       brightness_pct: 100
+       # color_temp: 254
+       kelvin: 6500
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - Off
+# ##################################
+- alias: vova_main_lamp_off_if_lamp_on_left
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_left_158d0001712d55
+      click_type: single
+  condition:
+    condition: state
+    entity_id: light.square_led_v
+    state: 'on'    
+  action:
+  - service: light.turn_off
+    entity_id: light.square_led_v
+
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - On 5%\3000k
+# ##################################
+- alias: vova_main_lamp_on_5_if_lamp_off
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_right_158d0001712d55
+      click_type: single
+  condition:
+    condition: state
+    entity_id: light.square_led_v
+    state: 'off'    
+  action:
+    service: light.turn_on
+    entity_id: light.square_led_v
+    data_template:
+       brightness_pct: 5
+       # color_temp: 254
+       kelvin: 3000
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - Off if On
+# ##################################
+- alias: vova_main_lamp_off_if_lamp_on_right
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_right_158d0001712d55
+      click_type: single
+  condition:
+    condition: state
+    entity_id: light.square_led_v
+    state: 'on'    
+  action:
+  - service: light.turn_off
+    entity_id: light.square_led_v
+
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - Bed Switch
+# ##################################
+- alias: vova_main_lamp_with_bed_switch
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_right_158d00026eb820
+      click_type: single
+  action:
+    service_template: >-
+      {% if is_state('light.square_led_v','on') and (states.light.square_led_v.attributes.brightness|int < 100) %}
+        script.square_lamp_to_100
+      {% elif is_state('light.square_led_v','on') and (states.light.square_led_v.attributes.brightness|int == 255) %}
+        script.square_lamp_off
+      {% elif is_state('light.square_led_v','off') %}
+        script.square_lamp_to_30
+      {% endif %}
+        

@@ -1,0 +1,215 @@
+# #####################################################################################
+#
+# HALL SMALL
+#
+# #####################################################################################
+# Hall Small - Auto Light On
+# ##################################
+- alias: hall_small_auto_night_light_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0001ae9f61
+  condition:
+    condition: and
+    conditions:
+      - condition: time
+        after: '21:00:00'
+        before: '07:00:00'
+      - condition: state
+        entity_id: switch.wall_switch_left_158d0002a36e26
+        state: 'off'
+  action:
+    - service: homeassistant.turn_on
+      entity_id: automation.kitchen_auto_night_on, switch.plug_158d0001f5501f
+    - delay: '00:00:30'
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f5501f
+      
+# ##################################
+# Hall Small - Turn Water Off
+# ##################################
+- alias: hall_small_turn_water_off
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_left_158d00026ea94e
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Запущена процедура выключения воды!'
+    - service: switch.turn_on
+      entity_id: switch.plug_158d00020d8679
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d00020d8679
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Вода выключена!'
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Принудительное закрытие воды!"
+
+# ##################################
+# Hall Small - Turn Water On
+# ##################################
+- alias: hall_small_turn_water_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_right_158d00026ea94e
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.water_leak_sensor_158d00023684c2
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.water_leak_sensor_158d0002373a67
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+        state: 'off'      
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Запущена процедура включения воды!'
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f54f90
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f54f90
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Вода включена!'
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Принудительное открытие воды!"
+        
+# ##################################
+# Hall Small - Turn Water On_Leak detected
+# ##################################
+- alias: hall_small_turn_water_on_leak_detected
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_right_158d00026ea94e
+  condition:
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.water_leak_sensor_158d00023684c2
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.water_leak_sensor_158d0002373a67
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+        state: 'on'      
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Включение воды невозможно! Протечка не устранена! Для принудительного включения воды нажмите клавиши Включения и Выключения одновременно!'
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Попытка открыть воду, протечка НЕ устранена!"
+# ##################################
+# Hall Small - Turn Water On_Force
+# ##################################
+- alias: hall_small_turn_water_on_force
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_both_158d00026ea94e
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Протечка воды не устранена! Запущена процедура принудительного включения воды!'
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f54f90
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f54f90
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Вода включена! Протечка не устранена!'
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Принудительное открытие воды, протечка НЕ устранена!"

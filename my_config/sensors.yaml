@@ -1,0 +1,1184 @@
+
+# ############################################################################
+# Wrong password input sensor
+# ############################################################################
+#  - platform: command_line
+#    name: badlogin
+#    command: grep -c 'Login attempt' /config/home-assistant.log
+#    value_template: '{{ value | int - 1 }}'
+
+
+  - platform: season
+    type: astronomical
+
+# ############################################################################
+# External IP sensor
+# ############################################################################
+  - platform: rest
+    resource: http://ip.jsontest.com
+    name: External IP
+    value_template: '{{ value_json.ip }}'
+
+# ############################################################################
+# PiHole plugin  sensor
+# ############################################################################
+  - platform: pi_hole
+    host: localhost:4865
+    monitored_conditions:
+      - ads_blocked_today
+      - ads_percentage_today
+      - dns_queries_today
+      - domains_being_blocked
+      - queries_cached
+      - queries_forwarded
+      - unique_clients
+      - unique_domains
+      - clients_ever_seen
+
+# ############################################################################
+# Moon sensor
+# ############################################################################
+  - platform: moon
+
+# ############################################################################
+# MIN\MAX sensor
+# ############################################################################
+  - platform: min_max
+    name: temperature_min_max
+    entity_ids:
+      - sensor.temperature_158d0002464ec0
+      - sensor.temperature_158d0001e586af
+      - sensor.temperature_158d000222c746
+      - sensor.temperature_158d0001e6d85a
+      - sensor.temperature_158d0001e58714
+      - sensor.temperature_158d00020d7c3a
+      - sensor.temperature_158d0001e58754
+  
+  - platform: min_max
+    name: humidity_min_max
+    entity_ids:
+      - sensor.humidity_158d0002464ec0
+      - sensor.humidity_158d0001e586af
+      - sensor.humidity_158d000222c746
+      - sensor.humidity_158d0001e6d85a
+      - sensor.humidity_158d0001e58714
+      - sensor.humidity_158d00020d7c3a
+      - sensor.humidity_158d0001e58754
+
+# ############################################################################
+# MQTT Unifi Mition Detector
+# ############################################################################
+  - platform: mqtt
+    state_topic: "camera/motion/kitchen/#"
+    name: Unifi Motion Kitchen
+    icon: mdi:cctv
+  - platform: mqtt
+    state_topic: "camera/motion/hall/#"
+    name: Unifi Motion Hall
+    icon: mdi:cctv
+  - platform: mqtt
+    state_topic: "camera/motion/entrance/#"
+    name: Unifi Motion Entrance
+    icon: mdi:cctv
+  - platform: mqtt
+    state_topic: "camera/motion/window/#"
+    name: Unifi Motion Window
+    icon: mdi:cctv
+
+# ############################################################################
+# HA Installed version sensor
+# ############################################################################
+  - platform: version
+    name: HA Installed Version
+    scan_interval: 1800
+
+# ############################################################################
+# HA Latest version sensor
+# ############################################################################
+  - platform: rest
+    resource: https://s3.amazonaws.com/hassio-version/stable.json
+    name: HA Latest Version
+    value_template: "{{ value_json.homeassistant.default }}"
+    scan_interval: 1800
+
+  - platform: rest
+    resource: https://s3.amazonaws.com/hassio-version/beta.json
+    name: HA Latest Beta
+    value_template: "{{ value_json.homeassistant.default }}"
+    scan_interval: 1800
+
+
+# ############################################################################
+# Yandex sensor
+# ############################################################################
+  - platform: yandex_maps
+    start: 'device_tracker.life360_dima_tsymbal'
+    destination: !secret yandex_dima_work
+    name: Dima to work
+  - platform: yandex_maps
+    start: 'device_tracker.life360_dima_tsymbal'
+    destination: !secret yandex_home
+    name: Dima to home
+  - platform: yandex_maps
+    start: 'device_tracker.life360_sandra_tsymbal'
+    destination: !secret yandex_home
+    name: Sasha to home
+  - platform: yandex_maps
+    start: 'device_tracker.life360_vova_tsymbal'
+    destination: !secret yandex_home
+    name: Vova to home
+  - platform: rest
+    name: Yandex Traffic
+    resource: "https://core-jams-rdr.maps.yandex.net/description/traffic-light?lang=ru_RU&ids=213,1"
+    value_template: "{{ value_json['data'].features[0]['properties']['JamsMetaData']['level'] }}"
+    scan_interval: 300
+    headers:
+      User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.96 Safari/537.36"
+
+# ############################################################################
+# Unifi USG sensor
+# ############################################################################
+  - platform: unifigateway
+    name: USG
+    host: !secret unifi_cloudkey_host
+    username: !secret unifi_cloudkey_username
+    password: !secret unifi_cloudkey_password
+    monitored_conditions:
+      - www
+      - wlan
+      - alerts
+      - firmware
+      - vpn
+      - lan
+      - wan
+
+# ############################################################################
+# Hardware sensors (OMV)
+# ############################################################################
+  - platform: rest
+    name: OMV CPU Load
+    resource: http://192.168.1.101:61208/api/3/cpu/total
+    unit_of_measurement: "%"
+    value_template: '{{ value_json.total | round(0) }}'
+    scan_interval: 10
+  - platform: rest
+    name: OMV CPU Temp
+    resource: http://192.168.1.101:61208/api/3/sensors
+    unit_of_measurement: "°C"
+    value_template: '{{ value_json[2].value| round(0) }}'
+    scan_interval: 10
+  - platform: rest
+    resource: http://192.168.1.101:61208/api/3/mem/percent
+    name: OMV MEM Used
+    value_template: '{{ value_json.percent| round(0) }}'
+    unit_of_measurement: "%"
+    scan_interval: 10
+  - platform: rest
+    name: OMV Torrent Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[7].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: OMV BackupDisk Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[4].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: OMV Storage Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[2].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: OMV Temp Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[9].percent| round(0)}}'
+    scan_interval: 30
+
+  - platform: systemmonitor
+    resources:
+      - type: last_boot
+      - type: memory_use_percent
+      - type: processor_use
+      - type: load_1m
+      - type: load_5m
+      - type: load_15m
+  - platform: command_line
+    name: CPU Temperature
+    command: "cat /sys/class/thermal/thermal_zone0/temp"
+    unit_of_measurement: "°C"
+    value_template: '{{ value | multiply(0.001) | round(0) }}'
+  #- platform: command_line
+  #  name: GPU Temperature
+  #  command: "/opt/vc/bin/vcgencmd measure_temp"
+  #  unit_of_measurement: "°C"
+  #  value_template: '{{ value | replace("temp=", "") | replace("''C", "") | round(0) }}'
+
+
+    
+# ############################################################################
+# Hardware sensors (Ubuntu)
+# ############################################################################
+  - platform: rest
+    name: Ubuntu SSD Space Used
+    resource: http://192.168.1.14:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[0].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: Ubuntu HDD Space Used
+    resource: http://192.168.1.14:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[2].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    resource: http://192.168.1.14:61208/api/3/mem/percent
+    name: Ubuntu MEM Used
+    value_template: '{{ value_json.percent| round(0) }}'
+    unit_of_measurement: "%"
+    scan_interval: 10
+  - platform: rest
+    name: Ubuntu CPU Load
+    resource: http://192.168.1.14:61208/api/3/cpu/total
+    unit_of_measurement: "%"
+    value_template: '{{ value_json.total | round(0) }}'
+    scan_interval: 5
+  - platform: rest
+    name: Ubuntu CPU Temp
+    resource: http://192.168.1.14:61208/api/3/sensors
+    unit_of_measurement: "°C"
+    value_template: '{{ value_json[2].value| round(0) }}'
+    scan_interval: 5
+
+# ############################################################################
+# Uptime sensor
+# ############################################################################
+  - platform: uptime
+    name: HA Uptime
+    unit_of_measurement: hours
+
+# ############################################################################
+# Weather sensors
+# ############################################################################
+  - platform: yr
+    name: yr00
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  - platform: yr
+    name: yr01
+    forecast: 1
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  - platform: yr
+    name: yr02
+    forecast: 2
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  - platform: yr
+    name: yr06
+    forecast: 6
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  - platform: yr
+    name: yr12
+    forecast: 12
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  - platform: yr
+    name: yr24
+    forecast: 24
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  - platform: yr
+    name: yr48
+    forecast: 48
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  - platform: yr
+    name: yr72
+    forecast: 72
+    monitored_conditions:
+      - temperature
+      - symbol
+      - precipitation
+      - windSpeed
+      - pressure
+      - humidity
+  #- platform: openweathermap
+  #  api_key: !secret openweather_api_key
+  #  monitored_conditions:
+  #    - temperature
+  - platform: darksky
+    api_key: !secret darksky_api_key
+    language: ru
+    units: si
+    scan_interval: '00:30:00'
+    forecast:
+      - 0
+      - 1
+    monitored_conditions:
+      - summary
+      - icon
+      - temperature
+      - wind_speed
+      - humidity
+      - visibility
+      - temperature_high
+      - temperature_low
+      - apparent_temperature
+      - precip_probability
+      - precip_type
+
+# ############################################################################
+# UPS sensor
+# ############################################################################
+  - platform: nut
+    host: 192.168.1.101
+    port: 3493
+    name: ippon
+    alias: ippon
+    username: !secret nut_username
+    password: !secret nut_password
+    resources:
+      - ups.load
+      - input.voltage
+      - output.voltage
+      - battery.charge
+      - battery.voltage
+      - battery.voltage.high
+      - battery.voltage.low
+      - battery.voltage.nominal
+      - ups.status
+      - ups.temperature
+
+# ############################################################################
+# Template sensors
+# ############################################################################
+  - platform: template
+    sensors:
+      #face0_entrance:
+      #  friendly_name: 'Face0 entrance'
+      #  value_template: '{{ states.image_processing.saved_image_entrance.attributes.faces[0]["name"].title}}'
+      #face1_entrance:
+      #  friendly_name: 'Face1 entrance'
+      #  value_template: '{{ states.image_processing.saved_image_entrance.attributes.faces[1]["name"].title}}'
+      #face0_hall:
+      #  friendly_name: 'Face0 hall'
+      #  value_template: '{{ states.image_processing.saved_image_hall.attributes.faces[0]["name"].title}}'
+      #face1_hall:
+      #  friendly_name: 'Face1 hall'
+      #  value_template: '{{ states.image_processing.saved_image_hall.attributes.faces[1]["name"].title}}'
+# ############################################################################
+# Weather sensors
+# ############################################################################
+      pressure_mmhg_in:
+        value_template: "{{ (states('sensor.pressure_158d000237167c')|float * 0.750062)|round(0) }}"
+        unit_of_measurement: "mmHG"
+        device_class: pressure
+        friendly_name: Inside pressure
+      pressure_mmhg_out:
+        value_template: "{{ (states('sensor.dark_sky_pressure')|float * 0.750062)|round(0) }}"
+        unit_of_measurement: "mmHG"
+        device_class: pressure
+        friendly_name: Outside pressure
+# ############################################################################
+# Traffic sensor
+# ############################################################################
+      traffic:
+        value_template: "{{ states('sensor.yandex_traffic') }}"
+        icon_template: mdi:traffic-light
+        unit_of_measurement: "б"
+        entity_picture_template: >-
+            {% if (states('sensor.yandex_traffic_moscow') | int) <= 3 %}
+                "https://yastatic.net/s3/home/yabro/notification/desk-notif-card__route-traffic-green.png"
+            {% elif (states('sensor.yandex_traffic_moscow') | int) >= 7 %}
+                "https://yastatic.net/s3/home/yabro/notification/desk-notif-card__route-traffic-red.png"
+            {% else %}
+                "https://yastatic.net/s3/home/yabro/notification/desk-notif-card__route-traffic-yellow.png"
+            {% endif %}
+# ############################################################################
+# Last motion sensors
+# ############################################################################
+      last_motion:
+        friendly_name: 'Last Motion'
+        value_template: >
+          {%- set sensors = [states.binary_sensor.motion_sensor_158d0001e05856, states.binary_sensor.motion_sensor_158d0001ae9f61, states.binary_sensor.motion_sensor_158d0002b4729d, states.binary_sensor.motion_sensor_158d0001e53cda, states.binary_sensor.motion_sensor_158d000236bb94, states.binary_sensor.motion_sensor_158d0001aea602, states.binary_sensor.motion_sensor_158d000236bc6d, states.binary_sensor.motion_sensor_158d0001e54280, states.binary_sensor.motion_sensor_158d000224f89f, states.binary_sensor.motion_sensor_158d0001d5995e, states.binary_sensor.motion_sensor_158d0002b482e9 ] %}
+          {% for sensor in sensors %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+              {{ sensor.name }}
+            {% endif %}
+          {% endfor %}
+      last_motion_time:
+        friendly_name: 'Last Motion Time'
+        value_template: '{{ as_timestamp(states.group.motionsensors.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
+
+# ############################################################################
+# Purifier sensors
+# ############################################################################
+      purifier_mode:
+        value_template: >-
+          {% if states.fan.purifier2s.attributes.speed == "Silent" %}
+          Silent
+          {% elif states.fan.purifier2s.attributes.speed == "idle" %}
+          Idle
+          {% elif states.fan.purifier2s.attributes.speed == "Favorite" %}
+          Favorite
+          {% elif states.fan.purifier2s.attributes.speed == "Auto" %}
+          Auto
+          {% else %}
+          NA
+          {% endif %}
+        friendly_name: "Purifier mode"
+      purifier_pm25:
+        value_template: "{{ states.fan.purifier2s.attributes.aqi | int }}"
+        friendly_name: "Purifier PM2.5"
+        unit_of_measurement: "mcg/m3"
+        icon_template: mdi:meteor
+      purifier_fan_speed:
+        friendly_name: "Purifier fan speed"
+        value_template: "{{ states.fan.purifier2s.attributes.motor_speed }}"
+      purifier_filter_left:
+        value_template: "{{ states.fan.purifier2s.attributes.filter_life_remaining | int }}"
+        friendly_name: "Purifier Filter Life Remaining"
+        unit_of_measurement: '%'
+
+# ############################################################################
+# Humidifier sensors
+# ############################################################################
+      humidifier_mode:
+        value_template: >-
+          {% if states.fan.humidifier2.attributes.speed == "Silent" %}
+          Silent
+          {% elif states.fan.humidifier2.attributes.speed == "Medium" %}
+          Medium
+          {% elif states.fan.humidifier2.attributes.speed == "High" %}
+          High
+          {% elif states.fan.humidifier2.attributes.speed == "Auto" %}
+          Auto
+          {% else %}
+          NA
+          {% endif %}
+        friendly_name: "Humidifier mode"
+      humidifier_fan_speed:
+        friendly_name: "Humidifier fan speed"
+        value_template: "{{ states.fan.humidifier2.attributes.motor_speed }}"
+      humidifier_water_level:
+        friendly_name: "Humidifier water level"
+        unit_of_measurement: '%'
+        value_template: "{{(states.fan.humidifier2.attributes.depth/ 1.2) | int}}"
+        icon_template: >-
+          {%if ((states.fan.humidifier2.attributes.depth/ 1.2) | int ) >= 15 %}
+          mdi:water-percent
+          {% else %}
+          mdi:water-off
+          {% endif %}
+      humidifier_led:
+        friendly_name: "Humidifier LED brightness"
+        value_template: >-
+          {% if states.fan.humidifier2.attributes.led_brightness == 0 %}
+          High
+          {% elif states.fan.humidifier2.attributes.led_brightness == 1 %}
+          Low
+          {% elif states.fan.humidifier2.attributes.led_brightness == 2 %}
+          Off
+          {% else %}
+          NA
+          {% endif %}
+        icon_template: >-
+          {%if states.fan.humidifier2.attributes.led_brightness == 2 %}
+          mdi:lightbulb-outline
+          {% else %}
+          mdi:lightbulb
+          {% endif %}
+
+# ############################################################################
+# Socket Load sensors
+# ############################################################################
+      fridge_hb:
+        friendly_name: Socket Fridge HB
+        value_template: "{{ states.switch.wall_plug_158d000230fc52.attributes.load_power|round(0) }}"
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+      entrance_hb:
+        friendly_name: Socket Entrance HB
+        value_template: '{{ states.switch.wall_plug_158d00024517fe.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+      wadrobe_l_hb:
+        friendly_name: Socket Wadrobe L HB
+        value_template: '{{ states.switch.wall_plug_158d0001f2630e.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+      wadrobe_r_hb:
+        friendly_name: Socket Wadrove R HB
+        value_template: '{{ states.switch.wall_plug_158d00023e5812.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+      gateway_hb:
+        friendly_name: Socket Gateway HB
+        value_template: '{{ states.switch.gateway_plug_hb.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+      
+      main_hs:
+        value_template: '{{ states.switch.wall_plug_158d000249b26b.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Main HS
+      utility_hs:
+        value_template: '{{ states.switch.plug_158d0001e85086.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Utility HS
+      fan_b:
+        value_template: '{{ states.switch.plug_158d0001f9ebd8.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Fan B
+      fan_t:
+        value_template: '{{ states.switch.plug_158d0001f54f91.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Fan T
+      water_on_b:
+        value_template: '{{ states.switch.plug_158d0001f54f90.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Water ON B
+      water_off_b:
+        value_template: '{{ states.switch.plug_158d00020d8679.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Water OFF B
+        
+      pc_k:
+        value_template: '{{ states.switch.wall_plug_158d0002451850.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket PC K
+      tv_k:
+        value_template: '{{ states.switch.wall_plug_158d0002476ed1.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket TV K
+      oven_k:
+        value_template: '{{ states.switch.wall_plug_158d000249b25b.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Oven K
+      air_filter_k:
+        value_template: '{{ states.switch.plug_158d000232481a.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Air Filter K
+      night_k:
+        value_template: '{{ states.switch.plug_158d000216528c.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Night Light K
+      
+      pc_mb:
+        value_template: '{{ states.switch.wall_plug_158d0002467773.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket PC MB
+      bed_plug_mb:
+        value_template: '{{ states.switch.plug_158d000205a835.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Bed MB
+      gateway_mb:
+        value_template: '{{ states.switch.gateway_plug_mb.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Gateway MB
+      
+      entrance_v:
+        value_template: '{{ states.switch.wall_plug_158d000246776f.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Entrance V
+      tv_v:
+        value_template: '{{ states.switch.wall_plug_158d0002395dc9.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket TV V
+      wadrobe_v:
+        value_template: '{{ states.switch.plug_158d0002468fbd.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Wadrobe V
+      gateway_v:
+        value_template: '{{ states.switch.gateway_plug_v.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Gateway V
+      
+      pc_s:
+        value_template: '{{ states.switch.wall_plug_158d000239097a.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket PC S
+      wadrobe_s:
+        value_template: '{{ states.switch.wall_plug_158d0002395d58.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Wadrobe S
+      heater_s:
+        value_template: '{{ states.switch.plug_158d00023a657a.attributes.load_power|round(0) }}'
+        unit_of_measurement: 'W'
+        icon_template: mdi:gauge
+        friendly_name: Socket Heater S
+
+# ############################################################################
+# Utility (water + Power Cost sensor
+# ############################################################################
+      utility_cost:
+        unit_of_measurement: 'rub'
+        icon_template: mdi:currency-rub
+        value_template: "{{ (states('sensor.power_consumption_month_cost')|float + states('sensor.water_cost')|float)|round(0) }}"
+        friendly_name: "Utility Cost/Month"
+
+# ############################################################################
+# Power monitoring sensors
+# ############################################################################
+      power_consumption_socket:
+        value_template: "{{ (states.switch.wall_plug_158d0001f2630e.attributes.load_power + states.switch.wall_plug_158d00024517fe.attributes.load_power + states.switch.wall_plug_158d000230fc52.attributes.load_power + states.switch.wall_plug_158d000239097a.attributes.load_power + states.switch.wall_plug_158d0002395d58.attributes.load_power + states.switch.plug_158d0002468fbd.attributes.load_power + states.switch.wall_plug_158d0002395dc9.attributes.load_power + states.switch.wall_plug_158d000246776f.attributes.load_power + states.switch.wall_plug_158d0002467773.attributes.load_power + states.switch.wall_plug_158d000249b26b.attributes.load_power + states.switch.plug_158d0001f5501f.attributes.load_power + states.switch.plug_158d0001f54f90.attributes.load_power + states.switch.plug_158d0001f54f91.attributes.load_power + states.switch.plug_158d0001f9ebd8.attributes.load_power + states.switch.plug_158d00020d8679.attributes.load_power + states.switch.plug_158d000216528c.attributes.load_power + states.switch.wall_plug_158d0002451850.attributes.load_power + states.switch.wall_plug_158d0002476ed1.attributes.load_power + states.switch.wall_plug_158d000249b25b.attributes.load_power + states.switch.plug_158d000216528c.attributes.load_power + states.switch.plug_158d000205a835.attributes.load_power + states.switch.plug_158d0001e85086.attributes.load_power + states.switch.plug_158d000232481a.attributes.load_power + 12 + ((states.fan.humidifier2.state|replace('on','1'))|int*10) )|round(2) }}"
+        unit_of_measurement: W
+        friendly_name: 'Power socket/Current'
+        icon_template: mdi:gauge
+    
+      power_consumption_light:
+        friendly_name: 'Power light/Current'
+        unit_of_measurement: W
+        icon_template: mdi:gauge
+        value_template: "{{ ((states.switch.wall_switch_right_158d0002a36f7f.state|replace('on','1'))|int*45)+((states.switch.wall_switch_left_158d0002a36f7f.state|replace('on','1'))|int*20)+((states.switch.wall_switch_right_158d0002a36e26.state|replace('on','1'))|int*65)+((states.switch.wall_switch_left_158d0002a36e26.state|replace('on','1'))|int*10)+(states.switch.plug_158d0002482619.attributes.load_power)+(states.switch.plug_158d00020b4971.attributes.load_power)+((states.switch.wall_switch_left_158d0002a36433.state|replace('on','1'))|int*50)+((states.switch.wall_switch_158d000248bf53.state|replace('on','1'))|int*32)+((states.switch.wall_switch_left_158d000223921b.state|replace('on','1'))|int*35)+((states.switch.wall_switch_right_158d000253f04a.state|replace('on','1'))|int*35)+(states.switch.wall_plug_158d00023e5812.attributes.load_power) }}"
+      voltage:
+        value_template: >
+          {% if states.sensor.ippon_input_voltage.state != "unknown" %}
+            {{states.sensor.ippon_input_voltage.state|round(1)}}
+          {% else %}
+          220
+          {% endif %}
+        unit_of_measurement: "V"
+        icon_template: mdi:gauge
+      total_current:
+        value_template: "{{ (states('sensor.power_consumption')|float / states('sensor.voltage')|float)|round(1) }}"
+        unit_of_measurement: "A"
+        friendly_name: "Total current"
+      power_consumption:
+        value_template: "{{ (states('sensor.power_consumption_light')|float + states('sensor.power_consumption_socket')|float)|round(2) }}"
+        unit_of_measurement: W
+        icon_template: mdi:gauge
+        friendly_name: 'Power/Current'
+      power_consumption_today:
+        value_template: "{{ states('input_number.power_consumption_today')|round(2) }}"
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/Today'
+      power_consumption_t1:
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/Today/T1'
+        value_template: "{{ states('input_number.power_consumption_t1')|round(2) }}"
+      power_consumption_t2:
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/Today/T2'
+        value_template: "{{ states('input_number.power_consumption_t2')|round(2) }}"
+      power_t1:
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power meter/T1'
+        value_template: "{{ states('input_number.power_t1')|round(2) }}"
+      power_t2:
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power meter/T2'
+        value_template: "{{ states('input_number.power_t2')|round(2) }}"
+      power:
+        value_template: "{{ (states('sensor.power_t1')|float + states('sensor.power_t2')|float)|round(2) }}"
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power meter'
+      power_consumption_yesterday:
+        icon_template: mdi:gauge
+        value_template: "{{ states('input_number.power_consumption_yesterday')|round(2) }}"
+        unit_of_measurement: kW
+        friendly_name: 'Power/Yesterday'
+      power_consumption_month:
+        value_template: "{{ states('input_number.power_consumption_month')|round(2) }}"
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/Month'
+      power_consumption_month_t1:
+        value_template: "{{ states('input_number.power_consumption_month_t1')|round(2) }}"
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/Month/T1'
+      power_consumption_month_t2:
+        value_template: "{{ states('input_number.power_consumption_month_t2')|round(2) }}"
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/Month/T2'
+      power_consumption_month_prev:
+        value_template: "{{ states('input_number.power_consumption_month_prev')|round(2) }}"
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/PrevMonth'
+      power_consumption_month_expected:
+        value_template: "{{ states('input_number.power_consumption_month_expected')|round(2) }}"
+        unit_of_measurement: kW
+        icon_template: mdi:gauge
+        friendly_name: 'Power/MonthExp'
+        
+      power_consumption_month_cost:
+        friendly_name: "Power/Month"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.power_consumption_month_t1')|float*6.29 + states('sensor.power_consumption_month_t2')|float*1.95) |round(2) }}"
+      power_consumption_month_t1_cost:
+        friendly_name: "Power/Month/T1"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.power_consumption_month_t1')|float*6.29) |round(2) }}"
+      power_consumption_month_t2_cost:
+        friendly_name: "Power/Month/T2"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.power_consumption_month_t2')|float*1.95) |round(2) }}"
+    
+# ############################################################################
+# Water monitoring sensors
+# ############################################################################
+      cold_water_meter:
+        friendly_name: "Cold water meter"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ ((states('counter.cold_water_meter'))|int)/100 }}"
+  
+      hot_water_meter:
+        friendly_name: "Hot water meter"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ ((states('counter.hot_water_meter'))|int)/100 }}"
+  
+      cold_water_month:
+        friendly_name: "Cold water/Month"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ (((states('counter.cold_water_meter_from_date1'))|float)/100)|round(2) }}"
+  
+      hot_water_month:
+        friendly_name: "Hot water/Month"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ (((states('counter.hot_water_meter_from_date1'))|float)/100)|round(2) }}"
+  
+      cold_water_meter_date1:
+        friendly_name: "Cold water meter 1"
+        icon_template: mdi:calendar
+        unit_of_measurement: 'm3'
+        value_template: "{{ ((((states('counter.cold_water_meter'))|float) - ((states('counter.cold_water_meter_from_date1'))|float))/100)|round(2) }}"
+  
+      hot_water_meter_date1:
+        friendly_name: "Hot water meter 1"
+        icon_template: mdi:calendar
+        unit_of_measurement: 'm3'
+        value_template: "{{ ((((states('counter.hot_water_meter'))|float) - ((states('counter.hot_water_meter_from_date1'))|float))/100)|round(2) }}"
+  
+      cold_water_cost:
+        friendly_name: "Cold water"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (((states('counter.cold_water_meter_from_date1'))|float)/100 * 38.7)|round(2) }}"
+  
+      hot_water_cost:
+        friendly_name: "Hot water"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (((states('counter.hot_water_meter_from_date1'))|float)/100 * 191.72)|round(2) }}"
+  
+      water_cost:
+        friendly_name: "Water cost"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: >
+          {{ (( (((states('counter.cold_water_meter_from_date1'))|float))/100*38.7) +
+          (((states('counter.hot_water_meter_from_date1'))|float)/100*191.72) )|round(2) }}
+          
+      water:
+        friendly_name: "Water total"
+        unit_of_measurement: 'm3'
+        value_template: >
+          {{ (( (((states('counter.cold_water_meter_from_date1'))|float))/100) +
+          (((states('counter.hot_water_meter_from_date1'))|float)/100) )|round(2) }}
+      water_delta_1m:
+        friendly_name: "Water delta/1m"
+        unit_of_measurement: 'm3'
+        value_template: "{{ states.sensor.total_water_1m_mean.attributes.change|float }}"
+      water_delta_10m:
+        friendly_name: "Water delta/10m"
+        unit_of_measurement: 'm3'
+        value_template: "{{ states.sensor.total_water_10m_mean.attributes.change|float }}"
+      water_delta_30m:
+        friendly_name: "Water delta/30m"
+        unit_of_measurement: 'm3'
+        value_template: "{{ states.sensor.total_water_30m_mean.attributes.change|float }}"
+      water_delta_60m:
+        friendly_name: "Water delta/60m"
+        unit_of_measurement: 'm3'
+        value_template: "{{ states.sensor.total_water_60m_mean.attributes.change|float }}"
+      cold_change:
+        value_template: "{{ states.sensor.cold_water_usage_mean.attributes.change }}"
+        friendly_name: "Cold water change"
+      hot_change:
+        value_template: "{{ states.sensor.hot_water_usage_mean.attributes.change }}"
+        friendly_name: "Hot water change"
+      water_change_10m:
+        value_template: "{{ states.sensor.total_water_10m_mean.attributes.change }}"
+        friendly_name: "Water change 10m"
+      water_change_1m:
+        value_template: "{{ states.sensor.total_water_1m_mean.attributes.change }}"
+        friendly_name: "Water change 1m"
+      water_change_30m:
+        value_template: "{{ states.sensor.total_water_30m_mean.attributes.change }}"
+        friendly_name: "Water change 30m"
+      water_change_60m:
+        value_template: "{{ states.sensor.total_water_60m_mean.attributes.change }}"
+        friendly_name: "Water change 60m"
+
+# ############################################################################
+# Stats sensors
+# ############################################################################
+      sensor_count:
+        friendly_name: 'Number of Sensors'
+        icon_template: mdi:gauge
+        value_template: >
+          {%- set domains = ['sensor'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+      counter_count:
+        friendly_name: 'Number of Counters'
+        icon_template: mdi:counter
+        value_template: >
+          {%- set domains = ['counter'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+      automation_count:
+        friendly_name: 'Number of Automations'
+        icon_template: mdi:home-assistant
+        value_template: >
+          {%- set domains = ['automation'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+      script_count:
+        friendly_name: 'Number of Scripts'
+        icon_template: mdi:script-text-outline
+        value_template: >
+          {%- set domains = ['script'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+      switch_count:
+        friendly_name: 'Number of Switches'
+        icon_template: mdi:toggle-switch
+        value_template: >
+          {%- set domains = ['switch'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+      binary_sensor_count:
+        friendly_name: 'Number of Binary Sensors'
+        icon_template: mdi:nintendo-switch
+        value_template: >
+          {%- set domains = ['binary_sensor'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+      lights_count:
+        friendly_name: 'Number of Lights'
+        icon_template: mdi:lightbulb
+        value_template: >
+          {%- set domains = ['light'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+      tracker_count:
+        friendly_name: 'Number of Devices'
+        icon_template: mdi:cellphone-link
+        value_template: >
+          {%- set domains = ['device_tracker'] -%}
+          {%- for domain in domains -%}
+            {%- for item in states[domain] -%}
+              {% if loop.first %}
+                {{loop.length}}
+              {% endif %}
+            {%- endfor -%}
+          {%- endfor -%}
+
+# ############################################################################
+# Water statistics sensors
+# ############################################################################
+  - platform: statistics
+    name: Cold Water Usage
+    entity_id: sensor.cold_water_meter
+    max_age:
+      minutes: 1
+  - platform: statistics
+    name: Hot Water Usage
+    entity_id: sensor.hot_water_meter
+    max_age:
+      minutes: 1
+  - platform: statistics
+    name: Total water 1m
+    entity_id: sensor.water
+    max_age:
+      minutes: 1
+  - platform: statistics
+    name: Total Water 10m
+    entity_id: sensor.water
+    max_age:
+      minutes: 10
+  - platform: statistics
+    name: Total Water 30m
+    entity_id: sensor.water
+    max_age:
+      minutes: 30
+  - platform: statistics
+    name: Total Water 60m
+    entity_id: sensor.water
+    max_age:
+      minutes: 60
+
+# ############################################################################
+# TIme\date sensor
+# ############################################################################
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      
+# ############################################################################
+# HA Uptime CLI sensor
+# ############################################################################
+  - platform: command_line
+    name: HA Uptime Text
+    command: echo "$(($(date +%s) - $(date -d "$(head -n1 /config/home-assistant.log | cut -d' ' -f-2)" +%s)))"
+    scan_interval: 720
+    value_template: >-
+      {% set uptime = value | int %}
+      {% set seconds = uptime % 60 %}
+      {% set minutes = ((uptime % 3600) / 60) | int %}
+      {% set hours = ((uptime % 86400) / 3600) | int %}
+      {% set days = (uptime / 86400) | int %}
+      {%- if days > 0 -%}
+        {%- if days == 1 -%}
+          1 day
+        {%- else -%}
+          {{ days }} days
+        {%- endif -%}
+        {{ ', ' }}
+      {%- endif -%}
+      {%- if hours > 0 -%}
+        {%- if hours == 1 -%}
+          1 hour
+        {%- else -%}
+          {{ hours }} hours
+        {%- endif -%}
+        {{ ', ' }}
+      {%- endif -%}
+      {%- if minutes > 0 -%}
+        {%- if minutes == 1 -%}
+          1 minute
+        {%- else -%}
+          {{ minutes }} minutes
+        {%- endif -%}
+      {%- endif -%}
+  
+  - platform: template
+    sensors: 
+      host_uptime:
+        friendly_name: Host Uptime
+        unit_of_measurement: "hours"
+        value_template: "{{ ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60 * 60) ) | round (2) }}"
+        
+      host_uptime_text:
+        friendly_name: Host Uptime Text
+        value_template: >
+          {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) %}
+
+          {% set minutes = (up_time // 60) | int %}
+          {% set hours = (minutes // 60) %}
+          {% set days = (hours // 24) %}
+          {% set weeks = (days // 7) %}
+          {% set minutes = (minutes % 60) %}
+          {% set hours = (hours % 24) %}
+          {% set days = (days % 7) %}
+        
+        
+          {% macro phrase(value, name) %}
+               {%- set value = value %}
+               {%- set end = 's' if value > 1 else '' %}
+               {{- '{} {}{}'.format(value, name, end) if value | int > 0 else '' }}
+          {%- endmacro %}
+                    
+          {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
+        
+          {% set last_comma = text.rfind(',') %}
+          {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
+          
+          {{ text }}
+          
+#          {% if last_comma != -1 %}
+#            {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
+#          {% endif %}
+
+# ############################################################################
+# DB size sensors
+# ############################################################################
+#  - platform: filesize
+#    file_paths:
+#      - /config/home-assistant_v2.db
+#  - platform: template
+#    sensors:
+#      db_size:
+#        value_template: "{{ states.sensor.home_assistant_v2_db.state | round(0) }}"
+#        unit_of_measurement: Mb
+#        friendly_name: 'DB size'
+
+  - platform: sql
+    db_url: !secret mariadb_url
+    queries:
+    - name: MariaDB Size
+      query: 'SELECT table_schema "database", Round(Sum(data_length + index_length) / 1048576, 0) "value" FROM information_schema.tables WHERE table_schema="homeassistant" GROUP BY table_schema;'
+      column: 'value'
+      unit_of_measurement: Mb
+  
+ # Influx DB Size  
+  #- platform: influxdb
+  #  host: 192.168.1.14
+  #  port: 8086
+  #  username: homeassistant
+  #  password: homeassistant
+  #  queries:
+  #  - name: InfluxDb Size
+  #    unit_of_measurement: Mb
+  #    value_template: '{{ (value | float / 1024 /1024) | round(0) }}'
+  #    group_function: sum
+  #    measurement: '"monitor"."shard"'
+  #    database: _internal
+  #    where: 'time > now() - 10s'
+  #    field: diskBytes
+  
+  
+# ####################
+# Google drive backup
+# ####################
+  - platform: mqtt
+    name: "Google Backup Status"
+    state_topic: "googlebackup/result"
+    json_attributes_topic: "googlebackup/result"
+   
+  - platform: template
+    sensors:
+
+      last_google_backup:
+        friendly_name: 'Google Drive - Last Success Backup'
+        value_template: '{{ (as_timestamp(states.sensor.google_backup_status.attributes["backupTimestamp"]) + 7200) | timestamp_custom("%d.%m.%Y %H:%M") }}'
+
+      last_google_filecount:
+        friendly_name: 'Google Drive - File Count on HA'
+        value_template: '{{ states.sensor.google_backup_status.attributes["fileCount"] }}'
+       
+      last_google_alreadycount:
+        friendly_name: 'Google Drive - File Count on G-Disk'
+        value_template: '{{ states.sensor.google_backup_status.attributes["alreadyCount"] }}'
+
+      last_google_backedupcount:
+        friendly_name: 'Google Drive - Backed Up Files'
+        value_template: '{{ states.sensor.google_backup_status.attributes["backedUpCount"] }}'
+         
+      last_google_deletedcount:
+        friendly_name: 'Google Drive - Deleted from Host'
+        value_template: '{{ states.sensor.google_backup_status.attributes["deletedCount"] }}'
+         
+      last_google_deletedfromgoogle:
+        friendly_name: 'Google Drive - Deleted from G-Disk'
+        value_template: '{{ states.sensor.google_backup_status.attributes["deletedFromGoogle"] }}'

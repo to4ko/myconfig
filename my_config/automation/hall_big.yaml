@@ -1,0 +1,707 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Auto Night Light On
+# ##################################
+- alias: hall_big_auto_night_light_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0001e05856
+  condition:
+    condition: time
+    after: '21:00:00'
+    before: '07:00:00'
+  action:
+    - service: light.turn_on
+      entity_id: light.led_strip_hb
+      data:
+        brightness_pct: 1
+        kelvin: 3000
+    #- service: light.turn_on
+    #  entity_id: light.gateway_light_7811dcb8cb4b
+    #  data:
+    #    brightness: 1
+    #    color_name: white
+        #rgb_color: [255,255,255]
+    - delay: '00:00:30'
+    - service: light.turn_off
+      entity_id: light.led_strip_hb
+    - service: light.turn_off
+      entity_id: light.gateway_light_7811dcb8cb4b
+    - delay: 00:00:05
+    - service: light.turn_off
+      entity_id: light.led_strip_hb, light.gateway_light_7811dcb8cb4b
+      
+# ##################################
+# Hall Big - Auto Light On
+# ##################################
+- alias: hall_big_auto_light_on
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0001e05856
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0002b482e9
+  condition:
+    condition: time
+    after: '07:00:00'
+    before: '21:00:00'
+  action:
+    - service: light.turn_on
+      entity_id: light.led_strip_hb
+      data_template:
+        brightness_pct: 100
+        kelvin: 6500
+
+# ##################################
+# Hall Big - Auto Night Light Off 60s without movements
+# ##################################
+- alias: hall_big_night_auto_off_60s
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.motion_sensor_158d0001e05856
+    to: 'off'
+    for:
+      seconds: 1
+  condition:
+    condition: time
+    after: '21:00:00'
+    before: '07:00:00'
+  action:
+    - service: light.turn_off
+      entity_id: light.led_strip_hb
+# ##################################
+# Hall Big - Auto Light Off 1m without movements
+# ##################################
+- alias: hall_big_auto_off_60s
+  initial_state: 'on'
+  trigger:
+    #- platform: state
+    #  entity_id: binary_sensor.motion_sensor_158d0001e05856
+    #  to: 'off'
+    #  for:
+    #    seconds: 1
+    #- platform: state
+    #  entity_id: binary_sensor.motion_sensor_158d0002b482e9
+    #  to: 'off'
+    #  for:
+    #    seconds: 1
+    - platform: state
+      entity_id: binary_sensor.motion_hb
+      to: 'off'
+      from: 'on'
+  condition:
+    condition: time
+    after: '07:00:00'
+    before: '21:00:00'
+  action:
+    - service: light.turn_off
+      entity_id: light.led_strip_hb
+      
+# ##################################
+# Hall Big - Auto Light On when door opened_day
+# ##################################
+- alias: hall_big_auto_light_on_with_door_day
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
+    from: 'off'
+    to: 'on'
+  condition:
+    condition: time
+    after: '07:00:00'
+    before: '21:00:00'
+  action:
+    - service: light.turn_on
+      entity_id: light.led_strip_hb
+      data_template:
+        brightness_pct: 100
+        # color_temp: 254
+        kelvin: 6500
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6aa Внимание! Входная дверь открыта!"
+    - delay: 00:00:09
+    - service: script.turn_on
+      entity_id: script.open_door_photo
+    
+    #- service: image_processing.scan
+    #  entity_id: image_processing.saved_image_entrance
+    #- service: image_processing.scan
+    #  entity_id: image_processing.saved_image_hall
+    #- service_template: {% if states.sensor.face0_entrance.state != "unknown" %} notify.telegram {% endif %}
+    #  data_template:
+    #    message: "{% if states.sensor.face0_entrance.state != "unknown" %}  {{ states('sensor.face0_entrance') }} пришел {% else %} {% endif %}"
+
+# ##################################
+# Hall Big - Main door not closed for 3 minutes
+# ##################################
+- alias: hall_big_main_door_not_closed_3m
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
+    from: 'off'
+    to: 'on'
+    for:
+     minutes: 3
+  condition:
+    condition: time
+    after: '07:00:00'
+    before: '21:00:00'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: media_player.mpd
+      data_template:
+        message: 'Внимание! Входная дверь не закрыта! Внимание! Входная дверь не закрыта!'
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
+    - delay: 00:00:01
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_entrance
+        filename: "/config/www/cam_captures/entrance.jpg"
+    - delay: 00:00:01
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_hall
+        filename: "/config/www/cam_captures/hall.jpg" 
+    - delay: 00:00:05
+    - service: notify.telegram
+      data:
+        title: "Входная дверь!"
+        message: "Фотография" 
+        data:
+          photo:
+          - file: /config/www/cam_captures/entrance2.jpg
+            caption: Вход
+          - file: /config/www/cam_captures/entrance.jpg
+            caption: Вход
+          - file: /config/www/cam_captures/hall.jpg
+            caption: Коридор
+          
+# ##################################
+# Hall Big - Auto Light On when door opened_night
+# ##################################
+- alias: hall_big_auto_light_on_with_door_night
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
+    from: 'off'
+    to: 'on'
+  condition:
+    condition: time
+    after: '21:00:00'
+    before: '07:00:00'
+  action:
+    - service: light.turn_on
+      entity_id: light.led_strip_hb
+      data_template:
+        brightness_pct: 10
+        # color_temp: 254
+        kelvin: 3000
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6aa Внимание! Входная дверь открыта!"
+    - delay: 00:00:10
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_entrance
+        filename: "/config/www/cam_captures/entrance.jpg"
+    - delay: 00:00:07
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_hall
+        filename: "/config/www/cam_captures/hall.jpg" 
+    - delay: 00:00:05
+    - service: notify.telegram
+      data:
+        title: "Входная дверь!"
+        message: "Фотография" 
+        data:
+          photo:
+          - file: /config/www/cam_captures/entrance2.jpg
+            caption: Вход
+          - file: /config/www/cam_captures/entrance.jpg
+            caption: Вход
+          - file: /config/www/cam_captures/hall.jpg
+            caption: Коридор
+    - delay: 00:00:30
+    - service: light.turn_off
+      entity_id: light.led_strip_hb
+
+# ##################################
+# Hall Big - Fridge R sync on state change to Entr R
+# ##################################
+#- alias: hall_big_fridge_r_to_entrance_r
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: switch.wall_switch_right_158d000253f04a
+#  action:
+#    service_template: "{% if is_state('switch.wall_switch_right_158d000253f04a','on') %} script.entrance_r_on {% elif is_state('switch.wall_switch_right_158d000253f04a' ,'off') %} script.entrance_r_off {% endif %}"
+    
+# ##################################
+# Hall Big - Entr L sync on state change to Fridge L
+# ##################################
+#- alias: hall_big_entrance_l_to_fridgel
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: switch.wall_switch_left_158d000223921b
+#  action:
+#    service_template: "{% if is_state('switch.wall_switch_left_158d000223921b','on') %} script.fridge_l_on {% elif is_state('switch.wall_switch_left_158d000223921b' ,'off') %} script.fridge_l_off {% endif %}"
+
+# ##################################
+# Hall Big - Auto Light On Entrance
+# ##################################
+- alias: hall_big_auto_light_on_entrance
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0001e05856
+  condition:
+    condition: and
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.illuminnation_158d0001e05856
+        below: 10
+      - condition: time
+        after: '07:30:00'
+        before: '21:00:00'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.wall_switch_left_158d000223921b
+
+
+# ##################################
+# Hall Big - Auto Light On Fridge
+# ##################################
+- alias: hall_big_auto_light_on_fridge
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0002b482e9
+  condition:
+    condition: and
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.illuminnation_158d0002b482e9
+        below: 10
+      - condition: time
+        after: '07:30:00'
+        before: '21:00:00'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.wall_switch_right_158d000253f04a
+      
+# ##################################
+# Hall big - Timer start on light on
+# ################################## 
+- alias: hall_big_timer_on
+  initial_state: true
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_left_158d000223921b
+    to: 'on'
+    from: 'off'
+  - platform: state
+    entity_id: switch.wall_switch_right_158d000253f04a
+    to: 'on'
+    from: 'off'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_hb
+  - service: timer.start
+    entity_id: timer.timer_hb
+    
+# ##################################
+# Hall big - Timer off
+# ################################## 
+- alias: hall_big_timer_off
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_left_158d000223921b
+    to: 'off'
+    from: 'on'
+  - platform: state
+    entity_id: switch.wall_switch_right_158d000253f04a
+    to: 'off'
+    from: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_hb
+
+# ##################################
+# Hall big - Auto Light Off 10m without movements
+# ##################################
+- alias: hall_big_auto_off_10m
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.timer_hb
+  action:
+    - service: switch.turn_off
+      entity_id: switch.wall_switch_left_158d000223921b, switch.wall_switch_right_158d000253f04a
+
+# ##################################
+# Hall big - Timer restart with movement
+# ################################## 
+- alias: hall_big_timer_restart
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0001e05856
+  - platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0002b482e9
+  condition:
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: switch.wall_switch_left_158d000223921b
+        state: 'on'
+      - condition: state
+        entity_id: switch.wall_switch_right_158d000253f04a
+        state: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_hb
+  - service: timer.start
+    entity_id: timer.timer_hb
+
+# ##################################
+# Hall Big - Entrance light On from Fridge
+# ##################################
+- alias: hall_big_entrance_light_on_from_fridge
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.wall_switch_left_158d000253f04a
+  action:
+    - service: switch.toggle
+      entity_id: switch.wall_switch_left_158d000223921b
+
+# ##################################
+# Hall Big - Fridge light On from Entrance
+# ##################################
+- alias: hall_big_fridge_light_on_from_entrance
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.wall_switch_right_158d000223921b
+  action:
+    - service: switch.toggle
+      entity_id: switch.wall_switch_right_158d000253f04a
+
+# ##################################
+# Hall Big - Main power turned off
+# ##################################
+- alias: hall_big_main_power_turned_off
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.wall_plug_158d000230fc52
+    to: 'off'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS"
+
+# ##################################
+# Hall Big - Main plug pulled out
+# ##################################
+- alias: hall_big_main_plug_pulled_out
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.fridge_hb
+    below: 10
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Нагрузка в главной розетке упала! Проверь кабель!"
+
+# ##################################
+# Hall Big - Main power - over-power
+# ##################################
+- alias: hall_big_main_power_overpower
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.fridge_hb
+    above: 1700 
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Перегрузка главной розетки! Отключите лишние потребители!"
+
+# ##################################
+# Hall Big - UPS - OB
+# ##################################
+- alias: hall_big_ups_ob
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_status_data
+    to: 'OB'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Внимание! Запущен UPS!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Запущен UPS"
+
+# ##################################
+# Hall Big - UPS - LB
+# ##################################
+- alias: hall_big_ups_lb
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_status_data
+    to: 'LB'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Заряд батареи критический! Завершение работы!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "UPS полностью разряжен! Зывершаем работу!"
+    - service: hassio.host_shutdown
+
+# ##################################
+# Hall Big - UPS - OL
+# ##################################
+- alias: hall_big_ups_ol
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_status_data
+    to: 'OL'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи!"
+
+# ##################################
+# Hall Big - UPS - Unknown
+# ##################################
+- alias: hall_big_ups_unknown
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_status_data
+    to: "unknown"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Свзяь с UPS потеряна!"
+    #- service: notify.ios_iphone_8_dtsymbal
+    #  data:
+    #    title: "Внимание!"
+    #    message: "Связь с UPS потеряна!"
+
+# ##################################
+# Hall Big - UPS - Unknown to OL
+# ##################################
+- alias: hall_big_ups_unknown_to_ol
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_status_data
+    from: "unknown"
+    to: "OL"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Свзяь с UPS восстановлена!"
+
+
+# ##################################
+# Hall Big - Main power turned on
+# ##################################
+- alias: hall_big_main_power_turned_on
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.wall_plug_158d000230fc52
+    to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS!"
+        
+# ##################################
+# Hall Big - left home
+# ##################################
+- alias: hall_big_left_home
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d00023d3206
+      click_type: single
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4a1 Выключаем освещение"
+    - service: tts.yandextts_say
+      entity_id: media_player.mpd
+      data_template:
+        message: 'Запуск процедуры выключения освещения!'
+    - delay: '00:00:02'
+    - service: switch.turn_off
+      entity_id: switch.wall_switch_right_158d0002a36f7f, switch.plug_158d000216528c, switch.wall_switch_left_158d0002a36f7f, switch.plug_158d0001f54f91, switch.wall_switch_right_158d0002a36e26, switch.plug_158d0001f54f90, switch.plug_158d0001f9ebd8, switch.plug_158d00020d8679, switch.wall_switch_left_158d0002a36433, switch.wall_switch_right_158d0002a36433, switch.wall_switch_left_158d0002a36e26, switch.plug_158d0001f5501f, switch.wall_switch_158d000248bf53, switch.wall_switch_right_158d000253f04a, switch.wall_switch_left_158d000223921b, switch.plug_158d000232481a
+    - service: fan.turn_off 
+      entity_id: fan.purifier2s, fan.humidifier2
+    - service: light.turn_off
+      entity_id: light.bedside_mb, light.round_led_mb, light.square_led_v, light.philips_e27_mb, light.philips_e27_sasha, light.led_color_v, light.led_color_k
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4a1 Освещение выключено"
+    - service: tts.yandextts_say
+      entity_id: media_player.mpd
+      data_template:
+        message: 'Освещение выключено! Всего хорошего!'
+
+# ##################################
+# Hall Big - Sasha Button - Weather fcst - long
+# ##################################
+- alias: hall_big_weather_fcst
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001ef6089
+      click_type: long_click_press
+  action:
+    - service: script.tts_weather
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+        style: 1
+        
+#    - service: media_player.volume_set
+#      data_template:
+#        entity_id: media_player.mpd
+#        volume_level: '0.3'
+#    - service: tts.yandextts_say
+#      entity_id: media_player.mpd
+#      data_template:
+#        message: >
+#          {%- set date = as_timestamp(now()) -%}
+#          {% set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
+#          {% set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
+#          {% set day_list = ['первое','второе','третье','четвертое','пятое','шестое','седьмое','восьмое','девятое','десятое','одиннадцатое','двенадцатое','тринадцатое','четырнадцатое','пятнадцатое','шестнадцатое','семнадцатое','восемнадцатое','девятнадцатое','двадцатое','двадцать первое','двадцать второе','двадцать третье','двадцать четвертое','двадцать пятое','двадцать шестое','двадцать седьмое','двадцать восьмое','двадцать девятое','тридцатое','тридцать первое'] %}
+#          
+#          {% set m_ok = date | timestamp_custom("%m") | int %}
+#          {% set wd_ok = date | timestamp_custom("%w") | int %}
+#          {% set d_ok = date | timestamp_custom("%d") | int %}
+#
+#          {% set weekday = weekday_list[wd_ok-1] %} 
+#          {% set day = day_list[d_ok-1] %}
+#          {% set month = month_list[m_ok-1] %} 
+#          {% set hour_num = now().hour | int %}
+#          
+#          {% if hour_num >=6 and hour_num <12 %}
+#            Доброе утро!
+#          {% elif hour_num>=12 and hour_num<17 %}
+#            Добрый день!
+#          {% elif hour_num>=17 and hour_num<22 %}
+#            Добрый вечер!
+#          {% else %}
+#            Доброй ночи!
+#          {% endif %}
+#          
+#          Сегодня {{weekday }} {{ day }} {{ month }}.
+#          В течении дня {{ states('sensor.dark_sky_summary') }}. 
+#          Температура {{ states('sensor.tts_temperature') }} °C. 
+#          Вероятность осадков - {{ states('sensor.tts_precip_prob') }} %. 
+#          {%if states('sensor.tts_precip_prob')|int > 0 %} Вид осадков - {{ states('sensor.tts_precip') }} {% endif %}
+#          
+# ##################################
+# Hall Big - Fridge open for more than 
+# ##################################
+- alias: hall_big_fridge_not_closed_5m
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d000253722b
+    #from: 'off'
+    to: 'on'
+    for:
+     minutes: 5
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: media_player.mpd
+      data_template:
+        message: 'Внимание! Холодильник не закрыт!'
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F441 Внимание! Холодильник не закрыт!"
+            
+# ##################################
+# Hall Big - Freezer open for more than 
+# ##################################
+- alias: hall_big_freezer_not_closed_5m
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d000252acba
+    #from: 'off'
+    to: 'on'
+    for:
+     minutes: 5
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: media_player.mpd
+      data_template:
+        message: 'Внимание! Морозильник не закрыт!'
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F441 Внимание! Морозильник не закрыт!"

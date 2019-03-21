@@ -1,0 +1,252 @@
+# #####################################################################################
+#
+# BATHROOM
+#
+# #####################################################################################
+# Bathroom Fan - On 10m
+# ##################################
+- alias: bathroom_fan_10m
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001b94abe
+      click_type: single
+  action:
+  - service: switch.turn_on
+    entity_id: switch.plug_158d0001f9ebd8
+  - delay: 00:10:00
+  - service: switch.turn_off
+    entity_id: switch.plug_158d0001f9ebd8
+# ##################################
+# Bathroom Fan - Auto On for 10m if Humidity more than 75%
+# ##################################
+- alias: bathroom_fan_auto_10m_h75
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.humidity_158d00020d7c3a
+    above: 70
+  action:
+  - service: switch.turn_on
+    entity_id: switch.plug_158d0001f9ebd8
+  - delay: 00:10:00
+  - service: switch.turn_off
+    entity_id: switch.plug_158d0001f9ebd8
+# ##################################
+# Bathroom Fan - On
+# ##################################
+- alias: bathroom_fan_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001b94abe
+      click_type: double
+  action:
+  - service: switch.turn_on
+    entity_id: switch.plug_158d0001f9ebd8
+  - delay: 00:20:00
+  - service: switch.turn_off
+    entity_id: switch.plug_158d0001f9ebd8
+# ##################################
+# Bathroom Fan - Off
+# ##################################
+- alias: bathroom_fan_turn_off
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001b94abe
+      click_type: long_click_press
+  action:
+    service: switch.turn_off
+    entity_id: switch.plug_158d0001f9ebd8
+
+# ##################################
+# Bathroom - Timer restart with movement
+# ################################## 
+- alias: bathroom_timer_restart
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id:  binary_sensor.motion_sensor_158d000236bc6d
+  condition:
+    - condition: state
+      entity_id: switch.wall_switch_right_158d0002a36e26
+      state: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_b
+  - service: timer.start
+    entity_id: timer.timer_b
+
+# ##################################
+# Bathroom - Timer off
+# ################################## 
+- alias: bathroom_timer_off
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_right_158d0002a36e26
+    to: 'off'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_b
+    
+# ##################################
+# Bathroom - Timer start on light on
+# ################################## 
+- alias: bathroom_timer_on
+  initial_state: true
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_right_158d0002a36e26
+    to: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_b
+  - service: timer.start
+    entity_id: timer.timer_b
+
+# ##################################
+# Bathroom - Auto Light On
+# ##################################
+- alias: bathroom_auto_light_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d000236bc6d
+  action:
+  - service: switch.turn_on
+    entity_id: switch.wall_switch_right_158d0002a36e26
+    
+# ##################################
+# Bathroom - Auto Light Off 15m without movements
+# ##################################
+- alias: bathroom_auto_off_15m
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.timer_b
+  action:
+    - service: switch.turn_off
+      entity_id: switch.wall_switch_right_158d0002a36e26
+
+# ##################################
+# Bathroom Water Leak - On
+# ##################################
+- alias: bathroom_water_leak_on
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.water_leak_sensor_158d0002373a67
+    from: 'off'
+    to: 'on'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Внимание! Обнаружена утечка воды в ванне! Обнаружена утечка воды в ванне! Вода перекрывается!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Обнаружена утечка воды в ванне! Обнаружена утечка воды в ванне! Вода перекрывается!"
+    - service: switch.turn_on
+      entity_id: switch.plug_158d00020d8679
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d00020d8679
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Вода перекрыта! Устраните протечку воды в ванне для включения воды!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Вода перекрыта! Устраните протечку воды в ванне для включения воды!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Сработал датчик протечки в ванне! Краны закрыты!"
+
+# ##################################
+# Bathroom Water Leak - Off
+# ##################################
+- alias: bathroom_water_leak_off
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.water_leak_sensor_158d0002373a67
+    from: 'on'
+    to: 'off'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Протечка воды в ванне устранена! Спасибо!'
+    - service: notify.telegram
+      data_template:
+        message: "\U00002705 Протечка воды в ванне устранена!"
+
+
+# ##################################
+# Bathroom Water Valves Test
+# ##################################
+- alias: bathroom_water_valves_test
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '00:01:00'
+  condition:
+    condition: time
+    weekday:
+      - mon
+      #- wed
+      - fri
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "\U0001f6b0 Проверка кранов - закрываем!"
+    - service: switch.turn_on
+      entity_id: switch.plug_158d00020d8679
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d00020d8679
+    - delay: 00:00:5
+    - service: notify.telegram
+      data_template: 
+        message: "\U0001f6b0 Проверка кранов - открываем!"
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f54f90
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f54f90
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002705 Проверка кранов завершена!"

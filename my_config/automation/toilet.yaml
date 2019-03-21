@@ -1,0 +1,245 @@
+# #####################################################################################
+#
+# TOILET
+#
+# #####################################################################################
+# Toilet Fan - On 10m
+# ##################################
+- alias: toilet_fan_10m
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001b97111
+      click_type: single
+  action:
+  - service: switch.turn_on
+    entity_id: switch.plug_158d0001f54f91
+  - delay: 00:10:00
+  - service: switch.turn_off
+    entity_id: switch.plug_158d0001f54f91
+# ##################################
+# Toilet Fan - On
+# ##################################
+- alias: toilet_fan_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001b97111
+      click_type: double
+  action:
+  - service: switch.turn_on
+    entity_id: switch.plug_158d0001f54f91
+  - delay: 00:20:00
+  - service: switch.turn_off
+    entity_id: switch.plug_158d0001f54f91
+# ##################################
+# Toilet Fan - Off
+# ##################################
+- alias: toilet_fan_turn_off
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001b97111
+      click_type: long_click_press
+  action:
+    service: switch.turn_off
+    entity_id: switch.plug_158d0001f54f91
+
+# ##################################
+# Toilet - Timer restart with movement
+# ################################## 
+- alias: toilet_timer_restart
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id:  binary_sensor.motion_sensor_158d0001e54280
+  condition:
+    - condition: state
+      entity_id: switch.wall_switch_left_158d0002a36f7f
+      state: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_t
+  - service: timer.start
+    entity_id: timer.timer_t
+
+# ##################################
+# Toilet - Timer off
+# ################################## 
+- alias: toilet_timer_off
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_left_158d0002a36f7f
+    to: 'off'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_t
+    
+# ##################################
+# Toilet - Timer start
+# ################################## 
+- alias: toilet_timer_on
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_left_158d0002a36f7f
+    to: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_t
+  - service: timer.start
+    entity_id: timer.timer_t
+    
+# ##################################
+# Toilet - Auto Light On
+# ##################################
+- alias: toilet_auto_light_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0001e54280
+  action:
+  - service: switch.turn_on
+    entity_id: switch.wall_switch_left_158d0002a36f7f
+    
+# ##################################
+# Toilet - Auto Light Off 10m without movements
+# ##################################
+- alias: toilet_auto_off_10m
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.timer_t
+  condition:
+    condition: state
+    entity_id: switch.wall_switch_left_158d0002a36f7f
+    state: 'on'    
+  action:
+    - service: switch.turn_off
+      entity_id: switch.wall_switch_left_158d0002a36f7f
+
+# ##################################
+# Toilet Water Leak - On
+# ##################################
+- alias: toilet_water_leak_on
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.water_leak_sensor_158d00023684c2
+    from: 'off'
+    to: 'on'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Внимание! Обнаружена утечка воды в туалете! Обнаружена утечка воды в туалете! Вода перекрывается!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Обнаружена утечка воды в туалете! Обнаружена утечка воды в туалете! Вода перекрывается!"
+    - service: switch.turn_on
+      entity_id: switch.plug_158d00020d8679
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d00020d8679
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Вода перекрыта! Устраните протечку воды в туалете для включения воды!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Вода перекрыта! Устраните протечку воды в туалете для включения воды!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Сработал датчик протечки в туалете! Краны закрыты!"
+
+# ##################################
+# Toilet Water Leak - Off
+# ##################################
+- alias: toilet_water_leak_off
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.water_leak_sensor_158d00023684c2
+    from: 'on'
+    to: 'off'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Протечка воды в туалете устранена! Спасибо!'
+    - service: notify.telegram
+      data_template:
+        message: "\U00002705 Протечка воды в туалете устранена!"
+    
+
+# ##################################
+# Toilet - Auto Fan 2 minute open cover
+# ##################################
+- alias: toilet_auto_fan_cover_2m
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+    to: 'off'
+    for: 00:02:00
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f54f91
+    - delay: 00:10:00
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f54f91
+
+# ##################################
+# Toilet - Auto Light off - No Motion 2m and Cover Closed
+# ##################################
+- alias: toilet_auto_light_off_no_motion_cover_closed
+  initial_state: 'off'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.motion_sensor_158d0001e54280
+    to: 'off'
+    for: 00:00:10
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+        state: 'on'
+      - condition: state
+        entity_id: switch.wall_switch_left_158d0002a36f7f
+        state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.wall_switch_left_158d0002a36f7f

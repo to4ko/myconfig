@@ -1,0 +1,330 @@
+# #####################################################################################
+#
+# KITCHEN
+#
+# #####################################################################################
+# Kitchen Table Lamp (Yeelight E27 Color) On
+# ##################################
+- alias: kitchen_table_lamp_on_if_lamp_off
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001ef61be
+      click_type: single
+  condition:
+    condition: state
+    entity_id: light.led_color_k
+    state: 'off'    
+  action:
+  - service: light.turn_on
+    entity_id: light.led_color_k
+    data_template:
+      brightness_pct: 100
+      kelvin: 6500
+      
+# ##################################
+# Kitchen Table Lamp (Yeelight E27 Color) Off
+# ##################################
+- alias: kitchen_table_lamp_off_if_lamp_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001ef61be
+      click_type: single
+  condition:
+    condition: state
+    entity_id: light.led_color_k
+    state: 'on'    
+  action:
+  - service: light.turn_off
+    entity_id: light.led_color_k
+
+# ##################################
+# Kitchen Table Lamp (Yeelight E27 Color) to bright
+# ##################################
+- alias: kitchen_table_lamp_to_bright
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001ef61be
+      click_type: double
+  action:
+  - service: light.turn_on
+    entity_id: light.led_color_k
+    data_template:
+      brightness_pct: 100
+      kelvin: 6500
+
+# ##################################
+# Kitchen Table Lamp (Yeelight E27 Color) to midnight
+# ##################################
+- alias: kitchen_table_lamp_to_midnight
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001ef61be
+      click_type: long_click_press
+  action:
+  - service: light.turn_on
+    entity_id: light.led_color_k
+    data_template:
+      brightness_pct: 5
+      kelvin: 3000
+      
+# ##################################
+# Kitchen - Timer restart with movement
+# ################################## 
+- alias: kitchen_timer_restart
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id:  binary_sensor.motion_sensor_158d0002b4729d
+  condition:
+    - condition: state
+      entity_id: switch.wall_switch_right_158d0002a36f7f
+      state: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_k
+  - service: timer.start
+    entity_id: timer.timer_k
+
+# ##################################
+# Kitchen - Timer off
+# ################################## 
+- alias: kitchen_timer_off
+  initial_state: 'on'
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_right_158d0002a36f7f
+    to: 'off'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_k
+    
+# ##################################
+# Kitchen - Timer start on light on
+# ################################## 
+- alias: kitchen_timer_on
+  initial_state: true
+  trigger:
+  - platform: state
+    entity_id: switch.wall_switch_right_158d0002a36f7f
+    to: 'on'
+  condition:
+    condition: time
+    after: '07:00:00'
+    before: '21:00:00'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_k
+  - service: timer.start
+    entity_id: timer.timer_k
+      
+# ##################################
+# Kitchen - Auto Light Off - timer
+# ##################################
+- alias: kitchen_auto_off_timer
+  initial_state: 'on'
+  trigger:
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.timer_k
+  condition:
+    condition: time
+    after: '07:00:00'
+    before: '21:00:00'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.wall_switch_right_158d0002a36f7f
+
+# ##################################
+# Kitchen - Auto Light On
+# ##################################
+- alias: kitchen_auto_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0002b4729d
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: switch.wall_switch_right_158d0002a36f7f
+        state: 'off'
+      - condition: time
+        after: '06:30:00'
+        before: '21:00:00'
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+  action:
+    - service: switch.turn_on
+      entity_id: switch.wall_switch_right_158d0002a36f7f
+
+
+# ##################################
+# Kitchen - Auto Night Light On
+# ##################################
+- alias: kitchen_auto_night_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0002b4729d
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: switch.plug_158d000216528c
+        state: 'off'
+      - condition: time
+        after: '21:00:00'
+        before: '07:00:00'
+      - condition: state
+        entity_id: switch.wall_switch_right_158d0002a36f7f
+        state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000216528c
+    - delay: '00:00:30'
+    - service: switch.turn_off
+      entity_id: switch.plug_158d000216528c
+    - service: automation.turn_off
+      entity_id: automation.kitchen_auto_night_on
+    - service: switch.turn_off
+      entity_id: switch.plug_158d000216528c
+     
+# ##################################
+# Kitchen Water Leak - On
+# ##################################
+- alias: kitchen_water_leak_on
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+    from: 'off'
+    to: 'on'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Внимание! Обнаружена утечка воды на кухне! Обнаружена утечка воды на кухне! Вода перекрывается!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Обнаружена утечка воды на кухне! Обнаружена утечка воды на кухне! Вода перекрывается!"
+    - service: switch.turn_on
+      entity_id: switch.plug_158d00020d8679
+    - delay: 00:00:25
+    - service: switch.turn_off
+      entity_id: switch.plug_158d00020d8679
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Внимание! Вода перекрыта! Устраните протечку воды на кухне для включения воды!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Вода перекрыта! Устраните протечку воды на кухне для включения воды!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Сработал датчик протечки на кухне! Краны закрыты!"
+
+# ##################################
+# Kitchen Water Leak - Off
+# ##################################
+- alias: kitchen_water_leak_off
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+    from: 'on'
+    to: 'off'
+  condition:
+  
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.mpd
+          - media_player.home_mini_k
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: 
+        - media_player.mpd
+        - media_player.home_mini_k
+      data_template:
+        message: 'Протечка воды на кухне устранена! Спасибо!'
+    - service: notify.telegram
+      data_template:
+        message: "\U00002705 Протечка воды в кухне устранена!"
+
+# ##################################
+# Kitchen - Air Filter socket on
+# ##################################
+- alias: kitchen_airfilter_socket_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0002b4729d
+  condition:
+      - condition: state
+        entity_id: switch.plug_158d000232481a
+        state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000232481a
+      
+# ##################################
+# Kitchen - Weather announcement
+# ##################################
+- alias: kitchen_weather_announcement
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d0002b4729d
+  condition:
+    - condition: time
+      after: '07:20:00'
+      before: '07:22:00'
+  action:
+    - service: script.tts_weather
+      data_template:
+        entity_id: media_player.home_mini_k
+        volume_level: '0.4'
+    - service: automation.turn_off
+      entity_id: automation.system_status_audio

@@ -1,0 +1,625 @@
+# #####################################################################################
+#
+# SYSTEM TASKS
+#
+# #####################################################################################
+# System - RESTART
+# ##################################
+#- alias: system_night_hassio_restart
+#  initial_state: 'on'
+#  trigger:
+#    platform: time
+#    at: 04:00:01
+#  action:
+#  - service: hassio.host_reboot
+
+
+# ##################################
+# System - Homekit Delay Start
+# ##################################
+#- alias: system_homekit_start
+#  initial_state: 'on'
+#  hide_entity: true
+#  trigger:
+#    - platform: homeassistant
+#      event: start
+#  action:
+#    - delay: 00:01:00
+#    - service: homekit.start
+#    - service: notify.telegram
+#      data:
+#        message: "\U0000267B Homekit запущен"
+
+# ##################################
+# System - Window Cam Snapshot on Motion
+# ##################################
+- alias: system_window_snapshot
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.unifi_motion_window
+    from: 'OFF'
+    to: 'ON'
+  action:
+    - delay: "00:00:01"
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_window
+        filename: "/config/www/cam_captures/window.jpg"
+    - service: notify.telegram_cam
+      data:
+        title: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+        message: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+        data:
+          photo:
+          - file: "/config/www/cam_captures/window.jpg"
+            caption: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+
+# ##################################
+# System - Auto Lights Off - Family not home
+# ##################################
+- alias: system_auto_light_off_family_not_home
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: group.family
+    from: "home"
+    to: "not_home"
+    for: "00:01:00"
+  action:
+    service: script.lights_off
+
+# ##################################
+# System - Facebox error
+# ##################################
+#- alias: system_facebox_error
+#  initial_state: 'on'
+#  trigger:
+#    platform: event
+#    event_type: system_log_event
+#  condition:
+#    condition: template
+#    value_template: '{{ "facebox" in trigger.event.data.message }}'
+#  action:
+#  - service: notify.telegram
+#    data_template:
+#      message: '{{ trigger.event.data.message }}'
+#      title: Facebox error
+
+# ##################################
+# System - Errors to Telegram
+# ##################################
+- alias: system_error_counter
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: system_log_event
+    event_data:
+        level: ERROR
+  action:
+    - service: counter.increment
+      entity_id: counter.error_counter
+    #- service: notify.telegram_errors
+    #  data_template:
+    #    message: '{{ trigger.event.data.message }}'
+
+# ##################################
+# System - Warning counters
+# ##################################
+- alias: system_warning_counter
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: system_log_event
+    event_data:
+      level: WARNING
+  action:
+    service: counter.increment
+    entity_id: counter.warning_counter
+      
+# ##################################
+# System - Radio Volume
+# ##################################
+- alias: system_set_radio_volume
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: input_number.volume_radio
+  action:
+    service: media_player.volume_set
+    data_template:
+      entity_id: >
+        {% if is_state("input_select.chromecast_radio", "Kitchen") %} media_player.home_mini_k
+        {% elif is_state("input_select.chromecast_radio", "Vova's room") %} media_player.home_mini_v
+        {% elif is_state("input_select.chromecast_radio", "Sasha's room") %} media_player.home_mini_s
+        {% elif is_state("input_select.chromecast_radio", "Master Bedroom") %} media_player.home_mini_mb
+        {% elif is_state("input_select.chromecast_radio", "Hall big") %} media_player.mpd
+        {% elif is_state("input_select.chromecast_radio", "Everywhere") %} media_player.all_speakers
+        {% endif %}
+      volume_level: '{{  states.input_number.volume_radio.state  }}' 
+
+# ##################################
+# System - Hass.io Daily Snapshot
+# ##################################
+- alias: system_daily_snapshot
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '3:00:00'
+  action:
+  - service: hassio.snapshot_full
+    data_template:
+      name: auto_snap_{{ now().strftime('%d.%m.%Y') }}
+  - service: notify.telegram
+    data_template: 
+      message: "\U00002705 Резервное копирование выполнено"
+
+# ##################################
+# System - Hass.io Weekly Dropbox Snapshot upload
+# ##################################
+- alias: system_weekly_dropbox_upload
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '05:00:00'
+  condition:
+    condition: time
+    weekday:
+      - mon
+      #- wed
+      #- fri
+  action:
+  - service: hassio.addon_stdin
+    data: {"addon":"7be23ff5_dropbox_sync","input":{"command":"upload"}}
+  - service: notify.telegram
+    data_template: 
+      message: "\U00002705 Резервная копия выгружена на Dropbox"
+
+# ##################################
+# System - Hass.io Daily G-Drive Snapshot upload
+# ##################################
+- alias: system_daily_google_drive_upload
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '06:00:00'
+  action:
+  - service: rest_command.google_backup
+  - service: notify.telegram
+    data_template: 
+      message: "\U00002705 Резервная копия выгружена на Google Drive"
+
+      
+# ##################################
+# System - Ubuntu server CPU temp >65
+# ##################################
+- alias: system_server_cpu_temp_high
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.cpu_temperature
+    above: 65
+    for:
+      minutes: 5
+  action:
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Температура процессора сервера превысила 65°"
+    - service: notify.telegram
+      data:
+        message: "\U0001F525 Внимание! Температура процессора сервера превысила 65°"
+
+# ##################################
+# System - OMV server CPU temp >65
+# ##################################
+- alias: system_omv_server_cpu_temp_high
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.omv_cpu_temp
+    above: 65
+    for:
+      minutes: 5
+  action:
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Температура процессора файл-сервера превысила 65°"
+    - service: notify.telegram
+      data:
+        message: "\U0001F525 Внимание! Температура процессора файл-сервера превысила 65°"
+
+
+# ##################################
+# System - Hass.io NEW Device
+# ##################################
+- alias: system_new_device_found
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: device_tracker_new_device
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002734 Новое устройство - {{trigger.event.data.host_name}} - ({{trigger.event.data.entity_id}}"
+
+# ##################################
+# System - LED Strip Restart
+# ##################################
+- alias: system_led_strip_restart
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: 05:00:01
+  action:
+    - service: switch.turn_off
+      entity_id: switch.wall_plug_158d00023e5812
+    - delay: 00:00:02
+    - service: switch.turn_on
+      entity_id: switch.wall_plug_158d00023e5812
+    - delay: 00:00:10
+    - service: light.turn_on
+      entity_id: light.led_strip_hb
+    #- delay: 00:00:05
+    - service: light.turn_off
+      entity_id: light.led_strip_hb
+    - service: light.turn_off
+      entity_id: light.led_strip_hb
+    - delay: 00:00:05
+    - service: light.turn_off
+      entity_id: light.led_strip_hb
+    
+# ##################################
+# System - Hass.io NEW Version
+# ##################################
+- alias: system_hassio_new_version
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: updater.updater
+  action:
+    service: notify.telegram
+    data_template: 
+      message: "\U00002733 {{ states.updater.updater.state }} доступен"
+
+# ##################################
+# System - NEW DAY
+# ##################################
+- alias: system_new_day_telegramm
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: 00:00:01
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F305 Начался новый день! За прошедшие сутки ошибок - {{states.counter.error_counter.state}}, предупреждений - {{states.counter.warning_counter.state}}."
+    - service: counter.reset
+      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter
+      
+
+# ##################################
+# System - NEW DAY run
+# ##################################
+- alias: system_new_day_auto_on
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: 06:00:01
+  action:
+  - service: automation.turn_on
+    entity_id: automation.kitchen_weather_announcement
+
+# ##################################
+# System - Dima At home (life360)
+# ##################################
+- alias: system_presence_dima_iphone_at_home_360
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: device_tracker.life360_dima_tsymbal
+      to: "home"
+      for: 00:05:00
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F9D4 Дима дома (life360)!"
+        
+# ##################################
+# System - Vova At home (life360)
+# ##################################
+- alias: system_presence_vova_mimax_at_home_360
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: device_tracker.life360_vova_tsymbal
+      to: "home"
+      for: 00:05:00
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F471 Вова дома! (life360)"
+
+# ##################################
+# System - Sandra At home (life360)
+# ##################################
+- alias: system_presence_sandra_iphone_at_home_360
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: device_tracker.life360_sandra_tsymbal
+      to: "home"
+      for: 00:05:00
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F467 Саша дома! (life360)"
+
+# ##################################
+# Dima At home (by iPhone)
+# ##################################
+#- alias: dima_iphone_at_home
+#  trigger:
+#    - platform: state
+#      entity_id: device_tracker.dima_iphone_8
+#      from: "not_home"
+#      to: "home"
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: 'Дима дома (iPhone online)!'
+        
+# ##################################
+# Vova At home (by iPhone)
+# ##################################
+#- alias: vova_mimax_at_home
+#  trigger:
+#    - platform: state
+#      entity_id: device_tracker.vova_mimax
+#      from: "not_home"
+#      to: "home"
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: 'Вова дома! (MiMax online)'
+
+# ##################################
+# Sasha At home (by iPhone)
+# ##################################
+#- alias: sasha_iphone_at_home
+#  trigger:
+#    - platform: state
+#      entity_id: device_tracker.sasha_iphone_7
+#      from: "not_home"
+#      to: "home"
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: 'Саша дома! (iPhone online)'
+
+        
+# ##################################
+# Sasha At home
+# ##################################
+#- alias: sasha_at_home
+#  trigger:
+#    - platform: state
+#      entity_id: device_tracker.sandra
+#      to: "home"
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: 'Саша дома!'
+# ##################################
+# System - START message
+# ##################################
+- alias: system_start_message
+  initial_state: 'on'
+  trigger:
+    platform: homeassistant
+    event: start
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F603 Сервер запущен!"
+    - service: script.timers_update
+    - service: counter.increment
+      entity_id: counter.restart_counter
+    
+# ##################################
+# System - STOP message
+# ##################################
+- alias: system_stop_message
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: homeassistant_stop
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F621 Сервер остановлен!"
+
+# ##################################
+# System - login failure message
+# ##################################
+- alias: system_login_failure
+  initial_state: 'on'
+  hide_entity: false
+  trigger:
+    - platform: state
+      entity_id: persistent_notification.http_login
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state != off }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0000274C Не удачная попытка подлючения. Не верно введен пароль! {{ states.persistent_notification.http_login.attributes.message }}"
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: http_login
+
+# ##################################
+# System - Mid Door Motion reset
+# ##################################
+#- alias: system_mid_door_motion_reset
+#  initial_state: 'on'
+#  trigger:
+#    platform: time
+#    minutes: '/10'
+#    seconds: 00
+#  action:
+#    - service: homeassistant.update_entity
+#      entity_id: binary_sensor.motion_sensor_158d0001d5995e
+#    - service: homeassistant.update_entity
+#      entity_id: switch.wall_plug_158d000249b25b
+
+# ##################################
+# System - Toilet Cover inversion
+# ##################################
+- alias: system_cover_inversion_off
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+    to: 'Open'
+  action:
+    service: input_boolean.turn_off
+    data:
+        entity_id: input_boolean.cover_inv_t
+- alias: system_cover_inversion_on
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+    to: 'Closed'
+  action:
+    service: input_boolean.turn_on
+    data:
+        entity_id: input_boolean.cover_inv_t
+
+
+# ##################################
+# System - Sasha tracker - Toggle
+# ##################################
+- alias: system_sasha_tracker_toggle
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef6089
+        click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef6089
+        click_type: double
+  action:
+  - service: input_boolean.toggle
+    entity_id: input_boolean.sasha_tracker
+
+#- alias: system_sasha_home
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: input_boolean.sasha_tracker
+#    from: "off"
+#    to: "on"
+#  action:
+#    service: device_tracker.see
+#    data:
+#      dev_id: sasha
+#      location_name: 'home'
+#- alias: system_sasha_nothome
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: input_boolean.sasha_tracker
+#    from: "on"
+#    to: "off"
+#  action:
+#    service: device_tracker.see
+#    data:
+#      dev_id: sasha
+#      location_name: 'not_home'
+      
+# ##################################
+# System - Sasha tracker - Audio
+# ##################################
+- alias: system_sasha_nothome_audio
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.sasha
+    from: 'on'
+    to: 'off'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: media_player.mpd
+      data_template:
+        message: >
+          {% set name1 = ['Саша, ','Санек, ','Александр, ','Митрич, ','Александр Дмитриевич, '] | random %}
+          {% set greet2  = ['пока!','до свиданья!','до встречи!','чава-какава!','всего хорошего!'] | random %}
+          
+          {{name1}} {{greet2}}
+
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F476 Санек уходит!"
+
+#          "{{ (['Сашка, пока', 'Санёк, до встречи!', 'Удачи тебе, Александр Дмитриевич', 'Всего хорошего, Александр'] | random) }}"
+
+- alias: system_sasha_home_audio
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.sasha
+    to: 'on'
+    from: 'off'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      entity_id: media_player.mpd
+      data_template:
+        message: >
+          {% set name1 = ['Саша, ','Санек, ','Александр, ','Митрич, ','Александр Дмитриевич, '] | random %}
+          {% set greet1 = ['привет!','здарова!','здравствуй!','здравия желаю!','салют!'] | random %}
+          
+          {{name1}} {{greet1}}
+
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F476 Санек дома!"
+
+#          "{{ (['Сашка, привет', 'Санёк, здарова!', 'Здравствуй, Александр Дмитриевич', 'Привет, Александр'] | random) }}"
+
+# ##################################
+# System - Select speaker
+# ##################################
+#- alias: system_select_speakers
+#  trigger:
+#    - platform: state
+#      entity_id: input_select.radio_cast
+#  action:
+#    - service: input_text.set_value
+#      data_template:
+#        entity_id: input_text.radio_cast
+#        value: >
+#          {% if is_state("input_select.radio_cast", "Kitchen speaker") %} media_player.kitchen_display
+#          {% elif is_state("input_select.radio_cast", "Loud speaker") %} media_player.loud_speaker
+#          {% elif is_state("input_select.radio_cast", "Yuri speaker") %} media_player.yury_speaker
+#          {% elif is_state("input_select.radio_cast", "Black speaker") %} media_player.black_speaker
+#          {% elif is_state("input_select.radio_cast", "Chromecast") %} media_player.chromecast
+#          {% elif is_state("input_select.radio_cast", "Speakers") %} media_player.speakers
+#          {% elif is_state("input_select.radio_cast", "Surround") %} media_player.surround
+#          {% endif %}
+
+

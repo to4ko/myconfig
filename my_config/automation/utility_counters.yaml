@@ -1,0 +1,232 @@
+# #####################################################################################
+#
+# Water Counting
+#
+# #####################################################################################
+# Cold Water - Increase
+# ##################################
+- alias: system_water_cold_water_increase_counter
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d000232de79
+    from: 'on'
+    to: 'off'
+    for:
+      seconds: 5
+  action:
+    - service: counter.increment
+      entity_id: 
+        - counter.cold_water_meter
+        - counter.cold_water_meter_from_date1
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.cold_water_meter
+        value: "{{ (states.input_number.cold_water_meter.state|float + 1 ) | round(0) }}"
+
+# ##################################
+# Hot Water - Increase
+# ##################################
+- alias: system_water_hot_water_increase_counter
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d000236fcd5
+    from: 'on'
+    to: 'off'
+    for:
+      seconds: 5
+  action:
+    - service: counter.increment
+      entity_id: 
+        - counter.hot_water_meter
+        - counter.hot_water_meter_from_date1
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.hot_water_meter
+        value: "{{ (states.input_number.hot_water_meter.state|float + 1 ) | round(0) }}"
+
+# ##################################
+# System - Water\Power - Notification
+# ##################################
+- alias: system_date1_notification
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: "00:00:01"
+  condition:
+    #- condition: state
+    #  entity_id: sensor.date_number
+    #  state: '1'
+    - condition: template
+      value_template: "{{ now().day == 22 }}"
+  action:
+    - service: script.turn_on
+      entity_id: script.system_water_date1_action
+    - service: script.turn_on
+      entity_id: script.system_power_date1_action
+
+# #####################################################################################
+#
+# Power Counting
+#
+# #####################################################################################
+# System - Power - 30sec update
+# ##################################
+- alias: system_power_update_30s
+  initial_state: 'on'
+  trigger:
+    platform: time_pattern
+    seconds: '/30'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_today
+        value: "{{ (states.input_number.power_consumption_today.state|float + states.sensor.power_consumption.state|float / 120000) | round(5) }}"
+    - service_template: >
+        {% if now().hour <23 and now().hour >=7 %}
+            script.power_t1
+        {% else %}
+            script.power_t2
+        {% endif %}
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_month
+        value: "{{ (states.input_number.power_consumption_month.state|float + states.sensor.power_consumption.state|float / 120000) | round(5) }}"
+    - service_template: >
+        {% if now().hour <23 and now().hour >=7 %}
+            script.power_m_t1
+        {% else %}
+            script.power_m_t2
+        {% endif %}
+
+# ##################################
+# System - Power - New day
+# ##################################
+- alias: system_power_update_new_day
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '00:00:05'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_month_expected
+        value: "{{ (states.input_number.power_consumption_today.state|float + states.input_number.power_consumption_yesterday.state|float) * 15 }}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_yesterday
+        value: 0
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_yesterday
+        value: "{{ (states.input_number.power_consumption_today.state|float) }}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_today, input_number.power_consumption_t1, input_number.power_consumption_t2
+        value: 0
+    
+# ##################################
+# System - Power - New Month
+# ##################################
+- alias: system_power_update_new_month
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '00:00:10'
+  condition:
+    - condition: template
+      value_template: '{{ now().day == 22 }}'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_month_prev
+        value: 0
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_month_expected
+        value: 0
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_month_prev
+        value: "{{ (states.input_number.power_consumption_month.state|float) }}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_consumption_month, input_number.power_consumption_month_t1, input_number.power_consumption_month_t2
+        value: 0
+
+# ##################################
+# System - Power - High current
+# ##################################
+- alias: system_power_10A_current
+  initial_state: 'off'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.total_current
+    above: 10
+    below: 15
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Общий ток более 10А!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Внимание! Общий ток более 10А"
+
+# ##################################
+# System - Power - High current
+# ##################################
+- alias: system_power_15A_current
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.total_current
+    above: 15
+    below: 20
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Общий ток более 15А!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Внимание! Общий ток более 15А"
+  
+# ##################################
+# System - Power - High current
+# ##################################
+- alias: system_power_20A_current
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.total_current
+    above: 20
+    below: 30
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Общий ток более 20А!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Внимание! Общий ток более 20А"
+ 
+# ##################################
+# System - Power - Ultra High current
+# ##################################
+- alias: system_power_30A_current
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.total_current
+    above: 30
+    below: 40
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Общий ток более 30А!"
+    - service: notify.ios_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Внимание! Общий ток более 30А"
