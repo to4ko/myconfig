@@ -798,25 +798,29 @@
         friendly_name: "Cold water meter"
         icon_template: mdi:counter
         unit_of_measurement: 'm3'
-        value_template: "{{ ((states('counter.cold_water_meter'))|int)/100 }}"
-  
+        #value_template: "{{ ((states('counter.cold_water_meter'))|int)/100 }}"
+        value_template: "{{ ((states('input_number.cold_water_meter'))|int)/100 }}"
+ 
       hot_water_meter:
         friendly_name: "Hot water meter"
         icon_template: mdi:counter
         unit_of_measurement: 'm3'
-        value_template: "{{ ((states('counter.hot_water_meter'))|int)/100 }}"
+        #value_template: "{{ ((states('counter.hot_water_meter'))|int)/100 }}"
+        value_template: "{{ ((states('input_number.hot_water_meter'))|int)/100 }}"
   
       cold_water_month:
         friendly_name: "Cold water/Month"
         icon_template: mdi:counter
         unit_of_measurement: 'm3'
-        value_template: "{{ (((states('counter.cold_water_meter_from_date1'))|float)/100)|round(2) }}"
+        #value_template: "{{ (((states('counter.cold_water_meter_from_date1'))|float)/100)|round(2) }}"
+        value_template: "{{ (((states('input_number.cold_water_meter_month'))|float)/100)|round(2) }}"
   
       hot_water_month:
         friendly_name: "Hot water/Month"
         icon_template: mdi:counter
         unit_of_measurement: 'm3'
-        value_template: "{{ (((states('counter.hot_water_meter_from_date1'))|float)/100)|round(2) }}"
+        #value_template: "{{ (((states('counter.hot_water_meter_from_date1'))|float)/100)|round(2) }}"
+        value_template: "{{ (((states('input_number.hot_water_meter_month'))|float)/100)|round(2) }}"
   
       cold_water_meter_date1:
         friendly_name: "Cold water meter 1"
@@ -834,28 +838,31 @@
         friendly_name: "Cold water"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
-        value_template: "{{ (((states('counter.cold_water_meter_from_date1'))|float)/100 * 38.7)|round(2) }}"
+        #value_template: "{{ (((states('counter.cold_water_meter_from_date1'))|float)/100 * 38.7)|round(2) }}"
+        value_template: "{{ (((states('input_number.cold_water_meter_month'))|float)/100 * 38.7)|round(2) }}"
   
       hot_water_cost:
         friendly_name: "Hot water"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
-        value_template: "{{ (((states('counter.hot_water_meter_from_date1'))|float)/100 * 191.72)|round(2) }}"
+        #value_template: "{{ (((states('counter.hot_water_meter_from_date1'))|float)/100 * 191.72)|round(2) }}"
+        value_template: "{{ (((states('input_number.hot_water_meter_month'))|float)/100 * 191.72)|round(2) }}"
   
       water_cost:
         friendly_name: "Water cost"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
         value_template: >
-          {{ (( (((states('counter.cold_water_meter_from_date1'))|float))/100*38.7) +
-          (((states('counter.hot_water_meter_from_date1'))|float)/100*191.72) )|round(2) }}
+          {{ (( (((states('input_number.cold_water_meter_month'))|float))/100*38.7) +
+          (((states('input_number.hot_water_meter_month'))|float)/100*191.72) )|round(2) }}
           
       water:
         friendly_name: "Water total"
         unit_of_measurement: 'm3'
         value_template: >
-          {{ (( (((states('counter.cold_water_meter_from_date1'))|float))/100) +
-          (((states('counter.hot_water_meter_from_date1'))|float)/100) )|round(2) }}
+          {{ (( (((states('input_number.cold_water_meter_month'))|float))/100) +
+          (((states('input_number.hot_water_meter_month'))|float)/100) )|round(2) }}
+      
       water_delta_1m:
         friendly_name: "Water delta/1m"
         unit_of_measurement: 'm3'
@@ -1077,6 +1084,13 @@
         {%- endif -%}
       {%- endif -%}
   
+  - platform: command_line
+    name: ha_runtime
+    command: cat /config/home-assistant.log | grep -o "initialized[[:space:]]in[[:space:]][0-9]\+.[0-9]\+" | grep -o "[0-9]\+.[0-9]\+$"
+    scan_interval: 60
+    unit_of_measurement: s
+    
+
   - platform: template
     sensors: 
       host_uptime:

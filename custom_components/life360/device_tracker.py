@@ -35,12 +35,12 @@ from homeassistant.util.distance import convert
 import homeassistant.util.dt as dt_util
 
 
-__version__ = '2.8.0'
+__version__ = '2.9.0'
 
 _LOGGER = logging.getLogger(__name__)
 
 DEPENDENCIES = ['zone']
-REQUIREMENTS = ['life360==2.2.0', 'timezonefinderL==2.0.1']
+REQUIREMENTS = ['life360==3.0.0', 'timezonefinderL==2.0.1']
 
 DEFAULT_FILENAME = 'life360.conf'
 DEFAULT_HOME_PLACE = 'Home'
@@ -50,8 +50,8 @@ EVENT_DELAY = timedelta(seconds=30)
 
 DATA_LIFE360 = 'life360'
 
-_AUTHORIZATION_TOKEN = 'cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRU'\
-                       'h1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg=='
+_API_TOKEN = 'cFJFcXVnYWJSZXRyZTRFc3RldGhlcnVmcmVQdW1hbUV4dWNyRU'\
+             'h1YzptM2ZydXBSZXRSZXN3ZXJFQ2hBUHJFOTZxYWtFZHI0Vg=='
 
 CONF_ADD_ZONES = 'add_zones'
 CONF_DRIVING_SPEED = 'driving_speed'
@@ -147,16 +147,11 @@ def m_name(first, last=None):
     return first or last
 
 def setup_scanner(hass, config, see, discovery_info=None):
-    def auth_info_callback():
-        _LOGGER.info('Authorizing')
-        return (_AUTHORIZATION_TOKEN,
-                config[CONF_USERNAME],
-                config[CONF_PASSWORD])
-
     interval = config.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     try:
         from life360 import life360, LoginError
-        api = life360(auth_info_callback, interval.total_seconds()-1,
+        api = life360(_API_TOKEN, config[CONF_USERNAME], config[CONF_PASSWORD],
+                      interval.total_seconds()-1,
                       hass.config.path(config[CONF_FILENAME]))
         api.get_circles()
     except LoginError as exc:
@@ -230,7 +225,7 @@ def setup_scanner(hass, config, see, discovery_info=None):
 
     def log_places(msg, places):
         s = 's' if len(places) > 1 else ''
-        _LOGGER.debug('{} zone{} for Place{}: {}'.format(
+        _LOGGER.debug('{} zone{} from Place{}: {}'.format(
             msg, s, s,
             '; '.join(['{}: {}, {}, {}'.format(*place) for place
                        in sorted(places, key=lambda x: x.name.lower())])))

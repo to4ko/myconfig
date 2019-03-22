@@ -294,9 +294,9 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001F305 Начался новый день! За прошедшие сутки ошибок - {{states.counter.error_counter.state}}, предупреждений - {{states.counter.warning_counter.state}}."
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states.counter.restart_counter.state}}, ошибок - {{states.counter.error_counter.state}}, предупреждений - {{states.counter.warning_counter.state}}, ошибок входа - {{states.counter.badlogin_counter.state}}"
     - service: counter.reset
-      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter
+      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter
       
 
 # ##################################
@@ -459,6 +459,8 @@
     - condition: template
       value_template: "{{ trigger.to_state.state != off }}"
   action:
+    - service: counter.increment
+      entity_id: counter.badlogin_counter
     - service: notify.telegram
       data_template:
         message: "\U0000274C Не удачная попытка подлючения. Не верно введен пароль! {{ states.persistent_notification.http_login.attributes.message }}"
