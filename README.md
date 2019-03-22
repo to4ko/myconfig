@@ -10,7 +10,9 @@ Hardware:
   
   Network: Ubiquiti USG 3, Switch 24, UAP-AC-AP-Lite * 5
   
-   Surveillance: Ubiquiti G3 Flex Cameras (4ea) + Digma 100 (1ea)
+  Surveillance: Ubiquiti G3 Flex Cameras (4ea) + Digma 100 (1ea)
+
+  Smart Home: Xiaomi Gateway (6ea), Yeelight 650, Yeelight Pro 90W, Yeelight Strip, Philips Xiaomi E27 Bulb (2ea), Yeelight E27 Color Led Bulb v2 (2ea), Aqara Wall Socket (10ea), Aqara Wall Switch 2 Rockers (6ea), Aqara Wireless Switch 2 Rockers (4ea), Aqara Door Sensor (16ea), Aqara Water Leak Sensor (3ea), Aqara Vibration Sensor (2ea), Aqara\Xiaomi Motion Sensor (11ea), Xiaomi Zigbee Plug (13ea), Google Home Mini (4ea), Xiaomi Temp\Humidity Sensor (8ea), Aqara Temp\Himidity\Pressure sensor (2ea), Xiaomi wireless switch (4ea), Aqara Wireless Switch (4ea), Xiaomi Smart WiFi Power Strip (1ea), Xiaomi Smartmi Humidifier 2, Xiaomi Air Purifier 2s, Xiaomi Wifi Plugs v2 (3ea)
    
 Software: Ubuntu Server 18.04 LTS, Hass.Io in Docker
 
