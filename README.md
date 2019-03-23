@@ -53,7 +53,7 @@ Thanks to Omh, OXOTH1K and AlexKvazis for cool stuff borrowed from their configs
 ![Device trackers](https://i.ibb.co/BsC56dt/06-network-devices.png "Device trackers")
 ![Climatee](https://i.ibb.co/VYQJPLR/08-climate.png "Climate")
 ![System monitoring](https://i.ibb.co/XDsLyv8/09-system-status.png "System monitoring")
-![Pi-Hole Plugin](https://i.ibb.co/rMMwZSL/10-pihole.png "Pi-Hole Addon)
+![Pi-Hole Plugin](https://i.ibb.co/rMMwZSL/10-pihole.png "Pi-Hole Addon")
 
 
 
