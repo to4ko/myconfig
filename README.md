@@ -1,8 +1,6 @@
-# myconfig
+# My Home Assistant configuration
 
-My Home Assistant config
 
-Current configuration:
 
 Hardware: 
 
@@ -40,7 +38,7 @@ Surveillance: Ubiquiti NVR (running as service), Ubiquiti G3 Flex Cameras (4ea) 
    
 Software: Ubuntu Server 18.04 LTS, Hass.Io in Docker
 
-Add-On: AirCast, Backup Hassio to Google Drive, Configurator Dropbox Sync, IDE, Log Viewer, MariaDB, Mosquitto broker, Pi-Hole, SSH, Samba, Tor
+Add-On (all in Docker): AirCast, Backup Hassio to Google Drive, Configurator Dropbox Sync, IDE, Log Viewer, MariaDB, Mosquitto broker, Pi-Hole, SSH, Samba, Tor
   
 Thanks to Omh, OXOTH1K and AlexKvazis for cool stuff borrowed from their configs!
 
