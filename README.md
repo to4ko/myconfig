@@ -1,14 +1,12 @@
-# myconfig
+# My Home Assistant configuration
 
-My Home Assistant config
 
-Current configuration:
 
 Hardware: 
 
 Server: i7 3770s, 16gb RAM, 512Gb Samsung SSD, 1Tb WD Purple for cameras
  
-Network: Ubiquiti USG 3, Switch 24, UAP-AC-AP-Lite * 5
+Network: Ubiquiti USG 3, Switch 24, UAP-AC-AP-Lite (5ea)
   
 Surveillance: Ubiquiti NVR (running as service), Ubiquiti G3 Flex Cameras (4ea) + Digma 100 (1ea)
 
@@ -19,7 +17,7 @@ Surveillance: Ubiquiti NVR (running as service), Ubiquiti G3 Flex Cameras (4ea) 
 - Yeelight Strip
 - Philips Xiaomi E27 Bulb (2ea)
 - Yeelight E27 Color Led Bulb v2 (2ea)
-- Aqara Wall Socket (10ea)
+- Aqara Wall Socket (12ea)
 - Aqara Wall Switch 2 Rockers (6ea)
 - Aqara Wireless Switch 2 Rockers (4ea)
 - Aqara Door Sensor (16ea)
@@ -30,17 +28,18 @@ Surveillance: Ubiquiti NVR (running as service), Ubiquiti G3 Flex Cameras (4ea) 
 - Aqara Temp\Himidity\Pressure sensor (2ea)
 - Xiaomi Zigbee Plug (13ea)
 - Xiaomi Temp\Humidity Sensor (8ea)
-- Xiaomi wireless switch (4ea)
+- Xiaomi Wireless switch (4ea)
 - Xiaomi Smart WiFi Power Strip (1ea)
 - Xiaomi Smartmi Humidifier 2
 - Xiaomi Air Purifier 2s
-- Xiaomi Wifi Plugs v2 (3ea)
+- Xiaomi Zigbee Plugs (10ea)
+- Xiaomi Wifi Plugs v2 (6ea) - used to restart Gateways remotely
 - Xiaomi IR controller
 - Google Home Mini (4ea)
    
 Software: Ubuntu Server 18.04 LTS, Hass.Io in Docker
 
-Add-On: AirCast, Backup Hassio to Google Drive, Configurator Dropbox Sync, IDE, Log Viewer, MariaDB, Mosquitto broker, Pi-Hole, SSH, Samba, Tor
+Add-On (all in Docker): AirCast, Backup Hassio to Google Drive, Configurator Dropbox Sync, IDE, Log Viewer, MariaDB, Mosquitto broker, Pi-Hole, SSH, Samba, Tor
   
 Thanks to Omh, OXOTH1K and AlexKvazis for cool stuff borrowed from their configs!
 
@@ -53,7 +52,7 @@ Thanks to Omh, OXOTH1K and AlexKvazis for cool stuff borrowed from their configs
 ![Device trackers](https://i.ibb.co/BsC56dt/06-network-devices.png "Device trackers")
 ![Climatee](https://i.ibb.co/VYQJPLR/08-climate.png "Climate")
 ![System monitoring](https://i.ibb.co/XDsLyv8/09-system-status.png "System monitoring")
-![Pi-Hole Plugin](https://i.ibb.co/rMMwZSL/10-pihole.png "Pi-Hole Addon)
+![Pi-Hole Plugin](https://i.ibb.co/rMMwZSL/10-pihole.png "Pi-Hole Addon")
 
 
 
