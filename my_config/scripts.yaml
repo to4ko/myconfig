@@ -12,6 +12,53 @@
         entity_id: 
           - counter.warning_counter
 
+
+  telegram_weather:
+    alias: Weather Notify to Telegram
+    sequence:
+      - service: notify.telegram
+        data_template:
+          message: >
+            {%- set date = as_timestamp(now()) -%}
+            {% set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
+            {% set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
+
+            {% set m_ok = date | timestamp_custom("%m") | int %}
+            {% set wd_ok = date | timestamp_custom("%w") | int %}
+
+            {% set weekday = weekday_list[wd_ok-1] %} 
+            {% set month = month_list[m_ok-1] %} 
+            {% set hour_num = now().hour | int %}
+            
+            {% if hour_num >=6 and hour_num <12 %}
+              Доброе утро!
+            {% elif hour_num>=12 and hour_num<17 %}
+              Добрый день!
+            {% elif hour_num>=17 and hour_num<22 %}
+              Добрый вечер!
+            {% else %}
+              Доброй ночи!
+            {% endif %}
+            
+            {%if hour_num < 17 or hour_num > 6 %}Сегодня {{ weekday }}, {{ now().day|int }} {{ month_list[now().month-1] }}.
+            {{ states('sensor.dark_sky_summary_0') }}
+            Температура днем {{states('sensor.dark_sky_daytime_high_temperature_0')|round(0)}} °C. 
+            Вероятность осадков {{states('sensor.dark_sky_precip_probability_0')|round(0)}} %. 
+            {%if states('sensor.dark_sky_precip_probability_0')|int > 0 %} Вид осадков - {% if states.sensor.dark_sky_precip_0.state == "snow" %}снег{% elif states.sensor.dark_sky_precip_0.state == "rain" %}дождь{% elif states.sensor.dark_sky_precip_0.state == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
+            {% endif %}
+            {% endif %}
+            
+            {%if hour_num >= 17 or hour_num <= 6 %}Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1') }}
+            Максимальная температура днем {{states('sensor.dark_sky_daytime_high_temperature_1')|round(0)}} °C. 
+            Вероятность осадков {{states('sensor.dark_sky_precip_probability_1')|round(0)}} %.
+            {%if states('sensor.dark_sky_precip_probability_1')|int > 0 %} Вид осадков - {% if states.sensor.dark_sky_precip_1.state == "snow" %}снег{% elif states.sensor.dark_sky_precip_1.state == "rain" %}дождь{% elif states.sensor.dark_sky_precip_1.state == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
+            {% endif %}
+            {% endif %}
+
+
+#{{(as_timestamp(now())+ (86400)) | timestamp_custom("%d",true)}}
+
+
   tts_weather:
     alias: Weather TTS to specified speakers
     sequence:
