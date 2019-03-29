@@ -69,7 +69,7 @@
     entity_id: group.family
     from: "home"
     to: "not_home"
-    for: "00:01:00"
+    for: "00:00:10"
   action:
     service: script.lights_off
 
@@ -133,7 +133,7 @@
     - service: notify.telegram
       data_template:
         message: "\U0001F603 Сервер запущен!"
-    - service: script.timers_update
+    - service: script.system_start
     - service: counter.increment
       entity_id: counter.restart_counter
     
@@ -221,7 +221,13 @@
     platform: time
     at: '06:00:00'
   action:
-  - service: rest_command.google_backup
+    - service: rest_command.google_backup
+    - delay: 00:05:00
+    - service: mqtt.publish
+      data_template:
+        topic: "googlebackup/result"
+        payload: "{{ states('sensor.google_backup_status')}}"
+        retain: true
   - service: notify.telegram
     data_template: 
       message: "\U00002705 Резервная копия выгружена на Google Drive"
@@ -350,19 +356,22 @@
         message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states.counter.restart_counter.state}}, ошибок - {{states.counter.error_counter.state}}, предупреждений - {{states.counter.warning_counter.state}}, ошибок входа - {{states.counter.badlogin_counter.state}}"
     - service: counter.reset
       entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.weather_announcement_flag
       
 
 # ##################################
 # System - NEW DAY run
 # ##################################
-- alias: system_new_day_auto_on
-  initial_state: 'on'
-  trigger:
-    platform: time
-    at: '06:00:01'
-  action:
-  - service: automation.turn_on
-    entity_id: automation.kitchen_weather_announcement
+#- alias: system_new_day_auto_on
+#  initial_state: 'on'
+#  trigger:
+#    platform: time
+#    at: '06:00:01'
+#  action:
+#  - service: automation.turn_on
+#    entity_id: automation.kitchen_weather_announcement
 
 # ##################################
 # System - Weather FCST to Telegram

@@ -53,6 +53,7 @@ Thanks to Omh, OXOTH1K and AlexKvazis for cool stuff borrowed from their configs
 ![Climatee](https://i.ibb.co/VYQJPLR/08-climate.png "Climate")
 ![System monitoring](https://i.ibb.co/XDsLyv8/09-system-status.png "System monitoring")
 ![Pi-Hole Plugin](https://i.ibb.co/rMMwZSL/10-pihole.png "Pi-Hole Addon")
+![Batteries Status](https://i.ibb.co/Y2JDmbj/11-batteries-status.png "Batteries status")
 
 
 
