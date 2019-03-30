@@ -43,7 +43,7 @@ Software: Ubuntu Server 18.04 LTS, Hass.Io in Docker
 
 Add-On (all in Docker): AirCast, Backup Hassio to Google Drive, Configurator, Dropbox Sync, IDE, Log Viewer, MariaDB, Mosquitto broker, Pi-Hole, SSH, Samba, Tor, VSC.
   
-Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant)) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs!
+Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs!
 
 # Main page
 ![Main Page](https://i.ibb.co/bzQykz2/01-main.png "Main page")
