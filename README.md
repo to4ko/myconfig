@@ -65,7 +65,7 @@ Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1
 ![System monitoring](https://i.ibb.co/XDsLyv8/09-system-status.png "System monitoring")
 # Pi-Hole
 ![Pi-Hole Plugin](https://i.ibb.co/rMMwZSL/10-pihole.png "Pi-Hole Addon")
-#Sensor batteries
+# Sensor batteries
 ![Batteries Status](https://i.ibb.co/Y2JDmbj/11-batteries-status.png "Batteries status")
 
 
