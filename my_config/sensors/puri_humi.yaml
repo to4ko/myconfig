@@ -1,0 +1,80 @@
+  - platform: template
+    sensors:
+# ############################################################################
+# Purifier sensors
+# ############################################################################
+      purifier_mode:
+        value_template: >-
+          {% if states.fan.purifier2s.attributes.speed == "Silent" %}
+          Silent
+          {% elif states.fan.purifier2s.attributes.speed == "idle" %}
+          Idle
+          {% elif states.fan.purifier2s.attributes.speed == "Favorite" %}
+          Favorite
+          {% elif states.fan.purifier2s.attributes.speed == "Auto" %}
+          Auto
+          {% else %}
+          NA
+          {% endif %}
+        friendly_name: "Purifier mode"
+      purifier_pm25:
+        value_template: "{{ states.fan.purifier2s.attributes.aqi | int }}"
+        friendly_name: "Purifier PM2.5"
+        unit_of_measurement: "mcg/m3"
+        icon_template: mdi:meteor
+      purifier_fan_speed:
+        friendly_name: "Purifier fan speed"
+        value_template: "{{ states.fan.purifier2s.attributes.motor_speed }}"
+      purifier_filter_left:
+        value_template: "{{ states.fan.purifier2s.attributes.filter_life_remaining | int }}"
+        friendly_name: "Purifier Filter Life Remaining"
+        unit_of_measurement: '%'
+
+# ############################################################################
+# Humidifier sensors
+# ############################################################################
+      humidifier_mode:
+        value_template: >-
+          {% if states.fan.humidifier2.attributes.speed == "Silent" %}
+          Silent
+          {% elif states.fan.humidifier2.attributes.speed == "Medium" %}
+          Medium
+          {% elif states.fan.humidifier2.attributes.speed == "High" %}
+          High
+          {% elif states.fan.humidifier2.attributes.speed == "Auto" %}
+          Auto
+          {% else %}
+          NA
+          {% endif %}
+        friendly_name: "Humidifier mode"
+      humidifier_fan_speed:
+        friendly_name: "Humidifier fan speed"
+        value_template: "{{ states.fan.humidifier2.attributes.motor_speed }}"
+      humidifier_water_level:
+        friendly_name: "Humidifier water level"
+        unit_of_measurement: '%'
+        value_template: "{{(states.fan.humidifier2.attributes.depth/ 1.2) | int}}"
+        icon_template: >-
+          {%if ((states.fan.humidifier2.attributes.depth/ 1.2) | int ) >= 15 %}
+          mdi:water-percent
+          {% else %}
+          mdi:water-off
+          {% endif %}
+      humidifier_led:
+        friendly_name: "Humidifier LED brightness"
+        value_template: >-
+          {% if states.fan.humidifier2.attributes.led_brightness == 0 %}
+          High
+          {% elif states.fan.humidifier2.attributes.led_brightness == 1 %}
+          Low
+          {% elif states.fan.humidifier2.attributes.led_brightness == 2 %}
+          Off
+          {% else %}
+          NA
+          {% endif %}
+        icon_template: >-
+          {%if states.fan.humidifier2.attributes.led_brightness == 2 %}
+          mdi:lightbulb-outline
+          {% else %}
+          mdi:lightbulb
+          {% endif %}

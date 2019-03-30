@@ -1,0 +1,81 @@
+# ############################################################################
+# HA Uptime CLI sensor
+# ############################################################################
+  - platform: command_line
+    name: HA Uptime Text
+    command: echo "$(($(date +%s) - $(date -d "$(head -n1 /config/home-assistant.log | cut -d' ' -f-2)" +%s)))"
+    scan_interval: 720
+    value_template: >-
+      {% set uptime = value | int %}
+      {% set seconds = uptime % 60 %}
+      {% set minutes = ((uptime % 3600) / 60) | int %}
+      {% set hours = ((uptime % 86400) / 3600) | int %}
+      {% set days = (uptime / 86400) | int %}
+      {%- if days > 0 -%}
+        {%- if days == 1 -%}
+          1 day
+        {%- else -%}
+          {{ days }} days
+        {%- endif -%}
+        {{ ', ' }}
+      {%- endif -%}
+      {%- if hours > 0 -%}
+        {%- if hours == 1 -%}
+          1 hour
+        {%- else -%}
+          {{ hours }} hours
+        {%- endif -%}
+        {{ ', ' }}
+      {%- endif -%}
+      {%- if minutes > 0 -%}
+        {%- if minutes == 1 -%}
+          1 minute
+        {%- else -%}
+          {{ minutes }} minutes
+        {%- endif -%}
+      {%- endif -%}
+  
+  - platform: command_line
+    name: ha_runtime
+    command: cat /config/home-assistant.log | grep -o "initialized[[:space:]]in[[:space:]][0-9]\+.[0-9]\+" | grep -o "[0-9]\+.[0-9]\+$"
+    scan_interval: 60
+    unit_of_measurement: s
+    
+
+  - platform: template
+    sensors: 
+      host_uptime:
+        friendly_name: Host Uptime
+        unit_of_measurement: hours
+        value_template: "{{ ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60 * 60) ) | round (2) }}"
+        
+      host_uptime_text:
+        friendly_name: Host Uptime Text
+        value_template: >
+          {% set up_time = as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) %}
+
+          {% set minutes = (up_time // 60) | int %}
+          {% set hours = (minutes // 60) %}
+          {% set days = (hours // 24) %}
+          {% set weeks = (days // 7) %}
+          {% set minutes = (minutes % 60) %}
+          {% set hours = (hours % 24) %}
+          {% set days = (days % 7) %}
+        
+        
+          {% macro phrase(value, name) %}
+               {%- set value = value %}
+               {%- set end = 's' if value > 1 else '' %}
+               {{- '{} {}{}'.format(value, name, end) if value | int > 0 else '' }}
+          {%- endmacro %}
+                    
+          {% set text = [ phrase(weeks, 'week'), phrase(days, 'day'), phrase(hours, 'hr'), phrase(minutes, 'min') ] | select('!=','') | list | join(', ') %}
+        
+          {% set last_comma = text.rfind(',') %}
+          {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
+          
+          {{ text }}
+          
+#          {% if last_comma != -1 %}
+#            {% set text = text[:last_comma] + ' and' + text[last_comma + 1:] %}
+#          {% endif %}

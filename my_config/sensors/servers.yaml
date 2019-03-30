@@ -1,0 +1,100 @@
+# ############################################################################
+# Hardware sensors (OMV)
+# ############################################################################
+  - platform: rest
+    name: OMV CPU Load
+    resource: http://192.168.1.101:61208/api/3/cpu/total
+    unit_of_measurement: "%"
+    value_template: '{{ value_json.total | round(0) }}'
+    scan_interval: 10
+  - platform: rest
+    name: OMV CPU Temp
+    resource: http://192.168.1.101:61208/api/3/sensors
+    unit_of_measurement: "°C"
+    value_template: '{{ value_json[2].value| round(0) }}'
+    scan_interval: 10
+  - platform: rest
+    resource: http://192.168.1.101:61208/api/3/mem/percent
+    name: OMV MEM Used
+    value_template: '{{ value_json.percent| round(0) }}'
+    unit_of_measurement: "%"
+    scan_interval: 10
+  - platform: rest
+    name: OMV Torrent Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[7].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: OMV BackupDisk Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[4].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: OMV Storage Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[2].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: OMV Temp Space Used
+    resource: http://192.168.1.101:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[9].percent| round(0)}}'
+    scan_interval: 30
+
+  - platform: systemmonitor
+    resources:
+      - type: last_boot
+      - type: memory_use_percent
+      - type: processor_use
+      - type: load_1m
+      - type: load_5m
+      - type: load_15m
+  - platform: command_line
+    name: CPU Temperature
+    command: "cat /sys/class/thermal/thermal_zone0/temp"
+    unit_of_measurement: "°C"
+    value_template: '{{ value | multiply(0.001) | round(0) }}'
+  #- platform: command_line
+  #  name: GPU Temperature
+  #  command: "/opt/vc/bin/vcgencmd measure_temp"
+  #  unit_of_measurement: "°C"
+  #  value_template: '{{ value | replace("temp=", "") | replace("''C", "") | round(0) }}'
+
+
+    
+# ############################################################################
+# Hardware sensors (Ubuntu)
+# ############################################################################
+  - platform: rest
+    name: Ubuntu SSD Space Used
+    resource: http://192.168.1.14:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[0].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    name: Ubuntu HDD Space Used
+    resource: http://192.168.1.14:61208/api/3/fs
+    unit_of_measurement: "%"
+    value_template: '{{ value_json[2].percent| round(0)}}'
+    scan_interval: 30
+  - platform: rest
+    resource: http://192.168.1.14:61208/api/3/mem/percent
+    name: Ubuntu MEM Used
+    value_template: '{{ value_json.percent| round(0) }}'
+    unit_of_measurement: "%"
+    scan_interval: 10
+  - platform: rest
+    name: Ubuntu CPU Load
+    resource: http://192.168.1.14:61208/api/3/cpu/total
+    unit_of_measurement: "%"
+    value_template: '{{ value_json.total | round(0) }}'
+    scan_interval: 5
+  - platform: rest
+    name: Ubuntu CPU Temp
+    resource: http://192.168.1.14:61208/api/3/sensors
+    unit_of_measurement: "°C"
+    value_template: '{{ value_json[2].value| round(0) }}'
+    scan_interval: 5

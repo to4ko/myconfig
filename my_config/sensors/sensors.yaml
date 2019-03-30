@@ -1,0 +1,160 @@
+
+# ############################################################################
+# Wrong password input sensor
+# ############################################################################
+#  - platform: command_line
+#    name: badlogin
+#    command: grep -c 'Login attempt' /config/home-assistant.log
+#    value_template: '{{ value | int - 1 }}'
+
+    
+  - platform: github
+    access_token: !secret github_access_token
+    repositories:
+      - path: 'to4ko/myconfig'
+
+  - platform: season
+    type: astronomical
+
+# ############################################################################
+# External IP sensor
+# ############################################################################
+  - platform: rest
+    resource: http://ip.jsontest.com
+    name: External IP
+    value_template: '{{ value_json.ip }}'
+
+# ############################################################################
+# PiHole plugin  sensor
+# ############################################################################
+  - platform: pi_hole
+    host: localhost:4865
+    monitored_conditions:
+      - ads_blocked_today
+      - ads_percentage_today
+      - dns_queries_today
+      - domains_being_blocked
+      - queries_cached
+      - queries_forwarded
+      - unique_clients
+      - unique_domains
+      - clients_ever_seen
+
+# ############################################################################
+# Moon sensor
+# ############################################################################
+  - platform: moon
+
+# ############################################################################
+# MIN\MAX sensor
+# ############################################################################
+  - platform: min_max
+    name: temperature_min_max
+    entity_ids:
+      - sensor.temperature_158d0002464ec0
+      - sensor.temperature_158d0001e586af
+      - sensor.temperature_158d000222c746
+      - sensor.temperature_158d0001e6d85a
+      - sensor.temperature_158d0001e58714
+      - sensor.temperature_158d00020d7c3a
+      - sensor.temperature_158d0001e58754
+  
+  - platform: min_max
+    name: humidity_min_max
+    entity_ids:
+      - sensor.humidity_158d0002464ec0
+      - sensor.humidity_158d0001e586af
+      - sensor.humidity_158d000222c746
+      - sensor.humidity_158d0001e6d85a
+      - sensor.humidity_158d0001e58714
+      - sensor.humidity_158d00020d7c3a
+      - sensor.humidity_158d0001e58754
+
+# ############################################################################
+# Unifi USG sensor
+# ############################################################################
+  - platform: unifigateway
+    name: USG
+    host: !secret unifi_cloudkey_host
+    username: !secret unifi_cloudkey_username
+    password: !secret unifi_cloudkey_password
+    monitored_conditions:
+      - www
+      - wlan
+      - alerts
+      - firmware
+      - vpn
+      - lan
+      - wan
+
+# ############################################################################
+# Uptime sensor
+# ############################################################################
+  - platform: uptime
+    name: HA Uptime
+    unit_of_measurement: hours
+
+# ############################################################################
+# UPS sensor
+# ############################################################################
+  - platform: nut
+    host: 192.168.1.101
+    port: 3493
+    name: ippon
+    alias: ippon
+    username: !secret nut_username
+    password: !secret nut_password
+    resources:
+      - ups.load
+      - input.voltage
+      - output.voltage
+      - battery.charge
+      - battery.voltage
+      - battery.voltage.high
+      - battery.voltage.low
+      - battery.voltage.nominal
+      - ups.status
+      - ups.temperature
+
+# ############################################################################
+# Template sensors
+# ############################################################################
+  - platform: template
+    sensors:
+      #face0_entrance:
+      #  friendly_name: 'Face0 entrance'
+      #  value_template: '{{ states.image_processing.saved_image_entrance.attributes.faces[0]["name"].title}}'
+      #face1_entrance:
+      #  friendly_name: 'Face1 entrance'
+      #  value_template: '{{ states.image_processing.saved_image_entrance.attributes.faces[1]["name"].title}}'
+      #face0_hall:
+      #  friendly_name: 'Face0 hall'
+      #  value_template: '{{ states.image_processing.saved_image_hall.attributes.faces[0]["name"].title}}'
+      #face1_hall:
+      #  friendly_name: 'Face1 hall'
+      #  value_template: '{{ states.image_processing.saved_image_hall.attributes.faces[1]["name"].title}}'
+
+# ############################################################################
+# Last motion sensors
+# ############################################################################
+      last_motion:
+        friendly_name: 'Last Motion'
+        value_template: >
+          {%- set sensors = [states.binary_sensor.motion_sensor_158d0001e05856, states.binary_sensor.motion_sensor_158d0001ae9f61, states.binary_sensor.motion_sensor_158d0002b4729d, states.binary_sensor.motion_sensor_158d0001e53cda, states.binary_sensor.motion_sensor_158d000236bb94, states.binary_sensor.motion_sensor_158d0001aea602, states.binary_sensor.motion_sensor_158d000236bc6d, states.binary_sensor.motion_sensor_158d0001e54280, states.binary_sensor.motion_sensor_158d000224f89f, states.binary_sensor.motion_sensor_158d0001d5995e, states.binary_sensor.motion_sensor_158d0002b482e9 ] %}
+          {% for sensor in sensors %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+              {{ sensor.name }}
+            {% endif %}
+          {% endfor %}
+      last_motion_time:
+        friendly_name: 'Last Motion Time'
+        value_template: '{{ as_timestamp(states.group.motion.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
+
+# ############################################################################
+# TIme\date sensor
+# ############################################################################
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      

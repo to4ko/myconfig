@@ -1,0 +1,35 @@
+# ####################
+# Google drive backup
+# ####################
+  - platform: mqtt
+    name: "Google Backup Status"
+    state_topic: "googlebackup/result"
+    json_attributes_topic: "googlebackup/result"
+   
+  - platform: template
+    sensors:
+
+      last_google_backup:
+        friendly_name: 'Google Drive - Last Success Backup'
+        value_template: '{{ (as_timestamp(states.sensor.google_backup_status.attributes["backupTimestamp"]) + 7200) | timestamp_custom("%d.%m.%Y %H:%M") }}'
+
+      last_google_filecount:
+        friendly_name: 'Google Drive - File Count on HA'
+        value_template: '{{ states.sensor.google_backup_status.attributes["fileCount"] }}'
+       
+      last_google_alreadycount:
+        friendly_name: 'Google Drive - File Count on G-Disk'
+        value_template: '{{ states.sensor.google_backup_status.attributes["alreadyCount"] }}'
+
+      last_google_backedupcount:
+        friendly_name: 'Google Drive - Backed Up Files'
+        value_template: '{{ states.sensor.google_backup_status.attributes["backedUpCount"] }}'
+         
+      last_google_deletedcount:
+        friendly_name: 'Google Drive - Deleted from Host'
+        value_template: '{{ states.sensor.google_backup_status.attributes["deletedCount"] }}'
+         
+      last_google_deletedfromgoogle:
+        friendly_name: 'Google Drive - Deleted from G-Disk'
+        value_template: '{{ states.sensor.google_backup_status.attributes["deletedFromGoogle"] }}'
+ 

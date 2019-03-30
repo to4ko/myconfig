@@ -1,0 +1,36 @@
+# ############################################################################
+# DB size sensors
+# ############################################################################
+#  - platform: filesize
+#    file_paths:
+#      - /config/home-assistant_v2.db
+#  - platform: template
+#    sensors:
+#      db_size:
+#        value_template: "{{ states.sensor.home_assistant_v2_db.state | round(0) }}"
+#        unit_of_measurement: Mb
+#        friendly_name: 'DB size'
+
+  - platform: sql
+    db_url: !secret mariadb_url
+    queries:
+    - name: MariaDB Size
+      query: 'SELECT table_schema "database", Round(Sum(data_length + index_length) / 1048576, 0) "value" FROM information_schema.tables WHERE table_schema="homeassistant" GROUP BY table_schema;'
+      column: 'value'
+      unit_of_measurement: Mb
+  
+ # Influx DB Size  
+  #- platform: influxdb
+  #  host: 192.168.1.14
+  #  port: 8086
+  #  username: homeassistant
+  #  password: homeassistant
+  #  queries:
+  #  - name: InfluxDb Size
+  #    unit_of_measurement: Mb
+  #    value_template: '{{ (value | float / 1024 /1024) | round(0) }}'
+  #    group_function: sum
+  #    measurement: '"monitor"."shard"'
+  #    database: _internal
+  #    where: 'time > now() - 10s'
+  #    field: diskBytes
