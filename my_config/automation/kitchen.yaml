@@ -329,11 +329,53 @@
       entity_id: input_boolean.weather_announcement_flag
       state: 'off'
   action:
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.weather_announcement_flag
     - service: script.tts_weather
       data_template:
         entity_id: media_player.home_mini_k
         volume_level: '0.4'
-    - service: input_boolean.turn_on
-      data:
-        entity_id: input_boolean.weather_announcement_flag
     - service: script.telegram_weather
+    
+
+# ##################################
+# Kitchen - Smoke Detected
+# ##################################
+- alias: kitchen_smoke_detected
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.smoke_sensor_158d0002c92f31
+      to: 'on'
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: ' Внимание! Сработал датчик дыма!'
+        
+# ##################################
+# Kitchen - Gas Detected
+# ##################################
+- alias: kitchen_gas_detected
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.natgas_sensor_158d00024bcf85
+      to: 'on'
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: ' Внимание! Сработал датчик газа!'
+
+# ##################################
+# Sasha At home
+# ##################################
+#- alias: sasha_at_home
+#  trigger:
+#    - platform: state
+#      entity_id: device_tracker.sandra
+#      to: "home"
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: 'Саша дома!'
