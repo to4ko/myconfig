@@ -1,35 +1,23 @@
 # ##################################
-# System - Security on - Sensors State change
-# ##################################
-- alias: system_security_sensors_state_change
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.door_window_sensor_158d00025371f6, binary_sensor.door_window_sensor_158d000200ad58, binary_sensor.door_window_sensor_158d00022ccffe, binary_sensor.door_window_sensor_158d00025370d1, binary_sensor.door_window_sensor_158d00027129ae, binary_sensor.door_window_sensor_158d0001ef2ffc, binary_sensor.door_window_sensor_158d0002a14c5e, binary_sensor.door_window_sensor_158d0002529b9c, binary_sensor.door_window_sensor_158d00025315e9, binary_sensor.door_window_sensor_158d0001e5d6be, binary_sensor.door_window_sensor_158d0002531749, binary_sensor.motion_sensor_158d0001e53cda, binary_sensor.motion_sensor_158d000224f89f, binary_sensor.motion_sensor_158d000236bb94, binary_sensor.motion_sensor_158d0001e05856, binary_sensor.motion_sensor_158d0002b482e9, binary_sensor.motion_sensor_158d0001d5995e, binary_sensor.motion_sensor_158d0001ae9f61, binary_sensor.motion_sensor_158d0002b4729d, binary_sensor.motion_sensor_158d000236bc6d, binary_sensor.motion_sensor_158d0001e54280, binary_sensor.motion_sensor_158d0001aea602, binary_sensor.unifi_motion_entrance, binary_sensor.unifi_motion_hall, binary_sensor.unifi_motion_kitchen
-  condition:
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: 'on'
-  action:
-    - service: notify.ios_iphone_8_dtsymbal
-      data:
-        title: "Внимание!"
-        message: "Обнаружено движение!"
-    - service: notify.telegram
-      data_template:
-        message: "\U0000274c Внимание! Обнаружено движение!"
-
-# ##################################
 # System - Auto Lights Off - Family not home
 # ##################################
 - alias: system_auto_light_off_family_not_home
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
-    platform: state
-    entity_id: group.family
-    from: "home"
-    to: "not_home"
-    for: "00:00:10"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "off"
+      for: "00:00:10"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "off"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "not_home"
+      for: "00:00:10"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "not_home"
   action:
     - service: notify.telegram
       data_template:
@@ -41,16 +29,15 @@
     - service: input_boolean.turn_on
       entity_id: input_boolean.security_mode
 
+
 # ##################################
-# System - Security - motion
+# System - Security on - Sensors State change
 # ##################################
-- alias: system_security_motion
-  initial_state: 'on'
+- alias: system_security_sensors_state_change
+  initial_state: 'off'
   trigger:
     platform: state
-    entity_id: binary_sensor.motion_internal
-    from: "off"
-    to: "on"
+    entity_id: sensor.security_last_change
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
@@ -59,23 +46,32 @@
     - service: notify.ios_iphone_8_dtsymbal
       data:
         title: "Внимание!"
-        message: "Обнаружено движение!"
-    - service: notify.telegram
+        message: "\U0001f46e Обнаружено движение! {{states.sensor.security_last_change.state}}"
+    - service: notify.telegram_errors
       data_template:
-        message: "\U0000274c Внимание! Обнаружено движение!"
+        message: "\U0001f46e Внимание! Обнаружено движение! {{states.sensor.security_last_change.state}} "
 
 
 # ##################################
 # System - Family back home
 # ##################################
 - alias: system_family_back_home
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
-    platform: state
-    entity_id: group.family
-    from: "not_home"
-    to: "home"
-    for: "00:00:01"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "on"
+      for: "00:00:10"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "on"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "home"
+      for: "00:00:10"
+    - platform: state
+      entity_id: binary_sensor.family_home
+      to: "home"
   action:
     - service: notify.telegram
       data_template:
