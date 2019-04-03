@@ -287,7 +287,7 @@
   action:
     - service: notify.telegram
       data_template: 
-        message: "\U00002734 Новое устройство - {{trigger.event.data.host_name}} - ({{trigger.event.data.entity_id}}"
+        message: "\U00002734 Новое устройство - {{trigger.event.data.host_name}} - ({{trigger.event.data.entity_id}})"
 
 # ##################################
 # System - LED Strip Restart
@@ -339,9 +339,9 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states.counter.restart_counter.state}}, ошибок - {{states.counter.error_counter.state}}, предупреждений - {{states.counter.warning_counter.state}}, ошибок входа - {{states.counter.badlogin_counter.state}}"
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states.counter.restart_counter.state}}, ошибок - {{states.counter.error_counter.state}}, предупреждений - {{states.counter.warning_counter.state}}, ошибок входа - {{states.counter.badlogin_counter.state}}. Входная дверь открывалась - {{states.counter.main_door_hb.state}}р."
     - service: counter.reset
-      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter
+      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.weather_announcement_flag
@@ -376,106 +376,68 @@
 
 
 # ##################################
-# System - Dima At home (life360)
+# System - Dima At home
 # ##################################
-- alias: system_presence_dima_iphone_at_home_360
+- alias: system_presence_dima_at_home
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: device_tracker.life360_dima_tsymbal
+      #entity_id: device_tracker.life360_dima_tsymbal
+      entity_id: person.dima
       to: "home"
       for: 00:05:00
   action: 
     - service: notify.telegram
       data_template:
-        message: "\U0001F9D4 Дима дома (life360)!"
+        message: "\U0001F9D4 Дима дома!"
         
 # ##################################
-# System - Vova At home (life360)
+# System - Vova At home
 # ##################################
-- alias: system_presence_vova_mimax_at_home_360
+- alias: system_presence_vova_at_home
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: device_tracker.life360_vova_tsymbal
+      #entity_id: device_tracker.life360_vova_tsymbal
+      entity_id: person.vova
       to: "home"
       for: 00:05:00
   action: 
     - service: notify.telegram
       data_template:
-        message: "\U0001F471 Вова дома! (life360)"
+        message: "\U0001F471 Вова дома!"
 
 # ##################################
-# System - Sandra At home (life360)
+# System - Sandra At home
 # ##################################
-- alias: system_presence_sandra_iphone_at_home_360
+- alias: system_presence_sandra_at_home
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: device_tracker.life360_sandra_tsymbal
+      #entity_id: device_tracker.life360_sandra_tsymbal
+      entity_id: person.sandra
       to: "home"
       for: 00:05:00
   action: 
     - service: notify.telegram
       data_template:
-        message: "\U0001F467 Саша дома! (life360)"
+        message: "\U0001F467 Саша дома!"
 
 # ##################################
-# Dima At home (by iPhone)
+# System - Sasha At home
 # ##################################
-#- alias: dima_iphone_at_home
-#  trigger:
-#    - platform: state
-#      entity_id: device_tracker.dima_iphone_8
-#      from: "not_home"
-#      to: "home"
-#  action: 
-#    - service: notify.telegram
-#      data_template:
-#        message: 'Дима дома (iPhone online)!'
-        
-# ##################################
-# Vova At home (by iPhone)
-# ##################################
-#- alias: vova_mimax_at_home
-#  trigger:
-#    - platform: state
-#      entity_id: device_tracker.vova_mimax
-#      from: "not_home"
-#      to: "home"
-#  action: 
-#    - service: notify.telegram
-#      data_template:
-#        message: 'Вова дома! (MiMax online)'
-
-# ##################################
-# Sasha At home (by iPhone)
-# ##################################
-#- alias: sasha_iphone_at_home
-#  trigger:
-#    - platform: state
-#      entity_id: device_tracker.sasha_iphone_7
-#      from: "not_home"
-#      to: "home"
-#  action: 
-#    - service: notify.telegram
-#      data_template:
-#        message: 'Саша дома! (iPhone online)'
-
-        
-# ##################################
-# Sasha At home
-# ##################################
-#- alias: sasha_at_home
-#  trigger:
-#    - platform: state
-#      entity_id: device_tracker.sandra
-#      to: "home"
-#  action: 
-#    - service: notify.telegram
-#      data_template:
-#        message: 'Саша дома!'
-
+- alias: system_presence_sasha_at_home
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_sandra_tsymbal
+      entity_id: person.sasha
+      to: "home"
+      for: 00:05:00
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F467 Санек дома!"
 
 
 # ##################################
@@ -522,7 +484,6 @@
     service: input_boolean.turn_on
     data:
         entity_id: input_boolean.cover_inv_t
-
 
 # ##################################
 # System - Sasha tracker - Toggle
@@ -571,15 +532,6 @@
       data:
         dev_id: sasha
         location_name: 'not_home'
-- alias: system_sasha_tracker
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: device_tracker.sasha
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "Sasha tracker - {{ states.device_tracker.sasha.state }}"
 
 # ##################################
 # System - Sasha tracker - Audio
