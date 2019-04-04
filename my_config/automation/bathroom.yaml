@@ -5,56 +5,39 @@
 # #####################################################################################
 # Bathroom Fan - On 10m
 # ##################################
-- alias: bathroom_fan_10m
+- alias: bathroom_fan_on
   initial_state: 'on'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001b94abe
-      click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001b94abe
+        click_type: single
+    - platform: numeric_state
+      entity_id: sensor.humidity_158d00020d7c3a
+      above: 70
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f9ebd8
-    - service: timer.cancel
-      entity_id: timer.timer_fan_b
-    - service: timer.start
-      entity_id: timer.timer_fan_b
 
-# ##################################
-# Bathroom Fan - Auto On for 10m if Humidity more than 75%
-# ##################################
-- alias: bathroom_fan_auto_10m_h75
-  initial_state: 'on'
-  trigger:
-    platform: numeric_state
-    entity_id: sensor.humidity_158d00020d7c3a
-    above: 70
-  action:
-    - service: switch.turn_on
-      entity_id: switch.plug_158d0001f9ebd8
-    - service: timer.cancel
-      entity_id: timer.timer_fan_b
-    - service: timer.start
-      entity_id: timer.timer_fan_b
-  
+
 # ##################################
 # Bathroom Fan - On
 # ##################################
-- alias: bathroom_fan_20m
-  initial_state: 'on'
-  trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001b94abe
-      click_type: double
-  action:
-  - service: switch.turn_on
-    entity_id: switch.plug_158d0001f9ebd8
-  - delay: 00:20:00
-  - service: switch.turn_off
-    entity_id: switch.plug_158d0001f9ebd8
+#- alias: bathroom_fan_20m
+#  initial_state: 'on'
+#  trigger:
+#    platform: event
+#    event_type: xiaomi_aqara.click
+#    event_data:
+#      entity_id: binary_sensor.switch_158d0001b94abe
+#      click_type: double
+#  action:
+#  - service: switch.turn_on
+#    entity_id: switch.plug_158d0001f9ebd8
+#  - delay: 00:20:00
+#  - service: switch.turn_off
+#    entity_id: switch.plug_158d0001f9ebd8
 
 # ##################################
 # Bathroom Fan - Off
@@ -92,6 +75,20 @@
     - service: timer.cancel
       entity_id: timer.timer_fan_b
 
+# ##################################
+# Bathroom - Fan Timer start on
+# ################################## 
+- alias: bathroom_fan_timer_on
+  initial_state: true
+  trigger:
+  - platform: state
+    entity_id: switch.plug_158d0001f9ebd8
+    to: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_fan_b
+  - service: timer.start
+    entity_id: timer.timer_fan_b
 
 # ##################################
 # Bathroom - Timer restart with movement

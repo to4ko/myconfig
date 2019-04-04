@@ -8,36 +8,36 @@
 - alias: toilet_fan_10m
   initial_state: 'on'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001b97111
-      click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001b97111
+        click_type: single
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+      to: 'off'
+      for: 00:02:00
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f54f91
-    - service: timer.cancel
-      entity_id: timer.timer_fan_t
-    - service: timer.start
-      entity_id: timer.timer_fan_t
 
 # ##################################
 # Toilet Fan - On
 # ##################################
-- alias: toilet_fan_on
-  initial_state: 'on'
-  trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001b97111
-      click_type: double
-  action:
-  - service: switch.turn_on
-    entity_id: switch.plug_158d0001f54f91
-  - delay: 00:20:00
-  - service: switch.turn_off
-    entity_id: switch.plug_158d0001f54f91
+#- alias: toilet_fan_on
+#  initial_state: 'on'
+#  trigger:
+#    platform: event
+#    event_type: xiaomi_aqara.click
+#    event_data:
+#      entity_id: binary_sensor.switch_158d0001b97111
+#      click_type: double
+#  action:
+#  - service: switch.turn_on
+#    entity_id: switch.plug_158d0001f54f91
+#  - delay: 00:20:00
+#  - service: switch.turn_off
+#    entity_id: switch.plug_158d0001f54f91
 
 # ##################################
 # Toilet Fan - Off
@@ -53,12 +53,27 @@
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.timer_fan_b
+        entity_id: timer.timer_fan_t
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f54f91
     - service: timer.cancel
       entity_id: timer.timer_fan_t
+
+# ##################################
+# Toilet - Fan Timer start on
+# ################################## 
+- alias: toilet_fan_timer_on
+  initial_state: true
+  trigger:
+  - platform: state
+    entity_id: switch.plug_158d0001f54f91
+    to: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.timer_fan_t
+  - service: timer.start
+    entity_id: timer.timer_fan_t
 
 # ##################################
 # Toilet - Timer restart with movement
@@ -141,6 +156,30 @@
       entity_id: switch.wall_switch_left_158d0002a36f7f
 
 # ##################################
+# Toilet - Auto Light off - No Motion 2m and Cover Closed
+# ##################################
+- alias: toilet_auto_light_off_no_motion_cover_closed
+  initial_state: 'off'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.motion_sensor_158d0001e54280
+    to: 'off'
+    for: 00:00:01
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+        state: 'on'
+      - condition: state
+        entity_id: switch.wall_switch_left_158d0002a36f7f
+        state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.wall_switch_left_158d0002a36f7f
+
+
+# ##################################
 # Toilet Water Leak - On
 # ##################################
 - alias: toilet_water_leak_on
@@ -216,39 +255,16 @@
 # ##################################
 # Toilet - Auto Fan 2 minute open cover
 # ##################################
-- alias: toilet_auto_fan_cover_2m
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.door_window_sensor_158d000232ddd6
-    to: 'off'
-    for: 00:02:00
-  action:
-    - service: switch.turn_on
-      entity_id: switch.plug_158d0001f54f91
-    - delay: 00:10:00
-    - service: switch.turn_off
-      entity_id: switch.plug_158d0001f54f91
-
-# ##################################
-# Toilet - Auto Light off - No Motion 2m and Cover Closed
-# ##################################
-- alias: toilet_auto_light_off_no_motion_cover_closed
-  initial_state: 'off'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.motion_sensor_158d0001e54280
-    to: 'off'
-    for: 00:00:10
-  condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.door_window_sensor_158d000232ddd6
-        state: 'on'
-      - condition: state
-        entity_id: switch.wall_switch_left_158d0002a36f7f
-        state: 'on'
-  action:
-    - service: switch.turn_off
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+#- alias: toilet_auto_fan_cover_2m
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+#    to: 'off'
+#    for: 00:02:00
+#  action:
+#    - service: switch.turn_on
+#      entity_id: switch.plug_158d0001f54f91
+#    - delay: 00:10:00
+#    - service: switch.turn_off
+#      entity_id: switch.plug_158d0001f54f91
