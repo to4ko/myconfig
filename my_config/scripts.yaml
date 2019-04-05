@@ -4,7 +4,12 @@
       - service_template: >
           homeassistant.turn_{%if is_state('input_boolean.security_mode','on') %}off{% else %}on{%endif%}
         entity_id: input_boolean.security_mode, automation.security_sensors_state_change
-
+  
+  ha_released_update:
+    alias: HA Released version update from server
+    sequence:
+      service: homeassistant.update_entity
+      entity_id: sensor.ha_latest_version
 
   error_reset:
     alias: Error Counter Reset
@@ -48,7 +53,7 @@
               Доброй ночи!
             {% endif %}
             
-            {%if hour_num < 17 or hour_num > 6 %}Сегодня {{ weekday }}, {{ now().day|int }} {{ month_list[now().month-1] }}.
+            {%if hour_num < 17 and hour_num > 6 %}Сегодня {{ weekday }}, {{ now().day|int }} {{ month_list[now().month-1] }}.
             {{ states('sensor.dark_sky_summary_0d') }}
             Температура днем {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}} °C. 
             Вероятность осадков {{states('sensor.dark_sky_precip_probability_0d')|round(0)}} %. 
@@ -56,7 +61,7 @@
             {% endif %}
             {% endif %}
             
-            {%if hour_num >= 17 or hour_num <= 6 %}Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
+            {%if hour_num >= 17 and hour_num <= 6 %}Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
             Максимальная температура днем {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}} °C. 
             Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|round(0)}} %.
             {%if states('sensor.dark_sky_precip_probability_1d')|int > 0 %} Вид осадков - {% if states.sensor.dark_sky_precip_1d.state == "snow" %}снег{% elif states.sensor.dark_sky_precip_1d.state == "rain" %}дождь{% elif states.sensor.dark_sky_precip_1d.state == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
@@ -120,7 +125,7 @@
               {% endif %}
             
 
-            {%if hour_num > 17 or hour_num < 6 %}
+            {%if hour_num > 17 and hour_num < 6 %}
               Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
               Максимальная температура днем {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}} °C. 
               Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|round(0)}} %.
