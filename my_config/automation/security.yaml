@@ -1,23 +1,22 @@
 # ##################################
-# System - Auto Lights Off - Family not home
+# Security - Turn  On
 # ##################################
-- alias: system_auto_light_off_family_not_home
-  initial_state: 'off'
+- alias: security_turn_on
+  initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.family_home
       to: "off"
-      for: "00:00:10"
     - platform: state
       entity_id: binary_sensor.family_home
-      to: "off"
-    - platform: state
-      entity_id: binary_sensor.family_home
-      to: "not_home"
-      for: "00:00:10"
+      to: "false"
     - platform: state
       entity_id: binary_sensor.family_home
       to: "not_home"
+  condition:
+    condition: state
+    entity_id: input_boolean.security_mode
+    state: "off"
   action:
     - service: notify.telegram
       data_template:
@@ -28,12 +27,14 @@
         message: "\U0001f514 Освещение выключено! Режим охраны включен!"
     - service: input_boolean.turn_on
       entity_id: input_boolean.security_mode
+    - service: automation.turn_on
+      entity_id: automation.system_security_sensors_state_change
 
 
 # ##################################
-# System - Security on - Sensors State change
+# Security - Sensors State change
 # ##################################
-- alias: system_security_sensors_state_change
+- alias: security_sensors_state_change
   initial_state: 'off'
   trigger:
     platform: state
@@ -43,32 +44,27 @@
       entity_id: input_boolean.security_mode
       state: 'on'
   action:
-    - service: notify.ios_iphone_8_dtsymbal
-      data:
-        title: "Внимание!"
-        message: "\U0001f46e Обнаружено движение! {{states.sensor.security_last_change.state}}"
-    - service: notify.telegram_errors
+    #- service: notify.ios_iphone_8_dtsymbal
+    #  data:
+    #    title: "Внимание!"
+    #    message: "\U0001f46e Обнаружено движение! {{states.sensor.security_last_change.state}}"
+    - service: notify.telegram
       data_template:
         message: "\U0001f46e Внимание! Обнаружено движение! {{states.sensor.security_last_change.state}} "
 
 
 # ##################################
-# System - Family back home
+# Security - Turn Off
 # ##################################
-- alias: system_family_back_home
+- alias: security_turn_off
   initial_state: 'off'
   trigger:
     - platform: state
       entity_id: binary_sensor.family_home
-      to: "on"
-      for: "00:00:10"
+      to: "true"
     - platform: state
       entity_id: binary_sensor.family_home
       to: "on"
-    - platform: state
-      entity_id: binary_sensor.family_home
-      to: "home"
-      for: "00:00:10"
     - platform: state
       entity_id: binary_sensor.family_home
       to: "home"
@@ -78,3 +74,5 @@
         message: "\U0001f515 Режим охраны выключен!"
     - service: input_boolean.turn_off
       entity_id: input_boolean.security_mode
+    - service: automation.turn_off
+      entity_id: automation.system_security_sensors_state_change
