@@ -6,17 +6,11 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.family_home
-      to: "off"
-    - platform: state
-      entity_id: binary_sensor.family_home
-      to: "false"
-    - platform: state
-      entity_id: binary_sensor.family_home
-      to: "not_home"
+      to: 'off'
   condition:
     condition: state
     entity_id: input_boolean.security_mode
-    state: "off"
+    state: 'off'
   action:
     - service: notify.telegram
       data_template:
@@ -24,11 +18,9 @@
     - service: script.lights_off
     - service: notify.telegram
       data_template:
-        message: "\U0001f514 Освещение выключено! Режим охраны включен!"
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.security_mode
-    - service: automation.turn_on
-      entity_id: automation.system_security_sensors_state_change
+        message: "\U0001f514 Освещение выключено!"
+    - service: homeassistant.turn_on
+      entity_id: input_boolean.security_mode,automation.security_sensors_state_change
 
 
 # ##################################
@@ -61,18 +53,20 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.family_home
-      to: "true"
+      to: 'on'
+  action:
+    - service: homeassistant.turn_off
+      entity_id: input_boolean.security_mode,automation.security_sensors_state_change
+      
+# ##################################
+# Security - Notification
+# ##################################
+- alias: security_notification
+  initial_state: 'on'
+  trigger:
     - platform: state
-      entity_id: binary_sensor.family_home
-      to: "on"
-    - platform: state
-      entity_id: binary_sensor.family_home
-      to: "home"
+      entity_id: input_boolean.security_mode
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f515 Режим охраны выключен!"
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.security_mode
-    - service: automation.turn_off
-      entity_id: automation.system_security_sensors_state_change
+        message: "\U0001f46e Режим охраны {% if states('input_boolean.security_mode') == 'off' %}выключен!{% else %}включен!{% endif %}"
