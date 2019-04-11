@@ -402,20 +402,12 @@
     sequence:
       - service: input_number.set_value
         data_template:
-            entity_id: input_number.power_consumption_t1
-            value: "{{ (states.input_number.power_consumption_t1.state|float + states.sensor.power_consumption.state|float / 120000) | round(2) }}"
-      - service: input_number.set_value
-        data_template:
             entity_id: input_number.power_t1
             value: "{{ (states.input_number.power_t1.state|float + states.sensor.power_consumption.state|float / 120000) | round(2) }}"
   
   power_t2:
     alias: Power Consumption T2
     sequence:
-      - service: input_number.set_value
-        data_template:
-            entity_id: input_number.power_consumption_t2
-            value: "{{ (states.input_number.power_consumption_t2.state|float + states.sensor.power_consumption.state|float / 120000) | round(2) }}"
       - service: input_number.set_value
         data_template:
             entity_id: input_number.power_t2
@@ -438,7 +430,7 @@
             value: "{{ (states.input_number.power_consumption_month_t2.state|float + states.sensor.power_consumption.state|float / 120000) | round(2) }}"
   
   
-  system_water_date1_action:
+  system_water_new_month_action:
     alias: Water Consumption Report
     sequence:
       - service: notify.telegram
@@ -468,21 +460,13 @@
               {{ ((states('sensor.water_cost'))|float)}} руб.
       - delay:
           seconds: 1
-      - service: counter.reset
-        entity_id: 
-          - counter.cold_water_meter_from_date1
-          - counter.hot_water_meter_from_date1
       - service: input_number.set_value
         data_template:
-          entity_id: input_number.hot_water_meter_month
+          entity_id: input_number.hot_water_meter_month, input_number.cold_water_meter_month
           value: 0
-      - service: input_number.set_value
-        data_template:
-          entity_id: input_number.cold_water_meter_month
-          value: 0
-      
+
   
-  system_power_date1_action:
+  system_power_new_month_action:
     alias: Power Consumption Report
     sequence:
       - service: notify.telegram
@@ -510,6 +494,10 @@
               Стоимость:
               
               {{ ((states('sensor.power_consumption_month_cost'))|float) }} руб.
+      - service: input_number.set_value
+        data_template:
+          entity_id: input_number.power_consumption_month_t1, input_number.power_consumption_month_t2
+          value: 0
   
   
   kitchen_snapshot:
