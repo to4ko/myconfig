@@ -67,10 +67,10 @@ views:
               #  name: Sasha
               #  #icon: /local/sasha.png
 
-          #- type: custom:weather-card-chart
-          #  weather: weather.dark_sky
           - type: custom:simple-weather-card
             entity: weather.yandex_weather
+          - type: custom:weather-card-chart
+            weather: weather.dark_sky
             
           - type: custom:vertical-stack-in-card
             cards:
@@ -96,59 +96,37 @@ views:
                     icon: mdi:database
               - type: horizontal-stack
                 cards:
-                  - type: glance
-                    entities:    
+                  - type: conditional
+                    conditions:
                       - entity: binary_sensor.ippon_hb_status
-                        name: HB
-                      - entity: sensor.ippon_hb_status_data
-                        name: Status
-                      - entity: sensor.ippon_hb_battery_voltage
-                        name: Voltage
-                  - type: glance
-                    entities:    
+                        state_not: 'off'
+                    card:
+                      type: glance
+                      columns: 3
+                      entities:
+                        - entity: binary_sensor.ippon_hb_status
+                          name: MB
+                        - entity: sensor.ippon_hb_status_data
+                          name: Status
+                        - entity: sensor.ippon_hb_battery_voltage
+                          name: Voltage
+                  - type: conditional
+                    conditions:
                       - entity: binary_sensor.ippon_mb_status
-                        name: MB
-                      - entity: sensor.ippon_mb_status_data
-                        name: Status
-                      - entity: sensor.ippon_mb_battery_voltage
-                        name: Voltage
-                  #- entity: sensor.ippon_hb_status_data
-                  #  name: Status
-                  #- entity: sensor.ippon_hb_load
-                  #  name: Load
-                  #- entity: sensor.ippon_hb_battery_charge
-                  #  name: Charge
-                  #- entity: sensor.ippon_hb_battery_voltage
-                  #  name: Voltage
-                  #- entity: sensor.ippon_hb_input_voltage
-                  #  name: Input
-                  #- entity: sensor.ippon_hb_output_voltage
-                  #  name: Output
-                  #- entity: sensor.ippon_ups_temperature
-                  #  name: Temp
-              #- type: glance
-              #  #title: Sytem Status
-              #  columns: 6
-              #  entities:
-              #    - entity: sensor.omv_cpu_load
-              #      name: CPU
-              #      icon: mdi:memory
-              #    - entity: sensor.omv_mem_used
-              #      name: RAM
-              #      icon: mdi:chip
-              #    - entity: sensor.omv_cpu_temp
-              #      name: CPU_T
-              #    - entity: sensor.omv_backupdisk_space_used
-              #      name: Backup
-              #      icon: mdi:nas
-              #    - entity: sensor.omv_torrent_space_used
-              #      name: Torrent
-              #      icon: mdi:nas
-              #    - entity: sensor.omv_storage_space_used
-              #      name: Storage
-              #      icon: mdi:nas
+                        state_not: 'off'
+                    card:
+                      type: glance
+                      columns: 3
+                      entities:
+                        - entity: binary_sensor.ippon_mb_status
+                          name: MB
+                        - entity: sensor.ippon_mb_status_data
+                          name: Status
+                        - entity: sensor.ippon_mb_battery_voltage
+                          name: Voltage
 
           - type: glance
+            columns: 6
             entities:
               - entity: media_player.home_mini_v
                 name: V                
@@ -160,6 +138,9 @@ views:
                 name: MB
               - entity: media_player.mpd
                 name: MPD
+              - entity: media_player.mpd_rpi
+                name: MPD RPI
+
           
           
       # ##################################
@@ -1510,7 +1491,7 @@ views:
         show_header_toggle: false
         entities:
           - device_tracker.ubuntu_server
-          - device_tracker.omv
+          - device_tracker.i5
           - device_tracker.m6800_lan
           - device_tracker.m6800_wifi
           - device_tracker.r418_wifi
@@ -1523,7 +1504,7 @@ views:
           - device_tracker.dell_5721_wifi
           - device_tracker.asus_v1j
           - device_tracker.j3455_lan
-          - device_tracker.backup_ubuntu_server
+          - device_tracker.a722_board
       
       - type: entities
         title: Network
@@ -1993,7 +1974,7 @@ views:
             title_position: top
             #title: none
             columns: 3
-            height: 30px
+            height: 20px
             min: 0
             max: 8
             target: 5.6
@@ -2108,49 +2089,23 @@ views:
                     - entity: sensor.ippon_mb_ups_temperature
                       name: Temp
                     
-          #- type: custom:vertical-stack-in-card
-          #  cards:
-              #- type: glance
-              #  #title: OMV Status
-              #  columns: 7
-              #  entities:
-              #    - entity: sensor.omv_cpu_load
-              #      name: CPU
-              #      icon: mdi:memory
-              #    - entity: sensor.omv_mem_used
-              #      name: RAM
-              #      icon: mdi:chip
-              #    - entity: sensor.omv_cpu_temp
-              #      name: CPU_T
-              #    - entity: sensor.omv_backupdisk_space_used
-              #      name: Backup
-              #      icon: mdi:nas
-              #    - entity: sensor.omv_torrent_space_used
-              #      name: Torrent
-              #      icon: mdi:nas
-              #    - entity: sensor.omv_storage_space_used
-              #      name: Storage
-              #      icon: mdi:nas
-              #    - entity: sensor.omv_temp_space_used
-              #      name: Temp
-              #      icon: mdi:nas
           - type: glance
             #title: Sytem Status
             columns: 7
             entities:
-              - entity: sensor.blackbox_status
+              - entity: sensor.blackhole_status
                 name: Status
-              - entity: sensor.blackbox_down_speed
+              - entity: sensor.blackhole_down_speed
                 name: DL
-              - entity: sensor.blackbox_up_speed
+              - entity: sensor.blackhole_up_speed
                 name: UL
-              - entity: sensor.blackbox_total_torrents
+              - entity: sensor.blackhole_total_torrents
                 name: Total
-              - entity: sensor.blackbox_active_torrents
+              - entity: sensor.blackhole_active_torrents
                 name: Active
-              - entity: sensor.blackbox_completed_torrents
+              - entity: sensor.blackhole_completed_torrents
                 name: Completed
-              - entity: sensor.blackbox_started_torrents
+              - entity: sensor.blackhole_started_torrents
                 name: Started      
           - type: custom:vertical-stack-in-card
             cards:
