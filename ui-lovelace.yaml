@@ -13,14 +13,20 @@ resources:
     type: module
   - url: /local/simple-weather-card.bundle.js?v=0.3.0
     type: module
+  - url: /local/weather-card.js
+    type: module
+  - url: /local/tiles-card.js?v=0.1
+    type: js
+    
 
 
-title: Home
+title: Home - Main Server
 views:
 ################################################################
 # MAIN PAGE
 ################################################################
   - title: Main
+    background: var(--background-image)
     icon: mdi:home
     columns: 4
     #badges:
@@ -67,10 +73,13 @@ views:
               #  name: Sasha
               #  #icon: /local/sasha.png
 
-          - type: custom:simple-weather-card
-            entity: weather.yandex_weather
-          - type: custom:weather-card-chart
-            weather: weather.dark_sky
+          #- type: custom:simple-weather-card
+          #  entity: weather.yandex_weather
+          - type: custom:weather-card
+            entity: weather.dark_sky
+            icons: "/local/icons/"
+          #- type: custom:weather-card-chart
+          #  weather: weather.dark_sky
             
           - type: custom:vertical-stack-in-card
             cards:
@@ -105,7 +114,7 @@ views:
                       columns: 3
                       entities:
                         - entity: binary_sensor.ippon_hb_status
-                          name: MB
+                          name: HB
                         - entity: sensor.ippon_hb_status_data
                           name: Status
                         - entity: sensor.ippon_hb_battery_voltage
@@ -507,11 +516,6 @@ views:
                   action: toggle
               - entity: switch.plug_158d000205a835
                 name: BPlug MB
-                icon: mdi:power-socket
-                tap_action:
-                  action: toggle
-              - entity: switch.power_strip_mb
-                name: PStrip MB
                 icon: mdi:power-socket
                 tap_action:
                   action: toggle
@@ -991,7 +995,6 @@ views:
           - switch.wall_switch_left_158d0002a36e26
           - light.gateway_light_7c49eb195e21
           - switch.wall_plug_158d000249b26b
-          - switch.power_strip_hs
           - switch.plug_158d0002924790
           - switch.gateway_plug_hs
       - type: entities
@@ -1382,7 +1385,7 @@ views:
               - sensor.main_hs
               - sensor.utility_hs
               - type: divider
-              - sensor.power_strip_hs
+              #- sensor.power_strip_hs
               - sensor.fan_b
               - sensor.fan_t
               - sensor.water_on_b
@@ -1490,7 +1493,7 @@ views:
         title: PCs
         show_header_toggle: false
         entities:
-          - device_tracker.ubuntu_server
+          - device_tracker.blackhole_lan
           - device_tracker.i5
           - device_tracker.m6800_lan
           - device_tracker.m6800_wifi
@@ -1800,10 +1803,16 @@ views:
                 name: MB
               - entity: media_player.mpd
                 name: MPD
-          - type: glance
+          #- type: glance
+          #  entities:
+          #    - sensor.ubuntu_cpu_temp
+          #    - sensor.cpu_temperature
+          - type: entities
             entities:
-              - sensor.ubuntu_cpu_temp
-              - sensor.cpu_temperature
+              - entity: binary_sensor.motion_sensor_158d0002b48381
+                secondary_info: last-changed
+              - entity: sensor.battery_temp_motion_hs
+                secondary_info: last-changed
           - type: entity-filter
             show_header_toggle: false
             entities:
@@ -1942,25 +1951,55 @@ views:
                       green: 10
                       yellow: 30
                       red: 50
-                    
-              - type: glance
-                entities:
-                  
-                  #- entity: sensor.pi_hole_ads_percentage_blocked_today
-                  #  name: Blocked
-                  - entity: sensor.pi_hole_dns_queries_today
-                    name: Total
-                  - entity: sensor.pi_hole_ads_blocked_today
-                    name: Blocked
-                  - entity: sensor.pi_hole_dns_queries_cached
-                    name: Cached
-                  - entity: sensor.pi_hole_dns_queries_forwarded
-                    name: Forwarded
-                  #- entity: sensor.pi_hole_dns_unique_domains
-                  - entity: sensor.pi_hole_domains_blocked
-                    name: List
-                  #- entity: sensor.pi_hole_seen_clients
-                  # name: Clients
+          - type: custom:mini-graph-card
+            icon: mdi:flash
+            entities:
+              - sensor.errors
+            name: Errors
+            show:
+              graph: bar
+            line_color: red
+            hours_to_show: 24
+            points_per_hour: 1
+            extrema: false
+            labels: false
+            line_width: 3
+            decimals: 0
+            hour24: true
+          - type: custom:mini-graph-card
+            icon: mdi:flash
+            entities:
+              - sensor.errors_delta
+            name: Delta
+            show:
+              graph: bar
+            line_color: blue
+            hours_to_show: 24
+            points_per_hour: 1
+            extrema: false
+            labels: false
+            line_width: 3
+            decimals: 0
+            hour24: true
+
+              #- type: glance
+              #  entities:
+              #    
+              #    #- entity: sensor.pi_hole_ads_percentage_blocked_today
+              #    #  name: Blocked
+              #    - entity: sensor.pi_hole_dns_queries_today
+              #      name: Total
+              #    - entity: sensor.pi_hole_ads_blocked_today
+              #      name: Blocked
+              #    - entity: sensor.pi_hole_dns_queries_cached
+              #      name: Cached
+              #    - entity: sensor.pi_hole_dns_queries_forwarded
+              #      name: Forwarded
+              #    #- entity: sensor.pi_hole_dns_unique_domains
+              #    - entity: sensor.pi_hole_domains_blocked
+              #      name: List
+              #    #- entity: sensor.pi_hole_seen_clients
+              #    # name: Clients
 
       # ############  
       # Right column
@@ -1980,11 +2019,18 @@ views:
             target: 5.6
             severity:
               - value: 1
-                hue: '120'
-              - value: 3.2
-                hue: '60'
-              - value: 7
-                hue: '0'
+                color: '#40bf40'
+              - value: 3
+                color: '#bf9540'
+              - value: 6
+                color: '#bf4040'
+          #  severity:
+          #    - value: 1
+          #      hue: '120'
+          #    - value: 3.2
+          #      hue: '60'
+          #    - value: 7
+          #      hue: '0'
             #width: 50%
             padding: 2px
             direction: right
@@ -2050,7 +2096,7 @@ views:
                     state_not: 'off'
                 card:
                   type: glance
-                  columns: 7
+                  columns: 6
                   entities:
                     - entity: sensor.ippon_hb_status_data
                       name: 1050hb
@@ -2064,15 +2110,13 @@ views:
                       name: Input
                     - entity: sensor.ippon_hb_output_voltage
                       name: Output
-                    - entity: sensor.ippon_hb_ups_temperature
-                      name: Temp
               - type: conditional
                 conditions:
                   - entity: binary_sensor.ippon_mb_status
                     state_not: 'off'
                 card:
                   type: glance
-                  columns: 7
+                  columns: 6
                   entities:
                     - entity: sensor.ippon_mb_status_data
                       name: 650mb
@@ -2086,9 +2130,7 @@ views:
                       name: Input
                     - entity: sensor.ippon_mb_output_voltage
                       name: Output
-                    - entity: sensor.ippon_mb_ups_temperature
-                      name: Temp
-                    
+
           - type: glance
             #title: Sytem Status
             columns: 7
