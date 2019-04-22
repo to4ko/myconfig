@@ -1,0 +1,80 @@
+  cycle_purifier_mode:
+    alias: Cycle Purifier Mode
+    sequence:
+      service: fan.set_speed
+      data_template:
+        speed: >
+         {% if (states.fan.purifier2s.attributes.mode|string) == "silent" %}
+            favorite
+          {% elif (states.fan.purifier2s.attributes.mode|string) == "favorite" %}
+            auto
+          {% elif (states.fan.purifier2s.attributes.mode|string) == "auto" %}
+            silent
+          {% endif %}
+        entity_id: fan.purifier2s
+              
+              
+  set_humidifier_buzzer:
+    alias: Set On/Off Humidifier Buzzer
+    sequence:
+      data:
+        entity_id: fan.humidifier2
+      service_template: >
+       {% if (states.fan.humidifier2.attributes.buzzer|string) == "True" %}
+          fan.xiaomi_miio_set_buzzer_off
+        {% else %}
+          fan.xiaomi_miio_set_buzzer_on
+        {% endif %}
+   
+  set_humidifier_dry_mode:
+    alias: Set On/Off Humidifier Dry Mode
+    sequence:
+      data:
+        entity_id: fan.humidifier2
+      service_template: >
+       {% if (states.fan.humidifier2.attributes.dry|string) == "True" %}
+          fan.xiaomi_miio_set_dry_off
+        {% else %}
+          fan.xiaomi_miio_set_dry_on
+        {% endif %}
+   
+  cycle_humidifier_mode:
+    alias: Cycle Humidifier Mode
+    sequence:
+      service: fan.set_speed
+      data_template:
+        speed: >
+         {% if (states.fan.humidifier2.attributes.mode|string) == "silent" %}
+            medium
+          {% elif (states.fan.humidifier2.attributes.mode|string) == "medium" %}
+            high
+          {% elif (states.fan.humidifier2.attributes.mode|string) == "high" %}
+            auto
+          {% else %}
+            silent
+          {% endif %}
+        entity_id: fan.humidifier2
+   
+  cycle_humidifier_led:
+    alias: Cycle Humidifier LED Brightness
+    sequence:
+      service: fan.xiaomi_miio_set_led_brightness
+      data_template:
+        brightness: >
+         {% if states.fan.humidifier2.attributes.led_brightness  == 2 %}
+            1
+          {% elif states.fan.humidifier2.attributes.led_brightness == 1 %}
+            0
+          {% else %}
+            2
+          {% endif %}
+        entity_id: fan.humidifier2
+        
+        
+        #{% if is_state_attr('fan.humidifier2', 'led_brightness', 2) %}
+         #   1
+         # {% elif is_state_attr('fan.humidifier2', 'led_brightness', 1) %}
+         #   0
+         # {% else %}
+         #   2
+         # {% endif %}

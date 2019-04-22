@@ -1,0 +1,35 @@
+  ha_released_update:
+    alias: HA Released version update from server
+    sequence:
+      service: homeassistant.update_entity
+      entity_id: sensor.ha_latest_version
+
+  ha_backup:
+    alias: Manual Backup with G-Drive upload
+    sequence:
+     - service: hassio.snapshot_full
+       data_template:
+         name: auto_snap_{{ now().strftime('%d.%m.%Y') }}
+     - delay: 00:05:00
+     - service: rest_command.google_backup 
+     - delay: 00:05:00
+     - service: mqtt.publish
+       data_template:
+         topic: "googlebackup/result"
+         payload: "{{ states('sensor.google_backup_status')}}"
+         retain: true
+
+  speedtest_manual:
+    alias: Speedtest
+    sequence:
+      - service: speedtestdotnet.speedtest
+
+  purge_db:
+    alias: Purge Main DB
+    sequence:
+      - service: recorder.purge
+        data:
+              keep_days: 1
+              repack: true
+  
+  

@@ -1,0 +1,27 @@
+  dismiss_all_persistent_notifications:
+    alias: Remove all Persistent notifications
+    sequence:
+      - service_template: >
+          {% if states.persistent_notification | count > 0 %}
+            script.turn_on
+          {% else %}
+            script.turn_off
+          {% endif %}
+        data_template:
+          entity_id: script.dismiss_all_persistent_notifications_loop
+          message: >
+            {% for item in states.persistent_notification %}
+              {% if loop.first %}
+                {{ item.name | lower | replace("persistent_notification.", "") }}
+              {% endif %}
+            {% endfor %}
+
+  dismiss_all_persistent_notifications_loop:
+    alias: Remove all Persistent notifications loop
+    sequence:
+      - service: persistent_notification.dismiss
+        data:
+          notification_id: "{{ message }}"
+      - service: script.turn_on
+        data:
+          entity_id: script.dismiss_all_persistent_notifications
