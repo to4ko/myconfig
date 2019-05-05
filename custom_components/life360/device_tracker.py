@@ -331,8 +331,18 @@ class Life360Scanner:
         if self._time_as in [TZ_DEVICE_UTC, TZ_DEVICE_LOCAL]:
             from timezonefinderL import TimezoneFinder
             self._tf = TimezoneFinder()
-        self._started = dt_util.utcnow()
 
+        self._seen_members = set()
+
+        if self._members is not None:
+            _LOGGER.debug(
+                'Including: %s',
+                ', '.join([
+                    self._prefix
+                    + slugify(name.replace(',', '_').replace('-', '_'))
+                    for name in self._members]))
+
+        self._started = dt_util.utcnow()
         self._update_life360()
         track_time_interval(self._hass, self._update_life360, interval)
 
@@ -369,10 +379,7 @@ class Life360Scanner:
             return self._dt_attr_from_utc(utc, time_zone)
         return STATE_UNKNOWN
 
-    def _update_member(self, member, name):
-        name = name.replace(',', '_').replace('-', '_')
-
-        dev_id = slugify(self._prefix + name)
+    def _update_member(self, member, dev_id):
         prev_seen, reported = self._dev_data.get(dev_id, (None, False))
 
         loc = member.get('location')
@@ -554,16 +561,29 @@ class Life360Scanner:
                 err_key = 'Member data'
                 try:
                     m_id = member['id']
+                    first = member.get('firstName')
+                    last = member.get('lastName')
+                    if first and last:
+                        full_name = ' '.join([first, last])
+                    else:
+                        full_name = first or last
+                    name = _m_name(first, last)
+                    include_member = not self._members or name in self._members
+                    dev_id = (
+                        self._prefix
+                        + slugify(name.replace(',', '_').replace('-', '_')))
+                    if full_name not in self._seen_members:
+                        self._seen_members.add(full_name)
+                        _LOGGER.debug(
+                            '%s -> %s: will%s be tracked', full_name,
+                            dev_id,
+                            '' if include_member else ' NOT')
                     sharing = bool(int(member['features']['shareLocation']))
-                    name = _m_name(
-                        member.get('firstName'), member.get('lastName'))
                 except (KeyError, TypeError, ValueError):
                     self._err(err_key, member)
                     continue
                 self._ok(err_key)
 
-                if (m_id not in checked_ids and
-                        (not self._members or name in self._members) and
-                        sharing):
+                if m_id not in checked_ids and include_member and sharing:
                     checked_ids.append(m_id)
-                    self._update_member(member, name)
+                    self._update_member(member, dev_id)
