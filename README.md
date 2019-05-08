@@ -4,7 +4,7 @@
 
 Hardware: 
 
-Server: i7 3770s, 16gb RAM, 512Gb Samsung SSD, 1Tb WD Purple for cameras
+Server: i7 3770s, 16gb RAM, 256Gb Samsung SSD, 1Tb WD Purple for cameras
  
 Network: Ubiquiti USG 3, Switch 24, UAP-AC-AP-Lite (5ea)
   
@@ -53,21 +53,19 @@ Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1
 # Devices by room
 ![Devices by room](https://i.ibb.co/kKnN786/02-devices-by-room.png)
 # Sensors by room
-![Sensors by room](https://i.ibb.co/4V2BfdP/03-sensors-by-room.png "Sensors by room")
+![Sensors by room](https://i.ibb.co/4V2BfdP/03-sensors-by-room.png)
 # Utility counters
-![Utility counters](https://i.ibb.co/YjgGGd9/04-utility-counters-a.png "Utility counters")
+![Utility counters](https://i.ibb.co/YjgGGd9/04-utility-counters-a.png)
 # Power load
-![Power loads](https://i.ibb.co/5vkczT1/05-power-loads-a.png "Power loads")
+![Power loads](https://i.ibb.co/5vkczT1/05-power-loads-a.png)
 # Device trackers
-![Device trackers](https://i.ibb.co/BsC56dt/06-network-devices.png "Device trackers")
+![Device trackers](https://i.ibb.co/BsC56dt/06-network-devices.png)
 # Climate
-![Climate](https://i.ibb.co/VYQJPLR/08-climate.png "Climate")
+![Climate](https://i.ibb.co/VYQJPLR/08-climate.png)
 # System monitoring
-![System monitoring](https://i.ibb.co/XDsLyv8/09-system-status.png "System monitoring")
-# Pi-Hole
-![Pi-Hole Plugin](https://i.ibb.co/rMMwZSL/10-pihole.png "Pi-Hole Addon")
+![System monitoring](https://i.ibb.co/XDsLyv8/09-system-status.png)
 # Sensor batteries
-![Batteries Status](https://i.ibb.co/Y2JDmbj/11-batteries-status.png "Batteries status")
+![Batteries Status](https://i.ibb.co/Y2JDmbj/11-batteries-status.png)
 
 
 
