@@ -1,7 +1,5 @@
 # My Home Assistant configuration
 
-
-
 Hardware: 
 
 Server: i7 3770s, 16gb RAM, 256Gb Samsung SSD, 1Tb WD Purple for cameras
