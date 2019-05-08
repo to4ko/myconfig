@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd /home/homeassistant/.homeassistant
-
 git add .
 git status
 echo -n "Enter the Description for the Change: " [Minor Update]
