@@ -46,12 +46,12 @@ Add-On (all in Docker): AirCast, Backup Hassio to Google Drive, Configurator, Dr
 Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs!
 
 # Main page
-![Main Page](https://i.ibb.co/bzQykz2/01-main.png "Main page")
+![Main Page](https://i.ibb.co/bzQykz2/01-main.png)
 
 # Security page
-![Security page](https://i.ibb.co/1frMxn1/12-security-page.png "Security Page")
+![Security page](https://i.ibb.co/1frMxn1/12-security-page.png)
 # Devices by room
-![Devices by room](https://i.ibb.co/kKnN786/02-devices-by-room.png "Devices by room")
+![Devices by room](https://i.ibb.co/kKnN786/02-devices-by-room.png)
 # Sensors by room
 ![Sensors by room](https://i.ibb.co/4V2BfdP/03-sensors-by-room.png "Sensors by room")
 # Utility counters
