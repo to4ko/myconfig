@@ -47,6 +47,7 @@ Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1
 
 # Main page
 ![Main Page](https://i.ibb.co/bzQykz2/01-main.png "Main page")
+
 # Security page
 ![Security page](https://i.ibb.co/1frMxn1/12-security-page.png "Security Page")
 # Devices by room
