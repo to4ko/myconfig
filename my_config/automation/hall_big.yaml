@@ -36,7 +36,7 @@
     - delay: 00:00:05
     - service: light.turn_off
       entity_id: light.led_strip_hb, light.gateway_light_7811dcb8cb4b
-      
+
 # ##################################
 # Hall Big - Auto Light On
 # ##################################
@@ -400,6 +400,7 @@
     platform: state
     entity_id: switch.wall_plug_158d000230fc52
     to: 'off'
+    from: 'on'
   action:
     - service: notify.telegram
       data_template:
@@ -440,7 +441,7 @@
   initial_state: 'on'
   trigger:
     platform: state
-    entity_id: sensor.ippon_status_data
+    entity_id: sensor.ippon_hb_status_data
     to: 'OB'
   action:
     - service: notify.telegram
@@ -458,7 +459,7 @@
   initial_state: 'on'
   trigger:
     platform: state
-    entity_id: sensor.ippon_status_data
+    entity_id: sensor.ippon_hb_status_data
     to: 'LB'
   action:
     - service: notify.telegram
@@ -477,7 +478,7 @@
   initial_state: 'on'
   trigger:
     platform: state
-    entity_id: sensor.ippon_status_data
+    entity_id: sensor.ippon_hb_status_data
     to: 'OL'
   action:
     - service: notify.telegram
@@ -491,7 +492,7 @@
   initial_state: 'on'
   trigger:
     platform: state
-    entity_id: sensor.ippon_status_data
+    entity_id: sensor.ippon_hb_status_data
     to: "unknown"
   action:
     - service: notify.telegram
@@ -509,7 +510,7 @@
   initial_state: 'on'
   trigger:
     platform: state
-    entity_id: sensor.ippon_status_data
+    entity_id: sensor.ippon_hb_status_data
     from: "unknown"
     to: "OL"
   action:
@@ -647,34 +648,6 @@
     - service: switch.turn_on
       entity_id: switch.wall_plug_158d00023e5812
       
-
-# ##################################
-# Hall Big - Main Door Bottom Lock Open - Day
-# ##################################
-- alias: hall_big_bottom_lock_open_day
-  initial_state: 'off'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.door_window_sensor_158d0002a1a4b2
-    from: 'off'
-    to: 'on'
-  condition:
-    - condition: time
-      after: '07:30:00'
-      before: '21:00:00'
-  action:
-    - service: media_player.volume_set
-      data_template:
-        entity_id: media_player.mpd
-        volume_level: '0.3'
-    - service: tts.yandextts_say
-      entity_id: media_player.mpd
-      data_template:
-        message: 'Н+ижний зам+ок откр+ыт!'
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F513 Нижний замок открыт!"
-
 # ##################################
 # Hall Big - Main Door Bottom Lock Close Day
 # ##################################
@@ -692,7 +665,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}\U0001F513 Нижний замок открыт!{% else %}\U0001F512 Нижний замок закрыт!{% endif %}"
+        message: "{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}\U0001F513\U0001F53D Нижний замок открыт!{% else %}\U0001F512\U0001F53D Нижний замок закрыт!{% endif %}"
     - service: media_player.volume_set
       data_template:
         entity_id: media_player.mpd
@@ -703,4 +676,34 @@
         
         {% if hour_num >=7 and hour_num <21 %}
         script.bottom_lock_tts
+        {% endif %}
+
+# ##################################
+# Hall Big - Main Door Top Lock Close Day
+# ##################################
+- alias: hall_big_top_lock
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0002b7c2c8
+      from: 'on'
+      to: 'off'
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0002b7c2c8
+      from: 'off'
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}\U0001F513\U0001F53C Верхний замок открыт!{% else %}\U0001F512\U0001F53C Верхний замок закрыт!{% endif %}"
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.mpd
+        volume_level: '0.3'
+    - service_template: >
+        {% set weekday = as_timestamp(now()) | timestamp_custom("%w")|int %} 
+        {% set hour_num = now().hour | int %}
+        
+        {% if hour_num >=7 and hour_num <21 %}
+        script.top_lock_tts
         {% endif %}
