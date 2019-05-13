@@ -6,7 +6,7 @@ Server: i7 3770s, 16gb RAM, 256Gb Samsung SSD, 1Tb WD Purple for cameras
  
 Network: Ubiquiti USG 3, Switch 24, UAP-AC-AP-Lite (5ea)
   
-Surveillance: Ubiquiti NVR (running as service), Ubiquiti G3 Flex Cameras (4ea) + Digma 100 (1ea)
+Surveillance: Ubiquiti Video (running as service), Ubiquiti G3 Flex Cameras (4ea) + Digma 100 (1ea)
 
   Smart Home: 
 - Xiaomi Gateway (6ea)
@@ -18,7 +18,7 @@ Surveillance: Ubiquiti NVR (running as service), Ubiquiti G3 Flex Cameras (4ea) 
 - Aqara Wall Socket (12ea)
 - Aqara Wall Switch 2 Rockers (6ea)
 - Aqara Wireless Switch 2 Rockers (4ea)
-- Aqara Door Sensor (16ea)
+- Aqara Door Sensor (19ea)
 - Aqara Water Leak Sensor (3ea)
 - Aqara Vibration Sensor (2ea)
 - Aqara\Xiaomi Motion Sensor (11ea)
@@ -39,13 +39,14 @@ Surveillance: Ubiquiti NVR (running as service), Ubiquiti G3 Flex Cameras (4ea) 
    
 Software: Ubuntu Server 18.04 LTS, Hass.Io in Docker
 
-Add-On (all in Docker): AirCast, Backup Hassio to Google Drive, Configurator, Dropbox Sync, IDE, Log Viewer, MariaDB, Mosquitto broker, Pi-Hole, SSH, Samba, Tor, VSC.
-  
+Add-On (all in Docker): AirCast, Backup Hassio to Google Drive, Configurator, Dropbox Sync, IDE, Log Viewer, MariaDB, Mosquitto broker, AdGuard, SSH, Samba, Tor, VSC.
+
+[psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
+
 Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs!
 
 # Main page
 ![Main Page](https://i.ibb.co/bzQykz2/01-main.png)
-
 # Security page
 ![Security page](https://i.ibb.co/1frMxn1/12-security-page.png)
 # Devices by room
@@ -64,6 +65,3 @@ Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1
 ![System monitoring](https://i.ibb.co/XDsLyv8/09-system-status.png)
 # Sensor batteries
 ![Batteries Status](https://i.ibb.co/Y2JDmbj/11-batteries-status.png)
-
-
-
