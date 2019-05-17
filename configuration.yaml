@@ -11,18 +11,18 @@ homeassistant:
 #    automation: 
 #      initial_state: 'on'
   auth_providers:
-  - type: homeassistant
   - type: trusted_networks
     trusted_networks:
-      - 172.30.0.0/23
-      - 172.17.0.0/16
+      #- 172.30.0.0/23
+      #- 172.17.0.0/16
       - 192.168.1.0/24
-    trusted_users:
-      192.168.1.35: !secret remote_user_id
-      192.168.1.57: !secret remote_user_id
-      192.168.1.56: !secret remote_user_id
-      192.168.1.60: !secret remote_user_id
+    #trusted_users:
+    #  192.168.1.35: !secret remote_user_id
+    #  192.168.1.57: !secret remote_user_id
+    #  192.168.1.56: !secret remote_user_id
+    #  192.168.1.60: !secret remote_user_id
     allow_bypass_login: true
+  - type: homeassistant
 #  - type: legacy_api_password
 #    api_password: !secret http_passwprd
   whitelist_external_dirs:
@@ -30,12 +30,22 @@ homeassistant:
       - /tmp
       - /share
 
+api:
+
+http:
+  #api_password: !secret http_passwprd
+  cors_allowed_origins:
+    - https://google.com
+    - https://www.home-assistant.io
+  ip_ban_enabled: true
+  login_attempts_threshold: 5
+
 automation: !include_dir_merge_list my_config/automation
 sensor: !include_dir_merge_list my_config/sensors
 script: !include_dir_merge_named my_config/scripts
+binary_sensor: !include_dir_merge_list my_config/bi-sensor
 
 timer: !include my_config/timer.yaml
-binary_sensor: !include my_config/bi-sensor.yaml
 device_tracker: !include my_config/device_tracker.yaml
 input_number: !include my_config/input_number.yaml
 group: !include my_config/groups.yaml
@@ -191,13 +201,6 @@ rest_command:
     url: 'http://192.168.1.14:8055/gb/doBackup'
     timeout: '300'
 
-http:
-  #api_password: !secret http_passwprd
-  cors_allowed_origins:
-    - https://google.com
-    - https://www.home-assistant.io
-  ip_ban_enabled: true
-  login_attempts_threshold: 5
 
 #influxdb:
 #  host: !secret influxdb_host

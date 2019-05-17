@@ -1,0 +1,50 @@
+# ####################################################
+# Servers Statuses
+# ####################################################
+
+  - platform: rest
+    resource: http://192.168.1.60:8123/api/states/binary_sensor.automation_status
+    name: j3455_automation
+    value_template: '{{ value_json.state }}'
+    scan_interval: 5
+
+  - platform: rest
+    resource: http://192.168.1.60:8123/api/states/binary_sensor.j3455_lead
+    name: j3455_lead
+    value_template: '{{ value_json.state }}'
+    scan_interval: 5
+    
+  - platform: rest
+    resource: http://192.168.1.57:8123/api/states/binary_sensor.automation_status
+    name: rpi_automation
+    value_template: '{{ value_json.state }}'
+    scan_interval: 5
+
+  - platform: rest
+    resource: http://192.168.1.57:8123/api/states/binary_sensor.rpi_lead
+    name: rpi_lead
+    value_template: '{{ value_json.state }}'
+    scan_interval: 5
+  
+  - platform: template
+    sensors:
+
+      j3455_state:
+        friendly_name: j3455 HA State
+        device_class: power
+        value_template: >
+          {% if is_state('sensor.j3455_state','unavailable') %}
+          false
+          {%else%}
+          true
+          {%endif%}
+          
+      rpi_state:
+        friendly_name: RPI Host State
+        device_class: power
+        value_template: >
+          {% if is_state('sensor.rpi_state','unavailable') %}
+          false
+          {%else%}
+          true
+          {%endif%}
