@@ -13,6 +13,8 @@ resources:
     type: module
   - url: /local/weather-card.js
     type: module
+  - url: /local/compact-custom-header.js?track=true
+    type: module
 
 title: Home - Main Server
 views:
@@ -29,6 +31,7 @@ views:
     #  - person.vova
     #  - person.sasha
     cards:
+      #- type: custom:compact-custom-header
       # ##################################
       # Left Block
       # ##################################a
@@ -81,15 +84,17 @@ views:
             cards:
               - type: glance
                 #title: Sytem Status
-                columns: 7
+                columns: 6
                 entities:
-                  - entity: sensor.processor_use
+                  - entity: sensor.ubuntu_cpu_temp
+                    name: CPU_T
+
+                  - entity: sensor.ubuntu_cpu_usage
                     name: CPU
                     icon: mdi:desktop-tower
-                  - entity: sensor.ubuntu_mem_used
+                  - entity: sensor.ubuntu_ram_usage
                     name: RAM
                     icon: mdi:chip
-
                   - entity: sensor.cont0_cpu_load
                     name: HA CPU
                     icon: mdi:home-assistant
@@ -97,10 +102,8 @@ views:
                     name: HA RAM
                     icon: mdi:chip
                     
-                  - entity: sensor.ubuntu_cpu_temp
-                    name: CPU_T
-                  - entity: sensor.cpu_temperature
-                    name: CPU T2
+                  #- entity: sensor.cpu_temperature
+                  #  name: CPU T2
                   #- entity: sensor.ubuntu_ssd_space_used
                   #  name: SSD
                   #  icon: mdi:harddisk
@@ -255,9 +258,6 @@ views:
                     icon: mdi:fan
                     tap_action:
                       action: toggle
-              - type: glance
-                show_state: false
-                entities:
                   - entity: switch.plug_158d0001f54f90
                     name: W.ON
                     tap_action:
@@ -266,6 +266,7 @@ views:
                     name: W.OFF
                     tap_action:
                       action: toggle
+
               - type: glance
                 show_state: false
                 entities:
@@ -277,6 +278,12 @@ views:
                   - entity: binary_sensor.washer_b
                     name: Washer
                     icon: mdi:washing-machine
+                  - entity: binary_sensor.kettle_k
+                    name: Kettle
+                  - entity: binary_sensor.microwave_k
+                    name: MW
+                  #- entity: binary_sensor.stove_k
+                  #  name: Stove
 
           - type: horizontal-stack
             cards:
@@ -467,7 +474,7 @@ views:
             #title: Sockets
             show_name: true
             show_state: false
-            columns: 6
+            columns: 7
             entities:
               - entity: switch.wall_plug_158d000230fc52
                 name: Fridge
@@ -562,8 +569,17 @@ views:
                 name: Washer
                 tap_action:
                   action: toggle
-                  
-                               
+              - entity: switch.plug_158d00028c9875
+                name: Kettle
+                tap_action:
+                  action: toggle
+              - entity: switch.plug_158d00028a54e4
+                name: Microvawe
+                tap_action:
+                  action: toggle
+
+                
+
           - type: glance
             #title: Gateway's Plugs
             show_name: true
@@ -681,6 +697,7 @@ views:
     icon: mdi:shield
     show_header_toggle: false
     cards:
+      #- type: custom:compact-custom-header
       - type: vertical-stack
         cards:
           - type: glance
@@ -816,28 +833,31 @@ views:
     icon: mdi:weather-snowy-rainy
     show_header_toggle: false
     cards:
-      - type: vertical-stack
-        cards:
-
-          - type: custom:weather-card-chart
-            weather: weather.dark_sky
-          - type: glance
-            title: Now
-            show_header_toggle: false
-            entities:
-              - entity: sensor.yr00_symbol
-                name: 
-              - entity: sensor.yr00_temperature
-                name: Temp
-              - entity: sensor.yr00_humidity
-                name: Humidity
-                icon: mdi:water-percent
-              - entity: sensor.yr00_precipitation
-                name: Precipitation
-                icon: mdi:weather-snowy-rainy
-              - entity: sensor.yr00_pressure
-                name: Pressure
-                icon: mdi:gauge-low
+      #- type: custom:compact-custom-header
+      #- type: custom:weather-card-chart
+      #  weather: weather.dark_sky
+      - type: custom:weather-card
+        entity: weather.dark_sky
+        icons: "/local/icons/"
+      #- type: weather-forecast
+      #  entity: weather.dark_sky
+      - type: glance
+        title: Now
+        show_header_toggle: false
+        entities:
+          - entity: sensor.yr00_symbol
+            name: 
+          - entity: sensor.yr00_temperature
+            name: Temp
+          - entity: sensor.yr00_humidity
+            name: Humidity
+            icon: mdi:water-percent
+          - entity: sensor.yr00_precipitation
+            name: Precipitation
+            icon: mdi:weather-snowy-rainy
+          - entity: sensor.yr00_pressure
+            name: Pressure
+            icon: mdi:gauge-low
         
       - type: vertical-stack
         cards:
@@ -1528,8 +1548,8 @@ views:
         show_header_toggle: false
         entities:
           #- device_tracker.blackhole_lan
-          - entity: binary_sensor.blackhole
-            icon: mdi:ubuntu
+          #- entity: binary_sensor.blackhole
+            #icon: mdi:ubuntu
           - device_tracker.i5
           - device_tracker.m6800_lan
           - device_tracker.m6800_wifi
@@ -1604,6 +1624,14 @@ views:
           - device_tracker.pi_zero2_mb
           - device_tracker.pi_zero2_mqtt
           - device_tracker.pi_zero2_test2
+          
+      - type: entities
+        title: ESPs
+        show_header_toggle: false
+        entities:
+          - device_tracker.8266_test1
+          - device_tracker.esp32_test1
+          - device_tracker.esp32_cam_test1
 
 ################################################################
 # Cameras PAGE
@@ -1703,7 +1731,7 @@ views:
                   service: script.set_humidifier_dry_mode
           - type: custom:mini-graph-card
             #title: 'Temperature'
-            hours_to_show: 72
+            hours_to_show: 48
             line_color: '#e74c3c'
             extrema: true
             labels: true
@@ -1716,7 +1744,7 @@ views:
                 #name: "Sasha's room"
           - type: custom:mini-graph-card
             #title: 'Humidity'
-            hours_to_show: 72
+            hours_to_show: 48
             line_color: blue
             points_per_hour: 1
             extrema: true
@@ -1782,7 +1810,7 @@ views:
                   service: script.cycle_purifier_mode
  
           - type: custom:mini-graph-card
-            hours_to_show: 72
+            hours_to_show: 48
             points_per_hour: 1
             decimals: 0
             hour24: true
@@ -1793,7 +1821,7 @@ views:
             entities:
               - sensor.temperature_158d0001e58714
           - type: custom:mini-graph-card
-            hours_to_show: 72
+            hours_to_show: 48
             points_per_hour: 1
             decimals: 0
             hour24: true
@@ -1806,7 +1834,7 @@ views:
           - type: custom:mini-graph-card
             entities:
               - sensor.purifier_pm25
-            hours_to_show: 72
+            hours_to_show: 48
             points_per_hour: 1
             decimals: 0
             hour24: true
@@ -2137,64 +2165,41 @@ views:
                 entities:
                   - entity: sensor.cpu_speed
                     name: Speed
-                  - entity: sensor.ubuntu_cpu_load
+                  - entity: sensor.ubuntu_cpu_usage
                     name: CPU
-                  - entity: sensor.ubuntu_mem_used
+                  - entity: sensor.ubuntu_ram_usage
                     name: RAM
                     icon: mdi:chip
                   - entity: sensor.ubuntu_cpu_temp
                     name: CPU_T
-                  #- entity: sensor.ubuntu_ssd_space_used
-                  #  name: SSD
-                  #  icon: mdi:harddisk
-                  #- entity: sensor.ubuntu_hdd_purple_space_used
-                  #  name: HDD
-                  #  icon: mdi:harddisk
-                  #- entity: sensor.db_size
-                  #  name: MariaDB
                   - entity: sensor.mariadb_size
                     name: DB
                     icon: mdi:database
                   - entity: switch.server_plug_hb
                     name: S.Plug
-              #- type: glance
-              #  #title: Ubuntu Status
-              #  columns: 8
-              #  show_name: false
-              #  show_icon: false
-              #  show_state: false
-              #  entities:
-              #    - entity: sensor.fs0_name
-              #    - entity: sensor.fs1_name
-              #    - entity: sensor.fs2_name
-              #    - entity: sensor.fs3_name
-              #    - entity: sensor.fs4_name
-              #    - entity: sensor.fs5_name
-              #    - entity: sensor.fs6_name
-              #    - entity: sensor.fs7_name
               - type: glance
                 #title: Ubuntu Status
                 columns: 7
                 entities:
-                  - entity: sensor.server_ssd
+                  - entity: sensor.ubuntu_ssd_usage
                     icon: mdi:chip
                     name: SSD
-                  - entity: sensor.server_purple
+                  - entity: sensor.ubuntu_purple_usage
                     icon: mdi:harddisk
                     name: Purple
-                  - entity: sensor.server_media
+                  - entity: sensor.ubuntu_media_usage
                     icon: mdi:harddisk
                     name: Media
-                  - entity: sensor.server_backupdisk
+                  - entity: sensor.ubuntu_backupdisk_usage
                     icon: mdi:harddisk
                     name: Backup
-                  - entity: sensor.server_storage
+                  - entity: sensor.ubuntu_storage_usage
                     icon: mdi:harddisk
                     name: Storage
-                  - entity: sensor.server_temp
+                  - entity: sensor.ubuntu_temp_usage
                     icon: mdi:harddisk
                     name: Temp
-                  - entity: sensor.server_tempm2
+                  - entity: sensor.ubuntu_tempm2_usage
                     icon: mdi:chip
                     name: TempM2
 
@@ -2325,11 +2330,12 @@ views:
         show_header_toggle: false
         title: Main
         entities:
-          - sensor.ubuntu_cpu_temp_mqtt
-          - sensor.ubuntu_cpu_usage_mqtt
+          - sensor.ubuntu_cpu_temp
+          - sensor.ubuntu_cpu_usage
           - sensor.ubuntu_ram_usage
           - sensor.ubuntu_ssd_usage
           - sensor.ubuntu_media_usage
+          - sensor.ubuntu_backupdisk_usage
           - sensor.ubuntu_purple_usage
           - sensor.ubuntu_storage_usage
           - sensor.ubuntu_temp_usage
@@ -2549,5 +2555,9 @@ views:
                 entity: sensor.battery_motion_v
               - type: "custom:battery-entity"
                 entity: sensor.battery_door_v
-          
+          - type: glance
+            entities:
+              - sensor.stove
+              - sensor.mw
+              - sensor.kettle
   

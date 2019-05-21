@@ -1,13 +1,29 @@
 # ##################################
-# Emergency - RPI connection lost
+# Emergency - RPI connection
 # ##################################
-- alias: emergency_rpi_lost
+- alias: emergency_rpi
   initial_state: 'on'
   trigger:
-   platform: state
-   entity_id: sensor.rpi_state
-   to: 'unavailable'
-   for: "00:00:10"
+#    - platform: state
+#      entity_id: sensor.rpi_state
+#      to: 'unavailable'
+#      for: "00:00:10"
+    - platform: state
+      entity_id: binary_sensor.rpi
+      to: 'off'
+      from: 'on'
+    - platform: state
+      entity_id: binary_sensor.rpi
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.rpi_state
+      to: 'off'
+      from: 'on'
+    - platform: state
+      entity_id: binary_sensor.rpi_state
+      from: 'off'
+      to: 'on'
 #  condition:
 #    - condition: state
 #      entity_id: automation.06_bathroom_cell_power
@@ -15,18 +31,34 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0000274C Потеря связи с RPI, host {{states.binary_sensor.rpi.state}}!"
+        message: "{%if is_state('binary_sensor.rpi','on') and is_state('binary_sensor.rpi_state','on')%}\U00002714{%else%}\U0000274C{%endif%} RPI: HA - {{states.binary_sensor.rpi_state.state|upper}}, host - {{states.binary_sensor.rpi.state|upper}}!"
         
 # ##################################
-# Emergency - j3455 connection lost
+# Emergency - j3455 connection
 # ##################################
-- alias: emergency_j3455_lost
+- alias: emergency_j3455
   initial_state: 'on'
   trigger:
+#    - platform: state
+#      entity_id: sensor.j3455_state
+#      to: 'unavailable'
+#      for: "00:00:10"
     - platform: state
-      entity_id: sensor.j3455_state
-      to: 'unavailable'
-      for: "00:00:10"
+      entity_id: binary_sensor.j3455
+      to: 'off'
+      from: 'on'
+    - platform: state
+      entity_id: binary_sensor.j3455
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.j3455_state
+      to: 'off'
+      from: 'on'
+    - platform: state
+      entity_id: binary_sensor.j3455_state
+      from: 'off'
+      to: 'on'
 #  condition:
 #    - condition: state
 #      entity_id: automation.06_bathroom_cell_power
@@ -34,34 +66,34 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0000274C Потеря связи с j3455, host {{states.binary_sensor.j3455.state}}!"
+        message: "{%if is_state('binary_sensor.j3455','on') and is_state('binary_sensor.j3455_state','on')%}\U00002714{%else%}\U0000274C{%endif%} j3455: HA - {{states.binary_sensor.j3455_state.state|upper}}, host - {{states.binary_sensor.j3455.state|upper}}!"
 #    - service: homeassistant.turn_on
 #      entity_id: group.scenario
 
 # ##################################
 # Emergency - RPI connection restored
 # ##################################
-- alias: emergency_rpi_restored
-  initial_state: 'on'
-  trigger:
-   platform: state
-   entity_id: sensor.rpi_state
-   from: 'unavailable'
-  action:
-    - service: notify.telegram
-      data:
-        message: "\U00002714 Связь с RPI восстановлена!"
+#- alias: emergency_rpi_restored
+#  initial_state: 'on'
+#  trigger:
+#   platform: state
+#   entity_id: sensor.rpi_state
+#   from: 'unavailable'
+#  action:
+#    - service: notify.telegram
+#      data:
+#        message: "\U00002714 Связь с RPI восстановлена!"
         
 # ##################################
 # Emergency - RPI connection restored
 # ##################################
-- alias: emergency_j3455_restored
-  initial_state: 'on'
-  trigger:
-   platform: state
-   entity_id: sensor.j3455_state
-   from: 'unavailable'
-  action:
-    - service: notify.telegram
-      data:
-        message: "\U00002714 Связь с j3455 восстановлена!"
+#- alias: emergency_j3455_restored
+#  initial_state: 'on'
+#  trigger:
+#   platform: state
+#   entity_id: sensor.j3455_state
+#   from: 'unavailable'
+#  action:
+#    - service: notify.telegram
+#      data:
+#        message: "\U00002714 Связь с j3455 восстановлена!"
