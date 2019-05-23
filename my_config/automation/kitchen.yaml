@@ -307,7 +307,7 @@
         state: 'off'
   action:
     - service: switch.turn_on
-      entity_id: switch.plug_158d000232481a
+      entity_id: switch.plug_158d000232481a, switch.plug_158d00028c9875, switch.plug_158d00028a54e4
       
 # ##################################
 # Kitchen - Weather announcement
@@ -373,29 +373,63 @@
 
 
 # ##################################
-# Kitchen - Kettle
+# Kitchen - Kettle ON
 # ##################################
-- alias: kitchen_kettle
+- alias: kitchen_kettle_on
   initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.kettle_k
+      from: 'off'
+      to: 'on'
   action: 
-    - service_template: switch.turn_{% if is_state('binary_sensor.kettle_k','on') %}off{%else%}on{%endif%}
+    - service_template: switch.turn_off
+      entity_id: switch.plug_158d00028a54e4
+
+# ##################################
+# Kitchen - Kettle OFF
+# ##################################
+- alias: kitchen_kettle_off
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.kettle_k
+      from: 'on'
+      to: 'off'
+  action: 
+    - service_template: switch.turn_on
       entity_id: switch.plug_158d00028a54e4
 
 
 # ##################################
-# Kitchen - Microwave
+# Kitchen - Microwave ON
 # ##################################
-- alias: kitchen_microvwave
+- alias: kitchen_microwave_on
   initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.microwave_k
+      from: 'off'
+      to: 'on'
   action: 
-    - service_template: switch.turn_{% if is_state('binary_sensor.microwave_k','on') %}off{%else%}on{%endif%}
+    - service_template: switch.turn_off
       entity_id: switch.plug_158d00028c9875
+
+# ##################################
+# Kitchen - Microwave OFF
+# ##################################
+- alias: kitchen_microwave_off
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.microwave_k
+      from: 'on'
+      to: 'off'
+  action: 
+    - service_template: switch.turn_on
+      entity_id: switch.plug_158d00028c9875
+
+
 
 # ##################################
 # Kitchen - Stove
@@ -408,3 +442,52 @@
   action: 
     - service_template: switch.turn_{% if is_state('binary_sensor.stove_k','on') %}off{%else%}on{%endif%}
       entity_id: switch.plug_158d00028c9875, switch.plug_158d00028a54e4
+      
+# ##################################
+# Kitchen - Plugs update
+# ##################################
+- alias: kitchen_plugs_update
+  initial_state: 'off'
+  trigger:
+    - platform: time_pattern
+      seconds: '2'
+  action:
+    - service: homeassistant.update_entity
+      data:
+        entity_id: switch.plug_158d00028c9875, switch.plug_158d00028a54e4
+
+# ##################################
+# Kitchen - Plugs update - motion
+# ##################################
+- alias: kitchen_plugs_update_motion
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0002b4729d
+    - platform: state
+      entity_id: binary_sensor.unifi_motion_kitchen
+      from: 'off'
+      to: 'on'
+  action:
+    - service: automation.turn_on
+      entity_id: automation.kitchen_plugs_update
+      
+# ##################################
+# Kitchen - Plugs update - NO motion
+# ##################################
+- alias: kitchen_plugs_update_motion_off
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.motion_sensor_158d0002b4729d
+      to: 'off'
+      for: 00:00:01
+    - platform: state
+      entity_id: binary_sensor.unifi_motion_kitchen
+      to: 'off'
+      for: 00:01:00
+  action:
+    - service: automation.turn_off
+      entity_id: automation.kitchen_plugs_update

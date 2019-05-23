@@ -1,4 +1,4 @@
-import "./compact-custom-header-editor.js?v=1.0.4b3";
+import "./compact-custom-header-editor.js?v=1.0.4b7";
 
 export const LitElement = Object.getPrototypeOf(
   customElements.get("ha-panel-lovelace")
@@ -372,7 +372,6 @@ if (!customElements.get("compact-custom-header")) {
     styleHeader(root, tabContainer, header, view, tabs) {
       if (!this.cchConfig.header && !this.editMode) {
         header.style.display = "none";
-        return;
       } else if (!this.editMode) {
         view.style.marginTop = "-48.5px";
         if (view.querySelector("hui-view")) {
@@ -620,11 +619,15 @@ if (!customElements.get("compact-custom-header")) {
     }
 
     hideTabs(tabContainer, tabs) {
-      let hidden_tabs = this.cchConfig.hide_tabs.length
-        ? this.cchConfig.hide_tabs.replace(/\s+/g, "").split(",")
+      let hidden_tabs = String(this.cchConfig.hide_tabs).length
+        ? String(this.cchConfig.hide_tabs)
+            .replace(/\s+/g, "")
+            .split(",")
         : null;
-      let shown_tabs = this.cchConfig.show_tabs.length
-        ? this.cchConfig.show_tabs.replace(/\s+/g, "").split(",")
+      let shown_tabs = String(this.cchConfig.show_tabs).length
+        ? String(this.cchConfig.show_tabs)
+            .replace(/\s+/g, "")
+            .split(",")
         : null;
 
       // Set the tab config source.
@@ -942,6 +945,7 @@ if (!customElements.get("compact-custom-header")) {
     }
 
     templateConditional(template, header, buttons, tabs) {
+      // Get entity states.
       window.hassConnection.then(function(result) {
         window.cchEntity = result.conn._ent.state;
       });
@@ -951,9 +955,10 @@ if (!customElements.get("compact-custom-header")) {
         }, 100);
         return;
       }
-
+      // Variables for templates.
       let states = window.cchEntity;
       let entity = window.cchEntity;
+
       const templateEval = (template, entity) => {
         try {
           if (template.includes("return")) {
@@ -1104,11 +1109,11 @@ if (!customElements.get("compact-custom-header")) {
       });
 
       function handleTouchStart(event) {
+        let ignored = ["APP-HEADER", "HA-SLIDER", "SWIPE-CARD"];
         if (typeof event.path == "object") {
           for (let element of event.path) {
-            if (element.nodeName == "SWIPE-CARD") return;
-            else if (element.nodeName == "APP-HEADER") return;
-            else if (element.nodeName == "HUI-VIEW") break;
+            if (element.nodeName == "HUI-VIEW") break;
+            else if (ignored.indexOf(element.nodeName) > -1) return;
           }
         }
         xDown = event.touches[0].clientX;
@@ -1154,6 +1159,12 @@ if (!customElements.get("compact-custom-header")) {
       }
 
       function click(index) {
+        if (
+          (activeTab == 0 && !wrap && left) ||
+          (activeTab == tabs.length - 1 && !wrap && !left)
+        ) {
+          return;
+        }
         if (animate == "swipe") {
           let _in = left
             ? `${screen.width / 1.5}px`
@@ -1163,22 +1174,22 @@ if (!customElements.get("compact-custom-header")) {
             : `${screen.width / 1.5}px`;
           view.style.transitionDuration = "200ms";
           view.style.opacity = 0;
-          view.style.transform = `translate3d(${_in}, 0px, 0px)`;
-          view.style.transition = "transform 0.20s, opacity 0.18s";
+          view.style.transform = `translate(${_in}, 0)`;
+          view.style.transition = "transform 0.20s, opacity 0.20s";
           setTimeout(function() {
             tabs[index].dispatchEvent(
               new MouseEvent("click", { bubbles: false, cancelable: true })
             );
             view.style.transitionDuration = "0ms";
-            view.style.transform = `translate3d(${_out}, 0px, 0px)`;
+            view.style.transform = `translate(${_out}, 0)`;
             view.style.transition = "transform 0s";
           }, 210);
           setTimeout(function() {
             view.style.transitionDuration = "200ms";
             view.style.opacity = 1;
-            view.style.transform = `translate3d(0px, 0px, 0px)`;
-            view.style.transition = "transform 0.20s, opacity 0.18s";
-          }, 250);
+            view.style.transform = `translate(0px, 0)`;
+            view.style.transition = "transform 0.20s, opacity 0.20s";
+          }, 215);
         } else if (animate == "fade") {
           view.style.transitionDuration = "200ms";
           view.style.transition = "opacity 0.20s";

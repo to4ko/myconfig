@@ -188,3 +188,51 @@
         script.square_lamp_to_30
       {% endif %}
         
+# ##################################
+# Vova - TV plug ON
+# ##################################
+- alias: vova_tv_plug_on
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d000236bb94
+  condition:
+      - condition: state
+        entity_id: switch.plug_158d000290a093
+        state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000290a093
+      
+# ##################################
+# Vova - Square LED Reset 
+# ##################################
+- alias: vova_square_led_reset
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: light.square_led_v
+    to: 'unavailable'
+  condition:
+    - condition: time
+      after: '07:00:00'
+      before: '23:00:00'
+  action:
+    - service: script.square_led_restart
+      
+# ##################################
+# Vova - Square LED status check
+# ##################################
+- alias: vova_square_led_status_check
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '08:00:00'
+  condition:
+    condition: state
+    entity_id: light.square_led_v
+    state: 'unavailable'
+  action:
+    - service: script.square_led_restart
