@@ -45,24 +45,7 @@
             caption: "{{now().strftime('%H:%M %d-%m-%Y')}}"
 
 # ##################################
-# System - Facebox error
-# ##################################
-#- alias: system_facebox_error
-#  initial_state: 'on'
-#  trigger:
-#    platform: event
-#    event_type: system_log_event
-#  condition:
-#    condition: template
-#    value_template: '{{ "facebox" in trigger.event.data.message }}'
-#  action:
-#  - service: notify.telegram
-#    data_template:
-#      message: '{{ trigger.event.data.message }}'
-#      title: Facebox error
-
-# ##################################
-# System - Errors to Telegram
+# System - Errors counter
 # ##################################
 - alias: system_error_counter
   initial_state: 'on'
@@ -76,7 +59,7 @@
       entity_id: counter.error_counter
 
 # ##################################
-# System - Warning counters
+# System - Warning counter
 # ##################################
 - alias: system_warning_counter
   initial_state: 'on'
@@ -117,6 +100,7 @@
     - service: notify.telegram
       data_template:
         message: "\U0001F621 Сервер остановлен!"
+        
 # ##################################
 # System - Radio Volume
 # ##################################
@@ -138,64 +122,7 @@
         {% endif %}
       volume_level: '{{  states.input_number.volume_radio.state  }}' 
 
-# ##################################
-# System - Hass.io Daily Snapshot
-# ##################################
-- alias: system_daily_snapshot
-  initial_state: 'on'
-  trigger:
-    platform: time
-    at: '3:00:00'
-  action:
-  - service: hassio.snapshot_full
-    data_template:
-      name: auto_snap_main_{{ now().strftime('%d.%m.%Y') }}
-  - service: notify.telegram
-    data_template: 
-      message: "\U00002705 Резервное копирование выполнено"
 
-# ##################################
-# System - Hass.io Weekly Dropbox Snapshot upload
-# ##################################
-- alias: system_weekly_dropbox_upload
-  initial_state: 'on'
-  trigger:
-    platform: time
-    at: '05:00:00'
-  condition:
-    condition: time
-    weekday:
-      - mon
-      #- wed
-      #- fri
-  action:
-  - service: hassio.addon_stdin
-    data: {"addon":"7be23ff5_dropbox_sync","input":{"command":"upload"}}
-  - service: notify.telegram
-    data_template: 
-      message: "\U00002705 Резервная копия выгружена на Dropbox"
-
-# ##################################
-# System - Hass.io Daily G-Drive Snapshot upload
-# ##################################
-- alias: system_daily_google_drive_upload
-  initial_state: 'on'
-  trigger:
-    platform: time
-    at: '06:00:00'
-  action:
-    - service: rest_command.google_backup
-    - delay: 00:05:00
-    - service: mqtt.publish
-      data_template:
-        topic: "googlebackup/result"
-        payload: "{{ states('sensor.google_backup_status')}}"
-        retain: true
-    - service: notify.telegram
-      data_template: 
-        message: "\U00002705 Резервная копия выгружена на Google Drive"
-
-      
 # ##################################
 # System - Ubuntu server CPU temp >65
 # ##################################
@@ -259,19 +186,6 @@
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.weather_announcement_flag
-      
-
-# ##################################
-# System - NEW DAY run
-# ##################################
-#- alias: system_new_day_auto_on
-#  initial_state: 'on'
-#  trigger:
-#    platform: time
-#    at: '06:00:01'
-#  action:
-#  - service: automation.turn_on
-#    entity_id: automation.kitchen_weather_announcement
 
 # ##################################
 # System - Weather FCST to Telegram
@@ -285,7 +199,6 @@
       at: '21:00:00'
   action:
   - service: script.telegram_weather
-
 
 # ##################################
 # System - Dima At home
@@ -374,29 +287,6 @@
         notification_id: http_login
 
 # ##################################
-# System - Toilet Cover inversion
-# ##################################
-#- alias: system_cover_inversion_off
-#  initial_state: 'on'
-#  trigger:
-#    platform: state
-#    entity_id: binary_sensor.door_window_sensor_158d000232ddd6
-#    to: 'Open'
-#  action:
-#    service: input_boolean.turn_off
-#    data:
-#        entity_id: input_boolean.cover_inv_t
-#- alias: system_cover_inversion_on
-#  trigger:
-#    platform: state
-#    entity_id: binary_sensor.door_window_sensor_158d000232ddd6
-#    to: 'Closed'
-#  action:
-#    service: input_boolean.turn_on
-#    data:
-#        entity_id: input_boolean.cover_inv_t
-
-# ##################################
 # System - Sasha tracker - Toggle
 # ##################################
 - alias: system_sasha_tracker_toggle
@@ -417,32 +307,33 @@
     entity_id: input_boolean.sasha_tracker
 
 # ##################################
-# System - Sasha tracker - TEST
+# System - Sasha tracker
 # ##################################
-- alias: system_sasha_home
+- alias: system_sasha_tracker
   initial_state: 'on'
   trigger:
     platform: state
     entity_id: input_boolean.sasha_tracker
-    from: "off"
-    to: "on"
+    #from: "off"
+    #to: "on"
   action:
     - service: device_tracker.see
-      data:
+      data_template:
         dev_id: sasha
-        location_name: 'home'
-- alias: system_sasha_nothome
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: input_boolean.sasha_tracker
-    from: "on"
-    to: "off"
-  action:
-    - service: device_tracker.see
-      data:
-        dev_id: sasha
-        location_name: 'not_home'
+        location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
+
+#- alias: system_sasha_nothome
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: input_boolean.sasha_tracker
+#    from: "on"
+#    to: "off"
+#  action:
+#    - service: device_tracker.see
+#      data:
+#        dev_id: sasha
+#        location_name: 'not_home'
 
 # ##################################
 # System - Sasha tracker - Audio
@@ -452,8 +343,8 @@
   trigger:
     platform: state
     entity_id: binary_sensor.sasha
-    from: 'on'
-    to: 'off'
+    #from: 'on'
+    #to: 'off'
   action:
     - service: media_player.volume_set
       data_template:
@@ -465,39 +356,37 @@
         message: >
           {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, '] | random %}
           {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!'] | random %}
-          
-          {{name1}} {{greet2}}
-
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F476 Санек уходит!"
-
-#          "{{ (['Сашка, пока', 'Санёк, до встречи!', 'Удачи тебе, Александр Дмитриевич', 'Всего хорошего, Александр'] | random) }}"
-
-- alias: system_sasha_home_audio
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.sasha
-    to: 'on'
-    from: 'off'
-  action:
-    - service: media_player.volume_set
-      data_template:
-        entity_id: media_player.mpd
-        volume_level: '0.3'
-    - service: tts.yandextts_say
-      entity_id: media_player.mpd
-      data_template:
-        message: >
-          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, '] | random %}
           {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!'] | random %}
           
-          {{name1}} {{greet1}}
+          {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
 
     - service: notify.telegram
       data_template:
-        message: "\U0001F476 Санек дома!"
+        message: "\U0001F476 Санек {%if is_state('binary_sensor.sasha','on')%}дома{%else%}уходит{%endif%}!"
 
-#          "{{ (['Сашка, привет', 'Санёк, здарова!', 'Здравствуй, Александр Дмитриевич', 'Привет, Александр'] | random) }}"
 
+
+#- alias: system_sasha_home_audio
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: binary_sensor.sasha
+#    to: 'on'
+#    from: 'off'
+#  action:
+#    - service: media_player.volume_set
+#      data_template:
+#        entity_id: media_player.mpd
+#        volume_level: '0.3'
+#    - service: tts.yandextts_say
+#      entity_id: media_player.mpd
+#      data_template:
+#        message: >
+#          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, '] | random %}
+#          {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!'] | random %}
+#          
+#          {{name1}} {{greet1}}
+
+#    - service: notify.telegram
+#      data_template:
+#        message: "\U0001F476 Санек дома!"
