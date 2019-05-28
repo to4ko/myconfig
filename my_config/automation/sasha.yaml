@@ -296,49 +296,27 @@
 #        media_content_type: "audio/mp3"
       
 # ##################################
-# Sasha - Humidifier 2 water level 25% 
+# Sasha - Humidifier 2 low water notify to Telegram
 # ##################################
-#- alias: sasha_humidifier_water_level
-#  initial_state: 'on'
-#  trigger:
-#    platform: state
-#    entity_id: sensor.water_level
-#    below: 100
-#    platform: template
-#    value_template: "{% if is_state('sensor.water_level', '25') %}true{% endif %}"
-#  action:
-#    service: notify.telegram
-#    data_template:
-#      message: >
-#        {% if is_state('sensor.water_level','50') %} Humidifier water level is 50%.
-#        {% elif is_state('sensor.water_level','25') %} Humidifier water level is 25%.
-#        {% elif is_state('sensor.water_level','10') %} Warning! Humidifier water level is 10%.
-#        {% elif is_state('sensor.water_level','5') %} Warning! Humidifier water level is 5%.
-#        {% else %}
-#        {% endif %}
-
-# ##################################
-# Sasha - Humidifier 2 water level 25% 
-# ##################################
-#- alias: sasha_humidifier_water_level_25
-#  initial_state: 'on'
-#  trigger:
-#    platform: template
-#    value_template: "{% if is_state('sensor.water_level', '25') %}true{% endif %}"
-#  action:
-#    service: notify.telegram
-#    data_template:
-#      message: "Увлажнитель - осталось 25% воды"
-
-# ##################################
-# Sasha - Humidifier 2 water level 10% 
-# ##################################
-#- alias: sasha_humidifier_water_level_10
-#  initial_state: 'on'
-#  trigger:
-#    platform: template
-#    value_template: "{% if is_state('sensor.water_level', '10') %}true{% endif %}"
-#  action:
-#    service: notify.telegram
-#    data_template:
-#      message: "Увлажнитель - осталось всего 10% воды!"
+- alias: sasha_humidifier_water_low_water
+  initial_state: 'on'
+  trigger:
+    platform: time_pattern
+    minutes: '/10'
+  condition:
+    condition: and
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.humidifier_water_level
+        #above: 0
+        below: 11
+      - condition: time
+        after: '07:00:00'
+        before: '23:59:00'
+      - condition: state
+        entity_id: person.dima
+        state: 'home'
+  action:
+    service: notify.telegram
+    data_template:
+      message: "\U0001f4a7 Увлажнитель - осталось менее 10% воды!"
