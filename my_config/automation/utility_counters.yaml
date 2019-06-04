@@ -207,3 +207,23 @@
       data:
         title: "Внимание!"
         message: "Внимание! Общий ток более 30А"
+        
+
+# ##################################
+# System - Power - Ultra High current
+# ##################################
+- alias: system_power_meter_counter
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.power_meter_impulse
+    from: 'on'
+    to: 'off'
+  action:
+    - service: counter.increment
+      entity_id: counter.power_meter_counter
+    - service: input_number.set_value
+      data_template:
+          entity_id: input_number.power_meter_total_imp
+          value: "{{ (states.input_number.power_meter_total_imp.state|float + 0.0002) | round(5) }}"
+  

@@ -281,7 +281,7 @@
       entity_id: counter.badlogin_counter
     - service: notify.telegram
       data_template:
-        message: "\U0000274C Не удачная попытка подлючения. Не верно введен пароль! {{ states.persistent_notification.http_login.attributes.message }}"
+        message: "\U0000274C Неудачная попытка подлючения. Неверно введен пароль! {{ states.persistent_notification.http_login.attributes.message }}"
     - service: persistent_notification.dismiss
       data:
         notification_id: http_login
@@ -338,13 +338,17 @@
 # ##################################
 # System - Sasha tracker - Audio
 # ##################################
-- alias: system_sasha_nothome_audio
+- alias: system_sasha_audio_tts
   initial_state: 'on'
   trigger:
     platform: state
     entity_id: binary_sensor.sasha
     #from: 'on'
     #to: 'off'
+  condition:
+    condition: time
+    after: '07:00:00'
+    before: '21:00:00'
   action:
     - service: media_player.volume_set
       data_template:
@@ -359,7 +363,6 @@
           {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!'] | random %}
           
           {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
-
     - service: notify.telegram
       data_template:
         message: "\U0001F476 Санек {%if is_state('binary_sensor.sasha','on')%}дома{%else%}уходит{%endif%}!"
