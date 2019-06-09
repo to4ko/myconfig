@@ -1,0 +1,137 @@
+# ##################################
+# Domofon - Incoming call notification
+# ##################################
+  - alias: domofon_incoming_call_notification
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.domofon
+      to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_boolean.domofon_auto_open
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.domofon_auto_open_once
+          state: 'off'
+    action:
+      service: notify.telegram
+      data:
+        message: 'Звонок в домофон'
+        data:
+          inline_keyboard:
+            - "Открыть:/domofon_open, Отклонить:/domofon_reject"
+
+# ##################################
+# Domofon - Incoming call notification (auto open)
+# ##################################
+  - alias: domofon_incoming_call_notification_auto_open
+    initial_state: 'on'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.domofon
+      to: 'on'
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: input_boolean.domofon_auto_open
+          state: 'on'
+        - condition: state
+          entity_id: input_boolean.domofon_auto_open_once
+          state: 'on'
+    action:
+      - service: notify.telegram
+        data:
+          message: 'Звонок в домофон (откроется автоматически)'
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.domofon_auto_open_once
+      - service: mqtt.publish
+        data:
+          topic: "domofon/in"
+          payload: "O"
+
+# ##################################
+# Domofon - Telegram domofon\open callback
+# ##################################
+  - alias: domofon_telegram_open_callback
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: telegram_callback
+      event_data:
+        data: '/domofon_open'
+    action:
+      - service: telegram_bot.answer_callback_query
+        data_template:
+          callback_query_id: "{{ trigger.event.data.id }}"
+          message: "Открываю..."
+      - service: mqtt.publish
+        data:
+          topic: "domofon/in"
+          payload: "O"
+
+# ##################################
+# Domofon - Telegram domofon\reject call back
+# ##################################
+  - alias: domofon_telegram_reject_callback
+    initial_state: 'on'
+    trigger:
+      platform: event
+      event_type: telegram_callback
+      event_data:
+        data: '/domofon_reject'
+    action:
+      - service: telegram_bot.answer_callback_query
+        data_template:
+          callback_query_id: "{{ trigger.event.data.id }}"
+          message: "Отклоняю..."
+      - service: mqtt.publish
+        data:
+          topic: "domofon/in"
+          payload: "N"
+
+# ##################################
+# Domofon - Success notification
+# ##################################
+  - alias: domofon_success_notification
+    initial_state: 'on'
+    trigger:
+      platform: mqtt
+      topic: 'domofon/out'
+      payload: 'S'
+    action:
+      service: notify.telegram
+      data:
+        message: "Выполнено"
+
+# ##################################
+# Domofon - Failure Notification
+# ##################################
+  - alias: domofon_failure_notification
+    initial_state: 'on'
+    trigger:
+      platform: mqtt
+      topic: 'domofon/out'
+      payload: 'F'
+    action:
+      service: notify.telegram
+      data:
+        message: "Ошибка! Нет входящего звонка"
+
+# ##################################
+# Domofon - Opened by button notification
+# ##################################
+  - alias: domofon_opened_by_button_notification
+    initial_state: 'on'
+    trigger:
+      platform: mqtt
+      topic: 'domofon/out'
+      payload: 'B'
+    action:
+      service: notify.telegram
+      data:
+        message: "Домофон открыт кнопкой"
