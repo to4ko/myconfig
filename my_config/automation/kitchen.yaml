@@ -363,6 +363,101 @@
       data_template:
         message: ' Внимание! Сработал датчик газа!'
 
+# ##################################
+# Kitchen - Work Light L
+# ##################################
+- alias: kitchen_work_light_l
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d00023e5f2a
+      click_type: single
+  action:
+  - service: switch.toggle
+    entity_id: switch.wall_switch_left_158d0002a365df
+
+# ##################################
+# Kitchen - Work Light R
+# ##################################
+- alias: kitchen_work_light_R
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0001ef609b
+      click_type: single
+  action:
+  - service: switch.toggle
+    entity_id: switch.wall_switch_right_158d0002a365df
+    
+# ##################################
+# Kitchen - Work Light Off
+# ##################################
+- alias: kitchen_work_light_off
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef609b
+        click_type: double
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d00023e5f2a
+        click_type: double
+  action:
+  - service_template: script.turn_{%if is_state('wall_switch_right_158d0002a365df','on') or is_state('wall_switch_left_158d0002a365df','on')%}off{%else%}on{%endif%}
+    entity_id: switch.wall_switch_right_158d0002a365df, switch.wall_switch_left_158d0002a365df
+
+# ##################################
+# Kitchen - Work Light On
+# ##################################
+- alias: kitchen_work_light_on
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef609b
+        click_type: double
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d00023e5f2a
+        click_type: double
+  condition:
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: switch.wall_switch_right_158d0002a365df
+        state: 'off'
+      - condition: state
+        entity_id: switch.wall_switch_left_158d0002a365df
+        state: 'off'
+  action:
+  - service: switch.turn_on
+    entity_id: switch.wall_switch_right_158d0002a365df, switch.wall_switch_left_158d0002a365df
+
+
+# ##################################
+# Kitchen - Hood On - Vent Close
+# ##################################
+- alias: kitchen_ventilation_auto
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.hood_k
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 0.083
+  action: 
+    - service_template: >
+        script.kitchen_vent_{%if is_state('binary_sensor.hood_k','on')%}close{%elif is_state('binary_sensor.hood_k','off')%}open{%endif%}
 
 # ##################################
 # Kitchen - Kettle ON
