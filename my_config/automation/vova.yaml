@@ -189,9 +189,9 @@
       {% endif %}
         
 # ##################################
-# Vova - TV plug ON
+# Vova - Sockets On
 # ##################################
-- alias: vova_tv_plug_on
+- alias: vova_sockets_on
   initial_state: 'on'
   trigger:
     platform: event
@@ -204,7 +204,28 @@
         state: 'off'
   action:
     - service: switch.turn_on
-      entity_id: switch.plug_158d000290a093
+      entity_id: switch.plug_158d000290a093, switch.plug_158d000290a0bc
+    - service: homeassistant.turn_on
+      entity_id: automation.vova_iconbit_check
+
+# ##################################
+# Kitchen - Iconbit Check
+# ##################################
+- alias: vova_iconbit_check
+  initial_state: 'off'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.iconbit
+    to: 'on'
+  condition:
+      - condition: state
+        entity_id: binary_sensor.tv_v
+        state: 'off'
+  action:
+    - delay: 00:01:00
+    - service: script.iconbit_toggle
+    - service: homeassistant.turn_off
+      entity_id: automation.vova_iconbit_check
       
 # ##################################
 # Vova - Square LED Reset 

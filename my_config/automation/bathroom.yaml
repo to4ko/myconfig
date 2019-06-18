@@ -3,9 +3,9 @@
 # BATHROOM
 #
 # #####################################################################################
-# Bathroom Fan - On 10m
+# Bathroom Fan - On 10m Manual
 # ##################################
-- alias: bathroom_fan_on
+- alias: bathroom_fan_on_manual
   initial_state: 'on'
   trigger:
     - platform: event
@@ -13,46 +13,48 @@
       event_data:
         entity_id: binary_sensor.switch_158d0001b94abe
         click_type: single
-    - platform: numeric_state
-      entity_id: sensor.humidity_158d00020d7c3a
-      above: 70
+  condition:
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f9ebd8
+    - delay: 00:10:00
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f9ebd8
 
+# ##################################
+# Bathroom Fan - Off Manual
+# ##################################
+- alias: bathroom_fan_off_manual
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001b94abe
+        click_type: single
+  condition:
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f9ebd8
 
 # ##################################
 # Bathroom Fan - On
 # ##################################
-#- alias: bathroom_fan_20m
-#  initial_state: 'on'
-#  trigger:
-#    platform: event
-#    event_type: xiaomi_aqara.click
-#    event_data:
-#      entity_id: binary_sensor.switch_158d0001b94abe
-#      click_type: double
-#  action:
-#  - service: switch.turn_on
-#    entity_id: switch.plug_158d0001f9ebd8
-#  - delay: 00:20:00
-#  - service: switch.turn_off
-#    entity_id: switch.plug_158d0001f9ebd8
-
-# ##################################
-# Bathroom Fan - Off
-# ##################################
-#- alias: bathroom_fan_turn_off
-#  initial_state: 'on'
-#  trigger:
-#    platform: event
-#    event_type: xiaomi_aqara.click
-#    event_data:
-#      entity_id: binary_sensor.switch_158d0001b94abe
-#      click_type: long_click_press
-#  action:
-#    service: switch.turn_off
-#    entity_id: switch.plug_158d0001f9ebd8
+- alias: bathroom_fan_on
+  initial_state: 'on'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.humidity_158d00020d7c3a
+      above: 67
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f9ebd8
 
 # ##################################
 # Bathroom - Fan off
@@ -60,35 +62,27 @@
 - alias: bathroom_fan_off
   initial_state: 'on'
   trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.timer_fan_b
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: binary_sensor.switch_158d0001b94abe
-        click_type: long_click_press
+    - platform: numeric_state
+      entity_id: sensor.humidity_158d00020d7c3a
+      below: 63
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f9ebd8
-    - service: timer.cancel
-      entity_id: timer.timer_fan_b
 
 # ##################################
 # Bathroom - Fan Timer start on
 # ################################## 
-- alias: bathroom_fan_timer_on
-  initial_state: true
-  trigger:
-  - platform: state
-    entity_id: switch.plug_158d0001f9ebd8
-    to: 'on'
-  action:
-  - service: timer.cancel
-    entity_id: timer.timer_fan_b
-  - service: timer.start
-    entity_id: timer.timer_fan_b
+#- alias: bathroom_fan_timer_on
+#  initial_state: true
+#  trigger:
+#  - platform: state
+#    entity_id: switch.plug_158d0001f9ebd8
+#    to: 'on'
+#  action:
+#  - service: timer.cancel
+#    entity_id: timer.timer_fan_b
+#  - service: timer.start
+#    entity_id: timer.timer_fan_b
 
 # ##################################
 # Bathroom - Timer restart with movement
@@ -237,7 +231,6 @@
     - service: notify.telegram
       data_template:
         message: "\U00002705 Протечка воды в ванне устранена!"
-
 
 # ##################################
 # Bathroom Water Valves Test
