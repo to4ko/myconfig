@@ -17,23 +17,23 @@
 # ##################################
 # System - Hass.io Weekly Dropbox Snapshot upload
 # ##################################
-- alias: snapshot_weekly_dropbox_upload
-  initial_state: 'on'
-  trigger:
-    platform: time
-    at: '05:00:00'
-  condition:
-    condition: time
-    weekday:
-      - mon
-      #- wed
-      #- fri
-  action:
-  - service: hassio.addon_stdin
-    data: {"addon":"7be23ff5_dropbox_sync","input":{"command":"upload"}}
-  - service: notify.telegram
-    data_template: 
-      message: "\U00002705 Резервная копия выгружена на Dropbox"
+#- alias: snapshot_weekly_dropbox_upload
+#  initial_state: 'on'
+#  trigger:
+#    platform: time
+#    at: '05:00:00'
+#  condition:
+#    condition: time
+#    weekday:
+#      - mon
+#      #- wed
+#      #- fri
+#  action:
+#  - service: hassio.addon_stdin
+#    data: {"addon":"7be23ff5_dropbox_sync","input":{"command":"upload"}}
+#  - service: notify.telegram
+#    data_template: 
+#      message: "\U00002705 Резервная копия выгружена на Dropbox"
 
 # ##################################
 # System - Hass.io Daily G-Drive Snapshot upload
@@ -53,7 +53,8 @@
         retain: true
     - service: notify.telegram
       data_template: 
-        message: "\U00002705 Резервное копирование на G-Drive запущено"
+        message: "{% if (as_timestamp(now()) - as_timestamp(states.sensor.last_google_backup.last_updated)) < 600 %}\U00002705 G-Drive бэкап выполнен успешно!{% else %} \U00002757 Внимание! G-Drive бэкап не выполнен!{% endif %}"
+        
 
 # ##################################
 # System - Hass.io Daily G-Drive updated
