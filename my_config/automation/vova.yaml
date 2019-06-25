@@ -217,7 +217,6 @@
     platform: state
     entity_id: binary_sensor.tv_v
     to: 'off'
-    from: 'on'
     for: '00:05:00'
   condition:
       - condition: state
@@ -225,7 +224,32 @@
         state: 'on'
   action:
     - service: script.iconbit_toggle
+    - delay: '00:00:10'
+    - service: automation.turn_on
+      entity_id: automation.vova_iconbit_reset
 
+# ##################################
+# Vova - Iconbit Reset if Stuck
+# ##################################
+- alias: vova_iconbit_reset
+  initial_state: 'off'
+  trigger:
+    platform: time_pattern
+    # You can also match on interval. This will match every 5 minutes
+    seconds: '/5'
+  condition:
+      - condition: state
+        entity_id: binary_sensor.iconbit_v
+        state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d000290a0bc
+    - delay: '00:02:00'
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000290a0bc
+    - service: automation.turn_off
+      entity_id: automation.vova_iconbit_reset
+      
 # ##################################
 # Vova - Square LED Reset 
 # ##################################
@@ -256,3 +280,27 @@
     state: 'unavailable'
   action:
     - service: script.square_led_restart
+
+# ##################################
+# Vova - Night mode
+# ##################################
+- alias: vova_night_mode
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '23:00:00'
+  action:
+    - service: homeassistant.turn_off
+      entity_id: switch.plug_158d00028b4fc3
+      
+# ##################################
+# Vova - Day mode
+# ##################################
+- alias: vova_day_mode
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '07:00:00'
+  action:
+    - service: homeassistant.turn_on
+      entity_id: switch.plug_158d00028b4fc3
