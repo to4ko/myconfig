@@ -13,7 +13,7 @@ resources:
     type: module
   - url: /local/weather-card.js
     type: module
-  - url: /local/compact-custom-header.js?track=true
+  - url: /local/camera-card.js
     type: module
 
 title: Home - Main Server
@@ -179,22 +179,16 @@ views:
           - type: horizontal-stack
             #title: Camers
             cards:
-              - type: picture-entity
-                title: Entrance
+              - type: 'custom:camera-card'
                 entity: camera.uvc_g3_flex_entrance
-                name: Entr
-              - type: picture-entity
-                title: Hall Big
-                entity: camera.uvc_g3_flex_hall
-                name: Hall
-              - type: picture-entity
-                title: Dixy
+              - type: 'custom:camera-card'
+                entity:  camera.uvc_g3_flex_hall
+              - type: 'custom:camera-card'
                 entity: camera.uvc_g3_flex_dixy
-                name: Dixy
-              - type: picture-entity
-                title: Window
+              - type: 'custom:camera-card'
                 entity: camera.uvc_g3_flex_window
-                name: Window
+              #- type: 'custom:camera-card'
+              #  entity: camera.door_hb
           - type: glance
             #title: Motion
             show_name: true
@@ -368,39 +362,32 @@ views:
         cards:
           - type: horizontal-stack
             cards:
-              - type: entity-button
-                name: All
-                entity: light.my_lights
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: homeassistant.turn_off
-                  entity_id: group.devices_to_turnoff
-              - type: entity-button
-                name: All
-                entity: light.my_lights
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: homeassistant.turn_off
-                  entity_id: group.devices_to_turnoff
-              - type: entity-button
-                name: All
-                entity: light.my_lights
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: homeassistant.turn_off
-                  entity_id: group.devices_to_turnoff
-              - type: entity-button
-                name: All
-                entity: light.my_lights
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: homeassistant.turn_off
-                  entity_id: group.devices_to_turnoff
-
+#              - type: entity-button
+#                name: All
+#                entity: light.my_lights
+#                hold_action: none
+#                tap_action:
+#                  action: call-service
+#                  service: homeassistant.turn_off
+#                  entity_id: group.devices_to_turnoff
+              - type: glance
+                entities:
+                  - entity: binary_sensor.d1_mini_domofon_incomingcall
+                    name: Call
+                  - entity: switch.d1_mini_domofon_phone
+                    name: PickupSw
+                    tap_action:
+                      action: toggle
+                  - entity: switch.d1_mini_domofon_opendoor
+                    name: OpenSw
+                    tap_action:
+                      action: toggle
+                  - entity: script.domofon_open_door
+                    name: Open
+                    icon: mdi:lock-open-outline
+                    tap_action:
+                      action: call-service
+                      service: script.domofon_open_door
 
           - type: glance
             #title: Lights
@@ -415,7 +402,8 @@ views:
                 tap_action:
                   action: call-service
                   service: homeassistant.turn_off
-                  entity_id: group.devices_to_turnoff
+                  service_data:
+                    entity_id: group.devices_to_turnoff
                 
               - entity: light.led_strip_hb
                 name: HB
@@ -619,6 +607,12 @@ views:
                 icon: mdi:power-socket
                 tap_action:
                   action: toggle
+              - entity: switch.plug_top_k
+                name: Top K
+                icon: mdi:power-socket
+                tap_action:
+                  action: toggle
+                 
               
               - entity: switch.wall_plug_158d0002467773
                 name: PC MB
@@ -1459,7 +1453,7 @@ views:
             extrema: true
             labels: true
             line_width: 3
-            decimals: 0
+            decimals: 2
             hour24: true
           
           - type: entities
@@ -2189,6 +2183,9 @@ views:
       #############
       - type: vertical-stack
         cards:
+          - type: entities
+            entities:
+              - sensor.git_stars
           - type: glance
             show_header_toggle: false
             columns: 7
@@ -2409,6 +2406,28 @@ views:
                     icon: mdi:database
                   - entity: switch.server_plug_hb
                     name: S.Plug
+              - type: custom:bar-card
+                title_position: top
+                columns: 3
+                height: 25px
+                min: 0
+                max: 3000
+                severity:
+                  #- value: 
+                  #  color: '#40bf40'
+                  - value: 1000
+                    color: '#bf9540'
+                  - value: 2000
+                    color: '#bf4040'
+                  - value: 3000
+                    color: '#ff0000'
+                padding: 2px
+                direction: right
+                entities:
+                  - sensor.fan1
+                  - sensor.fan2
+                  - sensor.fan4
+                  
               - type: glance
                 #title: Ubuntu Status
                 columns: 7
@@ -2553,6 +2572,26 @@ views:
           - type: custom:tracker-card
 
 ################################################################
+# TEST
+################################################################
+  - title: TEST
+    icon: mdi:comment-question-outline
+    cards:
+      - type: entities
+        show_header_toggle: false
+        entities:
+          - binary_sensor.d1_mini_domofon_incomingcall
+          - sensor.d1_mini_domofon_speaker
+          - type: divider
+          - switch.d1_mini_domofon_phone
+          - type: divider
+          - switch.d1_mini_domofon_opendoor
+          - type: divider
+          - switch.d1_mini_domofon_relay1
+          - switch.d1_mini_domofon_relay2
+
+
+################################################################
 # MQTT Cross Servers Sensors PAGE
 ################################################################
   - title: MQTT
@@ -2588,14 +2627,6 @@ views:
           - sensor.j3455_cpu_usage
           - sensor.j3455_ram_usage
           - sensor.j3455_ssd_usage
-      - type: entities
-        show_header_toggle: false
-        title: Zero2MQTT
-        entities:
-          - sensor.zero2mqtt_cpu_temp
-          - sensor.zero2mqtt_cpu_usage
-          - sensor.zero2mqtt_ram_usage
-          - sensor.zero2mqtt_disk_usage
       - type: entities
         show_header_toggle: false
         title: Zero2MB

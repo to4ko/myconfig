@@ -710,3 +710,36 @@
         {% if hour_num >=7 and hour_num <21 %}
         script.top_lock_tts
         {% endif %}
+        
+# ##################################
+# Hall Big - Domofon Incoming Call
+# ##################################
+- alias: hall_big_domofon_incoming_call
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1_mini_domofon_incomingcall
+      from: 'off'
+      to: 'on'
+  action:
+    - service: automation.turn_off
+      entity_id: automation.hall_big_incoming_call
+#    - service: notify.telegram
+#      data_template:
+#        message: "\U0001F4DE В домофон кто-то звонит!"
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_window
+        filename: "/config/www/cam_captures/domofon.jpg"
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F4DE В домофон кто-то звонит!"
+        data:
+          photo:
+          - file: "/config/www/cam_captures/domofon.jpg"
+            caption: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+    - delay: '00:00:30'
+    - service: automation.turn_on
+      entity_id: automation.hall_big_domofon_incoming_call
+        
+        
