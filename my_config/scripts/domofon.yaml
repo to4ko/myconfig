@@ -1,22 +1,69 @@
   domofon_auto_open_toggle:
-    alias: Auto Open Toggle
+    alias: Domofon Auto Open Toggle
     sequence:
-      service: input_boolean.toggle
-      entity_id: input_boolean.domofon_auto_open
+      - service: input_boolean.toggle
+        entity_id: input_boolean.domofon_auto_open
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.domofon_auto_open_once, input_boolean.domofon_ignore
 
   domofon_auto_open_once_toggle:
-    alias: Auto Open Once Toggle
+    alias: Domofon Auto Open Once Toggle
     sequence:
-      service: input_boolean.toggle
-      entity_id: input_boolean.domofon_auto_open_once
+      - service: input_boolean.toggle
+        entity_id: input_boolean.domofon_auto_open_once
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.domofon_auto_open, input_boolean.domofon_ignore
+        
+  domofon_ignore_toggle:
+    alias: Domofon Ignore Toggle
+    sequence:
+      - service: input_boolean.toggle
+        entity_id: input_boolean.domofon_ignore
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.domofon_auto_open, input_boolean.domofon_auto_open_once
       
   domofon_open_door:
     alias: Domofon Open Door
     sequence:
       - service: switch.turn_on
         entity_id: switch.d1_mini_domofon_phone
+      - delay: '00:00:01'
       - service: switch.turn_on
         entity_id: switch.d1_mini_domofon_opendoor
       - delay: '00:00:03'
       - service: switch.turn_off
         entity_id: switch.d1_mini_domofon_phone
+      - service_template: >
+          {% if is_state('input_boolean.domofon_auto_open_once','on') %}
+            input_boolean.turn_off
+          {%endif%}
+        entity_id: input_boolean.domofon_auto_open_once
+      - service: notify.telegram
+        data_template:
+          message: "\U0001F4DE Домофон открыт автоматически!"
+  
+  domofon_ignore:
+    alias: Domofon Ignore
+    sequence:
+      - service: switch.turn_on
+        entity_id: switch.d1_mini_domofon_phone
+      - delay: '00:00:01'
+      - service: switch.turn_off
+        entity_id: switch.d1_mini_domofon_opendoor
+  
+
+  domofon_script:
+    alias: Domofon script
+    sequence:
+      - service_template: >
+          {% if is_state('input_boolean.domofon_auto_open','on') %}
+            script.domofon_open_door
+          {% elif is_state('input_boolean.domofon_auto_open_once','on') %}
+            script.domofon_open_door
+          {% elif is_state('input_boolean.domofon_ignore','on') %}
+            script.domofon_ignore
+          {% else %}
+            script.noop
+          {%endif%}
+        
+  
