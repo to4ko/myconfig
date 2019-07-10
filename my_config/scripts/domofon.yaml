@@ -5,6 +5,14 @@
         entity_id: input_boolean.domofon_auto_open
       - service: input_boolean.turn_off
         entity_id: input_boolean.domofon_auto_open_once, input_boolean.domofon_ignore
+      - service: light.turn_off
+        entity_id: light.d1_mini_domofon_green_led
+      - service_template: light.turn_{{ states("input_boolean.domofon_auto_open") | lower }}
+        data:
+          entity_id: light.d1_mini_domofon_green_led
+      - service: notify.telegram
+        data_template:
+          message: "{% if is_state('input_boolean.domofon_auto_open','on') %}\U0001F4DE Домофон: Автооткрытие включено!{% else %}\U0001F4DE Домофон: Автооткрытие выключено!{% endif %}"
 
   domofon_auto_open_once_toggle:
     alias: Domofon Auto Open Once Toggle
@@ -13,7 +21,53 @@
         entity_id: input_boolean.domofon_auto_open_once
       - service: input_boolean.turn_off
         entity_id: input_boolean.domofon_auto_open, input_boolean.domofon_ignore
-        
+      - service: light.turn_off
+        entity_id: light.d1_mini_domofon_green_led
+      - service_template: script.domofon_green_led_blink_{{ states("input_boolean.domofon_auto_open_once") | lower }}
+      - service: notify.telegram
+        data_template:
+          message: "{% if is_state('input_boolean.domofon_auto_open_once','on') %}\U0001F4DE Домофон: Разовое автооткрытие включено!{% else %}\U0001F4DE Домофон: Автооткрытие выключено!{% endif %}"
+
+  domofon_mute_toggle:
+    alias: Domofon Mute
+    sequence:
+      - service: input_boolean.toggle
+        entity_id: input_boolean.domofon_mute
+      - service: light.turn_off
+        entity_id: light.d1_mini_domofon_blue_led
+      - service_template: script.domofon_blue_led_blink_{{ states("input_boolean.domofon_mute") | lower }}
+      - service_template: switch.turn_{{ states("input_boolean.domofon_mute") | lower }}
+        entity_id: switch.d1_mini_domofon_relay4
+      - service: notify.telegram
+        data_template:
+          message: "{% if is_state('input_boolean.domofon_mute','on') %}\U0001F4DE Домофон: Звук выключен!{% else %}\U0001F4DE Домофон: Звук включен!!{% endif %}"
+
+  domofon_blue_led_blink_on:
+    sequence:
+      - service: light.turn_on
+        data:
+          entity_id: light.d1_mini_domofon_blue_led
+          effect: "Blink"
+
+  domofon_blue_led_blink_off:
+    sequence:
+      - service: light.turn_off
+        data:
+          entity_id: light.d1_mini_domofon_blue_led
+
+  domofon_green_led_blink_on:
+    sequence:
+      - service: light.turn_on
+        data:
+          entity_id: light.d1_mini_domofon_green_led
+          effect: "Blink"
+
+  domofon_green_led_blink_off:
+    sequence:
+      - service: light.turn_off
+        data:
+          entity_id: light.d1_mini_domofon_green_led
+
   domofon_ignore_toggle:
     alias: Domofon Ignore Toggle
     sequence:
@@ -21,6 +75,12 @@
         entity_id: input_boolean.domofon_ignore
       - service: input_boolean.turn_off
         entity_id: input_boolean.domofon_auto_open, input_boolean.domofon_auto_open_once
+      - service_template: light.turn_{{ states("input_boolean.domofon_ignore") | lower }}
+        data:
+          entity_id: light.d1_mini_domofon_red_led
+      - service: notify.telegram
+        data_template:
+          message: "{% if is_state('input_boolean.domofon_ignore','on') %}\U0001F4DE Домофон: Игнор включен!{% else %}\U0001F4DE Домофон: Игнор выключен!{% endif %}"
       
   domofon_open_door:
     alias: Domofon Open Door
@@ -33,15 +93,46 @@
       - delay: '00:00:03'
       - service: switch.turn_off
         entity_id: switch.d1_mini_domofon_phone
-      - service_template: >
-          {% if is_state('input_boolean.domofon_auto_open_once','on') %}
-            input_boolean.turn_off
-          {%endif%}
-        entity_id: input_boolean.domofon_auto_open_once
+      - service: script.turn_on
+        data_template: 
+          entity_id: >
+            {% if is_state('input_boolean.domofon_auto_open_once','on') %}
+              script.domofon_auto_open_once_toggle
+            {%else%}
+              script.noop
+            {%endif%}
+      - service: script.turn_on
+        data_template:
+          entity_id: >
+            {% if is_state('input_boolean.domofon_mute','on') and is_state('input_boolean.domofon_auto_open','off') %}
+              script.domofon_mute_toggle
+            {%else%}
+              script.noop
+            {%endif%}
       - service: notify.telegram
         data_template:
           message: "\U0001F4DE Домофон открыт автоматически!"
   
+  domofon_check:
+    alias: Domofon Status Check
+    sequence:
+      - service: script.turn_on
+        data_template: 
+          entity_id: >
+            {% if is_state('input_boolean.domofon_auto_open_once','on') %}
+              script.domofon_auto_open_once_toggle
+            {%else%}
+              script.noop
+            {%endif%}
+      - service: script.turn_on
+        data_template:
+          entity_id: >
+            {% if is_state('input_boolean.domofon_mute','on') and is_state('input_boolean.domofon_auto_open','off') %}
+              script.domofon_mute_toggle
+            {%else%}
+              script.noop
+            {%endif%}
+
   domofon_ignore:
     alias: Domofon Ignore
     sequence:
@@ -49,7 +140,7 @@
         entity_id: switch.d1_mini_domofon_phone
       - delay: '00:00:01'
       - service: switch.turn_off
-        entity_id: switch.d1_mini_domofon_opendoor
+        entity_id: switch.d1_mini_domofon_phone
   
 
   domofon_script:

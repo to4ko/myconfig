@@ -3,6 +3,28 @@
     repositories:
       - path: 'to4ko/myconfig'
 
+  - platform: statistics
+    entity_id: sensor.pressure_158d000233fb72
+    name: pressure
+    max_age:
+      minutes: 10
+      
+  - platform: template
+    sensors:
+      pressure_gradient:
+        friendly_name: Pressure Gradient
+        value_template: "{{(states.binary_sensor.pressure_falling_fast.attributes.gradient|float * 3600*100)|int(0)}}"
+        icon_template: mdi:chart-line-variant
+        unit_of_measurement: 'Pah'
+
+      pressure_gradient_air_valve:
+        friendly_name: Pressure Gradient (Air Valve)
+        value_template: "{{(states.binary_sensor.pressure_rising_fast_air_valve.attributes.gradient|float * 3600*100)|int(0)}}"
+        icon_template: mdi:chart-line-variant
+        unit_of_measurement: 'Pah'
+        
+
+
 
 #  - platform: statistics
 #    entity_id: binary_sensor.8266_pwr_meter_imp
@@ -116,7 +138,7 @@
       last_motion:
         friendly_name: 'Last Motion'
         value_template: >
-          {%- set sensors = [states.binary_sensor.motion_sensor_158d0001e05856, states.binary_sensor.motion_sensor_158d0001ae9f61, states.binary_sensor.motion_sensor_158d0002b4729d, states.binary_sensor.motion_sensor_158d0001e53cda, states.binary_sensor.motion_sensor_158d000236bb94, states.binary_sensor.motion_sensor_158d0001aea602, states.binary_sensor.motion_sensor_158d000236bc6d, states.binary_sensor.motion_sensor_158d0001e54280, states.binary_sensor.motion_sensor_158d000224f89f, states.binary_sensor.motion_sensor_158d0001d5995e, states.binary_sensor.motion_sensor_158d0002b482e9 ] %}
+          {%- set sensors = [states.binary_sensor.motion_sensor_158d0001e05856, states.binary_sensor.motion_sensor_158d0001ae9f61, states.binary_sensor.motion_sensor_158d0002b4729d, states.binary_sensor.motion_sensor_158d0001e53cda, states.binary_sensor.motion_sensor_158d000236bb94, states.binary_sensor.motion_sensor_158d0001aea602, states.binary_sensor.motion_sensor_158d000236bc6d, states.binary_sensor.motion_sensor_158d0001e54280, states.binary_sensor.motion_sensor_158d000224f89f, states.binary_sensor.motion_sensor_158d0001d5995e, states.binary_sensor.motion_sensor_158d0002b482e9, states.binary_sensor.motion_sensor_158d0002b48381 ] %}
           {% for sensor in sensors %}
             {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
               {{ sensor.name }}
@@ -126,11 +148,16 @@
         friendly_name: 'Last Motion Time'
         value_template: '{{ as_timestamp(states.group.motion.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
 
+      bathroom_no_motion_since:
+        friendly_name: 'Bathroom No Motion Since'
+        value_template: "{{ states.binary_sensor.motion_sensor_158d000236bc6d.attributes['No motion since'] | int}}"
+        unit_of_measurement: 's'
+        entity_id: binary_sensor.motion_sensor_158d000236bc6d
 
       security_last_change:
         friendly_name: 'Last change sensor'
         value_template: >
-          {%- set sensors = [ states.binary_sensor.door_window_sensor_158d00025371f6, states.binary_sensor.door_window_sensor_158d000200ad58, states.binary_sensor.door_window_sensor_158d00022ccffe, states.binary_sensor.door_window_sensor_158d00025370d1, states.binary_sensor.door_window_sensor_158d00027129ae, states.binary_sensor.door_window_sensor_158d0001ef2ffc, states.binary_sensor.door_window_sensor_158d0002a14c5e, states.binary_sensor.door_window_sensor_158d0002529b9c, states.binary_sensor.door_window_sensor_158d00025315e9, states.binary_sensor.door_window_sensor_158d0001e5d6be, states.binary_sensor.door_window_sensor_158d0002531749, states.binary_sensor.motion_sensor_158d0001e53cda, states.binary_sensor.motion_sensor_158d000224f89f, states.binary_sensor.motion_sensor_158d000236bb94, states.binary_sensor.motion_sensor_158d0001e05856, states.binary_sensor.motion_sensor_158d0002b482e9, states.binary_sensor.motion_sensor_158d0001d5995e, states.binary_sensor.motion_sensor_158d0001ae9f61, states.binary_sensor.motion_sensor_158d0002b4729d, states.binary_sensor.motion_sensor_158d000236bc6d, states.binary_sensor.motion_sensor_158d0001e54280, states.binary_sensor.motion_sensor_158d0001aea602, states.binary_sensor.unifi_motion_entrance, states.binary_sensor.unifi_motion_hall ] %}
+          {%- set sensors = [ states.binary_sensor.door_window_sensor_158d00025371f6, states.binary_sensor.door_window_sensor_158d000200ad58, states.binary_sensor.door_window_sensor_158d00022ccffe, states.binary_sensor.door_window_sensor_158d00025370d1, states.binary_sensor.door_window_sensor_158d00027129ae, states.binary_sensor.door_window_sensor_158d0001ef2ffc, states.binary_sensor.door_window_sensor_158d0002a14c5e, states.binary_sensor.door_window_sensor_158d0002529b9c, states.binary_sensor.door_window_sensor_158d00025315e9, states.binary_sensor.door_window_sensor_158d0001e5d6be, states.binary_sensor.door_window_sensor_158d0002531749, states.binary_sensor.motion_sensor_158d0001e53cda, states.binary_sensor.motion_sensor_158d000224f89f, states.binary_sensor.motion_sensor_158d000236bb94, states.binary_sensor.motion_sensor_158d0001e05856, states.binary_sensor.motion_sensor_158d0002b482e9, states.binary_sensor.motion_sensor_158d0001d5995e, states.binary_sensor.motion_sensor_158d0001ae9f61, states.binary_sensor.motion_sensor_158d0002b4729d, states.binary_sensor.motion_sensor_158d000236bc6d, states.binary_sensor.motion_sensor_158d0001e54280, states.binary_sensor.motion_sensor_158d0001aea602, states.binary_sensor.motion_sensor_158d0002b48381 ] %}
           {% for sensor in sensors %}
             {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
               {{ sensor.name }}

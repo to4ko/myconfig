@@ -208,7 +208,8 @@ views:
                 name: HB Door
               - entity: binary_sensor.motion_sensor_158d0001ae9f61
                 name: HS
-              - entity: binary_sensor.motion_sensor_158d0002b4729d
+              - entity: binary_sensor.motion_k
+              #- entity: binary_sensor.motion_sensor_158d0002b4729d
                 name: K
               - entity: binary_sensor.motion_sensor_158d000236bc6d
                 name: B
@@ -250,7 +251,7 @@ views:
             title: Utility
             cards:
               - type: glance
-                columns: 5
+                columns: 7
                 show_state: false
                 entities:
                   #- entity: switch.ventilation
@@ -264,6 +265,13 @@ views:
                       service: switch.toggle
                       service_data:
                         entity_id: switch.ventilation
+                  - entity: binary_sensor.breather_v
+                    name: Breather
+                    tap_action:
+                      action: call-service
+                      service: script.breather_toggle
+                  - entity: binary_sensor.bathroom_humidity_rising
+                    name: H UP
                   - entity: switch.plug_158d0001f9ebd8
                     name: Fan B
                     icon: mdi:fan
@@ -371,25 +379,30 @@ views:
 #                  service: homeassistant.turn_off
 #                  entity_id: group.devices_to_turnoff
               - type: glance
-                columns: 7
+                columns: 6
                 entities:
                   - entity: binary_sensor.d1_mini_domofon_incomingcall
                     name: Call
-                  - entity: switch.d1_mini_domofon_phone
-                    name: PickupSw
-                    tap_action:
-                      action: toggle
-                  - entity: switch.d1_mini_domofon_relay3
-                    name: OpenSw
-                    icon: mdi:door-open
-                    tap_action:
-                      action: toggle
+#                  - entity: switch.d1_mini_domofon_phone
+#                    name: PickupSw
+#                    tap_action:
+#                      action: toggle
+#                  - entity: switch.d1_mini_domofon_relay3
+#                    name: OpenSw
+#                    icon: mdi:door-open
+#                    tap_action:
+#                      action: toggle
                   - entity: script.domofon_open_door
                     name: Open
                     icon: mdi:lock-open-outline
                     tap_action:
                       action: call-service
                       service: script.domofon_open_door
+                  - entity: binary_sensor.domofon_mute
+                    name: Mute
+                    tap_action:
+                      action: call-service
+                      service: script.domofon_mute_toggle
                   - entity: binary_sensor.domofon_auto_open
                     name: AOpen
                     tap_action:
@@ -2178,12 +2191,6 @@ views:
                 tap_action:
                   action: toggle
           #    - sensor.cpu_temperature
-          - type: entities
-            entities:
-              - entity: binary_sensor.motion_sensor_158d0002b48381
-                secondary_info: last-changed
-              - entity: sensor.battery_temp_motion_hs
-                secondary_info: last-changed
           - type: entity-filter
             show_header_toggle: false
             entities:
@@ -2600,7 +2607,7 @@ views:
         show_header_toggle: false
         entities:
           - binary_sensor.d1_mini_domofon_incomingcall
-          - sensor.d1_mini_domofon_speaker
+          - sensor.d1_mini_domofon_speakervoltage
           - type: divider
           - switch.d1_mini_domofon_phone
           - type: divider
@@ -2609,7 +2616,116 @@ views:
           - switch.d1_mini_domofon_relay1
           - switch.d1_mini_domofon_relay2
 
+      - type: entities
+        show_header_toggle: false
+        title: Daily meters
+        entities:
+          - sensor.cold_water_daily
+          - sensor.hot_water_daily
+          - type: divider
+          - sensor.power_daily_day
+          - sensor.power_daily_night
+          - type: divider
+          - sensor.power_light_daily_day
+          - sensor.power_light_daily_night
+          - type: divider
+          - sensor.power_socket_daily_day
+          - sensor.power_socket_daily_night
+      - type: entities
+        show_header_toggle: false
+        title: Monthly meters
+        entities:
+          - sensor.cold_water_monthly
+          - sensor.hot_water_monthly
+          - type: divider
+          - sensor.power_monthly_day
+          - sensor.power_monthly_night
+          - type: divider
+          - sensor.power_light_monthly_day
+          - sensor.power_light_monthly_night
+          - type: divider
+          - sensor.power_socket_monthly_day
+          - sensor.power_socket_monthly_night
 
+      - type: entities
+        show_header_toggle: false
+        title: Int meters
+        entities:
+          - sensor.power_consumption_int
+          - sensor.power_consumption_light_int
+          - sensor.power_consumption_socket_int
+      - type: entities
+        show_header_toggle: false
+        title: Tarrifs
+        entities:
+          - input_number.tariff_energy_day
+          - input_number.tariff_energy_night
+          - input_number.tariff_hot_water
+          - input_number.tariff_cold_water
+      - type: entities
+        show_header_toggle: false
+        title: Costs
+        entities:
+          - sensor.water_cost_um
+          - sensor.cold_water_cost_um
+          - sensor.hot_water_cost_um
+          - type: divider
+          - sensor.power_consumption_month_cost_um
+          - sensor.power_consumption_month_t1_cost_um
+          - sensor.power_consumption_month_t2_cost_um
+
+      - type: entities
+        show_header_toggle: false
+        title: Total Costs comparison
+        entities:
+          - sensor.utility_cost
+          - sensor.utility_cost_um
+          
+
+################################################################
+# pressure monitoring
+################################################################
+  - title: Pressure monitoring
+    icon: mdi:thermostat
+    cards:
+      - type: glance
+        columns: 6
+        entities:
+          - entity: binary_sensor.pressure_rising_fast
+            name: U Fast
+          - entity: binary_sensor.pressure_rising_slow
+            name: U Slow
+          - entity: binary_sensor.pressure_falling_fast
+            name: D Fast
+          - entity: binary_sensor.pressure_falling_slow
+            name: D Slow
+          - entity: binary_sensor.temp_rising
+            name: T Up
+          - entity: binary_sensor.temp_falling
+            name: T Down
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.pressure_158d000233fb72
+          - sensor.8266_air_valve_pressure
+      - type: gauge
+        name: Gradient
+        entity: sensor.pressure_gradient
+        max: 250
+        min: -250
+        severity:
+          blue: -250
+          green: 0
+          yellow: 250
+      - type: gauge
+        name: Gradient
+        entity: sensor.pressure_gradient_air_valve
+        max: 250
+        min: -250
+        severity:
+          blue: -100
+          green: 0
+          yellow: 100
 ################################################################
 # MQTT Cross Servers Sensors PAGE
 ################################################################
@@ -2681,174 +2797,174 @@ views:
 ################################################################
 # SENSORS BATTERIES PAGE
 ################################################################
-  - title: Battery
-    icon: mdi:battery
-    cards:
-      #############
-      # Left column
-      #############
-      - type: vertical-stack
-        cards: 
-          - type: entities
-            title: Hall Big
-            show_header_toggle: false
-            entities:
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_sasha_tracker_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_fridge_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_freezer_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_fridge_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_mid_door_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_main_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_secondary_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_entrance_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_fridge_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_left_home_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_vibration_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_freezer_hb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_test_sensor_hb
-          - type: entities
-            title: Hall Small
-            show_header_toggle: false
-            entities:  
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_hs
-          - type: entities
-            title: Storage
-            show_header_toggle: false
-            entities:    
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_night_light_st
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_st
-      #############
-      # Middle Left column
-      #############
-      - type: vertical-stack
-        cards:
-          - type: entities
-            title: Kitchen
-            show_header_toggle: false
-            entities:
-              - type: "custom:battery-entity"
-                entity: sensor.battery_window_k
-              - type: "custom:battery-entity"
-                entity: sensor.battery_water_leak_k
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_k
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_desk_light_k
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_k
-              - type: "custom:battery-entity"
-                entity: sensor.battery_smoke_k
-          - type: entities
-            title: Bathroom
-            show_header_toggle: false
-            entities:
-              - type: "custom:battery-entity"
-                entity: sensor.battery_water_leak_b
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_b
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_fan_b
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_b
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_b
-              - type: "custom:battery-entity"
-                entity: sensor.battery_counter_hot_water_b
-          - type: entities
-            title: Toilet
-            show_header_toggle: false
-            entities:
-              - type: "custom:battery-entity"
-                entity: sensor.battery_water_leak_t
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_t
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_fan_t
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_t
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_t
-              - type: "custom:battery-entity"
-                entity: sensor.battery_cover_t
-              - type: "custom:battery-entity"
-                entity: sensor.battery_counter_cold_water_t
-      #############
-      # Right column
-      #############
-      - type: vertical-stack
-        cards:
-          - type: entities
-            title: Master Bedroom
-            show_header_toggle: false
-            entities:    
-              - type: "custom:battery-entity"
-                entity: sensor.battery_window_mb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_mb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_main_light_mb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_desk_light_mb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_mb
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_mb
-          - type: entities
-            title: Sasha
-            show_header_toggle: false
-            entities:
-              - type: "custom:battery-entity"
-                entity: sensor.battery_window_s
-              - type: "custom:battery-entity"
-                entity: sensor.battery_vibration_s
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_s
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_night_light_s
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_desk_light_s
-              - type: "custom:battery-entity"
-                entity: sensor.battery_pink_cube_s
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_s
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_s
-          - type: entities
-            title: Vova
-            show_header_toggle: false
-            entities:
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_main_light_v
-              - type: "custom:battery-entity"
-                entity: sensor.battery_window_v
-              - type: "custom:battery-entity"
-                entity: sensor.battery_temp_v
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_desk_light_v
-              - type: "custom:battery-entity"
-                entity: sensor.battery_switch_bed_light_v
-              - type: "custom:battery-entity"
-                entity: sensor.battery_motion_v
-              - type: "custom:battery-entity"
-                entity: sensor.battery_door_v
+#  - title: Battery
+#    icon: mdi:battery
+#    cards:
+#      #############
+#      # Left column
+#      #############
+#      - type: vertical-stack
+#        cards: 
+#          - type: entities
+#            title: Hall Big
+#            show_header_toggle: false
+#            entities:
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_sasha_tracker_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_fridge_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_freezer_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_fridge_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_mid_door_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_main_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_secondary_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_entrance_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_fridge_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_left_home_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_vibration_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_freezer_hb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_test_sensor_hb
+#          - type: entities
+#            title: Hall Small
+#            show_header_toggle: false
+#            entities:  
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_hs
+#          - type: entities
+#            title: Storage
+#            show_header_toggle: false
+#            entities:    
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_night_light_st
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_st
+#      #############
+#      # Middle Left column
+#      #############
+#      - type: vertical-stack
+#        cards:
+#          - type: entities
+#            title: Kitchen
+#            show_header_toggle: false
+#            entities:
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_window_k
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_water_leak_k
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_k
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_desk_light_k
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_k
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_smoke_k
+#          - type: entities
+#            title: Bathroom
+#            show_header_toggle: false
+#            entities:
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_water_leak_b
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_b
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_fan_b
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_b
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_b
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_counter_hot_water_b
+#          - type: entities
+#            title: Toilet
+#            show_header_toggle: false
+#            entities:
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_water_leak_t
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_t
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_fan_t
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_t
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_t
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_cover_t
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_counter_cold_water_t
+#      #############
+#      # Right column
+#      #############
+#      - type: vertical-stack
+#        cards:
+#          - type: entities
+#            title: Master Bedroom
+#            show_header_toggle: false
+#            entities:    
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_window_mb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_mb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_main_light_mb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_desk_light_mb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_mb
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_mb
+#          - type: entities
+#            title: Sasha
+#            show_header_toggle: false
+#            entities:
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_window_s
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_vibration_s
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_s
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_night_light_s
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_desk_light_s
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_pink_cube_s
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_s
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_s
+#          - type: entities
+#            title: Vova
+#            show_header_toggle: false
+#            entities:
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_main_light_v
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_window_v
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_temp_v
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_desk_light_v
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_switch_bed_light_v
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_motion_v
+#              - type: "custom:battery-entity"
+#                entity: sensor.battery_door_v
 
 ################################################################
 # Utility SENSORS

@@ -64,7 +64,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.humidity_158d00020d7c3a
-      below: 63
+      below: 65
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f9ebd8
@@ -145,7 +145,7 @@
   action:
   - service: switch.turn_on
     entity_id: switch.wall_switch_right_158d0002a36e26
-    
+  
 # ##################################
 # Bathroom - Auto Light Off
 # ##################################
@@ -159,6 +159,24 @@
   action:
     - service: switch.turn_off
       entity_id: switch.wall_switch_right_158d0002a36e26
+
+# ##################################
+# Bathroom - Auto Light Disable if Door is Closed and there is movement detected
+# ##################################
+- alias: bathroom_auto_light_disable
+  initial_state: 'off'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.motion
+    event_data:
+      entity_id: binary_sensor.motion_sensor_158d000236bc6d
+  condition:
+    condition: state
+    entity_id: binary_sensor.door_window_sensor_158d0002a14c5e
+    state: 'off'
+  action:
+    - service: timer.cancel
+      entity_id: timer.timer_b
 
 # ##################################
 # Bathroom - Water Leak Detected

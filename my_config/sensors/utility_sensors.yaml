@@ -1,3 +1,23 @@
+  - platform: integration
+    source: sensor.power_consumption_w
+    name: power_consumption_int
+    unit_prefix: k
+    unit_time: h
+    round: 3
+
+  - platform: integration
+    source: sensor.power_consumption_light
+    name: power_consumption_light_int
+    unit_prefix: k
+    unit_time: h
+    round: 3
+
+  - platform: integration
+    source: sensor.power_consumption_socket
+    name: power_consumption_socket_int
+    unit_prefix: k
+    unit_time: h
+    round: 3
 
   - platform: template
     sensors:
@@ -10,15 +30,39 @@
         value_template: "{{ (states('sensor.power_consumption_month_cost')|float + states('sensor.water_cost')|float)|round(0) }}"
         friendly_name: "Utility Cost/Month"
 
+      utility_cost_um:
+        unit_of_measurement: 'rub'
+        icon_template: mdi:currency-rub
+        value_template: "{{ (states('sensor.power_consumption_month_cost_um')|float + states('sensor.water_cost_um')|float)|round(0) }}"
+        friendly_name: "Utility Cost/Month UM"
+
 # ############################################################################
 # Power monitoring sensors
 # ############################################################################
+      power_consumption_light:
+        friendly_name: 'Power light/Current'
+        unit_of_measurement: W
+        icon_template: mdi:gauge
+        value_template: "{{ ((states.switch.wall_switch_right_158d0002a36f7f.state|replace('on','1'))|int*48) + ((states.switch.wall_switch_left_158d0002a36f7f.state|replace('on','1'))|int*10) + ((states.switch.wall_switch_right_158d0002a36e26.state|replace('on','1'))|int*20) + ((states.switch.wall_switch_left_158d0002a36e26.state|replace('on','1'))|int*7) + (states.switch.plug_158d0002482619.attributes.load_power) + (states.switch.plug_158d00020b4971.attributes.load_power) + ((states.switch.wall_switch_left_158d0002a36433.state|replace('on','1'))|int*41) + ((states.switch.wall_switch_158d000248bf53.state|replace('on','1'))|int*16) + ((states.switch.wall_switch_left_158d000223921b.state|replace('on','1'))|int*32.5) + ((states.switch.wall_switch_right_158d000253f04a.state|replace('on','1'))|int*32.5) + (states.switch.wall_plug_158d00023e5812.attributes.load_power)|float + states.switch.plug_158d000216528c.attributes.load_power|float }}"
+
       power_consumption_socket:
         value_template: "{{ (states.switch.wall_plug_158d0001f2630e.attributes.load_power + states.switch.wall_plug_158d00024517fe.attributes.load_power + states.switch.wall_plug_158d000230fc52.attributes.load_power + states.switch.wall_plug_158d000239097a.attributes.load_power + states.switch.wall_plug_158d0002395d58.attributes.load_power + states.switch.plug_158d0002468fbd.attributes.load_power + states.switch.wall_plug_158d0002395dc9.attributes.load_power + states.switch.wall_plug_158d000246776f.attributes.load_power + states.switch.wall_plug_158d0002467773.attributes.load_power + states.switch.plug_158d000205a835.attributes.load_power + states.switch.wall_plug_158d000249b26b.attributes.load_power + 3 + states.switch.wall_plug_158d0002451850.attributes.load_power + states.switch.wall_plug_158d0002476ed1.attributes.load_power + states.switch.wall_plug_158d000249b25b.attributes.load_power + states.switch.plug_158d000232481a.attributes.load_power + states.switch.plug_158d0002924790.attributes.load_power + states.switch.plug_158d0001e85086.attributes.load_power + ((states.fan.humidifier2.state|replace('on','1'))|int*10) + 5 + 5 )|round(2) }}"
         unit_of_measurement: W
         friendly_name: 'Power socket/Current'
         icon_template: mdi:gauge
-      
+
+      power_consumption:
+        value_template: "{{ ((states('sensor.power_consumption_light')|float + states('sensor.power_consumption_socket')|float)/1000)|round(2) }}"
+        unit_of_measurement: 'kW'
+        icon_template: mdi:flash
+        friendly_name: 'Power/Current'
+
+      power_consumption_w:
+        value_template: "{{ ((states('sensor.power_consumption_light')|float + states('sensor.power_consumption_socket')|float))|round(2) }}"
+        unit_of_measurement: W
+        icon_template: mdi:flash
+        friendly_name: 'Power/Current'
+
       power_consumption_k:
         value_template: "{{ ( ((states.switch.wall_switch_right_158d0002a36f7f.state|replace('on','1'))|int*48) + states.switch.plug_158d000216528c.attributes.load_power + states.switch.wall_plug_158d0002451850.attributes.load_power + states.switch.wall_plug_158d0002476ed1.attributes.load_power + states.switch.wall_plug_158d000249b25b.attributes.load_power + states.switch.plug_158d0001e85086.attributes.load_power + states.switch.plug_158d000232481a.attributes.load_power + 1 ) | round(0)}}"
         unit_of_measurement: W
@@ -50,7 +94,7 @@
         icon_template: mdi:gauge
         
       power_consumption_mb:
-        value_template: "{{ ( states.switch.plug_158d0002482619.attributes.load_power + states.switch.wall_plug_158d0002467773.attributes.load_power + states.switch.plug_158d000205a835.attributes.load_power + 1 ) | round(0)}}"
+        value_template: "{{ ( states.switch.plug_158d000322e30c.attributes.load_power + states.switch.plug_158d0002482619.attributes.load_power + states.switch.wall_plug_158d0002467773.attributes.load_power + states.switch.plug_158d000205a835.attributes.load_power + 1 ) | round(0)}}"
         unit_of_measurement: W
         friendly_name: 'Power MB'
         icon_template: mdi:gauge
@@ -62,7 +106,7 @@
         icon_template: mdi:gauge
       
       power_consumption_s:
-        value_template: "{{ ( ((states.switch.wall_switch_left_158d0002a36433.state|replace('on','1'))|int*41) + states.switch.wall_plug_158d000239097a.attributes.load_power + states.switch.wall_plug_158d0002395d58.attributes.load_power + ((states.fan.humidifier2.state|replace('on','1'))|int*10) + states.switch.plug_158d00023a657a.attributes.load_power + 1  ) | round(0)}}"
+        value_template: "{{ ( ((states.switch.wall_switch_left_158d0002a36433.state|replace('on','1'))|int*41) + states.switch.wall_plug_158d000239097a.attributes.load_power + states.switch.wall_plug_158d0002395d58.attributes.load_power + ((states.fan.humidifier2.state|replace('on','1'))|int*10) + states.switch.plug_158d00023a657a.attributes.load_power + states.switch.power_strip_s.attributes.load_power  ) | round(0)}}"
         unit_of_measurement: W
         friendly_name: 'Power S'
         icon_template: mdi:gauge
@@ -79,12 +123,6 @@
         friendly_name: 'Power HB'
         icon_template: mdi:gauge
     
-      power_consumption_light:
-        friendly_name: 'Power light/Current'
-        unit_of_measurement: W
-        icon_template: mdi:gauge
-        value_template: "{{ ((states.switch.wall_switch_right_158d0002a36f7f.state|replace('on','1'))|int*48) + ((states.switch.wall_switch_left_158d0002a36f7f.state|replace('on','1'))|int*10) + ((states.switch.wall_switch_right_158d0002a36e26.state|replace('on','1'))|int*20) + ((states.switch.wall_switch_left_158d0002a36e26.state|replace('on','1'))|int*7) + (states.switch.plug_158d0002482619.attributes.load_power) + (states.switch.plug_158d00020b4971.attributes.load_power) + ((states.switch.wall_switch_left_158d0002a36433.state|replace('on','1'))|int*41) + ((states.switch.wall_switch_158d000248bf53.state|replace('on','1'))|int*16) + ((states.switch.wall_switch_left_158d000223921b.state|replace('on','1'))|int*32.5) + ((states.switch.wall_switch_right_158d000253f04a.state|replace('on','1'))|int*32.5) + (states.switch.wall_plug_158d00023e5812.attributes.load_power)|float + states.switch.plug_158d000216528c.attributes.load_power|float }}"
-      
       voltage:
         value_template: >
           {% if is_state('binary_sensor.ippon_hb_status','off') %}
@@ -99,11 +137,6 @@
         value_template: "{{ ((states('sensor.power_consumption')|float / states('sensor.voltage')|float)*1000)|round(1) }}"
         unit_of_measurement: "A"
         friendly_name: "Total current"
-      power_consumption:
-        value_template: "{{ ((states('sensor.power_consumption_light')|float + states('sensor.power_consumption_socket')|float)/1000)|round(2) }}"
-        unit_of_measurement: 'kWh'
-        icon_template: mdi:flash
-        friendly_name: 'Power/Current'
 
       power_t1:
         unit_of_measurement: 'kWh'
@@ -131,18 +164,35 @@
         friendly_name: "Power/Month"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
-        value_template: "{{ (states('sensor.power_consumption_month_t1')|float*6.29 + states('sensor.power_consumption_month_t2')|float*1.95) |round(2) }}"
+        value_template: "{{ (states('sensor.power_consumption_month_t1')|float*states('input_number.tariff_energy_day')|float + states('sensor.power_consumption_month_t2')|float*states('input_number.tariff_energy_night')|float) |round(2) }}"
       power_consumption_month_t1_cost:
         friendly_name: "Power/Month/T1"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
-        value_template: "{{ (states('sensor.power_consumption_month_t1')|float*6.29) |round(2) }}"
+        value_template: "{{ (states('sensor.power_consumption_month_t1')|float*states('input_number.tariff_energy_day')|float) |round(2) }}"
       power_consumption_month_t2_cost:
         friendly_name: "Power/Month/T2"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
-        value_template: "{{ (states('sensor.power_consumption_month_t2')|float*1.95) |round(2) }}"
-    
+        value_template: "{{ (states('sensor.power_consumption_month_t2')|float*states('input_number.tariff_energy_night')|float) |round(2) }}"
+
+
+      power_consumption_month_cost_um:
+        friendly_name: "Power/Month"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.power_monthly_day')|float*states('input_number.tariff_energy_day')|float + states('sensor.power_monthly_night')|float*states('input_number.tariff_energy_night')|float) |round(2) }}"
+      power_consumption_month_t1_cost_um:
+        friendly_name: "Power/Month/T1"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.power_monthly_day')|float*states('input_number.tariff_energy_day')|float) |round(2) }}"
+      power_consumption_month_t2_cost_um:
+        friendly_name: "Power/Month/T2"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.power_monthly_night')|float*states('input_number.tariff_energy_night')|float) |round(2) }}"
+
 #      power_meter_total_imp:
 #        friendly_name: "power_meter_total_imp"
 #        value_template: "{{ states('input_number.power_meter_total_imp')|float |round(2) }}"
@@ -192,21 +242,44 @@
         friendly_name: "Cold water"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
-        value_template: "{{ (((states('input_number.cold_water_meter_month'))|float)/100 * 38.7)|round(2) }}"
+        value_template: "{{ (((states('input_number.cold_water_meter_month'))|float)/100 * states('input_number.tariff_cold_water')|float)|round(2) }}"
   
       hot_water_cost:
         friendly_name: "Hot water"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
-        value_template: "{{ (((states('input_number.hot_water_meter_month'))|float)/100 * 191.72)|round(2) }}"
+        value_template: "{{ (((states('input_number.hot_water_meter_month'))|float)/100 * states('input_number.tariff_hot_water')|float)|round(2) }}"
   
       water_cost:
         friendly_name: "Water cost"
         icon_template: mdi:currency-rub
         unit_of_measurement: 'rub'
         value_template: >
-          {{ (( (((states('input_number.cold_water_meter_month'))|float))/100*38.7) +
-          (((states('input_number.hot_water_meter_month'))|float)/100*191.72) )|round(2) }}
+          {{ (( (((states('input_number.cold_water_meter_month'))|float))/100*states('input_number.tariff_cold_water')|float) +
+          (((states('input_number.hot_water_meter_month'))|float)/100*states('input_number.tariff_hot_water')|float) )|round(2) }}
+
+
+      cold_water_cost_um:
+        friendly_name: "Cold water"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (((states('sensor.cold_water_monthly'))|float) * states('input_number.tariff_cold_water')|float)|round(2) }}"
+  
+      hot_water_cost_um:
+        friendly_name: "Hot water"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (((states('sensor.hot_water_monthly'))|float) * states('input_number.tariff_hot_water')|float)|round(2) }}"
+  
+      water_cost_um:
+        friendly_name: "Water cost"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: >
+          {{ (( (((states('sensor.cold_water_monthly'))|float))*states('input_number.tariff_cold_water')|float) +
+          (((states('sensor.hot_water_monthly'))|float)*states('input_number.tariff_hot_water')|float) )|round(2) }}
+
+
           
       water:
         friendly_name: "Water total"

@@ -203,50 +203,50 @@
 # ##################################
 # System - Dima At home
 # ##################################
-- alias: system_presence_dima_at_home
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      #entity_id: device_tracker.life360_dima_tsymbal
-      entity_id: person.dima
-      to: "home"
-      for: 00:03:00
-  action: 
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F9D4 Дима дома!"
+#- alias: system_presence_dima_at_home
+#  initial_state: 'on'
+#  trigger:
+#    - platform: state
+#      #entity_id: device_tracker.life360_dima_tsymbal
+#      entity_id: person.dima
+#      to: "home"
+#      for: 00:03:00
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: "\U0001F9D4 Дима дома!"
         
 # ##################################
 # System - Vova At home
 # ##################################
-- alias: system_presence_vova_at_home
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      #entity_id: device_tracker.life360_vova_tsymbal
-      entity_id: person.vova
-      to: "home"
-      for: 00:03:00
-  action: 
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F471 Вова дома!"
+#- alias: system_presence_vova_at_home
+#  initial_state: 'on'
+#  trigger:
+#    - platform: state
+#      #entity_id: device_tracker.life360_vova_tsymbal
+#      entity_id: person.vova
+#      to: "home"
+#      for: 00:03:00
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: "\U0001F471 Вова дома!"
 
 # ##################################
 # System - Sandra At home
 # ##################################
-- alias: system_presence_sandra_at_home
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      #entity_id: device_tracker.life360_sandra_tsymbal
-      entity_id: person.sandra
-      to: "home"
-      for: 00:03:00
-  action: 
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F467 Саша дома!"
+#- alias: system_presence_sandra_at_home
+#  initial_state: 'on'
+#  trigger:
+#    - platform: state
+#      #entity_id: device_tracker.life360_sandra_tsymbal
+#      entity_id: person.sandra
+#      to: "home"
+#      for: 00:03:00
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: "\U0001F467 Саша дома!"
 
 # ##################################
 # System - Sasha At home
@@ -302,9 +302,15 @@
       event_data:
         entity_id: binary_sensor.switch_158d0001ef6089
         click_type: double
+#    - platform: state
+#      entity_id: input_boolean.sasha_tracker
   action:
-  - service: input_boolean.toggle
-    entity_id: input_boolean.sasha_tracker
+    - service: input_boolean.toggle
+      entity_id: input_boolean.sasha_tracker
+    #- service: device_tracker.see
+    #  data_template:
+    #    dev_id: sasha
+    #    location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
 
 # ##################################
 # System - Sasha tracker
@@ -322,6 +328,7 @@
         dev_id: sasha
         location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
 
+
 # ##################################
 # System - Sasha tracker - Audio
 # ##################################
@@ -330,8 +337,6 @@
   trigger:
     platform: state
     entity_id: input_boolean.sasha_tracker
-    #from: 'on'
-    #to: 'off'
   condition:
     condition: and
     conditions:
@@ -349,11 +354,146 @@
       entity_id: media_player.mpd
       data_template:
         message: >
-          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, '] | random %}
-          {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!'] | random %}
-          {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!'] | random %}
+          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'Маленький хозяин, '] | random %}
+          {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я буду скучать!'] | random %}
+          {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ура! Ура! Ты вернулся домой!'] | random %}
           
           {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+    #- service: notify.telegram
+    #  data_template:
+    #    message: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+
+# ##################################
+# System - Sensors Low Battery Notification
+# ##################################
+- alias: system_low_battery
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    value_template: '{{ state.attributes.battery_level }}'
+    below: 9
+    above: 11
+    entity_id:
+      # HALL BIG
+      - binary_sensor.switch_158d0001ef6089
+      - binary_sensor.door_window_sensor_158d000253722b
+      - binary_sensor.door_window_sensor_158d000252acba
+      - sensor.temperature_158d0002461e5b
+      - sensor.temperature_158d0002464ec0
+      - binary_sensor.motion_sensor_158d0001d5995e
+      - binary_sensor.door_window_sensor_158d0001e5d6be
+      - binary_sensor.door_window_sensor_158d0002531749
+      - binary_sensor.motion_sensor_158d0001e05856
+      - binary_sensor.motion_sensor_158d0002b482e9
+      - binary_sensor.switch_158d00023d3206
+      - binary_sensor.vibration_158d0002a2412d
+      - sensor.humidity_158d000237167c
+      - binary_sensor.door_window_sensor_158d0002a1a4b2
+      - binary_sensor.door_window_sensor_158d0002b7c2c8
+      # HALL SMALL
+      - binary_sensor.motion_sensor_158d0001ae9f61
+      - binary_sensor.wall_switch_right_158d00026ea94e
+      - binary_sensor.motion_sensor_158d0002b48381
+      # KITCHEN
+      - binary_sensor.door_window_sensor_158d00025371f6
+      - binary_sensor.water_leak_sensor_158d00023297e7
+      - sensor.temperature_158d0001e586af
+      - binary_sensor.motion_sensor_158d0002b4729d
+      - binary_sensor.switch_158d0001ef61be
+      - binary_sensor.switch_158d0001ef609b
+      - binary_sensor.switch_158d00023e5f2a
+      - switch.wall_switch_right_158d0002a365df
+      - binary_sensor.door_window_sensor_158d0002a1a47a
+      # MASTER BEDROOM
+      - binary_sensor.door_window_sensor_158d000200ad58
+      - binary_sensor.door_window_sensor_158d00025315e9
+      - binary_sensor.motion_sensor_158d0001e53cda
+      - binary_sensor.wall_switch_both_158d00013e6aa5
+      - sensor.temperature_158d000222c746
+      - binary_sensor.switch_158d00023d3116
+      - sensor.temperature_158d0001e8995a
+      # VOVA
+      - binary_sensor.door_window_sensor_158d00022ccffe
+      - binary_sensor.door_window_sensor_158d0002529b9c
+      - binary_sensor.motion_sensor_158d000236bb94
+      - binary_sensor.switch_158d00016bdb4a
+      - binary_sensor.wall_switch_both_158d0001712d55
+      - sensor.temperature_158d0001e58714
+      - binary_sensor.wall_switch_both_158d00026eb820
+      - binary_sensor.door_window_sensor_158d000236fdc9
+      # STORAGE
+      - binary_sensor.motion_sensor_158d0001aea602
+      - binary_sensor.switch_158d00023d0b86
+      - sensor.temperature_158d000233fb72
+      # BATHROOM
+      - switch.plug_158d0001f9ebd8
+      - binary_sensor.door_window_sensor_158d0002a14c5e
+      - binary_sensor.motion_sensor_158d000236bc6d
+      - binary_sensor.water_leak_sensor_158d0002373a67
+      - sensor.temperature_158d00020d7c3a
+      - binary_sensor.door_window_sensor_158d000236fcd5
+      # TOILET
+      - binary_sensor.door_window_sensor_158d0001ef2ffc
+      - binary_sensor.motion_sensor_158d0001e54280
+      - binary_sensor.switch_158d0001b97111
+      - binary_sensor.water_leak_sensor_158d00023684c2
+      - sensor.temperature_158d0001e58754
+      - binary_sensor.door_window_sensor_158d000232ddd6
+      - binary_sensor.door_window_sensor_158d000232de79
+      # SASHA
+      - binary_sensor.cube_158d000116b03f
+      - binary_sensor.door_window_sensor_158d00025370d1
+      - binary_sensor.door_window_sensor_158d00027129ae
+      - binary_sensor.motion_sensor_158d000224f89f
+      - binary_sensor.switch_158d00019c8afd
+      - binary_sensor.switch_158d0001f3627d
+      - binary_sensor.vibration_158d0002a8ac3c
+      - sensor.temperature_158d0001e6d85a
+  action:  
+  - service: notify.telegram
+    data_template:           
+      message: "\U0001f6a8 Low battery level: {{ trigger.to_state.name }} - {{ trigger.to_state.attributes.battery_level }}%"
+
+# ##################################      
+# System - Tor restart every 2 hours
+# ##################################
+- alias: system_tor_restart
+  initial_state: 'on'
+  trigger:
+    platform: time_pattern
+    hours: '/2'
+  action:
+    - service: hassio.addon_restart
+      data:
+        addon: "a0d7b954_tor"
+
+# ##################################
+# System - Person State
+# ##################################
+#- alias: system_person_state
+#  initial_state: 'on'
+#  trigger:
+#    - platform: state
+#      entity_id: person.dima
+#    - platform: state
+#      entity_id: person.sandra
+#    - platform: state
+#      entity_id: person.vova
+#    - platform: state
+#      entity_id: person.sasha
+#  condition:
+#    - condition: template
+#      value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
+   # condition: and
+  #  conditions:
+ #   
+  #    
+      #- condition: template
+      #  value_template: "{{ not is_state('trigger.from_state.state','not_home') }}"
+      #- condition: template
+      #  value_template: "{{ not is_state('trigger.to_state.state','not_home') }}"
+#  action:
+#    - service: notify.telegram
+#      data_template:
+#        message: "{%if trigger.from_state.attributes.friendly_name =='Dima'%}\U0001F9D4 Дима: {%elif trigger.from_state.attributes.friendly_name =='Sandra'%}\U0001F467 Саша: {%elif trigger.from_state.attributes.friendly_name =='Vova'%}\U0001F471 Вова: {%elif trigger.from_state.attributes.friendly_name =='Sasha'%}\U0001F476 Санек: {%endif%} {{ trigger.to_state.state|capitalize }}"
+#        {{ trigger.from_state.state|capitalize }} ->

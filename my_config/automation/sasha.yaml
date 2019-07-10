@@ -124,9 +124,14 @@
         entity_id: binary_sensor.vibration_158d0002a8ac3c
         movement_type: vibrate
   condition:
-    condition: time
-    after: '21:00:00'
-    before: '07:00:00'
+    condition: and
+    conditions:
+      - condition: time
+        after: '21:00:00'
+        before: '07:00:00'
+      - condition: state
+        entity_id: person.sasha
+        state: 'home'
   action:
     - service: switch.turn_on
       entity_id: switch.wall_switch_right_158d0002a36433
@@ -195,9 +200,9 @@
       entity_id: switch.wall_switch_right_158d0002a36433
       
 # ##################################
-# Sasha - Wall heater on if off
+# Sasha - Wall heater toggle
 # ##################################
-- alias: sasha_wall_heater_turn_on
+- alias: sasha_wall_heater_toggle
   initial_state: 'on'
   trigger:
     platform: event
@@ -205,33 +210,10 @@
     event_data:
       entity_id: binary_sensor.switch_158d00019c8afd
       click_type: double
-  condition:
-    condition: state
-    entity_id: switch.plug_158d00023a657a
-    state: 'off'    
   action:
-    service: switch.turn_on
+    service: switch.toggle
     entity_id: switch.plug_158d00023a657a
 
-# ##################################
-# Sasha - Wall heater off if on
-# ##################################
-- alias: sasha_wall_heater_turn_off
-  initial_state: 'on'
-  trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d00019c8afd
-      click_type: double
-  condition:
-    condition: state
-    entity_id: switch.plug_158d00023a657a
-    state: 'on'
-  action:
-    service: switch.turn_off
-    entity_id: switch.plug_158d00023a657a
-    
 #ube	cube	MFKZQ01LM	off (always)	xiaomi_aqara.cube_action	action_type, action_value (rotate)	flip90, flip180, move, tap_twice, shake_air, swing, alert, free_fall, rotate (degrees at action_value)
 
 # ##################################
@@ -310,10 +292,10 @@
 # Sasha - Humidifier 2 low water notify to Telegram
 # ##################################
 - alias: sasha_humidifier_water_low_water
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
     platform: time_pattern
-    minutes: '/10'
+    minutes: '/30'
   condition:
     condition: and
     conditions:
@@ -327,6 +309,30 @@
       - condition: state
         entity_id: person.dima
         state: 'home'
+  action:
+    service: notify.telegram
+    data_template:
+      message: "\U0001f4a7 Увлажнитель - осталось менее 10% воды!"
+      
+# ##################################
+# Sasha - Humidifier 2 low water notify to Telegram
+# ##################################
+- alias: sasha_humidifier_water_low_water
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.humidifier_water_level
+    below: 11
+    above: 9
+#  condition:
+#    condition: and
+#    conditions:
+#      - condition: time
+#        after: '07:00:00'
+#        before: '23:59:00'
+#      - condition: state
+#        entity_id: person.dima
+#        state: 'home'
   action:
     service: notify.telegram
     data_template:

@@ -226,4 +226,29 @@
 #      data_template:
 #          entity_id: input_number.power_meter_total_imp
 #          value: "{{ (states.input_number.power_meter_total_imp.state|float + 0.0002) | round(5) }}"
-  
+
+
+
+# ##################################
+# System - Utility meter tariff change
+# ##################################
+- alias: system_power_tariff_change
+  initial_state: 'on'
+  trigger:
+    - platform: homeassistant
+      event: start
+    - platform: time
+      at: '07:00:00'
+    - platform: time
+      at: '23:00:00'
+  action:
+    - service: utility_meter.select_tariff
+      data_template:
+        entity_id:
+          - utility_meter.power_daily
+          - utility_meter.power_monthly
+          - utility_meter.power_socket_daily
+          - utility_meter.power_socket_monthly
+          - utility_meter.power_light_daily
+          - utility_meter.power_light_monthly
+        tariff: '{%- if 7<= (now().strftime("%-H") | int) < 23 -%}day{%- else -%}night{%- endif -%}'

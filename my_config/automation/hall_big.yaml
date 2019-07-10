@@ -652,7 +652,7 @@
       entity_id: light.led_strip_hb
       
 # ##################################
-# Hall Big - Main Door Bottom Lock Close Day
+# Hall Big - Main Door Bottom Lock
 # ##################################
 - alias: hall_big_bottom_lock
   initial_state: 'on'
@@ -666,6 +666,10 @@
       from: 'off'
       to: 'on'
   action:
+    - service: script.turn_on
+      data_template:
+        entity_id: >
+          script.bottom_lock_yellow_led_blink_{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}off{% else %}on{% endif %}
     - service: notify.telegram
       data_template:
         message: "{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}\U0001F513\U0001F53D Нижний замок открыт!{% else %}\U0001F512\U0001F53D Нижний замок закрыт!{% endif %}"
@@ -673,16 +677,18 @@
       data_template:
         entity_id: media_player.mpd
         volume_level: '0.3'
-    - service_template: >
-        {% set weekday = as_timestamp(now()) | timestamp_custom("%w")|int %} 
-        {% set hour_num = now().hour | int %}
-        
-        {% if hour_num >=7 and hour_num <21 %}
-        script.bottom_lock_tts
-        {% endif %}
+    - service: script.turn_on
+      data_template:
+        entity_id: >
+          {% set weekday = as_timestamp(now()) | timestamp_custom("%w")|int %} 
+          {% set hour_num = now().hour | int %}
+          
+          {% if hour_num >=7 and hour_num <21 %}
+          script.bottom_lock_tts
+          {% endif %}
 
 # ##################################
-# Hall Big - Main Door Top Lock Close Day
+# Hall Big - Main Door Top Lock
 # ##################################
 - alias: hall_big_top_lock
   initial_state: 'on'
@@ -710,6 +716,9 @@
         {% if hour_num >=7 and hour_num <21 %}
         script.top_lock_tts
         {% endif %}
+    - service_template: light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}off{% else %}on{% endif %}
+      data:
+        entity_id: light.d1_mini_domofon_yellow_led
         
 # ##################################
 # Hall Big - Domofon Incoming Call
@@ -719,22 +728,74 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.d1_mini_domofon_incomingcall
-      from: 'off'
       to: 'on'
   action:
-    - service: automation.turn_off
-      entity_id: automation.hall_big_domofon_incoming_call
+    #- service: automation.turn_off
+    #  entity_id: automation.hall_big_domofon_incoming_call
+    - service: light.turn_on
+      data:
+        entity_id: light.d1_mini_domofon_white_led
+        effect: "blink white"
     - service: camera.snapshot
       data:
         entity_id: camera.uvc_g3_flex_window
         filename: "/config/www/cam_captures/domofon.jpg"
     - service: script.domofon_script
     - service: notify.telegram
-      data_template:
+      data:
+        title: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+        message: "{{now().strftime('%H:%M %d-%m-%Y')}}"
         data:
           photo:
-          - file: "/config/www/cam_captures/domofon.jpg"
-            caption: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+          - file: "/config/www/cam_captures/window.jpg"
+            caption: "Звонок в домофон {{now().strftime('%H:%M %d-%m-%Y')}}"
+    - service: light.turn_off
+      data:
+        entity_id: light.d1_mini_domofon_white_led
+    #- service: automation.turn_off
+    #  entity_id: automation.hall_big_domofon_incoming_call
     - delay: '00:00:30'
     - service: automation.turn_on
       entity_id: automation.hall_big_domofon_incoming_call
+    - service: light.turn_off
+      data:
+        entity_id: light.d1_mini_domofon_white_led
+    - delay: '00:15:00'
+    - service: script.domofon_check
+
+# ##################################
+# Hall Big - Domofon Auto Open On Arrival
+# ##################################
+- alias: hall_big_domofon_auto_open_on_arrival
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: person.dima
+      to: 'home'
+    - platform: state
+      entity_id: person.sandra
+      to: 'home'
+    - platform: state
+      entity_id: person.vova
+      to: 'home'
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: input_boolean.domofon_auto_open_once
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.domofon_auto_open
+        state: 'off'
+      - condition: template
+        value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: '{{ trigger.from_state.attributes.friendly_name }} прибыл домой!'
+    - service: script.turn_on
+      entity_id: script.domofon_mute_toggle
+    - service: script.turn_on
+      entity_id: script.domofon_auto_open_once_toggle
+    - delay: '00:15:00'
+    - service: script.domofon_check
