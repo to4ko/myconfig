@@ -180,6 +180,8 @@ views:
             #title: Camers
             cards:
               - type: 'custom:camera-card'
+                entity: camera.door_hb
+              - type: 'custom:camera-card'
                 entity: camera.uvc_g3_flex_entrance
               - type: 'custom:camera-card'
                 entity:  camera.uvc_g3_flex_hall
@@ -379,8 +381,10 @@ views:
 #                  service: homeassistant.turn_off
 #                  entity_id: group.devices_to_turnoff
               - type: glance
-                columns: 6
+                columns: 7
                 entities:
+                  - entity: binary_sensor.doorbell
+                    name: Doorbell
                   - entity: binary_sensor.d1_mini_domofon_incomingcall
                     name: Call
 #                  - entity: switch.d1_mini_domofon_phone
@@ -1838,30 +1842,18 @@ views:
   - title: Cameras
     icon: mdi:cctv
     cards:
-      - type: picture-entity
-        title: Entrance
-        entity: camera.uvc_g3_flex_entrance
-        name: Entrance
-      - type: picture-entity
-        title: Kitchen
+      - type: 'custom:camera-card'
+        entity: camera.door_hb
+      - type: 'custom:camera-card'
         entity: camera.digma100
-        name: Enrance 2
-      - type: picture-entity
-        title: Hall Big
-        entity: camera.uvc_g3_flex_hall
-        name: Hall
-      - type: picture-entity
-        title: Dixy
+      - type: 'custom:camera-card'
+        entity: camera.uvc_g3_flex_entrance
+      - type: 'custom:camera-card'
+        entity:  camera.uvc_g3_flex_hall
+      - type: 'custom:camera-card'
         entity: camera.uvc_g3_flex_dixy
-        name: Dixy
-      - type: picture-entity
-        title: Window
+      - type: 'custom:camera-card'
         entity: camera.uvc_g3_flex_window
-        name: Window
-      #- type: picture-entity
-      #  title: Dixy
-      #  entity: camera.rpi_cam
-      #  name: Dixy Cam
 
       
 
@@ -2688,44 +2680,82 @@ views:
   - title: Pressure monitoring
     icon: mdi:thermostat
     cards:
-      - type: glance
-        columns: 6
-        entities:
-          - entity: binary_sensor.pressure_rising_fast
-            name: U Fast
-          - entity: binary_sensor.pressure_rising_slow
-            name: U Slow
-          - entity: binary_sensor.pressure_falling_fast
-            name: D Fast
-          - entity: binary_sensor.pressure_falling_slow
-            name: D Slow
-          - entity: binary_sensor.temp_rising
-            name: T Up
-          - entity: binary_sensor.temp_falling
-            name: T Down
-      - type: history-graph
-        hours_to_show: 48
-        entities:
-          - sensor.pressure_158d000233fb72
-          - sensor.8266_air_valve_pressure
-      - type: gauge
-        name: Gradient
-        entity: sensor.pressure_gradient
-        max: 250
-        min: -250
-        severity:
-          blue: -250
-          green: 0
-          yellow: 250
-      - type: gauge
-        name: Gradient
-        entity: sensor.pressure_gradient_air_valve
-        max: 250
-        min: -250
-        severity:
-          blue: -100
-          green: 0
-          yellow: 100
+      - type: vertical-stack
+        cards:
+          - type: glance
+            columns: 6
+            entities:
+              - entity: binary_sensor.pressure_rising_fast
+                name: U Fast
+              - entity: binary_sensor.pressure_rising_slow
+                name: U Slow
+              - entity: binary_sensor.pressure_falling_fast
+                name: D Fast
+              - entity: binary_sensor.pressure_falling_slow
+                name: D Slow
+              - entity: binary_sensor.temp_rising
+                name: T Up
+              - entity: binary_sensor.temp_falling
+                name: T Down
+          - type: history-graph
+            hours_to_show: 72
+            entities:
+              - sensor.pressure_158d000233fb72
+              - sensor.8266_air_valve_pressure
+          - type: history-graph
+            hours_to_show: 72
+            entities:
+              - sensor.pressure_gradient
+              - sensor.pressure_gradient_air_valve
+      - type: vertical-stack
+        cards:
+          - type: gauge
+            name: Gradient
+            entity: sensor.pressure_gradient
+            max: 250
+            min: -250
+            severity:
+              blue: -250
+              green: 0
+              yellow: 250
+          - type: custom:mini-graph-card
+            entities:
+              - sensor.pressure_gradient
+            hours_to_show: 48
+            points_per_hour: 10
+            decimals: 0
+            hour24: true
+            extrema: true
+            labels: true
+            line_width: 1
+            line_color: blue
+            upper_bound: 250
+            lower_bound: -250
+      - type: vertical-stack
+        cards:
+          - type: gauge
+            name: Gradient
+            entity: sensor.pressure_gradient_air_valve
+            max: 250
+            min: -250
+            severity:
+              blue: -100
+              green: 0
+              yellow: 100
+          
+          - type: custom:mini-graph-card
+            entities:
+              - sensor.pressure_gradient_air_valve
+            hours_to_show: 48
+            points_per_hour: 10
+            decimals: 0
+            hour24: true
+            extrema: true
+            labels: true
+            line_width: 1
+            line_color: black
+            upper_bound: 250
+            lower_bound: -250
 ################################################################
 # MQTT Cross Servers Sensors PAGE
 ################################################################
@@ -2972,63 +3002,99 @@ views:
   - title: Utility Sensors
     icon: mdi:shape
     cards:
-      - type: entities
-        title: Main
-        show_header_toggle: false
-        entities:
-          - entity: sensor.power_t1
-          - entity: sensor.power_t2
-          - entity: sensor.power_consumption_month_t1
-          - entity: sensor.power_consumption_month_t2
-          - entity: sensor.cold_water_meter
-          - entity: sensor.hot_water_meter
-          - entity: sensor.cold_water_month
-          - entity: sensor.hot_water_month
-      - type: entities
-        title: j3455
-        show_header_toggle: false
-        entities:
-          - entity: sensor.power_t1_j3455
-            name: Power meter/T1
-          - entity: sensor.power_t2_j3455
-            name: Power meter/T2
-          - entity: sensor.power_consumption_month_t1_j3455
-            name: Power/Month/T1
-          - entity: sensor.power_consumption_month_t2_j3455
-            name: Power/Month/T2
-          - entity: sensor.cold_water_meter_j3455
-            name: 'Cold water meter'
-          - entity: sensor.hot_water_meter_j3455
-            name: 'Hot water meter'
-          - entity: sensor.cold_water_meter_month_j3455
-            name: 'Cold water/Month'
-          - entity: sensor.hot_water_meter_month_j3455
-            name: 'Hot water/Month'
-          - entity: input_boolean.j3455_set_utility
-            name: Set from Main
-          - entity: binary_sensor.j3455_state
-            name: j3455 Server State
-      - type: entities
-        title: RPI
-        show_header_toggle: false
-        entities:
-          - entity: sensor.power_t1_rpi
-            name: Power meter/T1
-          - entity: sensor.power_t2_rpi
-            name: Power meter/T2
-          - entity: sensor.power_consumption_month_t1_rpi
-            name: Power/Month/T1
-          - entity: sensor.power_consumption_month_t2_rpi
-            name: Power/Month/T2
-          - entity: sensor.cold_water_meter_rpi
-            name: 'Cold water meter'
-          - entity: sensor.hot_water_meter_rpi
-            name: 'Hot water meter'
-          - entity: sensor.cold_water_meter_month_rpi
-            name: 'Cold water/Month'
-          - entity: sensor.hot_water_meter_month_rpi
-            name: 'Hot water/Month'
-          - entity: input_boolean.rpi_set_utility
-            name: Set from Main
-          - entity: binary_sensor.rpi_state
-            name: RPI Server State
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Main
+            show_header_toggle: false
+            entities:
+              - entity: sensor.power_t1
+              - entity: sensor.power_t2
+              - entity: sensor.power_consumption_month_t1
+              - entity: sensor.power_consumption_month_t2
+              - entity: sensor.cold_water_meter
+              - entity: sensor.hot_water_meter
+              - entity: sensor.cold_water_month
+              - entity: sensor.hot_water_month
+          - type: glance
+            entities:
+              - entity: script.utility_value_from_j3455
+                name: j3455 -> Main
+                icon: mdi:desktop-tower
+                hold_action: none
+                tap_action:
+                  action: call-service
+                  service: script.utility_value_from_j3455
+              - entity: script.utility_value_from_rpi
+                name: RPI -> Main
+                icon: mdi:raspberry-pi
+                hold_action: none
+                tap_action:
+                  action: call-service
+                  service: script.utility_value_from_rpi
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: j3455
+            show_header_toggle: false
+            entities:
+              - entity: sensor.power_t1_j3455
+                name: Power meter/T1
+              - entity: sensor.power_t2_j3455
+                name: Power meter/T2
+              - entity: sensor.power_consumption_month_t1_j3455
+                name: Power/Month/T1
+              - entity: sensor.power_consumption_month_t2_j3455
+                name: Power/Month/T2
+              - entity: sensor.cold_water_meter_j3455
+                name: 'Cold water meter'
+              - entity: sensor.hot_water_meter_j3455
+                name: 'Hot water meter'
+              - entity: sensor.cold_water_meter_month_j3455
+                name: 'Cold water/Month'
+              - entity: sensor.hot_water_meter_month_j3455
+                name: 'Hot water/Month'
+          - type: glance
+            entities:
+              - entity: input_boolean.j3455_set_utility
+                name: Main -> j3455
+                tap_action:
+                  action: call-service
+                  service: input_boolean.toggle
+                  service_data:
+                    entity_id: input_boolean.j3455_set_utility
+              - entity: binary_sensor.j3455_state
+                name: j3455 Server State
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: RPI
+            show_header_toggle: false
+            entities:
+              - entity: sensor.power_t1_rpi
+                name: Power meter/T1
+              - entity: sensor.power_t2_rpi
+                name: Power meter/T2
+              - entity: sensor.power_consumption_month_t1_rpi
+                name: Power/Month/T1
+              - entity: sensor.power_consumption_month_t2_rpi
+                name: Power/Month/T2
+              - entity: sensor.cold_water_meter_rpi
+                name: 'Cold water meter'
+              - entity: sensor.hot_water_meter_rpi
+                name: 'Hot water meter'
+              - entity: sensor.cold_water_meter_month_rpi
+                name: 'Cold water/Month'
+              - entity: sensor.hot_water_meter_month_rpi
+                name: 'Hot water/Month'
+          - type: glance
+            entities:
+              - entity: input_boolean.rpi_set_utility
+                name: Main -> RPI
+                tap_action:
+                  action: call-service
+                  service: input_boolean.toggle
+                  service_data:
+                    entity_id: input_boolean.rpi_set_utility
+              - entity: binary_sensor.rpi_state
+                name: RPI Server State

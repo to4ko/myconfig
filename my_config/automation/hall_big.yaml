@@ -133,10 +133,10 @@
       entity_id: counter.main_door_hb
     - service: notify.telegram
       data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{ now().strftime('%H:%M %d.%m.%Y') }} {{ states.counter.main_door_hb.state }})"
+        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states.sensor.time.state}} {{states.sensor.date.state}}, {{ states.counter.main_door_hb.state }})"
     - service: notify.telegram_cam
       data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{ now().strftime('%H:%M %d.%m.%Y') }} {{ states.counter.main_door_hb.state }})"
+        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states.sensor.time.state}} {{states.sensor.date.state}}, {{ states.counter.main_door_hb.state }})"
     - delay: 00:00:09
     - service: script.turn_on
       entity_id: script.open_door_photo
@@ -206,10 +206,10 @@
       entity_id: counter.main_door_hb
     - service: notify.telegram
       data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! {{ now().strftime('%H:%M %d.%m.%Y') }} {{ states.counter.main_door_hb.state }}"
+        message: "\U0001f6aa Внимание! Входная дверь открыта! {{states.sensor.time.state}} {{states.sensor.date.state}}, {{ states.counter.main_door_hb.state }}"
     - service: notify.telegram_cam
       data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! {{ now().strftime('%H:%M %d.%m.%Y') }} {{ states.counter.main_door_hb.state }}"
+        message: "\U0001f6aa Внимание! Входная дверь открыта! {{states.sensor.time.state}} {{states.sensor.date.state}}, {{ states.counter.main_door_hb.state }}"
     - delay: 00:00:10
     - service: script.turn_on
       entity_id: script.open_door_photo
@@ -578,7 +578,7 @@
       entity_id: binary_sensor.switch_158d0001ef6089
       click_type: long_click_press
   action:
-    - service: script.tts_weather
+    - service: script.weather_tts
       data_template:
         entity_id: media_player.mpd
         volume_level: '0.3'
@@ -680,11 +680,8 @@
     - service: script.turn_on
       data_template:
         entity_id: >
-          {% set weekday = as_timestamp(now()) | timestamp_custom("%w")|int %} 
-          {% set hour_num = now().hour | int %}
-          
-          {% if hour_num >=7 and hour_num <21 %}
-          script.bottom_lock_tts
+          {% if is_state('binary_sensor.tod_long_day','on') %}
+            script.bottom_lock_tts
           {% endif %}
 
 # ##################################
@@ -710,11 +707,8 @@
         entity_id: media_player.mpd
         volume_level: '0.3'
     - service_template: >
-        {% set weekday = as_timestamp(now()) | timestamp_custom("%w")|int %} 
-        {% set hour_num = now().hour | int %}
-        
-        {% if hour_num >=7 and hour_num <21 %}
-        script.top_lock_tts
+        {% if is_states('binary_sensor.tod_long_day','on') %}
+          script.top_lock_tts
         {% endif %}
     - service_template: light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}off{% else %}on{% endif %}
       data:
@@ -799,3 +793,52 @@
       entity_id: script.domofon_auto_open_once_toggle
     - delay: '00:15:00'
     - service: script.domofon_check
+
+# ##################################
+# Hall Big - Doorbell
+# ##################################
+- alias: hall_big_doorbell
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.doorbell
+      from: 'off'
+      to: 'on'
+  action:
+    - service: camera.snapshot
+      data:
+        entity_id: camera.door_hb
+        filename: "/config/www/cam_captures/doorbell.jpg"
+    - service: xiaomi_aqara.play_ringtone
+      data:
+        gw_mac: 78:11:DC:B8:CB:4B
+        ringtone_id: 10
+        ringtone_vol: 8
+    - delay: '00:00:03'
+    - service: xiaomi_aqara.stop_ringtone
+      data:
+        gw_mac: 78:11:DC:B8:CB:4B
+    - service: notify.telegram
+      data:
+        title: Doorbell photo
+        message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+        data:
+          photo:
+          - file: /config/www/cam_captures/doorbell.jpg
+            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states.sensor.time.state}} {{states.sensor.date.state}}"
+    - service: notify.telegram_sandra
+      data:
+        title: Doorbell photo
+        message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+        data:
+          photo:
+          - file: /config/www/cam_captures/doorbell.jpg
+            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states.sensor.time.state}} {{states.sensor.date.state}}"
+    - service: notify.telegram_vova
+      data:
+        title: Doorbell photo
+        message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+        data:
+          photo:
+          - file: /config/www/cam_captures/doorbell.jpg
+            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states.sensor.time.state}} {{states.sensor.date.state}}"

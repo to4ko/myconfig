@@ -88,7 +88,7 @@
     at: "00:00:03"
   condition:
     - condition: template
-      value_template: "{{ now().day == 22 }}"
+      value_template: "{{ strptime(states('sensor.date'), '%Y-%m-%d').day|int == 20 }}"
   action:
     - service: script.turn_on
       entity_id: script.system_water_new_month_action
@@ -109,13 +109,13 @@
     seconds: '/30'
   action:
     - service_template: >
-        {% if now().hour <23 and now().hour >=7 %}
+        {% if is_state('binary_sensor.tariff_t1','on') %}
             script.power_t1
         {% else %}
             script.power_t2
         {% endif %}
     - service_template: >
-        {% if now().hour <23 and now().hour >=7 %}
+        {% if is_state('binary_sensor.tariff_t1','on') %}
             script.power_m_t1
         {% else %}
             script.power_m_t2
@@ -251,4 +251,4 @@
           - utility_meter.power_socket_monthly
           - utility_meter.power_light_daily
           - utility_meter.power_light_monthly
-        tariff: '{%- if 7<= (now().strftime("%-H") | int) < 23 -%}day{%- else -%}night{%- endif -%}'
+        tariff: "{%- if is_state('binary_sensor.tariff_t1','on') -%}day{%- else -%}night{%- endif -%}"

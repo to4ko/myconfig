@@ -1,9 +1,9 @@
-  telegram_weather:
+  weather_telegram:
     alias: Weather to Telegram
     sequence:
       - service: notify.telegram
         data_template:
-          message: >
+          message: |
             {%- set date = as_timestamp(now()) -%}
             {% set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
             {% set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
@@ -15,17 +15,12 @@
             {% set month = month_list[m_ok-1] %} 
             {% set hour_num = now().hour | int %}
             
-            {% if hour_num >=6 and hour_num <12 %}
-            Доброе утро!
-            {% elif hour_num>=12 and hour_num<17 %}
-            Добрый день!
-            {% elif hour_num>=17 and hour_num<22 %}
-            Добрый вечер!
-            {% else %}
-            Доброй ночи!
+            {% if hour_num >=6 and hour_num <12 %} {{ "\U00002600" }}Доброе утро!
+            {% elif hour_num>=12 and hour_num<17 %} {{ "\U0001f31e" }}Добрый день!
+            {% elif hour_num>=17 and hour_num<22 %} {{ "\U0001f31d" }}Добрый вечер!
+            {% else %} {{ "\U0001f31a" }}Доброй ночи!
             {% endif %}
             {%if hour_num < 17 and hour_num >= 0 %}
-            
             Сегодня {{ weekday }}, {{ now().day|int }} {{ month_list[now().month-1] }}.
             {{ states('sensor.dark_sky_summary_0d') }}
             Температура днем {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}} °C. 
@@ -42,7 +37,7 @@
             {% endif %}
 
 
-  tts_weather:
+  weather_tts:
     alias: Weather to Speakers
     sequence:
       - service: media_player.volume_set
@@ -52,7 +47,6 @@
       - service: tts.yandextts_say
         data_template:
           entity_id: "{{ entity_id }}"
-          cache: false
           message: >
             {%- set date = as_timestamp(now()) -%}
             {% set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
