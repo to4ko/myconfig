@@ -575,7 +575,7 @@
     platform: event
     event_type: xiaomi_aqara.click
     event_data:
-      entity_id: binary_sensor.switch_158d0001ef6089
+      entity_id: binary_sensor.switch_158d0002fa99a8
       click_type: long_click_press
   action:
     - service: script.weather_tts
@@ -786,7 +786,18 @@
   action:
     - service: notify.telegram
       data_template:
-        message: '{{ trigger.from_state.attributes.friendly_name }} прибыл домой!'
+        message: >
+          {% if trigger.from_state.attributes.friendly_name == "Dima" %} {{"\U0001F9D4"}} Дима прибыл домой!
+          {% elif trigger.from_state.attributes.friendly_name == "Sandra" %} {{"\U0001F467"}} Саша прибыла домой!
+          {% elif trigger.from_state.attributes.friendly_name == "Vova" %} {{"\U0001F471"}} Вова прибыл домой!
+          {%endif%}
+    - service_template: >
+        {% if trigger.from_state.attributes.friendly_name != "Dima"%} notify.telegram_{{ trigger.from_state.attributes.friendly_name|lower }}
+        {%else%} script.noop
+        {%endif%}
+      data_template:
+        message: "\U0001F4DE Домофон: Автооткрытие включено на 15мин!"
+          
     - service: script.turn_on
       entity_id: script.domofon_mute_toggle
     - service: script.turn_on
