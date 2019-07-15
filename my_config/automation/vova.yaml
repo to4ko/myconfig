@@ -309,16 +309,43 @@
 # ##################################
 # Vova - Breather off if Window open
 # ##################################
-- alias: vova_breather_off_window_open
+#- alias: vova_breather_off_window_open
+#  initial_state: 'on'
+#  trigger:
+#    platform: state
+#    entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+#    from: 'off'
+#    to: 'on'
+#  condition:
+#    condition: state
+#    entity_id: binary_sensor.breather_v
+#    state: 'on'
+#  action:
+#    - service: script.breather_toggle
+    
+# ##################################
+# Vova - Breather on if Window closed
+# ##################################
+- alias: vova_breather_control
   initial_state: 'on'
   trigger:
-    platform: state
-    entity_id: binary_sensor.door_window_sensor_158d00022ccffe
-    from: 'off'
-    to: 'on'
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+      from: 'on'
+      to: 'off'
   condition:
-    condition: state
-    entity_id: binary_sensor.breather_v
-    state: 'on'
+    - condition: template
+      value_template: "{{ states('binary_sensor.door_window_sensor_158d00022ccffe') == states('binary_sensor.breather_v') }}"
   action:
     - service: script.breather_toggle
+    - delay: '00:02:00'
+    - service_template: >
+        {% if states('binary_sensor.door_window_sensor_158d00022ccffe') == states('binary_sensor.breather_v') %}
+          script.breather_toggle
+        {% else %}
+          script.noop
+        {% endif %}

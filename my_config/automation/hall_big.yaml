@@ -658,21 +658,21 @@
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: binary_sensor.door_window_sensor_158d0002a1a4b2
+      entity_id: binary_sensor.bottom_lock
       from: 'on'
       to: 'off'
     - platform: state
-      entity_id: binary_sensor.door_window_sensor_158d0002a1a4b2
+      entity_id: binary_sensor.bottom_lock
       from: 'off'
       to: 'on'
   action:
     - service: script.turn_on
       data_template:
         entity_id: >
-          script.bottom_lock_yellow_led_blink_{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}off{% else %}on{% endif %}
+          script.bottom_lock_yellow_led_blink_{% if is_state('binary_sensor.bottom_lock','on') %}off{% else %}on{% endif %}
     - service: notify.telegram
       data_template:
-        message: "{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}\U0001F513\U0001F53D Нижний замок открыт!{% else %}\U0001F512\U0001F53D Нижний замок закрыт!{% endif %}"
+        message: "{% if is_state('binary_sensor.bottom_lock','on') %}\U0001F513\U0001F53D Нижний замок открыт!{% else %}\U0001F512\U0001F53D Нижний замок закрыт!{% endif %}"
     - service: media_player.volume_set
       data_template:
         entity_id: media_player.mpd
@@ -691,26 +691,26 @@
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: binary_sensor.door_window_sensor_158d0002b7c2c8
+      entity_id: binary_sensor.upper_lock
       from: 'on'
       to: 'off'
     - platform: state
-      entity_id: binary_sensor.door_window_sensor_158d0002b7c2c8
+      entity_id: binary_sensor.upper_lock
       from: 'off'
       to: 'on'
   action:
     - service: notify.telegram
       data_template:
-        message: "{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}\U0001F513\U0001F53C Верхний замок открыт!{% else %}\U0001F512\U0001F53C Верхний замок закрыт!{% endif %}"
+        message: "{% if is_state('binary_sensor.upper_lock','on') %}\U0001F513\U0001F53C Верхний замок открыт!{% else %}\U0001F512\U0001F53C Верхний замок закрыт!{% endif %}"
     - service: media_player.volume_set
       data_template:
         entity_id: media_player.mpd
         volume_level: '0.3'
     - service_template: >
-        {% if is_states('binary_sensor.tod_long_day','on') %}
-          script.top_lock_tts
+        {% if is_state('binary_sensor.tod_long_day','on') %} script.top_lock_tts
+        {% else%} script.noop
         {% endif %}
-    - service_template: light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}off{% else %}on{% endif %}
+    - service_template: "light.turn_{% if is_state('binary_sensor.upper_lock','on') %}off{% else %}on{% endif %}"
       data:
         entity_id: light.d1_mini_domofon_yellow_led
         
@@ -803,6 +803,56 @@
     - service: script.turn_on
       entity_id: script.domofon_auto_open_once_toggle
     - delay: '00:15:00'
+    - service: script.domofon_check
+
+# ##################################
+# Hall Big - Door close
+# ##################################
+- alias: hall_big_door_close
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
+      from: 'on'
+      to: 'off'
+  action:
+    #- service: camera.snapshot
+    #  data:
+    #    entity_id: camera.door_hb
+    #    filename: "/config/www/cam_captures/door_close.jpg"
+    - service: camera.snapshot
+      data:
+        entity_id: camera.door_hb_720p
+        filename: "/config/www/cam_captures/door_close2.jpg"
+    - service: notify.telegram
+      data:
+        title: Doorbell photo
+        message: "\U0001f514 Входная дверь закрыта!"
+        data:
+          photo:
+          #- file: /config/www/cam_captures/door_close.jpg
+          #  caption: "\U0001f514 Входная дверь закрыта!"
+          - file: /config/www/cam_captures/door_close2.jpg
+            caption: "\U0001f514 Входная дверь закрыта!"
+
+# ##################################
+# Hall Big - Domofon auto off on door open\close
+# ##################################
+- alias: hall_big_domofon_off_on_door open_close
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
+      from: 'on'
+      to: 'off'
+  condition:
+    - condition: state
+      entity_id: input_boolean.domofon_auto_open_once
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.domofon_mute
+      state: 'on'
+  action:
     - service: script.domofon_check
 
 # ##################################
