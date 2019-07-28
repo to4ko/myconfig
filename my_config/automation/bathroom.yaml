@@ -49,9 +49,11 @@
 - alias: bathroom_fan_on
   initial_state: 'on'
   trigger:
-    - platform: numeric_state
-      entity_id: sensor.humidity_158d00020d7c3a
-      above: 67
+#    - platform: numeric_state
+#      entity_id: sensor.humidity_158d00020d7c3a
+#      above: 67
+    - platform: template
+      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float > (states('sensor.humidity_average')|float +5) %}true{% endif %}"
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f9ebd8
@@ -62,9 +64,8 @@
 - alias: bathroom_fan_off
   initial_state: 'on'
   trigger:
-    - platform: numeric_state
-      entity_id: sensor.humidity_158d00020d7c3a
-      below: 65
+    - platform: template
+      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float < (states('sensor.humidity_average')|float +5) %}true{% endif %}"
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f9ebd8

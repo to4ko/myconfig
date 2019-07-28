@@ -84,6 +84,8 @@
     - service: notify.telegram
       data_template:
         message: "\U0001F603 Сервер запущен!"
+    - service: automation.trigger
+      entity_id: automation.system_sasha_tracker
     - service: script.system_start
     - service: counter.increment
       entity_id: counter.restart_counter
@@ -172,15 +174,15 @@
 # ##################################
 # System - NEW DAY
 # ##################################
-- alias: system_new_day_telegramm
+- alias: system_new_day_telegram
   initial_state: 'on'
   trigger:
-    platform: time
-    at: '00:00:01'
+    - platform: time
+      at: '00:00:02'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter') }}, ошибок - {{states('counter.error_counter') }}, предупреждений - {{states('counter.warning_counter')}}, ошибок входа - {{states('counter.badlogin_counter')}}. Входная дверь открывалась - {{states('counter.main_door_hb')}}раз(а)."
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а)."
     - service: counter.reset
       entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb
     - service: input_boolean.turn_off
@@ -459,6 +461,19 @@
     - service: hassio.addon_restart
       data:
         addon: "a0d7b954_tor"
+        
+# ##################################
+# System - server root device
+# ##################################
+- alias: system_rdev
+  initial_state: 'on'
+  trigger:
+    - platform: template
+      value_template: "{% if states('sensor.root_device') != '/dev/nvme0n1p1' %}true{% endif %}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F621 Внимание! Root устройство изменено!"
 
 # ##################################
 # System - Person State

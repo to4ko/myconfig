@@ -1,20 +1,30 @@
 resources:
-  - url: /local/bar-card.js
-    type: js
+
   - url: /local/custom-weather-card-chart.js
-    type: module
-  - url: /local/mini-graph-card-bundle.js
-    type: module
-  - url: /local/tracker-card.js?track=true
-    type: module
-  - url: /local/vertical-stack-in-card.js?v=v0.1.2
-    type: js
-  - url: /local/battery-entity.js?v=0.2
-    type: module
-  - url: /local/weather-card.js
     type: module
   - url: /local/camera-card.js
     type: module
+    
+  - url: /community_plugin/mini-graph-card/mini-graph-card.js
+    type: module
+  - url: /community_plugin/bar-card/bar-card.js
+    type: js
+  - url: /community_plugin/vertical-stack-in-card/vertical-stack-in-card.js
+    type: js
+  - url: /community_plugin/banner-card/banner-card.js
+    type: module
+  - url: /community_plugin/swipe-card/swipe-card.js
+    type: module
+  - url: /community_plugin/github-card/github-card.js
+    type: js
+  - url: /community_plugin/weather-card/weather-card.js
+    type: module
+
+swipe_nav:
+  wrap: false
+  animate: swipe
+  prevent_default: true
+  swipe_amount: 30
 
 title: Home - Main Server
 views:
@@ -38,25 +48,13 @@ views:
       - type: vertical-stack
         title: Main
         cards:
-          - type: glance
-            #title: Presence
-            show_name: true
-            show_state: true
-            columns: 5
-            entities:
-              - entity: sensor.temperature_158d0001e8995a
-                name: Temp
+          - type: map
+            aspect_ratio: '16x9'
+            default_zoom: 16
+            entities: 
               - person.dima
               - person.sandra
               - person.vova
-              - entity: person.sasha
-                name: Sasha
-                tap_action:
-                  action: call-service
-                  service: input_boolean.toggle
-                  service_data:
-                    entity_id: input_boolean.sasha_tracker
-
           #- type: custom:simple-weather-card
           #  entity: weather.yandex_weather
           - type: custom:weather-card
@@ -146,6 +144,16 @@ views:
                 name: MPD j3455
               - entity: media_player.mpd_rpi
                 name: MPD RPI
+          - type: glance
+            entities:
+              - entity: media_player.iphone8_chrome
+                name: i8 Chrome
+              - entity: media_player.iphone8_companion
+                name: i8 Client
+              - entity: media_player.m6800
+                name: m6800
+              - entity: media_player.mimax2
+                name: MiMax2
 
           
           
@@ -155,6 +163,24 @@ views:
       - type: vertical-stack
         title: Security
         cards:
+          - type: glance
+            #title: Presence
+            show_name: true
+            show_state: true
+            columns: 5
+            entities:
+              - entity: sensor.temperature_158d0001e8995a
+                name: Temp
+              - person.dima
+              - person.sandra
+              - person.vova
+              - entity: person.sasha
+                name: Sasha
+                tap_action:
+                  action: call-service
+                  service: input_boolean.toggle
+                  service_data:
+                    entity_id: input_boolean.sasha_tracker
           - type: horizontal-stack
             #title: Camers
             cards:
@@ -884,35 +910,27 @@ views:
         cards:
           - type: custom:vertical-stack-in-card
             cards:
-              #- type: glance
-              #  #title: Domofon
-              #  show_header_toggle: false
-              #  entities:
-              #    - entity: binary_sensor.domofon
-              #      name: Domofon
-              #    - entity: binary_sensor.domofon_auto_open
-              #      name: Auto open
-              #      tap_action:
-              #        action: call-service
-              #        service: input_boolean.toggle
-              #        service_data:
-              #          entity_id: input_boolean.domofon_auto_open
-              #    - entity: binary_sensor.domofon_auto_open_once
-              #      name: Auto open once
-              #      tap_action:
-              #        action: call-service
-              #        service: input_boolean.toggle
-              #        service_data:
-              #          entity_id: input_boolean.domofon_auto_open_once
-  
-              - type: glance
-                #title: Locks
-                show_header_toggle: false
-                entities:
-                  - entity: binary_sensor.upper_lock
-                    name: Upper Lock
-                  - entity: binary_sensor.bottom_lock
-                    name: Bottom Lock
+              - type: horizontal-stack
+                cards:  
+                  - type: glance
+                    #title: Locks
+                    show_header_toggle: false
+                    entities:
+                      - entity: binary_sensor.upper_lock
+                        name: Upper Lock
+                      - entity: binary_sensor.bottom_lock
+                        name: Bottom Lock
+                  - type: glance
+                    show_header_toggle: false
+                    entities:
+                      - entity: binary_sensor.d1_security_power
+                        name: PWR
+                      - entity: binary_sensor.d1_security_armed
+                        name: Armed
+                        icon: mdi:shield-check
+                      - entity: binary_sensor.d1_security_alarm
+                        name: Alarm
+                        icon: mdi:alarm-light
           - type: entities
             title: Windows
             show_header_toggle: false
@@ -1392,8 +1410,20 @@ views:
               - sensor.cold_water_meter
               - sensor.hot_water_meter
               - type: divider
+              - sensor.cold_water_current_month
+              - sensor.hot_water_current_month
+              - type: divider
               - sensor.power_t1
               - sensor.power_t2
+              - type: divider
+              - sensor.power_current_month_t1
+              - sensor.power_current_month_t2
+          - type: entities
+            entities:
+              - input_number.tariff_energy_day
+              - input_number.tariff_energy_night
+              - input_number.tariff_hot_water
+              - input_number.tariff_cold_water
           #- type: entities
           #  title: Change
           #  show_header_toggle: false
@@ -2191,9 +2221,9 @@ views:
       #############
       - type: vertical-stack
         cards:
-          - type: entities
+          - type: custom:github-card
             entities:
-              - sensor.git_stars
+              - sensor.myconfig
           - type: glance
             show_header_toggle: false
             columns: 7
@@ -2398,7 +2428,7 @@ views:
             cards:          
               - type: glance
                 #title: Ubuntu Status
-                columns: 6
+                columns: 7
                 entities:
                   - entity: sensor.cpu_speed
                     name: Speed
@@ -2414,6 +2444,8 @@ views:
                     icon: mdi:database
                   - entity: switch.server_plug_hb
                     name: S.Plug
+                  - entity: binary_sensor.root_device
+                    name: Root
               - type: custom:bar-card
                 title_position: top
                 columns: 3
@@ -2577,7 +2609,7 @@ views:
                     name: Devices
                   - entity: sensor.usg_vpn
                     name: VPN
-          - type: custom:tracker-card
+
 
 ################################################################
 # TEST
@@ -2607,6 +2639,8 @@ views:
           - type: divider
           - sensor.power_daily_day
           - sensor.power_daily_night
+          - sensor.power_daily_8266_day
+          - sensor.power_daily_8266_night
           - type: divider
           - sensor.power_light_daily_day
           - sensor.power_light_daily_night
@@ -2622,6 +2656,8 @@ views:
           - type: divider
           - sensor.power_monthly_day
           - sensor.power_monthly_night
+          - sensor.power_monthly_8266_day
+          - sensor.power_monthly_8266_night
           - type: divider
           - sensor.power_light_monthly_day
           - sensor.power_light_monthly_night
@@ -2633,6 +2669,7 @@ views:
         show_header_toggle: false
         title: Int meters
         entities:
+          - sensor.power_consumption_8266_int
           - sensor.power_consumption_int
           - sensor.power_consumption_light_int
           - sensor.power_consumption_socket_int

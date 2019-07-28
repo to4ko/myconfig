@@ -19,8 +19,21 @@
     unit_time: h
     round: 3
 
+  - platform: integration
+    source: sensor.power_consumption_8266_w
+    name: power_consumption_8266_int
+    unit_prefix: k
+    unit_time: h
+    round: 3
+
   - platform: template
     sensors:
+      power_consumption_8266_w:
+        unit_of_measurement: 'W'
+        value_template: "{{ states('sensor.8266_pwr_power_meter')|float * 1000 }}"
+        icon_template: mdi:flash
+        friendly_name: 'Power from 8266 PWR meter'
+        
 # ############################################################################
 # Utility (water + Power Cost sensor
 # ############################################################################
@@ -133,24 +146,24 @@
         friendly_name: "Total current"
 
       power_t1:
-        unit_of_measurement: 'kWh'
+        unit_of_measurement: kWh
         icon_template: mdi:gauge
         friendly_name: 'Power meter/T1'
         value_template: "{{ states('input_number.power_t1')|round(2) }}"
       power_t2:
-        unit_of_measurement: 'kWh'
+        unit_of_measurement: kWh
         icon_template: mdi:gauge
         friendly_name: 'Power meter/T2'
         value_template: "{{ states('input_number.power_t2')|round(2) }}"
 
       power_consumption_month_t1:
         value_template: "{{ states('input_number.power_consumption_month_t1')|round(2) }}"
-        unit_of_measurement: 'kWh'
+        unit_of_measurement: kWh
         icon_template: mdi:gauge
         friendly_name: 'Power/Month/T1'
       power_consumption_month_t2:
         value_template: "{{ states('input_number.power_consumption_month_t2')|round(2) }}"
-        unit_of_measurement: 'kWh'
+        unit_of_measurement: kWh
         icon_template: mdi:gauge
         friendly_name: 'Power/Month/T2'
 
@@ -187,6 +200,17 @@
         unit_of_measurement: 'rub'
         value_template: "{{ (states('sensor.power_monthly_night')|float*states('input_number.tariff_energy_night')|float) |round(2) }}"
 
+      power_current_month_t1:
+        friendly_name: Power Current Month T1
+        value_template: "{{ ( states('input_number.power_t1')|float - states('input_number.power_meter_last_month_t1')|float ) | round(2) }}"
+        icon_template: mdi:gauge
+        unit_of_measurement: 'kWh'
+      power_current_month_t2:
+        friendly_name: Power Current Month T2
+        value_template: "{{ ( states('input_number.power_t2')|float - states('input_number.power_meter_last_month_t2')|float ) | round(2)}}"
+        icon_template: mdi:gauge
+        unit_of_measurement: 'kWh'
+
 #      power_meter_total_imp:
 #        friendly_name: "power_meter_total_imp"
 #        value_template: "{{ states('input_number.power_meter_total_imp')|float |round(2) }}"
@@ -219,7 +243,19 @@
         icon_template: mdi:counter
         unit_of_measurement: 'm3'
         value_template: "{{ (((states('input_number.hot_water_meter_month'))|float)/100)|round(2) }}"
-  
+
+      cold_water_current_month:
+        friendly_name: Cold Water Current Month
+        value_template: "{{ (( states('input_number.cold_water_meter')|float - states('input_number.cold_water_meter_last_month')|float ) /100) | round(2) }}"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+      hot_water_current_month:
+        friendly_name: Hot Water Current Month
+        value_template: "{{ (( states('input_number.hot_water_meter')|float - states('input_number.hot_water_meter_last_month')|float ) /100) | round(2)}}"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+
+
 #      cold_water_meter_date1:
 #        friendly_name: "Cold water meter 1"
 #        icon_template: mdi:calendar

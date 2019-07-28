@@ -1,3 +1,5 @@
+  - platform: authenticated
+
   - platform: github
     access_token: !secret github_access_token
     repositories:
@@ -23,8 +25,17 @@
         icon_template: mdi:chart-line-variant
         unit_of_measurement: 'Pah'
         
-
-
+  - platform: ssh
+    name: root_device
+    host: 192.168.1.14
+    scan_interval: 3600
+    username: !secret ssh_user
+    password: !secret ssh_pass
+    command: "mount|grep ' / '|cut -d' ' -f 1"
+    value_template: >-
+     {%- set line = value.split("\r\n") -%}
+      {{ line[1] }}
+    unit_of_measurement: ''
 
 #  - platform: statistics
 #    entity_id: binary_sensor.8266_pwr_meter_imp
@@ -92,19 +103,19 @@
 # ############################################################################
 # Unifi USG sensor
 # ############################################################################
-#  - platform: unifigateway
-#    name: USG
-#    host: !secret unifi_cloudkey_host
-#    username: !secret unifi_cloudkey_username
-#    password: !secret unifi_cloudkey_password
-#    monitored_conditions:
-#      - www
-#      - wlan
-#      - alerts
-#      - firmware
-#      - vpn
-#      - lan
-#      - wan
+  - platform: unifigateway
+    name: USG
+    host: !secret unifi_cloudkey_host
+    username: !secret unifi_cloudkey_username
+    password: !secret unifi_cloudkey_password
+    monitored_conditions:
+      - www
+      - wlan
+      - alerts
+      - firmware
+      - vpn
+      - lan
+      - wan
       
 # ############################################################################
 # Template sensors
@@ -204,7 +215,14 @@
         
       mw: 
         value_template: '{{states.switch.plug_158d00028a54e4.attributes.load_power}}'
-
+        
+        
+      humidity_average:
+        friendly_name: Humidity Average
+        value_template: "{{((states('sensor.humidity_158d0001e586af')|float+states('sensor.humidity_158d0001e58714')|float+states('sensor.humidity_158d0001e6d85a')|float+states('sensor.humidity_158d000222c746')|float+states('sensor.humidity_158d000233fb72')|float+states('sensor.humidity_158d0002464ec0')|float)/6)| round(2) }}"
+        unit_of_measurement: '%'
+        icon_template: mdi:water-percent
+         
 # ############################################################################
 # TIme\date sensor
 # ############################################################################
