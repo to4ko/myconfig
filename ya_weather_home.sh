@@ -1,2 +1,0 @@
-#!/bin/bash
-wget -q --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36' "https://yandex.ru/pogoda/?lat=55.811782&lon=37.556639" -O /dev/stdout | sed 's/>/>\n/g' | grep "maps-widget-fact__title" -A1 | tail -1 | sed 's/<\/p>//g'
