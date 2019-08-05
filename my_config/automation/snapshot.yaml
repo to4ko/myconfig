@@ -17,29 +17,29 @@
 # ##################################
 # System - Hass.io Weekly Dropbox Snapshot upload
 # ##################################
-#- alias: snapshot_weekly_dropbox_upload
-#  initial_state: 'on'
-#  trigger:
-#    platform: time
-#    at: '05:00:00'
-#  condition:
-#    condition: time
-#    weekday:
-#      - mon
-#      #- wed
-#      #- fri
-#  action:
-#  - service: hassio.addon_stdin
-#    data: {"addon":"7be23ff5_dropbox_sync","input":{"command":"upload"}}
-#  - service: notify.telegram
-#    data_template: 
-#      message: "\U00002705 Резервная копия выгружена на Dropbox"
+- alias: snapshot_weekly_dropbox_upload
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '05:00:00'
+  condition:
+    condition: time
+    weekday:
+      - mon
+      #- wed
+      #- fri
+  action:
+  - service: hassio.addon_stdin
+    data: {"addon":"7be23ff5_dropbox_sync","input":{"command":"upload"}}
+  - service: notify.telegram
+    data_template: 
+      message: "\U00002705 Резервная копия выгружена на Dropbox"
 
 # ##################################
 # System - Hass.io Daily G-Drive Snapshot upload
 # ##################################
 - alias: snapshot_daily_google_drive_upload
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
     platform: time
     at: '06:00:00'
@@ -60,11 +60,28 @@
 # System - Hass.io Daily G-Drive updated
 # ##################################
 - alias: snapshot_daily_google_drive_update
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
     platform: state
     entity_id: sensor.last_google_backup
   action:
     - service: notify.telegram
       data_template: 
-        message: "\U00002705 G-Drive бэкап сделан {{states.sensor.last_google_backup.state}}"
+        message: "\U00002705 G-Drive бэкап сделан {{states('sensor.last_google_backup')}}"
+        
+        
+        
+# ##################################
+# System - Hass.io GDrive stats
+# ##################################
+- alias: snapshot_daily_gdrive_status
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: sensor.gdrive_backup_state
+    - platform: state
+      entity_id: sensor.gdrive_last_backup
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002705 GDrive: {{states('sensor.gdrive_backup_state')}} - {{states('sensor.gdrive_last_backup')}}"

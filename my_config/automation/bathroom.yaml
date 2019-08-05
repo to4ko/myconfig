@@ -49,9 +49,11 @@
 - alias: bathroom_fan_on
   initial_state: 'on'
   trigger:
-    - platform: numeric_state
-      entity_id: sensor.humidity_158d00020d7c3a
-      above: 67
+#    - platform: numeric_state
+#      entity_id: sensor.humidity_158d00020d7c3a
+#      above: 67
+    - platform: template
+      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float > (states('sensor.humidity_average')|float +5) %}true{% endif %}"
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f9ebd8
@@ -62,9 +64,8 @@
 - alias: bathroom_fan_off
   initial_state: 'on'
   trigger:
-    - platform: numeric_state
-      entity_id: sensor.humidity_158d00020d7c3a
-      below: 65
+    - platform: template
+      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float < (states('sensor.humidity_average')|float +5) %}true{% endif %}"
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f9ebd8
@@ -200,7 +201,7 @@
         - media_player.mpd
         - media_player.home_mini_k
       data_template:
-        message: 'Внимание! Внимание! Обнаружена утечка воды в ванне! Обнаружена утечка воды в ванне! Вода перекрывается!'
+        message: 'Вним+ание! Вним+ание! Обнар+ужена ут+ечка вод+ы в в+анне! Обнар+ужена ут+ечка вод+ы в в+анне! Вод+а перекрыв+ается!'
     - service: notify.telegram
       data_template:
         message: "\U000026d4 Внимание! Обнаружена утечка воды в ванне! Обнаружена утечка воды в ванне! Вода перекрывается!"
@@ -214,11 +215,11 @@
         - media_player.mpd
         - media_player.home_mini_k
       data_template:
-        message: 'Внимание! Вода перекрыта! Устраните протечку воды в ванне для включения воды!'
+        message: 'Вним+ание! Вод+а перекр+ыта! Устран+ите прот+ечку вод+ы в в+анне дл+я включ+ения вод+ы!'
     - service: notify.telegram
       data_template:
         message: "\U000026d4 Внимание! Вода перекрыта! Устраните протечку воды в ванне для включения воды!"
-    - service: notify.notify
+    - service: notify.telegram
       data:
         title: "Внимание!"
         message: "Сработал датчик протечки в ванне! Краны закрыты!"
@@ -245,7 +246,7 @@
         - media_player.mpd
         - media_player.home_mini_k
       data_template:
-        message: 'Протечка воды в ванне устранена! Спасибо!'
+        message: 'Прот+ечка вод+ы в в+анне устранен+а! Спас+ибо!'
     - service: notify.telegram
       data_template:
         message: "\U00002705 Протечка воды в ванне устранена!"
@@ -307,11 +308,10 @@
       data_template: 
         message: "{% if is_state('binary_sensor.washer_b','on') %}\U000023F3 Стирка начата!{% else %}\U0000231B Стирка завершена!{% endif %}"
     - service_template: >
-        {% set weekday = as_timestamp(now()) | timestamp_custom("%w")|int %} 
-        {% set hour_num = now().hour | int %}
-        
-        {% if hour_num >=7 and hour_num <21 %}
-        script.washing_machine_tts
+        {% if is_state('binary_sensor.tod_long_day','on') %}
+          script.washing_machine_tts
         {%else%}
-        script.noop
+          script.noop
         {% endif %}
+        
+#{% set hour_num = now().hour | int %}

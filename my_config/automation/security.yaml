@@ -42,7 +42,7 @@
     #    message: "\U0001f46e Обнаружено движение! {{states.sensor.security_last_change.state}}"
     - service: notify.telegram
       data_template:
-        message: "\U0001f46e Внимание! Обнаружено движение! {{states.sensor.security_last_change.state}} "
+        message: "\U0001f46e Внимание! Обнаружено движение! {{states('sensor.security_last_change')}} "
 
 
 # ##################################
@@ -89,3 +89,43 @@
   action:
     - service: homeassistant.update_entity
       entity_id: person.dima,person.sandra,person.vova,person.sasha, device_tracker.life360_dima_tsymbal,device_tracker.life360_sandra_tsymbal,device_tracker.life360_vova_tsymbal
+      
+
+# ##################################
+# Security - Security system PWR status
+# ##################################
+- alias: security_system_pwr
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1_security_power
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f693 Охранная система: питание {% if is_state('binary_sensor.d1_security_power','on') %}включено!{% else %}выключено!{% endif %}"
+
+# ##################################
+# Security - Security system armed
+# ##################################
+- alias: security_system_armed
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1_security_armed
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f693 Охранная система {% if is_state('binary_sensor.d1_security_armed','on') %}включена!{% else %}выключена!{% endif %}"
+
+# ##################################
+# Security - Security system alarm
+# ##################################
+- alias: security_system_alarm
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1_security_alarm
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f693 Охранная система: Тревога {% if is_state('binary_sensor.d1_security_alarm','on') %}включена!{% else %}выключена!{% endif %}"

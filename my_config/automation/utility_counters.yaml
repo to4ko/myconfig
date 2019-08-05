@@ -18,25 +18,25 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.cold_water_meter
-        value: "{{ (states.input_number.cold_water_meter.state|float + 1 ) | round(0) }}"
+        value: "{{ (states.input_number.cold_water_meter.state|float + 0.01 ) | round(2) }}"
     - service: input_number.set_value
       data_template:
         entity_id: input_number.cold_water_meter_month
-        value: "{{ (states.input_number.cold_water_meter_month.state|float + 1 ) | round(0) }}"
+        value: "{{ (states.input_number.cold_water_meter_month.state|float + 0.01 ) | round(2) }}"
     - service: mqtt.publish
       data_template:
         topic: "utility/water/cold_water_meter"
-        payload: "{{states('sensor.cold_water_meter')}}"
+        payload: "{{states('sensor.cold_water_meter')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/water/cold_water_meter_month"
-        payload: "{{states('sensor.cold_water_meter_month')}}"
+        payload: "{{states('sensor.cold_water_meter_month')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/water/cold_water_meter_input"
-        payload: "{{states('input_number.cold_water_meter')}}"
+        payload: "{{states('input_number.cold_water_meter')|float}}"
         retain: true
         
 
@@ -56,26 +56,62 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.hot_water_meter
-        value: "{{ (states.input_number.hot_water_meter.state|float + 1 ) | round(0) }}"
+        value: "{{ (states.input_number.hot_water_meter.state|float + 0.01 ) | round(2) }}"
     - service: input_number.set_value
       data_template:
         entity_id: input_number.hot_water_meter_month
-        value: "{{ (states.input_number.hot_water_meter_month.state|float + 1 ) | round(0) }}"
+        value: "{{ (states.input_number.hot_water_meter_month.state|float + 0.01 ) | round(2) }}"
     - service: mqtt.publish
       data_template:
         topic: "utility/water/hot_water_meter"
-        payload: "{{states('sensor.hot_water_meter')}}"
+        payload: "{{states('sensor.hot_water_meter')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/water/hot_water_meter_month"
-        payload: "{{states('sensor.hot_water_meter_month')}}"
+        payload: "{{states('sensor.hot_water_meter_month')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/water/hot_water_meter_input"
-        payload: "{{states('input_number.hot_water_meter')}}"
+        payload: "{{states('input_number.hot_water_meter')|float}}"
         retain: true
+
+# #####################################################################################
+#
+# RO Water Counting
+#
+# #####################################################################################
+# Mineralized Water - Increase
+# ##################################
+- alias: system_water_ro_mineralized_increase_counter
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1_filter_flow_mineralized_imp
+      from: 'off'
+      to: 'on'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.ro_mineralized
+        value: "{{ (states.input_number.ro_mineralized.state|float + 1/1380 ) }}"
+
+# ##################################
+# Non-Mineralized Water - Increase
+# ##################################
+- alias: system_water_ro_nonmineralized_increase_counter
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1_filter_flow_nonmineralized_imp
+      from: 'off'
+      to: 'on'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.ro_mineralized
+        value: "{{ (states.input_number.ro_nonmineralized.state|float + 1/1380 ) }}"
 
 
 # ##################################
@@ -85,10 +121,10 @@
   initial_state: 'on'
   trigger:
     platform: time
-    at: "00:00:03"
+    at: '00:00:03'
   condition:
     - condition: template
-      value_template: "{{ now().day == 22 }}"
+      value_template: "{{ strptime(states('sensor.date'), '%Y-%m-%d').day|int == 19 }}"
   action:
     - service: script.turn_on
       entity_id: script.system_water_new_month_action
@@ -109,13 +145,13 @@
     seconds: '/30'
   action:
     - service_template: >
-        {% if now().hour <23 and now().hour >=7 %}
+        {% if is_state('binary_sensor.tariff_t1','on') %}
             script.power_t1
         {% else %}
             script.power_t2
         {% endif %}
     - service_template: >
-        {% if now().hour <23 and now().hour >=7 %}
+        {% if is_state('binary_sensor.tariff_t1','on') %}
             script.power_m_t1
         {% else %}
             script.power_m_t2
@@ -123,32 +159,32 @@
     - service: mqtt.publish
       data_template:
         topic: "utility/power/power_t1"
-        payload: "{{states('sensor.power_t1')}}"
+        payload: "{{states('sensor.power_t1')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/power/power_t2"
-        payload: "{{states('sensor.power_t2')}}"
+        payload: "{{states('sensor.power_t2')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/power/power_consumption_month_t1"
-        payload: "{{states('sensor.power_consumption_month_t1')}}"
+        payload: "{{states('sensor.power_consumption_month_t1')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/power/power_consumption_month_t2"
-        payload: "{{states('sensor.power_consumption_month_t2')}}"
+        payload: "{{states('sensor.power_consumption_month_t2')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/power/power_t1_input"
-        payload: "{{states('input_number.power_t1')}}"
+        payload: "{{states('input_number.power_t1')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/power/power_t2_input"
-        payload: "{{states('input_number.power_t2')}}"
+        payload: "{{states('input_number.power_t2')|float}}"
         retain: true
 
 # ##################################
@@ -251,4 +287,4 @@
           - utility_meter.power_socket_monthly
           - utility_meter.power_light_daily
           - utility_meter.power_light_monthly
-        tariff: '{%- if 7<= (now().strftime("%-H") | int) < 23 -%}day{%- else -%}night{%- endif -%}'
+        tariff: "{%- if is_state('binary_sensor.tariff_t1','on') -%}day{%- else -%}night{%- endif -%}"

@@ -148,6 +148,7 @@
        brightness_pct: 5
        # color_temp: 254
        kelvin: 3000
+       
 # ##################################
 # Vova Main Lamp (Xiaomi Sqaure LED) - Off if On
 # ##################################
@@ -180,9 +181,9 @@
       click_type: single
   action:
     service_template: >-
-      {% if is_state('light.square_led_v','on') and (states.light.square_led_v.attributes.brightness|int < 100) %}
+      {% if is_state('light.square_led_v','on') and (state_attr('light.square_led_v','brightness') < 100) %}
         script.square_lamp_to_100
-      {% elif is_state('light.square_led_v','on') and (states.light.square_led_v.attributes.brightness|int == 255) %}
+      {% elif is_state('light.square_led_v','on') and (state_attr('light.square_led_v','brightness') > 250) %}
         script.square_lamp_off
       {% elif is_state('light.square_led_v','off') %}
         script.square_lamp_to_30
@@ -204,7 +205,11 @@
         state: 'off'
   action:
     - service: switch.turn_on
-      entity_id: switch.plug_158d000290a093, switch.plug_158d000290a0bc
+      entity_id: 
+        - switch.plug_158d000290a093
+        - switch.plug_158d000290a0bc
+        - switch.plug_158d000344998e
+        - switch.plug_158d0003600ea4
     #- service: homeassistant.turn_on
     #  entity_id: automation.vova_iconbit_check
 
@@ -259,6 +264,7 @@
     platform: state
     entity_id: light.square_led_v
     to: 'unavailable'
+    for: '00:00:05'
   condition:
     - condition: time
       after: '07:00:00'
@@ -304,3 +310,31 @@
   action:
     - service: homeassistant.turn_on
       entity_id: switch.plug_158d00028b4fc3
+
+
+# ##################################
+# Vova - Breather Control
+# ##################################
+#- alias: vova_breather_control
+#  initial_state: 'on'
+#  trigger:
+#    - platform: state
+#      entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+#      from: 'off'
+#      to: 'on'
+#    - platform: state
+#      entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+#      from: 'on'
+#      to: 'off'
+#  condition:
+#    - condition: template
+#      value_template: "{{ states('binary_sensor.door_window_sensor_158d00022ccffe') == states('binary_sensor.breather_v') }}"
+#  action:
+#    - service: script.breather_toggle
+#    - delay: '00:02:00'
+#    - service_template: >
+#        {% if states('binary_sensor.door_window_sensor_158d00022ccffe') == states('binary_sensor.breather_v') %}
+#          script.breather_toggle
+#        {% else %}
+#          script.noop
+#        {% endif %}

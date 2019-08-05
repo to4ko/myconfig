@@ -1,0 +1,33 @@
+#- alias: 'TG post'
+#  initial_state: 'off'
+#  hide_entity: true
+#  trigger:
+#    - platform: event
+#      event_type: telegram_text
+#    - platform: event
+#      event_type: telegram_callback
+#      event_data:
+#        data: '/почта'
+#  condition:
+#    - condition: or
+#      conditions:
+#        - condition: template
+#          value_template: "{{ 'почта' in trigger.event.data.text.lower() }}"
+#        - condition: template
+#          value_template: "{{ trigger.event.data.data == '/почта'}}"
+#  action:
+#    - service: telegram_bot.send_message
+#      data_template:
+#        target: '{{ trigger.event.data.chat_id }}'
+#        disable_notification: true
+#        title: 'Посылки:'
+#        message: >
+#          Ждут отправки: {{states('sensor.seventeentrack_packages_not_found')}}
+# 
+#          В пути: {{states('sensor.seventeentrack_packages_in_transit')}}
+# 
+#          Готовы к выдаче: {{states('sensor.seventeentrack_packages_ready_to_be_picked_up')}}
+#          {% if states('sensor.seventeentrack_packages_ready_to_be_picked_up')|int > 0 %}
+#            {%for package in states.sensor.seventeentrack_packages_ready_to_be_picked_up.attributes.packages%}
+#            {{'\U0001F4E6'}} {{package.friendly_name}} ({{package.tracking_number}}){%endfor%}
+#          {% endif %}

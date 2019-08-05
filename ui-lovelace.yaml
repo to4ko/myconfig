@@ -1,20 +1,30 @@
 resources:
-  - url: /local/bar-card.js
-    type: js
+
   - url: /local/custom-weather-card-chart.js
-    type: module
-  - url: /local/mini-graph-card-bundle.js
-    type: module
-  - url: /local/tracker-card.js?track=true
-    type: module
-  - url: /local/vertical-stack-in-card.js?v=v0.1.2
-    type: js
-  - url: /local/battery-entity.js?v=0.2
-    type: module
-  - url: /local/weather-card.js
     type: module
   - url: /local/camera-card.js
     type: module
+    
+  - url: /community_plugin/mini-graph-card/mini-graph-card.js
+    type: module
+  - url: /community_plugin/bar-card/bar-card.js
+    type: js
+  - url: /community_plugin/vertical-stack-in-card/vertical-stack-in-card.js
+    type: js
+  - url: /community_plugin/banner-card/banner-card.js
+    type: module
+  - url: /community_plugin/swipe-card/swipe-card.js
+    type: module
+  - url: /community_plugin/github-card/github-card.js
+    type: js
+  - url: /community_plugin/weather-card/weather-card.js
+    type: module
+
+swipe_nav:
+  wrap: false
+  animate: swipe
+  prevent_default: true
+  swipe_amount: 30
 
 title: Home - Main Server
 views:
@@ -38,46 +48,13 @@ views:
       - type: vertical-stack
         title: Main
         cards:
-          - type: glance
-            #title: Presence
-            show_name: true
-            show_state: true
-            columns: 5
-            entities:
-              #- sensor.yr_symbol
-              #- sun.sun
-              #- entity: sensor.yandex_traffic_moscow
-              #  name: Traffic
-                
-              - entity: sensor.temperature_158d0001e8995a
-                name: Temp
-              #- entity: sensor.traffic
-              #  name: Traffic
-              #- entity: sensor.dima_to_work
-              #  name: To Work
-              #- entity: sensor.dima_to_home
-              #  name: To Home
-              #- entity: device_tracker.life360_dima_tsymbal
-              #  name: Dima
-              #- entity: device_tracker.life360_sandra_tsymbal
-              #  name: Sasha
-              #- entity: device_tracker.life360_vova_tsymbal
-              #  name: Vova
+          - type: map
+            aspect_ratio: '16x9'
+            default_zoom: 16
+            entities: 
               - person.dima
-                #icon: /local/dima.jpg
               - person.sandra
               - person.vova
-              - entity: person.sasha
-                name: Sasha
-                tap_action:
-                  action: call-service
-                  service: input_boolean.toggle
-                  service_data:
-                    entity_id: input_boolean.sasha_tracker
-              #- entity: binary_sensor.sasha
-              #  name: Sasha
-              #  #icon: /local/sasha.png
-
           #- type: custom:simple-weather-card
           #  entity: weather.yandex_weather
           - type: custom:weather-card
@@ -167,6 +144,22 @@ views:
                 name: MPD j3455
               - entity: media_player.mpd_rpi
                 name: MPD RPI
+          - type: glance
+            entities:
+              - entity: media_player.iphone8_chrome
+                name: i8 Chrome
+              - entity: media_player.iphone8_companion
+                name: i8 Client
+              - entity: media_player.m6800
+                name: m6800
+              - entity: media_player.mimax2
+                name: MiMax2
+              - entity: media_player.unknown
+                name: Unknown
+              - entity: media_player.unknown2
+                name: Unknown2
+              - entity: media_player.unknown3
+                name: Unknown3
 
           
           
@@ -176,9 +169,29 @@ views:
       - type: vertical-stack
         title: Security
         cards:
+          - type: glance
+            #title: Presence
+            show_name: true
+            show_state: true
+            columns: 5
+            entities:
+              - entity: sensor.temperature_158d0001e8995a
+                name: Temp
+              - person.dima
+              - person.sandra
+              - person.vova
+              - entity: person.sasha
+                name: Sasha
+                tap_action:
+                  action: call-service
+                  service: input_boolean.toggle
+                  service_data:
+                    entity_id: input_boolean.sasha_tracker
           - type: horizontal-stack
             #title: Camers
             cards:
+              - type: 'custom:camera-card'
+                entity: camera.door_hb
               - type: 'custom:camera-card'
                 entity: camera.uvc_g3_flex_entrance
               - type: 'custom:camera-card'
@@ -251,7 +264,7 @@ views:
             title: Utility
             cards:
               - type: glance
-                columns: 7
+                columns: 6
                 show_state: false
                 entities:
                   #- entity: switch.ventilation
@@ -265,11 +278,6 @@ views:
                       service: switch.toggle
                       service_data:
                         entity_id: switch.ventilation
-                  - entity: binary_sensor.breather_v
-                    name: Breather
-                    tap_action:
-                      action: call-service
-                      service: script.breather_toggle
                   - entity: binary_sensor.bathroom_humidity_rising
                     name: H UP
                   - entity: switch.plug_158d0001f9ebd8
@@ -290,7 +298,28 @@ views:
                     name: W.OFF
                     tap_action:
                       action: toggle
-
+          - type: glance
+            show_state: false
+            entities:
+              - entity: switch.plug_158d000344998e
+                name: Plug
+              - entity: binary_sensor.breather_v
+                name: Breather
+                tap_action:
+                  action: call-service
+                  service: script.breather_toggle
+              - entity: script.breather_arrow_up
+                name: Up
+                icon: mdi:arrow-up-bold
+                tap_action:
+                  action: call-service
+                  service: script.breather_arrow_up
+              - entity: script.breather_arrow_down
+                icon: mdi:arrow-down-bold
+                name: Down
+                tap_action:
+                  action: call-service
+                  service: script.breather_arrow_down
 
           - type: horizontal-stack
             cards:
@@ -379,8 +408,10 @@ views:
 #                  service: homeassistant.turn_off
 #                  entity_id: group.devices_to_turnoff
               - type: glance
-                columns: 6
+                columns: 7
                 entities:
+                  - entity: binary_sensor.doorbell
+                    name: Doorbell
                   - entity: binary_sensor.d1_mini_domofon_incomingcall
                     name: Call
 #                  - entity: switch.d1_mini_domofon_phone
@@ -608,6 +639,11 @@ views:
                 icon: mdi:power-socket-au
                 tap_action:
                   action: toggle
+              - entity: switch.plug_158d000322e1d9
+                name: Doorcam
+                icon: mdi:power-socket-au
+                tap_action:
+                  action: toggle
               
               - entity: switch.wall_plug_158d000249b26b
                 name: Main HS
@@ -639,11 +675,11 @@ views:
                 icon: mdi:power-socket
                 tap_action:
                   action: toggle
-              - entity: switch.plug_top_k
-                name: Top K
-                icon: mdi:power-socket
-                tap_action:
-                  action: toggle
+              #- entity: switch.plug_top_k
+              #  name: Top K
+              #  icon: mdi:power-socket
+              #  tap_action:
+              #    action: toggle
                  
               
               - entity: switch.wall_plug_158d0002467773
@@ -896,35 +932,17 @@ views:
         cards:
           - type: custom:vertical-stack-in-card
             cards:
-              #- type: glance
-              #  #title: Domofon
-              #  show_header_toggle: false
-              #  entities:
-              #    - entity: binary_sensor.domofon
-              #      name: Domofon
-              #    - entity: binary_sensor.domofon_auto_open
-              #      name: Auto open
-              #      tap_action:
-              #        action: call-service
-              #        service: input_boolean.toggle
-              #        service_data:
-              #          entity_id: input_boolean.domofon_auto_open
-              #    - entity: binary_sensor.domofon_auto_open_once
-              #      name: Auto open once
-              #      tap_action:
-              #        action: call-service
-              #        service: input_boolean.toggle
-              #        service_data:
-              #          entity_id: input_boolean.domofon_auto_open_once
-  
-              - type: glance
-                #title: Locks
-                show_header_toggle: false
-                entities:
-                  - entity: binary_sensor.door_window_sensor_158d0002b7c2c8
-                    name: Top Lock
-                  - entity: binary_sensor.door_window_sensor_158d0002a1a4b2
-                    name: Bottom Lock
+              - type: horizontal-stack
+                cards:  
+                  - type: glance
+                    #title: Locks
+                    show_header_toggle: false
+                    entities:
+                      - entity: binary_sensor.upper_lock
+                        name: Upper Lock
+                      - entity: binary_sensor.bottom_lock
+                        name: Bottom Lock
+                  
           - type: entities
             title: Windows
             show_header_toggle: false
@@ -1382,6 +1400,24 @@ views:
     cards:
       - type: vertical-stack
         cards:
+          - type: glance
+            columns: 8
+            entities:
+              - entity: sensor.d1_filter_flow_mineralized
+                name: RO M
+              - entity: sensor.d1_filter_flow_nonmineralized
+                name: RO NM
+              - sensor.ro_mineralized
+              - sensor.ro_nonmineralized
+              - sensor.ro_total
+              - entity: script.ro_reset
+                name: RST
+                tap_action:
+                  action: call-service
+                  service: script.ro_reset
+              - sensor.d1_filter_flow_mineralized_integral
+              - sensor.d1_filter_flow_nonmineralized_integral
+                  
           - type: entities
             title: Utility Cost
             show_header_toggle: false
@@ -1398,14 +1434,11 @@ views:
               - type: divider
               - sensor.power_consumption_month_cost
           - type: entities
-            title: Meters
-            show_header_toggle: false
             entities:
-              - sensor.cold_water_meter
-              - sensor.hot_water_meter
-              - type: divider
-              - sensor.power_t1
-              - sensor.power_t2
+              - input_number.tariff_energy_day
+              - input_number.tariff_energy_night
+              - input_number.tariff_hot_water
+              - input_number.tariff_cold_water
           #- type: entities
           #  title: Change
           #  show_header_toggle: false
@@ -1450,6 +1483,9 @@ views:
               - type: divider
               - input_number.hot_water_meter
               - input_number.cold_water_meter
+              - type: divider
+              - input_number.hot_water_meter_last_month
+              - input_number.cold_water_meter_last_month
               - type: divider
               - entity: binary_sensor.door_window_sensor_158d000232de79
                 name: Cold water sensor
@@ -1507,7 +1543,9 @@ views:
               - type: divider
               - input_number.power_t1
               - input_number.power_t2
-          
+              - type: divider
+              - input_number.power_meter_last_month_t1
+              - input_number.power_meter_last_month_t2
 ################################################################
 # POWER LOADS PAGE
 ################################################################
@@ -1592,13 +1630,7 @@ views:
                 name: T
               - entity: sensor.power_consumption_st
                 name: St
-          - type: entities
-            title: Sasha
-            show_header_toggle: false
-            entities:
-              - sensor.pc_s
-              - sensor.wadrobe_s
-              - sensor.heater_s
+
       ##########################################
       # Mid column
       ##########################################
@@ -1625,17 +1657,24 @@ views:
               - sensor.fan_t
               - sensor.water_on_b
               - sensor.water_off_b
-      ##########################################
-      # Right column
-      ##########################################
-      - type: vertical-stack
-        cards:
           - type: entities
             title: Master bedroom
             show_header_toggle: false
             entities:
               - sensor.pc_mb
               - sensor.bed_plug_mb
+      ##########################################
+      # Right column
+      ##########################################
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Sasha
+            show_header_toggle: false
+            entities:
+              - sensor.pc_s
+              - sensor.wadrobe_s
+              - sensor.heater_s
           
           - type: entities
             title: Vova
@@ -1838,30 +1877,18 @@ views:
   - title: Cameras
     icon: mdi:cctv
     cards:
-      - type: picture-entity
-        title: Entrance
-        entity: camera.uvc_g3_flex_entrance
-        name: Entrance
-      - type: picture-entity
-        title: Kitchen
+      - type: 'custom:camera-card'
+        entity: camera.door_hb
+      - type: 'custom:camera-card'
         entity: camera.digma100
-        name: Enrance 2
-      - type: picture-entity
-        title: Hall Big
-        entity: camera.uvc_g3_flex_hall
-        name: Hall
-      - type: picture-entity
-        title: Dixy
+      - type: 'custom:camera-card'
+        entity: camera.uvc_g3_flex_entrance
+      - type: 'custom:camera-card'
+        entity:  camera.uvc_g3_flex_hall
+      - type: 'custom:camera-card'
         entity: camera.uvc_g3_flex_dixy
-        name: Dixy
-      - type: picture-entity
-        title: Window
+      - type: 'custom:camera-card'
         entity: camera.uvc_g3_flex_window
-        name: Window
-      #- type: picture-entity
-      #  title: Dixy
-      #  entity: camera.rpi_cam
-      #  name: Dixy Cam
 
       
 
@@ -2209,9 +2236,9 @@ views:
       #############
       - type: vertical-stack
         cards:
-          - type: entities
+          - type: custom:github-card
             entities:
-              - sensor.git_stars
+              - sensor.myconfig
           - type: glance
             show_header_toggle: false
             columns: 7
@@ -2285,6 +2312,11 @@ views:
                     tap_action:
                       action: call-service
                       service: script.warning_reset
+              - type: glance
+                show_header_toggle: false
+                entities:
+                  - sensor.snapshot_backup
+                  - binary_sensor.snapshots_stale
               - type: glance
                 show_header_toggle: false
                 columns: 7
@@ -2595,7 +2627,7 @@ views:
                     name: Devices
                   - entity: sensor.usg_vpn
                     name: VPN
-          - type: custom:tracker-card
+
 
 ################################################################
 # TEST
@@ -2625,6 +2657,8 @@ views:
           - type: divider
           - sensor.power_daily_day
           - sensor.power_daily_night
+          - sensor.power_daily_8266_day
+          - sensor.power_daily_8266_night
           - type: divider
           - sensor.power_light_daily_day
           - sensor.power_light_daily_night
@@ -2640,6 +2674,8 @@ views:
           - type: divider
           - sensor.power_monthly_day
           - sensor.power_monthly_night
+          - sensor.power_monthly_8266_day
+          - sensor.power_monthly_8266_night
           - type: divider
           - sensor.power_light_monthly_day
           - sensor.power_light_monthly_night
@@ -2651,6 +2687,7 @@ views:
         show_header_toggle: false
         title: Int meters
         entities:
+          - sensor.power_consumption_8266_int
           - sensor.power_consumption_int
           - sensor.power_consumption_light_int
           - sensor.power_consumption_socket_int
@@ -2688,44 +2725,82 @@ views:
   - title: Pressure monitoring
     icon: mdi:thermostat
     cards:
-      - type: glance
-        columns: 6
-        entities:
-          - entity: binary_sensor.pressure_rising_fast
-            name: U Fast
-          - entity: binary_sensor.pressure_rising_slow
-            name: U Slow
-          - entity: binary_sensor.pressure_falling_fast
-            name: D Fast
-          - entity: binary_sensor.pressure_falling_slow
-            name: D Slow
-          - entity: binary_sensor.temp_rising
-            name: T Up
-          - entity: binary_sensor.temp_falling
-            name: T Down
-      - type: history-graph
-        hours_to_show: 48
-        entities:
-          - sensor.pressure_158d000233fb72
-          - sensor.8266_air_valve_pressure
-      - type: gauge
-        name: Gradient
-        entity: sensor.pressure_gradient
-        max: 250
-        min: -250
-        severity:
-          blue: -250
-          green: 0
-          yellow: 250
-      - type: gauge
-        name: Gradient
-        entity: sensor.pressure_gradient_air_valve
-        max: 250
-        min: -250
-        severity:
-          blue: -100
-          green: 0
-          yellow: 100
+      - type: vertical-stack
+        cards:
+          - type: glance
+            columns: 6
+            entities:
+              - entity: binary_sensor.pressure_rising_fast
+                name: U Fast
+              - entity: binary_sensor.pressure_rising_slow
+                name: U Slow
+              - entity: binary_sensor.pressure_falling_fast
+                name: D Fast
+              - entity: binary_sensor.pressure_falling_slow
+                name: D Slow
+              - entity: binary_sensor.temp_rising
+                name: T Up
+              - entity: binary_sensor.temp_falling
+                name: T Down
+          - type: history-graph
+            hours_to_show: 72
+            entities:
+              - sensor.pressure_158d000233fb72
+              - sensor.8266_air_valve_pressure
+          - type: history-graph
+            hours_to_show: 72
+            entities:
+              - sensor.pressure_gradient
+              - sensor.pressure_gradient_air_valve
+      - type: vertical-stack
+        cards:
+          - type: gauge
+            name: Gradient
+            entity: sensor.pressure_gradient
+            max: 250
+            min: -250
+            severity:
+              blue: -250
+              green: 0
+              yellow: 250
+          - type: custom:mini-graph-card
+            entities:
+              - sensor.pressure_gradient
+            hours_to_show: 48
+            points_per_hour: 10
+            decimals: 0
+            hour24: true
+            extrema: true
+            labels: true
+            line_width: 1
+            line_color: blue
+            upper_bound: 250
+            lower_bound: -250
+      - type: vertical-stack
+        cards:
+          - type: gauge
+            name: Gradient
+            entity: sensor.pressure_gradient_air_valve
+            max: 250
+            min: -250
+            severity:
+              blue: -100
+              green: 0
+              yellow: 100
+          
+          - type: custom:mini-graph-card
+            entities:
+              - sensor.pressure_gradient_air_valve
+            hours_to_show: 48
+            points_per_hour: 10
+            decimals: 0
+            hour24: true
+            extrema: true
+            labels: true
+            line_width: 1
+            line_color: black
+            upper_bound: 250
+            lower_bound: -250
 ################################################################
 # MQTT Cross Servers Sensors PAGE
 ################################################################
@@ -2972,63 +3047,99 @@ views:
   - title: Utility Sensors
     icon: mdi:shape
     cards:
-      - type: entities
-        title: Main
-        show_header_toggle: false
-        entities:
-          - entity: sensor.power_t1
-          - entity: sensor.power_t2
-          - entity: sensor.power_consumption_month_t1
-          - entity: sensor.power_consumption_month_t2
-          - entity: sensor.cold_water_meter
-          - entity: sensor.hot_water_meter
-          - entity: sensor.cold_water_month
-          - entity: sensor.hot_water_month
-      - type: entities
-        title: j3455
-        show_header_toggle: false
-        entities:
-          - entity: sensor.power_t1_j3455
-            name: Power meter/T1
-          - entity: sensor.power_t2_j3455
-            name: Power meter/T2
-          - entity: sensor.power_consumption_month_t1_j3455
-            name: Power/Month/T1
-          - entity: sensor.power_consumption_month_t2_j3455
-            name: Power/Month/T2
-          - entity: sensor.cold_water_meter_j3455
-            name: 'Cold water meter'
-          - entity: sensor.hot_water_meter_j3455
-            name: 'Hot water meter'
-          - entity: sensor.cold_water_meter_month_j3455
-            name: 'Cold water/Month'
-          - entity: sensor.hot_water_meter_month_j3455
-            name: 'Hot water/Month'
-          - entity: input_boolean.j3455_set_utility
-            name: Set from Main
-          - entity: binary_sensor.j3455_state
-            name: j3455 Server State
-      - type: entities
-        title: RPI
-        show_header_toggle: false
-        entities:
-          - entity: sensor.power_t1_rpi
-            name: Power meter/T1
-          - entity: sensor.power_t2_rpi
-            name: Power meter/T2
-          - entity: sensor.power_consumption_month_t1_rpi
-            name: Power/Month/T1
-          - entity: sensor.power_consumption_month_t2_rpi
-            name: Power/Month/T2
-          - entity: sensor.cold_water_meter_rpi
-            name: 'Cold water meter'
-          - entity: sensor.hot_water_meter_rpi
-            name: 'Hot water meter'
-          - entity: sensor.cold_water_meter_month_rpi
-            name: 'Cold water/Month'
-          - entity: sensor.hot_water_meter_month_rpi
-            name: 'Hot water/Month'
-          - entity: input_boolean.rpi_set_utility
-            name: Set from Main
-          - entity: binary_sensor.rpi_state
-            name: RPI Server State
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: Main
+            show_header_toggle: false
+            entities:
+              - entity: sensor.power_t1
+              - entity: sensor.power_t2
+              - entity: sensor.power_consumption_month_t1
+              - entity: sensor.power_consumption_month_t2
+              - entity: sensor.cold_water_meter
+              - entity: sensor.hot_water_meter
+              - entity: sensor.cold_water_month
+              - entity: sensor.hot_water_month
+          - type: glance
+            entities:
+              - entity: script.utility_value_from_j3455
+                name: j3455 -> Main
+                icon: mdi:desktop-tower
+                hold_action: none
+                tap_action:
+                  action: call-service
+                  service: script.utility_value_from_j3455
+              - entity: script.utility_value_from_rpi
+                name: RPI -> Main
+                icon: mdi:raspberry-pi
+                hold_action: none
+                tap_action:
+                  action: call-service
+                  service: script.utility_value_from_rpi
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: j3455
+            show_header_toggle: false
+            entities:
+              - entity: sensor.power_t1_j3455
+                name: Power meter/T1
+              - entity: sensor.power_t2_j3455
+                name: Power meter/T2
+              - entity: sensor.power_consumption_month_t1_j3455
+                name: Power/Month/T1
+              - entity: sensor.power_consumption_month_t2_j3455
+                name: Power/Month/T2
+              - entity: sensor.cold_water_meter_j3455
+                name: 'Cold water meter'
+              - entity: sensor.hot_water_meter_j3455
+                name: 'Hot water meter'
+              - entity: sensor.cold_water_meter_month_j3455
+                name: 'Cold water/Month'
+              - entity: sensor.hot_water_meter_month_j3455
+                name: 'Hot water/Month'
+          - type: glance
+            entities:
+              - entity: input_boolean.j3455_set_utility
+                name: Main -> j3455
+                tap_action:
+                  action: call-service
+                  service: input_boolean.toggle
+                  service_data:
+                    entity_id: input_boolean.j3455_set_utility
+              - entity: binary_sensor.j3455_state
+                name: j3455 Server State
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: RPI
+            show_header_toggle: false
+            entities:
+              - entity: sensor.power_t1_rpi
+                name: Power meter/T1
+              - entity: sensor.power_t2_rpi
+                name: Power meter/T2
+              - entity: sensor.power_consumption_month_t1_rpi
+                name: Power/Month/T1
+              - entity: sensor.power_consumption_month_t2_rpi
+                name: Power/Month/T2
+              - entity: sensor.cold_water_meter_rpi
+                name: 'Cold water meter'
+              - entity: sensor.hot_water_meter_rpi
+                name: 'Hot water meter'
+              - entity: sensor.cold_water_meter_month_rpi
+                name: 'Cold water/Month'
+              - entity: sensor.hot_water_meter_month_rpi
+                name: 'Hot water/Month'
+          - type: glance
+            entities:
+              - entity: input_boolean.rpi_set_utility
+                name: Main -> RPI
+                tap_action:
+                  action: call-service
+                  service: input_boolean.toggle
+                  service_data:
+                    entity_id: input_boolean.rpi_set_utility
+              - entity: binary_sensor.rpi_state
+                name: RPI Server State

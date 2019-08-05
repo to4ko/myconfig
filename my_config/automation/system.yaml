@@ -37,12 +37,12 @@
         filename: "/config/www/cam_captures/window.jpg"
     - service: notify.telegram_cam
       data:
-        title: "{{now().strftime('%H:%M %d-%m-%Y')}}"
-        message: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "{{states('sensor.time')}} {{states('sensor.date')}}"
         data:
           photo:
           - file: "/config/www/cam_captures/window.jpg"
-            caption: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+            caption: "{{states('sensor.time')}} {{states('sensor.date')}}"
 
 # ##################################
 # System - Errors counter
@@ -84,6 +84,8 @@
     - service: notify.telegram
       data_template:
         message: "\U0001F603 Сервер запущен!"
+    - service: automation.trigger
+      entity_id: automation.system_sasha_tracker
     - service: script.system_start
     - service: counter.increment
       entity_id: counter.restart_counter
@@ -120,7 +122,7 @@
         {% elif is_state("input_select.chromecast_radio", "Hall big") %} media_player.mpd
         {% elif is_state("input_select.chromecast_radio", "Everywhere") %} media_player.all_speakers
         {% endif %}
-      volume_level: '{{  states.input_number.volume_radio.state  }}' 
+      volume_level: "{{ states('input_number.volume_radio') }}"
 
 
 # ##################################
@@ -167,20 +169,20 @@
   action:
     service: notify.telegram
     data_template: 
-      message: "\U00002733 {{ states.updater.updater.state }} доступен!"
+      message: "\U00002733 {{ states('updater.updater') }} доступен!"
 
 # ##################################
 # System - NEW DAY
 # ##################################
-- alias: system_new_day_telegramm
+- alias: system_new_day_telegram
   initial_state: 'on'
   trigger:
-    platform: time
-    at: '00:00:01'
+    - platform: time
+      at: '00:00:02'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states.counter.restart_counter.state}}, ошибок - {{states.counter.error_counter.state}}, предупреждений - {{states.counter.warning_counter.state}}, ошибок входа - {{states.counter.badlogin_counter.state}}. Входная дверь открывалась - {{states.counter.main_door_hb.state}} р."
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а)."
     - service: counter.reset
       entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb
     - service: input_boolean.turn_off
@@ -194,59 +196,61 @@
   initial_state: 'on'
   trigger:
     - platform: time
-      at: '17:00:00'
+      at: '07:00:00'
+    #- platform: time
+    #  at: '17:00:00'
     - platform: time
       at: '21:00:00'
   action:
-  - service: script.telegram_weather
+  - service: script.weather_telegram
 
 # ##################################
 # System - Dima At home
 # ##################################
-#- alias: system_presence_dima_at_home
-#  initial_state: 'on'
-#  trigger:
-#    - platform: state
-#      #entity_id: device_tracker.life360_dima_tsymbal
-#      entity_id: person.dima
-#      to: "home"
-#      for: 00:03:00
-#  action: 
-#    - service: notify.telegram
-#      data_template:
-#        message: "\U0001F9D4 Дима дома!"
+- alias: system_presence_dima_at_home
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_dima_tsymbal
+      entity_id: person.dima
+      to: "home"
+      for: 00:03:00
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F9D4 Дима дома!"
         
 # ##################################
 # System - Vova At home
 # ##################################
-#- alias: system_presence_vova_at_home
-#  initial_state: 'on'
-#  trigger:
-#    - platform: state
-#      #entity_id: device_tracker.life360_vova_tsymbal
-#      entity_id: person.vova
-#      to: "home"
-#      for: 00:03:00
-#  action: 
-#    - service: notify.telegram
-#      data_template:
-#        message: "\U0001F471 Вова дома!"
+- alias: system_presence_vova_at_home
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_vova_tsymbal
+      entity_id: person.vova
+      to: "home"
+      for: 00:03:00
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F471 Вова дома!"
 
 # ##################################
 # System - Sandra At home
 # ##################################
-#- alias: system_presence_sandra_at_home
-#  initial_state: 'on'
-#  trigger:
-#    - platform: state
-#      #entity_id: device_tracker.life360_sandra_tsymbal
-#      entity_id: person.sandra
-#      to: "home"
-#      for: 00:03:00
-#  action: 
-#    - service: notify.telegram
-#      data_template:
-#        message: "\U0001F467 Саша дома!"
+- alias: system_presence_sandra_at_home
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_sandra_tsymbal
+      entity_id: person.sandra
+      to: "home"
+      for: 00:03:00
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F467 Саша дома!"
 
 # ##################################
 # System - Sasha At home
@@ -281,7 +285,7 @@
       entity_id: counter.badlogin_counter
     - service: notify.telegram
       data_template:
-        message: "\U0000274C Неудачная попытка подлючения. Неверно введен пароль! {{ states.persistent_notification.http_login.attributes.message }}"
+        message: "\U0000274C Неудачная попытка подлючения. Неверно введен пароль! {{ state_attr('persistent_notification.http_login','message') }}"
     - service: persistent_notification.dismiss
       data:
         notification_id: http_login
@@ -295,22 +299,16 @@
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
-        entity_id: binary_sensor.switch_158d0001ef6089
+        entity_id: binary_sensor.switch_158d0002fa99a8
         click_type: single
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: binary_sensor.switch_158d0001ef6089
-        click_type: double
-#    - platform: state
-#      entity_id: input_boolean.sasha_tracker
+#    - platform: event
+#      event_type: xiaomi_aqara.click
+#      event_data:
+#        entity_id: binary_sensor.switch_158d0002fa99a8
+#        click_type: double
   action:
     - service: input_boolean.toggle
       entity_id: input_boolean.sasha_tracker
-    #- service: device_tracker.see
-    #  data_template:
-    #    dev_id: sasha
-    #    location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
 
 # ##################################
 # System - Sasha tracker
@@ -320,14 +318,11 @@
   trigger:
     platform: state
     entity_id: input_boolean.sasha_tracker
-    #from: "off"
-    #to: "on"
   action:
     - service: device_tracker.see
       data_template:
         dev_id: sasha
         location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
-
 
 # ##################################
 # System - Sasha tracker - Audio
@@ -344,7 +339,7 @@
         after: '07:00:00'
         before: '21:00:00'
       - condition: template
-        value_template: '{{ as_timestamp(now()) - as_timestamp(states.binary_sensor.switch_158d0001ef6089.last_updated) < 20 }}'
+        value_template: '{{ as_timestamp(now()) - as_timestamp(states.binary_sensor.switch_158d0002fa99a8.last_updated) < 20 }}'
   action:
     - service: media_player.volume_set
       data_template:
@@ -354,14 +349,14 @@
       entity_id: media_player.mpd
       data_template:
         message: >
-          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'Маленький хозяин, '] | random %}
-          {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я буду скучать!'] | random %}
-          {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ура! Ура! Ты вернулся домой!'] | random %}
+          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, '] | random %}
+          {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я б+уду скуч+ать!'] | random %}
+          {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ур+а! Ур+а! Ты верн+улся дом+ой!'] | random %}
           
           {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
-    #- service: notify.telegram
-    #  data_template:
-    #    message: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
 
 # ##################################
 # System - Sensors Low Battery Notification
@@ -375,7 +370,7 @@
     above: 11
     entity_id:
       # HALL BIG
-      - binary_sensor.switch_158d0001ef6089
+      - binary_sensor.switch_158d0002fa99a8
       - binary_sensor.door_window_sensor_158d000253722b
       - binary_sensor.door_window_sensor_158d000252acba
       - sensor.temperature_158d0002461e5b
@@ -458,7 +453,7 @@
 # System - Tor restart every 2 hours
 # ##################################
 - alias: system_tor_restart
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
     platform: time_pattern
     hours: '/2'
@@ -466,6 +461,37 @@
     - service: hassio.addon_restart
       data:
         addon: "a0d7b954_tor"
+        
+# ##################################
+# System - server root device
+# ##################################
+- alias: system_rdev
+  initial_state: 'on'
+  trigger:
+    - platform: template
+      value_template: "{% if states('sensor.root_device') != '/dev/sda2' %}true{% endif %}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F621 Внимание! Root устройство изменено!"
+
+# ##################################
+# System - Home weather (ya)
+# ##################################
+- alias: system_weather_home
+  initial_state: 'off'
+  trigger:
+    - platform: state
+      entity_id: sensor.ya_weather_home
+  condition:
+    - condition: time
+      after: "07:00:00"
+      before: "21:00:00"
+  action:
+    - service: notify.telegram_family
+      data_template:
+        message: "\U00002602 Погода дома: {{states('sensor.ya_weather_home')}}"
+
 
 # ##################################
 # System - Person State
@@ -497,3 +523,4 @@
 #      data_template:
 #        message: "{%if trigger.from_state.attributes.friendly_name =='Dima'%}\U0001F9D4 Дима: {%elif trigger.from_state.attributes.friendly_name =='Sandra'%}\U0001F467 Саша: {%elif trigger.from_state.attributes.friendly_name =='Vova'%}\U0001F471 Вова: {%elif trigger.from_state.attributes.friendly_name =='Sasha'%}\U0001F476 Санек: {%endif%} {{ trigger.to_state.state|capitalize }}"
 #        {{ trigger.from_state.state|capitalize }} ->
+
