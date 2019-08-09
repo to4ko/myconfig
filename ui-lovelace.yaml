@@ -1174,6 +1174,9 @@ views:
           - switch.wall_plug_158d00024517fe
           - switch.wall_plug_158d0001f2630e
           - switch.wall_plug_158d00023e5812
+          - switch.plug_158d000322e1d9
+          - switch.plug_158d0003539447
+
           #- switch.gateway_plug_hb
       - type: entities
         title: Sasha's Room
@@ -1187,6 +1190,7 @@ views:
           - switch.wall_plug_158d0002395d58
           - fan.humidifier2
           - switch.plug_158d00023a657a
+          - switch.power_strip_s
           #- switch.gateway_plug_s
       - type: entities
         title: Kitchen
@@ -1219,7 +1223,9 @@ views:
           - switch.plug_158d00020b4971
           - switch.plug_158d000290a093
           - switch.plug_158d000290a0bc
-  
+          - switch.plug_158d00028b4fc3
+          - switch.plug_158d00035c194f
+          - switch.plug_158d0003600ea4
       - type: entities
         title: Hall Small
         show_header_toggle: false
@@ -1243,6 +1249,7 @@ views:
           #- switch.gateway_plug_mb
           - light.philips_e27_mb
           - switch.plug_158d0002482619
+          - switch.plug_158d000322e30c
       - type: entities
         title: Bathroom
         show_header_toggle: false
@@ -1433,8 +1440,6 @@ views:
               #- sensor.power_consumption_month_t2_cost
               - type: divider
               - sensor.power_consumption_month_cost
-          - type: entities
-            entities:
           - type: entities
             title: Utility Cost
             show_header_toggle: false
@@ -1970,33 +1975,12 @@ views:
                 tap_action:
                   action: call-service
                   service: script.set_humidifier_dry_mode
-          - type: custom:mini-graph-card
-            #title: 'Temperature'
+          - type: history-graph
             hours_to_show: 48
-            line_color: '#e74c3c'
-            extrema: true
-            labels: true
-            line_width: 3
-            points_per_hour: 1
-            decimals: 0
-            hour24: true
             entities:
               - sensor.temperature_158d0001e6d85a
-                #name: "Sasha's room"
-          - type: custom:mini-graph-card
-            #title: 'Humidity'
-            hours_to_show: 48
-            line_color: blue
-            points_per_hour: 1
-            extrema: true
-            labels: true
-            line_width: 3
-            decimals: 0
-            hour24: true
-            entities:
               - sensor.humidity_158d0001e6d85a
-                #name: "Sasha's room"
-      
+
       - type: vertical-stack
         cards:
           - type: entities
@@ -2050,78 +2034,35 @@ views:
                   action: call-service
                   service: script.cycle_purifier_mode
  
-          - type: custom:mini-graph-card
+          - type: history-graph
             hours_to_show: 48
-            points_per_hour: 1
-            decimals: 0
-            hour24: true
-            extrema: true
-            labels: true
-            line_width: 3
-            line_color: red
             entities:
               - sensor.temperature_158d0001e58714
-          - type: custom:mini-graph-card
-            hours_to_show: 48
-            points_per_hour: 1
-            decimals: 0
-            hour24: true
-            extrema: true
-            labels: true
-            line_width: 3
-            line_color: blue
-            entities:
               - sensor.humidity_158d0001e58714
-          - type: custom:mini-graph-card
+          - type: history-graph
+            hours_to_show: 48
             entities:
               - sensor.purifier_pm25
-            hours_to_show: 48
-            points_per_hour: 1
-            decimals: 0
-            hour24: true
-            extrema: true
-            labels: true
-            line_width: 3
-            line_color: black
       - type: vertical-stack
         cards:
-          #- type: custom:mini-graph-card
-            #entities:
-            #  - sensor.temperature_158d0001e8995a
-            #hours_to_show: 48
-            #line_color: red
-            #points_per_hour: 1
-            #decimals: 0
-            #hour24: true
-            #extrema: true
-            #labels: true
-            #line_width: 3
-          #- type: custom:mini-graph-card
-            #entities:
-            #  - sensor.humidity_158d0001e8995a
-            #hours_to_show: 48
-            #line_color: blue
-            #points_per_hour: 1
-            #decimals: 0
-            #hour24: true
-            #extrema: true
-            #labels: true
-            #line_width: 3
           - type: glance
             entities:
               - sensor.z19_co2_v
               - sensor.z19_co2_s
               - sensor.z19_co2_mb
           - type: history-graph
-            title: 'CO2 V'
+            hours_to_show: 48
+            #title: 'CO2 V'
             entities:
               - sensor.z19_co2_v
           - type: history-graph
-            title: 'CO2 S'
+            hours_to_show: 48
+            #title: 'CO2 S'
             entities:
               - sensor.z19_co2_s
           - type: history-graph
-            title: 'CO2 MB'
+            hours_to_show: 48
+            #title: 'CO2 MB'
             entities:
               - sensor.z19_co2_mb
           
@@ -2201,6 +2142,7 @@ views:
                       action: call-service
                       service: script.radio_off
           - type: glance
+            columns: 6
             entities:
               - entity: media_player.home_mini_v
                 name: V
@@ -2210,6 +2152,8 @@ views:
                 name: K
               - entity: media_player.home_mini_mb
                 name: MB
+              - entity: media_player.home_mini_hb
+                name: HB
               - entity: media_player.mpd
                 name: MPD
           - type: glance
@@ -2332,9 +2276,14 @@ views:
               - type: glance
                 show_header_toggle: false
                 entities:
-                  - sensor.gdrive_backup_state
-                  - binary_sensor.snapshots_stale
-                  -  sensor.gdrive_last_backup
+                  - entity: sensor.gdrive_backup_state
+                    icon: mdi:google-drive
+                    name: G-BU Status
+                  - entity: binary_sensor.snapshots_stale
+                    name: G-BU Stale
+                  - entity: sensor.gdrive_last_backup
+                    icon: mdi:clock-digital
+                    name: G-BU Last
 #              - type: glance
 #                show_header_toggle: false
 #                columns: 7
@@ -2576,7 +2525,9 @@ views:
                       name: Input
                     - entity: sensor.ippon_mb_output_voltage
                       name: Output
-
+          - type: entities
+            entities:
+              - switch.blackhole
           - type: glance
             #title: Sytem Status
             columns: 7
@@ -2880,12 +2831,38 @@ views:
 ################################################################
 # PI-HOLE PAGE
 ################################################################
-#  - title: Pi-Hole
-#    icon: mdi:access-point-network-off
-#    cards:
-#      - type: iframe
-#        url: http://192.168.1.14:4865/admin
-#        aspect_ratio: 500%
+  - title: Pi-Hole
+    icon: mdi:access-point-network-off
+    cards:
+      - type: entities
+        entities:
+          - sensor.esp01_flow_counter_2
+          - binary_sensor.esp01_flow_counter_reset_2
+          - sensor.esp01_flow_integr_daily_3
+          - sensor.esp01_flow_pulse_filter_intake_3
+          - switch.esp01_flow_reset_switch
+          - switch.esp01_flow_restart_3
+          - binary_sensor.esp01_flow_status_3
+          - sensor.esp01_flow_uptime_3
+          - sensor.esp01_flow_wifi_rssi_3
+          - binary_sensor.esp01_flow_sensor_3
+      - type: entities
+        entities:
+          - sensor.d1_filter_flow_counter
+          - sensor.d1_filter_flow_counter_ml
+          - sensor.d1_filter_flow_mineralized
+          - binary_sensor.d1_filter_flow_mineralized_imp
+          - sensor.d1_filter_flow_nonmineralized
+          - binary_sensor.d1_filter_flow_nonmineralized_imp
+          - switch.d1_filter_flow_reset_switch
+          - switch.d1_filter_flow_restart
+          - binary_sensor.d1_filter_flow_status
+          - sensor.d1_filter_flow_uptime
+          - sensor.d1_filter_flow_wifi_rssi
+          - sensor.d1_filter_flow_mineralized_integral
+          - sensor.d1_filter_flow_nonmineralized_integral
+
+
 
 ################################################################
 # SENSORS BATTERIES PAGE
