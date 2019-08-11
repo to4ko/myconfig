@@ -20,7 +20,7 @@
       data_template:
         message: "\U0001f514 Освещение выключено!"
     - service: homeassistant.turn_on
-      entity_id: input_boolean.security_mode
+      entity_id: input_boolean.security_mode, switch.blackhole
 
 
 # ##################################
@@ -42,7 +42,7 @@
     #    message: "\U0001f46e Обнаружено движение! {{states.sensor.security_last_change.state}}"
     - service: notify.telegram
       data_template:
-        message: "\U0001f46e Внимание! Обнаружено движение! {{states('sensor.security_last_change')}} "
+        message: "\U0001f46e Внимание! Обнаружено движение! {{states('sensor.security_last_change')}}"
 
 
 # ##################################
@@ -54,9 +54,14 @@
     - platform: state
       entity_id: binary_sensor.family_home
       to: 'on'
+      from: 'off'
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'on'
   action:
     - service: homeassistant.turn_off
-      entity_id: input_boolean.security_mode
+      entity_id: input_boolean.security_mode, switch.blackhole
       
 # ##################################
 # Security - Notification

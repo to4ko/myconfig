@@ -173,7 +173,7 @@
     - service: tts.yandextts_say
       entity_id: media_player.mpd
       data_template:
-        message: 'Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Внима+ние! Входн+ая дв+ерь н+е закр+ыта!'
+        message: 'Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Вним+ание! Входн+ая дв+ерь н+е закр+ыта!'
     - service: notify.telegram
       data_template:
         message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
@@ -216,28 +216,6 @@
     - delay: 00:01:00
     - service: light.turn_off
       entity_id: light.led_strip_hb
-
-# ##################################
-# Hall Big - Fridge R sync on state change to Entr R
-# ##################################
-#- alias: hall_big_fridge_r_to_entrance_r
-#  initial_state: 'on'
-#  trigger:
-#    platform: state
-#    entity_id: switch.wall_switch_right_158d000253f04a
-#  action:
-#    service_template: "{% if is_state('switch.wall_switch_right_158d000253f04a','on') %} script.entrance_r_on {% elif is_state('switch.wall_switch_right_158d000253f04a' ,'off') %} script.entrance_r_off {% endif %}"
-    
-# ##################################
-# Hall Big - Entr L sync on state change to Fridge L
-# ##################################
-#- alias: hall_big_entrance_l_to_fridgel
-#  initial_state: 'on'
-#  trigger:
-#    platform: state
-#    entity_id: switch.wall_switch_left_158d000223921b
-#  action:
-#    service_template: "{% if is_state('switch.wall_switch_left_158d000223921b','on') %} script.fridge_l_on {% elif is_state('switch.wall_switch_left_158d000223921b' ,'off') %} script.fridge_l_off {% endif %}"
 
 # ##################################
 # Hall Big - Auto Light On Entrance
@@ -727,10 +705,6 @@
   action:
     #- service: automation.turn_off
     #  entity_id: automation.hall_big_domofon_incoming_call
-    - service: light.turn_on
-      data:
-        entity_id: light.d1_mini_domofon_white_led
-        effect: "blink white"
     - service: camera.snapshot
       data:
         entity_id: camera.uvc_g3_flex_window
@@ -744,17 +718,9 @@
           photo:
           - file: "/config/www/cam_captures/window.jpg"
             caption: "Звонок в домофон {{now().strftime('%H:%M %d-%m-%Y')}}"
-    - service: light.turn_off
-      data:
-        entity_id: light.d1_mini_domofon_white_led
-    #- service: automation.turn_off
-    #  entity_id: automation.hall_big_domofon_incoming_call
     - delay: '00:00:30'
     - service: automation.turn_on
       entity_id: automation.hall_big_domofon_incoming_call
-    - service: light.turn_off
-      data:
-        entity_id: light.d1_mini_domofon_white_led
     - delay: '00:15:00'
     - service: script.domofon_check
 
@@ -835,6 +801,32 @@
           #  caption: "\U0001f514 Входная дверь закрыта!"
           - file: /config/www/cam_captures/door_close2.jpg
             caption: "\U0001f514 Входная дверь закрыта!"
+            
+# ##################################
+# Hall Big - Motion Outside
+# ##################################
+- alias: hall_big_motion_outside
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1_mini_domofon_motion
+      from: 'off'
+      to: 'on'
+  action:
+    - service: camera.snapshot
+      data:
+        entity_id: camera.door_hb_720p
+        filename: "/config/www/cam_captures/door_outside_motion.jpg"
+    - service: notify.telegram
+      data:
+        title: Doorbell photo
+        message: "\U0001f514 Движение за дверью!"
+        data:
+          photo:
+          #- file: /config/www/cam_captures/door_close.jpg
+          #  caption: "\U0001f514 Входная дверь закрыта!"
+          - file: /config/www/cam_captures/door_outside_motion.jpg
+            caption: "\U0001f514 Движение за дверью!"
 
 # ##################################
 # Hall Big - Domofon auto off on door open\close
