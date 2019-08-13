@@ -1,3 +1,25 @@
+
+  - platform: imap_email_content
+    server: imap.gmail.com
+    name: DoorCam Motion Sensor
+    port: 993
+    username: !secret gmail_username
+    password: !secret gmail_password
+    folder: DoorCam
+    senders:
+      - !secret doorcam_email
+
+  - platform: template
+    sensors:
+      doorcam_motion_time:
+        friendly_name: DoorCam Motion Time
+        value_template: "{{ as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))| timestamp_custom('%d.%m.%Y %H:%M:%S')}}"
+    
+      doorcam_motion_time_delta:
+        friendly_name: DoorCam Motion Time Delta
+        unit_of_measurement: 's'
+        value_template: "{{(as_timestamp(now())-as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))) |int |round(0) }}"
+      
   - platform: command_line
     name: ya_weather_city
     command: 'bash /config/ya_weather.sh'
