@@ -135,11 +135,11 @@
   trigger:
     platform: numeric_state
     entity_id: sensor.cpu_temperature
-    above: 65
+    above: 60
     for:
       minutes: 5
   action:
-    - service: notify.notify
+    - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         title: "Внимание!"
         message: "Температура процессора сервера превысила 65°"
@@ -468,7 +468,7 @@
 # System - server root device
 # ##################################
 - alias: system_rdev
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
     - platform: template
       value_template: "{% if states('sensor.root_device') != '/dev/sda2' %}true{% endif %}"
@@ -495,7 +495,7 @@
         message: "\U00002602 Погода дома: {{states('sensor.ya_weather_home')}}"
 
 # ##################################
-# Security - Transmition mode
+# System - Transmition mode
 # ##################################
 - alias: system_turtle_mode
   initial_state: 'on'
@@ -506,6 +506,23 @@
     - service: notify.telegram
       data_template:
         message: "\U00002728 Черепаха {%if is_state('switch.blackhole','off')%}выкл{%else%}вкл{%endif%}!"
+
+# ##################################
+# System
+# ##################################
+- alias: system_motion_outside
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: sensor.doorcam_email_unread
+  action:
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.motion_out
+    - delay: '00:00:05'
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.motion_out
 
 # ##################################
 # System - Person State

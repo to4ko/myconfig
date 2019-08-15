@@ -8,6 +8,14 @@
     folder: DoorCam
     senders:
       - !secret doorcam_email
+  - platform: imap
+    server: imap.gmail.com
+    name: DoorCam Email Unread
+    port: 993
+    username: !secret gmail_username
+    password: !secret gmail_password
+    folder: DoorCam
+    search: FROM <doorcam.tsymbal@gmail.com>
 
   - platform: template
     sensors:
@@ -66,19 +74,6 @@
         value_template: "{{(states.binary_sensor.pressure_rising_fast_air_valve.attributes.gradient|float * 3600*100)|int(0)}}"
         icon_template: mdi:chart-line-variant
         unit_of_measurement: 'Pah'
-        
-  - platform: ssh
-    name: root_device
-    host: 192.168.1.14
-    scan_interval: 3600
-    username: !secret ssh_user
-    password: !secret ssh_pass
-    command: "mount|grep ' / '|cut -d' ' -f 1"
-    value_template: >-
-     {%- set line = value.split("\r\n") -%}
-      {{ line[1] }}
-    unit_of_measurement: ''
-
 
 #  - platform: season
 #    type: astronomical
@@ -145,10 +140,13 @@
     sensors:
       gdrive_last_backup:
         friendly_name: GBackup time
-        value_template: "{{(as_timestamp(states.sensor.snapshot_backup.attributes.last_snapshot)+(0) )|timestamp_custom('%H:%M:%S %d.%m.%Y ')}}"
+        icon_template: mdi:clock
+        value_template: "{{(as_timestamp(states.sensor.snapshot_backup.attributes.snapshots.3.date)+(0) )|timestamp_custom('%H:%M:%S %d.%m.%Y ')}}"
+        #value_template: "{{(as_timestamp(states.sensor.snapshot_backup.attributes.last_snapshot)+(0) )|timestamp_custom('%H:%M:%S %d.%m.%Y ')}}"
         
       gdrive_backup_state:
         friendly_name: GBackup status
+        icon_template: mdi:backup-restore
         value_template: "{{states('sensor.snapshot_backup')|capitalize|replace('_',' ')}}"
         
       git_stars:

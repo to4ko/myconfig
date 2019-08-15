@@ -1,49 +1,21 @@
 # ############################################################################
-# Hardware sensors (OMV)
+# Hardware sensors Z9PA
 # ############################################################################
-#  - platform: rest
-#    name: OMV CPU Load
-#    resource: http://192.168.1.101:61208/api/3/cpu/total
-#    unit_of_measurement: "%"
-#    value_template: '{{ value_json.total | round(0) }}'
-#    scan_interval: 10
-#  - platform: rest
-#    name: OMV CPU Temp
-#    resource: http://192.168.1.101:61208/api/3/sensors
-#    unit_of_measurement: "°C"
-#    value_template: '{{ value_json[2].value| round(0) }}'
-#    scan_interval: 10
-#  - platform: rest
-#    resource: http://192.168.1.101:61208/api/3/mem/percent
-#    name: OMV MEM Used
-#    value_template: '{{ value_json.percent| round(0) }}'
-#    unit_of_measurement: "%"
-#    scan_interval: 10
-#  - platform: rest
-#    name: OMV Torrent Space Used
-#    resource: http://192.168.1.101:61208/api/3/fs
-#    unit_of_measurement: "%"
-#    value_template: '{{ value_json[7].percent| round(0)}}'
-#    scan_interval: 30
-#  - platform: rest
-#    name: OMV BackupDisk Space Used
-#    resource: http://192.168.1.101:61208/api/3/fs
-#    unit_of_measurement: "%"
-#    value_template: '{{ value_json[4].percent| round(0)}}'
-#    scan_interval: 30
-#  - platform: rest
-#    name: OMV Storage Space Used
-#    resource: http://192.168.1.101:61208/api/3/fs
-#    unit_of_measurement: "%"
-#    value_template: '{{ value_json[2].percent| round(0)}}'
-#    scan_interval: 30
-#  - platform: rest
-#    name: OMV Temp Space Used
-#    resource: http://192.168.1.101:61208/api/3/fs
-#    unit_of_measurement: "%"
-#    value_template: '{{ value_json[9].percent| round(0)}}'
-#    scan_interval: 30
+  - platform: ssh
+    name: root_device
+    host: 192.168.1.14
+    scan_interval: 3600
+    username: !secret ssh_user
+    password: !secret ssh_pass
+    command: "mount|grep ' / '|cut -d' ' -f 1"
+    value_template: >-
+     {%- set line = value.split("\r\n") -%}
+      {{ line[1] }}
+    unit_of_measurement: ''
 
+# ############################################################################
+# Hardware sensors Z9PA
+# ############################################################################
   - platform: cpuspeed
 
   - platform: systemmonitor
@@ -58,34 +30,9 @@
         arg: /
   - platform: command_line
     name: CPU Temperature
-    command: "cat /sys/class/thermal/thermal_zone2/temp"
+    command: "cat /sys/class/thermal/thermal_zone0/temp"
     unit_of_measurement: "°C"
     value_template: '{{ value | multiply(0.001) | round(0) }}'
-  - platform: command_line
-    name: FAN1
-    command: "cat /sys/class/hwmon/hwmon2/fan1_input"
-    unit_of_measurement: "rpm"
-    value_template: '{{ value | round(0) }}'
-  - platform: command_line
-    name: FAN2
-    command: "cat /sys/class/hwmon/hwmon2/fan2_input"
-    unit_of_measurement: "rpm"
-    value_template: '{{ value | round(0) }}'
-  - platform: command_line
-    name: FAN3
-    command: "cat /sys/class/hwmon/hwmon2/fan3_input"
-    unit_of_measurement: "rpm"
-    value_template: '{{ value | round(0) }}'
-  - platform: command_line
-    name: FAN4
-    command: "cat /sys/class/hwmon/hwmon2/fan4_input"
-    unit_of_measurement: "rpm"
-    value_template: '{{ value | round(0) }}'
-  - platform: command_line
-    name: FAN5
-    command: "cat /sys/class/hwmon/hwmon2/fan5_input"
-    unit_of_measurement: "rpm"
-    value_template: '{{ value | round(0) }}'
 
 
   #- platform: command_line
@@ -98,65 +45,65 @@
 # ############################################################################
 # Hardware sensors (Zero2mb) - MQTT
 # ############################################################################
-  - platform: mqtt
-    name: "Zero2mb CPU Usage"
-    state_topic: "zero2mb/cpu_percent"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:speedometer
-    
-  - platform: mqtt
-    name: "Zero2mb CPU Temp"
-    state_topic: "zero2mb/sensors_temperatures/cpu-thermal"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '°C'
-    icon: mdi:thermometer
-    
-  - platform: mqtt
-    name: "Zero2mb RAM Usage"
-    state_topic: "zero2mb/virtual_memory/percent"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:memory
-
-  - platform: mqtt
-    name: "Zero2mb Disk Usage"
-    state_topic: "zero2mb/disk_usage/percent/|"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:chip
+#  - platform: mqtt
+#    name: "Zero2mb CPU Usage"
+#    state_topic: "zero2mb/cpu_percent"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '%'
+#    icon: mdi:speedometer
+#    
+#  - platform: mqtt
+#    name: "Zero2mb CPU Temp"
+#    state_topic: "zero2mb/sensors_temperatures/cpu-thermal"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '°C'
+#    icon: mdi:thermometer
+#    
+#  - platform: mqtt
+#    name: "Zero2mb RAM Usage"
+#    state_topic: "zero2mb/virtual_memory/percent"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '%'
+#    icon: mdi:memory
+#
+#  - platform: mqtt
+#    name: "Zero2mb Disk Usage"
+#    state_topic: "zero2mb/disk_usage/percent/|"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '%'
+#    icon: mdi:chip
 
 
 # ############################################################################
 # Hardware sensors (Zero2mqtt) - MQTT
 # ############################################################################
-  - platform: mqtt
-    name: "Zero2mqtt CPU Usage"
-    state_topic: "zero2mqtt/cpu_percent"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:speedometer
-    
-  - platform: mqtt
-    name: "Zero2mqtt CPU Temp"
-    state_topic: "zero2mqtt/sensors_temperatures/cpu-thermal"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '°C'
-    icon: mdi:thermometer
-    
-  - platform: mqtt
-    name: "Zero2mqtt RAM Usage"
-    state_topic: "zero2mqtt/virtual_memory/percent"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:memory
-
-  - platform: mqtt
-    name: "Zero2mqtt Disk Usage"
-    state_topic: "zero2mqtt/disk_usage/percent/|"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:chip
+#  - platform: mqtt
+#    name: "Zero2mqtt CPU Usage"
+#    state_topic: "zero2mqtt/cpu_percent"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '%'
+#    icon: mdi:speedometer
+#    
+#  - platform: mqtt
+#    name: "Zero2mqtt CPU Temp"
+#    state_topic: "zero2mqtt/sensors_temperatures/cpu-thermal"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '°C'
+#    icon: mdi:thermometer
+#    
+#  - platform: mqtt
+#    name: "Zero2mqtt RAM Usage"
+#    state_topic: "zero2mqtt/virtual_memory/percent"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '%'
+#    icon: mdi:memory#
+#
+#  - platform: mqtt
+#    name: "Zero2mqtt Disk Usage"
+#    state_topic: "zero2mqtt/disk_usage/percent/|"
+#    value_template: '{{ value| round(0)}}'
+#    unit_of_measurement: '%'
+#    icon: mdi:chip
 
 # ############################################################################
 # Hardware sensors (RPI) - MQTT
@@ -220,31 +167,99 @@
     unit_of_measurement: '%'
     icon: mdi:chip
 
+
+# ############################################################################
+# Hardware sensors (IPMI) - MQTT
+# ############################################################################
+
+  - platform: mqtt
+    name: "IPMI CPU1 Temp"
+    state_topic: "ubuntu/ipmi/cpu1_temp"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "IPMI CPU2 Temp"
+    state_topic: "ubuntu/ipmi/cpu2_temp"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "IPMI TR1 Temp"
+    state_topic: "ubuntu/ipmi/tr1_temp"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "IPMI TR2 Temp"
+    state_topic: "ubuntu/ipmi/tr2_temp"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "IPMI CPU Fan1"
+    state_topic: "ubuntu/ipmi/cpu_fan1"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+  - platform: mqtt
+    name: "IPMI CPU Fan2"
+    state_topic: "ubuntu/ipmi/cpu_fan2"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+  - platform: mqtt
+    name: "IPMI Rear Fan 1"
+    state_topic: "ubuntu/ipmi/rear_fan1"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+  - platform: mqtt
+    name: "IPMI Rear Fan 2"
+    state_topic: "ubuntu/ipmi/rear_fan2"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+  - platform: mqtt
+    name: "IPMI Front Fan 1"
+    state_topic: "ubuntu/ipmi/frnt_fan1"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+  - platform: mqtt
+    name: "IPMI Front Fan 2"
+    state_topic: "ubuntu/ipmi/frnt_fan2"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+  - platform: mqtt
+    name: "IPMI Front Fan 3"
+    state_topic: "ubuntu/ipmi/frnt_fan3"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+  - platform: mqtt
+    name: "IPMI Front Fan 4"
+    state_topic: "ubuntu/ipmi/frnt_fan4"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: 'RPM'
+    icon: mdi:fan
+
+
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT
 # ############################################################################
-
-#- platform: rest
-#  name: HDD Temp
-#  resource: http://insert_your_ip:61208/api/3/hddtemp
-#  value_template: '{{ value_json[0]["value"] }}'
-#  unit_of_measurement: "°C"
-
-#  - platform: rest
-#    name: fs_sensor
-#    resource: http://192.168.1.14:61208/api/3/fs
-#    json_attributes:
-#      - device_name
-
-#ubuntu/virtual_memory/percent 18.9
-#ubuntu/sensors_temperatures/coretemp/0 38.0
-#ubuntu/disk_usage/percent/| 21.2
-#ubuntu/disk_usage/percent/|purple 90.9
-#ubuntu/disk_usage/percent/|Media 81.7
-#ubuntu/disk_usage/percent/|Storage 3.0
-#ubuntu/disk_usage/percent/|Temp 0.0
-#ubuntu/disk_usage/percent/|TempM2 0.1
-#ubuntu/disk_usage/percent/|Backupdisk 22.8
 
   - platform: mqtt
     name: "Ubuntu CPU Usage"
@@ -276,46 +291,39 @@
 
   - platform: mqtt
     name: "Ubuntu Purple Usage"
-    state_topic: "ubuntu/disk_usage/percent/|purple"
+    state_topic: "ubuntu/disk_usage/percent/|mnt/Purple"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Ubuntu Media Usage"
-    state_topic: "ubuntu/disk_usage/percent/|Media"
+    state_topic: "ubuntu/disk_usage/percent/|mnt/Media"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Ubuntu Storage Usage"
-    state_topic: "ubuntu/disk_usage/percent/|Storage"
+    state_topic: "ubuntu/disk_usage/percent/|mnt/Storage"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Ubuntu BackupDisk Usage"
-    state_topic: "ubuntu/disk_usage/percent/|Backupdisk"
+    state_topic: "ubuntu/disk_usage/percent/|mnt/BackupDisk"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Ubuntu Temp Usage"
-    state_topic: "ubuntu/disk_usage/percent/|Temp"
+    state_topic: "ubuntu/disk_usage/percent/|mnt/Temp"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
-
-  - platform: mqtt
-    name: "Ubuntu TempM2 Usage"
-    state_topic: "ubuntu/disk_usage/percent/|TempM2"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:chip
-
+    
 # ############################################################################
 # Hardware sensors (Ubuntu) - REST
 # ############################################################################
@@ -417,23 +425,23 @@
   
 
 
-  - platform: rest
-    name: cont0_cpu_load
-    resource: http://192.168.1.14:61208/api/3/docker
-    value_template: '{{ value_json["containers"][0].cpu_percent | round(0) }}'
-    unit_of_measurement: "%"
-    scan_interval: 5
-  - platform: rest
-    name: cont0_mem_usage
-    resource: http://192.168.1.14:61208/api/3/docker
-    value_template: '{{ ( value_json["containers"][0].memory.usage / 1024 / 1024 ) | int }}'
-    unit_of_measurement: "Mb"
-    scan_interval: 5
-  - platform: rest
-    name: cont0_name
-    resource: http://192.168.1.14:61208/api/3/docker
-    value_template: '{{ value_json["containers"][0].name }}'
-    scan_interval: 30
+#  - platform: rest
+#    name: cont0_cpu_load
+#    resource: http://192.168.1.14:61208/api/3/docker
+#    value_template: '{{ value_json["containers"][0].cpu_percent | round(0) }}'
+#    unit_of_measurement: "%"
+#    scan_interval: 5
+#  - platform: rest
+#    name: cont0_mem_usage
+#    resource: http://192.168.1.14:61208/api/3/docker
+#    value_template: '{{ ( value_json["containers"][0].memory.usage / 1024 / 1024 ) | int }}'
+#    unit_of_measurement: "Mb"
+#    scan_interval: 5
+#  - platform: rest
+#    name: cont0_name
+#    resource: http://192.168.1.14:61208/api/3/docker
+#    value_template: '{{ value_json["containers"][0].name }}'
+#    scan_interval: 30
 
 
 #  - platform: rest

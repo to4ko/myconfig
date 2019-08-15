@@ -205,8 +205,10 @@ views:
             entities:
               - entity: binary_sensor.d1_mini_domofon_motion
                 name: Out
-              - sensor.doorcam_motion_time_delta
-              - binary_sensor.motion_out
+              #- sensor.doorcam_motion_time_delta
+              #- binary_sensor.motion_out
+              #- sensor.doorcam_email_unread
+              - binary_sensor.motion_out2
               - entity: binary_sensor.motion_sensor_158d0001e53cda
                 name: MB
               - entity: binary_sensor.motion_sensor_158d000224f89f
@@ -1284,6 +1286,7 @@ views:
           - binary_sensor.door_window_sensor_158d0002531749
           - binary_sensor.motion_sensor_158d0001d5995e
           - binary_sensor.motion_sensor_158d0001e05856
+          - binary_sensor.motion_sensor_158d0002b482e9
           - binary_sensor.switch_158d00023d3206
           - sensor.illumination_158d0001e05856
           - sensor.illumination_7811dcb8cb4b
@@ -1293,8 +1296,6 @@ views:
           - sensor.humidity_158d000237167c
           - sensor.temperature_158d0002461e5b
           - sensor.humidity_158d0002461e5b
-          - entity: sensor.yr00_symbol
-            name: Yr
           - sun.sun
       - type: entities
         title: Sasha's Room
@@ -1673,7 +1674,6 @@ views:
               - sensor.main_hs
               - sensor.utility_hs
               - type: divider
-              #- sensor.power_strip_hs
               - sensor.fan_b
               - sensor.fan_t
               - sensor.water_on_b
@@ -1750,7 +1750,7 @@ views:
           - device_tracker.gateway_plug_mb
           - device_tracker.server_plug_hb
           - device_tracker.power_strip_mb
-          - device_tracker.power_strip_hs
+          - device_tracker.power_strip_s
           - device_tracker.plug_top_k
           - type: divider
           - device_tracker.humi
@@ -2414,6 +2414,29 @@ views:
           
           - type: custom:vertical-stack-in-card
             cards:          
+              - type: custom:bar-card
+                title_position: top
+                columns: 4
+                height: 25px
+                min: 0
+                max: 100
+                severity:
+                  - value: 10
+                    color: '#40bf40'
+                  - value: 30
+                    color: '#bf9540'
+                  - value: 50
+                    color: '#bf4040'
+                  - value: 70
+                    color: '#ff0000'
+                padding: 2px
+                direction: right
+                entities:
+                  - sensor.ipmi_cpu1_temp
+                  - sensor.ipmi_cpu2_temp
+                  - sensor.ipmi_tr1_temp
+                  - sensor.ipmi_tr2_temp
+
               - type: glance
                 #title: Ubuntu Status
                 columns: 6
@@ -2434,29 +2457,47 @@ views:
                     name: S.Plug
               - type: custom:bar-card
                 title_position: top
-                columns: 3
+                columns: 2
                 height: 25px
-                min: 0
-                max: 3000
+                min: 200
+                max: 1700
                 severity:
                   #- value: 
                   #  color: '#40bf40'
-                  - value: 1000
+                  - value: 200
                     color: '#bf9540'
-                  - value: 2000
+                  - value: 950
                     color: '#bf4040'
-                  - value: 3000
+                  - value: 1700
                     color: '#ff0000'
                 padding: 2px
                 direction: right
                 entities:
-                  - sensor.fan1
-                  - sensor.fan2
-                  - sensor.fan4
+                  - entity: sensor.ipmi_cpu_fan_1
+                    name: CPU1 FAN
+                  - entity: sensor.ipmi_cpu_fan_2
+                    name: CPU2 FAN
+              - type: glance
+                columns: 6
+                entities:
+                  - entity: sensor.ipmi_front_fan_1
+                    name: FRNT1
+                  - entity: sensor.ipmi_front_fan_2
+                    name: FRNT2
+                  - entity: sensor.ipmi_front_fan_3
+                    name: FRNT3
+                  - entity: sensor.ipmi_front_fan_4
+                    name: FRNT4
+                  - entity: sensor.ipmi_rear_fan_1
+                    name: REAR1
+                  - entity: sensor.ipmi_rear_fan_2
+                    name: REAR2
+              
+
                   
               - type: glance
                 #title: Ubuntu Status
-                columns: 7
+                columns: 6
                 entities:
                   - entity: sensor.ubuntu_ssd_usage
                     icon: mdi:chip
@@ -2476,9 +2517,6 @@ views:
                   - entity: sensor.ubuntu_temp_usage
                     icon: mdi:harddisk
                     name: Temp
-                  - entity: sensor.ubuntu_tempm2_usage
-                    icon: mdi:chip
-                    name: TempM2
 
           - type: custom:vertical-stack-in-card
             cards:      
@@ -2782,44 +2820,39 @@ views:
   - title: MQTT
     icon: mdi:altimeter
     cards:
-      - type: entities
-        show_header_toggle: false
-        title: Main
-        entities:
-          - sensor.ubuntu_cpu_temp
-          - sensor.ubuntu_cpu_usage
-          - sensor.ubuntu_ram_usage
-          - sensor.ubuntu_ssd_usage
-          - sensor.ubuntu_media_usage
-          - sensor.ubuntu_backupdisk_usage
-          - sensor.ubuntu_purple_usage
-          - sensor.ubuntu_storage_usage
-          - sensor.ubuntu_temp_usage
-          - sensor.ubuntu_tempm2_usage
-      - type: entities
-        show_header_toggle: false
-        title: RPI
-        entities:
-          - sensor.rpi_cpu_temp
-          - sensor.rpi_cpu_usage
-          - sensor.rpi_ram_usage
-          - sensor.rpi_ssd_usage
-      - type: entities
-        show_header_toggle: false
-        title: j3455
-        entities:
-          - sensor.j3455_cpu_temp
-          - sensor.j3455_cpu_usage
-          - sensor.j3455_ram_usage
-          - sensor.j3455_ssd_usage
-      - type: entities
-        show_header_toggle: false
-        title: Zero2MB
-        entities:
-          - sensor.zero2mb_cpu_temp
-          - sensor.zero2mb_cpu_usage
-          - sensor.zero2mb_ram_usage
-          - sensor.zero2mb_disk_usage
+      - type: vertical-stack
+        cards:
+          - type: entities
+            show_header_toggle: false
+            title: Main
+            entities:
+              - sensor.ubuntu_cpu_temp
+              - sensor.ubuntu_cpu_usage
+              - sensor.ubuntu_ram_usage
+              - sensor.ubuntu_ssd_usage
+              - sensor.ubuntu_media_usage
+              - sensor.ubuntu_backupdisk_usage
+              - sensor.ubuntu_purple_usage
+              - sensor.ubuntu_storage_usage
+              - sensor.ubuntu_temp_usage
+      - type: vertical-stack
+        cards:
+          - type: entities
+            show_header_toggle: false
+            title: RPI
+            entities:
+              - sensor.rpi_cpu_temp
+              - sensor.rpi_cpu_usage
+              - sensor.rpi_ram_usage
+              - sensor.rpi_ssd_usage
+          - type: entities
+            show_header_toggle: false
+            title: j3455
+            entities:
+              - sensor.j3455_cpu_temp
+              - sensor.j3455_cpu_usage
+              - sensor.j3455_ram_usage
+              - sensor.j3455_ssd_usage
       - type: glance
         show_header_toggle: false
         title: HP8600
@@ -2887,160 +2920,7 @@ views:
 #            entities:
 #              - type: "custom:battery-entity"
 #                entity: sensor.battery_switch_sasha_tracker_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_fridge_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_freezer_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_fridge_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_mid_door_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_main_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_secondary_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_entrance_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_fridge_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_left_home_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_vibration_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_freezer_hb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_test_sensor_hb
-#          - type: entities
-#            title: Hall Small
-#            show_header_toggle: false
-#            entities:  
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_hs
-#          - type: entities
-#            title: Storage
-#            show_header_toggle: false
-#            entities:    
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_night_light_st
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_st
-#      #############
-#      # Middle Left column
-#      #############
-#      - type: vertical-stack
-#        cards:
-#          - type: entities
-#            title: Kitchen
-#            show_header_toggle: false
-#            entities:
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_window_k
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_water_leak_k
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_k
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_desk_light_k
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_k
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_smoke_k
-#          - type: entities
-#            title: Bathroom
-#            show_header_toggle: false
-#            entities:
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_water_leak_b
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_b
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_fan_b
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_b
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_b
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_counter_hot_water_b
-#          - type: entities
-#            title: Toilet
-#            show_header_toggle: false
-#            entities:
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_water_leak_t
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_t
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_fan_t
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_t
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_t
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_cover_t
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_counter_cold_water_t
-#      #############
-#      # Right column
-#      #############
-#      - type: vertical-stack
-#        cards:
-#          - type: entities
-#            title: Master Bedroom
-#            show_header_toggle: false
-#            entities:    
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_window_mb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_mb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_main_light_mb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_desk_light_mb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_mb
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_mb
-#          - type: entities
-#            title: Sasha
-#            show_header_toggle: false
-#            entities:
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_window_s
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_vibration_s
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_s
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_night_light_s
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_desk_light_s
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_pink_cube_s
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_s
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_s
-#          - type: entities
-#            title: Vova
-#            show_header_toggle: false
-#            entities:
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_main_light_v
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_window_v
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_temp_v
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_desk_light_v
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_switch_bed_light_v
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_motion_v
-#              - type: "custom:battery-entity"
-#                entity: sensor.battery_door_v
+
 
 ################################################################
 # Utility SENSORS
