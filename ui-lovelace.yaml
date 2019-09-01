@@ -67,23 +67,22 @@ views:
             cards:
               - type: glance
                 #title: Sytem Status
-                columns: 6
+                columns: 4
                 entities:
                   - entity: sensor.ubuntu_cpu_temp
                     name: CPU_T
-
                   - entity: sensor.ubuntu_cpu_usage
                     name: CPU
                     icon: mdi:desktop-tower
                   - entity: sensor.ubuntu_ram_usage
                     name: RAM
                     icon: mdi:chip
-                  - entity: sensor.cont0_cpu_load
-                    name: HA CPU
-                    icon: mdi:home-assistant
-                  - entity: sensor.cont0_mem_usage
-                    name: HA RAM
-                    icon: mdi:chip
+                  #- entity: sensor.cont0_cpu_load
+                  #  name: HA CPU
+                  #  icon: mdi:home-assistant
+                  #- entity: sensor.cont0_mem_usage
+                  #  name: HA RAM
+                  #  icon: mdi:chip
                     
                   #- entity: sensor.cpu_temperature
                   #  name: CPU T2
@@ -128,7 +127,7 @@ views:
                           name: Voltage
 
           - type: glance
-            columns: 7
+            columns: 8
             entities:
               - entity: media_player.home_mini_v
                 name: V
@@ -142,8 +141,8 @@ views:
                 name: HB
               - entity: media_player.mpd
                 name: MPD
-              #- entity: media_player.mpd_j3455
-              #  name: MPD j3455
+              - entity: media_player.mpd_j3455
+                name: MPD j3455
               - entity: media_player.mpd_rpi
                 name: MPD RPI
           - type: glance
@@ -152,8 +151,10 @@ views:
                 name: i8 Chrome
               - entity: media_player.iphone8_companion
                 name: i8 Client
-              - entity: media_player.m6800
-                name: m6800
+              - entity: media_player.m6800_external
+                name: m6800 ext
+              - entity: media_player.m6800_internal
+                name: m6800 int
               - entity: media_player.mimax2
                 name: MiMax2
           
@@ -265,8 +266,8 @@ views:
             title: Utility
             cards:
               - type: glance
-                columns: 6
-                show_state: false
+                columns: 7
+                show_state: true
                 entities:
                   #- entity: switch.ventilation
                   #  name: Vent K
@@ -279,8 +280,13 @@ views:
                       service: switch.toggle
                       service_data:
                         entity_id: switch.ventilation
-                  - entity: binary_sensor.bathroom_humidity_rising
-                    name: H UP
+                  - entity: sensor.humidity_b_delta
+                    name: Humidity Delta
+                  - entity: switch.plug_158d0003926263
+                    name: BFan B
+                    icon: mdi:cached
+                    tap_action:
+                      action: toggle
                   - entity: switch.plug_158d0001f9ebd8
                     name: Fan B
                     icon: mdi:fan
@@ -409,10 +415,15 @@ views:
 #                  service: homeassistant.turn_off
 #                  entity_id: group.devices_to_turnoff
               - type: glance
-                columns: 7
+                columns: 8
                 entities:
                   - entity: binary_sensor.doorbell
                     name: Doorbell
+                  - entity: binary_sensor.doorbell_mute
+                    name: Mute
+                    tap_action:
+                      action: call-service
+                      service: script.doorbell_mute
                   - entity: binary_sensor.d1_mini_domofon_incomingcall
                     name: Call
 #                  - entity: switch.d1_mini_domofon_phone
@@ -459,15 +470,15 @@ views:
             show_state: false
             columns: 7
             entities:
-              - entity: group.devices_to_turnoff
-                name: All
-                icon: mdi:lightbulb
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: homeassistant.turn_off
-                  service_data:
-                    entity_id: group.devices_to_turnoff
+              #- entity: group.devices_to_turnoff
+              #  name: All
+              #  icon: mdi:lightbulb
+              #  hold_action: none
+              #  tap_action:
+              #    action: call-service
+              #    service: homeassistant.turn_off
+              #    service_data:
+              #      entity_id: group.devices_to_turnoff
                 
               - entity: light.led_strip_hb
                 name: HB
@@ -574,6 +585,11 @@ views:
                 name: R
                 tap_action:
                   action: toggle
+              - entity: switch.d1_hood_light
+                name: Hood
+                tap_action:
+                  action: toggle
+
 
               - entity: switch.wall_switch_158d000248bf53
                 name: Main St
@@ -583,8 +599,14 @@ views:
           
           - type: glance
             show_state: false
-            columns: 7
+            columns: 8
             entities:
+              - entity: switch.d1_hood_fan1
+                name: Hood
+                icon: mdi:fan
+                tap_action:
+                  action: toggle
+              
               - entity: binary_sensor.washer_b
                 name: Washer
                 icon: mdi:washing-machine
@@ -756,36 +778,36 @@ views:
             show_state: false
             columns: 6
             entities:
-              - entity: switch.gateway_plug_hb
-                name: HB
-                tap_action:
-                  action: toggle
-                icon: mdi:power
-              - entity: switch.gateway_plug_hs
-                name: HS
-                tap_action:
-                  action: toggle
-                icon: mdi:power
-              - entity: switch.gateway_plug_k
-                name: K
-                tap_action:
-                  action: toggle
-                icon: mdi:power
-              - entity: switch.gateway_plug_mb
-                name: MB
-                tap_action:
-                  action: toggle
-                icon: mdi:power
-              - entity: switch.gateway_plug_s
-                name: S
-                tap_action:
-                  action: toggle
-                icon: mdi:power
-              - entity: switch.gateway_plug_v
-                name: V
-                tap_action:
-                  action: toggle
-                icon: mdi:power
+              # - entity: switch.gateway_plug_hb
+              #   name: HB
+              #   tap_action:
+              #     action: toggle
+              #   icon: mdi:power
+              # - entity: switch.gateway_plug_hs
+              #   name: HS
+              #   tap_action:
+              #     action: toggle
+              #   icon: mdi:power
+              # - entity: switch.gateway_plug_k
+              #   name: K
+              #   tap_action:
+              #     action: toggle
+              #   icon: mdi:power
+              # - entity: switch.gateway_plug_mb
+              #   name: MB
+              #   tap_action:
+              #     action: toggle
+              #   icon: mdi:power
+              # - entity: switch.gateway_plug_s
+              #   name: S
+              #   tap_action:
+              #     action: toggle
+              #   icon: mdi:power
+              # - entity: switch.gateway_plug_v
+              #   name: V
+              #   tap_action:
+              #     action: toggle
+              #   icon: mdi:power
               - entity: light.gateway_light_7811dcb8cb4b
                 name: HB
                 tap_action:
@@ -1207,8 +1229,10 @@ views:
           #- switch.gateway_plug_k
           - light.led_color_k
           - switch.plug_158d0001e85086
-          - switch.plug_top_k
-          - switch.plug_top_k_usb
+          - switch.d1_hood_fan1
+          - switch.d1_hood_fan2
+          - switch.d1_hood_fan3
+          - switch.d1_hood_light
       - type: entities
         title: Vova's Room
         show_header_toggle: false
@@ -1227,6 +1251,7 @@ views:
           - switch.plug_158d00028b4fc3
           - switch.plug_158d00035c194f
           - switch.plug_158d0003600ea4
+          - switch.plug_158d00039bd56d
       - type: entities
         title: Hall Small
         show_header_toggle: false
@@ -1260,6 +1285,7 @@ views:
           - switch.plug_158d0001f9ebd8
           - switch.plug_158d00020d8679
           - switch.plug_158d0002c3d86e
+          - switch.plug_158d0003926263
       - type: entities
         title: Toilet
         show_header_toggle: false
@@ -1408,7 +1434,7 @@ views:
       - type: vertical-stack
         cards:
           - type: glance
-            columns: 8
+            columns: 7
             entities:
               - entity: sensor.d1_filter_flow_mineralized
                 name: RO M
@@ -1422,24 +1448,8 @@ views:
                 tap_action:
                   action: call-service
                   service: script.ro_reset
-              - sensor.d1_filter_flow_mineralized_integral
-              - sensor.d1_filter_flow_nonmineralized_integral
+              - sensor.d1_filter_flow_counter
                   
-          - type: entities
-            title: Utility Cost
-            show_header_toggle: false
-            entities:
-              - sensor.utility_cost
-              - type: divider
-              #- sensor.hot_water_cost
-              #- sensor.cold_water_cost
-              - type: divider
-              - sensor.water_cost 
-              - type: divider
-              #- sensor.power_consumption_month_t1_cost
-              #- sensor.power_consumption_month_t2_cost
-              - type: divider
-              - sensor.power_consumption_month_cost
           - type: entities
             title: Utility Cost
             show_header_toggle: false
@@ -1764,14 +1774,12 @@ views:
         entities:
           - device_tracker.life360_dima_tsymbal
           - device_tracker.dima_iphone_8
-          - binary_sensor.iphone_8
           - device_tracker.iphone8_ping
           - device_tracker.meizu_2
           
           - type: divider
           - device_tracker.life360_sandra_tsymbal
           - device_tracker.sandra_iphone_7
-          - binary_sensor.iphone_7
           - device_tracker.iphone7_ping
           - device_tracker.sandra_iphone_6
           - device_tracker.sandra_iphone_4s
@@ -1779,7 +1787,6 @@ views:
           - type: divider
           - device_tracker.life360_vova_tsymbal
           - device_tracker.vova_mimax
-          - binary_sensor.mimax_2
           - device_tracker.mimax2_ping
           
           - type: divider
@@ -1799,7 +1806,7 @@ views:
           #- entity: binary_sensor.blackhole
             #icon: mdi:ubuntu
           - device_tracker.z9pa_ipmi
-          - device_tracker.z9pa_lan0
+          - device_tracker.z9pa_bond0
           - device_tracker.i5
           - device_tracker.m6800_lan
           - device_tracker.m6800_wifi
@@ -1854,6 +1861,7 @@ views:
           - device_tracker.square_cam_hs
           - device_tracker.360camera
           - device_tracker.digma_100
+          - device_tracker.door_cam_hb
       
       - type: entities
         title: Home Mini
@@ -1883,6 +1891,9 @@ views:
           - device_tracker.8266_air_valve
           - device_tracker.esp32_test1
           - device_tracker.esp32_cam_test1
+          - device_tracker.d1_domofon
+          - device_tracker.d1_filter_flow
+          - device_tracker.d1_hood
 
       - type: entities
         title: CO2 sensors
@@ -2190,6 +2201,7 @@ views:
               - entity: timer.timer_fan_b
               - entity: timer.timer_fan_t
               - entity: timer.timer_st
+              - entity: timer.timer_washer_b
             state_filter:
             - "active"
 
@@ -2386,16 +2398,16 @@ views:
             columns: 3
             height: 20px
             min: 0
-            max: 8.1
-            target: 5.6
+            max: 12.2
+            target: 8
             severity:
               - value: 1
                 color: '#40bf40'
-              - value: 3
+              - value: 5
                 color: '#bf9540'
-              - value: 6
+              - value: 9
                 color: '#bf4040'
-              - value: 8 
+              - value: 12 
                 color: '#ff0000'
           #  severity:
           #    - value: 1
@@ -2439,7 +2451,7 @@ views:
 
               - type: glance
                 #title: Ubuntu Status
-                columns: 6
+                columns: 5
                 entities:
                   - entity: sensor.cpu_speed
                     name: Speed
@@ -2453,8 +2465,8 @@ views:
                   - entity: sensor.mariadb_size
                     name: DB
                     icon: mdi:database
-                  - entity: switch.server_plug_hb
-                    name: S.Plug
+                  # - entity: switch.server_plug_hb
+                  #   name: S.Plug
               - type: custom:bar-card
                 title_position: top
                 columns: 2
@@ -2473,9 +2485,9 @@ views:
                 padding: 2px
                 direction: right
                 entities:
-                  - entity: sensor.ipmi_cpu_fan_1
+                  - entity: sensor.ipmi_cpu_fan1
                     name: CPU1 FAN
-                  - entity: sensor.ipmi_cpu_fan_2
+                  - entity: sensor.ipmi_cpu_fan2
                     name: CPU2 FAN
               - type: glance
                 columns: 6
@@ -2514,9 +2526,9 @@ views:
                   - entity: sensor.ubuntu_storage_usage
                     icon: mdi:harddisk
                     name: Storage
-                  - entity: sensor.ubuntu_temp_usage
+                  - entity: sensor.ubuntu_back_2tb_usage
                     icon: mdi:harddisk
-                    name: Temp
+                    name: Back_2Tb
 
           - type: custom:vertical-stack-in-card
             cards:      
@@ -2643,96 +2655,6 @@ views:
 
 
 ################################################################
-# TEST
-################################################################
-  - title: TEST
-    icon: mdi:comment-question-outline
-    cards:
-      - type: entities
-        show_header_toggle: false
-        entities:
-          - binary_sensor.d1_mini_domofon_incomingcall
-          - sensor.d1_mini_domofon_speakervoltage
-          - type: divider
-          - switch.d1_mini_domofon_phone
-          - type: divider
-          - switch.d1_mini_domofon_opendoor
-          - type: divider
-          - switch.d1_mini_domofon_relay1
-          - switch.d1_mini_domofon_relay2
-
-      - type: entities
-        show_header_toggle: false
-        title: Daily meters
-        entities:
-          - sensor.cold_water_daily
-          - sensor.hot_water_daily
-          - type: divider
-          - sensor.power_daily_day
-          - sensor.power_daily_night
-          - sensor.power_daily_8266_day
-          - sensor.power_daily_8266_night
-          - type: divider
-          - sensor.power_light_daily_day
-          - sensor.power_light_daily_night
-          - type: divider
-          - sensor.power_socket_daily_day
-          - sensor.power_socket_daily_night
-      - type: entities
-        show_header_toggle: false
-        title: Monthly meters
-        entities:
-          - sensor.cold_water_monthly
-          - sensor.hot_water_monthly
-          - type: divider
-          - sensor.power_monthly_day
-          - sensor.power_monthly_night
-          - sensor.power_monthly_8266_day
-          - sensor.power_monthly_8266_night
-          - type: divider
-          - sensor.power_light_monthly_day
-          - sensor.power_light_monthly_night
-          - type: divider
-          - sensor.power_socket_monthly_day
-          - sensor.power_socket_monthly_night
-
-      - type: entities
-        show_header_toggle: false
-        title: Int meters
-        entities:
-          - sensor.power_consumption_8266_int
-          - sensor.power_consumption_int
-          - sensor.power_consumption_light_int
-          - sensor.power_consumption_socket_int
-      - type: entities
-        show_header_toggle: false
-        title: Tarrifs
-        entities:
-          - input_number.tariff_energy_day
-          - input_number.tariff_energy_night
-          - input_number.tariff_hot_water
-          - input_number.tariff_cold_water
-      - type: entities
-        show_header_toggle: false
-        title: Costs
-        entities:
-          - sensor.water_cost_um
-          - sensor.cold_water_cost_um
-          - sensor.hot_water_cost_um
-          - type: divider
-          - sensor.power_consumption_month_cost_um
-          - sensor.power_consumption_month_t1_cost_um
-          - sensor.power_consumption_month_t2_cost_um
-
-      - type: entities
-        show_header_toggle: false
-        title: Total Costs comparison
-        entities:
-          - sensor.utility_cost
-          - sensor.utility_cost_um
-          
-
-################################################################
 # pressure monitoring
 ################################################################
   - title: Pressure monitoring
@@ -2834,7 +2756,7 @@ views:
               - sensor.ubuntu_backupdisk_usage
               - sensor.ubuntu_purple_usage
               - sensor.ubuntu_storage_usage
-              - sensor.ubuntu_temp_usage
+              - sensor.ubuntu_back_2tb_usage
       - type: vertical-stack
         cards:
           - type: entities

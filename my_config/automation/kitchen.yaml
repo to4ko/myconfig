@@ -338,7 +338,8 @@
         state: 'off'
   action:
     - delay: 00:00:40
-    - service: script.tv_box_k_toggle
+    - service: script.turn_on
+      entity_id: script.tv_box_k_toggle
     - service: homeassistant.turn_off
       entity_id: automation.kitchen_check_tv_box
 
@@ -358,7 +359,8 @@
         entity_id: binary_sensor.tv_box
         state: 'on'
   action:
-    - service: script.tv_box_k_toggle
+    - service: script.turn_on
+      entity_id: script.tv_box_k_toggle
 
 
 # ##################################
@@ -488,3 +490,33 @@
   action: 
     - service_template: >
         script.kitchen_vent_{%if is_state('binary_sensor.hood_k','on')%}close{%elif is_state('binary_sensor.hood_k','off')%}open{%endif%}
+
+# ##################################
+# Kitchen - Hood Fan
+# ##################################
+- alias: kitchen_hood_fan
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_right_158d0001e0784e
+      #click_type: single
+  action:
+  - service: switch.toggle
+    entity_id: switch.d1_hood_fan1
+
+# ##################################
+# Kitchen - Hood Light
+# ##################################
+- alias: kitchen_hood_light
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.wall_switch_left_158d0001e0784e
+      #click_type: single
+  action:
+  - service: switch.toggle
+    entity_id: switch.d1_hood_light

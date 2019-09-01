@@ -63,6 +63,11 @@
 
   - platform: template
     sensors:
+      update_available:
+        friendly_name: HA Update Available
+        device_class: occupancy
+        value_template: "{{states.sensor.ha_latest_version.state > states.sensor.ha_installed_version.state}}"
+      
       motion_out:
         friendly_name: Motion Out
         device_class: motion
@@ -81,6 +86,11 @@
         delay_off:
           seconds: 10
         value_template: "{{ is_state('binary_sensor.door_window_sensor_158d0003262ba8','off') }}"
+  
+      doorbell_mute:
+        friendly_name: Doorbell Mute
+        icon_template: mdi:bell-off
+        value_template: "{{ is_state('input_boolean.doorbell_mute','on') }}"
         
       domofon_mute:
         friendly_name: Domofon Mute
@@ -129,8 +139,8 @@
       hood_k:
         friendly_name: Hood Status
         icon_template: mdi:fan
-        entity_id: switch.plug_158d000232481a
-        value_template: "{{ state_attr('switch.plug_158d000232481a','load_power') >35 }}"
+        entity_id: switch.d1_hood_fan1, switch.d1_hood_fan2, switch.d1_hood_fan3
+        value_template: "{{ is_state('switch.d1_hood_fan1','on') or is_state('switch.d1_hood_fan2','on') or is_state('switch.d1_hood_fan3','on') }}"
       
       hood_lights_k:
         friendly_name: Hood Lights Status

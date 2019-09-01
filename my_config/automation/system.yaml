@@ -87,7 +87,8 @@
         message: "\U0001F603 Сервер запущен!"
     - service: automation.trigger
       entity_id: automation.system_sasha_tracker
-    - service: script.system_start
+    - service: script.turn_on
+      entity_id: script.system_start
     - service: counter.increment
       entity_id: counter.restart_counter
     
@@ -167,11 +168,17 @@
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: updater.updater
+      entity_id: binary_sensor.updater
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.update_available 
+      from: 'off'
+      to: 'on'
   action:
     service: notify.telegram
     data_template: 
-      message: "\U00002733 {{ states('updater.updater') }} доступен!"
+      message: "\U00002733 Hass.io {{states('sensor.sensor.ha_latest_version')}} доступен!"
 
 # ##################################
 # System - NEW DAY
@@ -204,7 +211,8 @@
     - platform: time
       at: '21:00:00'
   action:
-  - service: script.weather_telegram
+  - service: script.turn_on
+    entity_id: script.weather_telegram
 
 # ##################################
 # System - Dima At home
@@ -340,8 +348,8 @@
       - condition: time
         after: '07:00:00'
         before: '21:00:00'
-      - condition: template
-        value_template: '{{ as_timestamp(now()) - as_timestamp(states.binary_sensor.switch_158d0002fa99a8.last_updated) < 20 }}'
+      #- condition: template
+      #  value_template: '{{ as_timestamp(now()) - as_timestamp(states.binary_sensor.switch_158d0002fa99a8.last_changed) < 20 }}'
   action:
     - service: media_player.volume_set
       data_template:
@@ -495,20 +503,7 @@
         message: "\U00002602 Погода дома: {{states('sensor.ya_weather_home')}}"
 
 # ##################################
-# System - Transmition mode
-# ##################################
-- alias: system_turtle_mode
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      entity_id: switch.blackhole
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U00002728 Черепаха {%if is_state('switch.blackhole','off')%}выкл{%else%}вкл{%endif%}!"
-
-# ##################################
-# System
+# System - Outside motion
 # ##################################
 - alias: system_motion_outside
   initial_state: 'on'

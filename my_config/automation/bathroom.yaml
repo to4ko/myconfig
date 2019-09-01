@@ -56,7 +56,7 @@
       value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float > (states('sensor.humidity_average')|float +5) %}true{% endif %}"
   action:
     - service: switch.turn_on
-      entity_id: switch.plug_158d0001f9ebd8
+      entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
 
 # ##################################
 # Bathroom - Fan off
@@ -65,10 +65,13 @@
   initial_state: 'on'
   trigger:
     - platform: template
-      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float < (states('sensor.humidity_average')|float +5) %}true{% endif %}"
+      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float <= (states('sensor.humidity_average')|float +5) %}true{% endif %}"
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f9ebd8
+    - delay: 00:30:00
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0003926263
 
 # ##################################
 # Bathroom - Fan Timer start on
@@ -286,18 +289,21 @@
     - service: notify.telegram
       data_template: 
         message: "\U00002705 Проверка кранов завершена!"
-        
-        
+
 # ##################################
-# Bathroom - Washing Machine notificartion
+# Bathroom - Washing Machine notification
 # ##################################
 - alias: bathroom_washing_machine
   initial_state: 'on'
   trigger:
     - platform: state
       entity_id: binary_sensor.washer_b
-    #  from: 'off'
-    #  to: 'on'
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.washer_b
+      from: 'on'
+      to: 'off'
   condition:
     - condition: numeric_state
       entity_id: sensor.ha_uptime
@@ -306,12 +312,43 @@
   action:
     - service: notify.telegram
       data_template: 
-        message: "{% if is_state('binary_sensor.washer_b','on') %}\U000023F3 Стирка начата!{% else %}\U0000231B Стирка завершена!{% endif %}"
+        message: "{% if is_state('binary_sensor.washer_b','on') %}\U000023F3 Стирка начата!{% else %}\U0000231B Стирка завершена! Время стирки составило {{ ( (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_washer_b.last_changed)| int) / 60 )| round(0) }}мин.{% endif %}"
     - service_template: >
         {% if is_state('binary_sensor.tod_long_day','on') %}
           script.washing_machine_tts
         {%else%}
           script.noop
         {% endif %}
-        
-#{% set hour_num = now().hour | int %}
+    - service: script.turn_on
+      data_template: 
+        entity_id: "{% if is_state('binary_sensor.washer_b','on') %}script.washer_timer_on{% else %}script.washer_timer_off{% endif %}"
+          
+# ##################################
+# Bathroom - Bottom Fan On
+# ##################################
+- alias: bathroom_bottom_fan
+  initial_state: 'on'
+  trigger:
+    - platform: time
+      at: '07:00:00'
+    - platform: time
+      at: '23:00:00'
+  action:
+  - service_template: "switch.turn_{% if is_state('binary_sensor.tod_night','on') %}on{% else %}off{% endif %}"
+    data:
+      entity_id: switch.plug_158d0003926263
+
+# ##################################
+# Bathroom - Bottom Fan
+# ##################################
+- alias: bathroom_bottom_fan_manual
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001b94abe
+        click_type: double
+  action:
+    - service: switch.toggle
+      entity_id: switch.plug_158d0003926263

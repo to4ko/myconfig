@@ -21,7 +21,7 @@ class BarCard extends HTMLElement {
     if (!config.max) config.max = 100
     if (!config.padding) config.padding = '4px'
     if (!config.align) config.align = 'center'
-    if (!config.color) config.color = 'var(--primary-color)'
+    if (!config.color) config.color = 'var(--custom-bar-card-color, var(--primary-color))'
     if (!config.tap_action) config.tap_action = 'info'
     if (!config.show_value) config.show_value = true
     if (!config.limit_value) config.limit_value = false
@@ -973,11 +973,15 @@ class BarCard extends HTMLElement {
     if (entityObject == undefined) {
       root.getElementById('value_'+id).textContent = `Entity doesn't exist.`
       root.getElementById('value_'+id).style.setProperty('color', '#FF0000')
-      root.getElementById('icon_'+id).style.setProperty('--icon-display', 'none')
-      root.getElementById('titleBar_'+id).style.setProperty('display', 'none')
+      if (root.getElementById('icon'+id) !== null) {
+        root.getElementById('icon_'+id).style.setProperty('--icon-display', 'none')
+      }
+      if (root.getElementById('titleBar_'+id) !== null) {
+        root.getElementById('titleBar_'+id).style.setProperty('display', 'none')
+      }
       return
-    } 
-
+    }
+    
     const config = this._configAttributeCheck(entity, index)
 
     if (config.title == false) config.title = entityObject.attributes.friendly_name
@@ -1179,3 +1183,9 @@ class BarCard extends HTMLElement {
 }
 
 customElements.define('bar-card', BarCard)
+
+console.info(
+  `%cBAR-CARD\n%cVersion: 1.5.2`,
+  "color: green; font-weight: bold;",
+  ""
+);

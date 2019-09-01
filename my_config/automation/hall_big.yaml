@@ -20,22 +20,11 @@
     - service: light.turn_on
       entity_id: light.led_strip_hb
       data:
-        brightness_pct: 1
+        brightness_pct: 2
         kelvin: 3000
-    #- service: light.turn_on
-    #  entity_id: light.gateway_light_7811dcb8cb4b
-    #  data:
-    #    brightness: 1
-    #    color_name: white
-        #rgb_color: [255,255,255]
     - delay: '00:00:30'
     - service: light.turn_off
       entity_id: light.led_strip_hb
-    - service: light.turn_off
-      entity_id: light.gateway_light_7811dcb8cb4b
-    - delay: 00:00:05
-    - service: light.turn_off
-      entity_id: light.led_strip_hb, light.gateway_light_7811dcb8cb4b
 
 # ##################################
 # Hall Big - Auto Light On
@@ -109,26 +98,39 @@
       entity_id: light.led_strip_hb
       
 # ##################################
-# Hall Big - Auto Light On when door opened_day
+# Hall Big - Auto Light On when door opened
 # ##################################
-- alias: hall_big_main_door_open_day
+- alias: hall_big_main_door_open
   initial_state: 'on'
   trigger:
     platform: state
     entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
     from: 'off'
     to: 'on'
-  condition:
-    condition: time
-    after: '07:00:00'
-    before: '21:00:00'
+#  condition:
+#    condition: time
+#    after: '07:00:00'
+#    before: '21:00:00'
   action:
+    - service: timer.cancel
+      entity_id: timer.timer_open_door_hb
+    - service: timer.start
+      entity_id: timer.timer_open_door_hb
     - service: light.turn_on
       entity_id: light.led_strip_hb
       data_template:
-        brightness_pct: 100
-        # color_temp: 254
-        kelvin: 6500
+        brightness_pct: >
+          {%- if states("binary_sensor.tod_night") == 'on' -%}
+          1
+          {%- else -%}
+          100
+          {% endif %}
+        kelvin: >
+          {%- if states("binary_sensor.tod_night") == 'on' -%}
+          3000
+          {%- else -%}
+          6500
+          {% endif %}
     - service: counter.increment
       entity_id: counter.main_door_hb
     - service: notify.telegram
@@ -140,15 +142,41 @@
     - delay: 00:00:09
     - service: script.turn_on
       entity_id: script.open_door_photo
-    
-    #- service: image_processing.scan
-    #  entity_id: image_processing.saved_image_entrance
-    #- service: image_processing.scan
-    #  entity_id: image_processing.saved_image_hall
-    #- service_template: {% if states.sensor.face0_entrance.state != "unknown" %} notify.telegram {% endif %}
-    #  data_template:
-    #    message: "{% if states.sensor.face0_entrance.state != "unknown" %}  {{ states('sensor.face0_entrance') }} пришел {% else %} {% endif %}"
 
+# ##################################
+# Hall Big - Main Door Closed
+# ##################################
+- alias: hall_big_main_door_closed
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
+    from: 'on'
+    to: 'off'
+  action:
+    #- service: timer.pause
+      #entity_id: timer.timer_open_door_hb
+    #- service: notify.telegram
+    #  data_template:
+    #    message: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S', 0) }}"
+    - service: camera.snapshot
+      data:
+        entity_id: camera.door_hb_720p
+        filename: "/config/www/cam_captures/door_close2.jpg"
+    - service: notify.telegram
+      data:
+        title: Doorbell photo
+        message: "\U0001f514 Входная дверь закрыта!"
+        data:
+          photo:
+          - file: /config/www/cam_captures/door_close2.jpg
+            caption: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S', 0) }}"
+    - service: timer.cancel
+      entity_id: timer.timer_open_door_hb
+#    - service: notify.telegram
+#      data_template:
+#        message: "TEST {{ trigger.from_state.for }}"
+    
 # ##################################
 # Hall Big - Main door not closed for 3 minutes
 # ##################################
@@ -161,61 +189,60 @@
     to: 'on'
     for:
      minutes: 3
-  condition:
-    condition: time
-    after: '07:00:00'
-    before: '21:00:00'
+#  condition:
+#    condition: time
+#    after: '07:00:00'
+#    before: '21:00:00'
   action:
-    - service: media_player.volume_set
-      data_template:
-        entity_id: media_player.mpd
-        volume_level: '0.3'
-    - service: tts.yandextts_say
-      entity_id: media_player.mpd
-      data_template:
-        message: 'Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Вним+ание! Входн+ая дв+ерь н+е закр+ыта!'
+    - service_template: >
+        {% if states("binary_sensor.tod_day") == 'on' %} script.main_door_not_closed_tts
+        {%else%} script.noop
+        {%endif%}
     - service: notify.telegram
       data_template:
         message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
-    - delay: 00:00:01
     - service: script.turn_on
       entity_id: script.open_door_photo
           
 # ##################################
 # Hall Big - Auto Light On when door opened_night
 # ##################################
-- alias: hall_big_main_door_open_night
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
-    from: 'off'
-    to: 'on'
-  condition:
-    condition: time
-    after: '21:00:00'
-    before: '07:00:00'
-  action:
-    - service: light.turn_on
-      entity_id: light.led_strip_hb
-      data_template:
-        brightness_pct: 10
-        # color_temp: 254
-        kelvin: 3000
-    - service: counter.increment
-      entity_id: counter.main_door_hb
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! {{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }}"
-    - service: notify.telegram_cam
-      data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! {{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }}"
-    - delay: 00:00:10
-    - service: script.turn_on
-      entity_id: script.open_door_photo
-    - delay: 00:01:00
-    - service: light.turn_off
-      entity_id: light.led_strip_hb
+# - alias: hall_big_main_door_open_night
+#   initial_state: 'on'
+#   trigger:
+#     platform: state
+#     entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
+#     from: 'off'
+#     to: 'on'
+#   condition:
+#     condition: time
+#     after: '21:00:00'
+#     before: '07:00:00'
+#   action:
+#     - service: timer.cancel
+#       entity_id: timer.timer_open_door_hb
+#     - service: timer.start
+#       entity_id: timer.timer_open_door_hb
+#     - service: light.turn_on
+#       entity_id: light.led_strip_hb
+#       data_template:
+#         brightness_pct: 1
+#         # color_temp: 254
+#         kelvin: 3000
+#     - service: counter.increment
+#       entity_id: counter.main_door_hb
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f6aa Внимание! Входная дверь открыта! {{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }}"
+#     - service: notify.telegram_cam
+#       data_template:
+#         message: "\U0001f6aa Внимание! Входная дверь открыта! {{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }}"
+#     - delay: 00:00:10
+#     - service: script.turn_on
+#       entity_id: script.open_door_photo
+#     - delay: 00:01:00
+#     - service: light.turn_off
+#       entity_id: light.led_strip_hb
 
 # ##################################
 # Hall Big - Auto Light On Entrance
@@ -535,7 +562,8 @@
       data_template:
         message: 'З+апуск процед+уры выключ+ения освещ+ения!'
     - delay: '00:00:03'
-    - service: script.lights_off
+    - service: script.turn_on
+      entity_id: script.lights_off
     - service: notify.telegram
       data_template:
         message: "\U0001f4a1 Освещение выключено"
@@ -709,7 +737,8 @@
       data:
         entity_id: camera.uvc_g3_flex_window
         filename: "/config/www/cam_captures/domofon.jpg"
-    - service: script.domofon_script
+    - service: script.turn_on
+      entity_id: script.domofon_script
     - service: notify.telegram
       data:
         title: "{{now().strftime('%H:%M %d-%m-%Y')}}"
@@ -722,7 +751,8 @@
     - service: automation.turn_on
       entity_id: automation.hall_big_domofon_incoming_call
     - delay: '00:15:00'
-    - service: script.domofon_check
+    - service: script.turn_on
+      entity_id: script.domofon_check
 
 # ##################################
 # Hall Big - Domofon Auto Open On Arrival
@@ -770,13 +800,14 @@
     - service: script.turn_on
       entity_id: script.domofon_auto_open_once_toggle
     - delay: '00:15:00'
-    - service: script.domofon_check
+    - service: script.turn_on
+      entity_id: script.domofon_check
 
 # ##################################
 # Hall Big - Door close
 # ##################################
 - alias: hall_big_door_close
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
     - platform: state
       entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
@@ -821,11 +852,11 @@
     - service: notify.telegram_cam
       data:
         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-        message: "\U0001f514 Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}}"
         data:
           photo:
           - file: /config/www/cam_captures/door_outside_motion.jpg
-            caption: "\U0001f514 Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}}"
+            caption: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}}"
 
 
 # ##################################
@@ -846,7 +877,8 @@
       entity_id: input_boolean.domofon_mute
       state: 'on'
   action:
-    - service: script.domofon_check
+    - service: script.turn_on
+      entity_id: script.domofon_check
 
 # ##################################
 # Hall Big - Doorbell
@@ -863,15 +895,12 @@
       data:
         entity_id: camera.door_hb
         filename: "/config/www/cam_captures/doorbell.jpg"
-    - service: xiaomi_aqara.play_ringtone
-      data:
-        gw_mac: 78:11:DC:B8:CB:4B
-        ringtone_id: 10
-        ringtone_vol: 8
-    - delay: '00:00:03'
-    - service: xiaomi_aqara.stop_ringtone
-      data:
-        gw_mac: 78:11:DC:B8:CB:4B
+#    - service_template: script.turn_on
+#      data_template:
+#        entity_id: >
+#          {% if states('input_boolean.doorbell_mute')=='on' %}script.door_bell_ring
+#          {%else%}script.noop
+#          {%endif%}
     - service: notify.telegram_family
       data:
         title: Doorbell photo
@@ -880,6 +909,21 @@
           photo:
           - file: /config/www/cam_captures/doorbell.jpg
             caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+
+# binary_sensor.motion_sensor_158d0001d5995e friendly_name: Motion Mid Door HB
+# binary_sensor.motion_sensor_158d0001e05856 friendly_name: Motion Entrance HB
+# binary_sensor.motion_sensor_158d0002b482e9 friendly_name: Motion Fridge HB
+# binary_sensor.motion_sensor_158d0001ae9f61 friendly_name: Motion HS
+# binary_sensor.motion_sensor_158d0002b4729d friendly_name: Motion K
+# binary_sensor.motion_sensor_158d0002b48381 friendly_name: Motion 2 K
+# binary_sensor.motion_sensor_158d0001e53cda friendly_name: Motion MB
+# binary_sensor.motion_sensor_158d000236bb94 friendly_name: Motion V
+# binary_sensor.motion_sensor_158d0001aea602 friendly_name: Motion St
+# binary_sensor.motion_sensor_158d000236bc6d friendly_name: Motion B
+# binary_sensor.motion_sensor_158d0001e54280 friendly_name: Motion T
+# binary_sensor.motion_sensor_158d000224f89f friendly_name: Motion S
+
+
 #    - service: notify.telegram_sandra
 #      data:
 #        title: Doorbell photo
@@ -896,3 +940,19 @@
 #          photo:
 #          - file: /config/www/cam_captures/doorbell.jpg
 #            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+
+# ##################################
+# Hall Big - Main door vibration
+# ##################################
+- alias: hall_big_main_door_vibration
+  initial_state: 'off'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.movement
+      event_data:
+        entity_id: binary_sensor.vibration_158d0002a2412d
+        movement_type: vibrate 
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F6AA Внимание! Главная дверь - Вибрация!"
