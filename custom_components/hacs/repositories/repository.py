@@ -143,8 +143,9 @@ class HacsRepository(Hacs):
         target = None
         if self.information.homeassistant_version is not None:
             target = self.information.homeassistant_version
-        if self.repository_manifest.homeassistant is not None:
-            target = self.repository_manifest.homeassistant
+        if self.repository_manifest is not None:
+            if self.repository_manifest.homeassistant is not None:
+                target = self.repository_manifest.homeassistant
 
         if target is not None:
             if self.releases.releases:
@@ -156,12 +157,12 @@ class HacsRepository(Hacs):
     def display_name(self):
         """Return display name."""
         name = None
-        if self.repository_manifest is not None:
-            return self.repository_manifest["name"]
-
         if self.information.category == "integration":
             if self.manifest is not None:
                 name = self.manifest["name"]
+
+        if self.repository_manifest is not None:
+            name = self.repository_manifest.name
 
         if name is not None:
             return name
@@ -284,6 +285,9 @@ class HacsRepository(Hacs):
         # Step 5: Get releases.
         await self.get_releases()
 
+        # Step 6: Get the content of hacs.json
+        await self.get_repository_manifest_content()
+
         # Set repository name
         self.information.name = self.information.full_name.split("/")[1]
 
@@ -327,10 +331,7 @@ class HacsRepository(Hacs):
             self.information.description = self.repository_object.description
 
         # Update default branch
-        if self.information.full_name != "custom-components/hacs":
-            self.information.default_branch = self.repository_object.default_branch
-        else:
-            self.information.default_branch = "next"
+        self.information.default_branch = self.repository_object.default_branch
 
         # Update last available commit
         await self.repository_object.set_last_commit()
@@ -475,15 +476,16 @@ class HacsRepository(Hacs):
             root = await self.repository_object.get_contents("", self.ref)
             for file in root:
                 if file.name.lower() in info_files:
-                    info = await self.repository_object.get_contents(
+
+                    info = await self.repository_object.get_rendered_contents(
                         file.name, self.ref
                     )
                     break
             if info is None:
                 self.information.additional_info = ""
             else:
-                info = await self.github.render_markdown(info.content)
                 info = info.replace("&lt;", "<")
+                info = info.replace("<svg", "<disabled").replace("</svg", "</disabled")
                 info = info.replace("<h3>", "<h6>").replace("</h3>", "</h6>")
                 info = info.replace("<h2>", "<h5>").replace("</h2>", "</h5>")
                 info = info.replace("<h1>", "<h4>").replace("</h1>", "</h4>")
@@ -491,12 +493,18 @@ class HacsRepository(Hacs):
                 info = info.replace(
                     '<a href="http', '<a rel="noreferrer" target="_blank" href="http'
                 )
-                info = info.replace("<ul>", "")
-                info = info.replace("</ul>", "")
+                info = info.replace("<li>", "<li style='list-style-type: initial;'>")
+
+                # Special changes that needs to be done:
+                info = info.replace(
+                    "<your", "<&#8205;your"
+                )  # for thomasloven/hass-favicon
+
                 info += "</br>"
+
                 self.information.additional_info = render_template(info, self)
 
-        except Exception:  # Gotta Catch 'Em All
+        except (AIOGitHubException, Exception):
             self.information.additional_info = ""
 
     async def get_releases(self):

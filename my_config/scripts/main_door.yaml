@@ -1,0 +1,121 @@
+  main_door_not_closed_tts:
+    alias: Main Door Not Closed TTS
+    sequence:
+      - service: media_player.volume_set
+        data_template:
+          entity_id: media_player.mpd
+          volume_level: '0.3'
+      - service: tts.yandextts_say
+        entity_id: media_player.mpd
+        data_template:
+          message: 'Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Вним+ание! Входн+ая дв+ерь н+е закр+ыта!'
+  
+  bottom_lock_tts:
+    alias: Bottom Lock TTS
+    sequence:
+      - service: tts.yandextts_say
+        entity_id: media_player.mpd
+        data_template: 
+          message: >
+            {% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}
+            Н+ижний зам+ок откр+ыт!
+            {% else %}
+            Н+ижний зам+ок закр+ыт!
+            {% endif %}
+
+  top_lock_tts:
+    alias: Top Lock TTS
+    sequence:
+      - service: tts.yandextts_say
+        entity_id: media_player.mpd
+        data_template: 
+          message: >
+            {% if is_state('binary_sensor.upper_lock','on') %}
+            В+ерхний зам+ок откр+ыт!
+            {% else %}
+            В+ерхний зам+ок закр+ыт!
+            {% endif %}
+  
+  bottom_lock_yellow_led_blink_on:
+    sequence:
+      - service: light.turn_off
+        data:
+          entity_id: light.d1_mini_domofon_yellow_led
+      - service: light.turn_on
+        data:
+          entity_id: light.d1_mini_domofon_yellow_led
+          effect: "Blink"
+
+  bottom_lock_yellow_led_blink_off:
+    sequence:
+      - service: light.turn_off
+        data:
+          entity_id: light.d1_mini_domofon_yellow_led
+
+  doorbell_mute:
+    alias: Doorbell Mute
+    sequence:
+      - service: input_boolean.toggle
+        entity_id: input_boolean.doorbell_mute
+
+  doorbell_ring:
+    alias: Doorbell ring
+    sequence:
+      - service: xiaomi_aqara.play_ringtone
+        data:
+          gw_mac: 78:11:DC:B8:CB:4B
+          ringtone_id: 10
+          ringtone_vol: 20
+      - service: xiaomi_aqara.play_ringtone
+        data_template:
+          ringtone_id: 10
+          ringtone_vol: 20
+          gw_mac: >
+            {%- if states.sensor.last_motion.state == "Motion S" -%}
+            78:11:DC:B8:D6:12
+            {%- elif states.sensor.last_motion.state == "Motion V" -%}
+            7C:49:EB:B1:90:80
+            {%- elif states.sensor.last_motion.state == "Motion MB" -%}
+            7C:49:EB:B1:B5:E1
+            {%- elif states.sensor.last_motion.state == "Motion K" or states.sensor.last_motion.state == "Motion 2 K" or states.sensor.last_motion.state == "Motion T" -%}
+            04:CF:8C:97:80:8B
+            {%- elif states.sensor.last_motion.state == "Motion B" or states.sensor.last_motion.state == "Motion HS" -%}
+            7C:49:EB:19:5E:21
+            {%- elif states.sensor.last_motion.state == "Motion Mid Door HB" or states.sensor.last_motion.state == "Motion Entrance HB" or states.sensor.last_motion.state == "Motion Fridge HB" or states.sensor.last_motion.state == "Motion St" -%}
+            78:11:DC:B8:CB:4B
+            {%- endif -%}
+          
+      - delay: '00:00:03'
+      - service: xiaomi_aqara.stop_ringtone
+        data:
+          gw_mac: 78:11:DC:B8:CB:4B
+      - service: xiaomi_aqara.stop_ringtone
+        data_template:
+          gw_mac: >
+            {%- if states.sensor.last_motion.state == "Motion S" -%}
+            78:11:DC:B8:D6:12
+            {%- elif states.sensor.last_motion.state == "Motion V" -%}
+            7C:49:EB:B1:90:80
+            {%- elif states.sensor.last_motion.state == "Motion MB" -%}
+            7C:49:EB:B1:B5:E1
+            {%- elif states.sensor.last_motion.state == "Motion K" or states.sensor.last_motion.state == "Motion 2 K" or states.sensor.last_motion.state == "Motion T" -%}
+            04:CF:8C:97:80:8B
+            {%- elif states.sensor.last_motion.state == "Motion B" or states.sensor.last_motion.state == "Motion HS" -%}
+            7C:49:EB:19:5E:21
+            {%- elif states.sensor.last_motion.state == "Motion Mid Door HB" or states.sensor.last_motion.state == "Motion Entrance HB" or states.sensor.last_motion.state == "Motion Fridge HB" or states.sensor.last_motion.state == "Motion St" -%}
+            78:11:DC:B8:CB:4B
+            {%- endif -%}
+
+
+# binary_sensor.motion_sensor_158d0001d5995e friendly_name: Motion Mid Door HB
+# binary_sensor.motion_sensor_158d0001e05856 friendly_name: Motion Entrance HB
+# binary_sensor.motion_sensor_158d0002b482e9 friendly_name: Motion Fridge HB
+# binary_sensor.motion_sensor_158d0001ae9f61 friendly_name: Motion HS
+# binary_sensor.motion_sensor_158d0002b4729d friendly_name: Motion K
+# binary_sensor.motion_sensor_158d0002b48381 friendly_name: Motion 2 K
+# binary_sensor.motion_sensor_158d0001e53cda friendly_name: Motion MB
+# binary_sensor.motion_sensor_158d000236bb94 friendly_name: Motion V
+# binary_sensor.motion_sensor_158d0001aea602 friendly_name: Motion St
+# binary_sensor.motion_sensor_158d000236bc6d friendly_name: Motion B
+# binary_sensor.motion_sensor_158d0001e54280 friendly_name: Motion T
+# binary_sensor.motion_sensor_158d000224f89f friendly_name: Motion S

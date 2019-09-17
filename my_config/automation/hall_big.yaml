@@ -660,6 +660,21 @@
     - delay: '00:00:10'
     - service: light.turn_off
       entity_id: light.led_strip_hb
+
+# ##################################
+# Hall Big - LED Strip Power Switch Turn On
+# ##################################
+- alias: vova_square_led_switch_on
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.plug_158d00020b4971
+    to: 'off'
+    for: '00:00:03'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.wall_plug_158d00023e5812
+
       
 # ##################################
 # Hall Big - Main Door Bottom Lock
@@ -901,12 +916,12 @@
       data:
         entity_id: camera.door_hb
         filename: "/config/www/cam_captures/doorbell.jpg"
-#    - service_template: script.turn_on
-#      data_template:
-#        entity_id: >
-#          {% if states('input_boolean.doorbell_mute')=='on' %}script.door_bell_ring
-#          {%else%}script.noop
-#          {%endif%}
+    - service_template: script.turn_on
+      data_template:
+        entity_id: >
+          {% if states('input_boolean.doorbell_mute')=='off' %}script.doorbell_ring
+          {%else%}script.noop
+          {%endif%}
     - service: notify.telegram_family
       data:
         title: Doorbell photo
