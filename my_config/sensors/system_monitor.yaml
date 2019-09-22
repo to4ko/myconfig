@@ -1,17 +1,59 @@
 # ############################################################################
 # Hardware sensors Z9PA
 # ############################################################################
-  - platform: ssh
-    name: root_device
-    host: 192.168.1.14
-    scan_interval: 3600
-    username: !secret ssh_user
-    password: !secret ssh_pass
-    command: "mount|grep ' / '|cut -d' ' -f 1"
-    value_template: >-
-     {%- set line = value.split("\r\n") -%}
-      {{ line[1] }}
-    unit_of_measurement: ''
+  - platform: mqtt
+    name: NVME0 Session Write
+    state_topic: "ubuntu/disk_stat/nvme0_gb_write"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: NVME1 Session Write
+    state_topic: "ubuntu/disk_stat/nvme1_gb_write"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: NVME0 Session Read
+    state_topic: "ubuntu/disk_stat/nvme0_gb_read"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: NVME1 Session Read
+    state_topic: "ubuntu/disk_stat/nvme1_gb_read"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:thermometer
+
+  - platform: template
+    sensors:
+      nvme0_gb_per_day:
+        friendly_name: NVME0 Gb per day
+        unit_of_measurement: Gb
+        value_template: >-
+          {{ (( states('sensor.nvme0_session_write')|float / states('sensor.host_uptime')|float ) *24) | round(2) }}
+      nvme0_life_left:
+        friendly_name: NVME0 Calculated life left
+        unit_of_measurement: years
+        value_template: >-
+          {{ (((170 - states('sensor.ubuntu_root_nvme0_tb_written')|float) / (((( states('sensor.nvme0_session_write')|float / states('sensor.host_uptime')|float ) *24) | round(2)) / 1000)) / 365) |  float | round(1)  }}
+
+      nvme1_gb_per_day:
+        friendly_name: NVME1 Gb per day
+        unit_of_measurement: Gb
+        value_template: >-
+          {{ (( states('sensor.nvme1_session_write')|float / states('sensor.host_uptime')|float ) *24) | round(2) }}
+      nvme1_life_left:
+        friendly_name: NVME1 Calculated life left
+        unit_of_measurement: years
+        value_template: >-
+          {{ (((170 - states('sensor.ubuntu_root_nvme1_tb_written')|float) / (((( states('sensor.nvme1_session_write')|float / states('sensor.host_uptime')|float ) *24) | round(2)) / 1000)) / 365) |  float | round(1)  }}
+
+
 
 # ############################################################################
 # Hardware sensors Z9PA
@@ -291,59 +333,203 @@
 
   - platform: mqtt
     name: "Ubuntu SSD Usage"
-    state_topic: "ubuntu/disk_usage/percent/|"
+    state_topic: "ubuntu/disk_usage/md0"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:chip
 
   - platform: mqtt
-    name: "Ubuntu Purple Usage"
-    state_topic: "ubuntu/disk_usage/percent/|mnt/Purple"
+    name: "Ubuntu Video Usage"
+    state_topic: "ubuntu/disk_usage/video"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Ubuntu Media Usage"
-    state_topic: "ubuntu/disk_usage/percent/|mnt/Media"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:harddisk
-
-  - platform: mqtt
-    name: "Ubuntu Storage Usage"
-    state_topic: "ubuntu/disk_usage/percent/|mnt/Storage"
-    value_template: '{{ value| round(0)}}'
-    unit_of_measurement: '%'
-    icon: mdi:harddisk
-
-  - platform: mqtt
-    name: "Ubuntu BackupDisk Usage"
-    state_topic: "ubuntu/disk_usage/percent/|mnt/BackupDisk"
+    state_topic: "ubuntu/disk_usage/md2"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Ubuntu Back_2Tb Usage"
-    state_topic: "ubuntu/disk_usage/percent/|mnt/Back_2Tb"
+    state_topic: "ubuntu/disk_usage/md1"
     value_template: '{{ value| round(0)}}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
-    name: "Ubuntu Root NVME0 Tb Writted"
-    state_topic: "ubuntu/nvme0n1_tb_written"
-    value_template: '{{ value| round(1)}}'
+    name: "Ubuntu Root NVME0 Tb Written"
+    state_topic: "ubuntu/nvme0_tb_total"
+    value_template: '{{ value| float |round(2)}}'
     unit_of_measurement: 'Tb'
     icon: mdi:chip
 
   - platform: mqtt
-    name: "Ubuntu Root NVME1 Tb Writted"
-    state_topic: "ubuntu/nvme1n1_tb_written"
-    value_template: '{{ value| round(1)}}'
+    name: "Ubuntu Root NVME1 Tb Written"
+    state_topic: "ubuntu/nvme1_tb_total"
+    value_template: '{{ value| float |round(2)}}'
     unit_of_measurement: 'Tb'
     icon: mdi:chip
+
+# ############################################################################
+# Hardware sensors (Ubuntu) - MQTT
+# ############################################################################
+
+  - platform: mqtt
+    name: "Ubuntu SDA Temp"
+    state_topic: "ubuntu/disk_temp/sda"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDB Temp"
+    state_topic: "ubuntu/disk_temp/sdb"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDC Temp"
+    state_topic: "ubuntu/disk_temp/sdc"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDD Temp"
+    state_topic: "ubuntu/disk_temp/sdd"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDE Temp"
+    state_topic: "ubuntu/disk_temp/sde"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDF Temp"
+    state_topic: "ubuntu/disk_temp/sdf"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDG Temp"
+    state_topic: "ubuntu/disk_temp/sdg"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDH Temp"
+    state_topic: "ubuntu/disk_temp/sdh"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDI Temp"
+    state_topic: "ubuntu/disk_temp/sdi"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDJ Temp"
+    state_topic: "ubuntu/disk_temp/sdj"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: "Ubuntu SDK Temp"
+    state_topic: "ubuntu/disk_temp/sdk"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+    
+  - platform: mqtt
+    name: "Ubuntu SDL Temp"
+    state_topic: "ubuntu/disk_temp/sdl"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+    
+  - platform: mqtt
+    name: "Ubuntu NVME0 Temp"
+    state_topic: "ubuntu/disk_temp/nvme0"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+    
+  - platform: mqtt
+    name: "Ubuntu NVME1 Temp"
+    state_topic: "ubuntu/disk_temp/nvme1"
+    value_template: '{{ value| round(0)}}'
+    unit_of_measurement: '°C'
+    icon: mdi:thermometer
+
+  - platform: mqtt
+    name: md0 Session Write
+    state_topic: "ubuntu/disk_stat/md0_gb_write"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
+
+  - platform: mqtt
+    name: md0 Session Read
+    state_topic: "ubuntu/disk_stat/md0_gb_read"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
+
+  - platform: mqtt
+    name: md1 Session Write
+    state_topic: "ubuntu/disk_stat/md1_gb_write"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
+
+  - platform: mqtt
+    name: md1 Session Read
+    state_topic: "ubuntu/disk_stat/md1_gb_read"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
+
+  - platform: mqtt
+    name: md2 Session Write
+    state_topic: "ubuntu/disk_stat/md2_gb_write"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
+
+  - platform: mqtt
+    name: md2 Session Read
+    state_topic: "ubuntu/disk_stat/md2_gb_read"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
+
+  - platform: mqtt
+    name: Video Session Write
+    state_topic: "ubuntu/disk_stat/video_gb_write"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
+
+  - platform: mqtt
+    name: Video Session Read
+    state_topic: "ubuntu/disk_stat/video_gb_read"
+    value_template: '{{ value| float| round(2)}}'
+    unit_of_measurement: Gb
+    icon: mdi:percent
 
     
 # ############################################################################

@@ -94,7 +94,7 @@ views:
                   #- entity: sensor.ubuntu_hdd_purple_space_used
                   #  name: HDD
                   #  icon: mdi:harddisk
-                  - entity:  sensor.postgresql_size
+                  - entity:  sensor.mariadb_size
                     name: DB
                     icon: mdi:database
               - type: horizontal-stack
@@ -1437,21 +1437,23 @@ views:
       - type: vertical-stack
         cards:
           - type: glance
-            columns: 7
+            columns: 2
             entities:
-              - entity: sensor.d1_filter_flow_mineralized
-                name: RO M
-              - entity: sensor.d1_filter_flow_nonmineralized
-                name: RO NM
-              - sensor.ro_mineralized
-              - sensor.ro_nonmineralized
-              - sensor.ro_total
-              - entity: script.ro_reset
-                name: RST
-                tap_action:
-                  action: call-service
-                  service: script.ro_reset
-              - sensor.d1_filter_flow_counter
+              - sensor.water_mineralized_single
+              - sensor.water_non_mineralized_single
+              # - entity: sensor.d1_filter_flow_mineralized
+              #   name: RO M
+              # - entity: sensor.d1_filter_flow_nonmineralized
+              #   name: RO NM
+              # - sensor.ro_mineralized
+              # - sensor.ro_nonmineralized
+              # - sensor.ro_total
+              # - entity: script.ro_reset
+              #   name: RST
+              #   tap_action:
+              #     action: call-service
+              #     service: script.ro_reset
+              # - sensor.d1_filter_flow_counter
                   
           - type: entities
             title: Utility Cost
@@ -1675,6 +1677,7 @@ views:
             title: Hall Big
             show_header_toggle: false
             entities:
+              - sensor.server_z_hb
               - sensor.fridge_hb
               - sensor.entrance_hb
               - sensor.wadrobe_l_hb
@@ -2194,6 +2197,29 @@ views:
                 tap_action:
                   action: toggle
           #    - sensor.cpu_temperature
+          - type: history-graph
+            hours_to_show: 48
+            entities:
+              - sensor.mariadb_size
+          - type: entities
+            entities:
+              - type: call-service
+                icon: mdi:database-minus
+                name: Purge 0
+                action_name: Purge
+                service: recorder.purge
+                service_data:
+                  keep_days: 0
+                  repack: true
+              - type: call-service
+                icon: mdi:database-minus
+                name: Purge 1
+                action_name: Purge
+                service: recorder.purge
+                service_data:
+                  keep_days: 1
+                  repack: true
+
           - type: entity-filter
             show_header_toggle: false
             entities:
@@ -2355,8 +2381,31 @@ views:
                     
                   - entity: binary_sensor.rpi_lead
                     name: Lead
-                    
-                  
+          - type: glance
+            columns: 6
+            entities:
+              - entity: sensor.nvme0_session_write
+                name: NVME0 Stat
+                # tap_action:
+                #   action: call-service
+                #   service: homeassistant.update_entity
+                #   service_data:
+                #     entity_id: sensor.nvme0_diskstat
+              - entity: sensor.nvme0_gb_per_day
+                name: Per Day
+              - entity: sensor.nvme0_life_left
+                name: Left
+              - entity: sensor.nvme1_session_write
+                name: NVME1 Stat
+                # tap_action:
+                #   action: call-service
+                #   service: homeassistant.update_entity
+                #   service_data:
+                #     entity_id: sensor.nvme1_diskstat
+              - entity: sensor.nvme1_gb_per_day
+                name: Per Day
+              - entity: sensor.nvme1_life_left
+                name: Left
 #          - type: vertical-stack
 #            cards:
 #              - type: horizontal-stack
@@ -2465,13 +2514,13 @@ views:
                     icon: mdi:chip
                   #- entity: sensor.ubuntu_cpu_temp
                   #  name: CPU_T
-                  - entity: sensor.ubuntu_root_nvme0_tb_writted
+                  - entity: sensor.ubuntu_root_nvme0_tb_written
                     name: NVME0
                     icon: mdi:raspberry-pi
-                  - entity: sensor.ubuntu_root_nvme1_tb_writted
+                  - entity: sensor.ubuntu_root_nvme1_tb_written
                     name: NVME1
                     icon: mdi:raspberry-pi
-                  - entity: sensor.postgresql_size
+                  - entity: sensor.mariadb_size
                     name: DB
                     icon: mdi:database
                   - entity: switch.server_plug_hb
@@ -2523,9 +2572,9 @@ views:
                   - entity: sensor.ubuntu_ssd_usage
                     icon: mdi:chip
                     name: SSD
-                  - entity: sensor.ubuntu_purple_usage
+                  - entity: sensor.ubuntu_video_usage
                     icon: mdi:harddisk
-                    name: Purple
+                    name: Survailance
                   - entity: sensor.ubuntu_media_usage
                     icon: mdi:harddisk
                     name: Media

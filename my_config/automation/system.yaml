@@ -549,3 +549,21 @@
 #      data_template:
 #        message: "{%if trigger.from_state.attributes.friendly_name =='Dima'%}\U0001F9D4 Дима: {%elif trigger.from_state.attributes.friendly_name =='Sandra'%}\U0001F467 Саша: {%elif trigger.from_state.attributes.friendly_name =='Vova'%}\U0001F471 Вова: {%elif trigger.from_state.attributes.friendly_name =='Sasha'%}\U0001F476 Санек: {%endif%} {{ trigger.to_state.state|capitalize }}"
 #        {{ trigger.from_state.state|capitalize }} ->
+
+# ##################################
+# System - Outside motion
+# ##################################
+- alias: system_postgresql_purge
+  initial_state: 'on'
+  trigger:
+    - platform: time_pattern
+      hours: '/2'
+      minutes: 15
+      seconds: 00
+  action:
+    - service: recorder.purge
+      data:
+        keep_days: 1
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4ab PostgreSQL Purge"
