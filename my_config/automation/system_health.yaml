@@ -1,0 +1,122 @@
+# ##################################
+# System - Ubuntu server CPU temp >60
+# ##################################
+- alias: system_health_cpu_temp
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id:
+      - sensor.ipmi_cpu1_temp
+      - sensor.ipmi_cpu2_temp
+    above: 60
+    for:
+      minutes: 5
+  action:
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "{{ trigger.from_state.attributes.friendly_name }} >60°"
+    - service: notify.telegram
+      data:
+        message: "\U0001F525 Внимание! {{ trigger.from_state.attributes.friendly_name }} >60°"
+
+# ##################################
+# System - Ubuntu server secondary temp >60
+# ##################################
+- alias: system_health_secondary_temp
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id:
+      - sensor.ipmi_tr1_temp
+      - sensor.ipmi_tr2_temp
+    above: 55
+    for:
+      minutes: 5
+  action:
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "{{ trigger.from_state.attributes.friendly_name }} >55°"
+    - service: notify.telegram
+      data:
+        message: "\U0001F525 Внимание! {{ trigger.from_state.attributes.friendly_name }} >55°"
+
+# ##################################
+# System - server root device
+# ##################################
+- alias: system_health_rdev
+  initial_state: 'off'
+  trigger:
+    - platform: template
+      value_template: "{% if states('sensor.root_device') != '/dev/sda2' %}true{% endif %}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F621 Внимание! Root устройство изменено!"
+
+# ##################################
+# System - MDADM status change
+# ##################################
+- alias: system_health_mdadm_monitor
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.md0_status
+        - sensor.md1_status
+        - sensor.md2_status
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}"
+        
+# ##################################
+# System - Server Disks Temp
+# ##################################
+- alias: system_health_disks_temp
+  initial_state: 'on'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.ubuntu_nvme0_temp
+        - sensor.ubuntu_nvme1_temp
+        - sensor.ubuntu_sda_temp
+        - sensor.ubuntu_sdb_temp
+        - sensor.ubuntu_sdc_temp
+        - sensor.ubuntu_sdd_temp
+        - sensor.ubuntu_sde_temp
+        - sensor.ubuntu_sdf_temp
+        - sensor.ubuntu_sdg_temp
+        - sensor.ubuntu_sdh_temp
+        - sensor.ubuntu_sdi_temp
+        - sensor.ubuntu_sdj_temp
+        - sensor.ubuntu_sdk_temp
+        - sensor.ubuntu_sdl_temp  
+      above: 50
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{ trigger.from_state.attributes.friendly_name }} >55°!"
+        
+# ##################################
+# System - Server Fans stats
+# ##################################
+- alias: system_health_fans
+  initial_state: 'on'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.ipmi_front_fan_1
+        - sensor.ipmi_front_fan_2
+        - sensor.ipmi_front_fan_3
+        - sensor.ipmi_front_fan_4
+        - sensor.ipmi_front_rear_1
+        - sensor.ipmi_front_rear_2
+        - sensor.ipmi_cpu_fan1
+        - sensor.ipmi_cpu_fan2
+      below: 300
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{trigger.from_state.attributes.friendly_name}} < 300об!"

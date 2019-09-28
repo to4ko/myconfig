@@ -4,78 +4,107 @@ import voluptuous as vol
 from homeassistant.components.websocket_api import websocket_command, result_message, event_message, async_register_command
 from homeassistant.helpers.entity import Entity, async_generate_entity_id
 
-from .const import DOMAIN, DATA_DEVICES, DATA_ADDERS, WS_CONNECT, WS_UPDATE
+from .const import DOMAIN,  WS_CONNECT, WS_UPDATE, WS_CAMERA
+from .helpers import get_devices, create_entity, get_config
 
 _LOGGER = logging.getLogger(__name__)
 
+async def setup_connection(hass, config):
 
-def setup_connection(hass):
+    @websocket_command({
+        vol.Required("type"): WS_CONNECT,
+        vol.Required("deviceID"): str,
+    })
+    def handle_connect(hass, connection, msg):
+        deviceID = msg["deviceID"]
+
+        device = get_devices(hass).get(deviceID, BrowserModConnection(hass, deviceID))
+        device.connect(connection, msg["id"])
+        get_devices(hass)[deviceID] = device
+
+        connection.send_message(result_message(msg["id"]))
+
+    @websocket_command({
+        vol.Required("type"): WS_UPDATE,
+        vol.Required("deviceID"): str,
+        vol.Optional("data"): dict,
+    })
+    def handle_update( hass, connection, msg):
+        devices = get_devices(hass)
+        deviceID = msg["deviceID"]
+        if deviceID in devices:
+            devices[deviceID].update(msg.get("data", None))
+
     async_register_command(hass, handle_connect)
     async_register_command(hass, handle_update)
 
+class BrowserModConnection:
+    def __init__(self, hass, deviceID):
+        self.hass = hass
+        self.deviceID = deviceID
+        self.connection = []
 
-@websocket_command({
-    vol.Required("type"): WS_CONNECT,
-    vol.Required("deviceID"): str,
-})
-def handle_connect(hass, connection, msg):
+        self.media_player = None
+        self.screen = None
+        self.sensor = None
+        self.fully = None
+        self.camera = None
 
-    devices = hass.data[DOMAIN][DATA_DEVICES]
-    deviceID = msg["deviceID"]
-    if deviceID in devices:
-        devices[deviceID].ws_connect(connection, msg["id"])
-    else:
-        adder = hass.data[DOMAIN][DATA_ADDERS][0]
-        devices[deviceID] = adder(hass, deviceID, connection, msg["id"])
-    connection.send_message(result_message(msg["id"]))
+    def connect(self, connection, cid):
+        self.connection.append((connection, cid))
+        self.send("update", **get_config(self.hass, self.deviceID))
 
+        def disconnect():
+            self.connection.remove((connection, cid))
 
-@websocket_command({
-    vol.Required("type"): WS_UPDATE,
-    vol.Required("deviceID"): str,
-    vol.Optional("data"): dict,
-})
-def handle_update(hass, connection, msg):
-    devices = hass.data[DOMAIN][DATA_DEVICES]
-    deviceID = msg["deviceID"]
-    if deviceID in devices:
-        devices[deviceID].ws_update(msg.get("data", None))
+        connection.subscriptions[cid] = disconnect
 
-
-class BrowserModEntity(Entity):
-    def __init__(self, hass, deviceID, alias=None):
-        self._deviceID = deviceID
-        self._alias = alias
-        self._ws_data = {}
-        self._ws_connection = None
-        self.entity_id = async_generate_entity_id("media_player.{}", alias or deviceID, hass=hass)
-
-    def ws_send(self, command, **kwargs):
-        if self._ws_connection:
-            self._ws_connection.send_message(event_message(self._ws_cid, {
+    def send(self, command, **kwargs):
+        if self.connection:
+            connection, cid = self.connection[-1]
+            connection.send_message(event_message(cid, {
                 "command": command,
                 **kwargs,
                 }))
 
-    def ws_connect(self, connection, cid):
-        self._ws_cid = cid
-        self._ws_connection = connection
-        self.ws_send("update", entity_id=self.entity_id)
-        connection.subscriptions[cid] = self.ws_disconnect
-        if self.hass:
-            self.schedule_update_ha_state()
+    def update(self, data):
+        if data.get('browser'):
+            self.sensor = self.sensor or create_entity(
+                    self.hass,
+                    'sensor',
+                    self.deviceID,
+                    self)
+            self.sensor.data = data.get('browser')
 
-    def ws_disconnect(self):
-        self._ws_cid = None
-        self._ws_connection = None
-        if self.hass:
-            self.schedule_update_ha_state()
+        if data.get('player'):
+            self.media_player = self.media_player or create_entity(
+                    self.hass,
+                    'media_player',
+                    self.deviceID,
+                    self)
+            self.media_player.data = data.get('player')
 
-    def ws_update(self, data):
-        self._ws_data = data
-        if self.hass:
-            self.schedule_update_ha_state()
+        if data.get('screen'):
+            self.screen = self.screen or create_entity(
+                    self.hass,
+                    'light',
+                    self.deviceID,
+                    self)
+            self.screen.data = data.get('screen')
 
-    @property
-    def device_id(self):
-        return self._deviceID
+        if data.get('fully'):
+            self.fully = self.fully or create_entity(
+                    self.hass,
+                    'binary_sensor',
+                    self.deviceID,
+                    self)
+            self.fully.data = data.get('fully')
+
+        if data.get('camera'):
+            self.camera = self.camera or create_entity(
+                    self.hass,
+                    'camera',
+                    self.deviceID,
+                    self)
+            self.camera.data = data.get('camera')
+

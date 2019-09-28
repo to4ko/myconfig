@@ -134,13 +134,21 @@
   - platform: template
     sensors:
 
+      nonsmoker:
+        value_template: "{{ (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"
+        friendly_name: 'Not smoking'
+        unit_of_measurement: "Days"
+
       door_count:
+        entity_id: sensor.time
         value_template: >-
           {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'door') | list | count }}
       window_count:
+        entity_id: sensor.time
         value_template: >-
           {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'window') | list | count }}
       motion_count:
+        entity_id: sensor.time
         value_template: >-
           {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'motion') | list | count }}
 
@@ -159,7 +167,7 @@
         friendly_name: GitHub Stars
         value_template: '{{states.sensor.myconfig.attributes.stargazers|int}}'
         icon_template: mdi:star
-        
+
       home_status:
         friendly_name: Home Occupation
         #device_class: presence
@@ -192,11 +200,12 @@
         friendly_name: 'Last Motion Time'
         value_template: '{{ as_timestamp(states.group.motion.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
 
-      bathroom_no_motion_since:
-        friendly_name: 'Bathroom No Motion Since'
-        value_template: "{{ states.binary_sensor.motion_sensor_158d000236bc6d.attributes['No motion since'] | int}}"
-        unit_of_measurement: 's'
-        entity_id: binary_sensor.motion_sensor_158d000236bc6d
+      # bathroom_no_motion_since:
+      #   friendly_name: 'Bathroom No Motion Since'
+      #   value_template: "{{ states.binary_sensor.motion_sensor_158d000236bc6d.attributes['No motion since'] | int}}"
+      #   unit_of_measurement: 's'
+      #   entity_id: sensor.time
+      #   entity_id: binary_sensor.motion_sensor_158d000236bc6d
 
       security_last_change:
         friendly_name: 'Last change sensor'
@@ -245,10 +254,10 @@
         
       kettle:
         value_template: '{{states.switch.plug_158d00028c9875.attributes.load_power}}'
-        
+
       mw: 
         value_template: '{{states.switch.plug_158d00028a54e4.attributes.load_power}}'
-        
+
         
       humidity_average:
         friendly_name: Humidity Average

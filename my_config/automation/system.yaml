@@ -127,27 +127,6 @@
         {% endif %}
       volume_level: "{{ states('input_number.volume_radio') }}"
 
-
-# ##################################
-# System - Ubuntu server CPU temp >65
-# ##################################
-- alias: system_server_cpu_temp_high
-  initial_state: 'on'
-  trigger:
-    platform: numeric_state
-    entity_id: sensor.cpu_temperature
-    above: 60
-    for:
-      minutes: 5
-  action:
-    - service: notify.mobile_app_iphone_8_dtsymbal
-      data:
-        title: "Внимание!"
-        message: "Температура процессора сервера превысила 65°"
-    - service: notify.telegram
-      data:
-        message: "\U0001F525 Внимание! Температура процессора сервера превысила 65°"
-
 # ##################################
 # System - Hass.io NEW Device
 # ##################################
@@ -348,8 +327,8 @@
       - condition: time
         after: '07:00:00'
         before: '21:00:00'
-      #- condition: template
-      #  value_template: '{{ as_timestamp(now()) - as_timestamp(states.binary_sensor.switch_158d0002fa99a8.last_changed) < 20 }}'
+      # - condition: template
+      #   value_template: "{{(now()|as_timestamp - states.binary_sensor.switch_158d0002fa99a8.last_updated|as_timestamp ) > 15}}"
   action:
     - service: media_player.volume_set
       data_template:
@@ -473,19 +452,6 @@
         addon: "a0d7b954_tor"
         
 # ##################################
-# System - server root device
-# ##################################
-- alias: system_rdev
-  initial_state: 'off'
-  trigger:
-    - platform: template
-      value_template: "{% if states('sensor.root_device') != '/dev/sda2' %}true{% endif %}"
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F621 Внимание! Root устройство изменено!"
-
-# ##################################
 # System - Home weather (ya)
 # ##################################
 - alias: system_weather_home
@@ -551,19 +517,33 @@
 #        {{ trigger.from_state.state|capitalize }} ->
 
 # ##################################
-# System - Outside motion
+# System - Database Purge
 # ##################################
-- alias: system_postgresql_purge
-  initial_state: 'on'
+- alias: system_database_purge
+  initial_state: 'off'
   trigger:
     - platform: time_pattern
-      hours: '/2'
+      hours: '/12'
       minutes: 15
       seconds: 00
   action:
     - service: recorder.purge
       data:
-        keep_days: 1
+        keep_days: 7
     - service: notify.telegram
       data_template:
-        message: "\U0001f4ab PostgreSQL Purge"
+        message: "\U0001f4ab Database Purge"
+        
+
+
+# ##################################
+# System - Entities update
+# ##################################
+- alias: system_entities_update
+  initial_state: 'off'
+  trigger:
+      - platform: time_pattern
+        minutes: '/5'
+  action:
+    - service: homeassistant.update_entity
+      entity_id: sensor.nonsmoker

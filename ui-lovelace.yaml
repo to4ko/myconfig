@@ -94,7 +94,7 @@ views:
                   #- entity: sensor.ubuntu_hdd_purple_space_used
                   #  name: HDD
                   #  icon: mdi:harddisk
-                  - entity:  sensor.mariadb_size
+                  - entity:  sensor.postgresql_size
                     name: DB
                     icon: mdi:database
               - type: horizontal-stack
@@ -147,20 +147,34 @@ views:
                 name: MPD j3455
               - entity: media_player.mpd_rpi
                 name: MPD RPI
-          - type: glance
+          - type: entity-filter
+            show_header_toggle: false
             entities:
               - entity: media_player.iphone8_chrome
                 name: i8 Chrome
               - entity: media_player.iphone8_companion
                 name: i8 Client
-              - entity: media_player.m6800_external
-                name: m6800 ext
-              - entity: media_player.m6800_internal
-                name: m6800 int
-              - entity: media_player.mimax2
-                name: MiMax2
+              - entity: media_player.5490
+                name: 5490
+              - entity: media_player.m6800
+                name: m6800
+            state_filter:
+              - 'idle'
+              - 'playing'
+              - 'stop'
+
           
-          
+          # - type: glance
+          #   entities:
+          #     - entity: media_player.iphone8_chrome
+          #       name: i8 Chrome
+          #     - entity: media_player.iphone8_companion
+          #       name: i8 Client
+          #     - entity: media_player.m6800_external
+          #       name: m6800 ext
+          #     - entity: media_player.m6800_internal
+          #       name: m6800 int
+
       # ##################################
       # Center Block
       # ##################################      
@@ -1272,6 +1286,7 @@ views:
           - light.bedside_mb
           - light.gateway_light_7c49ebb1b5e1
           - light.round_led_mb
+          - light.round_led_mb_ambilight
           - switch.wall_plug_158d0002467773
           - fan.purifier2s
           - switch.plug_158d000205a835
@@ -1437,37 +1452,24 @@ views:
       - type: vertical-stack
         cards:
           - type: glance
-            columns: 2
+            columns: 3
             entities:
-              - sensor.water_mineralized_single
-              - sensor.water_non_mineralized_single
-              # - entity: sensor.d1_filter_flow_mineralized
-              #   name: RO M
-              # - entity: sensor.d1_filter_flow_nonmineralized
-              #   name: RO NM
-              # - sensor.ro_mineralized
-              # - sensor.ro_nonmineralized
-              # - sensor.ro_total
-              # - entity: script.ro_reset
-              #   name: RST
-              #   tap_action:
-              #     action: call-service
-              #     service: script.ro_reset
-              # - sensor.d1_filter_flow_counter
-                  
+              - entity: sensor.water_mineralized_single
+                name: Mineralized
+              - entity: sensor.water_non_mineralized_single
+                name: Non-Mineralized
+              - entity: sensor.water_raw_single
+                name: RAW
+
           - type: entities
             title: Utility Cost
             show_header_toggle: false
             entities:
               - sensor.utility_cost
               - type: divider
-              #- sensor.hot_water_cost
-              #- sensor.cold_water_cost
               - type: divider
               - sensor.water_cost 
               - type: divider
-              #- sensor.power_consumption_month_t1_cost
-              #- sensor.power_consumption_month_t2_cost
               - type: divider
               - sensor.power_consumption_month_cost
           - type: entities
@@ -1476,16 +1478,6 @@ views:
               - input_number.tariff_energy_night
               - input_number.tariff_hot_water
               - input_number.tariff_cold_water
-          #- type: entities
-          #  title: Change
-          #  show_header_toggle: false
-          #  entities:
-          #    
-          #    - sensor.water_change_1m
-          #    - sensor.water_change_10m
-          #    - sensor.water_change_30m
-          #    - sensor.water_change_60m
-          
       - type:  vertical-stack
         cards:
           - type: custom:mini-graph-card
@@ -2200,9 +2192,10 @@ views:
           - type: history-graph
             hours_to_show: 48
             entities:
-              - sensor.mariadb_size
+              - sensor.postgresql_size
           - type: entities
             entities:
+              - sensor.postgresql_size
               - type: call-service
                 icon: mdi:database-minus
                 name: Purge 0
@@ -2219,6 +2212,29 @@ views:
                 service_data:
                   keep_days: 1
                   repack: true
+              - type: call-service
+                icon: mdi:database-minus
+                name: Purge 2
+                action_name: Purge
+                service: recorder.purge
+                service_data:
+                  keep_days: 2
+                  repack: true
+          - type: glance
+            entities:
+              - entity: switch.esp01_hdd_box_power
+                name: USB HDD
+                tap_action:
+                  action: toggle
+              - entity: binary_sensor.esp01_hdd_box_powerstatus
+                name: Status
+                tap_action:
+                  action: call-service
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.esp01_hdd_box_power
+              - entity: binary_sensor.esp01_hdd_box_status
+                name: Connection
 
           - type: entity-filter
             show_header_toggle: false
@@ -2233,7 +2249,6 @@ views:
               - entity: timer.timer_washer_b
             state_filter:
             - "active"
-
 
       # Mid column
       #############
@@ -2382,30 +2397,114 @@ views:
                   - entity: binary_sensor.rpi_lead
                     name: Lead
           - type: glance
-            columns: 6
+            columns: 5
             entities:
+              # NVME 0
+              - entity: sensor.ubuntu_nvme0_tb_written
+                name: nvme0
+                icon: mdi:raspberry-pi
               - entity: sensor.nvme0_session_write
-                name: NVME0 Stat
-                # tap_action:
-                #   action: call-service
-                #   service: homeassistant.update_entity
-                #   service_data:
-                #     entity_id: sensor.nvme0_diskstat
+                name: Per Session
               - entity: sensor.nvme0_gb_per_day
                 name: Per Day
+              - entity: sensor.nvme0_gb_per_hour
+                name: Per Hour
               - entity: sensor.nvme0_life_left
                 name: Left
+              # NVME 1
+              - entity: sensor.ubuntu_nvme1_tb_written
+                name: nvme1
+                icon: mdi:raspberry-pi
               - entity: sensor.nvme1_session_write
-                name: NVME1 Stat
-                # tap_action:
-                #   action: call-service
-                #   service: homeassistant.update_entity
-                #   service_data:
-                #     entity_id: sensor.nvme1_diskstat
+                name: Per Session
               - entity: sensor.nvme1_gb_per_day
                 name: Per Day
+              - entity: sensor.nvme1_gb_per_hour
+                name: Per Hour
               - entity: sensor.nvme1_life_left
                 name: Left
+              # sda
+              - entity: sensor.ubuntu_sda_tb_written
+                name: sda
+                icon: mdi:raspberry-pi
+              - entity: sensor.sda_session_write
+                name: Per Session
+              - entity: sensor.sda_gb_per_day
+                name: Per Day
+              - entity: sensor.sda_gb_per_hour
+                name: Per Hour
+              - entity: sensor.sda_life_left
+                name: Left
+              # sdb
+              - entity: sensor.ubuntu_sdb_tb_written
+                name: sdb
+                icon: mdi:raspberry-pi
+              - entity: sensor.sdb_session_write
+                name: Per Session
+              - entity: sensor.sdb_gb_per_day
+                name: Per Day
+              - entity: sensor.sdb_gb_per_hour
+                name: Per Hour
+              - entity: sensor.sdb_life_left
+                name: Left
+          - type: glance
+            columns: 3
+            entities:
+              - sensor.md0_status
+              - sensor.md1_status
+              - sensor.md2_status
+          - type: glance
+            columns: 4
+            entities:
+              - entity: sensor.md0_session_read
+                name: md0 R
+              - entity: sensor.md1_session_read
+                name: md1 R
+              - entity: sensor.md2_session_read
+                name: md2 R
+              - entity: sensor.video_session_read
+                name: Surv R
+              - entity: sensor.md0_session_write
+                name: md0 W
+              - entity: sensor.md1_session_write
+                name: md1 W
+              - entity: sensor.md2_session_write
+                name: md2 W
+              - entity: sensor.video_session_write
+                name: Surv W
+
+          - type: glance
+            columns: 7
+            entities:
+              - entity: sensor.ubuntu_nvme0_temp
+                name: NVME0
+              - entity: sensor.ubuntu_nvme1_temp
+                name: NVME1
+              - entity: sensor.ubuntu_sda_temp
+                name: sda
+              - entity: sensor.ubuntu_sdb_temp
+                name: sdb
+              - entity: sensor.ubuntu_sdc_temp
+                name: sdc
+              - entity: sensor.ubuntu_sdd_temp
+                name: sdd
+              - entity: sensor.ubuntu_sde_temp
+                name: sde
+              - entity: sensor.ubuntu_sdf_temp
+                name: sdf
+              - entity: sensor.ubuntu_sdg_temp
+                name: sdg
+              - entity: sensor.ubuntu_sdh_temp
+                name: sdh
+              - entity: sensor.ubuntu_sdi_temp
+                name: sdi
+              - entity: sensor.ubuntu_sdj_temp
+                name: sdj
+              - entity: sensor.ubuntu_sdk_temp
+                name: sdk
+              - entity: sensor.ubuntu_sdl_temp
+                name: sdl
+              
 #          - type: vertical-stack
 #            cards:
 #              - type: horizontal-stack
@@ -2503,7 +2602,7 @@ views:
 
               - type: glance
                 #title: Ubuntu Status
-                columns: 7
+                columns: 6
                 entities:
                   - entity: sensor.cpu_speed
                     name: Speed
@@ -2514,17 +2613,14 @@ views:
                     icon: mdi:chip
                   #- entity: sensor.ubuntu_cpu_temp
                   #  name: CPU_T
-                  - entity: sensor.ubuntu_root_nvme0_tb_written
-                    name: NVME0
-                    icon: mdi:raspberry-pi
-                  - entity: sensor.ubuntu_root_nvme1_tb_written
-                    name: NVME1
-                    icon: mdi:raspberry-pi
-                  - entity: sensor.mariadb_size
+                  
+                  - entity: sensor.postgresql_size
                     name: DB
                     icon: mdi:database
                   - entity: switch.server_plug_hb
                     name: S.Plug
+                  - entity: sensor.server_z_hb
+                    name: Power usage
               - type: custom:bar-card
                 title_position: top
                 columns: 2
@@ -2574,7 +2670,7 @@ views:
                     name: SSD
                   - entity: sensor.ubuntu_video_usage
                     icon: mdi:harddisk
-                    name: Survailance
+                    name: Surveillance
                   - entity: sensor.ubuntu_media_usage
                     icon: mdi:harddisk
                     name: Media
