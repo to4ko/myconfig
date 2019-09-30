@@ -1,16 +1,18 @@
 # ##################################
 # System - Ubuntu server CPU temp >60
 # ##################################
-- alias: system_health_cpu_temp
+- alias: system_health_temp
   initial_state: 'on'
   trigger:
     platform: numeric_state
     entity_id:
       - sensor.ipmi_cpu1_temp
       - sensor.ipmi_cpu2_temp
+      - sensor.ipmi_tr1_temp
+      - sensor.ipmi_tr2_temp
     above: 60
     for:
-      minutes: 5
+      minutes: 3
   action:
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
@@ -19,28 +21,6 @@
     - service: notify.telegram
       data:
         message: "\U0001F525 Внимание! {{ trigger.from_state.attributes.friendly_name }} >60°"
-
-# ##################################
-# System - Ubuntu server secondary temp >60
-# ##################################
-- alias: system_health_secondary_temp
-  initial_state: 'on'
-  trigger:
-    platform: numeric_state
-    entity_id:
-      - sensor.ipmi_tr1_temp
-      - sensor.ipmi_tr2_temp
-    above: 55
-    for:
-      minutes: 5
-  action:
-    - service: notify.mobile_app_iphone_8_dtsymbal
-      data:
-        title: "Внимание!"
-        message: "{{ trigger.from_state.attributes.friendly_name }} >55°"
-    - service: notify.telegram
-      data:
-        message: "\U0001F525 Внимание! {{ trigger.from_state.attributes.friendly_name }} >55°"
 
 # ##################################
 # System - server root device
@@ -72,17 +52,13 @@
         message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}"
         
 # ##################################
-# System - Server Disks Temp
+# System - Server HDD Disks Temp
 # ##################################
-- alias: system_health_disks_temp
+- alias: system_health_hdd_temp
   initial_state: 'on'
   trigger:
     - platform: numeric_state
       entity_id:
-        - sensor.ubuntu_nvme0_temp
-        - sensor.ubuntu_nvme1_temp
-        - sensor.ubuntu_sda_temp
-        - sensor.ubuntu_sdb_temp
         - sensor.ubuntu_sdc_temp
         - sensor.ubuntu_sdd_temp
         - sensor.ubuntu_sde_temp
@@ -92,12 +68,33 @@
         - sensor.ubuntu_sdi_temp
         - sensor.ubuntu_sdj_temp
         - sensor.ubuntu_sdk_temp
-        - sensor.ubuntu_sdl_temp  
+        - sensor.ubuntu_sdl_temp
+        - sensor.ubuntu_sdm_temp
+      above: 40
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{ trigger.from_state.attributes.friendly_name }} >40°!"
+
+# ##################################
+# System - Server SSD Disks Temp
+# ##################################
+- alias: system_health_ssd_temp
+  initial_state: 'on'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.ubuntu_nvme0_temp
+        - sensor.ubuntu_nvme1_temp
+        - sensor.ubuntu_sda_temp
+        - sensor.ubuntu_sdb_temp
       above: 50
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f321 Внимание! {{ trigger.from_state.attributes.friendly_name }} >55°!"
+        message: "\U0001f321 Внимание! {{ trigger.from_state.attributes.friendly_name }} >50°!"
+
+
         
 # ##################################
 # System - Server Fans stats
