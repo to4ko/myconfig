@@ -124,6 +124,49 @@
     entity_id: timer.timer_t
   - service: timer.start
     entity_id: timer.timer_t
+
+# ##################################
+# Toilet - Timer pause on
+# ################################## 
+- alias: toilet_timer_pause_on
+  initial_state: 'on'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0001e54280
+  condition:
+    - condition: state
+      entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+      state: 'off'
+    - condition: state
+      entity_id: switch.wall_switch_left_158d0002a36f7f
+      state: 'on'
+  action:
+  - service: timer.pause
+    entity_id: timer.timer_t
+  - service: automation.turn_off
+    entity_id: automation.toilet_timer_restart
+    
+# ##################################
+# Bathroom - Timer pause off
+# ################################## 
+- alias: toilet_timer_pause_off
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000232ddd6
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: switch.wall_switch_left_158d0002a36f7f
+      state: 'on'
+  action:
+  - service: timer.start
+    entity_id: timer.timer_t
+  - service: automation.turn_on
+    entity_id: automation.toilet_timer_restart
     
 # ##################################
 # Toilet - Auto Light On
@@ -162,7 +205,7 @@
     platform: state
     entity_id: binary_sensor.motion_sensor_158d0001e54280
     to: 'off'
-    for: 00:05:00
+    for: '00:10:00'
   condition:
     condition: and
     conditions:
