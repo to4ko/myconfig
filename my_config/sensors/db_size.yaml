@@ -2,6 +2,7 @@
 # DB size sensors
 # ############################################################################
 #  - platform: filesize
+#    name: Db Size
 #    file_paths:
 #      - /config/home-assistant_v2.db
 #  - platform: template
@@ -11,23 +12,23 @@
 #        unit_of_measurement: Mb
 #        friendly_name: 'DB size'
 
-#   - platform: sql
-#     db_url: !secret postgresql_url
-#     queries:
-#       - name: PostgreSQL Size
-#         query: "SELECT (pg_database_size('hass')/1024/1024) as db_size;"
-#         column: "db_size"
-#         unit_of_measurement: MB
-#     scan_interval: 60
+   - platform: sql
+     db_url: !secret postgresql_url
+     queries:
+       - name: DB Size
+         query: "SELECT (pg_database_size('hass')/1024/1024) as db_size;"
+         column: "db_size"
+         unit_of_measurement: MB
+     scan_interval: 30
 
-  - platform: sql
-    db_url: !secret mariadb_url
-    queries:
-    - name: MariaDB Size
-      query: 'SELECT table_schema "database", Round(Sum(data_length + index_length) / 1024 / 1024, 0) "value" FROM information_schema.tables WHERE table_schema="hass" GROUP BY table_schema;'
-      column: 'value'
-      unit_of_measurement: Mb
-    scan_interval: 60
+#  - platform: sql
+#    db_url: !secret mariadb_url
+#    queries:
+#    - name: DB Size
+#      query: 'SELECT table_schema "database", Round(Sum(data_length + index_length) / 1024 / 1024, 0) "value" FROM information_schema.tables WHERE table_schema="hass" GROUP BY table_schema;'
+#      column: 'value'
+#      unit_of_measurement: Mb
+#    scan_interval: 30
   
 # Influx DB Size  
 #  - platform: influxdb
@@ -36,7 +37,7 @@
 #    username: !secret influxdb_username
 #    password: !secret influxdb_password
 #    queries:
-#    - name: InfluxDb Size
+#    - name: Db Size
 #      unit_of_measurement: Mb
 #      value_template: '{{ (value | float / 1024 /1024) | round(0) }}'
 #      group_function: sum

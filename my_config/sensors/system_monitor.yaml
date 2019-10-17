@@ -2,6 +2,21 @@
 # Hardware sensors Z9PA - NVME
 # ############################################################################
 
+  - platform: template
+    sensors:
+      f20_single_session_write:
+        value_template: "{{ (states('sensor.md5_session_write')|float * 0.25) | round(1) }}"
+        unit_of_measurement: 'Gb'
+      f20_tb_written:
+        value_template: '1000'
+        unit_of_measurement: 'Gb'
+
+  - platform: statistics
+    entity_id: sensor.f20_single_session_write
+    name: f20_statistics
+    max_age:
+      minutes: 60
+
   - platform: statistics
     entity_id: sensor.nvme0_session_write
     name: nvme0_statistics
@@ -19,8 +34,7 @@
     name: sdb_statistics
     max_age:
       minutes: 60
-      
-      
+
   - platform: template
     sensors:
       nvme0_write_change_1h:
@@ -32,10 +46,51 @@
       sdb_write_change_1h:
         value_template: "{{ state_attr('sensor.sdb_statistics','change') }}"
         unit_of_measurement: 'Gb'
+      f20_write_change_1h:
+        value_template: "{{ state_attr('sensor.f20_statistics','change') }}"
+        unit_of_measurement: 'Gb'
 
-      
   - platform: template
     sensors:
+      f20_gb_per_hour:
+        friendly_name: f20 Gb per hour
+        unit_of_measurement: Gb
+        entity_id: sensor.time, sensor.md5_session_write
+        icon_template: mdi:clock
+        value_template: >-
+          {% set uptime = states('sensor.host_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (states('sensor.f20_single_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
+          {% else %}
+          {{states('sensor.f20_single_session_write')|float | round(2)}}
+          {% endif %}
+      f20_gb_per_day:
+        friendly_name: f20 Gb per day
+        unit_of_measurement: Gb
+        icon_template: mdi:calendar
+        entity_id: sensor.time, sensor.md5_session_write
+        value_template: >-
+          {% set uptime = states('sensor.host_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (((states('sensor.f20_single_session_write')|float) / (states('sensor.host_uptime')|float)*24)|float)|round(2) }}
+          {% else %}
+          {{ (states('sensor.f20_single_session_write')|float*24) | round(2)}}
+          {% endif %}
+      f20_life_left:
+        friendly_name: f20 Calculated life left
+        unit_of_measurement: years
+        entity_id: sensor.time, sensor.md5_session_write
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw = 5000 %}
+          {%set f20_tb_written = 1000 %}
+          {%set per_day = states('sensor.f20_gb_per_day')|float%}
+          {%if per_day == 0 %}
+          {{(((tbw * 1024 - f20_tb_written) / 1 ) / 365)|round(2)}}
+          {%else%}
+          {{(((tbw * 1024 - f20_tb_written) / per_day ) / 365)|round(2)}}
+          {%endif%}
+    
       sda_gb_per_hour:
         friendly_name: sda Gb per hour
         unit_of_measurement: Gb
@@ -252,28 +307,28 @@
 #  - platform: mqtt
 #    name: "Zero2mb CPU Usage"
 #    state_topic: "zero2mb/cpu_percent"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '%'
 #    icon: mdi:speedometer
 #    
 #  - platform: mqtt
 #    name: "Zero2mb CPU Temp"
 #    state_topic: "zero2mb/sensors_temperatures/cpu-thermal"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '°C'
 #    icon: mdi:thermometer
 #    
 #  - platform: mqtt
 #    name: "Zero2mb RAM Usage"
 #    state_topic: "zero2mb/virtual_memory/percent"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '%'
 #    icon: mdi:memory
 #
 #  - platform: mqtt
 #    name: "Zero2mb Disk Usage"
 #    state_topic: "zero2mb/disk_usage/percent/|"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '%'
 #    icon: mdi:chip
 
@@ -284,28 +339,28 @@
 #  - platform: mqtt
 #    name: "Zero2mqtt CPU Usage"
 #    state_topic: "zero2mqtt/cpu_percent"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '%'
 #    icon: mdi:speedometer
 #    
 #  - platform: mqtt
 #    name: "Zero2mqtt CPU Temp"
 #    state_topic: "zero2mqtt/sensors_temperatures/cpu-thermal"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '°C'
 #    icon: mdi:thermometer
 #    
 #  - platform: mqtt
 #    name: "Zero2mqtt RAM Usage"
 #    state_topic: "zero2mqtt/virtual_memory/percent"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '%'
 #    icon: mdi:memory#
 #
 #  - platform: mqtt
 #    name: "Zero2mqtt Disk Usage"
 #    state_topic: "zero2mqtt/disk_usage/percent/|"
-#    value_template: '{{ value| round(0)}}'
+#    value_template: '{{ value | int | round(0) }}'
 #    unit_of_measurement: '%'
 #    icon: mdi:chip
 
@@ -315,28 +370,28 @@
   - platform: mqtt
     name: "RPI CPU Usage"
     state_topic: "rpi/cpu_percent"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:speedometer
     
   - platform: mqtt
     name: "RPI CPU Temp"
     state_topic: "rpi/sensors_temperatures/cpu-thermal"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
     
   - platform: mqtt
     name: "RPI RAM Usage"
     state_topic: "rpi/virtual_memory/percent"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:memory
 
   - platform: mqtt
     name: "RPI SSD Usage"
     state_topic: "rpi/disk_usage/percent/|"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:chip
 
@@ -346,28 +401,28 @@
   - platform: mqtt
     name: "j3455 CPU Usage"
     state_topic: "j3455/cpu_percent"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:speedometer
     
   - platform: mqtt
     name: "j3455 CPU Temp"
     state_topic: "j3455/sensors_temperatures/coretemp/0"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
     
   - platform: mqtt
     name: "j3455 RAM Usage"
     state_topic: "j3455/virtual_memory/percent"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:memory
 
   - platform: mqtt
     name: "j3455 SSD Usage"
     state_topic: "j3455/disk_usage/percent/|"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:chip
 
@@ -379,35 +434,35 @@
   - platform: mqtt
     name: "IPMI CPU1 Temp"
     state_topic: "ubuntu/ipmi/cpu1_temp"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "IPMI CPU2 Temp"
     state_topic: "ubuntu/ipmi/cpu2_temp"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "IPMI TR1 Temp"
     state_topic: "ubuntu/ipmi/tr1_temp"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "IPMI TR2 Temp"
     state_topic: "ubuntu/ipmi/tr2_temp"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "IPMI CPU Fan1"
     state_topic: "ubuntu/ipmi/cpu_fan1"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
     icon: mdi:fan
 
@@ -421,42 +476,42 @@
   - platform: mqtt
     name: "IPMI Rear Fan 1"
     state_topic: "ubuntu/ipmi/rear_fan1"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
     icon: mdi:fan
 
   - platform: mqtt
     name: "IPMI Rear Fan 2"
     state_topic: "ubuntu/ipmi/rear_fan2"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
     icon: mdi:fan
 
   - platform: mqtt
     name: "IPMI Front Fan 1"
     state_topic: "ubuntu/ipmi/frnt_fan1"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
     icon: mdi:fan
 
   - platform: mqtt
     name: "IPMI Front Fan 2"
     state_topic: "ubuntu/ipmi/frnt_fan2"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
     icon: mdi:fan
 
   - platform: mqtt
     name: "IPMI Front Fan 3"
     state_topic: "ubuntu/ipmi/frnt_fan3"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
     icon: mdi:fan
 
   - platform: mqtt
     name: "IPMI Front Fan 4"
     state_topic: "ubuntu/ipmi/frnt_fan4"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
     icon: mdi:fan
 
@@ -468,65 +523,85 @@
   - platform: mqtt
     name: "CPU Usage"
     state_topic: "ubuntu/cpu_percent"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:speedometer
     
   - platform: mqtt
     name: "CPU1 Package Temp"
     state_topic: "ubuntu/sensors_temperatures/coretemp/0"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
     
   - platform: mqtt
     name: "CPU2 Package Temp"
     state_topic: "ubuntu/sensors_temperatures/coretemp/7"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
-    
+
+# ############################################################################
+# Hardware sensors (Ubuntu) - MQTT - RAM Usage
+# ############################################################################
   - platform: mqtt
     name: "RAM Usage"
     state_topic: "ubuntu/virtual_memory/percent"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:memory
 
+# ############################################################################
+# Hardware sensors (Ubuntu) - MQTT - Drives Usage
+# ############################################################################
   - platform: mqtt
     name: "SSD Usage"
     state_topic: "ubuntu/disk_usage/md0"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:chip
     
   - platform: mqtt
     name: "840pro Usage"
     state_topic: "ubuntu/disk_usage/840pro"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:chip
 
   - platform: mqtt
     name: "Video Usage"
     state_topic: "ubuntu/disk_usage/video"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Media Usage"
     state_topic: "ubuntu/disk_usage/md2"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
 
   - platform: mqtt
     name: "Back_2Tb Usage"
     state_topic: "ubuntu/disk_usage/md1"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     icon: mdi:harddisk
+
+  - platform: mqtt
+    name: "320l Usage"
+    state_topic: "ubuntu/disk_usage/320l"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    icon: mdi:nas
+    
+  - platform: mqtt
+    name: "md5 Usage"
+    state_topic: "ubuntu/disk_usage/md5"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    icon: mdi:chip
 
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT - Drives Temperature
@@ -534,105 +609,105 @@
   - platform: mqtt
     name: "NVME0 Temp"
     state_topic: "ubuntu/disk_temp/nvme0"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
     
   - platform: mqtt
     name: "NVME1 Temp"
     state_topic: "ubuntu/disk_temp/nvme1"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sda Temp"
     state_topic: "ubuntu/disk_temp/sda"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdb Temp"
     state_topic: "ubuntu/disk_temp/sdb"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdc Temp"
     state_topic: "ubuntu/disk_temp/sdc"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdd Temp"
     state_topic: "ubuntu/disk_temp/sdd"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sde Temp"
     state_topic: "ubuntu/disk_temp/sde"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdf Temp"
     state_topic: "ubuntu/disk_temp/sdf"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdg Temp"
     state_topic: "ubuntu/disk_temp/sdg"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdh Temp"
     state_topic: "ubuntu/disk_temp/sdh"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdi Temp"
     state_topic: "ubuntu/disk_temp/sdi"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdj Temp"
     state_topic: "ubuntu/disk_temp/sdj"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdk Temp"
     state_topic: "ubuntu/disk_temp/sdk"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
     
   - platform: mqtt
     name: "sdl Temp"
     state_topic: "ubuntu/disk_temp/sdl"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
 
   - platform: mqtt
     name: "sdm Temp"
     state_topic: "ubuntu/disk_temp/sdm"
-    value_template: '{{ value| round(0)}}'
+    value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     icon: mdi:thermometer
     
@@ -727,7 +802,9 @@
     icon: mdi:alpha-r-box
 
 
-# HDD Stats
+# ############################################################################
+# Hardware sensors (Ubuntu) - MQTT - Session States (Drives R\W)
+# ############################################################################  
   - platform: mqtt
     name: sdc Session Write
     state_topic: "ubuntu/disk_stat/sdc_gb_write"
@@ -870,7 +947,9 @@
     icon: mdi:alpha-r-box
 
 
-# RAID stats
+# ############################################################################
+# Hardware sensors (Ubuntu) - MQTT - RAID Stats
+# ############################################################################
   - platform: mqtt
     name: md0 Session Write
     state_topic: "ubuntu/disk_stat/md0_gb_write"
@@ -927,6 +1006,48 @@
     unit_of_measurement: Gb
     icon: mdi:alpha-r-box
 
+  - platform: mqtt
+    name: md3 Session Write
+    state_topic: "ubuntu/disk_stat/md3_gb_write"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    icon: mdi:alpha-w-box
+
+  - platform: mqtt
+    name: md3 Session Read
+    state_topic: "ubuntu/disk_stat/md3_gb_read"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    icon: mdi:alpha-r-box
+
+  - platform: mqtt
+    name: md4 Session Write
+    state_topic: "ubuntu/disk_stat/md4_gb_write"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    icon: mdi:alpha-w-box
+
+  - platform: mqtt
+    name: md4 Session Read
+    state_topic: "ubuntu/disk_stat/md4_gb_read"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    icon: mdi:alpha-r-box
+
+  - platform: mqtt
+    name: md5 Session Write
+    state_topic: "ubuntu/disk_stat/md5_gb_write"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    icon: mdi:alpha-w-box
+
+  - platform: mqtt
+    name: md5 Session Read
+    state_topic: "ubuntu/disk_stat/md5_gb_read"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    icon: mdi:alpha-r-box
+
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT - MDADM Arrays State
 # ############################################################################
@@ -948,6 +1069,24 @@
     value_template: '{{ value }}'
     icon: mdi:harddisk
     
+  - platform: mqtt
+    name: md3 Status
+    state_topic: "ubuntu/mdstat/md3"
+    value_template: '{{ value }}'
+    icon: mdi:harddisk
+
+  - platform: mqtt
+    name: md4 Status
+    state_topic: "ubuntu/mdstat/md4"
+    value_template: '{{ value }}'
+    icon: mdi:harddisk
+
+  - platform: mqtt
+    name: md5 Status
+    state_topic: "ubuntu/mdstat/md5"
+    value_template: '{{ value }}'
+    icon: mdi:harddisk
+
 # ############################################################################
 # Hardware sensors (Ubuntu) - REST
 # ############################################################################

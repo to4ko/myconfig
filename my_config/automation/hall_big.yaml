@@ -12,10 +12,17 @@
     event_type: xiaomi_aqara.motion
     event_data:
       entity_id: binary_sensor.motion_sensor_158d0001e05856
+    #from: 'off'
+    #to: 'on'
   condition:
-    condition: time
-    after: '21:00:00'
-    before: '07:00:00'
+    condition: and
+    conditions:
+      - condition: time
+        after: '21:00:00'
+        before: '07:00:00'
+      - condition: state
+        entity_id: light.led_strip_hb
+        state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.led_strip_hb
@@ -32,26 +39,31 @@
 - alias: hall_big_auto_light_on
   initial_state: 'on'
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.motion_sensor_158d0001e05856
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.motion_sensor_158d0002b482e9
-    - platform: state
-      entity_id: binary_sensor.motion_sensor_158d0001e05856
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.motion_sensor_158d0002b482e9
-      from: 'off'
-      to: 'on'
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.motion_hb #.motion_sensor_158d0001e05856, binary_sensor.motion_sensor_158d0002b482e9
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.motion_sensor_158d0002b482e9
+     - platform: state
+       entity_id: binary_sensor.motion_hb #.motion_sensor_158d0001e05856
+       from: 'off'
+       to: 'on'
+    # - platform: state
+    #   entity_id: binary_sensor.motion_sensor_158d0002b482e9
+    #   from: 'off'
+    #   to: 'on'
   condition:
-    condition: time
-    after: '07:00:00'
-    before: '21:00:00'
+    condition: and
+    conditions:
+      - condition: time
+        after: '07:00:00'
+        before: '21:00:00'
+      - condition: state
+        entity_id: light.led_strip_hb
+        state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.led_strip_hb
@@ -69,7 +81,7 @@
     entity_id: binary_sensor.motion_sensor_158d0001e05856
     to: 'off'
     for:
-      seconds: 1
+      seconds: 30
   condition:
     condition: time
     after: '21:00:00'
@@ -97,6 +109,8 @@
       entity_id: binary_sensor.motion_hb
       to: 'off'
       from: 'on'
+      for:
+        minutes: 1
   condition:
     condition: time
     after: '07:00:00'
@@ -115,10 +129,10 @@
     entity_id: binary_sensor.door_window_sensor_158d0001e5d6be
     from: 'off'
     to: 'on'
-#  condition:
-#    condition: time
-#    after: '07:00:00'
-#    before: '21:00:00'
+  condition:
+    - condition: state
+      entity_id: light.led_strip_hb
+      state: 'off'
   action:
     - service: timer.cancel
       entity_id: timer.timer_open_door_hb
@@ -162,11 +176,6 @@
     from: 'on'
     to: 'off'
   action:
-    #- service: timer.pause
-      #entity_id: timer.timer_open_door_hb
-    #- service: notify.telegram
-    #  data_template:
-    #    message: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S', 0) }}"
     - service: camera.snapshot
       data:
         entity_id: camera.door_hb_720p
@@ -181,10 +190,7 @@
             caption: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S', 0) }}"
     - service: timer.cancel
       entity_id: timer.timer_open_door_hb
-#    - service: notify.telegram
-#      data_template:
-#        message: "TEST {{ trigger.from_state.for }}"
-    
+
 # ##################################
 # Hall Big - Main door not closed for 3 minutes
 # ##################################
@@ -197,10 +203,6 @@
     to: 'on'
     for:
      minutes: 3
-#  condition:
-#    condition: time
-#    after: '07:00:00'
-#    before: '21:00:00'
   action:
     - service_template: >
         {% if states("binary_sensor.tod_day") == 'on' %} script.main_door_not_closed_tts
@@ -510,7 +512,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Внимание! Свзяь с UPS потеряна!"
+        message: "\U0001f6a8 Внимание! Связь с UPS потеряна!"
     #- service: notify.mobile_app_iphone_8_dtsymbal
     #  data:
     #    title: "Внимание!"
@@ -529,8 +531,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Свзяь с UPS восстановлена!"
-
+        message: "\U0001f50b Связь с UPS восстановлена!"
 
 # ##################################
 # Hall Big - Main power turned on
@@ -568,7 +569,7 @@
     - service: tts.yandextts_say
       entity_id: media_player.mpd
       data_template:
-        message: 'З+апуск процедуры выключ+ения освещ+ения!'
+        message: 'Выключ+аю освещ+ение!'
     - delay: '00:00:03'
     - service: script.turn_on
       entity_id: script.lights_off
@@ -650,24 +651,25 @@
 # Hall Big - LED Strip Reset 
 # ##################################
 - alias: hall_big_led_strip_reset
-  initial_state: 'off'
+  initial_state: 'on'
   trigger:
     - platform: state
       entity_id: light.led_strip_hb
       to: 'unavailable'
-#      for: '00:00:20'
-    - platform: state
-      entity_id: light.led_strip_hb
-      from: 'unavailable'
-  condition:
-    condition: state
-    entity_id: binary_sensor.led_strip_hb
-    state: 'off'
+      for: '00:05:00'
+    # - platform: state
+    #   entity_id: light.led_strip_hb
+    #   from: 'unavailable'
+  # condition:
+  #   condition: state
+  #   entity_id: binary_sensor.led_strip_hb
+  #   state: 'off'
   action:
+    - service: script.turn_on
+      entity_id: script.led_strip_restart
     - service: notify.telegram
       data_template:
-        message: "LED Strip {{trigger.from_state.state}} -> {{trigger.to_state.state}}, ping - {{states('binary_sensor.led_strip_hb')}}"
-    #- service: script.led_strip_restart
+        message: "LED Strip HB restart done!"
 
 
 # ##################################
@@ -746,10 +748,10 @@
         {% endif %}
     - service_template: "light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}on{% else %}off{% endif %}"
       data:
-        entity_id: light.d1_mini_domofon_yellow_led
+        entity_id: light.esp32_domofon_yellow_led
     - service_template: "light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}off{% else %}on{% endif %}"
       data:
-        entity_id: light.d1_mini_domofon_yellow_led
+        entity_id: light.esp32_domofon_yellow_led
         
 # ##################################
 # Hall Big - Domofon Incoming Call
@@ -758,7 +760,7 @@
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: binary_sensor.d1_mini_domofon_incomingcall
+      entity_id: binary_sensor.esp32_domofon_incomingcall
       to: 'on'
   action:
     #- service: automation.turn_off
@@ -870,7 +872,7 @@
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: binary_sensor.d1_mini_domofon_motion, binary_sensor.motion_out2
+      entity_id: binary_sensor.esp32_domofon_motion, binary_sensor.motion_out2
       from: 'off'
       to: 'on'
   action:
