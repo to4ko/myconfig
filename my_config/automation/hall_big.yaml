@@ -134,6 +134,10 @@
       entity_id: light.led_strip_hb
       state: 'off'
   action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.main_door_open
+        value: '{{as_timestamp (now())|int}}'
     - service: timer.cancel
       entity_id: timer.timer_open_door_hb
     - service: timer.start
@@ -187,7 +191,9 @@
         data:
           photo:
           - file: /config/www/cam_captures/door_close2.jpg
-            caption: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S', 0) }}"
+            #caption: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S',0) }}"
+            caption: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{(as_timestamp(now())-states.input_number.main_door_open.state|int)|int | timestamp_custom('%H:%M:%S',0)}} \ {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S',0) }}"
+            
     - service: timer.cancel
       entity_id: timer.timer_open_door_hb
 
@@ -983,8 +989,53 @@
       event_type: xiaomi_aqara.movement
       event_data:
         entity_id: binary_sensor.vibration_158d0002a2412d
-        movement_type: vibrate 
+        movement_type: vibrate
   action:
     - service: notify.telegram
       data_template:
         message: "\U0001F6AA Внимание! Главная дверь - Вибрация!"
+
+# ##################################
+# Hall big - Domofon Open Button
+# ##################################
+- alias: hall_big_domofon_button_open
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0002f8dd54
+      click_type: single
+  action:
+    - service: script.turn_on
+      entity_id: script.domofon_open_door
+      
+# ##################################
+# Hall big - Domofon Auto Open Once
+# ##################################
+- alias: hall_big_domofon_auto_open_once
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0002f8dd54
+      click_type: double
+  action:
+    - service: script.turn_on
+      entity_id: script.domofon_auto_open_once_toggle
+      
+# ##################################
+# Hall big - Domofon Auto Open 
+# ##################################
+- alias: hall_big_domofon_auto_open
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d0002f8dd54
+      click_type: long_click_press
+  action:
+    - service: script.turn_on
+      entity_id: script.domofon_auto_open_toggle
