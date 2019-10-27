@@ -17,9 +17,9 @@
   condition:
     condition: and
     conditions:
-      - condition: time
-        after: '21:00:00'
-        before: '07:00:00'
+      - condition: state
+        entity_id: binary_sensor.tod_night
+        state: 'on'
       - condition: state
         entity_id: light.led_strip_hb
         state: 'off'
@@ -58,9 +58,9 @@
   condition:
     condition: and
     conditions:
-      - condition: time
-        after: '07:00:00'
-        before: '21:00:00'
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'on'
       - condition: state
         entity_id: light.led_strip_hb
         state: 'off'
@@ -83,9 +83,9 @@
     for:
       seconds: 30
   condition:
-    condition: time
-    after: '21:00:00'
-    before: '07:00:00'
+    - condition: state
+      entity_id: binary_sensor.tod_night
+      state: 'on'
   action:
     - service: light.turn_off
       entity_id: light.led_strip_hb
@@ -112,9 +112,9 @@
       for:
         minutes: 1
   condition:
-    condition: time
-    after: '07:00:00'
-    before: '21:00:00'
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
   action:
     - service: light.turn_off
       entity_id: light.led_strip_hb
@@ -146,13 +146,13 @@
       entity_id: light.led_strip_hb
       data_template:
         brightness_pct: >
-          {%- if states("binary_sensor.tod_night") == 'on' -%}
-          1
+          {%- if is_state('binary_sensor.tod_night','on') -%}
+          2
           {%- else -%}
           100
           {% endif %}
         kelvin: >
-          {%- if states("binary_sensor.tod_night") == 'on' -%}
+          {%- if is_state('binary_sensor.tod_night','on') -%}
           3000
           {%- else -%}
           6500
@@ -182,7 +182,7 @@
   action:
     - service: camera.snapshot
       data:
-        entity_id: camera.door_hb_720p
+        entity_id: camera.pinhole
         filename: "/config/www/cam_captures/door_close2.jpg"
     - service: notify.telegram
       data:
@@ -211,7 +211,7 @@
      minutes: 3
   action:
     - service_template: >
-        {% if states("binary_sensor.tod_day") == 'on' %} script.main_door_not_closed_tts
+        {% if is_state('binary_sensor.tod_day','on') %} script.main_door_not_closed_tts
         {%else%} script.noop
         {%endif%}
     - service: notify.telegram
@@ -276,9 +276,9 @@
       - condition: numeric_state
         entity_id: sensor.illuminnation_158d0001e05856
         below: 10
-      - condition: time
-        after: '07:30:00'
-        before: '21:00:00'
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'on'
   action:
     - service: switch.turn_on
       entity_id: switch.wall_switch_left_158d000223921b
@@ -300,9 +300,9 @@
       - condition: numeric_state
         entity_id: sensor.illuminnation_158d0002b482e9
         below: 10
-      - condition: time
-        after: '07:30:00'
-        before: '21:00:00'
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'on'
   action:
     - service: switch.turn_on
       entity_id: switch.wall_switch_right_158d000253f04a
@@ -722,7 +722,7 @@
     - service: script.turn_on
       data_template:
         entity_id: >
-          {% if is_state('binary_sensor.tod_long_day','on') %}
+          {% if is_state('binary_sensor.tod_day','on') %}
             script.bottom_lock_tts
           {% endif %}
 
@@ -749,7 +749,7 @@
         entity_id: media_player.mpd
         volume_level: '0.3'
     - service_template: >
-        {% if is_state('binary_sensor.tod_long_day','on') %} script.top_lock_tts
+        {% if is_state('binary_sensor.tod_day','on') %} script.top_lock_tts
         {% else%} script.noop
         {% endif %}
     - service_template: "light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}on{% else %}off{% endif %}"
@@ -858,7 +858,7 @@
     #    filename: "/config/www/cam_captures/door_close.jpg"
     - service: camera.snapshot
       data:
-        entity_id: camera.door_hb_720p
+        entity_id: camera.pinhole
         filename: "/config/www/cam_captures/door_close2.jpg"
     - service: notify.telegram
       data:
@@ -874,28 +874,54 @@
 # ##################################
 # Hall Big - Motion Outside
 # ##################################
-- alias: hall_big_motion_outside
+- alias: hall_big_motion_outside_esp32
   initial_state: 'on'
   trigger:
     - platform: state
-      entity_id: binary_sensor.esp32_domofon_motion, binary_sensor.motion_out2
+      entity_id: binary_sensor.esp32_domofon_motion
       from: 'off'
       to: 'on'
   action:
     - service: camera.snapshot
       data:
-        entity_id: camera.door_hb_720p
-        filename: "/config/www/cam_captures/door_outside_motion.jpg"
-    - delay: '00:00:01'
+        entity_id: camera.door_hb
+        filename: "/config/www/cam_captures/outside.jpg"
+    - delay: '00:00:03'
     - service: notify.telegram_cam
       data:
         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-        message: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "ESP32 - Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
         data:
           photo:
-          - file: /config/www/cam_captures/door_outside_motion.jpg
-            caption: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}}"
+          - file: /config/www/cam_captures/outside.jpg
+            caption: "ESP32 - Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
 
+
+# ##################################
+# Hall Big - Motion Outside
+# ##################################
+- alias: hall_big_motion_outside_motioneye
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.pinhole_camera_motion
+      from: 'off'
+      to: 'on'
+  action:
+    - delay: '00:00:04'
+    - service: camera.snapshot
+      data:
+        entity_id: camera.door_hb
+        filename: "/config/www/cam_captures/outside.jpg"
+    - delay: '00:00:03'
+    - service: notify.telegram_cam
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
+        data:
+          photo:
+          - file: /config/www/cam_captures/outside.jpg
+            caption: "MotionEye - Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
 
 # ##################################
 # Hall Big - Domofon auto off on door open\close
@@ -978,22 +1004,6 @@
 #          photo:
 #          - file: /config/www/cam_captures/doorbell.jpg
 #            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
-
-# ##################################
-# Hall Big - Main door vibration
-# ##################################
-- alias: hall_big_main_door_vibration
-  initial_state: 'off'
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.movement
-      event_data:
-        entity_id: binary_sensor.vibration_158d0002a2412d
-        movement_type: vibrate
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001F6AA Внимание! Главная дверь - Вибрация!"
 
 # ##################################
 # Hall big - Domofon Open Button

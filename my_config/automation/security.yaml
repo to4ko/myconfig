@@ -24,8 +24,6 @@
       entity_id: input_boolean.security_mode
     - service: homeassistant.turn_off
       entity_id: switch.blackhole_turtle_mode, automation.kitchen_auto_light_on, automation.hall_big_auto_light_on
-    
-
 
 # ##################################
 # Security - Sensors State change
@@ -102,41 +100,61 @@
       entity_id: person.dima,person.sandra,person.vova,person.sasha, device_tracker.life360_dima_tsymbal,device_tracker.life360_sandra_tsymbal,device_tracker.life360_vova_tsymbal
       
 
-# ##################################
-# Security - Security system PWR status
-# ##################################
-- alias: security_system_pwr
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.d1_security_power
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f693 Охранная система: питание {% if is_state('binary_sensor.d1_security_power','on') %}включено!{% else %}выключено!{% endif %}"
+# # ##################################
+# # Security - Security system PWR status
+# # ##################################
+# - alias: security_system_pwr
+#   initial_state: 'on'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.d1_security_power
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f693 Охранная система: питание {% if is_state('binary_sensor.d1_security_power','on') %}включено!{% else %}выключено!{% endif %}"
 
-# ##################################
-# Security - Security system armed
-# ##################################
-- alias: security_system_armed
-  initial_state: 'on'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.d1_security_armed
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f693 Охранная система {% if is_state('binary_sensor.d1_security_armed','on') %}включена!{% else %}выключена!{% endif %}"
+# # ##################################
+# # Security - Security system armed
+# # ##################################
+# - alias: security_system_armed
+#   initial_state: 'on'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.d1_security_armed
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f693 Охранная система {% if is_state('binary_sensor.d1_security_armed','on') %}включена!{% else %}выключена!{% endif %}"
 
+# # ##################################
+# # Security - Security system alarm
+# # ##################################
+# - alias: security_system_alarm
+#   initial_state: 'on'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.d1_security_alarm
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f693 Охранная система: Тревога {% if is_state('binary_sensor.d1_security_alarm','on') %}включена!{% else %}выключена!{% endif %}"
+        
 # ##################################
-# Security - Security system alarm
+# Security- Main door vibration
 # ##################################
-- alias: security_system_alarm
+- alias: security_main_door_vibration
   initial_state: 'on'
   trigger:
-    - platform: state
-      entity_id: binary_sensor.d1_security_alarm
+    - platform: event
+      event_type: xiaomi_aqara.movement
+      event_data:
+        entity_id: binary_sensor.vibration_158d0002a2412d
+        movement_type: vibrate
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'on'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f693 Охранная система: Тревога {% if is_state('binary_sensor.d1_security_alarm','on') %}включена!{% else %}выключена!{% endif %}"
+        message: "\U0001F6AA Внимание! Главная дверь - Вибрация!"

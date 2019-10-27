@@ -1,31 +1,31 @@
-  - platform: imap_email_content
-    server: imap.gmail.com
-    name: DoorCam Motion Sensor
-    port: 993
-    username: !secret gmail_username
-    password: !secret gmail_password
-    folder: DoorCam
-    senders:
-      - !secret doorcam_email
-  - platform: imap
-    server: imap.gmail.com
-    name: DoorCam Email Unread
-    port: 993
-    username: !secret gmail_username
-    password: !secret gmail_password
-    folder: DoorCam
-    search: FROM <doorcam.tsymbal@gmail.com>
+  # - platform: imap_email_content
+  #   server: imap.gmail.com
+  #   name: DoorCam Motion Sensor
+  #   port: 993
+  #   username: !secret gmail_username
+  #   password: !secret gmail_password
+  #   folder: DoorCam
+  #   senders:
+  #     - !secret doorcam_email
+  # - platform: imap
+  #   server: imap.gmail.com
+  #   name: DoorCam Email Unread
+  #   port: 993
+  #   username: !secret gmail_username
+  #   password: !secret gmail_password
+  #   folder: DoorCam
+  #   search: FROM <doorcam.tsymbal@gmail.com>
 
-  - platform: template
-    sensors:
-      doorcam_motion_time:
-        friendly_name: DoorCam Motion Time
-        value_template: "{{ as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))| timestamp_custom('%d.%m.%Y %H:%M:%S')}}"
+  # - platform: template
+  #   sensors:
+  #     doorcam_motion_time:
+  #       friendly_name: DoorCam Motion Time
+  #       value_template: "{{ as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))| timestamp_custom('%d.%m.%Y %H:%M:%S')}}"
     
-      doorcam_motion_time_delta:
-        friendly_name: DoorCam Motion Time Delta
-        unit_of_measurement: 's'
-        value_template: "{{(as_timestamp(now())-as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))) |int |round(0) }}"
+  #     doorcam_motion_time_delta:
+  #       friendly_name: DoorCam Motion Time Delta
+  #       unit_of_measurement: 's'
+  #       value_template: "{{(as_timestamp(now())-as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))) |int |round(0) }}"
 
   - platform: template
     sensors:
@@ -154,21 +154,21 @@
       nonsmoker:
         value_template: "{{ (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"
         friendly_name: 'Not smoking'
-        entity_id: sensor.time
+        entity_id: sensor.hour
         unit_of_measurement: "Days"
 
-      door_count:
-        entity_id: sensor.time
-        value_template: >-
-          {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'door') | list | count }}
-      window_count:
-        entity_id: sensor.time
-        value_template: >-
-          {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'window') | list | count }}
-      motion_count:
-        entity_id: sensor.time
-        value_template: >-
-          {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'motion') | list | count }}
+      # door_count:
+      #   entity_id: sensor.hor
+      #   value_template: >-
+      #     {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'door') | list | count }}
+      # window_count:
+      #   entity_id: sensor.hour
+      #   value_template: >-
+      #     {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'window') | list | count }}
+      # motion_count:
+      #   entity_id: sensor.hour
+      #   value_template: >-
+      #     {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'motion') | list | count }}
 
       gdrive_last_backup:
         friendly_name: GBackup time
@@ -301,3 +301,11 @@
       - 'time_date'
       - 'time_utc'
       - 'beat'
+  
+  - platform: template
+    sensors:
+      hour:
+        friendly_name: Hour Sensor
+        value_template: "{{now().hour}}"
+        unit_of_measurement: 'h'
+        icon_template: mdi:clock

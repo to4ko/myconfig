@@ -12,36 +12,66 @@
 #        unit_of_measurement: Mb
 #        friendly_name: 'DB size'
 
-   - platform: sql
-     db_url: !secret postgresql_url
-     queries:
-       - name: DB Size
-         query: "SELECT (pg_database_size('hass')/1024/1024) as db_size;"
-         column: "db_size"
-         unit_of_measurement: MB
-     scan_interval: 30
+#    - platform: sql
+#      db_url: !secret postgresql_url
+#      queries:
+#        - name: DB Size
+#         query: "SELECT (pg_database_size('hass')/1024/1024) as db_size;"
+#         column: "db_size"
+#         unit_of_measurement: MB
+#      scan_interval: 30
 
-#  - platform: sql
-#    db_url: !secret mariadb_url
-#    queries:
-#    - name: DB Size
-#      query: 'SELECT table_schema "database", Round(Sum(data_length + index_length) / 1024 / 1024, 0) "value" FROM information_schema.tables WHERE table_schema="hass" GROUP BY table_schema;'
-#      column: 'value'
-#      unit_of_measurement: Mb
-#    scan_interval: 30
+  - platform: sql
+    db_url: !secret mariadb_url
+    queries:
+    - name: DB Size
+      query: 'SELECT table_schema "database", Round(Sum(data_length + index_length) / 1024 / 1024, 0) "value" FROM information_schema.tables WHERE table_schema="hass" GROUP BY table_schema;'
+      column: 'value'
+      unit_of_measurement: Mb
+    scan_interval: 30
   
 # Influx DB Size  
-#  - platform: influxdb
-#    host: !secret influxdb_host
-#    port: !secret influxdb_port
-#    username: !secret influxdb_username
-#    password: !secret influxdb_password
-#    queries:
-#    - name: Db Size
-#      unit_of_measurement: Mb
-#      value_template: '{{ (value | float / 1024 /1024) | round(0) }}'
-#      group_function: sum
-#      measurement: '"monitor"."shard"'
-#      database: _internal
-#      where: 'time > now() - 10s'
-#      field: diskBytes
+  - platform: influxdb
+    host: !secret influxdb_host
+    port: !secret influxdb_port
+    username: !secret influxdb_username
+    password: !secret influxdb_password
+    queries:
+    - name: influxDb Size
+      unit_of_measurement: Mb
+      value_template: '{{ (value | float / 1024 /1024) | round(0) }}'
+      group_function: sum
+      measurement: '"monitor"."shard"'
+      database: _internal
+      where: 'time > now() - 10s'
+      field: diskBytes
+
+# ############################################################################
+# DB size sensors - Speed
+# ############################################################################
+  - platform: statistics
+    entity_id: sensor.db_size
+    name: db_size_statistics
+    max_age:
+      minutes: 60
+
+  - platform: statistics
+    entity_id: sensor.influxdb_size
+    name: influxdb_size_statistics
+    max_age:
+      minutes: 60
+
+
+  - platform: template
+    sensors:
+      db_size_change_1h:
+        friendly_name: Main DB change
+        value_template: "{{ state_attr('sensor.db_size_statistics','change') }}"
+        unit_of_measurement: 'Mb\h'
+        icon_template: mdi:decimal-increase
+        
+      influxdb_size_change_1h:
+        friendly_name: InfluxDB change
+        value_template: "{{ state_attr('sensor.influxdb_size_statistics','change') }}"
+        unit_of_measurement: 'Mb\h'
+        icon_template: mdi:decimal-increase

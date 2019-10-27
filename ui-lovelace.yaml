@@ -67,7 +67,7 @@ views:
             cards:
               - type: glance
                 #title: Sytem Status
-                columns: 5
+                columns: 6
                 entities:
                   - entity: sensor.cpu1_package_temp
                     name: CPU1_T
@@ -97,6 +97,9 @@ views:
                   - entity:  sensor.db_size
                     name: DB
                     icon: mdi:database
+                  - entity: sensor.influxdb_size
+                    name: InfluxDB
+                    icon: mdi:database-lock
               - type: horizontal-stack
                 cards:
                   - type: conditional
@@ -195,7 +198,8 @@ views:
             entities:
               - entity: binary_sensor.esp32_domofon_motion
                 name: Out
-              - binary_sensor.motion_out2
+              - entity: binary_sensor.pinhole_camera_motion
+                name: Pinhole
               - entity: binary_sensor.motion_sensor_158d0001e53cda
                 name: MB
               - entity: binary_sensor.motion_sensor_158d000224f89f
@@ -986,6 +990,10 @@ views:
         title: Motion
         show_header_toggle: false
         entities:
+          - entity: binary_sensor.pinhole_camera_motion
+            secondary_info: last-changed
+          - entity: binary_sensor.esp32_domofon_motion
+            secondary_info: last-changed
           - entity: binary_sensor.motion_sensor_158d0001e53cda
             secondary_info: last-changed
           - entity: binary_sensor.motion_sensor_158d000224f89f
@@ -1001,6 +1009,8 @@ views:
           - entity: binary_sensor.motion_sensor_158d0001ae9f61
             secondary_info: last-changed
           - entity: binary_sensor.motion_sensor_158d0002b4729d
+            secondary_info: last-changed
+          - entity:   binary_sensor.motion_sensor_158d0002b48381
             secondary_info: last-changed
           - entity: binary_sensor.motion_sensor_158d000236bc6d
             secondary_info: last-changed
@@ -2028,13 +2038,16 @@ views:
                 tap_action:
                   action: toggle
           #    - sensor.cpu_temperature
-          - type: history-graph
-            hours_to_show: 48
-            entities:
-              - sensor.db_size
+          # - type: history-graph
+          #   hours_to_show: 48
+          #   entities:
+          #     - sensor.db_size
           - type: entities
             entities:
               - sensor.db_size
+              - sensor.db_size_change_1h
+              - sensor.influxdb_size
+              - sensor.influxdb_size_change_1h
               - type: call-service
                 icon: mdi:database-minus
                 name: Purge 0
@@ -2050,14 +2063,6 @@ views:
                 service: recorder.purge
                 service_data:
                   keep_days: 1
-                  repack: true
-              - type: call-service
-                icon: mdi:database-minus
-                name: Purge 2
-                action_name: Purge
-                service: recorder.purge
-                service_data:
-                  keep_days: 2
                   repack: true
           - type: glance
             entities:
@@ -2735,10 +2740,8 @@ views:
               - entity: sensor.md5_session_write
                 name: md5 W
 
-
       - type: vertical-stack
         cards:
-        
           - type: glance
             columns: 6
             entities:
@@ -2934,9 +2937,6 @@ views:
               - entity: media_player.mpd
                 name: MPD
 
-
-
-
 ################################################################
 # pressure monitoring
 ################################################################
@@ -3022,8 +3022,8 @@ views:
 ################################################################
 # MQTT Cross Servers Sensors PAGE
 ################################################################
-  - title: MQTT
-    icon: mdi:altimeter
+  - title: Telemetry
+    icon: mdi:desktop-mac-dashboard
     cards:
       - type: vertical-stack
         cards:

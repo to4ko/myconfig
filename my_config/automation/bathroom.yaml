@@ -359,7 +359,7 @@
       data_template: 
         message: "{% if is_state('binary_sensor.washer_b','on') %}\U000023F3 Стирка начата!{% else %}\U0000231B Стирка завершена! Время стирки составило {{ ( (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_washer_b.last_changed)| int) / 60 )| round(0) }}мин.{% endif %}"
     - service_template: >
-        {% if is_state('binary_sensor.tod_long_day','on') %}
+        {% if is_state('binary_sensor.tod_day','on') %}
           script.washing_machine_tts
         {%else%}
           script.noop
@@ -383,7 +383,7 @@
       entity_id: input_boolean.security_mode
       state: 'off'
   action:
-  - service_template: "switch.turn_{% if is_state('binary_sensor.tod_night','on') %}on{% else %}off{% endif %}"
+  - service_template: "switch.turn_{{states('binary_sensor.tod_night')}}"
     data:
       entity_id: switch.plug_158d0003926263
 
@@ -413,12 +413,14 @@
       from: 'on'
       to: 'off'
   condition:
-    - condition: time
-      after: '21:00:00'
-      before: '07:00:00'
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: 'off'
+    condition: and
+    conditions: 
+      - condition: state
+        entity_id: binary_sensor.tod_night
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
   action:
     - delay: '00:00:03'
     - service: switch.toggle
