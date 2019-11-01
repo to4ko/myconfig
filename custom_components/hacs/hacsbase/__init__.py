@@ -65,6 +65,7 @@ class Hacs:
     hacsapi = f"/hacsapi/{token}"
     repositories = []
     repo = None
+    data_repo = None
     developer = Developer()
     data = None
     configuration = None
@@ -143,13 +144,14 @@ class Hacs:
                     self.logger.error(
                         f"Validation for {full_name} failed with {exception}."
                     )
-                return
-        self.hass.bus.fire(
+                return exception
+        self.hass.bus.async_fire(
             "hacs/repository",
             {
                 "id": 1337,
                 "action": "registration",
                 "repository": repository.information.full_name,
+                "repository_id": repository.information.uid,
             },
         )
         self.repositories.append(repository)
@@ -157,6 +159,7 @@ class Hacs:
     async def startup_tasks(self):
         """Tasks tha are started after startup."""
         self.system.status.background_task = True
+        self.hass.bus.async_fire("hacs/status", {})
         self.logger.debug(self.github.ratelimits.remaining)
         self.logger.debug(self.github.ratelimits.reset_utc)
         await self.load_known_repositories()
@@ -174,6 +177,7 @@ class Hacs:
 
         self.system.status.startup = False
         self.system.status.background_task = False
+        self.hass.bus.async_fire("hacs/status", {})
         self.data.write()
 
     async def recuring_tasks_installed(self, notarealarg=None):
@@ -182,6 +186,7 @@ class Hacs:
             "Starting recuring background task for installed repositories"
         )
         self.system.status.background_task = True
+        self.hass.bus.async_fire("hacs/status", {})
         self.logger.debug(self.github.ratelimits.remaining)
         self.logger.debug(self.github.ratelimits.reset_utc)
         for repository in self.repositories:
@@ -191,12 +196,14 @@ class Hacs:
                     repository.logger.debug("Information update done.")
                 except AIOGitHubException:
                     self.system.status.background_task = False
+                    self.hass.bus.async_fire("hacs/status", {})
                     self.data.write()
                     self.logger.debug(
                         "Recuring background task for installed repositories done"
                     )
                     return
         self.system.status.background_task = False
+        self.hass.bus.async_fire("hacs/status", {})
         self.data.write()
         self.logger.debug("Recuring background task for installed repositories done")
 
@@ -204,6 +211,7 @@ class Hacs:
         """Recuring tasks for all repositories."""
         self.logger.debug("Starting recuring background task for all repositories")
         self.system.status.background_task = True
+        self.hass.bus.async_fire("hacs/status", {})
         self.logger.debug(self.github.ratelimits.remaining)
         self.logger.debug(self.github.ratelimits.reset_utc)
         for repository in self.repositories:
@@ -212,6 +220,7 @@ class Hacs:
                 repository.logger.debug("Information update done.")
             except AIOGitHubException:
                 self.system.status.background_task = False
+                self.hass.bus.async_fire("hacs/status", {})
                 self.data.write()
                 self.logger.debug("Recuring background task for all repositories done")
                 return
@@ -219,7 +228,8 @@ class Hacs:
         self.clear_out_blacklisted_repositories()
         self.system.status.background_task = False
         self.data.write()
-        self.hass.bus.fire("hacs/repository", {"action": "reload"})
+        self.hass.bus.async_fire("hacs/status", {})
+        self.hass.bus.async_fire("hacs/repository", {"action": "reload"})
         self.logger.debug("Recuring background task for all repositories done")
 
     def clear_out_blacklisted_repositories(self):
@@ -230,7 +240,7 @@ class Hacs:
                 repository = self.get_by_name(repository)
                 if repository.status.installed:
                     self.logger.error(
-                        f"You have {repository.information.full_name} installed with HACS, this repositroy have not been blacklisted, please consider removing it."
+                        f"You have {repository.information.full_name} installed with HACS, this repositroy has been blacklisted, please consider removing it."
                     )
                 else:
                     need_to_save = True
@@ -253,9 +263,7 @@ class Hacs:
                 }
         else:
             for category in self.common.categories:
-                remote = await self.repo.get_contents(
-                    f"repositories/{category}", "data"
-                )
+                remote = await self.data_repo.get_contents(category)
                 repositories[category] = json.loads(remote.content)
                 if category == "plugin":
                     org = await self.github.get_org_repos("custom-cards")
@@ -263,6 +271,12 @@ class Hacs:
                         repositories[category].append(repo.full_name)
                 if category == "integration":
                     org = await self.github.get_org_repos("custom-components")
+                    for repo in org:
+                        repositories[category].append(repo.full_name)
+                if category == "theme":
+                    org = await self.github.get_org_repos(
+                        "home-assistant-community-themes"
+                    )
                     for repo in org:
                         repositories[category].append(repo.full_name)
 
@@ -275,7 +289,7 @@ class Hacs:
     async def load_known_repositories(self):
         """Load known repositories."""
         self.logger.info("Loading known repositories")
-        blacklist = await self.repo.get_contents("repositories/blacklist", "data")
+        blacklist = await self.data_repo.get_contents("blacklist")
         repositories = await self.get_repositories()
 
         for item in json.loads(blacklist.content):

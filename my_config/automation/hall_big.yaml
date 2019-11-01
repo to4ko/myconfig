@@ -168,6 +168,20 @@
     - delay: '00:00:09'
     - service: script.turn_on
       entity_id: script.open_door_photo
+    - service: image_processing.scan
+      entity_id: 
+        - camera.local_file_entr
+    - service: image_processing.scan
+      entity_id: 
+        - camera.local_file_entr2
+    - service: image_processing.scan
+      entity_id: 
+        - camera.local_file_hall
+    - service: notify.telegram
+      data_template:
+        message: |
+          {% set persons = states.image_processing.tensorflow_local_file_entr.attributes.summary.person|int, states.image_processing.tensorflow_local_file_entr2.attributes.summary.person|int, states.image_processing.tensorflow_local_file_hall.attributes.summary.person|int %} 
+          Detected {{ persons|max }} prs.
 
 # ##################################
 # Hall Big - Main Door Closed

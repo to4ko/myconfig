@@ -16,7 +16,6 @@ class HacsIntegration(HacsRepository):
         super().__init__()
         self.information.full_name = full_name
         self.information.category = self.category
-        self.manifest = None
         self.domain = None
         self.content.path.remote = "custom_components"
         self.content.path.local = self.localpath
@@ -29,8 +28,8 @@ class HacsIntegration(HacsRepository):
     @property
     def config_flow(self):
         """Return bool if integration has config_flow."""
-        if self.manifest is not None:
-            if self.information.full_name == "custom-components/hacs":
+        if self.manifest:
+            if self.information.full_name == "hacs/integration":
                 return False
             return self.manifest.get("config_flow", False)
         return False
@@ -62,9 +61,13 @@ class HacsIntegration(HacsRepository):
                     self.content.path.remote = item.path
                     break
 
-        self.content.objects = await self.repository_object.get_contents(
-            self.content.path.remote, self.ref
-        )
+        if self.repository_manifest.zip_release:
+            self.content.objects = self.releases.last_release_object.assets
+
+        else:
+            self.content.objects = await self.repository_object.get_contents(
+                self.content.path.remote, self.ref
+            )
 
         self.content.files = []
         for filename in self.content.objects or []:
@@ -96,6 +99,8 @@ class HacsIntegration(HacsRepository):
 
     async def update_repository(self):
         """Update."""
+        if self.github.ratelimits.remaining == 0:
+            return
         await self.common_update()
 
         # Get integration objects.
@@ -138,13 +143,13 @@ class HacsIntegration(HacsRepository):
     async def get_manifest(self):
         """Get info from the manifest file."""
         manifest_path = f"{self.content.path.remote}/manifest.json"
-        manifest = None
-
-        if "manifest.json" not in self.content.files:
+        try:
+            manifest = await self.repository_object.get_contents(
+                manifest_path, self.ref
+            )
+            manifest = json.loads(manifest.content)
+        except Exception:  # pylint: disable=broad-except
             return False
-
-        manifest = await self.repository_object.get_contents(manifest_path, self.ref)
-        manifest = json.loads(manifest.content)
 
         if manifest:
             self.manifest = manifest

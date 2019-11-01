@@ -16,24 +16,36 @@
   #   folder: DoorCam
   #   search: FROM <doorcam.tsymbal@gmail.com>
 
-  # - platform: template
-  #   sensors:
-  #     doorcam_motion_time:
-  #       friendly_name: DoorCam Motion Time
-  #       value_template: "{{ as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))| timestamp_custom('%d.%m.%Y %H:%M:%S')}}"
-    
-  #     doorcam_motion_time_delta:
-  #       friendly_name: DoorCam Motion Time Delta
-  #       unit_of_measurement: 's'
-  #       value_template: "{{(as_timestamp(now())-as_timestamp(strptime(states.sensor.doorcam_motion_sensor.attributes.date.replace(' +3000',''), '%a, %d %b %Y %H:%M:%S %z'))) |int |round(0) }}"
+  - platform: yandex_transport
+    name: Bus To Home
+    stop_id: 9639688
+    routes:
+      - 22
+      - 595
 
   - platform: template
     sensors:
+      bus_to_home_min:
+        value_template: >
+          {%if as_timestamp(states('sensor.bus_to_home'))|int(-9999) == -9999 %}
+          -9999
+          {%else%}
+          {{((as_timestamp(states('sensor.bus_to_home'))- as_timestamp(now()))/60) | round(0)}}
+          {%endif%}
+        unit_of_measurement: 'min'
+        friendly_name: Bus to home
+        icon_template: mdi:bus-alert
+        
       water_raw_yesterday: # Расход сырой воды (вчера)
         friendly_name: Raw Water Yesterday
         icon_template: mdi:gauge
         unit_of_measurement: 'L'
-        value_template: "{{ state_attr('sensor.water_raw_daily_single', 'last_period') | float }}"      
+        value_template: "{{ state_attr('sensor.water_raw_daily_single', 'last_period') | float }}"
+      water_postmembrane_yesterday: # Расход воды после мембраны (вчера)
+        friendly_name: PostMembrane Water Yesterday
+        icon_template: mdi:gauge
+        unit_of_measurement: 'L'
+        value_template: "{{ state_attr('sensor.water_postmembrane_daily_single', 'last_period') | float }}"
       water_mineralized_yesterday: # Расход минерализованной питьевой воды (вчера)
         friendly_name: Mineralized Water Yesterday
         icon_template: mdi:gauge
