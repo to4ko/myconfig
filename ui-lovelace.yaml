@@ -21,8 +21,6 @@ resources:
     type: module
   - url: /community_plugin/restriction-card/restriction-card.js
     type: module
-  - url: /community_plugin/surveillance-card/surveillance-card.js
-    type: module
 
 swipe_nav:
   wrap: false
@@ -2076,6 +2074,16 @@ views:
                 service_data:
                   keep_days: 1
                   repack: true
+              - type: call-service
+                icon: mdi:database-minus
+                name: Purge 2
+                action_name: Purge
+                service: recorder.purge
+                service_data:
+                  keep_days: 2
+                  repack: true
+          
+          
           - type: glance
             entities:
               - entity: switch.esp01_hdd_box_power
@@ -2377,11 +2385,14 @@ views:
 
               - type: glance
                 #title: Ubuntu Status
-                columns: 7
+                columns: 8
                 entities:
                   - entity: sensor.ssd_usage
                     icon: mdi:chip
                     name: NVME
+                  - entity: sensor.nvme1_usage
+                    icon: mdi:chip
+                    name: NVME1
                   - entity: sensor.840pro_usage
                     icon: mdi:chip
                     name: 840ro
@@ -2391,20 +2402,12 @@ views:
                   - entity: sensor.media_usage
                     icon: mdi:harddisk
                     name: Media
-                  #- entity: sensor.backupdisk_usage
-                  #  icon: mdi:harddisk
-                  #  name: Backup
-                  #- entity: sensor.storage_usage
-                  #  icon: mdi:harddisk
-                  #  name: Storage
                   - entity: sensor.back_2tb_usage
                     icon: mdi:harddisk
                     name: Back_2Tb
                   - entity: sensor.md5_usage
-                    #icon: mdi:harddisk
                     name: F20
                   - entity: sensor.320l_usage
-                    #icon: mdi:harddisk
                     name: 320l
 
 
@@ -2561,10 +2564,10 @@ views:
             entities:
               - entity: sensor.nvme0_write_change_1h
                 name: NVME0 1h
-              - entity: sensor.nvme2_write_change_1h
-                name: NVME2 1h
               - entity: sensor.nvme1_write_change_1h
                 name: NVME1 1h
+              - entity: sensor.nvme2_write_change_1h
+                name: NVME2 1h
               - entity: sensor.sda_write_change_1h
                 name: sda 1h
               - entity: sensor.sdb_write_change_1h
@@ -2714,10 +2717,6 @@ views:
               - entity: sensor.sds_gb_per_hour
                 name: Per Hour
 
-
-
-
-
       - type: vertical-stack
         cards:
           - type: glance
@@ -2736,50 +2735,58 @@ views:
               - entity: sensor.md5_status
                 name: md5
           - type: glance
-            columns: 5
+            columns: 6
             entities:
               # NVME 0
               - entity: sensor.nvme0_tb_written
                 name: nvme0
                 icon: mdi:raspberry-pi
+              - entity: sensor.nvme0_session_read
+                name: R Session
               - entity: sensor.nvme0_session_write
-                name: Per Session
+                name: W Session
               - entity: sensor.nvme0_gb_per_day
                 name: Per Day
               - entity: sensor.nvme0_gb_per_hour
                 name: Per Hour
               - entity: sensor.nvme0_life_left
                 name: Left
-              # NVME 2
-              - entity: sensor.nvme2_tb_written
-                name: nvme2
-                icon: mdi:raspberry-pi
-              - entity: sensor.nvme2_session_write
-                name: Per Session
-              - entity: sensor.nvme2_gb_per_day
-                name: Per Day
-              - entity: sensor.nvme2_gb_per_hour
-                name: Per Hour
-              - entity: sensor.nvme2_life_left
-                name: Left
               # NVME 1
               - entity: sensor.nvme1_tb_written
                 name: nvme1
                 icon: mdi:raspberry-pi
+              - entity: sensor.nvme1_session_read
+                name: R Session
               - entity: sensor.nvme1_session_write
-                name: Per Session
+                name: W Session
               - entity: sensor.nvme1_gb_per_day
                 name: Per Day
               - entity: sensor.nvme1_gb_per_hour
                 name: Per Hour
               - entity: sensor.nvme1_life_left
                 name: Left
+              # NVME 2
+              - entity: sensor.nvme2_tb_written
+                name: nvme2
+                icon: mdi:raspberry-pi
+              - entity: sensor.nvme2_session_read
+                name: R Session
+              - entity: sensor.nvme2_session_write
+                name: W Session
+              - entity: sensor.nvme2_gb_per_day
+                name: Per Day
+              - entity: sensor.nvme2_gb_per_hour
+                name: Per Hour
+              - entity: sensor.nvme2_life_left
+                name: Left
               # sda
               - entity: sensor.sda_tb_written
                 name: sda
                 icon: mdi:raspberry-pi
+              - entity: sensor.sda_session_read
+                name: R Session
               - entity: sensor.sda_session_write
-                name: Per Session
+                name: W Session
               - entity: sensor.sda_gb_per_day
                 name: Per Day
               - entity: sensor.sda_gb_per_hour
@@ -2790,8 +2797,10 @@ views:
               - entity: sensor.sdb_tb_written
                 name: sdb
                 icon: mdi:raspberry-pi
+              - entity: sensor.sdb_session_read
+                name: R Session
               - entity: sensor.sdb_session_write
-                name: Per Session
+                name: W Session
               - entity: sensor.sdb_gb_per_day
                 name: Per Day
               - entity: sensor.sdb_gb_per_hour
@@ -2802,8 +2811,10 @@ views:
               - entity: sensor.f20_tb_written
                 name: f20
                 icon: mdi:raspberry-pi
+              - entity: sensor.f20_single_session_read
+                name: R Session
               - entity: sensor.f20_single_session_write
-                name: Per Session
+                name: W Session
               - entity: sensor.f20_gb_per_day
                 name: Per Day
               - entity: sensor.f20_gb_per_hour
@@ -2859,6 +2870,16 @@ views:
                 name: Read
               - entity: sensor.nvme1_session_write
                 name: Write
+              # nvme2
+              - entity: sensor.nvme2_temp
+                name: NVME2
+              - entity: sensor.nvme2_session_read
+                name: Read
+              - entity: sensor.nvme2_session_write
+                name: Write
+          - type: glance
+            columns: 6
+            entities:    
               # sda
               - entity: sensor.sda_temp
                 name: sda
