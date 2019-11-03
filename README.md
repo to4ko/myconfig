@@ -1,10 +1,12 @@
 # My Home Assistant configuration
+[My Home Assistant Config]
 
-Hardware: 
+first of all - thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs. Special thanks to [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s], [@lapatoc](https://github.com/bastshoes) for help and support! And all the rest from [Home Assistant Channel](https://t.me/homassistant) [You are all best of the best guys!]
 
-Server: Dual E5-2630l v2, 32gb ECC DDR3 RAM, 128Gb Boot SSD, 256Gb Raid1 NVME as Root drive, 256Gb NVME for DB, Oracle F20 card, 7ea WD RED 2Tb (NAS section), 1Tb WD Purple for cameras, 2ea WD Green as Torrent box
+
+Main Server: Dual E5-2630l v2, 32gb ECC DDR3 RAM, 128Gb Boot SSD, 256Gb Raid1 NVME as Root drive, 256Gb NVME for DB, Oracle F20 card, 7ea WD RED 2Tb (NAS section), 1Tb WD Purple for cameras, 2ea WD Green as Torrent box
  
-Network: Ubiquiti USG 3, Switch 24, Switch 8-60W, UAP-AC-AP-Lite (5ea)
+Network(500mb\s): Ubiquiti USG 3, Switch 24, Switch 8-60W, UAP-AC-AP-Lite (5ea)
   
 Surveillance: Ubiquiti Video (running as service), Ubiquiti G3 Flex Cameras (4ea), Digma 100 (1ea) + Pinhole cam
 
@@ -43,10 +45,6 @@ DB used: PostgreSQL 12 installed on host as well as InfluxDB 1.7.9
 Add-On (all in Docker): AirCast, Configurator, Custom deps deployment, Dropbox Sync, ESPhome, Grafana, Hass.io Google Drive Backup, IDE, Log Viewer, Mosquitto BrockerPortainer, RPC shutdown
 
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
-
-Thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs
-
-Special thanks to [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s], [@lapatoc](https://github.com/bastshoes) and all the rest! [You are all best of the best guys!]
 
 # Main page
 ![Main Page](https://i.ibb.co/BTcVZtt/page1.jpg)
