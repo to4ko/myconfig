@@ -5,47 +5,61 @@ First of all - HUGE THANKS to [Omh](https://github.com/omhy/ha), [OXOTH1K](https
 And all the rest from [Home Assistant Channel](https://t.me/homassistant) [You are all best of the best guys!]
 
 
-Main Server: Dual E5-2630l v2, 32gb ECC DDR3 RAM, 128Gb Boot SSD, 256Gb Raid1 NVME as Root drive, 256Gb NVME for DB, Oracle F20 card, 7ea WD RED 2Tb (NAS section), 1Tb WD Purple for cameras, 2ea WD Green as Torrent box
+Main Server: 
+  - Dual E5-2630l v2
+  - 2gb ECC DDR3 RAM
+  - 128Gb Boot SSD
+  - 256Gb Raid1 NVME as Root drive
+  - 256Gb NVME for DB
+  - Oracle F20 card
+  - 7ea WD RED 2Tb (NAS section)
+  - 1Tb WD Purple for cameras
+  - 2ea WD Green as Torrent box
  
-Network(500mb\s): Ubiquiti USG 3, Switch 24, Switch 8-60W, UAP-AC-AP-Lite (5ea)
+Network(500mb\s):
+  - Ubiquiti USG 3
+  - Switch 24
+  - Switch 8-60W
+  - UAP-AC-AP-Lite (5ea)
   
 Surveillance: Ubiquiti Video (running as service), Ubiquiti G3 Flex Cameras (4ea), Digma 100 (1ea) + Pinhole cam
 
-  Smart Home: 
-    - Xiaomi Gateway (7ea)
-    - Yeelight 650
-    - Yeelight Pro 90W
-    - Yeelight Strip
-    - Philips Xiaomi E27 Bulb (2ea)
-    - Yeelight E27 Color Led Bulb v2 (2ea)
-    - Aqara Wall Socket (12ea)
-    - Aqara Wall Switch 2 Rockers (6ea)
-    - Aqara Wireless Switch 2 Rockers (6ea)
-    - Aqara Door Sensor (26ea)
-    - Aqara Water Leak Sensor (3ea)
-    - Aqara Vibration Sensor (3ea)
-    - Aqara\Xiaomi Motion Sensor (12ea)
-    - Aqara Wireless Switch (7ea)
-    - Aqara Temp\Himidity\Pressure sensor (3ea)
-    - Xiaomi Zigbee Plug (22ea)
-    - Xiaomi Temp\Humidity Sensor (8ea)
-    - Xiaomi Wireless switch (6ea)
-    - Xiaomi Smart WiFi Power Strip (1ea)
-    - Xiaomi Smartmi Humidifier 2
-    - Xiaomi Air Purifier 2s
-    - Xiaomi Wifi Plugs v2 (7ea) - used to restart Gateways remotely
-    - Xiaomi IR controller
-    - Xiaomi Smoke Detector (1ea)
-    - Xiaomi Natural Gas Detector (1ea)
-    - Google Home Mini (5ea)
-    
-    - ESPHome devices:
-      - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea
-      - Power Meter Based on NodeMCUv3
-      - Domofon (Intercom helper) on ESP32
-      - Oven Hood controller (light + 3 speeds) on Wemos D1 mini
-      - Kitchen Air valve and IR controller on NodeMCUv3
-      - Reverse Osmos Water Filter resource counter based on Wemos D1 mini and cheap flow meters.
+Smart Home:
+  Xiaomi\Aqara:
+  - Xiaomi Gateway (7ea)
+  - Yeelight 650
+  - Yeelight Pro 90W
+  - Yeelight Strip
+  - Philips Xiaomi E27 Bulb (2ea)
+  - Yeelight E27 Color Led Bulb v2 (2ea)
+  - Aqara Wall Socket (12ea)
+  - Aqara Wall Switch 2 Rockers (6ea)
+  - Aqara Wireless Switch 2 Rockers (6ea)
+  - Aqara Door Sensor (26ea)
+  - Aqara Water Leak Sensor (3ea)
+  - Aqara Vibration Sensor (3ea)
+  - Aqara\Xiaomi Motion Sensor (12ea)
+  - Aqara Wireless Switch (7ea)
+  - Aqara Temp\Himidity\Pressure sensor (3ea)
+  - Xiaomi Zigbee Plug (22ea)
+  - Xiaomi Temp\Humidity Sensor (8ea)
+  - Xiaomi Wireless switch (6ea)
+  - Xiaomi Smart WiFi Power Strip (1ea)
+  - Xiaomi Smartmi Humidifier 2
+  - Xiaomi Air Purifier 2s
+  - Xiaomi Wifi Plugs v2 (7ea) - used to restart Gateways remotely
+  - Xiaomi IR controller
+  - Xiaomi Smoke Detector (1ea)
+  - Xiaomi Natural Gas Detector (1ea)
+  - Google Home Mini (5ea)
+  
+  ESPHome devices:
+  - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea
+  - Power Meter Based on NodeMCUv3
+  - Domofon (Intercom helper) on ESP32
+  - Oven Hood controller (light + 3 speeds) on Wemos D1 mini
+  - Kitchen Air valve and IR controller on NodeMCUv3
+  - Reverse Osmos Water Filter resource counter based on Wemos D1 mini and cheap flow meters.
       
 
 Software: Ubuntu Server 18.04 LTS, Hass.Io in Docker
