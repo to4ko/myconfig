@@ -298,8 +298,6 @@
   action:
     - service: input_boolean.toggle
       entity_id: input_boolean.sasha_tracker
-    - service: script.turn_on
-      entity_id: script.entrance_snapshot
 
 # ##################################
 # System - Sasha tracker
@@ -332,6 +330,8 @@
       # - condition: template
       #   value_template: "{{(now()|as_timestamp - states.binary_sensor.switch_158d0002fa99a8.last_updated|as_timestamp ) > 15}}"
   action:
+    - service: script.turn_on
+      entity_id: script.entrance_snapshot_sasha
     - service: media_player.volume_set
       data_template:
         entity_id: media_player.mpd
@@ -347,7 +347,21 @@
           {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
     - service: notify.telegram
       data_template:
-        message: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+        message: "Фотография"
+        data:
+          photo:
+            - file: /config/www/cam_captures/entrance-sasha.jpg
+              caption: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+
+    # - service: notify.telegram
+    #   data:
+    #     title: "Вход"
+    #     message: "Фотография"
+    #     data:
+    #       photo:
+    #       - file: /config/www/cam_captures/entrance.jpg
+    #         caption: Вход
+
 
 # ##################################
 # System - Sensors Low Battery Notification
@@ -699,3 +713,29 @@
         - binary_sensor.tariff_t2
         - binary_sensor.tod_full_day
         - binary_sensor.tod_full_night
+        
+# ##################################
+# System - Gateway PLugs turn on
+# ##################################
+- alias: system_gateway_plugs_restore
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: 
+      - switch.gateway_plug_hb
+      - switch.gateway_plug_hs
+      - switch.gateway_plug_k
+      - switch.gateway_plug_s
+      - switch.gateway_plug_v
+      - switch.gateway_plug_mb
+    to: 'off'
+    for: '00:00:15'
+  action:
+    - service: switch.turn_on
+      entity_id: 
+      - switch.gateway_plug_hb
+      - switch.gateway_plug_hs
+      - switch.gateway_plug_k
+      - switch.gateway_plug_s
+      - switch.gateway_plug_v
+      - switch.gateway_plug_mb
