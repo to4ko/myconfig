@@ -1,7 +1,8 @@
 # My Home Assistant configuration
-[My Home Assistant Config]
 
-first of all - thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs. Special thanks to [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s], [@lapatoc](https://github.com/bastshoes) for help and support! And all the rest from [Home Assistant Channel](https://t.me/homassistant) [You are all best of the best guys!]
+
+#First of all - thanks to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs. Special thanks to [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s], [@lapatoc](https://github.com/bastshoes) for help and support! 
+And all the rest from [Home Assistant Channel](https://t.me/homassistant) [You are all best of the best guys!]
 
 
 Main Server: Dual E5-2630l v2, 32gb ECC DDR3 RAM, 128Gb Boot SSD, 256Gb Raid1 NVME as Root drive, 256Gb NVME for DB, Oracle F20 card, 7ea WD RED 2Tb (NAS section), 1Tb WD Purple for cameras, 2ea WD Green as Torrent box
