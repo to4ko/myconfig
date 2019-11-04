@@ -151,11 +151,13 @@
     - platform: state
       entity_id: binary_sensor.motion_sensor_158d000224f89f
       to: 'off'
-      for: '00:30:00'
+      for:
+        minutes: 30
     - platform: state
       entity_id: binary_sensor.vibration_158d0002a8ac3c
       to: 'off'
-      for: '00:30:00'
+      for:
+        minutes: 30
   condition:
     - condition: state
       entity_id: binary_sensor.tod_night
@@ -177,6 +179,10 @@
     event_data:
       entity_id: binary_sensor.switch_158d00019c8afd
       click_type: single
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_night
+      state: 'on'
   action:
     - service: switch.turn_on
       entity_id: switch.wall_switch_right_158d0002a36433
@@ -204,9 +210,9 @@
       entity_id: switch.wall_switch_right_158d0002a36433
       
 # ##################################
-# Sasha - Wall heater toggle
+# Sasha - Wall heater on
 # ##################################
-- alias: sasha_wall_heater_toggle
+- alias: sasha_wall_heater_toggle_on
   initial_state: 'on'
   trigger:
     platform: event
@@ -214,9 +220,36 @@
     event_data:
       entity_id: binary_sensor.switch_158d00019c8afd
       click_type: double
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.temperature_158d0001e6d85a
+      below: 20
+    - condition: state
+      entity_id: switch.plug_158d00023a657a
+      state: 'off'
   action:
-    service: switch.toggle
+    service: switch.turn_on
     entity_id: switch.plug_158d00023a657a
+
+# ##################################
+# Sasha - Wall heater off
+# ##################################
+- alias: sasha_wall_heater_toggle_off
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d00019c8afd
+      click_type: double
+  condition:
+    - condition: state
+      entity_id: switch.plug_158d00023a657a
+      state: 'on'
+  action:
+    service: switch.turn_off
+    entity_id: switch.plug_158d00023a657a
+
 
 #ube	cube	MFKZQ01LM	off (always)	xiaomi_aqara.cube_action	action_type, action_value (rotate)	flip90, flip180, move, tap_twice, shake_air, swing, alert, free_fall, rotate (degrees at action_value)
 
@@ -324,7 +357,8 @@
     platform: state
     entity_id: fan.humidifier2
     to: 'unavailable'
-    for: '00:05:00'
+    for:
+      minutes: 5
   action:
     - service: script.turn_on
       entity_id: script.humidifier2_restart

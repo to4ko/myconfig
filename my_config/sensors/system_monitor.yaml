@@ -74,6 +74,87 @@
 
   - platform: template
     sensors:
+
+      j3455_sda_gb_per_hour:
+        friendly_name: j3455 sda Gb per hour
+        unit_of_measurement: Gb
+        entity_id: sensor.j3455_ssd_session_write
+        icon_template: mdi:clock
+        value_template: >-
+          {% set uptime = states('sensor.j3455_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (states('sensor.j3455_ssd_session_write')|float / states('sensor.j3455_uptime')|float)|round(2) }}
+          {% else %}
+          {{states('sensor.j3455_ssd_session_write')|float | round(2)}}
+          {% endif %}
+      j3455_sda_gb_per_day:
+        friendly_name: j3455 sda Gb per day
+        unit_of_measurement: Gb
+        icon_template: mdi:calendar
+        entity_id: sensor.j3455_ssd_session_write
+        value_template: >-
+          {% set uptime = states('sensor.j3455_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (((states('sensor.j3455_ssd_session_write')|float) / (states('sensor.j3455_uptime')|float)*24)|float)|round(2) }}
+          {% else %}
+          {{ (states('sensor.j3455_ssd_session_write')|float*24) | round(2)}}
+          {% endif %}
+      j3455_sda_life_left:
+        friendly_name: j3455 sda Calculated life left
+        unit_of_measurement: years
+        entity_id: sensor.j3455_ssd_session_write
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw = 40 %}
+          {%set per_day = states('sensor.j3455_sda_gb_per_day')|float%}
+          {%set total = states('sensor.j3455_ssd_total_lba_written')|float%}
+          {%if per_day == 0 %}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
+          {%else%}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
+          {%endif%}
+
+      rpi_sda_gb_per_hour:
+        friendly_name: RPI sda Gb per hour
+        unit_of_measurement: Gb
+        entity_id: sensor.rpi_ssd_session_write
+        icon_template: mdi:clock
+        value_template: >-
+          {% set uptime = states('sensor.rpi_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (states('sensor.rpi_ssd_session_write')|float / states('sensor.rpi_uptime')|float)|round(2) }}
+          {% else %}
+          {{states('sensor.rpi_ssd_session_write')|float | round(2)}}
+          {% endif %}
+      rpi_sda_gb_per_day:
+        friendly_name: RPI sda Gb per day
+        unit_of_measurement: Gb
+        icon_template: mdi:calendar
+        entity_id: sensor.rpi_ssd_session_write
+        value_template: >-
+          {% set uptime = states('sensor.rpi_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (((states('sensor.rpi_ssd_session_write')|float) / (states('sensor.rpi_uptime')|float)*24)|float)|round(2) }}
+          {% else %}
+          {{ (states('sensor.rpi_ssd_session_write')|float*24) | round(2)}}
+          {% endif %}
+      rpi_sda_life_left:
+        friendly_name: RPI sda Calculated life left
+        unit_of_measurement: years
+        entity_id: sensor.rpi_ssd_session_write
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw = 40 %}
+          {%set per_day = states('sensor.rpi_sda_gb_per_day')|float%}
+          {%set total = states('sensor.rpi_ssd_total_lba_written')|float%}
+          {%if per_day == 0 %}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
+          {%else%}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
+          {%endif%}
+
+
+
       sdp_gb_per_hour:
         friendly_name: sdp Gb per hour
         unit_of_measurement: Gb
@@ -204,13 +285,13 @@
         entity_id: sensor.md5_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {%set tbw = 5000 %}
-          {%set f20_tb_written = 1000 %}
+          {%set tbw = 1000 %}
           {%set per_day = states('sensor.f20_gb_per_day')|float%}
+          {%set total = 5000%}
           {%if per_day == 0 %}
-          {{(((tbw * 1024 - f20_tb_written) / 1 ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
           {%else%}
-          {{(((tbw * 1024 - f20_tb_written) / per_day ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
     
       sda_gb_per_hour:
@@ -245,10 +326,11 @@
         value_template: >-
           {%set tbw = 40 %}
           {%set per_day = states('sensor.sda_gb_per_day')|float%}
+          {%set total = states('sensor.sda_tb_written')|float%}
           {%if per_day == 0 %}
-          {{(((tbw * 1024 - states('sensor.sda_tb_written')|float) / 1 ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
           {%else%}
-          {{(((tbw * 1024 - states('sensor.sda_tb_written')|float) / per_day ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
 
       sdb_gb_per_hour:
@@ -278,11 +360,13 @@
         value_template: >-
           {%set tbw = 150 %}
           {%set per_day = states('sensor.sdb_gb_per_day')|float%}
+          {%set total = states('sensor.sdb_tb_written')|float%}
           {%if per_day == 0 %}
-          {{(((tbw * 1024 - states('sensor.sdb_tb_written')|float) / 1 ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
           {%else%}
-          {{(((tbw * 1024 - states('sensor.sdb_tb_written')|float) / per_day ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
+
 
       nvme0_gb_per_hour:
         friendly_name: NVME0 Gb per hour
@@ -309,13 +393,15 @@
         entity_id: sensor.nvme0_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {% set tbw = 160 %}
-          {% set per_day = states('sensor.nvme0_gb_per_day')|float %}
+          {%set tbw = 160 %}
+          {%set per_day = states('sensor.nvme0_gb_per_day')|float%}
+          {%set total = states('sensor.nvme0_tb_written')|float%}
           {%if per_day == 0 %}
-          {{(((tbw * 1024 - states('sensor.nvme0_tb_written')|float) / 1 ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
           {%else%}
-          {{(((tbw * 1024 - states('sensor.nvme0_tb_written')|float) / per_day ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
+
 
       nvme1_gb_per_hour:
         friendly_name: NVME1 Gb per hour
@@ -342,12 +428,13 @@
         entity_id: sensor.nvme1_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {% set tbw = 160 %}
-          {% set per_day = states('sensor.nvme1_gb_per_day')|float %}
+          {%set tbw = 160 %}
+          {%set per_day = states('sensor.nvme1_gb_per_day')|float%}
+          {%set total = states('sensor.nvme1_tb_written')|float%}
           {%if per_day == 0 %}
-          {{(((tbw * 1024 - states('sensor.nvme1_tb_written')|float) / 1 ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
           {%else%}
-          {{(((tbw * 1024 - states('sensor.nvme1_tb_written')|float) / per_day ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
 
       nvme2_gb_per_hour:
@@ -377,55 +464,13 @@
         value_template: >-
           {%set tbw = 160 %}
           {%set per_day = states('sensor.nvme2_gb_per_day')|float%}
+          {%set total = states('sensor.nvme2_tb_written')|float%}
           {%if per_day == 0 %}
-          {{(((tbw * 1024 - states('sensor.nvme2_tb_written')|float) / 1 ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
           {%else%}
-          {{(((tbw * 1024 - states('sensor.nvme2_tb_written')|float) / per_day ) / 365)|round(2)}}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
           
-      # nvme0_gb_per_day:
-      #   friendly_name: NVME0 Gb per day
-      #   unit_of_measurement: Gb
-      #   icon_template: mdi:calendar
-      #   entity_id: sensor.nvme0_session_write
-      #   value_template: >-
-      #     {{ (( states('sensor.nvme0_session_write')|float / states('sensor.host_uptime')|float ) *24) | round(0) }}
-      # nvme0_gb_per_hour:
-      #   friendly_name: NVME0 Gb per hour
-      #   unit_of_measurement: Gb
-      #   entity_id: sensor.nvme0_session_write
-      #   icon_template: mdi:clock
-      #   value_template: >-
-      #     {{ (( states('sensor.nvme0_session_write')|float / states('sensor.host_uptime')|float ) ) | round(0) }}
-      # nvme0_life_left:
-      #   friendly_name: NVME0 Calculated life left
-      #   unit_of_measurement: years
-      #   entity_id: sensor.nvme0_session_write
-      #   icon_template: mdi:calendar-clock
-      #   value_template: >-
-      #     {{ (((160 - states('sensor.nvme0_tb_written')|float) / (((( states('sensor.nvme0_session_write')|float / states('sensor.host_uptime')|float ) *24) ) / 1024)) / 365) |  float | round(1)  }}
-
-      # nvme2_gb_per_day:
-      #   friendly_name: NVME1 Gb per day
-      #   unit_of_measurement: Gb
-      #   entity_id: sensor.nvme2_session_write
-      #   icon_template: mdi:calendar
-      #   value_template: >-
-      #     {{ (( states('sensor.nvme2_session_write')|float / states('sensor.host_uptime')|float ) *24) | round(0) }}
-      # nvme2_gb_per_hour:
-      #   friendly_name: NVME1 Gb per hour
-      #   unit_of_measurement: Gb
-      #   entity_id: sensor.nvme2_session_write
-      #   icon_template: mdi:clock
-      #   value_template: >-
-      #     {{ (( states('sensor.nvme2_session_write')|float / states('sensor.host_uptime')|float ) ) | round(0) }}
-      # nvme2_life_left:
-      #   friendly_name: NVME1 Calculated life left
-      #   icon_template: mdi:calendar-clock
-      #   entity_id: sensor.nvme2_session_write
-      #   unit_of_measurement: years
-      #   value_template: >-
-      #     {{ (((160 - states('sensor.nvme2_tb_written')|float) / (((( states('sensor.nvme2_session_write')|float / states('sensor.host_uptime')|float ) *24) ) / 1024)) / 365) |  float | round(1)  }}
 
 # ############################################################################
 # Hardware sensors Z9PA - Internal HA
@@ -455,73 +500,16 @@
   #  unit_of_measurement: "°C"
   #  value_template: '{{ value | replace("temp=", "") | replace("''C", "") | round(0) }}'
 
-
-# ############################################################################
-# Hardware sensors (Zero2mb) - MQTT
-# ############################################################################
-#  - platform: mqtt
-#    name: "Zero2mb CPU Usage"
-#    state_topic: "zero2mb/cpu_percent"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '%'
-#    icon: mdi:speedometer
-#    
-#  - platform: mqtt
-#    name: "Zero2mb CPU Temp"
-#    state_topic: "zero2mb/sensors_temperatures/cpu-thermal"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '°C'
-#    icon: mdi:thermometer
-#    
-#  - platform: mqtt
-#    name: "Zero2mb RAM Usage"
-#    state_topic: "zero2mb/virtual_memory/percent"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '%'
-#    icon: mdi:memory
-#
-#  - platform: mqtt
-#    name: "Zero2mb Disk Usage"
-#    state_topic: "zero2mb/disk_usage/percent/|"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '%'
-#    icon: mdi:chip
-
-
-# ############################################################################
-# Hardware sensors (Zero2mqtt) - MQTT
-# ############################################################################
-#  - platform: mqtt
-#    name: "Zero2mqtt CPU Usage"
-#    state_topic: "zero2mqtt/cpu_percent"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '%'
-#    icon: mdi:speedometer
-#    
-#  - platform: mqtt
-#    name: "Zero2mqtt CPU Temp"
-#    state_topic: "zero2mqtt/sensors_temperatures/cpu-thermal"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '°C'
-#    icon: mdi:thermometer
-#    
-#  - platform: mqtt
-#    name: "Zero2mqtt RAM Usage"
-#    state_topic: "zero2mqtt/virtual_memory/percent"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '%'
-#    icon: mdi:memory#
-#
-#  - platform: mqtt
-#    name: "Zero2mqtt Disk Usage"
-#    state_topic: "zero2mqtt/disk_usage/percent/|"
-#    value_template: '{{ value | int | round(0) }}'
-#    unit_of_measurement: '%'
-#    icon: mdi:chip
-
 # ############################################################################
 # Hardware sensors (RPI) - MQTT
 # ############################################################################
+  - platform: mqtt
+    name: "RPI Uptime"
+    state_topic: "rpi/uptime"
+    value_template: '{{ ((value | float)/3600) | round(2) }}'
+    unit_of_measurement: 'h'
+    icon: mdi:timer
+    
   - platform: mqtt
     name: "RPI CPU Usage"
     state_topic: "rpi/cpu_percent"
@@ -553,20 +541,20 @@
   - platform: mqtt
     name: "RPI SSD Total LBA Written"
     state_topic: "rpi/sda_lba_total"
-    value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
+    value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
     icon: mdi:chip
 
   - platform: mqtt
     name: "RPI SSD Session Read"
-    state_topic: "RPI/disk_stat/sda_gb_read"
+    state_topic: "rpi/disk_stat/sda_gb_read"
     value_template: '{{ ( value | float ) |round(1) }}'
     unit_of_measurement: 'Gb'
     icon: mdi:alpha-r-box
 
   - platform: mqtt
     name: "RPI SSD Session Write"
-    state_topic: "RPI/disk_stat/sda_gb_write"
+    state_topic: "rpi/disk_stat/sda_gb_write"
     value_template: '{{ ( value | float ) |round(1) }}'
     unit_of_measurement: 'Gb'
     icon: mdi:alpha-w-box
@@ -574,6 +562,14 @@
 # ############################################################################
 # Hardware sensors (j3455) - MQTT
 # ############################################################################
+
+  - platform: mqtt
+    name: "j3455 Uptime"
+    state_topic: "j3455/uptime"
+    value_template: '{{ ((value | float)/3600) | round(2) }}'
+    unit_of_measurement: 'h'
+    icon: mdi:timer
+
   - platform: mqtt
     name: "j3455 CPU Usage"
     state_topic: "j3455/cpu_percent"
@@ -605,7 +601,7 @@
   - platform: mqtt
     name: "j3455 SSD Total LBA Written"
     state_topic: "j3455/sda_lba_total"
-    value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
+    value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
     icon: mdi:chip
 
@@ -622,7 +618,6 @@
     value_template: '{{ ( value | float ) |round(1) }}'
     unit_of_measurement: 'Gb'
     icon: mdi:alpha-w-box
-
 
   - platform: mqtt
     name: "j3455 SSD Temp"

@@ -676,7 +676,8 @@
     - platform: state
       entity_id: light.led_strip_hb
       to: 'unavailable'
-      for: '00:05:00'
+      for:
+        minutes: 5
     # - platform: state
     #   entity_id: light.led_strip_hb
     #   from: 'unavailable'
@@ -701,7 +702,8 @@
     platform: state
     entity_id: switch.wall_plug_158d00023e5812
     to: 'off'
-    for: '00:00:03'
+    for:
+      seconds: 3
   action:
     - service: switch.turn_on
       entity_id: switch.wall_plug_158d00023e5812
@@ -788,23 +790,37 @@
     - service: camera.snapshot
       data:
         entity_id: camera.uvc_g3_flex_window
-        filename: "/config/www/cam_captures/domofon.jpg"
+        filename: "/config/www/cam_captures/window.jpg"
+    
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        message: "Звонок в домофон!"
+        data:
+          push:
+            badge: 0
+            category: "domofon_call"
+          # attachment:
+          #   url: "http://192.168.1.14:8123/local/cam_captures/domofon.jpg"
+          #   content-type: jpg
+          #   hide-thumbnail: false
     - service: script.turn_on
       entity_id: script.domofon_script
-    - service: notify.telegram
-      data:
-        title: "{{now().strftime('%H:%M %d-%m-%Y')}}"
-        message: "{{now().strftime('%H:%M %d-%m-%Y')}}"
-        data:
-          photo:
-          - file: "/config/www/cam_captures/window.jpg"
-            caption: "Звонок в домофон {{now().strftime('%H:%M %d-%m-%Y')}}"
+    # - service: notify.telegram
+    #   data:
+    #     title: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+    #     message: "{{now().strftime('%H:%M %d-%m-%Y')}}"
+    #     data:
+    #       photo:
+    #       - file: "/config/www/cam_captures/window.jpg"
+    #         caption: "Звонок в домофон {{now().strftime('%H:%M %d-%m-%Y')}}"
     - delay: '00:00:30'
     - service: automation.turn_on
       entity_id: automation.hall_big_domofon_incoming_call
     - delay: '00:15:00'
     - service: script.turn_on
       entity_id: script.domofon_check
+      
+      
 
 # ##################################
 # Hall Big - Domofon Auto Open On Arrival
@@ -957,6 +973,21 @@
   action:
     - service: script.turn_on
       entity_id: script.domofon_check
+
+# ##################################
+# Hall Big - Domofon open door from iphone
+# ##################################
+- alias: hall_big_domofon_open_iphone
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: ios.notification_action_fired
+    event_data:
+      actionName: DOMOFON_OPEN_DOOR
+  action:
+    service: script.turn_on
+    entity_id: script.domofon_open_door
+
 
 # ##################################
 # Hall Big - Doorbell
