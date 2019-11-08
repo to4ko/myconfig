@@ -21,6 +21,7 @@ Network(500mb\s):
   - Switch 24
   - Switch 8-60W
   - UAP-AC-AP-Lite (5ea)
+  - Tp-Link "dumb" switch (2ea)
   
 Surveillance: Ubiquiti Video (running as service), Ubiquiti G3 Flex Cameras (4ea), Digma 100 (1ea) + Pinhole cam
 
