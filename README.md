@@ -71,10 +71,10 @@ Add-On (all in Docker): AirCast, Configurator, Custom deps deployment, Dropbox S
 
 
   Scripts:
-  - ipmi_mqtt.sh  Publishing IPMI, Temp and other system monitoring info to MQTT broker
-  - ha_log_parser.sh  Backing up HA log to my home directory and splitting it to Error, Warning, Info message type as well as keeping full log. Logs rotated every 5 days.
-  - ya_weather.sh Yandex weather fcst ( thanks to [Ivan](https://t.me/configit)  )
-  - root_dev.sh Host root device name for monitoring.
+  **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
+  **ha_log_parser.sh**  Backing up HA log to my home directory and splitting it to Error, Warning, Info message type as well as keeping full log. Logs rotated every 5 days.
+  **ya_weather.sh** Yandex weather fcst ( thanks to [Ivan](https://t.me/configit)  )
+  **root_dev.sh** Host root device name for monitoring.
 
 
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
