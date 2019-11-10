@@ -69,6 +69,12 @@ DB used: PostgreSQL 12 installed on host as well as InfluxDB 1.7.9
 
 Add-On (all in Docker): AirCast, Configurator, Custom deps deployment, Dropbox Sync, ESPhome, Grafana, Hass.io Google Drive Backup, IDE, Log Viewer, Mosquitto BrockerPortainer, RPC shutdown
 
+
+  Scripts:
+    - ipmi_mqtt.sh  Publishing IPMI, Temp and other system monitoring info to MQTT broker
+    - ha_log_parser.sh  Backing up HA log to my home directory and splitting it to Error, Warning, Info message type as well as keeping full log. Logs rotated every 5 days.
+
+
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
 
 # Main page

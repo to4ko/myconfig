@@ -44,16 +44,51 @@
       entity_id: switch.plug_158d0001f9ebd8
 
 # ##################################
+# Bathroom Fan - Fan's check_on
+# ##################################
+- alias: bathroom_fans_check_on
+  initial_state: 'on'
+  trigger:
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.humidity_b_delta
+      above: 5
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
+
+# ##################################
+# Bathroom Fan - Fan's check - Off
+# ##################################
+- alias: bathroom_fans_check_off
+  initial_state: 'on'
+  trigger:
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.humidity_b_delta
+      below: 5
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f9ebd8
+    - delay: '00:15:00'
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0003926263
+
+# ##################################
 # Bathroom Fan - On
 # ##################################
 - alias: bathroom_fan_on
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
-#    - platform: numeric_state
-#      entity_id: sensor.humidity_158d00020d7c3a
-#      above: 67
-    - platform: template
-      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float > (states('sensor.humidity_average')|float +5) %}true{% endif %}"
+    - platform: numeric_state
+      entity_id: sensor.humidity_b_delta
+      above: 5
+    # - platform: template
+    #   value_template: "{{ states('sensor.humidity_158d00020d7c3a')|float > (states('sensor.humidity_average')|float +5) }}"
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
@@ -62,14 +97,15 @@
 # Bathroom - Fan off
 # ##################################
 - alias: bathroom_fan_off
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
-    - platform: template
-      value_template: "{% if states('sensor.humidity_158d00020d7c3a')|float <= (states('sensor.humidity_average')|float +5) %}true{% endif %}"
+    - platform: numeric_state
+      entity_id: sensor.humidity_b_delta
+      below: 5
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f9ebd8
-    - delay: '00:30:00'
+    - delay: '00:15:00'
     - service: switch.turn_off
       entity_id: switch.plug_158d0003926263
 
