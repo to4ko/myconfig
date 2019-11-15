@@ -58,6 +58,45 @@
         value_template: "{{ state_attr('sensor.water_nonmineralized_daily_single', 'last_period') | float }}"
 
   - platform: command_line
+    name: config_line_count_sh
+    command: 'bash /config/line_count.sh'
+    scan_interval: 120
+
+  - platform: command_line
+    name: config_line_count_sh_code
+    command: 'bash /config/line_count_code.sh'
+    scan_interval: 120
+
+  - platform: template
+    sensors:
+      config_line_count_sh_ratio:
+        friendly_name: Config Line Count Usage
+        value_template: "{{ (states('sensor.config_line_count_sh_code')|int / states('sensor.config_line_count_sh')|int * 100) | round(0) }}"
+        unit_of_measurement: '%'
+        icon_template: mdi:brightness-percent
+
+  - platform: mqtt
+    name: Config Line Count
+    state_topic: "ubuntu/config_linecount"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ value }}"
+    unit_of_measurement: ''
+    icon: mdi:format-list-bulleted
+
+  - platform: mqtt
+    name: Config Line Count Code
+    state_topic: "ubuntu/config_linecount_code"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ value }}"
+    unit_of_measurement: ''
+    icon: mdi:format-list-numbered
+
+
+  - platform: command_line
     name: ya_weather_city
     command: 'bash /config/ya_weather.sh'
     scan_interval: 120

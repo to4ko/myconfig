@@ -1032,7 +1032,6 @@
 # binary_sensor.motion_sensor_158d0001e54280 friendly_name: Motion T
 # binary_sensor.motion_sensor_158d000224f89f friendly_name: Motion S
 
-
 #    - service: notify.telegram_sandra
 #      data:
 #        title: Doorbell photo
@@ -1062,13 +1061,30 @@
       entity_id: binary_sensor.switch_158d0002f8dd54
       click_type: single
   action:
-    - service: script.turn_on
-      entity_id: script.domofon_open_door
-      
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_entrance
+        filename: "/config/www/cam_captures/entrance_domofon.jpg"
+    - service: switch.turn_on
+      entity_id: switch.esp32_domofon_relay1, switch.esp32_domofon_relay2
+    - delay: '00:00:01'
+    - service: switch.turn_on
+      entity_id: switch.esp32_domofon_relay3
+    - delay: '00:00:01'
+    - service: switch.turn_off
+      entity_id: switch.esp32_domofon_relay1, switch.esp32_domofon_relay2, switch.esp32_domofon_relay3
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f518 Домофон открыт вручную!"
+        data:
+          photo:
+            - file: /config/www/cam_captures/entrance_domofon.jpg
+              caption: "\U0001f518 Домофон открыт вручную!"
+
 # ##################################
 # Hall big - Domofon Auto Open Once
 # ##################################
-- alias: hall_big_domofon_auto_open_once
+- alias: hall_big_domofon_button_auto_open_once
   initial_state: 'on'
   trigger:
     platform: event
@@ -1083,7 +1099,7 @@
 # ##################################
 # Hall big - Domofon Auto Open 
 # ##################################
-- alias: hall_big_domofon_auto_open
+- alias: hall_big_domofon_button_auto_open
   initial_state: 'on'
   trigger:
     platform: event

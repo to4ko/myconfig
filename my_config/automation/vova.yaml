@@ -104,7 +104,7 @@
     service: light.turn_on
     entity_id: light.square_led_v
     data_template:
-       brightness_pct: 100
+       brightness_pct: 95
        # color_temp: 254
        kelvin: 6500
 
@@ -170,7 +170,7 @@
     service_template: >-
       {% if is_state('light.square_led_v','on') and (state_attr('light.square_led_v','brightness') < 100) %}
         script.square_lamp_to_100
-      {% elif is_state('light.square_led_v','on') and (state_attr('light.square_led_v','brightness') > 250) %}
+      {% elif is_state('light.square_led_v','on') and (state_attr('light.square_led_v','brightness') > 230) %}
         script.square_lamp_off
       {% elif is_state('light.square_led_v','off') %}
         script.square_lamp_to_30
@@ -325,7 +325,7 @@
     at: '23:00:00'
   action:
     - service: homeassistant.turn_off
-      entity_id: switch.plug_158d00028b4fc3
+      entity_id: switch.plug_158d00028b4fc3, switch.wall_plug_158d000246776f
       
 # ##################################
 # Vova - Day mode
@@ -335,10 +335,36 @@
   trigger:
     platform: time
     at: '07:00:00'
+  condition:
+    condition: time
+    weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+      #- sat
+      #- sun
   action:
     - service: homeassistant.turn_on
-      entity_id: switch.plug_158d00028b4fc3
+      entity_id: switch.plug_158d00028b4fc3 #, switch.wall_plug_158d000246776f
 
+# ##################################
+# Vova - Day mode - weekends
+# ##################################
+- alias: vova_day_mode_we
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '10:00:00'
+  condition:
+    condition: time
+    weekday:
+      - sat
+      - sun
+  action:
+    - service: homeassistant.turn_on
+      entity_id: switch.plug_158d00028b4fc3 #, switch.wall_plug_158d000246776f
 
 # ##################################
 # Vova - Breather Control

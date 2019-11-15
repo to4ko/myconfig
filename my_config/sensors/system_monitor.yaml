@@ -508,7 +508,7 @@
   
   - platform: mqtt
     name: "RPI Uptime"
-    state_topic: "rpi/uptime"
+    state_topic: "rpi/system_uptime"
     value_template: '{{ ((value | float)/3600) | round(2) }}'
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -574,7 +574,7 @@
 
   - platform: mqtt
     name: "j3455 Uptime"
-    state_topic: "j3455/uptime"
+    state_topic: "j3455/system_uptime"
     value_template: '{{ ((value | float)/3600) | round(2) }}'
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -644,6 +644,17 @@
     state_topic: "ubuntu/last_update"
     value_template: '{{ value }}'
     icon: mdi:calendar
+
+  - platform: mqtt
+    name: Ubuntu Uptime
+    state_topic: "ubuntu/system_uptime"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: '{{ ((value | float)/3600) | round(2) }}'
+    unit_of_measurement: 'h'
+    icon: mdi:clock-digital
+
 
   - platform: mqtt
     name: "IPMI CPU1 Temp"
@@ -1468,10 +1479,21 @@
     icon: mdi:calendar
 
   - platform: mqtt
+    name: BRIX Uptime
+    state_topic: "brix/system_uptime"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    #value_template: "{{ value }}"
+    value_template: "{{ ( value | float ) |round(2) }}"
+    unit_of_measurement: 'h'
+    icon: mdi:clock-digital
+
+  - platform: mqtt
     name: BRIX SSD Temperature
     state_topic: "brix/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -1481,7 +1503,7 @@
     name: BRIX SSD Usage
     state_topic: "brix/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1491,7 +1513,7 @@
     name: BRIX 860evo Total Gb Written
     state_topic: "brix/smart/860evo_250gb_lba_written"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
@@ -1501,7 +1523,7 @@
     name: BRIX 860evo Power On Hours
     state_topic: "brix/smart/860evo_250gb_power_on_hours"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
@@ -1539,7 +1561,7 @@
     name: BRIX CPU Temperature
     state_topic: "brix/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[1].Children[1].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -1549,7 +1571,7 @@
     name: BRIX CPU Fan
     state_topic: "brix/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[2].Children[0].Value.split(' ')[0] | int }}"
     unit_of_measurement: 'rpm'
@@ -1559,7 +1581,7 @@
     name: BRIX AUX Temperature
     state_topic: "brix/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[1].Children[2].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -1569,7 +1591,7 @@
     name: BRIX Memory Usage
     state_topic: "brix/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1579,7 +1601,7 @@
     name: BRIX CPU Load
     state_topic: "brix/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1595,10 +1617,34 @@
     icon: mdi:calendar
 
   - platform: mqtt
+    name: u430p Last Boot
+    state_topic: "u430p/last_boot"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ value }}"
+    #value_template: "{{ ( value | float ) |round(2) }}"
+    #unit_of_measurement: 'h'
+    icon: mdi:calendar
+
+  - platform: template
+    sensors:
+      u430p_uptime:
+        friendly_name: u430p Uptime
+        value_template: >
+          {%if states('sensor.u430p_cpu_load')|int(-9999) == -9999%}
+          unknown
+          {%else%}
+          {{((as_timestamp(now())-as_timestamp(strptime(states('sensor.u430p_last_boot'),'%d.%m.%Y %H:%M:%S')))/3600) | round(2)}}
+          {%endif%}
+        icon_template: mdi:clock-digital 
+        unit_of_measurement: 'h'
+
+  - platform: mqtt
     name: u430p SSD Temperature
     state_topic: "u430p/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -1608,7 +1654,7 @@
     name: u430p SSD Usage
     state_topic: "u430p/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1618,7 +1664,7 @@
     name: u430p 840pro Total Gb Written
     state_topic: "u430p/smart/840pro_512gb_lba_written"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
@@ -1628,7 +1674,7 @@
     name: u430p 840pro Power On Hours
     state_topic: "u430p/smart/840pro_512gb_power_on_hours"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
@@ -1665,7 +1711,7 @@
     name: u430p M2 Usage
     state_topic: "u430p/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[5].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1675,7 +1721,7 @@
     name: u430p CPU Temperature
     state_topic: "u430p/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[1].Children[2].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -1685,7 +1731,7 @@
     name: u430p SC2 M2 Total Gb Written
     state_topic: "u430p/smart/sc2_m2_120gb_mb_written"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | float / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
@@ -1695,7 +1741,7 @@
     name: u430p SC2 M2 Power On Hours
     state_topic: "u430p/smart/sc2_m2_120gb_power_on_hours"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
@@ -1732,7 +1778,7 @@
     name: u430p Memory Usage
     state_topic: "u430p/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1742,7 +1788,7 @@
     name: u430p CPU Load
     state_topic: "u430p/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1756,12 +1802,37 @@
     state_topic: "r418/last_update"
     value_template: '{{ value }}'
     icon: mdi:calendar
+
+  - platform: mqtt
+    name: r418 Last Boot
+    state_topic: "r418/last_boot"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ value }}"
+    icon: mdi:calendar
   
+  - platform: template
+    sensors:
+      r418_uptime:
+        friendly_name: r418 Uptime
+        value_template: >
+          {%if states('sensor.r418_cpu_load')|int(-9999) == -9999%}
+          unknown
+          {%else%}
+          {{((as_timestamp(now())-as_timestamp(strptime(states('sensor.r418_last_boot'),'%d.%m.%Y %H:%M:%S')))/3600) | round(2)}}
+          {%endif%}
+        
+        
+        icon_template: mdi:clock-digital 
+        unit_of_measurement: 'h'
+    
+        
   - platform: mqtt
     name: r418 SSD Usage
     state_topic: "r418/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1771,7 +1842,7 @@
     name: r418 SATA SSD Total Gb Written
     state_topic: "r418/smart/sata_ssd_128gb_lba_written"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
@@ -1781,7 +1852,7 @@
     name: r418 SATA SSD Power On Hours
     state_topic: "r418/smart/sata_ssd_128gb_power_on_hours"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
@@ -1808,17 +1879,20 @@
           {%set tbw =  40*1024%}
           {%set per_day = states('sensor.r418_sata_ssd_gb_per_hour')|float*24%}
           {%set total = states('sensor.r418_sata_ssd_total_gb_written')|float%}
-          {%if per_day == 0 %}
-          {{ ((tbw-total)/1/365)|round(2)  }}
+          {%if states('sensor.r418_sata_ssd_power_on_hours')|float(-9999) == -9999%}
+          unknown
           {%else%}
-          {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
           {%endif%}
-
   - platform: mqtt
     name: r418 CPU Temperature
     state_topic: "r418/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: >
       {% set cores_temp = value_json.Children[0].Children[1].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int,
@@ -1831,7 +1905,7 @@
     name: r418 Memory Usage
     state_topic: "r418/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1841,7 +1915,7 @@
     name: r418 CPU Load
     state_topic: "r418/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1857,10 +1931,20 @@
     icon: mdi:calendar
 
   - platform: mqtt
+    name: i5 Uptime
+    state_topic: "i5vova/system_uptime"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ ( value | float ) |round(2) }}"
+    unit_of_measurement: 'h'
+    icon: mdi:clock-digital
+
+  - platform: mqtt
     name: i5 SSD Temperature
     state_topic: "i5vova/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -1870,7 +1954,7 @@
     name: i5 SSD Usage
     state_topic: "i5vova/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1880,7 +1964,7 @@
     name: i5 bx500 Total Gb Written
     state_topic: "i5vova/smart/bx500_120gb_lba_written"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
@@ -1890,7 +1974,7 @@
     name: i5 bx500 Power On Hours
     state_topic: "i5vova/smart/bx500_120gb_power_on_hours"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
@@ -1917,17 +2001,21 @@
           {%set tbw =  40*1024%}
           {%set per_day = states('sensor.i5_bx500_gb_per_hour')|float*24%}
           {%set total = states('sensor.i5_bx500_total_gb_written')|float%}
-          {%if per_day == 0 %}
-          {{ ((tbw-total)/1/365)|round(2)  }}
+          {%if states('sensor.i5_bx500_power_on_hours')|float(-9999) == -9999%}
+          unknown
           {%else%}
-          {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
           {%endif%}
 
   - platform: mqtt
     name: i5 CPU Temperature
     state_topic: "i5vova/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[1].Children[4].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -1937,7 +2025,7 @@
     name: i5 Memory Usage
     state_topic: "i5vova/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1947,7 +2035,7 @@
     name: i5 CPU Load
     state_topic: "i5vova/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -1957,7 +2045,7 @@
     name: i5 CPU Fan
     state_topic: "i5vova/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[2].Children[0].Value.split(' ')[0] | int }}"
     unit_of_measurement: 'rpm'
@@ -1967,7 +2055,7 @@
     name: i5 Case Fan
     state_topic: "i5vova/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[2].Children[1].Value.split(' ')[0] | int }}"
     unit_of_measurement: 'rpm'
@@ -1993,7 +2081,7 @@
     icon: mdi:clock-digital
 
   - platform: mqtt
-    name: 5490 SSD Temperature
+    name: 5490 SC401 Temperature
     state_topic: "5490/telemetry"
     qos: 0
     expire_after: 350
@@ -2003,8 +2091,8 @@
     icon: mdi:thermometer
 
   - platform: mqtt
-    name: 5490 sda Total Gb Written
-    state_topic: "5490msrt/sc401_256gb_total_lba_written"
+    name: 5490 SC401 Total Gb Written
+    state_topic: "5490/smart/sc401_256gb_total_lba_written"
     qos: 0
     expire_after: 350
     force_update: true
@@ -2014,20 +2102,39 @@
 
   - platform: template
     sensors:
-      5490_sda_gb_per_hour:
-        friendly_name: 5490 sda gb per hour
+      5490_sc401_gb_per_hour:
+        friendly_name: 5490 SC401 Gb per hour
         value_template: >
-          {%if states('sensor.5490_sda_power_on_hours')|float(-9999) == -9999%}
+          {%if states('sensor.5490_sc401_power_on_hours')|float(-9999) == -9999%}
           0
           {%else%}
-          {{(states('sensor.5490_sda_total_gb_written')|float / states('sensor.5490_sda_power_on_hours')|float)|round(2)}}
+          {{(states('sensor.5490_sc401_total_gb_written')|float / states('sensor.5490_sc401_power_on_hours')|float)|round(2)}}
           {%endif%}
         icon_template: mdi:chip
         unit_of_measurement: 'Gb\h'
+      
+      5490_sc401_calc_life_left:
+        friendly_name: 5490 SC401 Calculated Life Left
+        unit_of_measurement: years
+        entity_id: sensor.5490_cpu_load
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw =  120*1024%}
+          {%set per_day = states('sensor.5490_sc401_gb_per_hour')|float*24%}
+          {%set total = states('sensor.5490_sc401_total_gb_written')|float%}
+          {%if states('sensor.5490_sc401_power_on_hours')|float(-9999) == -9999%}
+          unknown
+          {%else%}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
+          {%endif%}
         
 
   - platform: mqtt
-    name: 5490 sda Power On Hours
+    name: 5490 SC401 Power On Hours
     state_topic: "5490/smart/sc401_256gb_power_on_hours"
     qos: 0
     expire_after: 350
@@ -2037,7 +2144,7 @@
     icon: mdi:timer
 
   - platform: mqtt
-    name: 5490 SSD Usage
+    name: 5490 SC401 Usage
     state_topic: "5490/telemetry"
     qos: 0
     expire_after: 350
@@ -2079,7 +2186,6 @@
 ##############################################################################################
 # Dell m6800 Telemetry
 ##############################################################################################
-
   - platform: mqtt
     name: m6800 Telemetry Last Update
     state_topic: "m6800/last_update"
@@ -2087,10 +2193,20 @@
     icon: mdi:calendar
 
   - platform: mqtt
+    name: m6800 Uptime
+    state_topic: "m6800/system_uptime"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ ( value | float ) |round(2) }}"
+    unit_of_measurement: 'h'
+    icon: mdi:clock-digital
+
+  - platform: mqtt
     name: m6800 Drive E Temperature
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[6].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -2100,7 +2216,7 @@
     name: m6800 860pro Total Gb Written
     state_topic: "m6800/smart/860pro_512gb_lba_written"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
@@ -2110,7 +2226,7 @@
     name: m6800 860pro Power On Hours
     state_topic: "m6800/smart/860pro_512gb_power_on_hours"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
@@ -2137,17 +2253,21 @@
           {%set tbw =  600*1024%}
           {%set per_day = states('sensor.m6800_860pro_gb_per_hour')|float*24%}
           {%set total = states('sensor.m6800_860pro_total_gb_written')|float%}
-          {%if per_day == 0 %}
-          {{ ((tbw-total)/1/365)|round(2)  }}
+          {%if states('sensor.m6800_860pro_power_on_hours')|float(-9999) == -9999%}
+          unknown
           {%else%}
-          {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
           {%endif%}
 
   - platform: mqtt
     name: m6800 840evo Total Gb Written
     state_topic: "m6800/smart/840evo_500gb_lba_written"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
@@ -2174,17 +2294,21 @@
           {%set tbw =  72*1024%}
           {%set per_day = states('sensor.m6800_840evo_gb_per_hour')|float*24%}
           {%set total = states('sensor.m6800_840evo_total_gb_written')|float%}
-          {%if per_day == 0 %}
-          {{ ((tbw-total)/1/365)|round(2)  }}
+          {%if states('sensor.m6800_840evo_power_on_hours')|float(-9999) == -9999%}
+          unknown
           {%else%}
-          {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
           {%endif%}
           
   - platform: mqtt
     name: m6800 840evo Power On Hours
     state_topic: "m6800/smart/840evo_500gb_power_on_hours"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
@@ -2194,7 +2318,7 @@
     name: m6800 Drive E Usage
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[6].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -2204,7 +2328,7 @@
     name: m6800 Drive C Temperature
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[7].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -2214,7 +2338,7 @@
     name: m6800 Drive C Usage
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[7].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -2224,7 +2348,7 @@
     name: m6800 Drive D Temperature
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -2234,7 +2358,7 @@
     name: m6800 Drive D Usage
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -2244,7 +2368,7 @@
     name: m6800 Drive F Temperature
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[5].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -2254,7 +2378,7 @@
     name: m6800 Drive F Usage
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[5].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -2264,7 +2388,7 @@
     name: m6800 CPU Temperature
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[1].Children[4].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
@@ -2274,7 +2398,7 @@
     name: m6800 Memory Usage
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
@@ -2284,7 +2408,7 @@
     name: m6800 CPU Load
     state_topic: "m6800/telemetry"
     qos: 0
-    expire_after: 120
+    expire_after: 150
     force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%' 
