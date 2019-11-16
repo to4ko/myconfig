@@ -55,7 +55,7 @@ Smart Home:
   - Google Home Mini (5ea)
   
   ESPHome devices:
-  - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea
+  - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea 
   - Power Meter Based on NodeMCUv3
   - Domofon (Intercom helper) on ESP32
   - Oven Hood controller (light + 3 speeds) on Wemos D1 mini
