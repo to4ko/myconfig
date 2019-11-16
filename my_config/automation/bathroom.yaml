@@ -44,23 +44,7 @@
       entity_id: switch.plug_158d0001f9ebd8
 
 # ##################################
-# Bathroom Fan - Fan's check_on
-# ##################################
-- alias: bathroom_fans_check_on
-  initial_state: 'on'
-  trigger:
-    - platform: time_pattern
-      minutes: '/1'
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.humidity_b_delta
-      above: 5
-  action:
-    - service: switch.turn_on
-      entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
-
-# ##################################
-# Bathroom Fan - Fan's check - Off
+# Bathroom Fan - Fans - Off
 # ##################################
 - alias: bathroom_fans_check_off
   initial_state: 'on'
@@ -71,6 +55,9 @@
     - condition: numeric_state
       entity_id: sensor.humidity_b_delta
       below: 5
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'on'
   action:
     - service: switch.turn_off
       entity_id: switch.plug_158d0001f9ebd8
@@ -79,50 +66,40 @@
       entity_id: switch.plug_158d0003926263
 
 # ##################################
-# Bathroom Fan - On
+# Bathroom Fan - Fans - On
 # ##################################
-- alias: bathroom_fan_on
-  initial_state: 'off'
+- alias: bathroom_fans_ckeck_on
+  initial_state: 'on'
   trigger:
-    - platform: numeric_state
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+    - condition: numeric_state
       entity_id: sensor.humidity_b_delta
       above: 5
-    # - platform: template
-    #   value_template: "{{ states('sensor.humidity_158d00020d7c3a')|float > (states('sensor.humidity_average')|float +5) }}"
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
 
 # ##################################
-# Bathroom - Fan off
+# Bathroom Fan - On
 # ##################################
-- alias: bathroom_fan_off
+- alias: bathroom_fans_on
   initial_state: 'off'
   trigger:
     - platform: numeric_state
       entity_id: sensor.humidity_b_delta
-      below: 5
-  action:
-    - service: switch.turn_off
+      above: 5
+  condition:
+    - condition: state
       entity_id: switch.plug_158d0001f9ebd8
-    - delay: '00:15:00'
-    - service: switch.turn_off
-      entity_id: switch.plug_158d0003926263
-
-# ##################################
-# Bathroom - Fan Timer start on
-# ################################## 
-#- alias: bathroom_fan_timer_on
-#  initial_state: true
-#  trigger:
-#  - platform: state
-#    entity_id: switch.plug_158d0001f9ebd8
-#    to: 'on'
-#  action:
-#  - service: timer.cancel
-#    entity_id: timer.timer_fan_b
-#  - service: timer.start
-#    entity_id: timer.timer_fan_b
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
 
 # ##################################
 # Bathroom - Timer restart with movement
@@ -439,10 +416,31 @@
       entity_id: switch.plug_158d0003926263
       
 # ##################################
+# Bathroom - Bottom Fan Toggle
+# ##################################
+- alias: bathroom_bottom_fan_toggle
+  initial_state: 'on'
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+  condition:
+    condition: and
+    conditions: 
+      - condition: state
+        entity_id: binary_sensor.tod_night
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+  action:
+    - service: switch.toggle
+      entity_id: switch.plug_158d0003926263
+
+# ##################################
 # Bathroom - Bottom Fan Status
 # ##################################
 - alias: bathroom_bottom_fan_status
-  initial_state: 'on'
+  initial_state: 'off'
   trigger:
     - platform: state
       entity_id: switch.plug_158d0003926263
