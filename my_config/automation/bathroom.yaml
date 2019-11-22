@@ -64,6 +64,9 @@
     - delay: '00:15:00'
     - service: switch.turn_off
       entity_id: switch.plug_158d0003926263
+    - service: automation.turn_on
+      entity_id: automation.bathroom_bottom_fan_toggle
+
 
 # ##################################
 # Bathroom Fan - Fans - On
@@ -83,23 +86,8 @@
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
-
-# ##################################
-# Bathroom Fan - On
-# ##################################
-- alias: bathroom_fans_on
-  initial_state: 'off'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.humidity_b_delta
-      above: 5
-  condition:
-    - condition: state
-      entity_id: switch.plug_158d0001f9ebd8
-      state: 'off'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
+    - service: automation.turn_off
+      entity_id: automation.bathroom_bottom_fan_toggle
 
 # ##################################
 # Bathroom - Timer restart with movement
@@ -388,9 +376,9 @@
   initial_state: 'on'
   trigger:
     - platform: time
-      at: '07:00:00'
+      at: '07:00:03'
     - platform: time
-      at: '23:00:00'
+      at: '23:00:03'
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
@@ -434,42 +422,4 @@
         state: 'off'
   action:
     - service: switch.toggle
-      entity_id: switch.plug_158d0003926263
-
-# ##################################
-# Bathroom - Bottom Fan Status
-# ##################################
-- alias: bathroom_bottom_fan_status
-  initial_state: 'off'
-  trigger:
-    - platform: state
-      entity_id: switch.plug_158d0003926263
-      from: 'on'
-      to: 'off'
-  condition:
-    condition: and
-    conditions: 
-      - condition: state
-        entity_id: binary_sensor.tod_night
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.security_mode
-        state: 'off'
-  action:
-    - delay: '00:00:03'
-    - service: switch.toggle
-      entity_id: switch.plug_158d0003926263
-      
-# ##################################
-# Bathroom - Bottom Fan off timer
-# ##################################
-- alias: bathroom_bottom_fan_timer_off
-  initial_state: 'on'
-  trigger:
-  - platform: event
-    event_type: timer.finished
-    event_data:
-      entity_id: timer.timer_fan_bottom_b
-  action:
-    - service: switch.turn_off
       entity_id: switch.plug_158d0003926263
