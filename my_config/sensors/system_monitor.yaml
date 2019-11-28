@@ -1,24 +1,6 @@
 # ############################################################################
 # Hardware sensors Z9PA - NVME
 # ############################################################################
-  - platform: template
-    sensors:
-      f20_single_session_write:
-        value_template: "{{ (states('sensor.md5_session_write')|float * 0.25) | round(1) }}"
-        unit_of_measurement: 'Gb'
-      f20_single_session_read:
-        value_template: "{{ (states('sensor.md5_session_read')|float * 0.25) | round(1) }}"
-        unit_of_measurement: 'Gb'
-      f20_tb_written:
-        value_template: '1000'
-        unit_of_measurement: 'Gb'
-
-  - platform: statistics
-    entity_id: sensor.f20_single_session_write
-    name: f20_statistics
-    max_age:
-      minutes: 60
-
   - platform: statistics
     entity_id: sensor.nvme0_session_write
     name: nvme0_statistics
@@ -44,11 +26,10 @@
       minutes: 60
 
   - platform: statistics
-    entity_id: sensor.sdb_session_write
+    entity_id: sensor.sda_session_write
     name: sda_statistics
     max_age:
       minutes: 60
-
 
   - platform: template
     sensors:
@@ -66,9 +47,6 @@
         unit_of_measurement: 'Gb'
       sdb_write_change_1h:
         value_template: "{{ state_attr('sensor.sdb_statistics','change') }}"
-        unit_of_measurement: 'Gb'
-      f20_write_change_1h:
-        value_template: "{{ state_attr('sensor.f20_statistics','change') }}"
         unit_of_measurement: 'Gb'
 
   - platform: template
@@ -151,147 +129,6 @@
           {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
 
-
-
-      sdp_gb_per_hour:
-        friendly_name: sdp Gb per hour
-        unit_of_measurement: Gb
-        entity_id: sensor.sdp_session_write
-        icon_template: mdi:clock
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (states('sensor.sdp_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
-          {% else %}
-          {{states('sensor.sdp_session_write')|float | round(2)}}
-          {% endif %}
-      sdp_gb_per_day:
-        friendly_name: sdp Gb per day
-        unit_of_measurement: Gb
-        icon_template: mdi:calendar
-        entity_id: sensor.sdp_session_write
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (((states('sensor.sdp_session_write')|float) / (states('sensor.host_uptime')|float)*24)|float)|round(2) }}
-          {% else %}
-          {{ (states('sensor.sdp_session_write')|float*24) | round(2)}}
-          {% endif %}
-
-      sdq_gb_per_hour:
-        friendly_name: sdq Gb per hour
-        unit_of_measurement: Gb
-        entity_id: sensor.sdq_session_write
-        icon_template: mdi:clock
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (states('sensor.sdq_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
-          {% else %}
-          {{states('sensor.sdq_session_write')|float | round(2)}}
-          {% endif %}
-      sdq_gb_per_day:
-        friendly_name: sdq Gb per day
-        unit_of_measurement: Gb
-        icon_template: mdi:calendar
-        entity_id: sensor.sdp_session_write
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (((states('sensor.sdq_session_write')|float) / (states('sensor.host_uptime')|float)*24)|float)|round(2) }}
-          {% else %}
-          {{ (states('sensor.sdq_session_write')|float*24) | round(2)}}
-          {% endif %}
-
-      sdr_gb_per_hour:
-        friendly_name: sdr Gb per hour
-        unit_of_measurement: Gb
-        entity_id: sensor.sdr_session_write
-        icon_template: mdi:clock
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (states('sensor.sdr_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
-          {% else %}
-          {{states('sensor.sdr_session_write')|float | round(2)}}
-          {% endif %}
-      sdr_gb_per_day:
-        friendly_name: sdr Gb per day
-        unit_of_measurement: Gb
-        icon_template: mdi:calendar
-        entity_id: sensor.sdr_session_write
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (((states('sensor.sdr_session_write')|float) / (states('sensor.host_uptime')|float)*24)|float)|round(2) }}
-          {% else %}
-          {{ (states('sensor.sdr_session_write')|float*24) | round(2)}}
-          {% endif %}
-
-      sds_gb_per_hour:
-        friendly_name: sds Gb per hour
-        unit_of_measurement: Gb
-        entity_id: sensor.sds_session_write
-        icon_template: mdi:clock
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (states('sensor.sds_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
-          {% else %}
-          {{states('sensor.sds_session_write')|float | round(2)}}
-          {% endif %}
-      sds_gb_per_day:
-        friendly_name: sds Gb per day
-        unit_of_measurement: Gb
-        icon_template: mdi:calendar
-        entity_id: sensor.sds_session_write
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (((states('sensor.sds_session_write')|float) / (states('sensor.host_uptime')|float)*24)|float)|round(2) }}
-          {% else %}
-          {{ (states('sensor.sds_session_write')|float*24) | round(2)}}
-          {% endif %}
-
-      f20_gb_per_hour:
-        friendly_name: f20 Gb per hour
-        unit_of_measurement: Gb
-        entity_id: sensor.md5_session_write
-        icon_template: mdi:clock
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (states('sensor.f20_single_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
-          {% else %}
-          {{states('sensor.f20_single_session_write')|float | round(2)}}
-          {% endif %}
-      f20_gb_per_day:
-        friendly_name: f20 Gb per day
-        unit_of_measurement: Gb
-        icon_template: mdi:calendar
-        entity_id: sensor.md5_session_write
-        value_template: >-
-          {% set uptime = states('sensor.host_uptime') %}
-          {% if uptime | float  > 0 %}
-          {{ (((states('sensor.f20_single_session_write')|float) / (states('sensor.host_uptime')|float)*24)|float)|round(2) }}
-          {% else %}
-          {{ (states('sensor.f20_single_session_write')|float*24) | round(2)}}
-          {% endif %}
-      f20_life_left:
-        friendly_name: f20 Calculated life left
-        unit_of_measurement: years
-        entity_id: sensor.md5_session_write
-        icon_template: mdi:calendar-clock
-        value_template: >-
-          {%set tbw = 1000 %}
-          {%set per_day = states('sensor.f20_gb_per_day')|float%}
-          {%set total = 5000%}
-          {%if per_day == 0 %}
-          {{ ((tbw-total)*1024/1/365)|round(2)  }}
-          {%else%}
-          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
-          {%endif%}
-    
       sda_gb_per_hour:
         friendly_name: sda Gb per hour
         unit_of_measurement: Gb
@@ -399,6 +236,25 @@
           {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
 
+      nvme0_calc_life_left:
+        friendly_name: nvme0 Calculated Life Left
+        unit_of_measurement: years
+        entity_id: sensor.nvme0_tb_written, sensor.nvme0_session_write, sensor.nvme0_session_read, sensor.nvme0_power_on_hours
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw =  160%}
+          {%set per_day = (states('sensor.nvme0_tb_written')|float / states('sensor.nvme0_power_on_hours')|float)*24%}
+          {%set total = states('sensor.nvme0_tb_written')|float%}
+          {%if states('sensor.nvme0_power_on_hours')|float(-9999) == -9999%}
+          unknown
+          {%else%}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
+          {%endif%}
+
       nvme1_gb_per_hour:
         friendly_name: NVME1 Gb per hour
         unit_of_measurement: Gb
@@ -503,6 +359,7 @@
     name: RPI Telemetry Last Update
     state_topic: "rpi/last_update"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:calendar
   
   - platform: mqtt
@@ -510,6 +367,7 @@
     state_topic: "rpi/system_uptime"
     value_template: '{{ ((value | float)/3600) | round(2) }}'
     unit_of_measurement: 'h'
+    expire_after: 150
     icon: mdi:timer
     
   - platform: mqtt
@@ -517,6 +375,7 @@
     state_topic: "rpi/cpu_percent"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:speedometer
     
   - platform: mqtt
@@ -524,6 +383,7 @@
     state_topic: "rpi/sensors_temperatures/cpu-thermal"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
     
   - platform: mqtt
@@ -531,6 +391,7 @@
     state_topic: "rpi/virtual_memory/percent"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:memory
 
   - platform: mqtt
@@ -538,6 +399,7 @@
     state_topic: "rpi/disk_usage/percent/|"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:chip
 
   - platform: mqtt
@@ -545,6 +407,7 @@
     state_topic: "rpi/sda_lba_total"
     value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
+    expire_after: 150
     icon: mdi:chip
 
   - platform: mqtt
@@ -552,6 +415,7 @@
     state_topic: "rpi/disk_stat/sda_gb_read"
     value_template: '{{ ( value | float ) |round(1) }}'
     unit_of_measurement: 'Gb'
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -559,6 +423,7 @@
     state_topic: "rpi/disk_stat/sda_gb_write"
     value_template: '{{ ( value | float ) |round(1) }}'
     unit_of_measurement: 'Gb'
+    expire_after: 150
     icon: mdi:alpha-w-box
 
 # ############################################################################
@@ -568,6 +433,7 @@
     name: j3455 Telemetry Last Update
     state_topic: "j3455/last_update"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:calendar
 
 
@@ -576,6 +442,7 @@
     state_topic: "j3455/system_uptime"
     value_template: '{{ ((value | float)/3600) | round(2) }}'
     unit_of_measurement: 'h'
+    expire_after: 150
     icon: mdi:timer
 
   - platform: mqtt
@@ -583,6 +450,7 @@
     state_topic: "j3455/cpu_percent"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:speedometer
     
   - platform: mqtt
@@ -590,6 +458,7 @@
     state_topic: "j3455/sensors_temperatures/coretemp/0"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
     
   - platform: mqtt
@@ -597,6 +466,7 @@
     state_topic: "j3455/virtual_memory/percent"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:memory
 
   - platform: mqtt
@@ -604,6 +474,7 @@
     state_topic: "j3455/disk_usage/percent/|"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:chip
 
   - platform: mqtt
@@ -611,6 +482,7 @@
     state_topic: "j3455/sda_lba_total"
     value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
+    expire_after: 150
     icon: mdi:chip
 
   - platform: mqtt
@@ -618,6 +490,7 @@
     state_topic: "j3455/disk_stat/sda_gb_read"
     value_template: '{{ ( value | float ) |round(1) }}'
     unit_of_measurement: 'Gb'
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -625,6 +498,7 @@
     state_topic: "j3455/disk_stat/sda_gb_write"
     value_template: '{{ ( value | float ) |round(1) }}'
     unit_of_measurement: 'Gb'
+    expire_after: 150
     icon: mdi:alpha-w-box
 
   - platform: mqtt
@@ -632,6 +506,7 @@
     state_topic: "j3455/disk_temp/sda"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
 
@@ -642,14 +517,14 @@
     name: Ubuntu Telemetry Last Update
     state_topic: "ubuntu/last_update"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:calendar
 
   - platform: mqtt
     name: Ubuntu Uptime
     state_topic: "ubuntu/system_uptime"
-    qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: '{{ ((value | float)/3600) | round(2) }}'
     unit_of_measurement: 'h'
     icon: mdi:clock-digital
@@ -660,6 +535,7 @@
     state_topic: "ubuntu/ipmi/cpu1_temp"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -667,6 +543,7 @@
     state_topic: "ubuntu/ipmi/cpu2_temp"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -674,6 +551,7 @@
     state_topic: "ubuntu/ipmi/tr1_temp"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -681,6 +559,7 @@
     state_topic: "ubuntu/ipmi/tr2_temp"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -688,6 +567,7 @@
     state_topic: "ubuntu/ipmi/cpu_fan1"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
   - platform: mqtt
@@ -695,6 +575,7 @@
     state_topic: "ubuntu/ipmi/cpu_fan2"
     value_template: '{{ value | int | round(0)}}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
   - platform: mqtt
@@ -702,6 +583,7 @@
     state_topic: "ubuntu/ipmi/rear_fan1"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
   - platform: mqtt
@@ -709,6 +591,7 @@
     state_topic: "ubuntu/ipmi/rear_fan2"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
   - platform: mqtt
@@ -716,6 +599,7 @@
     state_topic: "ubuntu/ipmi/frnt_fan1"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
   - platform: mqtt
@@ -723,6 +607,7 @@
     state_topic: "ubuntu/ipmi/frnt_fan2"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
   - platform: mqtt
@@ -730,6 +615,7 @@
     state_topic: "ubuntu/ipmi/frnt_fan3"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
   - platform: mqtt
@@ -737,6 +623,7 @@
     state_topic: "ubuntu/ipmi/frnt_fan4"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: 'RPM'
+    expire_after: 150
     icon: mdi:fan
 
 
@@ -749,6 +636,7 @@
     state_topic: "ubuntu/cpu_percent"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:speedometer
     
   - platform: mqtt
@@ -756,6 +644,7 @@
     state_topic: "ubuntu/sensors_temperatures/coretemp/0"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
     
   - platform: mqtt
@@ -763,6 +652,7 @@
     state_topic: "ubuntu/sensors_temperatures/coretemp/7"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
 # ############################################################################
@@ -773,6 +663,7 @@
     state_topic: "ubuntu/virtual_memory/percent"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:memory
 
 # ############################################################################
@@ -783,6 +674,7 @@
     state_topic: "ubuntu/disk_usage/md0"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:chip
     
   - platform: mqtt
@@ -790,6 +682,23 @@
     state_topic: "ubuntu/disk_usage/840pro"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
+    icon: mdi:chip
+
+  - platform: mqtt
+    name: "NVME0 Usage"
+    state_topic: "ubuntu/disk_usage/nvme0"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    expire_after: 150
+    icon: mdi:chip
+
+  - platform: mqtt
+    name: "NVME1 Usage"
+    state_topic: "ubuntu/disk_usage/nvme1"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:chip
 
   - platform: mqtt
@@ -797,6 +706,7 @@
     state_topic: "ubuntu/disk_usage/nvme2"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:chip
 
   - platform: mqtt
@@ -804,6 +714,7 @@
     state_topic: "ubuntu/disk_usage/video"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:harddisk
 
   - platform: mqtt
@@ -811,6 +722,7 @@
     state_topic: "ubuntu/disk_usage/md2"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:harddisk
 
   - platform: mqtt
@@ -818,6 +730,7 @@
     state_topic: "ubuntu/disk_usage/md1"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:harddisk
 
   - platform: mqtt
@@ -825,6 +738,7 @@
     state_topic: "ubuntu/disk_usage/320l"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:nas
     
   - platform: mqtt
@@ -832,6 +746,7 @@
     state_topic: "ubuntu/disk_usage/md5"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
+    expire_after: 150
     icon: mdi:chip
 
 # ############################################################################
@@ -842,6 +757,7 @@
     state_topic: "ubuntu/disk_temp/nvme0"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
     
   - platform: mqtt
@@ -849,6 +765,7 @@
     state_topic: "ubuntu/disk_temp/nvme1"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -856,6 +773,7 @@
     state_topic: "ubuntu/disk_temp/nvme2"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -863,6 +781,7 @@
     state_topic: "ubuntu/disk_temp/sda"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -870,6 +789,7 @@
     state_topic: "ubuntu/disk_temp/sdb"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -877,6 +797,7 @@
     state_topic: "ubuntu/disk_temp/sdc"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -884,6 +805,7 @@
     state_topic: "ubuntu/disk_temp/sdd"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -891,6 +813,7 @@
     state_topic: "ubuntu/disk_temp/sde"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -898,6 +821,7 @@
     state_topic: "ubuntu/disk_temp/sdf"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -905,6 +829,7 @@
     state_topic: "ubuntu/disk_temp/sdg"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -912,6 +837,7 @@
     state_topic: "ubuntu/disk_temp/sdh"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -919,6 +845,7 @@
     state_topic: "ubuntu/disk_temp/sdi"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -926,6 +853,7 @@
     state_topic: "ubuntu/disk_temp/sdj"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -933,6 +861,7 @@
     state_topic: "ubuntu/disk_temp/sdk"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
     
   - platform: mqtt
@@ -940,6 +869,7 @@
     state_topic: "ubuntu/disk_temp/sdl"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
 
   - platform: mqtt
@@ -947,6 +877,7 @@
     state_topic: "ubuntu/disk_temp/sdm"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
+    expire_after: 150
     icon: mdi:thermometer
     
 # ############################################################################
@@ -957,35 +888,81 @@
     state_topic: "ubuntu/nvme0_lba_written"
     value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
+    expire_after: 150
     icon: mdi:chip
+
+  - platform: mqtt
+    name: NVME0 Power On Hours
+    state_topic: "ubuntu/nvme0_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
 
   - platform: mqtt
     name: "NVME1 Tb Written"
     state_topic: "ubuntu/nvme1_lba_written"
     value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
+    expire_after: 150
     icon: mdi:chip
+
+  - platform: mqtt
+    name: NVME1 Power On Hours
+    state_topic: "ubuntu/nvme1_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
 
   - platform: mqtt
     name: "NVME2 Tb Written"
     state_topic: "ubuntu/nvme2_lba_written"
     value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
+    expire_after: 150
     icon: mdi:chip
+
+  - platform: mqtt
+    name: NVME2 Power On Hours
+    state_topic: "ubuntu/nvme2_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
 
   - platform: mqtt
     name: "sda Tb Written"
     state_topic: "ubuntu/sda_gb_total"
     value_template: '{{ (value| float / 1024) |round(2) }}'
     unit_of_measurement: 'Tb'
+    expire_after: 150
     icon: mdi:chip
-    
+
+  - platform: mqtt
+    name: sda Power On Hours
+    state_topic: "ubuntu/sda_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
+
   - platform: mqtt
     name: "sdb Tb Written"
     state_topic: "ubuntu/sdb_lba_written"
     value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
+    expire_after: 150
     icon: mdi:chip
+
+  - platform: mqtt
+    name: sdb Power On Hours
+    state_topic: "ubuntu/sdb_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
+
 
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT - Drives Read\Write Stats
@@ -995,6 +972,7 @@
     state_topic: "ubuntu/disk_stat/nvme0_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
 
   - platform: mqtt
@@ -1002,6 +980,7 @@
     state_topic: "ubuntu/disk_stat/nvme0_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1009,6 +988,7 @@
     state_topic: "ubuntu/disk_stat/nvme1_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
 
   - platform: mqtt
@@ -1016,6 +996,7 @@
     state_topic: "ubuntu/disk_stat/nvme1_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1023,6 +1004,7 @@
     state_topic: "ubuntu/disk_stat/nvme2_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
 
   - platform: mqtt
@@ -1030,6 +1012,7 @@
     state_topic: "ubuntu/disk_stat/nvme2_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1037,6 +1020,7 @@
     state_topic: "ubuntu/disk_stat/sda_gb_write"
     value_template: '{{ value| float | round(1) }}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1044,6 +1028,7 @@
     state_topic: "ubuntu/disk_stat/sda_gb_read"
     value_template: '{{ value| float | round(1) }}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
     
   - platform: mqtt
@@ -1051,6 +1036,7 @@
     state_topic: "ubuntu/disk_stat/sdb_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1058,7 +1044,9 @@
     state_topic: "ubuntu/disk_stat/sdb_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
+    
 
 
 # ############################################################################
@@ -1069,6 +1057,7 @@
     state_topic: "ubuntu/disk_stat/sdc_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1076,6 +1065,7 @@
     state_topic: "ubuntu/disk_stat/sdc_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1083,6 +1073,7 @@
     state_topic: "ubuntu/disk_stat/sdd_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1090,6 +1081,7 @@
     state_topic: "ubuntu/disk_stat/sdd_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
 
@@ -1098,6 +1090,7 @@
     state_topic: "ubuntu/disk_stat/sde_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1105,6 +1098,7 @@
     state_topic: "ubuntu/disk_stat/sde_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1112,6 +1106,7 @@
     state_topic: "ubuntu/disk_stat/sdf_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1119,6 +1114,7 @@
     state_topic: "ubuntu/disk_stat/sdf_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1126,6 +1122,7 @@
     state_topic: "ubuntu/disk_stat/sdg_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1133,6 +1130,7 @@
     state_topic: "ubuntu/disk_stat/sdg_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1140,6 +1138,7 @@
     state_topic: "ubuntu/disk_stat/sdh_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1147,6 +1146,7 @@
     state_topic: "ubuntu/disk_stat/sdh_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
     
   - platform: mqtt
@@ -1154,6 +1154,7 @@
     state_topic: "ubuntu/disk_stat/sdi_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1161,6 +1162,7 @@
     state_topic: "ubuntu/disk_stat/sdi_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
     
   - platform: mqtt
@@ -1168,6 +1170,7 @@
     state_topic: "ubuntu/disk_stat/sdj_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1175,6 +1178,7 @@
     state_topic: "ubuntu/disk_stat/sdj_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
     
   - platform: mqtt
@@ -1182,6 +1186,7 @@
     state_topic: "ubuntu/disk_stat/sdk_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1189,6 +1194,7 @@
     state_topic: "ubuntu/disk_stat/sdk_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box  
   
   - platform: mqtt
@@ -1196,6 +1202,7 @@
     state_topic: "ubuntu/disk_stat/sdl_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1203,64 +1210,65 @@
     state_topic: "ubuntu/disk_stat/sdl_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
 
-  - platform: mqtt
-    name: sdp Session Write
-    state_topic: "ubuntu/disk_stat/sdp_gb_write"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-w-box
+  # - platform: mqtt
+  #   name: sdp Session Write
+  #   state_topic: "ubuntu/disk_stat/sdp_gb_write"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-w-box
     
-  - platform: mqtt
-    name: sdp Session Read
-    state_topic: "ubuntu/disk_stat/sdp_gb_read"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-r-box
+  # - platform: mqtt
+  #   name: sdp Session Read
+  #   state_topic: "ubuntu/disk_stat/sdp_gb_read"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-r-box
 
-  - platform: mqtt
-    name: sdq Session Write
-    state_topic: "ubuntu/disk_stat/sdq_gb_write"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-w-box
+  # - platform: mqtt
+  #   name: sdq Session Write
+  #   state_topic: "ubuntu/disk_stat/sdq_gb_write"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-w-box
     
-  - platform: mqtt
-    name: sdq Session Read
-    state_topic: "ubuntu/disk_stat/sdq_gb_read"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-r-box
+  # - platform: mqtt
+  #   name: sdq Session Read
+  #   state_topic: "ubuntu/disk_stat/sdq_gb_read"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-r-box
 
-  - platform: mqtt
-    name: sdr Session Write
-    state_topic: "ubuntu/disk_stat/sdr_gb_write"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-w-box
+  # - platform: mqtt
+  #   name: sdr Session Write
+  #   state_topic: "ubuntu/disk_stat/sdr_gb_write"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-w-box
     
-  - platform: mqtt
-    name: sdr Session Read
-    state_topic: "ubuntu/disk_stat/sdr_gb_read"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-r-box
+  # - platform: mqtt
+  #   name: sdr Session Read
+  #   state_topic: "ubuntu/disk_stat/sdr_gb_read"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-r-box
     
-  - platform: mqtt
-    name: sds Session Write
-    state_topic: "ubuntu/disk_stat/sds_gb_write"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-w-box
+  # - platform: mqtt
+  #   name: sds Session Write
+  #   state_topic: "ubuntu/disk_stat/sds_gb_write"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-w-box
     
-  - platform: mqtt
-    name: sds Session Read
-    state_topic: "ubuntu/disk_stat/sds_gb_read"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-r-box
+  # - platform: mqtt
+  #   name: sds Session Read
+  #   state_topic: "ubuntu/disk_stat/sds_gb_read"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-r-box
 
 
 # ############################################################################
@@ -1271,6 +1279,7 @@
     state_topic: "ubuntu/disk_stat/md0_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
     
   - platform: mqtt
@@ -1278,6 +1287,7 @@
     state_topic: "ubuntu/disk_stat/md0_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1285,6 +1295,7 @@
     state_topic: "ubuntu/disk_stat/md1_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
 
   - platform: mqtt
@@ -1292,6 +1303,7 @@
     state_topic: "ubuntu/disk_stat/md1_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1299,6 +1311,7 @@
     state_topic: "ubuntu/disk_stat/md2_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
 
   - platform: mqtt
@@ -1306,6 +1319,7 @@
     state_topic: "ubuntu/disk_stat/md2_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
   - platform: mqtt
@@ -1313,6 +1327,7 @@
     state_topic: "ubuntu/disk_stat/video_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-w-box
 
   - platform: mqtt
@@ -1320,49 +1335,50 @@
     state_topic: "ubuntu/disk_stat/video_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
+    expire_after: 150
     icon: mdi:alpha-r-box
 
-  - platform: mqtt
-    name: md3 Session Write
-    state_topic: "ubuntu/disk_stat/md3_gb_write"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-w-box
+  # - platform: mqtt
+  #   name: md3 Session Write
+  #   state_topic: "ubuntu/disk_stat/md3_gb_write"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-w-box
 
-  - platform: mqtt
-    name: md3 Session Read
-    state_topic: "ubuntu/disk_stat/md3_gb_read"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-r-box
+  # - platform: mqtt
+  #   name: md3 Session Read
+  #   state_topic: "ubuntu/disk_stat/md3_gb_read"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-r-box
 
-  - platform: mqtt
-    name: md4 Session Write
-    state_topic: "ubuntu/disk_stat/md4_gb_write"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-w-box
+  # - platform: mqtt
+  #   name: md4 Session Write
+  #   state_topic: "ubuntu/disk_stat/md4_gb_write"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-w-box
 
-  - platform: mqtt
-    name: md4 Session Read
-    state_topic: "ubuntu/disk_stat/md4_gb_read"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-r-box
+  # - platform: mqtt
+  #   name: md4 Session Read
+  #   state_topic: "ubuntu/disk_stat/md4_gb_read"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-r-box
 
-  - platform: mqtt
-    name: md5 Session Write
-    state_topic: "ubuntu/disk_stat/md5_gb_write"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-w-box
+  # - platform: mqtt
+  #   name: md5 Session Write
+  #   state_topic: "ubuntu/disk_stat/md5_gb_write"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-w-box
 
-  - platform: mqtt
-    name: md5 Session Read
-    state_topic: "ubuntu/disk_stat/md5_gb_read"
-    value_template: '{{ value| float| round(1)}}'
-    unit_of_measurement: Gb
-    icon: mdi:alpha-r-box
+  # - platform: mqtt
+  #   name: md5 Session Read
+  #   state_topic: "ubuntu/disk_stat/md5_gb_read"
+  #   value_template: '{{ value| float| round(1)}}'
+  #   unit_of_measurement: Gb
+  #   icon: mdi:alpha-r-box
 
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT - MDADM Arrays State
@@ -1371,18 +1387,21 @@
     name: md0 Status
     state_topic: "ubuntu/mdstat/md0"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:harddisk
 
   - platform: mqtt
     name: md0_disk1
     state_topic: "ubuntu/mdstat/md0_disk1"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:chip
 
   - platform: mqtt
     name: md0_disk2
     state_topic: "ubuntu/mdstat/md0_disk2"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:chip
 
 
@@ -1420,6 +1439,7 @@
     name: md0_full
     state_topic: "ubuntu/mdstat/md0_full"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:chip
 
     
@@ -1427,43 +1447,47 @@
     name: md1 Status
     state_topic: "ubuntu/mdstat/md1"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:harddisk
 
   - platform: mqtt
     name: md1_full
     state_topic: "ubuntu/mdstat/md1_full"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:harddisk
 
   - platform: mqtt
     name: md2 Status
     state_topic: "ubuntu/mdstat/md2"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:harddisk
 
   - platform: mqtt
     name: md2_full
     state_topic: "ubuntu/mdstat/md2_full"
     value_template: '{{ value }}'
+    expire_after: 150
     icon: mdi:harddisk
     
-  - platform: mqtt
-    name: md3 Status
-    state_topic: "ubuntu/mdstat/md3"
-    value_template: '{{ value }}'
-    icon: mdi:harddisk
+  # - platform: mqtt
+  #   name: md3 Status
+  #   state_topic: "ubuntu/mdstat/md3"
+  #   value_template: '{{ value }}'
+  #   icon: mdi:harddisk
 
-  - platform: mqtt
-    name: md4 Status
-    state_topic: "ubuntu/mdstat/md4"
-    value_template: '{{ value }}'
-    icon: mdi:harddisk
+  # - platform: mqtt
+  #   name: md4 Status
+  #   state_topic: "ubuntu/mdstat/md4"
+  #   value_template: '{{ value }}'
+  #   icon: mdi:harddisk
 
-  - platform: mqtt
-    name: md5 Status
-    state_topic: "ubuntu/mdstat/md5"
-    value_template: '{{ value }}'
-    icon: mdi:harddisk
+  # - platform: mqtt
+  #   name: md5 Status
+  #   state_topic: "ubuntu/mdstat/md5"
+  #   value_template: '{{ value }}'
+  #   icon: mdi:harddisk
 
 # ############################################################################
 # Hardware sensors - Windows PC
@@ -1482,7 +1506,6 @@
     state_topic: "brix/system_uptime"
     qos: 0
     expire_after: 150
-    force_update: true
     #value_template: "{{ value }}"
     value_template: "{{ ( value | float ) |round(2) }}"
     unit_of_measurement: 'h'
@@ -1493,7 +1516,6 @@
     state_topic: "brix/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -1503,7 +1525,6 @@
     state_topic: "brix/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:chip
@@ -1513,7 +1534,7 @@
     state_topic: "brix/smart/860evo_250gb_lba_written"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -1523,7 +1544,7 @@
     state_topic: "brix/smart/860evo_250gb_power_on_hours"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -1561,7 +1582,7 @@
     state_topic: "brix/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[1].Children[1].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -1571,7 +1592,7 @@
     state_topic: "brix/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[2].Children[0].Value.split(' ')[0] | int }}"
     unit_of_measurement: 'rpm'
     icon: mdi:fan
@@ -1581,7 +1602,7 @@
     state_topic: "brix/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[1].Children[2].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -1591,7 +1612,7 @@
     state_topic: "brix/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:memory
@@ -1601,7 +1622,7 @@
     state_topic: "brix/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:speedometer
@@ -1620,7 +1641,7 @@
     state_topic: "u430p/last_boot"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value }}"
     #value_template: "{{ ( value | float ) |round(2) }}"
     #unit_of_measurement: 'h'
@@ -1644,7 +1665,7 @@
     state_topic: "u430p/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -1654,7 +1675,7 @@
     state_topic: "u430p/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:chip
@@ -1664,7 +1685,7 @@
     state_topic: "u430p/smart/840pro_512gb_lba_written"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -1674,7 +1695,7 @@
     state_topic: "u430p/smart/840pro_512gb_power_on_hours"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -1684,8 +1705,8 @@
       u430p_840pro_gb_per_hour:
         friendly_name: u430p 840pro gb per hour
         value_template: >
-          {%if states('sensor.u430p_840pro_power_on_hours')|float(-9999) == -9999%}
-          0
+          {%if states('sensor.u430p_cpu_load')|float(-9999) == -9999%}
+          unknown
           {%else%}
           {{(states('sensor.u430p_840pro_total_gb_written')|float / states('sensor.u430p_840pro_power_on_hours')|float)|round(2)}}
           {%endif%}
@@ -1700,10 +1721,14 @@
           {%set tbw = 500*1024%}
           {%set per_day = states('sensor.u430p_840pro_gb_per_hour')|float*24%}
           {%set total = states('sensor.u430p_840pro_total_gb_written')|float%}
-          {%if per_day == 0 %}
-          {{ ((tbw-total)/1/365)|round(2)  }}
+          {%if states('sensor.u430p_840pro_power_on_hours')|float(-9999) == -9999%}
+          unknown
           {%else%}
-          {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
           {%endif%}
 
   - platform: mqtt
@@ -1711,7 +1736,7 @@
     state_topic: "u430p/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[5].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:chip
@@ -1721,7 +1746,7 @@
     state_topic: "u430p/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[1].Children[2].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -1731,7 +1756,7 @@
     state_topic: "u430p/smart/sc2_m2_120gb_mb_written"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -1741,7 +1766,7 @@
     state_topic: "u430p/smart/sc2_m2_120gb_power_on_hours"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -1751,11 +1776,12 @@
       u430p_sc2_m2_gb_per_hour:
         friendly_name: u430p SC2 M2  gb per hour
         value_template: >
-          {%if states('sensor.u430p_840pro_power_on_hours')|float(-9999) == -9999%}
-          0
+          {%if states('sensor.u430p_cpu_load')|float(-9999) == -9999%}
+          unknown
           {%else%}
           {{(states('sensor.u430p_840pro_total_gb_written')|float / states('sensor.u430p_840pro_power_on_hours')|float)|round(2)}}
           {%endif%}
+
         icon_template: mdi:chip
         unit_of_measurement: 'Gb\h'
       u430p_sc2_m2_calc_life_left:
@@ -1767,10 +1793,14 @@
           {%set tbw =  40*1024%}
           {%set per_day = states('sensor.u430p_sc2_m2_gb_per_hour')|float*24%}
           {%set total = states('sensor.u430p_sc2_m2_total_gb_written')|float%}
-          {%if per_day == 0 %}
-          {{ ((tbw-total)/1/365)|round(2)  }}
+          {%if states('sensor.u430p_840pro_power_on_hours')|float(-9999) == -9999%}
+          unknown
           {%else%}
-          {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
           {%endif%}
 
   - platform: mqtt
@@ -1778,7 +1808,7 @@
     state_topic: "u430p/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:memory
@@ -1788,7 +1818,7 @@
     state_topic: "u430p/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:speedometer
@@ -1807,7 +1837,7 @@
     state_topic: "r418/last_boot"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value }}"
     icon: mdi:calendar
   
@@ -1832,7 +1862,7 @@
     state_topic: "r418/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:chip  
@@ -1842,7 +1872,7 @@
     state_topic: "r418/smart/sata_ssd_128gb_lba_written"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -1852,7 +1882,7 @@
     state_topic: "r418/smart/sata_ssd_128gb_power_on_hours"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -1892,7 +1922,7 @@
     state_topic: "r418/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: >
       {% set cores_temp = value_json.Children[0].Children[1].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int,
                           value_json.Children[0].Children[1].Children[1].Children[1].Value.split(' ')[0].replace(',','.') | int %}
@@ -1905,7 +1935,7 @@
     state_topic: "r418/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:memory
@@ -1915,7 +1945,7 @@
     state_topic: "r418/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:speedometer
@@ -1934,7 +1964,7 @@
     state_topic: "i5vova/system_uptime"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float ) |round(2) }}"
     unit_of_measurement: 'h'
     icon: mdi:clock-digital
@@ -1944,7 +1974,7 @@
     state_topic: "i5vova/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -1954,7 +1984,7 @@
     state_topic: "i5vova/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:chip    
@@ -1964,7 +1994,7 @@
     state_topic: "i5vova/smart/bx500_120gb_lba_written"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -1974,7 +2004,7 @@
     state_topic: "i5vova/smart/bx500_120gb_power_on_hours"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -2015,7 +2045,7 @@
     state_topic: "i5vova/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[1].Children[4].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -2025,7 +2055,7 @@
     state_topic: "i5vova/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:memory
@@ -2035,7 +2065,7 @@
     state_topic: "i5vova/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:speedometer
@@ -2045,7 +2075,7 @@
     state_topic: "i5vova/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[2].Children[0].Value.split(' ')[0] | int }}"
     unit_of_measurement: 'rpm'
     icon: mdi:fan
@@ -2055,7 +2085,7 @@
     state_topic: "i5vova/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[0].Children[0].Children[2].Children[1].Value.split(' ')[0] | int }}"
     unit_of_measurement: 'rpm'
     icon: mdi:fan
@@ -2074,7 +2104,7 @@
     state_topic: "5490/system_uptime"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float ) |round(2) }}"
     unit_of_measurement: 'h'
     icon: mdi:clock-digital
@@ -2084,7 +2114,7 @@
     state_topic: "5490/telemetry"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -2094,7 +2124,7 @@
     state_topic: "5490/smart/sc401_256gb_total_lba_written"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -2137,7 +2167,7 @@
     state_topic: "5490/smart/sc401_256gb_power_on_hours"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -2147,7 +2177,7 @@
     state_topic: "5490/telemetry"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[3].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:chip
@@ -2157,7 +2187,7 @@
     state_topic: "5490/telemetry"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[1].Children[4].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -2167,7 +2197,7 @@
     state_topic: "5490/telemetry"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:memory
@@ -2177,7 +2207,7 @@
     state_topic: "5490/telemetry"
     qos: 0
     expire_after: 350
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:speedometer
@@ -2196,7 +2226,7 @@
     state_topic: "m6800/system_uptime"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float ) |round(2) }}"
     unit_of_measurement: 'h'
     icon: mdi:clock-digital
@@ -2206,7 +2236,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[6].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer  
@@ -2216,7 +2246,7 @@
     state_topic: "m6800/smart/860pro_512gb_lba_written"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -2226,7 +2256,7 @@
     state_topic: "m6800/smart/860pro_512gb_power_on_hours"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -2267,7 +2297,7 @@
     state_topic: "m6800/smart/840evo_500gb_lba_written"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | float * 512 / 1024 / 1024 / 1024 ) |round(1) }}"
     unit_of_measurement: 'Gb'
     icon: mdi:chip
@@ -2308,7 +2338,7 @@
     state_topic: "m6800/smart/840evo_500gb_power_on_hours"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ ( value | int) }}"
     unit_of_measurement: 'h'
     icon: mdi:timer
@@ -2318,7 +2348,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[6].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:harddisk
@@ -2328,7 +2358,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[7].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -2338,7 +2368,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[7].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon:  mdi:chip
@@ -2348,7 +2378,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -2358,7 +2388,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[4].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:harddisk
@@ -2368,7 +2398,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[5].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -2378,7 +2408,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[5].Children[1].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon:  mdi:chip
@@ -2388,7 +2418,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[1].Children[4].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '°C'
     icon: mdi:thermometer
@@ -2398,7 +2428,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[2].Children[0].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%'
     icon: mdi:memory
@@ -2408,7 +2438,7 @@
     state_topic: "m6800/telemetry"
     qos: 0
     expire_after: 150
-    force_update: true
+    ##force_update: true
     value_template: "{{ value_json.Children[0].Children[1].Children[2].Children[0].Value.split(' ')[0].replace(',','.') | int }}"
     unit_of_measurement: '%' 
     icon: mdi:speedometer
