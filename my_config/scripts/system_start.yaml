@@ -1,19 +1,19 @@
   system_start:
     alias: System start script
     sequence:
-      - service: homeassistant.update_entity
-        entity_id: 
-          - sensor.nonsmoker
-          - binary_sensor.tod_night
-          - binary_sensor.tod_early_night
-          - binary_sensor.tod_morning
-          - binary_sensor.tod_day
-          - binary_sensor.tod_evening 
-          - binary_sensor.tod_day_long
-          - binary_sensor.tariff_t1 
-          - binary_sensor.tariff_t2
-          - binary_sensor.tod_full_day
-          - binary_sensor.tod_full_night
+      # - service: homeassistant.update_entity
+      #   entity_id: 
+      #     - sensor.nonsmoker
+      #     - binary_sensor.tod_night
+      #     - binary_sensor.tod_early_night
+      #     - binary_sensor.tod_morning
+      #     - binary_sensor.tod_day
+      #     - binary_sensor.tod_evening 
+      #     - binary_sensor.tod_day_long
+      #     - binary_sensor.tariff_t1 
+      #     - binary_sensor.tariff_t2
+      #     - binary_sensor.tod_full_day
+      #     - binary_sensor.tod_full_night
       - service_template: >
           script.toilet_timer_{{ states("switch.wall_switch_left_158d0002a36f7f") | lower }}
       - service_template: >
@@ -33,18 +33,17 @@
       - service: input_boolean.turn_on
         data:
           entity_id: input_boolean.weather_announcement_flag
-      - delay: 00:02:00
+      - service: device_tracker.see
+        data_template:
+          dev_id: sasha
+          location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
+      - delay: 00:00:30
       - service_template: >
           {% if is_state('binary_sensor.hood_k','off') %}
             script.kitchen_vent_open
           {%else%}
             script.kitchen_vent_close
           {%endif%}
-      - delay: '00:00:20'
-      - service: device_tracker.see
-        data_template:
-          dev_id: sasha
-          location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
       - service: homeassistant.update_entity
         entity_id: 
           - sensor.sda_life_left
