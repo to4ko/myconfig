@@ -341,8 +341,8 @@
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d000232481a, switch.plug_158d00028c9875, switch.plug_158d00028a54e4, switch.plug_158d0001e85086
-    - service: homeassistant.turn_on
-      entity_id: automation.kitchen_check_tv_box
+#    - service: homeassistant.turn_on
+#      entity_id: automation.kitchen_check_tv_box
 
 # ##################################
 # Kitchen - TV box Check
@@ -358,7 +358,7 @@
         entity_id: binary_sensor.tv_k
         state: 'off'
   action:
-    - delay: '00:00:40'
+    - delay: '00:01:00'
     - service: script.turn_on
       entity_id: script.tv_box_k_toggle
     - service: homeassistant.turn_off
@@ -370,20 +370,20 @@
 - alias: kitchen_tv_box_off_tv_off
   initial_state: 'on'
   trigger:
-    platform: state
-    entity_id: binary_sensor.tv_k
-    to: 'off'
-    from: 'on'
-    for:
-      minutes: 5
+    - platform: time_pattern
+      minutes: '/1'
   condition:
       - condition: state
         entity_id: binary_sensor.tv_box
         state: 'on'
+      - condition: state
+        entity_id: binary_sensor.tv_k
+        state: 'off'
+        for:
+          minutes: 1
   action:
     - service: script.turn_on
       entity_id: script.tv_box_k_toggle
-
 
 # ##################################
 # Kitchen - Weather announcement
@@ -405,9 +405,8 @@
       - condition: time
         after: '07:20:00'
         before: '07:30:00'
-      - condition: state
-        entity_id: input_boolean.weather_announcement_flag
-        state: 'off'
+      - condition: template
+        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_weather_announcement', 'last_triggered')))|int(0) > 601 }}"
   action:
     - service: input_boolean.turn_on
       data:
@@ -417,8 +416,7 @@
         entity_id: media_player.home_mini_k
         volume_level: '0.3'
     #- service: script.weather_telegram
-    
-    
+
 # ##################################
 # Kitchen - Smoke Detected
 # ##################################

@@ -109,3 +109,19 @@
           data:
             photo:
             - file: /config/www/cam_captures/hall.jpg
+
+  hall_video:
+    alias: Video - Hall
+    sequence:
+    - service: camera.record
+      data_template:
+        entity_id: camera.uvc_g3_flex_hall
+        filename: "/config/www/cam_captures/hall.mp4"
+        duration: 5
+    - delay: 00:00:10
+    - service: telegram_bot.send_video
+      data_template:
+        target:
+         - !secret tel_chat_id
+        file: "/config/www/cam_captures/hall.mp4"
+        caption: "Видео сделано в - {{ states('sensor.time_date') }}"
