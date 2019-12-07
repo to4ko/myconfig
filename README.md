@@ -6,8 +6,8 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) [You a
 
 
 Main Server: 
-  - Dual E5-2630l v2
-  - 2gb ECC DDR3 RAM
+  - Dual E5-1660
+  - 64gb ECC DDR3 RAM
   - 128Gb Boot SSD
   - 256Gb Raid1 NVME as Root drive
   - 256Gb NVME for DB
