@@ -6,10 +6,10 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) [You a
 
 
 Main Server: 
-  - Xeon E5-1660
-  - 64gb ECC DDR3 RAM
+  - Xeon E5-2620v3
+  - 64gb ECC DDR4 RAM
   - 128Gb Boot SSD
-  - 256Gb Raid1 NVME as Root drive
+  - 256Gb NVME Raid1 as Root drive
   - 256Gb NVME for DB
   - Oracle F20 card
   - 7ea WD RED 2Tb (NAS section)

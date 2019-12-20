@@ -731,4 +731,64 @@
         message: "{{ '\U0000274C' }} Перезапуск отменён. Конфигурация содержит ошибки."
     - service: persistent_notification.dismiss
       data:
-        notification_id: homeassistant_check_confi         
+        notification_id: homeassistant_check_config
+        
+# ##################################
+# System - TOD check
+# ##################################
+- alias: system_tod_check
+  initial_state: 'on'
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"
+    - platform: state
+      entity_id: binary_sensor.tod_day
+    - platform: state
+      entity_id: binary_sensor.tod_night
+  condition:
+    condition: or
+    conditions:
+      - condition: template
+        value_template: "{{ is_state('binary_sensor.tod_day','off') and ((now().hour | int) >= 7 and (now().hour | int) < 21 ) }}"
+      - condition: template
+        value_template: "{{ is_state('binary_sensor.tod_day','on') and ((now().hour | int) >= 21 or (now().hour | int) < 7 ) }}"
+      - condition: template
+        value_template: "{{ is_state('binary_sensor.tod_night','off') and ((now().hour | int) >= 21 or (now().hour | int) < 7 ) }}"
+      - condition: template
+        value_template: "{{ is_state('binary_sensor.tod_night','on') and ((now().hour | int) >= 7 and (now().hour | int) < 21 ) }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {% if (is_state('binary_sensor.tod_day','off') and ((now().hour | int) >= 7 and (now().hour | int) < 21 )) or (is_state('binary_sensor.tod_day','on') and ((now().hour | int) >= 21 or (now().hour | int) < 7 )) %} {{'\U000023f2'}} Внимание! Не верный TOD Day! (state {{states('binary_sensor.tod_day') }})"
+          {% elif (is_state('binary_sensor.tod_night','off') and ((now().hour | int) >= 21 or (now().hour | int) < 7 )) or (is_state('binary_sensor.tod_night','on') and ((now().hour | int) >= 7 and (now().hour | int) < 21 )) %} {{'\U000023f2'}} Внимание! Не верный TOD Night! (state {{states('binary_sensor.tod_night') }})"
+          {%endif%}
+    - service: homeassistant.update_entity
+      entity_id:
+        - binary_sensor.tod_day
+        - binary_sensor.tod_night
+    - service: notify.telegram
+      data_template:
+        message: >
+          {% if 
+          (is_state('binary_sensor.tod_day','on') and ((now().hour | int) >= 7 and (now().hour | int) < 21 ))
+          or (is_state('binary_sensor.tod_day','off') and ((now().hour | int) >= 21 or (now().hour | int) < 7 )) 
+          and (is_state('binary_sensor.tod_night','on') and ((now().hour | int) >= 21 or (now().hour | int) < 7 ))
+          or (is_state('binary_sensor.tod_night','off') and ((now().hour | int) >= 7 and (now().hour | int) < 21 )) %} {{'\U000023f2'}} Исправлено!  (day {{states('binary_sensor.tod_day') }} \ night {{states('binary_sensor.tod_night') }} )"
+          {%else%} {{'\U000023f2'}} Не исправлено!  (day {{states('binary_sensor.tod_day') }} \ night {{states('binary_sensor.tod_night') }} )"
+          {%endif%}
+
+# ##################################
+# System - Vova GPS Delta
+# ##################################
+- alias: system_gps_vova_delta
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: device_tracker.life360_vova_tsymbal
+  action:
+    - service: input_number.set_value
+      data_template:
+          entity_id: input_number.vova_gps_delta
+          value: "{{ ((as_timestamp(trigger.to_state.attributes.last_seen)|float - as_timestamp(trigger.from_state.attributes.last_seen)|float)/60)|round(2) }}"
+
