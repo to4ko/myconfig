@@ -51,8 +51,10 @@ views:
             #title: Presence
             show_name: true
             show_state: true
-            columns: 5
+            columns: 6
             entities:
+              - entity: binary_sensor.tod_status
+                name: TOD
               - entity: sensor.temperature_158d0001e8995a
                 name: Temp
               - person.dima
@@ -87,7 +89,7 @@ views:
                 #title: Sytem Status
                 columns: 6
                 entities:
-                  - entity: sensor.cpu1_package_temp
+                  - entity: sensor.cpu_package_temp
                     name: CPUT
                   - entity: sensor.ipmi_fan1
                     name: FAN1
@@ -502,11 +504,6 @@ views:
                 icon: mdi:circle
                 tap_action:
                   action: toggle
-              # - entity: light.bedside_mb
-              #   name: Bed MB
-              #   icon: mdi:lava-lamp
-              #   tap_action:
-              #     action: toggle
               - entity: light.philips_e27_mb
                 name: Desk MB
                 icon: mdi:desk-lamp
@@ -521,6 +518,11 @@ views:
                   action: toggle
               - entity: light.philips_e27_s
                 name: Desk S
+                icon: mdi:desk-lamp
+                tap_action:
+                  action: toggle
+              - entity: light.led_color_k
+                name: Desk 2 S
                 icon: mdi:desk-lamp
                 tap_action:
                   action: toggle
@@ -562,9 +564,9 @@ views:
                 icon: mdi:candle
                 tap_action:
                   action: toggle
-              - entity: light.led_color_k
-                name: Desk K
-                icon: mdi:desk-lamp
+              - entity: light.bedside_mb
+                name: Lava K
+                icon: mdi:lava-lamp
                 tap_action:
                   action: toggle
               - entity: switch.wall_switch_left_158d0002a365df
@@ -766,7 +768,7 @@ views:
             show_state: false
             columns: 7
             entities:
-              - entity: switch.gateway_plug_entrance_hb_test
+              - entity: switch.gateway_plug_entrance_hb
                 name: HBe
                 tap_action:
                   action: toggle
@@ -1065,6 +1067,8 @@ views:
           - switch.wall_switch_left_158d0002a36433
           - light.philips_e27_s
           - light.gateway_light_7811dcb8d612
+          - entity: light.led_color_k
+            name: Desk Color S
           - type: divider
           - fan.humidifier2
           - switch.plug_158d00023a657a
@@ -1082,7 +1086,6 @@ views:
         entities:
           - switch.wall_switch_right_158d0002a36f7f
           - switch.plug_158d000216528c
-          - light.led_color_k
           - switch.d1_hood_light
           - switch.wall_switch_right_158d0002a365df
           - switch.wall_switch_left_158d0002a365df
@@ -2403,23 +2406,26 @@ views:
 
               - type: glance
                 #title: Ubuntu Status
-                columns: 7
+                columns: 8
                 entities:
                   - entity: sensor.ssd_usage
                     icon: mdi:chip
-                    name: NVME
-                  - entity: sensor.nvme2_usage
+                    name: "/"
+                  - entity: sensor.nvme_db_usage
                     icon: mdi:chip
-                    name: NVME2
+                    name: DB
                   - entity: sensor.840pro_usage
                     icon: mdi:chip
                     name: 840ro
                   - entity: sensor.video_usage
                     icon: mdi:harddisk
-                    name: Surveillance
-                  - entity: sensor.media_usage
+                    name: V
+                  - entity: sensor.media1_usage
                     icon: mdi:harddisk
-                    name: Media
+                    name: M1
+                  - entity: sensor.media2_usage
+                    icon: mdi:harddisk
+                    name: M2
                   - entity: sensor.back_2tb_usage
                     icon: mdi:harddisk
                     name: Back_2Tb
@@ -2584,10 +2590,10 @@ views:
                 name: NVME1 1h
               - entity: sensor.nvme2_write_change_1h
                 name: NVME2 1h
-              - entity: sensor.sda_write_change_1h
-                name: sda 1h
-              - entity: sensor.sdb_write_change_1h
-                name: sdb 1h
+              - entity: sensor.boot_write_change_1h
+                name: boot 1h
+              - entity: sensor.840pro_write_change_1h
+                name: 840pro 1h
 
           - type: custom:bar-card
             title_position: top
@@ -2644,6 +2650,50 @@ views:
                   - sensor.ipmi_cpu_temp
                   - sensor.ipmi_pch_temp
                   - sensor.ipmi_system_temp
+              - type: custom:bar-card
+                title_position: top
+                columns: 4
+                height: 25px
+                min: 20
+                max: 100
+                severity:
+                  - value: 40
+                    color: '#40bf40'
+                  - value: 50
+                    color: '#bf9540'
+                  - value: 60
+                    color: '#bf4040'
+                  - value: 70
+                    color: '#ff0000'
+                padding: 2px
+                direction: right
+                entities:
+                  - sensor.ipmi_peripheral_temp
+                  - sensor.ipmi_vcpuvrm_temp
+                  - sensor.ipmi_vmemabvrm_temp
+                  - sensor.ipmi_vmemcdvrm_temp
+              - type: custom:bar-card
+                title_position: top
+                columns: 4
+                height: 25px
+                min: 20
+                max: 100
+                severity:
+                  - value: 40
+                    color: '#40bf40'
+                  - value: 50
+                    color: '#bf9540'
+                  - value: 60
+                    color: '#bf4040'
+                  - value: 70
+                    color: '#ff0000'
+                padding: 2px
+                direction: right
+                entities:
+                  - sensor.ipmi_dimma1_temp
+                  - sensor.ipmi_dimmb1_temp
+                  - sensor.ipmi_dimmc1_temp
+                  - sensor.ipmi_dimmd1_temp
 
               - type: glance
                 #title: Ubuntu Status
@@ -2678,7 +2728,7 @@ views:
                   - value: 1500
                     color: '#40bf40'
                   - value: 3500
-                    color: '#ff0000'
+                    color: '#bf4040'
                 padding: 2px
                 direction: right
                 entities:
@@ -2699,10 +2749,6 @@ views:
                     name: FAN5
                   - entity: sensor.ipmi_fana
                     name: FANA
-              - type: glance
-                entities:
-                  - sensor.md0_disk1_template
-                  - sensor.md0_disk2_template
           # - type: glance
           #   columns: 3
           #   entities:
@@ -2734,14 +2780,14 @@ views:
       - type: vertical-stack
         cards:
           - type: glance
-            columns: 3
+            columns: 4
             entities:
               - entity: sensor.md0_status
                 name: md0
+              - sensor.md0_disk1_template
+              - sensor.md0_disk2_template
               - entity: sensor.md1_status
                 name: md1
-              - entity: sensor.md2_status
-                name: md2
           - type: glance
             columns: 6
             entities:
@@ -2787,57 +2833,56 @@ views:
                 name: Per Hour
               - entity: sensor.nvme2_life_left
                 name: Left
-              # sda
-              - entity: sensor.sda_tb_written
-                name: sda
+              # boot
+              - entity: sensor.boot_tb_written
+                name: boot
                 icon: mdi:raspberry-pi
-              - entity: sensor.sda_session_read
+              - entity: sensor.boot_session_read
                 name: R Session
-              - entity: sensor.sda_session_write
+              - entity: sensor.boot_session_write
                 name: W Session
-              - entity: sensor.sda_gb_per_day
+              - entity: sensor.boot_gb_per_day
                 name: Per Day
-              - entity: sensor.sda_gb_per_hour
+              - entity: sensor.boot_gb_per_hour
                 name: Per Hour
-              - entity: sensor.sda_life_left
+              - entity: sensor.boot_life_left
                 name: Left
-              # sdb
-              - entity: sensor.sdb_tb_written
-                name: sdb
+              # 840pro
+              - entity: sensor.840pro_tb_written
+                name: 840pro
                 icon: mdi:raspberry-pi
-              - entity: sensor.sdb_session_read
+              - entity: sensor.840pro_session_read
                 name: R Session
-              - entity: sensor.sdb_session_write
+              - entity: sensor.840pro_session_write
                 name: W Session
-              - entity: sensor.sdb_gb_per_day
+              - entity: sensor.840pro_gb_per_day
                 name: Per Day
-              - entity: sensor.sdb_gb_per_hour
+              - entity: sensor.840pro_gb_per_hour
                 name: Per Hour
-              - entity: sensor.sdb_life_left
+              - entity: sensor.840pro_life_left
                 name: Left
 
           - type: glance
-            columns: 3
+            columns: 4
             entities:
               - entity: sensor.md0_session_read
                 name: md0 R
-              - entity: sensor.md1_session_read
-                name: md1 R
-              - entity: sensor.md2_session_read
-                name: md2 R
+              - entity: sensor.md0_session_write
+                name: md0 W
+              #- entity: sensor.md2_session_read
+              #  name: md2 R
               # - entity: sensor.md3_session_read
               #   name: md3 R
               # - entity: sensor.md4_session_read
               #   name: md4 R
               # - entity: sensor.md5_session_read
               #   name: md5 R
-
-              - entity: sensor.md0_session_write
-                name: md0 W
+              - entity: sensor.md1_session_read
+                name: md1 R
               - entity: sensor.md1_session_write
                 name: md1 W
-              - entity: sensor.md2_session_write
-                name: md2 W
+              #- entity: sensor.md2_session_write
+              #  name: md2 W
               # - entity: sensor.md3_session_write
               #   name: md3 W
               # - entity: sensor.md4_session_write
@@ -2848,7 +2893,7 @@ views:
       - type: vertical-stack
         cards:
           - type: glance
-            columns: 3
+            columns: 5
             entities:
               # nvme0
               - entity: sensor.nvme0_temp
@@ -2873,110 +2918,104 @@ views:
               # - entity: sensor.nvme2_session_write
               #   name: Write
 
+              # boot
+              - entity: sensor.boot_temp
+                name: boot
+              # - entity: sensor.sda_session_read
+              #   name: Read
+              # - entity: sensor.sda_session_write
+              #   name: Write
+              # 840pro
+              - entity: sensor.840pro_temp
+                name: 840pro
+              # - entity: sensor.sdb_session_read
+              #   name: Read
+              # - entity: sensor.sdb_session_write
+              #   name: Write
           - type: glance
-            columns: 6
-            entities:    
-              # sda
-              - entity: sensor.sda_temp
-                name: sda
-              - entity: sensor.sda_session_read
-                name: Read
-              - entity: sensor.sda_session_write
-                name: Write
-              # sdb
-              - entity: sensor.sdb_temp
-                name: sdb
-              - entity: sensor.sdb_session_read
-                name: Read
-              - entity: sensor.sdb_session_write
-                name: Write
-          - type: glance
-            columns: 6
+            columns: 4
             entities:    
               # sdc
-              - entity: sensor.sdc_temp
-                name: sdc
-              - entity: sensor.sdc_session_read
-                name: Read
-              - entity: sensor.sdc_session_write
-                name: Write
+              - entity: sensor.media1_temp
+                name: Media1
+              # - entity: sensor.sdc_session_read
+              #   name: Read
+              # - entity: sensor.sdc_session_write
+              #   name: Write
               # sdd
-              - entity: sensor.sdd_temp
-                name: sdd
-              - entity: sensor.sdd_session_read
-                name: Read
-              - entity: sensor.sdd_session_write
-                name: Write
+              - entity: sensor.media2_temp
+                name: Media2
+              # - entity: sensor.sdd_session_read
+              #   name: Read
+              # - entity: sensor.sdd_session_write
+              #   name: Write
                 
-          - type: glance
-            columns: 6
-            entities:
               # sde
-              - entity: sensor.sde_temp
-                name: sde
-              - entity: sensor.sde_session_read
-                name: Read
-              - entity: sensor.sde_session_write
-                name: Write
+              - entity: sensor.video_temp
+                name: Video
+              # - entity: sensor.sde_session_read
+              #   name: Read
+              # - entity: sensor.sde_session_write
+              #   name: Write
               # sdm
-              - entity: sensor.sdm_temp
-                name: sdm
-              - entity: sensor.video_session_read
-                name: Read
-              - entity: sensor.video_session_write
-                name: Write
+              - entity: sensor.sdi_temp
+                name: Temp
+              # - entity: sensor.video_session_read
+              #   name: Read
+              # - entity: sensor.video_session_write
+              #   name: Write
           - type: glance
-            columns: 6
+            columns: 4
             entities:
               # sdf
+              - entity: sensor.sda_temp
+                name: sda
+              # - entity: sensor.sdf_session_read
+              #   name: Read
+              # - entity: sensor.sdf_session_write
+              #   name: Write
+              # sdg
+              - entity: sensor.sdb_temp
+                name: sdb
+              # - entity: sensor.sdg_session_read
+              #   name: Read
+              # - entity: sensor.sdg_session_write
+              #   name: Write
+              # sdh
+              - entity: sensor.sdc_temp
+                name: sdc
+              # - entity: sensor.sdh_session_read
+              #   name: Read
+              # - entity: sensor.sdh_session_write
+              #   name: Write
+              # sdi
+              - entity: sensor.sdd_temp
+                name: sdd
+              # - entity: sensor.sdi_session_read
+              #   name: Read
+              # - entity: sensor.sdi_session_write
+              #   name: Write
+              # sdj
               - entity: sensor.sdf_temp
                 name: sdf
-              - entity: sensor.sdf_session_read
-                name: Read
-              - entity: sensor.sdf_session_write
-                name: Write
-              # sdg
+              # - entity: sensor.sdj_session_read
+              #   name: Read
+              # - entity: sensor.sdj_session_write
+              #   name: Write
+              # sdk
               - entity: sensor.sdg_temp
                 name: sdg
-              - entity: sensor.sdg_session_read
-                name: Read
-              - entity: sensor.sdg_session_write
-                name: Write
-              # sdh
+              # - entity: sensor.sdk_session_read
+              #   name: Read
+              # - entity: sensor.sdk_session_write
+              #   name: Write
+              # sdl
               - entity: sensor.sdh_temp
                 name: sdh
-              - entity: sensor.sdh_session_read
-                name: Read
-              - entity: sensor.sdh_session_write
-                name: Write
-              # sdi
-              - entity: sensor.sdi_temp
-                name: sdi
-              - entity: sensor.sdi_session_read
-                name: Read
-              - entity: sensor.sdi_session_write
-                name: Write
-              # sdj
-              - entity: sensor.sdj_temp
-                name: sdj
-              - entity: sensor.sdj_session_read
-                name: Read
-              - entity: sensor.sdj_session_write
-                name: Write
-              # sdk
-              - entity: sensor.sdk_temp
-                name: sdk
-              - entity: sensor.sdk_session_read
-                name: Read
-              - entity: sensor.sdk_session_write
-                name: Write
-              # sdl
-              - entity: sensor.sdl_temp
-                name: sdl
-              - entity: sensor.sdl_session_read
-                name: Read
-              - entity: sensor.sdl_session_write
-                name: Write
+              # - entity: sensor.sdl_session_read
+              #   name: Read
+              # - entity: sensor.sdl_session_write
+              #   name: Write
 
           # - type: glance
           #   columns: 3
@@ -3150,7 +3189,7 @@ views:
             entities:
               - sensor.ubuntu_telemetry_last_update
               - sensor.ubuntu_uptime
-              - sensor.cpu1_package_temp
+              - sensor.cpu_package_temp
               - sensor.cpu_usage
               - sensor.ram_usage
               - sensor.ssd_usage
@@ -3222,12 +3261,12 @@ views:
             entities:
               - sensor.5490_telemetry_last_update
               - sensor.5490_uptime
-              - sensor.5490_cpu_temperature
-              - sensor.5490_cpu_load
-              - sensor.5490_memory_usage
-              - sensor.5490_sc401_temperature
-              - sensor.5490_sc401_usage
-              - sensor.5490_sc401_calc_life_left
+              # - sensor.5490_cpu_temperature
+              # - sensor.5490_cpu_load
+              # - sensor.5490_memory_usage
+              # - sensor.5490_sc401_temperature
+              # - sensor.5490_sc401_usage
+              # - sensor.5490_sc401_calc_life_left
           - type: entities
             show_header_toggle: false
             title: R418

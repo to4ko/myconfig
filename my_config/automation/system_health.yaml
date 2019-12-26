@@ -6,10 +6,18 @@
   trigger:
     platform: numeric_state
     entity_id:
-      - sensor.ipmi_cpu1_temp
-      #- sensor.ipmi_cpu2_temp
-      - sensor.ipmi_tr1_temp
-      - sensor.ipmi_tr2_temp
+      - sensor.ipmi_cpu_temp
+      - sensor.ipmi_dimma1_temp
+      - sensor.ipmi_dimmb1_temp
+      - sensor.ipmi_dimmc1_temp
+      - sensor.ipmi_dimmd1_temp
+      - sensor.ipmi_peripheral_temp
+      - sensor.ipmi_vcpuvrm_temp
+      - sensor.ipmi_vmemabvrm_temp
+      - sensor.ipmi_vmemcdvrm_temp
+      - sensor.ipmi_cpu_temp
+      - sensor.ipmi_pch_temp
+      - sensor.ipmi_system_temp
     above: 60
     for:
       minutes: 3
@@ -45,7 +53,6 @@
       entity_id:
         - sensor.md0_status
         - sensor.md1_status
-        - sensor.md2_status
   action:
     - service: notify.telegram
       data_template:
@@ -59,15 +66,14 @@
   trigger:
     - platform: numeric_state
       entity_id:
+        - sensor.sda_temp
+        - sensor.sdb_temp
         - sensor.sdc_temp
         - sensor.sdd_temp
-        - sensor.sde_temp
         - sensor.sdf_temp
         - sensor.sdg_temp
         - sensor.sdh_temp
         - sensor.sdi_temp
-        - sensor.sdj_temp
-        - sensor.sdk_temp
         - sensor.sdl_temp
         - sensor.sdm_temp
       above: 40
@@ -87,8 +93,8 @@
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
-        - sensor.sda_temp
-        - sensor.sdb_temp
+        - sensor.boot_temp
+        - sensor.840pro_temp
       above: 50
       for:
         minutes: 3
@@ -108,8 +114,8 @@
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
-        - sensor.sda_temp
-        - sensor.sdb_temp
+        - sensor.boot_temp
+        - sensor.840pro_temp
       above: 55
       for:
         minutes: 3
@@ -129,8 +135,8 @@
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
-        - sensor.sda_temp
-        - sensor.sdb_temp
+        - sensor.boot_temp
+        - sensor.840pro_temp
       above: 60
       for:
         minutes: 1
@@ -139,8 +145,6 @@
       data_template:
         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >60°!"
 
-
-        
 # ##################################
 # System - Server Fans stats
 # ##################################
@@ -149,16 +153,87 @@
   trigger:
     - platform: numeric_state
       entity_id:
-        - sensor.ipmi_front_fan_1
-        - sensor.ipmi_front_fan_2
-        - sensor.ipmi_front_fan_3
-        - sensor.ipmi_front_fan_4
-        - sensor.ipmi_front_rear_1
-        - sensor.ipmi_front_rear_2
-        - sensor.ipmi_cpu_fan1
-        #- sensor.ipmi_cpu_fan2
-      below: 300
+        - sensor.ipmi_fan1
+        - sensor.ipmi_fan2
+        - sensor.ipmi_fan3
+        - sensor.ipmi_fan4
+        - sensor.ipmi_fan5
+        - sensor.ipmi_fana
+      below: 250
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} < 300об!"
+        message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} < 250об!"
+
+
+# ##################################
+# System - System Monitoring Update
+# ##################################
+- alias: system_health_monitoring_update
+  initial_state: 'on'
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+  action:
+    - service: homeassistant.update_entity
+      entity_id: 
+        - sensor.nvme0_calc_life_left
+        - sensor.nvme0_gb_per_day
+        - sensor.nvme0_gb_per_hour
+        - sensor.nvme0_life_left
+        - sensor.nvme0_power_on_hours
+        - sensor.nvme0_session_read
+        - sensor.nvme0_session_write
+        - sensor.nvme0_statistics
+        - sensor.nvme0_tb_written
+        - sensor.nvme0_temp
+        - sensor.nvme0_usage
+        - sensor.nvme0_write_change_1h
+        
+        - sensor.nvme1_gb_per_day
+        - sensor.nvme1_gb_per_hour
+        - sensor.nvme1_life_left
+        - sensor.nvme1_power_on_hours
+        - sensor.nvme1_session_read
+        - sensor.nvme1_session_write
+        - sensor.nvme1_statistics
+        - sensor.nvme1_tb_written
+        - sensor.nvme1_temp
+        - sensor.nvme1_usage
+        - sensor.nvme1_write_change_1h
+        
+        - sensor.nvme2_gb_per_day
+        - sensor.nvme2_gb_per_hour
+        - sensor.nvme2_life_left
+        - sensor.nvme2_power_on_hours
+        - sensor.nvme2_session_read
+        - sensor.nvme2_session_write
+        - sensor.nvme2_statistics
+        - sensor.nvme2_tb_written
+        - sensor.nvme2_temp
+        - sensor.nvme2_usage
+        - sensor.nvme2_write_change_1h
+        
+        - sensor.boot_gb_per_day
+        - sensor.boot_gb_per_hour
+        - sensor.boot_life_left
+        - sensor.boot_power_on_hours
+        - sensor.boot_session_read
+        - sensor.boot_session_write
+        - sensor.boot_statistics
+        - sensor.boot_tb_written
+        - sensor.boot_temp
+        - sensor.boot_write_change_1h
+        
+        - sensor.840pro_calc_life_left
+        - sensor.840pro_gb_per_day
+        - sensor.840pro_gb_per_hour
+        - sensor.840pro_life_left
+        - sensor.840pro_power_on_hours
+        - sensor.840pro_session_read
+        - sensor.840pro_session_write
+        - sensor.840pro_statistics
+        - sensor.840pro_tb_written
+        - sensor.840pro_temp
+        - sensor.840pro_usage
+        - sensor.840pro_write_change_1h
