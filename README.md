@@ -11,8 +11,8 @@ Main Server:
   - 128Gb Boot SSD
   - 256Gb NVME Raid1 as Root drive
   - 256Gb NVME for DB
-  - Oracle F20 card
-  - 7ea WD RED 2Tb (NAS section)
+  - Oracle F20 card (not in use)
+  - 7ea WD RED 2Tb (NAS section) in Linux Raid 6 via LSI 9207-8i(IT)
   - 1Tb WD Purple for cameras
   - 2ea WD Green as Torrent box
  
@@ -23,14 +23,18 @@ Network(500mb\s):
   - UAP-AC-AP-Lite (5ea)
   - Tp-Link "dumb" switch (2ea)
   
-Surveillance: Ubiquiti Video (running as service), Ubiquiti G3 Flex Cameras (4ea), Digma 100 (1ea) + Pinhole cam
+Surveillance: 
+  - Ubiquiti Video (running as service)
+  - Ubiquiti G3 Flex Cameras (4ea)
+  - Digma 100
+  - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 Smart Home:
   Xiaomi\Aqara:
   - Xiaomi Gateway (7ea)
-  - Yeelight 650
+  - Yeelight 650 (2ea)
   - Yeelight Pro 90W
-  - Yeelight Strip
+  - Yeelight LED Strip
   - Philips Xiaomi E27 Bulb (2ea)
   - Yeelight E27 Color Led Bulb v2 (2ea)
   - Aqara Wall Socket (12ea)
@@ -55,6 +59,8 @@ Smart Home:
   - Google Home Mini (5ea)
   
   ESPHome devices:
+  - Sonoff Basic
+  - Sonoff S26 Plug
   - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea 
   - Power Meter Based on NodeMCUv3
   - Domofon (Intercom helper) on ESP32
@@ -63,11 +69,28 @@ Smart Home:
   - Reverse Osmos Water Filter resource counter based on Wemos D1 mini and cheap flow meters.
       
 
-Software: Ubuntu Server 18.04 LTS, Hass.Io in Docker
+Software:
+  - Ubuntu Server 18.04 LTS
+  - Hass.Io in Docker
 
-DB used: PostgreSQL 12 installed on host as well as InfluxDB 1.7.9
+DB used:
+  - PostgreSQL 12
+  - InfluxDB 1.7.9
 
-Add-On (all in Docker): AirCast, Configurator, Custom deps deployment, Dropbox Sync, ESPhome, Grafana, Hass.io Google Drive Backup, IDE, Log Viewer, Mosquitto BrockerPortainer, RPC shutdown
+Add-On's: 
+  - AirCast
+  - Configurator
+  - Custom deps deployment
+  - Dropbox Sync
+  - ESPhome
+  - Grafana
+  - Hass.io Google Drive Backup
+  - IDE
+  - Log Viewer
+  - Mosquitto Brocker
+  - Portainer
+  - RPC shutdown
+  - zigbee2mqtt
 
 
   Scripts:

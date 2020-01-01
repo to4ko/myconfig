@@ -3,72 +3,65 @@
 # SASHA
 #
 # #####################################################################################
-# Sasha Table Lamp (Philips E27) - On
+# Sasha Table Lamp (Philips E27)
 # ##################################
 - alias: sasha_table_lamp_on_if_lamp_off
   initial_state: 'on'
   trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001f3627d
+        click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.wall_switch_right_158d0003fa6077
+        click_type: single
+  action:
+    - service: light.toggle
+      entity_id: light.philips_e27_s
+
+# ##################################        
+# Sasha Main Lamp (Xiaomi Round LED) - On
+# ##################################
+- alias: sasha_main_lamp_on_if_lamp_off
+  initial_state: 'on'
+  trigger:
     platform: event
     event_type: xiaomi_aqara.click
     event_data:
-      entity_id: binary_sensor.switch_158d0001f3627d
+      entity_id: binary_sensor.wall_switch_left_158d0003fa6077
       click_type: single
   condition:
     condition: state
-    entity_id: light.philips_e27_s
+    entity_id: light.round_led_s
     state: 'off'    
   action:
-  - service: switch.turn_on
-    entity_id: switch.wall_switch_right_158d0002a36433
-   
+  - service: light.turn_on
+    entity_id: light.round_led_s
+    data_template:
+      brightness_pct: 95
+      kelvin: 5000
+      
 # ##################################
-# Sasha Table Lamp (Philips E27) - On with wall switch
+# Sasha Main Lamp (Xiaomi Round LED) - Off
 # ##################################
-- alias: sasha_lamp_on_if_lamp_off_with_wall
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: switch.wall_switch_right_158d0002a36433
-    to: 'on'
-  action:
-    - service: light.turn_on
-      entity_id: light.philips_e27_s
-    - service: automation.turn_on
-      entity_id: automation.sasha_night_auto_off_10m, automation.sasha_auto_nightlight_on
-
-# ##################################
-# Sasha Table Lamp (Philips E27) - Off
-# ##################################
-- alias: sasha_table_lamp_off_if_lamp_on
+- alias: sasha_main_lamp_off_if_lamp_on
   initial_state: 'on'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
     event_data:
-      entity_id: binary_sensor.switch_158d0001f3627d
+      entity_id: binary_sensor.wall_switch_left_158d0003fa6077
       click_type: single
   condition:
     condition: state
-    entity_id: light.philips_e27_s
+    entity_id: light.round_led_s
     state: 'on'    
   action:
-    - service: switch.turn_off
-      entity_id: switch.wall_switch_right_158d0002a36433
-    - service: automation.turn_on
-      entity_id: automation.sasha_night_auto_off_10m, automation.sasha_auto_nightlight_on
- 
-# ##################################
-# Sasha Table Lamp (Philips E27) - Off with wall switch
-# ##################################
-- alias: sasha_lamp_off_if_lamp_on_with_wall
-  initial_state: 'on'
-  trigger:
-    platform: state
-    entity_id: switch.wall_switch_right_158d0002a36433
-    to: 'off'   
-  action:
   - service: light.turn_off
-    entity_id: light.philips_e27_s
+    entity_id: light.round_led_s
 
 # ##################################
 # Sasha Table Lamp (Philips E27) - Switch to Bright
@@ -86,9 +79,7 @@
       entity_id: light.philips_e27_s
       data:
          scene: 1
-    - service: automation.turn_off
-      entity_id: automation.sasha_night_auto_off_10m, automation.sasha_auto_nightlight_on
-      
+
 # ##################################
 # Sasha Table Lamp (Philips E27) - Switch to Mid-Night
 # ##################################
@@ -105,11 +96,9 @@
       entity_id: light.philips_e27_s
       data:
         scene: 4
-    - service: automation.turn_on
-      entity_id: automation.sasha_night_auto_off_10m, automation.sasha_auto_nightlight_on
-  
+
 # ##################################
-# Sasha - Auto Night Light On
+# Sasha - Auto Night Light\Humidifier On
 # ##################################
 - alias: sasha_auto_nightlight_on
   initial_state: 'on'
@@ -141,11 +130,20 @@
       entity_id: light.philips_e27_s
       data:
           scene: 4
+    - condition: numeric_state
+      entity_id: sensor.humidifier_water_level
+      above: 10
+    - service: fan.turn_on
+      entity_id: fan.humidifier2
+    - service: fan.set_speed
+      data:
+        speed: high
+        entity_id: fan.humidifier2
 
 # ##################################
-# Sasha - Auto Night Light Off 10m without movements
+# Sasha - Auto Night Light Off 30m without movements
 # ##################################
-- alias: sasha_night_auto_off_10m
+- alias: sasha_night_auto_off_30m
   initial_state: 'on'
   trigger:
     - platform: state
@@ -163,11 +161,11 @@
       entity_id: binary_sensor.tod_night
       state: 'on'
   action:
-    - service: switch.turn_off
-      entity_id: switch.wall_switch_right_158d0002a36433
     - service: light.turn_off
       entity_id: light.philips_e27_s
-        
+    - service: fan.turn_off
+      entity_id: fan.humidifier2
+
 # ##################################
 # Sasha - Night Light On
 # ##################################
@@ -184,8 +182,6 @@
       entity_id: binary_sensor.tod_night
       state: 'on'
   action:
-    - service: switch.turn_on
-      entity_id: switch.wall_switch_right_158d0002a36433
     - service: light.turn_on
       entity_id: light.gateway_light_7811dcb8d612
       data:
@@ -206,9 +202,7 @@
     - delay: '00:00:30'
     - service: light.turn_off
       entity_id: light.led_strip_hb, light.philips_e27_s, light.gateway_light_7811dcb8d612
-    - service: switch.turn_off
-      entity_id: switch.wall_switch_right_158d0002a36433
-      
+
 # ##################################
 # Sasha - Wall heater on
 # ##################################
@@ -362,6 +356,41 @@
   action:
     - service: script.turn_on
       entity_id: script.humidifier2_restart
+
+# ##################################
+# Sasha - Round LED Reset 
+# ##################################
+- alias: sasha_round_led_reset
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: light.round_led_s
+    to: 'unavailable'
+    for:
+      minutes: 5
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day_long
+      state: 'on'
+  action:
+    - service: script.turn_on
+      entity_id: script.round_led_s_restart
+
+# ##################################
+# Sasha - Round LED status check
+# ##################################
+- alias: Sasha_round_led_status_check
+  initial_state: 'on'
+  trigger:
+    platform: time
+    at: '07:00:01'
+  condition:
+    condition: state
+    entity_id: light.round_led_s
+    state: 'unavailable'
+  action:
+    - service: script.turn_on
+      entity_id: script.round_led_s_restart
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Humi2 restart done!"
+        message: "\U0001f6a8 Round LED S restart done(morning)!"
