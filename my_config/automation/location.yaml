@@ -1,4 +1,64 @@
 # ##################################
+# System - Vova GPS Delta
+# ##################################
+- alias: system_gps_vova_delta
+  initial_state: 'on'
+  trigger:
+    - platform: state
+      entity_id: device_tracker.life360_vova_tsymbal
+  condition:
+    condition: template
+    value_template: "{{states('person.vova') not in ['home','Home','Dima Parents','Sasha Parents','Dacha']}}"
+  action:
+    - service: input_number.set_value
+      data_template:
+          entity_id: input_number.vova_gps_delta
+          value: "{{ ((as_timestamp(trigger.to_state.attributes.last_seen)|float - as_timestamp(trigger.from_state.attributes.last_seen)|float)/60)|round(2) }}"
+
+# ##################################
+# Location - Vova GPS Delta notify
+# ##################################
+- alias: location_system_gps_vova_delta_notify
+  initial_state: 'on'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.vova_gps_delta
+      above: 10
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f910 Внимание! Нет данных от Vova_GPS более 10 минут!"
+
+# ##################################
+# Location - life360 Overdue update
+# ##################################
+- alias: location_life360_overdue_update
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: life360_update_overdue
+  action:
+    service: notify.telegram
+    data_template:
+      title: Life360 update overdue
+      message: "\U0001f910 Внимание! Задержка апдейт для {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}}"
+
+# ##################################
+# Location - life360 Overdue update
+# ##################################
+- alias: location_life360_update_restored
+  initial_state: 'on'
+  trigger:
+    platform: event
+    event_type: life360_update_restored
+  action:
+    service: notify.telegram
+    data_template:
+      title: Life360 update restored
+      message: "\U0001f910 Внимание! Апдейт получен для {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}} спустя {{ trigger.event.data.wait }}."
+
+
+# ##################################
 # Location - Back to home Bus Notification
 # ################################## 
 - alias: location_back_to_home
