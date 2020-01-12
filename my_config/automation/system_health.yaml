@@ -2,7 +2,7 @@
 # System - Ubuntu server CPU temp >60
 # ##################################
 - alias: system_health_temp
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: numeric_state
     entity_id:
@@ -34,7 +34,7 @@
 # System - server root device
 # ##################################
 - alias: system_health_rdev
-  initial_state: 'off'
+  initial_state: 'false'
   trigger:
     - platform: template
       value_template: "{% if states('sensor.root_device') != '/dev/sda2' %}true{% endif %}"
@@ -47,12 +47,13 @@
 # System - MDADM status change
 # ##################################
 - alias: system_health_mdadm_monitor
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id:
         - sensor.md0_status
         - sensor.md1_status
+        - sensor.md2_status
   action:
     - service: notify.telegram
       data_template:
@@ -62,7 +63,7 @@
 # System - Server HDD Disks Temp
 # ##################################
 - alias: system_health_hdd_temp
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id:
@@ -73,9 +74,9 @@
         - sensor.sdf_temp
         - sensor.sdg_temp
         - sensor.sdh_temp
-        - sensor.sdi_temp
-        - sensor.sdl_temp
-        - sensor.sdm_temp
+        - sensor.media1_temp
+        - sensor.media2_temp
+        - sensor.temp_temp
       above: 40
   action:
     - service: notify.telegram
@@ -86,15 +87,18 @@
 # System - Server SSD Disks Temp
 # ##################################
 - alias: system_health_ssd_temp_50
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id:
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
+        - sensor.nvme3_temp
+        - sensor.nvme4_temp
         - sensor.boot_temp
-        - sensor.840pro_temp
+        - sensor.840pro_1_temp
+        - sensor.840pro_2_temp
       above: 50
       for:
         minutes: 3
@@ -107,15 +111,18 @@
 # System - Server SSD Disks Temp
 # ##################################
 - alias: system_health_ssd_temp_55
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id:
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
+        - sensor.nvme3_temp
+        - sensor.nvme4_temp
         - sensor.boot_temp
-        - sensor.840pro_temp
+        - sensor.840pro_1_temp
+        - sensor.840pro_2_temp
       above: 55
       for:
         minutes: 3
@@ -128,15 +135,18 @@
 # System - Server SSD Disks Temp
 # ##################################
 - alias: system_health_ssd_temp_60
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id:
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
+        - sensor.nvme3_temp
+        - sensor.nvme4_temp
         - sensor.boot_temp
-        - sensor.840pro_temp
+        - sensor.840pro_1_temp
+        - sensor.840pro_2_temp
       above: 60
       for:
         minutes: 1
@@ -149,7 +159,7 @@
 # System - Server Fans stats
 # ##################################
 - alias: system_health_fans
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id:
@@ -170,7 +180,7 @@
 # System - System Monitoring Update
 # ##################################
 - alias: system_health_monitoring_update
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: time_pattern
       minutes: "/30"
@@ -213,6 +223,30 @@
         - sensor.nvme2_temp
         - sensor.nvme2_usage
         - sensor.nvme2_write_change_1h
+
+        - sensor.nvme3_gb_per_day
+        - sensor.nvme3_gb_per_hour
+        - sensor.nvme3_life_left
+        - sensor.nvme3_power_on_hours
+        - sensor.nvme3_session_read
+        - sensor.nvme3_session_write
+        - sensor.nvme3_statistics
+        - sensor.nvme3_tb_written
+        - sensor.nvme3_temp
+        - sensor.nvme3_usage
+        - sensor.nvme3_write_change_1h
+
+        - sensor.nvme4_gb_per_day
+        - sensor.nvme4_gb_per_hour
+        - sensor.nvme4_life_left
+        - sensor.nvme4_power_on_hours
+        - sensor.nvme4_session_read
+        - sensor.nvme4_session_write
+        - sensor.nvme4_statistics
+        - sensor.nvme4_tb_written
+        - sensor.nvme4_temp
+        - sensor.nvme4_usage
+        - sensor.nvme4_write_change_1h
         
         - sensor.boot_gb_per_day
         - sensor.boot_gb_per_hour
@@ -225,15 +259,28 @@
         - sensor.boot_temp
         - sensor.boot_write_change_1h
         
-        - sensor.840pro_calc_life_left
-        - sensor.840pro_gb_per_day
-        - sensor.840pro_gb_per_hour
-        - sensor.840pro_life_left
-        - sensor.840pro_power_on_hours
-        - sensor.840pro_session_read
-        - sensor.840pro_session_write
-        - sensor.840pro_statistics
-        - sensor.840pro_tb_written
-        - sensor.840pro_temp
-        - sensor.840pro_usage
-        - sensor.840pro_write_change_1h
+        - sensor.840pro_1_calc_life_left
+        - sensor.840pro_1_gb_per_day
+        - sensor.840pro_1_gb_per_hour
+        - sensor.840pro_1_life_left
+        - sensor.840pro_1_power_on_hours
+        - sensor.840pro_1_session_read
+        - sensor.840pro_1_session_write
+        - sensor.840pro_1_statistics
+        - sensor.840pro_1_tb_written
+        - sensor.840pro_1_temp
+        - sensor.840pro_1_usage
+        - sensor.840pro_1_write_change_1h
+
+        - sensor.840pro_2_calc_life_left
+        - sensor.840pro_2_gb_per_day
+        - sensor.840pro_2_gb_per_hour
+        - sensor.840pro_2_life_left
+        - sensor.840pro_2_power_on_hours
+        - sensor.840pro_2_session_read
+        - sensor.840pro_2_session_write
+        - sensor.840pro_2_statistics
+        - sensor.840pro_2_tb_written
+        - sensor.840pro_2_temp
+        - sensor.840pro_2_usage
+        - sensor.840pro_2_write_change_1h

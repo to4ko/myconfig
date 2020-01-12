@@ -6,7 +6,7 @@
 # Sasha Table Lamp (Philips E27)
 # ##################################
 - alias: sasha_table_lamp_on_if_lamp_off
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -26,7 +26,7 @@
 # Sasha Main Lamp (Xiaomi Round LED) - On
 # ##################################
 - alias: sasha_main_lamp_on_if_lamp_off
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
@@ -48,7 +48,7 @@
 # Sasha Main Lamp (Xiaomi Round LED) - Off
 # ##################################
 - alias: sasha_main_lamp_off_if_lamp_on
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
@@ -67,7 +67,7 @@
 # Sasha Table Lamp (Philips E27) - Switch to Bright
 # ##################################
 - alias: sasha_table_lamp_bright
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
@@ -84,7 +84,7 @@
 # Sasha Table Lamp (Philips E27) - Switch to Mid-Night
 # ##################################
 - alias: sasha_table_lamp_night
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
@@ -101,7 +101,7 @@
 # Sasha - Auto Night Light\Humidifier On
 # ##################################
 - alias: sasha_auto_nightlight_on
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: event
       event_type: xiaomi_aqara.motion
@@ -132,7 +132,10 @@
           scene: 4
     - condition: numeric_state
       entity_id: sensor.humidifier_water_level
-      above: 10
+      above: 15
+    - condition: state
+      entity_id: input_boolean.humidifier2_auto_off
+      state: 'true'
     - service: fan.turn_on
       entity_id: fan.humidifier2
     - service: fan.set_speed
@@ -141,10 +144,24 @@
         entity_id: fan.humidifier2
 
 # ##################################
+# Sasha - Humidifier2 State Flag
+# ##################################
+- alias: sasha_humidifier2_flag
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: fan.humidifier2
+      to: 'on'
+  action:
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.humidifier2_auto_off
+
+# ##################################
 # Sasha - Auto Night Light Off 30m without movements
 # ##################################
 - alias: sasha_night_auto_off_30m
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: binary_sensor.motion_sensor_158d000224f89f
@@ -165,12 +182,15 @@
       entity_id: light.philips_e27_s
     - service: fan.turn_off
       entity_id: fan.humidifier2
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.humidifier2_auto_off
 
 # ##################################
 # Sasha - Night Light On
 # ##################################
 - alias: sasha_night_light_on
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
@@ -207,7 +227,7 @@
 # Sasha - Wall heater on
 # ##################################
 - alias: sasha_wall_heater_toggle_on
-  initial_state: 'off'
+  initial_state: 'false'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
@@ -229,7 +249,7 @@
 # Sasha - Wall heater off
 # ##################################
 - alias: sasha_wall_heater_toggle_off
-  initial_state: 'off'
+  initial_state: 'false'
   trigger:
     platform: event
     event_type: xiaomi_aqara.click
@@ -251,7 +271,7 @@
 # Sasha - Cube play 
 # ##################################
 - alias: sasha_play_night
-  initial_state: 'off'
+  initial_state: 'false'
   trigger:
     platform: event
     event_type: xiaomi_aqara.cube_action
@@ -287,7 +307,7 @@
 # Sasha - Cube stop
 # ##################################
 - alias: sasha_stop_night
-  initial_state: 'off'
+  initial_state: 'false'
   trigger:
     platform: event
     event_type: xiaomi_aqara.cube_action
@@ -323,7 +343,7 @@
 # Sasha - Humidifier 2 low water notify to Telegram
 # ##################################
 - alias: sasha_humidifier_water_low_water_cond
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: numeric_state
     entity_id: sensor.humidifier_water_level
@@ -346,7 +366,7 @@
 # Sasha - Humidifier2  Reset
 # ##################################
 - alias: sasha_humidifier_reset
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: state
     entity_id: fan.humidifier2
@@ -361,7 +381,7 @@
 # Sasha - Round LED Reset 
 # ##################################
 - alias: sasha_round_led_reset
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: state
     entity_id: light.round_led_s
@@ -380,7 +400,7 @@
 # Sasha - Round LED status check
 # ##################################
 - alias: Sasha_round_led_status_check
-  initial_state: 'on'
+  initial_state: 'true'
   trigger:
     platform: time
     at: '07:00:01'

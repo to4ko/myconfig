@@ -20,8 +20,26 @@
       minutes: 60
 
   - platform: statistics
-    entity_id: sensor.840pro_session_write
-    name: 840pro_statistics
+    entity_id: sensor.nvme3_session_write
+    name: nvme3_statistics
+    max_age:
+      minutes: 60
+      
+  - platform: statistics
+    entity_id: sensor.nvme4_session_write
+    name: nvme4_statistics
+    max_age:
+      minutes: 60
+      
+  - platform: statistics
+    entity_id: sensor.840pro_1_session_write
+    name: 840pro_1_statistics
+    max_age:
+      minutes: 60
+
+  - platform: statistics
+    entity_id: sensor.840pro_2_session_write
+    name: 840pro_2_statistics
     max_age:
       minutes: 60
 
@@ -42,12 +60,24 @@
       nvme2_write_change_1h:
         value_template: "{{ state_attr('sensor.nvme2_statistics','change') }}"
         unit_of_measurement: 'Gb'
+      nvme3_write_change_1h:
+        value_template: "{{ state_attr('sensor.nvme3_statistics','change') }}"
+        unit_of_measurement: 'Gb'
+      nvme4_write_change_1h:
+        value_template: "{{ state_attr('sensor.nvme4_statistics','change') }}"
+        unit_of_measurement: 'Gb'
+
       boot_write_change_1h:
         value_template: "{{ state_attr('sensor.boot_statistics','change') }}"
         unit_of_measurement: 'Gb'
-      840pro_write_change_1h:
-        value_template: "{{ state_attr('sensor.840pro_statistics','change') }}"
+
+      840pro_1_write_change_1h:
+        value_template: "{{ state_attr('sensor.840pro_1_statistics','change') }}"
         unit_of_measurement: 'Gb'
+      840pro_2_write_change_1h:
+        value_template: "{{ state_attr('sensor.840pro_2_statistics','change') }}"
+        unit_of_measurement: 'Gb'
+
 
   - platform: template
     sensors:
@@ -187,51 +217,104 @@
             {%endif%}
           {%endif%}
 
-      840pro_gb_per_hour:
+      840pro_1_gb_per_hour:
         friendly_name: sdb Gb per hour
         unit_of_measurement: Gb
-        entity_id: sensor.840pro_session_write
+        entity_id: sensor.840pro_1_session_write
         icon_template: mdi:clock
         value_template: >-
           {% set uptime = states('sensor.host_uptime') %}
           {% if uptime | float  > 0 %}
-          {{ (states('sensor.840pro_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
+          {{ (states('sensor.840pro_1_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
           {% else %}
-          {{states('sensor.840pro_session_write')|float | round(2)}}
+          {{states('sensor.840pro_1_session_write')|float | round(2)}}
           {% endif %}
-      840pro_gb_per_day:
+      840pro_1_gb_per_day:
         friendly_name: sdb Gb per day
         unit_of_measurement: Gb
         icon_template: mdi:calendar
-        entity_id: sensor.840pro_session_write
+        entity_id: sensor.840pro_1_session_write
         value_template: >-
-          {{ (states('sensor.840pro_gb_per_hour')|float *24) | round(2) }}
-      840pro_life_left:
+          {{ (states('sensor.840pro_1_gb_per_hour')|float *24) | round(2) }}
+      840pro_1_life_left:
         friendly_name: sdb Calculated life left
         unit_of_measurement: years
-        entity_id: sensor.840pro_session_write
+        entity_id: sensor.840pro_1_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
           {%set tbw = 150 %}
-          {%set per_day = states('sensor.840pro_gb_per_day')|float%}
-          {%set total = states('sensor.840pro_tb_written')|float%}
+          {%set per_day = states('sensor.840pro_1_gb_per_day')|float%}
+          {%set total = states('sensor.840pro_1_tb_written')|float%}
           {%if per_day == 0 %}
           {{ ((tbw-total)*1024/1/365)|round(2)  }}
           {%else%}
           {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
-      840pro_calc_life_left:
+      840pro_1_calc_life_left:
         friendly_name: 840pro Calculated Life Left
         unit_of_measurement: years
-        entity_id: sensor.840pro_tb_written, sensor.840pro_session_write, sensor.840pro_session_read, sensor.840pro_power_on_hours
+        entity_id: sensor.840pro_1_tb_written, sensor.840pro_1_session_write, sensor.840pro_1_session_read, sensor.840pro_1_power_on_hours
         icon_template: mdi:calendar-clock
         value_template: >-
-          {%if states('sensor.840pro_power_on_hours')|float(-9999) == -9999%}
+          {%if states('sensor.840pro_1_power_on_hours')|float(-9999) == -9999%}
           unknown
           {%else%}
             {%set tbw =  160%}
-            {%set per_day = (states('sensor.840pro_tb_written')|float / states('sensor.840pro_power_on_hours')|float)*24%}
-            {%set total = states('sensor.840pro_tb_written')|float%}
+            {%set per_day = (states('sensor.840pro_1_tb_written')|float / states('sensor.840pro_1_power_on_hours')|float)*24%}
+            {%set total = states('sensor.840pro_1_tb_written')|float%}
+
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
+          {%endif%}
+
+      840pro_2_gb_per_hour:
+        friendly_name: sdb Gb per hour
+        unit_of_measurement: Gb
+        entity_id: sensor.840pro_2_session_write
+        icon_template: mdi:clock
+        value_template: >-
+          {% set uptime = states('sensor.host_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (states('sensor.840pro_2_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
+          {% else %}
+          {{states('sensor.840pro_2_session_write')|float | round(2)}}
+          {% endif %}
+      840pro_2_gb_per_day:
+        friendly_name: sdb Gb per day
+        unit_of_measurement: Gb
+        icon_template: mdi:calendar
+        entity_id: sensor.840pro_2_session_write
+        value_template: >-
+          {{ (states('sensor.840pro_2_gb_per_hour')|float *24) | round(2) }}
+      840pro_2_life_left:
+        friendly_name: sdb Calculated life left
+        unit_of_measurement: years
+        entity_id: sensor.840pro_2_session_write
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw = 150 %}
+          {%set per_day = states('sensor.840pro_2_gb_per_day')|float%}
+          {%set total = states('sensor.840pro_2_tb_written')|float%}
+          {%if per_day == 0 %}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
+          {%else%}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
+          {%endif%}
+      840pro_2_calc_life_left:
+        friendly_name: 840pro Calculated Life Left
+        unit_of_measurement: years
+        entity_id: sensor.840pro_2_tb_written, sensor.840pro_2_session_write, sensor.840pro_2_session_read, sensor.840pro_2_power_on_hours
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%if states('sensor.840pro_2_power_on_hours')|float(-9999) == -9999%}
+          unknown
+          {%else%}
+            {%set tbw =  160%}
+            {%set per_day = (states('sensor.840pro_2_tb_written')|float / states('sensor.840pro_2_power_on_hours')|float)*24%}
+            {%set total = states('sensor.840pro_2_tb_written')|float%}
 
             {%if per_day == 0 %}
             {{ ((tbw-total)/1/365)|round(2)  }}
@@ -399,7 +482,113 @@
             {{ ((tbw-total)/per_day/365)|round(2)  }}
             {%endif%}
           {%endif%}
-        
+
+      nvme3_gb_per_hour:
+        friendly_name: NVME2 Gb per hour
+        unit_of_measurement: Gb
+        entity_id: sensor.nvme3_session_write
+        icon_template: mdi:clock
+        value_template: >-
+          {% set uptime = states('sensor.host_uptime')|float %}
+          {% if uptime > 0 %}
+          {{ (states('sensor.nvme3_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
+          {% else %}
+          {{states('sensor.nvme3_session_write')|float | round(2)}}
+          {% endif %}
+      nvme3_gb_per_day:
+        friendly_name: NVME2 Gb per day
+        unit_of_measurement: Gb
+        icon_template: mdi:calendar
+        entity_id: sensor.nvme3_session_write
+        value_template: >-
+          {{ (states('sensor.nvme3_gb_per_hour')|float *24) | round(2) }}
+      nvme3_life_left:
+        friendly_name: NVME2 Calculated life left
+        unit_of_measurement: years
+        entity_id: sensor.nvme3_session_write
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw = 160 %}
+          {%set per_day = states('sensor.nvme3_gb_per_day')|float%}
+          {%set total = states('sensor.nvme3_tb_written')|float%}
+          {%if per_day == 0 %}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
+          {%else%}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
+          {%endif%}
+      nvme3_calc_life_left:
+        friendly_name: nvme2 Calculated Life Left
+        unit_of_measurement: years
+        entity_id: sensor.nvme3_tb_written, sensor.nvme3_session_write, sensor.nvme3_session_read, sensor.nvme3_power_on_hours
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%if states('sensor.nvme3_power_on_hours')|float(-9999) == -9999%}
+          unknown
+          {%else%}
+            {%set tbw =  160%}
+            {%set per_day = (states('sensor.nvme3_tb_written')|float / states('sensor.nvme3_power_on_hours')|float)*24%}
+            {%set total = states('sensor.nvme3_tb_written')|float%}
+
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
+          {%endif%}
+
+      nvme4_gb_per_hour:
+        friendly_name: NVME2 Gb per hour
+        unit_of_measurement: Gb
+        entity_id: sensor.nvme4_session_write
+        icon_template: mdi:clock
+        value_template: >-
+          {% set uptime = states('sensor.host_uptime')|float %}
+          {% if uptime > 0 %}
+          {{ (states('sensor.nvme4_session_write')|float / states('sensor.host_uptime')|float)|round(2) }}
+          {% else %}
+          {{states('sensor.nvme4_session_write')|float | round(2)}}
+          {% endif %}
+      nvme4_gb_per_day:
+        friendly_name: NVME2 Gb per day
+        unit_of_measurement: Gb
+        icon_template: mdi:calendar
+        entity_id: sensor.nvme4_session_write
+        value_template: >-
+          {{ (states('sensor.nvme4_gb_per_hour')|float *24) | round(2) }}
+      nvme4_life_left:
+        friendly_name: NVME2 Calculated life left
+        unit_of_measurement: years
+        entity_id: sensor.nvme4_session_write
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw = 160 %}
+          {%set per_day = states('sensor.nvme4_gb_per_day')|float%}
+          {%set total = states('sensor.nvme4_tb_written')|float%}
+          {%if per_day == 0 %}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
+          {%else%}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
+          {%endif%}
+      nvme4_calc_life_left:
+        friendly_name: nvme2 Calculated Life Left
+        unit_of_measurement: years
+        entity_id: sensor.nvme4_tb_written, sensor.nvme4_session_write, sensor.nvme4_session_read, sensor.nvme4_power_on_hours
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%if states('sensor.nvme4_power_on_hours')|float(-9999) == -9999%}
+          unknown
+          {%else%}
+            {%set tbw =  160%}
+            {%set per_day = (states('sensor.nvme4_tb_written')|float / states('sensor.nvme4_power_on_hours')|float)*24%}
+            {%set total = states('sensor.nvme4_tb_written')|float%}
+
+            {%if per_day == 0 %}
+            {{ ((tbw-total)/1/365)|round(2)  }}
+            {%else%}
+            {{ ((tbw-total)/per_day/365)|round(2)  }}
+            {%endif%}
+          {%endif%}
+
 
 # ############################################################################
 # Hardware sensors Z9PA - Internal HA
@@ -829,7 +1018,7 @@
 
   - platform: mqtt
     name: "840pro Usage"
-    state_topic: "ubuntu/disk_usage/840pro"
+    state_topic: "ubuntu/disk_usage/md2"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     expire_after: 150
@@ -857,6 +1046,24 @@
   - platform: mqtt
     name: "NVME2 Usage"
     state_topic: "ubuntu/disk_usage/nvme2"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    expire_after: 150
+    icon: mdi:chip
+    force_update: true
+
+  - platform: mqtt
+    name: "NVME3 Usage"
+    state_topic: "ubuntu/disk_usage/nvme3"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    expire_after: 150
+    icon: mdi:chip
+    force_update: true
+
+  - platform: mqtt
+    name: "NVME4 Usage"
+    state_topic: "ubuntu/disk_usage/nvme4"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '%'
     expire_after: 150
@@ -920,7 +1127,7 @@
 # Hardware sensors (Ubuntu) - MQTT - Drives Temperature
 # ############################################################################
   - platform: mqtt
-    name: "NVME0 Temp"
+    name: NVME0 Temp
     state_topic: "ubuntu/disk_temp/nvme0"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
@@ -929,7 +1136,7 @@
     force_update: true
     
   - platform: mqtt
-    name: "NVME1 Temp"
+    name: NVME1 Temp
     state_topic: "ubuntu/disk_temp/nvme1"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
@@ -938,8 +1145,26 @@
     force_update: true
     
   - platform: mqtt
-    name: "NVME2 Temp"
+    name: NVME2 Temp"
     state_topic: "ubuntu/disk_temp/nvme2"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '°C'
+    expire_after: 150
+    icon: mdi:thermometer
+    force_update: true
+    
+  - platform: mqtt
+    name: NVME3 Temp
+    state_topic: "ubuntu/disk_temp/nvme3"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '°C'
+    expire_after: 150
+    icon: mdi:thermometer
+    force_update: true
+
+  - platform: mqtt
+    name: NVME4 Temp
+    state_topic: "ubuntu/disk_temp/nvme4"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     expire_after: 150
@@ -1019,8 +1244,8 @@
     force_update: true
 
   - platform: mqtt
-    name: "sdi Temp"
-    state_topic: "ubuntu/disk_temp/sdi"
+    name: Temp Temp
+    state_topic: "ubuntu/disk_temp/sdk"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     expire_after: 150
@@ -1028,7 +1253,7 @@
     force_update: true
 
   - platform: mqtt
-    name: "boot Temp"
+    name: boot Temp
     state_topic: "ubuntu/disk_temp/boot"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
@@ -1037,17 +1262,8 @@
     force_update: true
 
   - platform: mqtt
-    name: "840pro Temp"
-    state_topic: "ubuntu/disk_temp/840pro"
-    value_template: '{{ value | int | round(0) }}'
-    unit_of_measurement: '°C'
-    expire_after: 150
-    icon: mdi:thermometer
-    force_update: true
-    
-  - platform: mqtt
-    name: "Media1 Temp"
-    state_topic: "ubuntu/disk_temp/sdl"
+    name: 840pro_1 Temp
+    state_topic: "ubuntu/disk_temp/840pro_1"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     expire_after: 150
@@ -1055,8 +1271,27 @@
     force_update: true
 
   - platform: mqtt
-    name: "Media2 Temp"
-    state_topic: "ubuntu/disk_temp/sdm"
+    name: 840pro_2 Temp
+    state_topic: "ubuntu/disk_temp/840pro_2"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '°C'
+    expire_after: 150
+    icon: mdi:thermometer
+    force_update: true
+
+    
+  - platform: mqtt
+    name: Media1 Temp
+    state_topic: "ubuntu/disk_temp/sdi"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '°C'
+    expire_after: 150
+    icon: mdi:thermometer
+    force_update: true
+
+  - platform: mqtt
+    name: Media2 Temp
+    state_topic: "ubuntu/disk_temp/sdj"
     value_template: '{{ value | int | round(0) }}'
     unit_of_measurement: '°C'
     expire_after: 150
@@ -1067,7 +1302,7 @@
 # Hardware sensors (Ubuntu) - MQTT - SSD Drives Smart Data
 # ############################################################################
   - platform: mqtt
-    name: "NVME0 Tb Written"
+    name: NVME0 Tb Written
     state_topic: "ubuntu/ssd_smart/nvme0_lba_written"
     value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
@@ -1085,7 +1320,7 @@
     force_update: true
 
   - platform: mqtt
-    name: "NVME1 Tb Written"
+    name: NVME1 Tb Written
     state_topic: "ubuntu/ssd_smart/nvme1_lba_written"
     value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
@@ -1103,7 +1338,7 @@
     force_update: true
 
   - platform: mqtt
-    name: "NVME2 Tb Written"
+    name: NVME2 Tb Written
     state_topic: "ubuntu/ssd_smart/nvme2_lba_written"
     value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
@@ -1119,6 +1354,43 @@
     expire_after: 150
     icon: mdi:clock-alert-outline
     force_update: true
+
+  - platform: mqtt
+    name: NVME3 Tb Written
+    state_topic: "ubuntu/ssd_smart/nvme3_lba_written"
+    value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
+    unit_of_measurement: 'Tb'
+    expire_after: 150
+    icon: mdi:chip
+    force_update: true
+
+  - platform: mqtt
+    name: NVME3 Power On Hours
+    state_topic: "ubuntu/ssd_smart/nvme3_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
+    force_update: true
+
+  - platform: mqtt
+    name: NVME4 Tb Written
+    state_topic: "ubuntu/ssd_smart/nvme4_lba_written"
+    value_template: '{{ ( value | float * 512000 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
+    unit_of_measurement: 'Tb'
+    expire_after: 150
+    icon: mdi:chip
+    force_update: true
+
+  - platform: mqtt
+    name: NVME4 Power On Hours
+    state_topic: "ubuntu/ssd_smart/nvme4_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
+    force_update: true
+
 
   - platform: mqtt
     name: boot Tb Written
@@ -1139,8 +1411,8 @@
     force_update: true
 
   - platform: mqtt
-    name: 840pro Tb Written
-    state_topic: "ubuntu/ssd_smart/840pro_lba_written"
+    name: 840pro_1 Tb Written
+    state_topic: "ubuntu/ssd_smart/840pro_1_lba_written"
     value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
     unit_of_measurement: 'Tb'
     expire_after: 150
@@ -1148,13 +1420,32 @@
     force_update: true
 
   - platform: mqtt
-    name: 840pro Power On Hours
-    state_topic: "ubuntu/ssd_smart/840pro_power_on_hours"
+    name: 840pro_1 Power On Hours
+    state_topic: "ubuntu/ssd_smart/840pro_1_power_on_hours"
     value_template: '{{ value | int }}'
     unit_of_measurement: 'h'
     expire_after: 150
     icon: mdi:clock-alert-outline
     force_update: true
+
+  - platform: mqtt
+    name: 840pro_2 Tb Written
+    state_topic: "ubuntu/ssd_smart/840pro_2_lba_written"
+    value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
+    unit_of_measurement: 'Tb'
+    expire_after: 150
+    icon: mdi:chip
+    force_update: true
+
+  - platform: mqtt
+    name: 840pro_2 Power On Hours
+    state_topic: "ubuntu/ssd_smart/840pro_2_power_on_hours"
+    value_template: '{{ value | int }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:clock-alert-outline
+    force_update: true
+
 
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT - Drives Read\Write Stats
@@ -1214,6 +1505,42 @@
     force_update: true
 
   - platform: mqtt
+    name: NVME3 Session Write
+    state_topic: "ubuntu/disk_stat/nvme3_gb_write"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-w-box
+    force_update: true
+
+  - platform: mqtt
+    name: NVME3 Session Read
+    state_topic: "ubuntu/disk_stat/nvme3_gb_read"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-r-box
+    force_update: true
+
+  - platform: mqtt
+    name: NVME4 Session Write
+    state_topic: "ubuntu/disk_stat/nvme4_gb_write"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-w-box
+    force_update: true
+
+  - platform: mqtt
+    name: NVME4 Session Read
+    state_topic: "ubuntu/disk_stat/nvme4_gb_read"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-r-box
+    force_update: true
+
+  - platform: mqtt
     name: boot Session Write
     state_topic: "ubuntu/disk_stat/boot_gb_write"
     value_template: '{{ value| float | round(1) }}'
@@ -1232,8 +1559,8 @@
     force_update: true
     
   - platform: mqtt
-    name: 840pro Session Write
-    state_topic: "ubuntu/disk_stat/840pro_gb_write"
+    name: 840pro_1 Session Write
+    state_topic: "ubuntu/disk_stat/840pro_1_gb_write"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
     expire_after: 150
@@ -1241,13 +1568,32 @@
     force_update: true
     
   - platform: mqtt
-    name: 840pro Session Read
-    state_topic: "ubuntu/disk_stat/840pro_gb_read"
+    name: 840pro_1 Session Read
+    state_topic: "ubuntu/disk_stat/840pro_1_gb_read"
     value_template: '{{ value| float| round(1)}}'
     unit_of_measurement: Gb
     expire_after: 150
     icon: mdi:alpha-r-box
     force_update: true
+
+  - platform: mqtt
+    name: 840pro_2 Session Write
+    state_topic: "ubuntu/disk_stat/840pro_2_gb_write"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-w-box
+    force_update: true
+    
+  - platform: mqtt
+    name: 840pro_2 Session Read
+    state_topic: "ubuntu/disk_stat/840pro_2_gb_read"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-r-box
+    force_update: true
+
 
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT - Session States (Drives R\W)
@@ -1507,6 +1853,22 @@
     icon: mdi:alpha-r-box
 
   - platform: mqtt
+    name: md2 Session Write
+    state_topic: "ubuntu/disk_stat/md2_gb_write"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-w-box
+
+  - platform: mqtt
+    name: md2 Session Read
+    state_topic: "ubuntu/disk_stat/md2_gb_read"
+    value_template: '{{ value| float| round(1)}}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:alpha-r-box
+
+  - platform: mqtt
     name: Video Session Write
     state_topic: "ubuntu/disk_stat/video_gb_write"
     value_template: '{{ value| float| round(1)}}'
@@ -1634,6 +1996,10 @@
               mdi:numeric-1-box
           {%elif 'nvme2' in states.sensor.md0_disk1.state %}
               mdi:numeric-2-box
+          {%elif 'nvme3' in states.sensor.md0_disk1.state %}
+              mdi:numeric-3-box
+          {%elif 'nvme4' in states.sensor.md0_disk1.state %}
+              mdi:numeric-4-box
           {%else%}
               mdi:chip
           {%endif%}
@@ -1648,6 +2014,10 @@
               mdi:numeric-1-box
           {%elif 'nvme2' in states.sensor.md0_disk2.state %}
               mdi:numeric-2-box
+          {%elif 'nvme3' in states.sensor.md0_disk2.state %}
+              mdi:numeric-3-box
+          {%elif 'nvme4' in states.sensor.md0_disk2.state %}
+              mdi:numeric-4-box
           {%else%}
               mdi:chip
           {%endif%}
@@ -1659,7 +2029,6 @@
     expire_after: 300
     icon: mdi:chip
 
-    
   - platform: mqtt
     name: md1 Status
     state_topic: "ubuntu/mdstat/md1"
@@ -1674,19 +2043,19 @@
     expire_after: 300
     icon: mdi:harddisk
 
-  # - platform: mqtt
-  #   name: md2 Status
-  #   state_topic: "ubuntu/mdstat/md2"
-  #   value_template: '{{ value }}'
-  #   expire_after: 150
-  #   icon: mdi:harddisk
+  - platform: mqtt
+    name: md2 Status
+    state_topic: "ubuntu/mdstat/md2"
+    value_template: '{{ value }}'
+    expire_after: 150
+    icon: mdi:harddisk
 
-  # - platform: mqtt
-  #   name: md2_full
-  #   state_topic: "ubuntu/mdstat/md2_full"
-  #   value_template: '{{ value }}'
-  #   expire_after: 150
-  #   icon: mdi:harddisk
+  - platform: mqtt
+    name: md2_full
+    state_topic: "ubuntu/mdstat/md2_full"
+    value_template: '{{ value }}'
+    expire_after: 150
+    icon: mdi:harddisk
     
   # - platform: mqtt
   #   name: md3 Status
