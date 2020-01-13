@@ -373,15 +373,13 @@
   condition:
     condition: template
     value_template: >
-      {%- set battery_alert_threshold = 15|int -%}
-        {{ states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', battery_alert_threshold ) | list | count >= 1 }}
+      {{ states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count >= 1 }}
   action:  
   - service: notify.telegram
     data_template:
       message: >
-          {%- set battery_alert_threshold = 15|int -%}
-          {%- set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', battery_alert_threshold ) | map(attribute='name') | list | join(', ') -%}
-          \U0001f6a8 Low batteries in: {{ low_batteries }}
+        {%- set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') -%}
+        {{"\U0001f6a8"}} Низкий заряд батарей: {{ low_batteries }}
           
 # ##################################
 # System - Home weather (ya)

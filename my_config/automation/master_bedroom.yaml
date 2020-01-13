@@ -197,3 +197,139 @@
   action:
     - service: switch.turn_on
       entity_id: switch.plug_158d0002482619
+      
+# ##################################
+# Master Bedroom - Main power turned off
+# ##################################
+- alias: master_bedroom_main_power_turned_off
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.wall_plug_158d0002467773
+    to: 'off'
+    from: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Вторая розетка отключена! Запущен UPS (650)"
+
+# ##################################
+# Master Bedroom - Main plug pulled out
+# ##################################
+- alias: master_bedroom_main_plug_pulled_out
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.pc_mb
+    below: 10
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Нагрузка во второй розетке упала! Проверь кабель!"
+
+# ##################################
+# Master Bedroom- Main power - over-power
+# ##################################
+- alias: master_bedroom_big_main_power_overpower
+  initial_state: 'on'
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.pc_mb
+    above: 1700 
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Перегрузка второй розетки! Отключите лишние потребители!"
+
+# ##################################
+# Master Bedroom- UPS - OB
+# ##################################
+- alias: master_bedroom_ups_ob
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_mb_status_data
+    to: 'OB'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Внимание! Запущен UPS (650)!"
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Запущен UPS (650)"
+
+# ##################################
+# Master Bedroom- UPS - LB
+# ##################################
+- alias: master_bedroom_big_ups_lb
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_mb_status_data
+    to: 'LB'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Заряд батареи (650) критический! Завершение работы j3455!"
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "UPS полностью разряжен! Завершаем работу j3455!"
+
+# ##################################
+# Master Bedroom- UPS - OL
+# ##################################
+- alias: master_bedroom_ups_ol
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_mb_status_data
+    to: 'OL'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи(650)!"
+
+# ##################################
+# Master Bedroom- UPS - Unknown
+# ##################################
+- alias: master_bedroom_ups_unknown
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_mb_status_data
+    to: "unknown"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Связь с UPS(650) потеряна!"
+
+# ##################################
+# Master Bedroom- UPS - Unknown to OL
+# ##################################
+- alias: master_bedroom_ups_unknown_to_ol
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.ippon_mb_status_data
+    from: "unknown"
+    to: "OL"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Связь с UPS(650) восстановлена!"
+
+# ##################################
+# Master Bedroom- Main power turned on
+# ##################################
+- alias: master_bedroom_main_power_turned_on
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: switch.wall_plug_158d0002467773
+    to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(650)!"

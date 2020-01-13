@@ -349,7 +349,7 @@
         entity_id: sensor.nvme0_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {%set tbw = 160 %}
+          {%set tbw = (states('sensor.nvme0_size')|int / 256)*160 %}
           {%set per_day = states('sensor.nvme0_gb_per_day')|float%}
           {%set total = states('sensor.nvme0_tb_written')|float%}
           {%if per_day == 0 %}
@@ -366,7 +366,8 @@
           {%if states('sensor.nvme0_power_on_hours')|float(-9999) == -9999%}
           unknown
           {%else%}
-            {%set tbw =  160%}
+            {%set tbw = (states('sensor.nvme0_size')|int / 256)*160 %}
+            
             {%set per_day = (states('sensor.nvme0_tb_written')|float / states('sensor.nvme0_power_on_hours')|float)*24%}
             {%set total = states('sensor.nvme0_tb_written')|float%}
 
@@ -402,7 +403,7 @@
         entity_id: sensor.nvme1_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {%set tbw = 160 %}
+          {%set tbw = (states('sensor.nvme1_size')|int / 256)*160 %}
           {%set per_day = states('sensor.nvme1_gb_per_day')|float%}
           {%set total = states('sensor.nvme1_tb_written')|float%}
           {%if per_day == 0 %}
@@ -419,7 +420,7 @@
           {%if states('sensor.nvme1_power_on_hours')|float(-9999) == -9999%}
           unknown
           {%else%}
-            {%set tbw =  160%}
+            {%set tbw = (states('sensor.nvme1_size')|int / 256)*160 %}
             {%set per_day = (states('sensor.nvme1_tb_written')|float / states('sensor.nvme1_power_on_hours')|float)*24%}
             {%set total = states('sensor.nvme1_tb_written')|float%}
 
@@ -455,7 +456,7 @@
         entity_id: sensor.nvme2_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {%set tbw = 160 %}
+          {%set tbw = (states('sensor.nvme2_size')|int / 256)*160 %}
           {%set per_day = states('sensor.nvme2_gb_per_day')|float%}
           {%set total = states('sensor.nvme2_tb_written')|float%}
           {%if per_day == 0 %}
@@ -472,7 +473,7 @@
           {%if states('sensor.nvme2_power_on_hours')|float(-9999) == -9999%}
           unknown
           {%else%}
-            {%set tbw =  160%}
+            {%set tbw = (states('sensor.nvme2_size')|int / 256)*160 %}
             {%set per_day = (states('sensor.nvme2_tb_written')|float / states('sensor.nvme2_power_on_hours')|float)*24%}
             {%set total = states('sensor.nvme2_tb_written')|float%}
 
@@ -508,7 +509,7 @@
         entity_id: sensor.nvme3_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {%set tbw = 160 %}
+          {%set tbw = (states('sensor.nvme3_size')|int / 256)*160 %}
           {%set per_day = states('sensor.nvme3_gb_per_day')|float%}
           {%set total = states('sensor.nvme3_tb_written')|float%}
           {%if per_day == 0 %}
@@ -525,7 +526,7 @@
           {%if states('sensor.nvme3_power_on_hours')|float(-9999) == -9999%}
           unknown
           {%else%}
-            {%set tbw =  160%}
+            {%set tbw = (states('sensor.nvme3_size')|int / 256)*160 %}
             {%set per_day = (states('sensor.nvme3_tb_written')|float / states('sensor.nvme3_power_on_hours')|float)*24%}
             {%set total = states('sensor.nvme3_tb_written')|float%}
 
@@ -561,7 +562,7 @@
         entity_id: sensor.nvme4_session_write
         icon_template: mdi:calendar-clock
         value_template: >-
-          {%set tbw = 160 %}
+          {%set tbw = (states('sensor.nvme4_size')|int / 256)*160 %}
           {%set per_day = states('sensor.nvme4_gb_per_day')|float%}
           {%set total = states('sensor.nvme4_tb_written')|float%}
           {%if per_day == 0 %}
@@ -578,7 +579,7 @@
           {%if states('sensor.nvme4_power_on_hours')|float(-9999) == -9999%}
           unknown
           {%else%}
-            {%set tbw =  160%}
+            {%set tbw = (states('sensor.nvme4_size')|int / 256)*160 %}
             {%set per_day = (states('sensor.nvme4_tb_written')|float / states('sensor.nvme4_power_on_hours')|float)*24%}
             {%set total = states('sensor.nvme4_tb_written')|float%}
 
@@ -1279,7 +1280,6 @@
     icon: mdi:thermometer
     force_update: true
 
-    
   - platform: mqtt
     name: Media1 Temp
     state_topic: "ubuntu/disk_temp/sdi"
@@ -1297,7 +1297,56 @@
     expire_after: 150
     icon: mdi:thermometer
     force_update: true
+
+# ############################################################################
+# Hardware sensors (Ubuntu) - MQTT - NVME Size
+# ############################################################################
+  - platform: mqtt
+    name: NVME0 Size
+    state_topic: "ubuntu/nvme_size/nvme0"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:file-swap-outline
+    force_update: true
+
+  - platform: mqtt
+    name: NVME1 Size
+    state_topic: "ubuntu/nvme_size/nvme1"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:file-swap-outline
+    force_update: true
+
+  - platform: mqtt
+    name: NVME2 Size
+    state_topic: "ubuntu/nvme_size/nvme2"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:file-swap-outline
+    force_update: true
+
+  - platform: mqtt
+    name: NVME3 Size
+    state_topic: "ubuntu/nvme_size/nvme3"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:file-swap-outline
+    force_update: true
+
+  - platform: mqtt
+    name: NVME4 Size
+    state_topic: "ubuntu/nvme_size/nvme4"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: Gb
+    expire_after: 150
+    icon: mdi:file-swap-outline
+    force_update: true
     
+
 # ############################################################################
 # Hardware sensors (Ubuntu) - MQTT - SSD Drives Smart Data
 # ############################################################################

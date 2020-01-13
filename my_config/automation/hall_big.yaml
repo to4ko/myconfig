@@ -442,7 +442,7 @@
 # Hall Big - Main power turned off
 # ##################################
 - alias: hall_big_main_power_turned_off
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: switch.wall_plug_158d000230fc52
@@ -451,13 +451,13 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS"
+        message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS (1050)"
 
 # ##################################
 # Hall Big - Main plug pulled out
 # ##################################
 - alias: hall_big_main_plug_pulled_out
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: numeric_state
     entity_id: sensor.fridge_hb
@@ -471,7 +471,7 @@
 # Hall Big - Main power - over-power
 # ##################################
 - alias: hall_big_main_power_overpower
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: numeric_state
     entity_id: sensor.fridge_hb
@@ -485,7 +485,7 @@
 # Hall Big - UPS - OB
 # ##################################
 - alias: hall_big_ups_ob
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.ippon_hb_status_data
@@ -493,17 +493,17 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Внимание! Запущен UPS!"
+        message: "\U0001f50b Внимание! Запущен UPS (1050)!"
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         title: "Внимание!"
-        message: "Запущен UPS"
+        message: "Запущен UPS (1050)"
 
 # ##################################
 # Hall Big - UPS - LB
 # ##################################
 - alias: hall_big_ups_lb
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.ippon_hb_status_data
@@ -511,18 +511,18 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Внимание! Заряд батареи критический! Завершение работы!"
+        message: "\U0001f6a8 Внимание! Заряд батареи (1050) критический! Завершение работы!"
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         title: "Внимание!"
-        message: "UPS полностью разряжен! Зывершаем работу!"
+        message: "UPS полностью разряжен! Завершаем работу!"
     - service: hassio.host_shutdown
 
 # ##################################
 # Hall Big - UPS - OL
 # ##################################
 - alias: hall_big_ups_ol
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.ippon_hb_status_data
@@ -530,13 +530,13 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи!"
+        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1050)!"
 
 # ##################################
 # Hall Big - UPS - Unknown
 # ##################################
 - alias: hall_big_ups_unknown
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.ippon_hb_status_data
@@ -544,7 +544,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Внимание! Связь с UPS потеряна!"
+        message: "\U0001f6a8 Внимание! Связь с UPS(1050) потеряна!"
     #- service: notify.mobile_app_iphone_8_dtsymbal
     #  data:
     #    title: "Внимание!"
@@ -554,7 +554,7 @@
 # Hall Big - UPS - Unknown to OL
 # ##################################
 - alias: hall_big_ups_unknown_to_ol
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: sensor.ippon_hb_status_data
@@ -563,13 +563,13 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Связь с UPS восстановлена!"
+        message: "\U0001f50b Связь с UPS(1050) восстановлена!"
 
 # ##################################
 # Hall Big - Main power turned on
 # ##################################
 - alias: hall_big_main_power_turned_on
-  initial_state: 'true'
+  initial_state: 'on'
   trigger:
     platform: state
     entity_id: switch.wall_plug_158d000230fc52
@@ -577,8 +577,8 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS!"
-        
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1050)!"
+
 # ##################################
 # Hall Big - left home
 # ##################################
@@ -1118,3 +1118,71 @@
   action:
     - service: script.turn_on
       entity_id: script.domofon_auto_open_toggle
+
+# ##################################
+# Hall big - Fridge door open time
+# ##################################
+- alias: hall_big_fridge_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000253722b
+      from: 'off'
+      to: 'on'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.fridge_door_open_time
+        value: "{{as_timestamp (now())|int}}"
+
+# ##################################
+# Hall big - Fridge door closed after 5 mins
+# ##################################
+- alias: hall_big_fridge_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000253722b
+      from: 'on'
+      to: 'off'
+  condition:
+    - condition: template
+      value_template: "{{ (as_timestamp(now())|int - states('input_number.fridge_door_open_time')|int)  > 310  }}"
+  action:
+  - service: notify.telegram
+    data:
+      message: Холодильник успешно закрыт после 5 минут.
+
+# ##################################
+# Hall big - Freezer door open time
+# ##################################
+- alias: hall_big_freezer_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000252acba
+      from: 'off'
+      to: 'on'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.freezer_door_open_time
+        value: "{{as_timestamp (now())|int}}"
+
+# ##################################
+# Hall big - Freezer door closed after 5 mins
+# ##################################
+- alias: hall_big_freezer_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000252acba
+      from: 'on'
+      to: 'off'
+  condition:
+    - condition: template
+      value_template: "{{ (as_timestamp(now())|int - states('input_number.freezer_door_open_time')|int)  > 310  }}"
+  action:
+  - service: notify.telegram
+    data:
+      message: Морозилка успешно закрыта после 5 минут.
