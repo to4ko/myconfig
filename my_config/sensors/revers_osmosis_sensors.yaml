@@ -1,0 +1,71 @@
+  - platform: template
+    sensors:
+      water_raw_yesterday: # Расход сырой воды (вчера)
+        friendly_name: Raw Water Yesterday
+        icon_template: mdi:gauge
+        unit_of_measurement: 'L'
+        value_template: "{{ state_attr('sensor.water_raw_daily_single', 'last_period') | float }}"
+      water_postmembrane_yesterday: # Расход воды после мембраны (вчера)
+        friendly_name: PostMembrane Water Yesterday
+        icon_template: mdi:gauge
+        unit_of_measurement: 'L'
+        value_template: "{{ state_attr('sensor.water_postmembrane_daily_single', 'last_period') | float }}"
+      water_mineralized_yesterday: # Расход минерализованной питьевой воды (вчера)
+        friendly_name: Mineralized Water Yesterday
+        icon_template: mdi:gauge
+        unit_of_measurement: 'L'
+        value_template: "{{ state_attr('sensor.water_mineralized_daily_single', 'last_period') | float }}"
+      water_nonmineralized_yesterday: # Расход не минерализованной питьевой воды (вчера)
+        friendly_name: Non-Mineralized Water Yesterday
+        icon_template: mdi:gauge
+        unit_of_measurement: 'L'
+        value_template: "{{ state_attr('sensor.water_nonmineralized_daily_single', 'last_period') | float }}"
+
+      ro_filter1_wearing:
+        friendly_name: RO Mech Filter Wearing
+        icon_template: mdi:numeric-1-box
+        unit_of_measurement: '%'
+        value_template: "{{ (states('sensor.water_raw_single')|float/states('input_number.ro_filer1_resource')|int*100 ) | round (2) }}"
+        attribute_templates:
+          liters_left: "{{ (states('input_number.ro_filer1_resource')|int-states('sensor.water_raw_single')|float)|round(2) }}"
+      
+      ro_filter2_wearing:
+        friendly_name: RO Coal Filter Wearing
+        icon_template: mdi:numeric-2-box
+        unit_of_measurement: '%'
+        value_template: "{{ (states('sensor.water_raw_single')|float/states('input_number.ro_filer2_resource')|int*100 ) | round (2) }}"
+        attribute_templates:
+          liters_left: "{{ (states('input_number.ro_filer2_resource')|int-states('sensor.water_raw_single')|float)|round(2) }}"
+
+      ro_filter3_wearing:
+        friendly_name: RO Coal_Ag Filter Wearing
+        icon_template: mdi:numeric-2-box
+        unit_of_measurement: '%'
+        value_template: "{{ (states('sensor.water_raw_single')|float/states('input_number.ro_filer3_resource')|int*100 ) | round (2) }}"
+        attribute_templates:
+          liters_left: "{{ (states('input_number.ro_filer3_resource')|int-states('sensor.water_raw_single')|float)|round(2) }}"
+
+      ro_membrane_wearing:
+        friendly_name: RO Membrare Wearing
+        icon_template: mdi:air-filter
+        unit_of_measurement: '%'
+        value_template: "{{ (states('sensor.water_raw_single')|float/states('input_number.ro_membrane_resource')|int*100 ) | round (2) }}"
+        attribute_templates:
+          liters_left: "{{ (states('input_number.ro_membrane_resource')|int-states('sensor.water_raw_single')|float)|round(2) }}"
+
+      ro_postfilter_wearing:
+        friendly_name: RO Postfilter Wearing
+        icon_template: mdi:numeric-4-box
+        unit_of_measurement: '%'
+        value_template: "{{ ((states('sensor.water_non_mineralized_single')|float+states('sensor.water_mineralized_single')|float)/states('input_number.ro_postfilter_resource')|int*100)|round(2) }}"
+        attribute_templates:
+          liters_left: "{{ (states('input_number.ro_postfilter_resource')|int-states('sensor.water_non_mineralized_single')|float-states('sensor.water_mineralized_single')|float)|round(2) }}"
+
+      ro_mineralizer_wearing:
+        friendly_name: RO Mineralizer Wearing
+        icon_template: mdi:filter-variant-plus
+        unit_of_measurement: '%'
+        value_template: "{{ (states('sensor.water_mineralized_single')|float/states('input_number.ro_mineralizer_resource')|int*100 ) | round (2) }}"
+        attribute_templates:
+          liters_left: "{{ (states('input_number.ro_mineralizer_resource')|int-states('sensor.water_mineralized_single')|float)| round(2) }}"
+      
