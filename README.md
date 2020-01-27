@@ -7,22 +7,24 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 
 Main Server: 
-  - Xeon E5-2620v3
+  - Xeon E5-2620v3 cooled by Noctua NH-U12DX i4
   - 64gb ECC DDR4 RAM
-  - 128Gb Boot SSD
-  - 256Gb NVME Raid1 as Root drive
-  - 256Gb NVME for DB
-  - Oracle F20 card (not in use)
+  - 128Gb Kingston SSD as Boot drive
+  - 512Gb ADATA 8200Pro Raid 1 as Root drive
+  - 256Gb ADATA 8200Pro NVME for DB
   - 7ea WD RED 2Tb (NAS section) in Linux Raid 6 via LSI 9207-8i(IT)
+  - 2ea Samsung 840 Pro 256Gb in Raid 0 as temp drive
   - 1Tb WD Purple for cameras
-  - 2ea WD Green as Torrent box
+  - 2ea WD Green in Raid0 (Torrent heap) via Adaptec 71605
+  - Corsair HX1200i
+  - Fractal Design XL R2 with be quite Silent Wings 2 140mm PWM fans (6ea)
  
 Network(500mb\s):
   - Ubiquiti USG 3
   - Switch 24
-  - Switch 8-60W
+  - Switch 8-60W (3ea)
   - UAP-AC-AP-Lite (5ea)
-  - Tp-Link "dumb" switch (2ea)
+  - Tp-Link "dumb" switch (1ea)
   
 Surveillance: 
   - Ubiquiti Video (running as service)
@@ -63,16 +65,14 @@ Smart Home:
   - Sonoff Basic
   - Sonoff S26 Plug
   - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea 
-  - Power Meter Based on NodeMCUv3
-  - Domofon (Intercom helper) on ESP32
-  - Oven Hood controller (light + 3 speeds) on Wemos D1 mini
-  - Kitchen Air valve and IR controller on NodeMCUv3
-  - Reverse Osmos Water Filter resource counter based on Wemos D1 mini and cheap flow meters.
+  - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
+  - ESP32 - Kitchen Air valve, hood fan\light with IR controller
+  - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
       
-
 Software:
   - Ubuntu Server 18.04 LTS
   - Hass.Io in Docker
+  - MotionEye
 
 DB used:
   - PostgreSQL 12
