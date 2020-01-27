@@ -18,8 +18,8 @@
     condition: and
     conditions:
       - condition: state
-        entity_id: binary_sensor.tod_night
-        state: 'on'
+        entity_id: binary_sensor.tod_day
+        state: 'off'
       - condition: state
         entity_id: light.led_strip_hb
         state: 'off'
@@ -96,8 +96,8 @@
       seconds: 30
   condition:
     - condition: state
-      entity_id: binary_sensor.tod_night
-      state: 'on'
+      entity_id: binary_sensor.tod_day
+      state: 'off'
   action:
     - service: light.turn_off
       entity_id: light.led_strip_hb
@@ -150,7 +150,7 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.main_door_open
-        value: '{{as_timestamp (now())|int}}'
+        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))}}"
     - service: timer.cancel
       entity_id: timer.timer_open_door_hb
     - service: timer.start
@@ -159,13 +159,13 @@
       entity_id: light.led_strip_hb
       data_template:
         brightness_pct: >
-          {%- if is_state('binary_sensor.tod_night','on') -%}
+          {%- if is_state('binary_sensor.tod_day','off') -%}
           2
           {%- else -%}
           100
           {% endif %}
         kelvin: >
-          {%- if is_state('binary_sensor.tod_night','on') -%}
+          {%- if is_state('binary_sensor.tod_day','off') -%}
           3000
           {%- else -%}
           5000
@@ -218,8 +218,7 @@
         data:
           photo:
           - file: /config/www/cam_captures/door_close2.jpg
-            #caption: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S',0) }}"
-            caption: "\U0001F6AA Входная дверь закрыта {{ now().strftime('%H:%M') }}, была открыта {{(as_timestamp(now())|round(0)-states.input_number.main_door_open.state|int)|int | timestamp_custom('%H:%M:%S',0)}} \ {{ (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_open_door_hb.last_changed)| int)| timestamp_custom('%H:%M:%S',0) }}"
+            caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|round(0)-states('input_number.main_door_open')|int)|int | timestamp_custom('%H:%M:%S',0)}}"
     - service: timer.cancel
       entity_id: timer.timer_open_door_hb
 
@@ -1133,7 +1132,7 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.fridge_door_open_time
-        value: "{{as_timestamp (now())|int}}"
+        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int}}"
 
 # ##################################
 # Hall big - Fridge door closed after 5 mins
@@ -1147,7 +1146,7 @@
       to: 'off'
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(now())|int - states('input_number.fridge_door_open_time')|int)  > 310  }}"
+      value_template: "{{ (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int - states('input_number.fridge_door_open_time')|int)  > 310  }}"
   action:
   - service: notify.telegram
     data:
@@ -1167,7 +1166,7 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.freezer_door_open_time
-        value: "{{as_timestamp (now())|int}}"
+        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int}}"
 
 # ##################################
 # Hall big - Freezer door closed after 5 mins
@@ -1181,7 +1180,7 @@
       to: 'off'
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(now())|int - states('input_number.freezer_door_open_time')|int)  > 310  }}"
+      value_template: "{{ (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int - states('input_number.freezer_door_open_time')|int)  > 310  }}"
   action:
   - service: notify.telegram
     data:

@@ -358,7 +358,7 @@
   action:
     - service: notify.telegram
       data_template: 
-        message: "{% if is_state('binary_sensor.washer_b','on') %}\U000023F3 Стирка начата!{% else %}\U0000231B Стирка завершена! Время стирки составило {{ ( (as_timestamp(now())| round(0) - as_timestamp(states.timer.timer_washer_b.last_changed)| int) / 60 )| round(0) }}мин.{% endif %}"
+        message: "{% if is_state('binary_sensor.washer_b','on') %}\U000023F3 Стирка начата!{% else %}\U0000231B Стирка завершена! Время стирки составило {{ ( (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))| round(0) - as_timestamp(states.timer.timer_washer_b.last_changed)| int) / 60 )| round(0) }}мин.{% endif %}"
     - service_template: >
         {% if is_state('binary_sensor.tod_day','on') %}
           script.washing_machine_tts
@@ -384,7 +384,7 @@
       entity_id: input_boolean.security_mode
       state: 'off'
   action:
-  - service_template: "switch.turn_{{states('binary_sensor.tod_night')}}"
+  - service_template: "switch.turn_switch.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}"
     data:
       entity_id: switch.plug_158d0003926263
 
@@ -415,8 +415,8 @@
     condition: and
     conditions: 
       - condition: state
-        entity_id: binary_sensor.tod_night
-        state: 'on'
+        entity_id: binary_sensor.tod_day
+        state: 'off'
       - condition: state
         entity_id: input_boolean.security_mode
         state: 'off'

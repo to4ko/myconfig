@@ -1,6 +1,4 @@
 resources:
-#  - url: /local/custom-weather-card-chart.js
-#    type: module
   - url: /local/camera-card.js
     type: module
     
@@ -12,9 +10,9 @@ resources:
     type: js
   - url: /local/community/weather-card/weather-card.js
     type: module
-  - url: /local/community/restriction-card/restriction-card.js
-    type: module
   - url: /community_plugin/group-card/group-card.js
+    type: module
+  - url: /community_plugin/button-card/button-card.js
     type: module
 
 title: Home - Main Server
@@ -892,7 +890,6 @@ views:
           #         service_data:
           #           entity_id: automation.hall_big_left_home
               
-                  
         #OL - ИБП работает от сети,
         #OB - ИБП работает от батареи,
         #LB - батарея разряжена,
@@ -1561,12 +1558,15 @@ views:
               - entity: sensor.water_nonmineralized_yesterday
                 name: NM
                 icon: mdi:cup-off
-          - type: entities
+          - type: glance
             entities:
               - entity: script.ro_reset_stats
                 name: Reset Statistics
                 icon: mdi:lock-reset
-              
+              - entity: input_datetime.ro_replace_date
+                name: Filters changed at
+              - entity: sensor.ro_filters_inuse
+                name: InUse
 
 
 ################################################################
@@ -2141,6 +2141,8 @@ views:
           - type: entities
             entities:
               - entity: input_number.battery_low_level
+              - entity: script.battery_level_check
+                name: Check now
           - type: glance
             columns: 8
             entities:
@@ -2476,13 +2478,13 @@ views:
             max: 24.4
             target: 19
             severity:
-              - value: 7
+              - value: 3
                 color: '#40bf40'
-              - value: 14
+              - value: 6
                 color: '#bf9540'
-              - value: 21
+              - value: 9
                 color: '#bf4040'
-              - value: 24 
+              - value: 12 
                 color: '#ff0000'
           #  severity:
           #    - value: 1
@@ -2525,7 +2527,7 @@ views:
 
               - type: glance
                 #title: Ubuntu Status
-                columns: 8
+                columns: 7
                 entities:
                   - entity: sensor.ssd_usage
                     icon: mdi:chip
@@ -2539,12 +2541,9 @@ views:
                   - entity: sensor.video_usage
                     icon: mdi:harddisk
                     name: V
-                  - entity: sensor.media1_usage
+                  - entity: sensor.media_usage
                     icon: mdi:harddisk
-                    name: M1
-                  - entity: sensor.media2_usage
-                    icon: mdi:harddisk
-                    name: M2
+                    name: M
                   - entity: sensor.back_2tb_usage
                     icon: mdi:harddisk
                     name: Back_2Tb
@@ -2709,7 +2708,7 @@ views:
                 service: script.ha_released_update
 
           - type: glance
-            columns: 8
+            columns: 6
             entities:
               - entity: sensor.nvme0_write_change_1h
                 name: N0
@@ -2717,10 +2716,6 @@ views:
                 name: N1
               - entity: sensor.nvme2_write_change_1h
                 name: N2
-              - entity: sensor.nvme3_write_change_1h
-                name: N3
-              - entity: sensor.nvme4_write_change_1h
-                name: N4
               - entity: sensor.boot_write_change_1h
                 name: boot
               - entity: sensor.840pro_1_write_change_1h
@@ -2737,13 +2732,13 @@ views:
             max: 24.4
             target: 19
             severity:
-              - value: 7
+              - value: 3
                 color: '#40bf40'
-              - value: 14
+              - value: 6
                 color: '#bf9540'
-              - value: 21
+              - value: 9
                 color: '#bf4040'
-              - value: 24 
+              - value: 12 
                 color: '#ff0000'
           #  severity:
           #    - value: 1
@@ -2963,38 +2958,6 @@ views:
                 name: Left
               - entity: sensor.nvme2_calc_life_left
                 name: CLeft
-              # NVME 3
-              - entity: sensor.nvme3_tb_written
-                name: nvme3
-                icon: mdi:raspberry-pi
-              - entity: sensor.nvme3_session_read
-                name: R Session
-              - entity: sensor.nvme3_session_write
-                name: W Session
-              #- entity: sensor.nvme3_gb_per_day
-              #  name: Per Day
-              - entity: sensor.nvme3_gb_per_hour
-                name: Per Hour
-              - entity: sensor.nvme3_life_left
-                name: Left
-              - entity: sensor.nvme3_calc_life_left
-                name: CLeft
-              # NVME 4
-              - entity: sensor.nvme4_tb_written
-                name: nvme4
-                icon: mdi:raspberry-pi
-              - entity: sensor.nvme4_session_read
-                name: R Session
-              - entity: sensor.nvme4_session_write
-                name: W Session
-              #- entity: sensor.nvme4_gb_per_day
-              #  name: Per Day
-              - entity: sensor.nvme4_gb_per_hour
-                name: Per Hour
-              - entity: sensor.nvme4_life_left
-                name: Left
-              - entity: sensor.nvme4_calc_life_left
-                name: CLeft
               # boot
               - entity: sensor.boot_tb_written
                 name: boot
@@ -3047,6 +3010,25 @@ views:
       - type: vertical-stack
         cards:
           - type: glance
+            columns: 7
+            entities:
+              - entity: sensor.psu_efficiency
+                name: Eff
+              - entity: sensor.psu_temperature_0
+                name: T0
+              - entity: sensor.psu_temperature_1
+                name: T1
+              - entity: sensor.psu_total_watts
+                name: Total W
+              - entity: sensor.psu_12v_watts
+                name: 12V W
+              - entity: sensor.psu_5v_watts
+                name: 5V W
+              - entity: sensor.psu_3v_watts
+                name: "3.3V W"
+                
+
+          - type: glance
             columns: 5
             entities:
               - entity: sensor.md0_status
@@ -3075,7 +3057,7 @@ views:
                 name: md2 W
 
           - type: glance
-            columns: 8
+            columns: 6
             entities:
               # nvme0
               - entity: sensor.nvme0_temp
@@ -3086,12 +3068,6 @@ views:
               # nvme2
               - entity: sensor.nvme2_temp
                 name: N2
-              # nvme3
-              - entity: sensor.nvme3_temp
-                name: N3
-              # nvme2
-              - entity: sensor.nvme4_temp
-                name: N4
               # boot
               - entity: sensor.boot_temp
                 name: boot
@@ -3139,54 +3115,21 @@ views:
             columns: 7
             entities:
               # sdf
-              - entity: sensor.sda_temp
-                name: sda
-              # - entity: sensor.sdf_session_read
-              #   name: Read
-              # - entity: sensor.sdf_session_write
-              #   name: Write
-              # sdg
-              - entity: sensor.sdb_temp
-                name: sdb
-              # - entity: sensor.sdg_session_read
-              #   name: Read
-              # - entity: sensor.sdg_session_write
-              #   name: Write
-              # sdh
-              - entity: sensor.sdc_temp
-                name: sdc
-              # - entity: sensor.sdh_session_read
-              #   name: Read
-              # - entity: sensor.sdh_session_write
-              #   name: Write
-              # sdi
               - entity: sensor.sdd_temp
                 name: sdd
-              # - entity: sensor.sdi_session_read
-              #   name: Read
-              # - entity: sensor.sdi_session_write
-              #   name: Write
-              # sdj
+              - entity: sensor.sde_temp
+                name: sde
               - entity: sensor.sdf_temp
                 name: sdf
-              # - entity: sensor.sdj_session_read
-              #   name: Read
-              # - entity: sensor.sdj_session_write
-              #   name: Write
-              # sdk
               - entity: sensor.sdg_temp
                 name: sdg
-              # - entity: sensor.sdk_session_read
-              #   name: Read
-              # - entity: sensor.sdk_session_write
-              #   name: Write
-              # sdl
               - entity: sensor.sdh_temp
                 name: sdh
-              # - entity: sensor.sdl_session_read
-              #   name: Read
-              # - entity: sensor.sdl_session_write
-              #   name: Write
+              - entity: sensor.sdi_temp
+                name: sdi
+              - entity: sensor.sdj_temp
+                name: sdj
+
 
 ################################################################
 # radio
@@ -3718,18 +3661,55 @@ views:
               - entity: binary_sensor.rpi_state
                 name: RPI Server State
                 
-                
-                
 ################################################################
-# Debug
+# Lamps Reset
 ################################################################
-  - title: Debug
-    icon: mdi:file-settings-variant
+  - title: WiFi Lamps
+    icon: mdi:lightbulb-off #mdi:file-settings-variant
     cards:
-      - type: entities
-        title: debug
-        show_header_toggle: false
-        entities:
-          - sensor.u430p_cpu_load
-          - sensor.u430p_last_boot
-          - sensor.u430p_uptime
+      - type: vertical-stack
+        cards: 
+          - type: entities
+            title: Lamps Stats
+            show_header_toggle: false
+            entities:
+              - light.round_led_mb
+              - type: divider
+              - light.round_led_s
+              - type: divider
+              - light.square_led_v
+              - type: divider
+              - fan.humidifier2
+              - type: divider
+              - light.bedside_mb
+      - type: vertical-stack
+        cards: 
+          - type: entities
+            title: Lamps Restart
+            show_header_toggle: false
+            entities:
+              - switch.plug_158d0002482619
+              - type: divider
+              - switch.sonoff_basic_1_relay
+              - type: divider
+              - switch.plug_158d00020b4971
+              - type: divider
+              - switch.plug_158d000392623d
+              - type: divider
+              - switch.plug_158d00039bd56d
+      - type: vertical-stack
+        cards: 
+          - type: entities
+            title: Scripts
+            show_header_toggle: false
+            entities:
+              - script.round_led_restart
+              - type: divider
+              - script.round_led_s_restart
+              - type: divider
+              - script.square_led_restart
+              - type: divider
+              - script.humidifier2_restart
+              - type: divider
+              - script.bedside_lamp_restart
+

@@ -39,3 +39,31 @@
       - delay: '00:00:25'
       - service: switch.turn_off
         entity_id: switch.plug_158d0001f54f90
+
+  battery_level_check:
+    alias: Battery Level Check
+    sequence:
+      - service: script.turn_on
+        data_template:
+          entity_id: >
+              {% if states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count >= 1 %}
+                script.battery_level_low
+              {% else %}
+                script.battery_level_ok
+              {% endif%}
+
+  battery_level_low:
+    alias: Battery Level Low
+    sequence:
+      - service: notify.telegram
+        data_template:
+          message: >
+            {%- set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') -%}
+            {{"\U0001f6a8"}} Низкий заряд батарей: {{ low_batteries }}
+
+  battery_level_ok:
+    alias: Battery Level Ok
+    sequence:
+      - service: notify.telegram
+        data:
+          message: "\U0001f50b Батарей с уровнем заряда ниже {{states('input_number.battery_low_level')|int}}% не найдено!"
