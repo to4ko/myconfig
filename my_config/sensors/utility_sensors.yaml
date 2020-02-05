@@ -1,42 +1,27 @@
-  # - platform: integration
-  #   source: sensor.power_consumption_w
-  #   name: power_consumption_int
-  #   unit_prefix: k
-  #   unit_time: h
-  #   round: 3
-
-  # - platform: integration
-  #   source: sensor.power_consumption_light
-  #   name: power_consumption_light_int
-  #   unit_prefix: k
-  #   unit_time: h
-  #   round: 3
-
-  # - platform: integration
-  #   source: sensor.power_consumption_socket
-  #   name: power_consumption_socket_int
-  #   unit_prefix: k
-  #   unit_time: h
-  #   round: 3
-
-  # - platform: integration
-  #   source: sensor.power_consumption_8266_w
-  #   name: power_consumption_8266_int
-  #   unit_prefix: k
-  #   unit_time: h
-  #   round: 3
-
-  #     power_consumption_8266_w:
-  #       unit_of_measurement: 'W'
-  #       value_template: "{{ states('sensor.esp32_domofon_power_meter')|float * 1000 }}"
-  #       icon_template: mdi:flash
-  #       friendly_name: 'Power from 8266 PWR meter'
-        
+  - platform: statistics
+    name: server_daily_power_consumption
+    entity_id: sensor.psu_total_watts
+    sampling_size: 1440
+#    max_age:
+#      minutes: 1440
+      
 # ############################################################################
 # Utility (water + Power Cost sensor
 # ############################################################################
   - platform: template
     sensors:
+      server_daily_cost:
+        friendly_name: Server Average Daily Running Cost
+        value_template: "{{(states('input_number.tariff_energy_day')|float*16*states('sensor.server_daily_power_consumption')|float/1000+states('input_number.tariff_energy_night')|float*8*states('sensor.server_daily_power_consumption')|float/1000)|round(2)}}"
+        unit_of_measurement: 'rub'
+        icon_template: mdi:currency-rub
+      server_monthly_cost:
+        friendly_name: Server Average Monthly Running Cost
+        value_template: "{{(states('sensor.server_daily_cost')|float*31)|round(0) }}"
+        unit_of_measurement: 'rub'
+        icon_template: mdi:currency-rub
+      
+
       utility_cost:
         unit_of_measurement: 'rub'
         icon_template: mdi:currency-rub
@@ -289,7 +274,8 @@
       water_change_60m:
         value_template: "{{ states.sensor.total_water_60m.attributes.change }}"
         friendly_name: "Water change 60m"
-        
+  
+
 # ############################################################################
 # Water statistics sensors
 # ############################################################################
