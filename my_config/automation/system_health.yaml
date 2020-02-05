@@ -52,8 +52,6 @@
     - platform: state
       entity_id:
         - sensor.md0_status
-        - sensor.md1_status
-        - sensor.md2_status
   action:
     - service: notify.telegram
       data_template:
@@ -62,26 +60,50 @@
 # ##################################
 # System - Server HDD Disks Temp
 # ##################################
-- alias: system_health_hdd_temp
+- alias: system_health_hdd_temp_45
   initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id:
-        - sensor.sda_temp
-        - sensor.sdb_temp
-        - sensor.sdc_temp
-        - sensor.sdd_temp
-        - sensor.sdf_temp
-        - sensor.sdg_temp
-        - sensor.sdh_temp
-        - sensor.media1_temp
-        - sensor.media2_temp
+        - sensor.main0_temp
+        - sensor.main1_temp
+        - sensor.main2_temp
+        - sensor.main3_temp
+        - sensor.main4_temp
+        - sensor.main5_temp
+        - sensor.main6_temp
+        - sensor.media_temp
         - sensor.temp_temp
-      above: 40
+        - sensor.video_temp
+      above: 45
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >40°!"
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >45°!"
+
+# ##################################
+# System - Server HDD Disks Temp
+# ##################################
+- alias: system_health_hdd_temp_50
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.main0_temp
+        - sensor.main1_temp
+        - sensor.main2_temp
+        - sensor.main3_temp
+        - sensor.main4_temp
+        - sensor.main5_temp
+        - sensor.main6_temp
+        - sensor.media_temp
+        - sensor.temp_temp
+        - sensor.video_temp
+      above: 50
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >50°!"
 
 # ##################################
 # System - Server SSD Disks Temp
@@ -94,8 +116,6 @@
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
-        - sensor.nvme3_temp
-        - sensor.nvme4_temp
         - sensor.boot_temp
         - sensor.840pro_1_temp
         - sensor.840pro_2_temp
@@ -118,8 +138,6 @@
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
-        - sensor.nvme3_temp
-        - sensor.nvme4_temp
         - sensor.boot_temp
         - sensor.840pro_1_temp
         - sensor.840pro_2_temp
@@ -142,8 +160,6 @@
         - sensor.nvme0_temp
         - sensor.nvme1_temp
         - sensor.nvme2_temp
-        - sensor.nvme3_temp
-        - sensor.nvme4_temp
         - sensor.boot_temp
         - sensor.840pro_1_temp
         - sensor.840pro_2_temp
@@ -174,6 +190,85 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} < 250об!"
+
+# ##################################
+# System - 71605 Temp Alert
+# ##################################
+- alias: system_health_71605_temp_95
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.71605_cpu_temp
+      above: 95
+      for:
+        minutes: 1
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >95°!"
+
+# ##################################
+# System - 71605 Temp Alert
+# ##################################
+- alias: system_health_71605_temp_97
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.71605_cpu_temp
+      above: 97
+      for:
+        minutes: 1
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >97°!"
+
+# ##################################
+# System - 71605 Temp Alert
+# ##################################
+- alias: system_health_71605_temp_100
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.71605_cpu_temp
+      above: 100
+      for:
+        minutes: 1
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >100°!"
+
+# ##################################
+# System - 71605 LD Status Failed Degraded
+# ##################################
+- alias: system_health_71605_ld_failed_degraded
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.71605_ld_failed
+        - sensor.71605_ld_degraded
+      above: 0
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}!"
+
+# ##################################
+# System - 71605 LD Ststus
+# ##################################
+- alias: system_health_71605_ld_total
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.71605_ld_total
+      below: 3
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}!"
 
 
 # ##################################
@@ -226,9 +321,7 @@
         - sensor.nvme2_usage
         - sensor.nvme2_write_change_1h
 
-        - sensor.boot_gb_per_day
-        - sensor.boot_gb_per_hour
-        - sensor.boot_life_left
+        - sensor.boot_calc_life_left
         - sensor.boot_power_on_hours
         - sensor.boot_session_read
         - sensor.boot_session_write
@@ -238,25 +331,11 @@
         - sensor.boot_write_change_1h
         
         - sensor.840pro_1_calc_life_left
-        - sensor.840pro_1_gb_per_day
-        - sensor.840pro_1_gb_per_hour
-        - sensor.840pro_1_life_left
         - sensor.840pro_1_power_on_hours
-        - sensor.840pro_1_session_read
-        - sensor.840pro_1_session_write
-        - sensor.840pro_1_statistics
         - sensor.840pro_1_tb_written
         - sensor.840pro_1_temp
-        - sensor.840pro_1_write_change_1h
 
         - sensor.840pro_2_calc_life_left
-        - sensor.840pro_2_gb_per_day
-        - sensor.840pro_2_gb_per_hour
-        - sensor.840pro_2_life_left
         - sensor.840pro_2_power_on_hours
-        - sensor.840pro_2_session_read
-        - sensor.840pro_2_session_write
-        - sensor.840pro_2_statistics
         - sensor.840pro_2_tb_written
         - sensor.840pro_2_temp
-        - sensor.840pro_2_write_change_1h

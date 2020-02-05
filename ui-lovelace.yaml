@@ -37,22 +37,12 @@ views:
       - type: vertical-stack
         #title: Main
         cards:
-          # - type: glance
-          #   entities:
-          #     - entity: input_boolean.sasha_tracker
-          #       name: input
-          #     - entity: device_tracker.sasha
-          #       name: tracker
-          #     - entity: person.sasha
-          #       name: person
           - type: glance
             #title: Presence
             show_name: true
             show_state: true
-            columns: 7
+            columns: 6
             entities:
-              - entity: binary_sensor.tod_status
-                name: TOD
               - entity: binary_sensor.dark_mode
                 name: Dark
                 #icon: mdi:recycle
@@ -1022,6 +1012,9 @@ views:
         #title: Motion
         show_header_toggle: false
         entities:
+          - entity: binary_sensor.digma100_camera_motion
+            secondary_info: last-changed
+            name: Digma100
           - entity: binary_sensor.pinhole_camera_motion
             secondary_info: last-changed
           - entity: binary_sensor.esp32_domofon_motion
@@ -1363,7 +1356,13 @@ views:
               - entity: sensor.water_non_mineralized_single
                 name: NM
                 icon: mdi:cup-off
-
+          - type: glance
+            show_header_toggle: false
+            entities:
+              - entity: sensor.server_daily_cost
+                name: Server Daily Cost
+              - entity: sensor.server_monthly_cost
+                name: Server Monthly Cost
           - type: entities
             #title: Utility Cost
             show_header_toggle: false
@@ -1513,6 +1512,22 @@ views:
 
       - type: vertical-stack
         cards:
+          - type: glance
+            columns: 4
+            entities:
+              - entity: sensor.ro_raw_flow
+                name: Flow RAW
+                icon: mdi:water-pump
+              - entity: sensor.ro_postmembrane_flow
+                name: PostM
+                icon: mdi:filter-menu
+              - entity: sensor.ro_mineralized_flow
+                name: M
+                icon: mdi:cup-water
+              - entity: sensor.ro_non_mineralized_flow
+                name: NM
+                icon: mdi:cup-off
+
           - type: glance
             columns: 4
             entities:
@@ -2073,6 +2088,7 @@ views:
               - sensor.z19_co2_v
               - sensor.z19_co2_s
               - sensor.z19_co2_mb
+              - sensor.z19_co2_k
           - type: history-graph
             hours_to_show: 48
             #title: 'CO2 V'
@@ -2088,6 +2104,12 @@ views:
             #title: 'CO2 MB'
             entities:
               - sensor.z19_co2_mb
+          - type: history-graph
+            hours_to_show: 48
+            #title: 'CO2 K'
+            entities:
+              - sensor.z19_co2_k
+
           
           
           
@@ -2708,20 +2730,18 @@ views:
                 service: script.ha_released_update
 
           - type: glance
-            columns: 6
+            columns: 5
             entities:
-              - entity: sensor.nvme0_write_change_1h
-                name: N0
-              - entity: sensor.nvme1_write_change_1h
-                name: N1
-              - entity: sensor.nvme2_write_change_1h
-                name: N2
-              - entity: sensor.boot_write_change_1h
-                name: boot
-              - entity: sensor.840pro_1_write_change_1h
-                name: pro1
-              - entity: sensor.840pro_2_write_change_1h
-                name: pro2
+              - entity: sensor.71605_cpu_temp
+                name: 71605 CPU
+              - entity: sensor.71605_afm_temp
+                name: AFM 700
+              - entity: sensor.71605_ld_total
+                name: LD
+              - entity: sensor.71605_ld_failed
+                name: Failed
+              - entity: sensor.71605_ld_degraded
+                name: Degraded
 
           - type: custom:bar-card
             title_position: top
@@ -2908,6 +2928,19 @@ views:
       - type: vertical-stack
         cards:
           - type: glance
+            columns: 5
+            entities:
+              - entity: sensor.nvme0_write_change_1h
+                name: N0
+              - entity: sensor.nvme1_write_change_1h
+                name: N1
+              - entity: sensor.nvme2_write_change_1h
+                name: N2
+              - entity: sensor.boot_write_change_1h
+                name: boot
+              - entity: sensor.840pro_write_change_1h
+                name: Heap
+          - type: glance
             columns: 6
             entities:
               # NVME 0
@@ -2958,6 +2991,9 @@ views:
                 name: Left
               - entity: sensor.nvme2_calc_life_left
                 name: CLeft
+          - type: glance
+            columns: 4
+            entities:
               # boot
               - entity: sensor.boot_tb_written
                 name: boot
@@ -2966,44 +3002,25 @@ views:
                 name: R Session
               - entity: sensor.boot_session_write
                 name: W Session
-              #- entity: sensor.boot_gb_per_day
-              #  name: Per Day
-              - entity: sensor.boot_gb_per_hour
-                name: Per Hour
-              - entity: sensor.boot_life_left
-                name: Left
               - entity: sensor.boot_calc_life_left
                 name: CLeft
+          - type: glance
+            columns: 3
+            entities:
               # 840pro_1
               - entity: sensor.840pro_1_tb_written
                 name: 840pro_1
                 icon: mdi:raspberry-pi
-              - entity: sensor.840pro_1_session_read
-                name: R Session
-              - entity: sensor.840pro_1_session_write
-                name: W Session
-              #- entity: sensor.840pro_1_gb_per_day
-              #  name: Per Day
-              - entity: sensor.840pro_1_gb_per_hour
-                name: Per Hour
-              - entity: sensor.840pro_1_life_left
-                name: Left
+              - entity: sensor.840pro_1_power_on_hours
+                name: OnHours
               - entity: sensor.840pro_1_calc_life_left
                 name: CLeft
               # 840pro_2
               - entity: sensor.840pro_2_tb_written
                 name: 840pro_2
                 icon: mdi:raspberry-pi
-              - entity: sensor.840pro_2_session_read
-                name: R Session
-              - entity: sensor.840pro_2_session_write
-                name: W Session
-              #- entity: sensor.840pro_2_gb_per_day
-              #  name: Per Day
-              - entity: sensor.840pro_2_gb_per_hour
-                name: Per Hour
-              - entity: sensor.840pro_2_life_left
-                name: Left
+              - entity: sensor.840pro_2_power_on_hours
+                name: OnHours
               - entity: sensor.840pro_2_calc_life_left
                 name: CLeft
 
@@ -3029,32 +3046,32 @@ views:
                 
 
           - type: glance
-            columns: 5
+            columns: 3
             entities:
               - entity: sensor.md0_status
                 name: md0
               - sensor.md0_disk1_template
               - sensor.md0_disk2_template
-              - entity: sensor.md1_status
-                name: md1
-              - entity: sensor.md2_status
-                name: md2
 
           - type: glance
-            columns: 6
+            columns: 8
             entities:
               - entity: sensor.md0_session_read
                 name: md0 R
               - entity: sensor.md0_session_write
                 name: md0 W
-              - entity: sensor.md1_session_read
-                name: md1 R
-              - entity: sensor.md1_session_write
-                name: md1 W
-              - entity: sensor.md2_session_read
-                name: md2 R
-              - entity: sensor.md2_session_write
-                name: md2 W
+              - entity: sensor.main_session_read
+                name: main R 
+              - entity: sensor.main_session_write
+                name: main W
+              - entity: sensor.840pro_session_read
+                name: heap R
+              - entity: sensor.840pro_session_write
+                name: heap W
+              - entity: sensor.media_session_read
+                name: M R
+              - entity: sensor.media_session_write
+                name: M W
 
           - type: glance
             columns: 6
@@ -3080,55 +3097,37 @@ views:
 
 
           - type: glance
-            columns: 4
+            columns: 5
             entities:    
               # sdc
               - entity: sensor.media1_temp
                 name: Media1
-              # - entity: sensor.sdc_session_read
-              #   name: Read
-              # - entity: sensor.sdc_session_write
-              #   name: Write
-              # sdd
               - entity: sensor.media2_temp
                 name: Media2
-              # - entity: sensor.sdd_session_read
-              #   name: Read
-              # - entity: sensor.sdd_session_write
-              #   name: Write
-                
-              # sde
+              - entity: sensor.media3_temp
+                name: Media3
               - entity: sensor.video_temp
                 name: Video
-              # - entity: sensor.sde_session_read
-              #   name: Read
-              # - entity: sensor.sde_session_write
-              #   name: Write
-              # sdm
               - entity: sensor.temp_temp
                 name: Temp
-              # - entity: sensor.video_session_read
-              #   name: Read
-              # - entity: sensor.video_session_write
-              #   name: Write
           - type: glance
             columns: 7
             entities:
               # sdf
-              - entity: sensor.sdd_temp
-                name: sdd
-              - entity: sensor.sde_temp
-                name: sde
-              - entity: sensor.sdf_temp
-                name: sdf
-              - entity: sensor.sdg_temp
-                name: sdg
-              - entity: sensor.sdh_temp
-                name: sdh
-              - entity: sensor.sdi_temp
-                name: sdi
-              - entity: sensor.sdj_temp
-                name: sdj
+              - entity: sensor.main0_temp
+                name: "#0"
+              - entity: sensor.main1_temp
+                name: "#1"
+              - entity: sensor.main2_temp
+                name: "#2"
+              - entity: sensor.main3_temp
+                name: "#3"
+              - entity: sensor.main4_temp
+                name: "#4"
+              - entity: sensor.main5_temp
+                name: "#5"
+              - entity: sensor.main6_temp
+                name: "#6"
 
 
 ################################################################
