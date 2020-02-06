@@ -191,53 +191,24 @@
       data_template:
         message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} < 250об!"
 
-# ##################################
-# System - 71605 Temp Alert
-# ##################################
-- alias: system_health_71605_temp_95
-  initial_state: 'true'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.71605_cpu_temp
-      above: 95
-      for:
-        minutes: 1
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >95°!"
 
 # ##################################
 # System - 71605 Temp Alert
 # ##################################
-- alias: system_health_71605_temp_97
+- alias: system_health_71605_temp
   initial_state: 'true'
   trigger:
-    - platform: numeric_state
+    - platform: state
       entity_id: sensor.71605_cpu_temp
-      above: 97
-      for:
-        minutes: 1
+  condition:
+    - condition: template
+      value_template: "{{ (states('sensor.71605_cpu_temp')|int) >= 95 }}"
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >97°!"
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >{{ (states('sensor.71605_cpu_temp')|int) }}°C!"
 
-# ##################################
-# System - 71605 Temp Alert
-# ##################################
-- alias: system_health_71605_temp_100
-  initial_state: 'true'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.71605_cpu_temp
-      above: 100
-      for:
-        minutes: 1
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >100°!"
+
 
 # ##################################
 # System - 71605 LD Status Failed Degraded

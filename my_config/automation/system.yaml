@@ -5,21 +5,6 @@
 # #####################################################################################
 
 # ##################################
-# System - Adguard state
-# ##################################
-#- alias: system_adguard_state
-#  initial_state: 'false'
-#  trigger:
-#    - platform: state
-#      entity_id: binary_sensor.adguard_protection
-#    - platform: state
-#      entity_id: binary_sensor.adguard_runnig
-#  action:
-#    - service: notify.telegram
-#      data_template:
-#        message: "AdGuard state - {{states.binary_sensor.adguard_runnig.state | upper}}, protection - {{states.binary_sensor.adguard_protection.state | upper}}!"
-
-# ##################################
 # System - Window Cam Snapshot on Motion
 # ##################################
 - alias: system_window_snapshot
@@ -106,7 +91,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime')|int}}ч!"
+        message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime')|int}}ч работы!"
         
 # ##################################
 # System - Radio Volume
@@ -268,7 +253,6 @@
 # ##################################
 - alias: system_login_failure
   initial_state: 'true'
-  hide_entity: false
   trigger:
     - platform: state
       entity_id: persistent_notification.http_login
@@ -344,7 +328,7 @@
       entity_id: media_player.mpd
       data_template:
         message: >
-          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, '] | random %}
+          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, ', 'З+аяц, ', 'З+айка, '] | random %}
           {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я б+уду скуч+ать!'] | random %}
           {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ур+а! Ур+а! Ты верн+улся дом+ой!'] | random %}
           
@@ -470,18 +454,6 @@
         
 
 # ##################################
-# System - Entities update
-# ##################################
-- alias: system_entities_update
-  initial_state: 'false'
-  trigger:
-      - platform: time_pattern
-        minutes: '/30'
-  action:
-    - service: homeassistant.update_entity
-      entity_id: sensor.nonsmoker
-      
-# ##################################
 # System - Critical WiFi Devices state
 # ##################################
 - alias: system_critical_wifi_devices_state
@@ -542,83 +514,6 @@
         message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 
 
-# # ##################################
-# # System - Tnsor Flow Scan
-# # ##################################
-# - alias: system_tensorflow_scan
-#   initial_state: 'false'
-#   trigger:
-#     - platform: state
-#       entity_id:
-#         - sun.sun
-#   action:
-#     - service: image_processing.scan
-#       entity_id: 
-#         - camera.uvc_g3_flex_window
-#     - service: image_processing.scan
-#       entity_id: 
-#         - camera.uvc_g3_flex_entrance
-#     - service: image_processing.scan
-#       entity_id: 
-#         - camera.uvc_g3_flex_dixy
-#     - service: image_processing.scan
-#       entity_id: 
-#         - camera.uvc_g3_flex_hall
-#     - service: image_processing.scan
-#       entity_id: 
-#         - camera.digma100
-#     - service: image_processing.scan
-#       entity_id: 
-#         - camera.door_hb
-        
-# # ##################################
-# # System - Tnsor Flow Scan File
-# # ##################################
-# - alias: system_tensorflow_scan_file
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id:
-#         - binary_sensor.driveway
-#   action:
-#     - service: image_processing.scan
-#       entity_id: 
-#         - camera.local_file
-        
-# ##################################
-# System - Tod update
-# ##################################
-- alias: system_tod_update
-  initial_state: 'false'
-  trigger:
-#    - platform: time_pattern
-#      minutes: "/10"
-    - platform: time_pattern
-      minutes: 0
-    - platform: time_pattern
-      minutes: 1
-    - platform: time_pattern
-      minutes: 15
-    - platform: time_pattern
-      minutes: 30
-    - platform: time_pattern
-      minutes: 45
-    - platform: time_pattern
-      minutes: 59
-  action:
-    - service: homeassistant.update_entity
-      entity_id: 
-        - binary_sensor.tod_night
-        - binary_sensor.tod_early_night
-        - binary_sensor.tod_morning
-        - binary_sensor.tod_day
-        - binary_sensor.tod_evening 
-        - binary_sensor.tod_day_long
-        - binary_sensor.tariff_t1 
-        - binary_sensor.tariff_t2
-        - binary_sensor.tod_full_day
-        - binary_sensor.tod_full_night
-        
 # ##################################
 # System - Gateway PLugs turn on
 # ##################################
@@ -675,48 +570,3 @@
     - service: persistent_notification.dismiss
       data:
         notification_id: homeassistant_check_config
-        
-# ##################################
-# System - TOD check
-# ##################################
-- alias: system_tod_check
-  initial_state: 'false'
-  trigger:
-    - platform: time_pattern
-      minutes: "/5"
-    - platform: state
-      entity_id: binary_sensor.tod_day
-    - platform: state
-      entity_id: binary_sensor.tod_night
-  condition:
-    condition: or
-    conditions:
-      - condition: template
-        value_template: "{{ is_state('binary_sensor.tod_day','off') and ((now().hour | int) >= 7 and (now().hour | int) < 21 ) }}"
-      - condition: template
-        value_template: "{{ is_state('binary_sensor.tod_day','on') and ((now().hour | int) >= 21 or (now().hour | int) < 7 ) }}"
-      - condition: template
-        value_template: "{{ is_state('binary_sensor.tod_night','off') and ((now().hour | int) >= 21 or (now().hour | int) < 7 ) }}"
-      - condition: template
-        value_template: "{{ is_state('binary_sensor.tod_night','on') and ((now().hour | int) >= 7 and (now().hour | int) < 21 ) }}"
-  action:
-    - service: notify.telegram
-      data_template:
-        message: >
-          {% if (is_state('binary_sensor.tod_day','off') and ((now().hour | int) >= 7 and (now().hour | int) < 21 )) or (is_state('binary_sensor.tod_day','on') and ((now().hour | int) >= 21 or (now().hour | int) < 7 )) %} {{'\U000023f2'}} Внимание! Не верный TOD Day! (state {{states('binary_sensor.tod_day') }})"
-          {% elif (is_state('binary_sensor.tod_night','off') and ((now().hour | int) >= 21 or (now().hour | int) < 7 )) or (is_state('binary_sensor.tod_night','on') and ((now().hour | int) >= 7 and (now().hour | int) < 21 )) %} {{'\U000023f2'}} Внимание! Не верный TOD Night! (state {{states('binary_sensor.tod_night') }})"
-          {%endif%}
-    - service: homeassistant.update_entity
-      entity_id:
-        - binary_sensor.tod_day
-        - binary_sensor.tod_night
-    - service: notify.telegram
-      data_template:
-        message: >
-          {% if 
-          (is_state('binary_sensor.tod_day','on') and ((now().hour | int) >= 7 and (now().hour | int) < 21 ))
-          or (is_state('binary_sensor.tod_day','off') and ((now().hour | int) >= 21 or (now().hour | int) < 7 )) 
-          and (is_state('binary_sensor.tod_night','on') and ((now().hour | int) >= 21 or (now().hour | int) < 7 ))
-          or (is_state('binary_sensor.tod_night','off') and ((now().hour | int) >= 7 and (now().hour | int) < 21 )) %} {{'\U000023f2'}} Исправлено!  (day {{states('binary_sensor.tod_day') }} \ night {{states('binary_sensor.tod_night') }} )"
-          {%else%} {{'\U000023f2'}} Не исправлено!  (day {{states('binary_sensor.tod_day') }} \ night {{states('binary_sensor.tod_night') }} )"
-          {%endif%}

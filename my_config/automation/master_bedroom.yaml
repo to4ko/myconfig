@@ -333,3 +333,118 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(650)!"
+
+
+# ##################################
+# Master Bedroom - Timer restart with movement
+# ################################## 
+- alias: master_bedroom_timer_restart
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0001e53cda
+  condition:
+    - condition: state
+      entity_id: light.round_led_mb
+      state: 'on'
+  action:
+  - service: timer.cancel
+    entity_id: timer.main_light_mb
+  - service: timer.start
+    entity_id: timer.main_light_mb
+
+# ##################################
+# Master Bedroom - Timer off
+# ################################## 
+- alias: sasha_timer_off
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.round_led_mb
+      to: 'off'
+      from: 'on'
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_mb
+    - service: automation.turn_off
+      entity_id: automation.master_bedroom_auto_light_on
+    - delay: '00:00:10'
+    - service: automation.turn_on
+      entity_id: automation.master_bedroom_auto_light_on
+
+# ##################################
+# Master Bedroom - Timer start on light on
+# ################################## 
+- alias: master_bedroom_timer_on
+  initial_state: true
+  trigger:
+  - platform: state
+    entity_id: light.round_led_mb
+    to: 'on'
+    from: 'off'
+  action:
+    - service: automation.turn_on
+      entity_id: automation.master_bedroom_auto_light_on
+    - service: timer.cancel
+      entity_id: timer.main_light_mb
+    - service: timer.start
+      entity_id: timer.main_light_mb
+
+# ##################################
+# Master Bedroom - Auto Light Off
+# ##################################
+- alias: master_bedroom_auto_light_off
+  initial_state: 'true'
+  trigger:
+  - platform: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.main_light_mb
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
+  action:
+    - service: light.turn_off
+      entity_id: light.round_led_mb
+
+# ##################################
+# Master Bedroom - Auto Light On
+# ##################################
+# - alias: master_bedroom_auto_light_on
+#   initial_state: 'true'
+#   trigger:
+#     - platform: event
+#       event_type: xiaomi_aqara.motion
+#       event_data:
+#         entity_id: binary_sensor.motion_sensor_158d0001e53cda
+#   condition:
+#     condition: and
+#     conditions:
+#       - condition: state
+#         entity_id: light.round_led_mb
+#         state: 'off'
+#       - condition: state
+#         entity_id: binary_sensor.tod_day
+#         state: 'on'
+#       - condition: state
+#         entity_id: sun.sun
+#         state: below_horizon
+#   action:
+#     - service: light.turn_on
+#       entity_id: light.round_led_mb
+      
+# ##################################
+# Master Bedroom - Auto Ambilight On
+# ##################################
+# - alias: master_bedroom_auto_ambilight_light
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: light.round_led_mb
+#   action:
+#     - service: script.turn_on
+#       data_template:
+#         entity_id: script.master_bedroom_ambilight_{{ states('light.round_led_mb') | lower }}
