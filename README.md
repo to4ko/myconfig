@@ -12,12 +12,12 @@ Main Server:
   - 128Gb Kingston SSD as Boot drive
   - 512Gb ADATA 8200Pro Raid 1 as Root drive
   - 256Gb ADATA 8200Pro NVME for DB
-  - 7ea WD RED 2Tb (NAS section) in Linux Raid 6 via LSI 9207-8i(IT)
-  - 2ea Samsung 840 Pro 256Gb in Raid 0 as temp drive
+  - 7ea WD RED 2Tb (NAS section) in HW Raid 6 via Adaptec 71605
+  - 2ea Samsung 840 Pro 256Gb in HW Raid 0 as temp drive via Adaptec 71605
   - 1Tb WD Purple for cameras
-  - 2ea WD Green in Raid0 (Torrent heap) via Adaptec 71605
+  - 3ea WD Green in HW Raid0 (Torrent heap) via Adaptec 71605
   - Corsair HX1200i
-  - Fractal Design XL R2 with be quite Silent Wings 2 140mm PWM fans (6ea)
+  - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
  
 Network(500mb\s):
   - Ubiquiti USG 3
@@ -75,8 +75,8 @@ Software:
   - MotionEye
 
 DB used:
-  - PostgreSQL 12
-  - InfluxDB 1.7.9
+  - PostgreSQL
+  - InfluxDB
 
 Add-On's: 
   - AirCast

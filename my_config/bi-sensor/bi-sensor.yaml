@@ -1,35 +1,56 @@
 
 #{{ 'on' if is_state('sensor.fibaro_system_unknown_type_0701_id_4001_access_control', 23) else 'off' }}
+  - platform: template
+    sensors:
+      ro_raw_flow_manual:
+        entity_id: sensor.esp32_water_filter_raw, sensor.time
+        icon_template: mdi:water-pump
+        value_template: "{{as_timestamp(now())|int-as_timestamp(states.sensor.esp32_water_filter_raw.last_changed)|int <2 }}"
 
-#  - platform: ffmpeg_motion
-#    name: Outside motion ffmpeg
-#    input: !secret door_cam_720p
+      ro_mineralized_flow_manual:
+        entity_id: sensor.esp32_water_filter_mineralized, sensor.time
+        icon_template: mdi:filter-menu
+        value_template: "{{as_timestamp(now())|int-as_timestamp(states.sensor.esp32_water_filter_mineralized.last_changed)|int <2 }}"
+
+      ro_non_mineralized_flow_manual:
+        entity_id: sensor.esp32_water_filter_nonmineralized, sensor.time
+        icon_template: mdi:cup-water
+        value_template: "{{as_timestamp(now())|int-as_timestamp(states.sensor.esp32_water_filter_nonmineralized.last_changed)|int <2 }}"
+
+      ro_postmembrane_flow_manual:
+        entity_id: sensor.esp32_water_filter_postmembrane, sensor.time
+        icon_template: mdi:cup-off
+        value_template: "{{as_timestamp(now())|int-as_timestamp(states.sensor.esp32_water_filter_postmembrane.last_changed)|int <2 }}"
 
   - platform: trend
     sensors:
       ro_raw_flow:
         entity_id: sensor.esp32_water_filter_raw
         friendly_name: Raw Water Flow
-        #sample_duration: 600
-        min_gradient: 0.01
+        sample_duration: 50
+        max_samples: 2
+        min_gradient: 0.003
 
       ro_mineralized_flow:
         entity_id: sensor.esp32_water_filter_mineralized
         friendly_name: Mineralized Water Flow
-        #sample_duration: 600
-        min_gradient: 0.01
+        sample_duration: 50
+        max_samples: 2
+        min_gradient: 0.003
 
       ro_non_mineralized_flow:
         entity_id: sensor.esp32_water_filter_nonmineralized
         friendly_name: NonMineralized Water Flow
-        #sample_duration: 600
-        min_gradient: 0.01
+        sample_duration: 50
+        max_samples: 2
+        min_gradient: 0.003
 
       ro_postmembrane_flow:
         entity_id: sensor.esp32_water_filter_postmembrane
         friendly_name: Postmembrane Water Flow
-        #sample_duration: 600
-        min_gradient: 0.01
+        sample_duration: 50
+        max_samples: 2
+        min_gradient: 0.003
 
       bathroom_humidity_rising:
         entity_id: sensor.humidity_158d00020d7c3a
@@ -105,6 +126,7 @@
         friendly_name: Toilet Usage
         icon_template: mdi:toilet
         value_template: "{{ is_state('binary_sensor.door_window_sensor_158d000232ddd6','off') }}"
+        device_class: occupancy
 
       doorbell:
         friendly_name: Doorbell
@@ -254,10 +276,8 @@
         friendly_name: Bottom Lock
         device_class: lock
         value_template: "{{is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on')}}"
-        delay_off:
-          seconds: 2
-        #delay_on:
-        #  seconds: 2
+        delay_off: '00:00:02'
+        #delay_on: '00:00:01'
         icon_template: >
             {% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}
             mdi:lock-open
@@ -268,8 +288,8 @@
         friendly_name: Upper Lock
         device_class: lock
         value_template: "{{is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on')}}"
-        delay_off:
-          seconds: 2
+        delay_off: '00:00:02'
+        #delay_on: '00:00:01'
         icon_template: >
           {% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}
           mdi:lock-open-outline

@@ -1639,7 +1639,12 @@
     sensors:
       psu_efficiency:
         friendly_name: PSU Efficiency
-        value_template: "{{ ((states('sensor.psu_total_watts')|float / states('sensor.server_z_hb')|float)*100)|round(1) }}"
+        value_template: >
+          {% if states('sensor.server_z_hb')|int(-9999) == (-9999)%}
+          1
+          {%else%}  
+          {{ ((states('sensor.psu_total_watts')|float / states('sensor.server_z_hb')|float)*100)|round(1) }}
+          {%endif%}
         unit_of_measurement: '%'
         icon_template: mdi:ticket-percent
 
@@ -1808,7 +1813,7 @@
         friendly_name: u430p Uptime
         entity_id: sensor.u430p_cpu_load
         value_template: >
-          {%if states('sensor.u430p_cpu_load')|int(-9999) == -9999%}
+          {%if as_timestamp(strptime(states('sensor.u430p_last_boot'),'%d.%m.%Y %H:%M:%S'))|int(-9999) == (-9999) %}
            0
           {%else%}
            {{((as_timestamp(now())-as_timestamp(strptime(states('sensor.u430p_last_boot'),'%d.%m.%Y %H:%M:%S')))/3600) | round(2)}}

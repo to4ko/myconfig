@@ -1,22 +1,40 @@
 
   - platform: template
     sensors:
-      water_raw_yesterday: # Расход сырой воды (вчера)
+      ro_drain:
+        friendly_name: RO Drain
+        unit_of_measurement: 'L'
+        icon_template: mdi:filter-remove-outline
+        value_template: "{{(states('sensor.water_raw_single')|float-states('sensor.water_mineralized_single')|float-states('sensor.water_non_mineralized_single')|float)|round(2)}}"
+
+      ro_drain_percentage:
+        friendly_name: RO Drain Percentage
+        unit_of_measurement: '%'
+        icon_template: mdi:filter-remove-outline
+        value_template: >
+          {% if states('sensor.ro_drain')|int(-9999) == (-9999) %}
+            -9999
+          {% else %}
+            {{((states('sensor.water_raw_single')|float/states('sensor.ro_drain')|float-1)*100)|int}}
+          {% endif %}
+          
+          
+      water_raw_yesterday:
         friendly_name: Raw Water Yesterday
         icon_template: mdi:gauge
         unit_of_measurement: 'L'
         value_template: "{{ state_attr('sensor.water_raw_daily_single', 'last_period') | float }}"
-      water_postmembrane_yesterday: # Расход воды после мембраны (вчера)
+      water_postmembrane_yesterday:
         friendly_name: PostMembrane Water Yesterday
         icon_template: mdi:gauge
         unit_of_measurement: 'L'
         value_template: "{{ state_attr('sensor.water_postmembrane_daily_single', 'last_period') | float }}"
-      water_mineralized_yesterday: # Расход минерализованной питьевой воды (вчера)
+      water_mineralized_yesterday:
         friendly_name: Mineralized Water Yesterday
         icon_template: mdi:gauge
         unit_of_measurement: 'L'
         value_template: "{{ state_attr('sensor.water_mineralized_daily_single', 'last_period') | float }}"
-      water_nonmineralized_yesterday: # Расход не минерализованной питьевой воды (вчера)
+      water_nonmineralized_yesterday:
         friendly_name: Non-Mineralized Water Yesterday
         icon_template: mdi:gauge
         unit_of_measurement: 'L'
@@ -75,3 +93,71 @@
         icon_template: mdi:calendar
         unit_of_measurement: 'days'
         value_template: "{{((as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int-state_attr('input_datetime.ro_replace_date','timestamp')|int)/86400)|round(1)}}"
+
+
+      ro_filter1_life_left:
+        friendly_name: RO Mech Filter Life Left
+        icon_template: mdi:numeric-1-box
+        unit_of_measurement: 'months'
+        value_template: >
+          {% if states('sensor.ro_filter1_wearing')|int(-9999) == (-9999) %}
+            -9999
+          {% else %}
+            {{ (states('sensor.ro_filters_inuse')|float/states('sensor.ro_filter1_wearing')|float*100/30 ) | round (1) }}
+          {% endif %}
+          
+      ro_filter2_life_left:
+        friendly_name: RO Coal Filter Life Left
+        icon_template: mdi:numeric-2-box
+        unit_of_measurement: 'months'
+        value_template: >
+          {% if states('sensor.ro_filter2_wearing')|int(-9999) == (-9999) %}
+            -9999
+          {% else %}
+            {{ (states('sensor.ro_filters_inuse')|float/states('sensor.ro_filter2_wearing')|float*100/30 ) | round (1) }}
+          {% endif %}
+
+
+      ro_filter3_life_left:
+        friendly_name: RO Coal_Ag Filter Life Left
+        icon_template: mdi:numeric-3-box
+        unit_of_measurement: 'months'
+        value_template: >
+          {% if states('sensor.ro_filter3_wearing')|int(-9999) == (-9999) %}
+            -9999
+          {% else %}
+            {{ (states('sensor.ro_filters_inuse')|float/states('sensor.ro_filter3_wearing')|float*100/30 ) | round (1) }}
+          {% endif %}
+
+      ro_membrane_life_left:
+        friendly_name: RO Membrane Life Left
+        icon_template: mdi:air-filter
+        unit_of_measurement: 'months'
+        value_template: >
+          {% if states('sensor.ro_membrane_wearing')|int(-9999) == (-9999) %}
+            -9999
+          {% else %}
+            {{ (states('sensor.ro_filters_inuse')|float/states('sensor.ro_membrane_wearing')|float*100/30 ) | round (1) }}
+          {% endif %}
+
+      ro_postfilter_life_left:
+        friendly_name: RO Postfilter Life Left
+        icon_template: mdi:numeric-4-box
+        unit_of_measurement: 'months'
+        value_template: >
+          {% if states('sensor.ro_postfilter_wearing')|int(-9999) == (-9999) %}
+            -9999
+          {% else %}
+            {{ (states('sensor.ro_filters_inuse')|float/states('sensor.ro_postfilter_wearing')|float*100/30 ) | round (1) }}
+          {% endif %}
+          
+      ro_mineralizer_life_left:
+        friendly_name: RO Mineralizer Life Left
+        icon_template: mdi:filter-variant-plus
+        unit_of_measurement: 'months'
+        value_template: >
+          {% if states('sensor.ro_mineralizer_wearing')|int(-9999) == (-9999) %}
+            -9999
+          {% else %}
+            {{ (states('sensor.ro_filters_inuse')|float/states('sensor.ro_mineralizer_wearing')|float*100/30 ) | round (1) }}
+          {% endif %}
