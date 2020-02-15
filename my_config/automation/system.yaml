@@ -31,6 +31,32 @@
             caption: "{{states('sensor.time')}} {{states('sensor.date')}}"
 
 # ##################################
+# System - Dixy Cam Snapshot on Motion
+# ##################################
+- alias: system_dixy_snapshot
+  initial_state: 'true'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.unifi_motion_dixy
+    from: 'off'
+    to: 'on'
+  action:
+    - delay: '00:00:01'
+    - service: camera.snapshot
+      data:
+        entity_id: camera.uvc_g3_flex_dixy
+        filename: "/config/www/cam_captures/dixy.jpg"
+    - delay: '00:00:01'
+    - service: notify.telegram_cam
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        data:
+          photo:
+          - file: "/config/www/cam_captures/dixy.jpg"
+            caption: "{{states('sensor.time')}} {{states('sensor.date')}}"
+
+# ##################################
 # System - Errors counter
 # ##################################
 - alias: system_error_counter
@@ -328,7 +354,7 @@
       entity_id: media_player.mpd
       data_template:
         message: >
-          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, ', 'З+аяц, ', 'З+айка, '] | random %}
+          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, ', 'З+аяц, ', 'Зайка, '] | random %}
           {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я б+уду скуч+ать!'] | random %}
           {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ур+а! Ур+а! Ты верн+улся дом+ой!'] | random %}
           
@@ -570,3 +596,19 @@
     - service: persistent_notification.dismiss
       data:
         notification_id: homeassistant_check_config
+        
+# ##################################
+# System - Pinhole restart
+# ##################################
+- alias: system_pinhole_restart
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '03:00:00'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d000322e1d9
+    - delay: '00:00:05'
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000322e1d9
+    

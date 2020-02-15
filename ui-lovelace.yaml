@@ -279,7 +279,7 @@ views:
             #title: Utility
             cards:
               - type: glance
-                columns: 8
+                columns: 7
                 show_state: true
                 state_color: true
                 entities:
@@ -295,8 +295,8 @@ views:
                       service_data:
                         entity_id: switch.ventilation
                   - binary_sensor.toilet_usage
-                  - entity: sensor.humidity_b_delta
-                    name: Humidity Delta
+                  #- entity: sensor.humidity_b_delta
+                  #  name: Humidity Delta
                   - entity: switch.plug_158d0003926263
                     name: BFan B
                     icon: mdi:cached
@@ -1488,6 +1488,8 @@ views:
           - type: entities
             #columns: 3
             state_color: true
+            title: Wear
+            show_header_toggle: false
             entities:
               - sensor.ro_filter1_wearing
               - sensor.ro_filter2_wearing
@@ -1499,15 +1501,48 @@ views:
             #columns: 3
             state_color: true
             entities:
-              - input_number.ro_filer1_resource
-              - input_number.ro_filer2_resource
-              - input_number.ro_filer3_resource
-              - input_number.ro_membrane_resource
-              - input_number.ro_postfilter_resource
-              - input_number.ro_mineralizer_resource
+              - sensor.ro_filter1_life_left
+              - sensor.ro_filter2_life_left
+              - sensor.ro_filter3_life_left
+              - sensor.ro_membrane_life_left
+              - sensor.ro_postfilter_life_left
+              - sensor.ro_mineralizer_life_left
+
+          # - type: entities
+          #   #columns: 3
+          #   state_color: true
+          #   entities:
+          #     - input_number.ro_filer1_resource
+          #     - input_number.ro_filer2_resource
+          #     - input_number.ro_filer3_resource
+          #     - input_number.ro_membrane_resource
+          #     - input_number.ro_postfilter_resource
+          #     - input_number.ro_mineralizer_resource
 
       - type: vertical-stack
         cards:
+          - type: glance
+            columns: 6
+            state_color: true
+            title: Total
+            show_header_toggle: false
+            entities:
+              - entity: sensor.water_raw_single
+                name: RAW
+                icon: mdi:water-pump
+              - entity: sensor.water_postmembrane_single
+                name: PostM
+                icon: mdi:filter-menu
+              - entity: sensor.water_mineralized_single
+                name: M
+                icon: mdi:cup-water
+              - entity: sensor.water_non_mineralized_single
+                name: NM
+                icon: mdi:cup-off
+              - entity: sensor.ro_drain
+                name: Drain
+              - entity: sensor.ro_drain_percentage
+                name: Drain %
           - type: glance
             columns: 4
             state_color: true
@@ -1529,18 +1564,19 @@ views:
             columns: 4
             state_color: true
             entities:
-              - entity: sensor.water_raw_single
-                name: Total RAW
+              - entity: binary_sensor.ro_raw_flow_manual
+                name: Manual Flow RAW
                 icon: mdi:water-pump
-              - entity: sensor.water_postmembrane_single
+              - entity: binary_sensor.ro_postmembrane_flow_manual
                 name: PostM
                 icon: mdi:filter-menu
-              - entity: sensor.water_mineralized_single
+              - entity: binary_sensor.ro_mineralized_flow_manual
                 name: M
                 icon: mdi:cup-water
-              - entity: sensor.water_non_mineralized_single
+              - entity: binary_sensor.ro_non_mineralized_flow_manual
                 name: NM
                 icon: mdi:cup-off
+
           - type: glance
             columns: 4
             state_color: true
@@ -1583,7 +1619,20 @@ views:
                 name: Filters changed at
               - entity: sensor.ro_filters_inuse
                 name: InUse
-
+      - type: vertical-stack
+        cards:
+          - type: entities
+            #columns: 3
+            state_color: true
+            show_header_toggle: false
+            title: Resource
+            entities:
+              - input_number.ro_filer1_resource
+              - input_number.ro_filer2_resource
+              - input_number.ro_filer3_resource
+              - input_number.ro_membrane_resource
+              - input_number.ro_postfilter_resource
+              - input_number.ro_mineralizer_resource
 
 ################################################################
 # POWER LOADS PAGE
@@ -1609,20 +1658,32 @@ views:
               - type: gauge
                 name: Voltage
                 entity: sensor.voltage
-                max: 230
+                min: 200
+                max: 240
+                severity:
+                  green: 215
+                  yellow: 120
+                  red: 50
+          - type: horizontal-stack
+            cards:
+              - type: gauge
+                name: BW Volt
+                entity: sensor.shp2_socket_1_voltage
+                min: 200
+                max: 240
                 severity:
                   green: 215
                   yellow: 120
                   red: 50
               - type: gauge
-                name: BW Volt
-                entity: sensor.shp2_socket_1_voltage
-                max: 230
+                name: BW Volt 2
+                entity: sensor.shp6_socket_1_v
+                min: 200
+                max: 240
                 severity:
                   green: 215
                   yellow: 120
-                  red: 50
-                  
+                  red: 50                  
           - type: horizontal-stack
             cards:
               - type: gauge
@@ -2251,6 +2312,7 @@ views:
               - entity: timer.washer_b
             state_filter:
             - "active"
+            - "paused"
 
       # Mid column
       #############
