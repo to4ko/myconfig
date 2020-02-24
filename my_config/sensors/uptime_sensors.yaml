@@ -3,14 +3,32 @@
 # ############################################################################
   - platform: uptime
     name: HA Uptime
-    unit_of_measurement: hours
+    unit_of_measurement: minutes
+    
+  - platform: template
+    sensors:
+      ha_uptime_text:
+        friendly_name: HA Uptime Text
+        icon_template: mdi:account-clock
+        entity_id: sensor.time, sensor.ha_uptime
+        value_template: >
+          {%- set test = states('sensor.ha_uptime')|int -%}
+          {%- set hours = ((test % 1440) /60) | int %}
+          {%- set days = (test / 1440)|int -%}
+          {%- set minutes = (test % 60) | int %} 
+          
+          {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{{ minutes}}m
+        attribute_templates:
+          days: "{{((states('sensor.ha_uptime')|int)/1440)|int}}"
+          hours: "{{ (((states('sensor.ha_uptime')|int) % 1440) /60) | int }}"
+          minutes: "{{ ((states('sensor.ha_uptime')|int) % 60) | int }}"
 
 # ############################################################################
 # HA Uptime CLI sensor
 # ############################################################################
   - platform: command_line
     name: ha_init
-    command: cat /config/home-assistant.log | grep -o "initialized[[:space:]]in[[:space:]][0-9]\+.[0-9]\+" | grep -o "[0-9]\+.[0-9]\+$"
+    command: 'cat /config/home-assistant.log | grep -o "initialized[[:space:]]in[[:space:]][0-9]\+.[0-9]\+" | grep -o "[0-9]\+.[0-9]\+$" || echo -1'
     scan_interval: 60
     unit_of_measurement: s
 
@@ -18,6 +36,22 @@
     sensors: 
       host_uptime:
         friendly_name: Host Uptime
-        unit_of_measurement: hours
-        value_template: "{{ ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60 * 60) ) | round (2) }}"
+        unit_of_measurement: minutes
+        value_template: "{{ ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60) ) | round (0) }}"
         entity_id: sensor.time
+        
+      host_uptime_text:
+        friendly_name: Host Uptime Text
+        icon_template: mdi:account-clock-outline
+        entity_id: sensor.time, sensor.host_uptime
+        value_template: >
+          {%- set test = states('sensor.host_uptime')|int -%}
+          {%- set hours = ((test % 1440) /60) | int %}
+          {%- set days = (test / 1440)|int -%}
+          {%- set minutes = (test % 60) | int %} 
+
+          {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{{ minutes}}m
+        attribute_templates:
+          days: "{{((states('sensor.host_uptime')|int)/1440)|int}}"
+          hours: "{{ (((states('sensor.host_uptime')|int) % 1440) /60) | int }}"
+          minutes: "{{ ((states('sensor.host_uptime')|int) % 60) | int }}"
