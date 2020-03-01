@@ -1,0 +1,73 @@
+substitutions:
+  board_name: esp32_cam_bc
+ 
+esphome:
+  name: esp32_cam_bc
+  platform: ESP32
+  board: esp32cam
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  manual_ip:
+    static_ip: 192.168.1.103
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+esp32_camera:
+  name: ${board_name}_Camera
+  external_clock:
+    pin: GPIO0
+    frequency: 20MHz
+  i2c_pins:
+    sda: GPIO26
+    scl: GPIO27
+  data_pins: [GPIO5, GPIO18, GPIO19, GPIO21, GPIO36, GPIO39, GPIO34, GPIO35]
+  vsync_pin: GPIO25
+  href_pin: GPIO23
+  pixel_clock_pin: GPIO22
+  power_down_pin: GPIO32
+  resolution: 640x480
+  jpeg_quality: 10
+
+
+dallas:
+  - pin: GPIO13
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+sensor:    
+  - platform: uptime
+    name: ${board_name}_Uptime
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+  
+  - platform: dallas
+    address: 0x96011447B082AA28
+    name: ${board_name}_Pike
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+  
+time:
+  - platform: homeassistant
+    id: homeassistant_time
