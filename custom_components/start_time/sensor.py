@@ -54,3 +54,7 @@ class StartTime(Entity):
     @property
     def unit_of_measurement(self):
         return 'seconds'
+
+    @property
+    def icon(self):
+        return 'mdi:home-assistant'
