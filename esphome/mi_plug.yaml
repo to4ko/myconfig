@@ -1,0 +1,85 @@
+substitutions:
+  board_name: mi_plug
+
+esphome:
+  name: mi_plug
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  manual_ip:
+    static_ip: 192.168.1.118
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+logger:
+
+api:
+
+ota:
+
+web_server:
+  port: 80
+  
+# status_led:
+#   pin:
+#     number: GPIO13
+#     inverted: True
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO00
+    id: gpio0
+    internal: true
+    filters:
+      - invert:
+      - delayed_off: 10ms
+    on_press:
+      - switch.toggle: 
+          id: relay
+  # - platform: gpio
+  #   name: ${board_name}_sw
+  #   pin: GPIO04
+  #   id: switch_1
+  #   on_press:
+  #     then:
+  #       - switch.toggle:
+  #           id: relay
+  #   on_release:
+  #     then:
+  #       - switch.toggle:
+  #           id: relay
+  - platform: status
+    name: ${board_name}_Status
+
+switch:
+  - platform: gpio
+    name: ${board_name}_switch
+    pin: GPIO2
+    id: relay
+
+  - platform: gpio
+    name: ${board_name}_BlueLED
+    pin: GPIO5
+    id: b_led
+
+  - platform: gpio
+    name: ${board_name}_YellowLED
+    pin: GPIO4
+    id: y_led
+
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_uptime
+
+  - platform: wifi_signal
+    name: ${board_name}_wifi_signal
+    update_interval: 60s
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
