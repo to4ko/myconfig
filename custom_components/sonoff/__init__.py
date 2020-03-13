@@ -8,7 +8,7 @@ from typing import Callable, Optional
 import voluptuous as vol
 from aiohttp import ClientSession
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_DEVICES, \
-    CONF_NAME, CONF_DEVICE_CLASS
+    CONF_NAME, CONF_DEVICE_CLASS, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import ServiceCall
 from homeassistant.helpers import config_validation as cv, discovery
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -44,6 +44,8 @@ ZEROCONF_NAME = 'eWeLink_{}._ewelink._tcp.local.'
 
 
 async def async_setup(hass: HomeAssistantType, hass_config: dict):
+    utils.init_zeroconf_singleton(hass)
+
     config = hass_config[DOMAIN]
 
     # load devices from file in config dir
@@ -137,6 +139,8 @@ async def async_setup(hass: HomeAssistantType, hass_config: dict):
     listener = EWeLinkListener(devices, session)
     listener.listen(add_device)
 
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, listener.stop)
+
     async def send_command(call: ServiceCall):
         data = dict(call.data)
 
@@ -164,6 +168,7 @@ class EWeLinkListener:
         self.session = session
 
         self._add_device = None
+        self._zeroconf = None
 
     def listen(self, add_device: Callable):
         """Начать поиск всех устройств Sonoff в сети.
@@ -171,10 +176,13 @@ class EWeLinkListener:
         :param add_device: функция, которая будет вызываться при обнаружении
         нового устройства
         """
+        from homeassistant.components.zeroconf import Zeroconf
         self._add_device = add_device
+        self._zeroconf = Zeroconf()
+        ServiceBrowser(self._zeroconf, '_ewelink._tcp.local.', listener=self)
 
-        zeroconf = Zeroconf()
-        ServiceBrowser(zeroconf, '_ewelink._tcp.local.', listener=self)
+    def stop(self, *args):
+        self._zeroconf.close()
 
     def add_service(self, zeroconf: Zeroconf, type_: str, name: str):
         """Стандартная функция ServiceBrowser."""
@@ -368,6 +376,11 @@ class EWeLinkDevice:
         except:
             _LOGGER.warning(f"Can't send {command} to {self.deviceid}")
 
+    @property
+    @lru_cache()
+    def is_th_3_4_0(self):
+        return self.state.get('deviceType') in ('normal', 'temperature')
+
     async def turn_on(self, channels: Optional[list]):
         """Включает указанные каналы.
 
@@ -379,6 +392,9 @@ class EWeLinkDevice:
                 for channel in channels
             ]
             await self.send('switches', {'switches': switches})
+        elif self.is_th_3_4_0:
+            await self.send('switch', {'switch': 'on', 'mainSwitch': 'on',
+                                       'deviceType': 'normal'})
         else:
             await self.send('switch', {'switch': 'on'})
 
@@ -393,6 +409,9 @@ class EWeLinkDevice:
                 for channel in channels
             ]
             await self.send('switches', {'switches': switches})
+        elif self.is_th_3_4_0:
+            await self.send('switch', {'switch': 'off', 'mainSwitch': 'off',
+                                       'deviceType': 'normal'})
         else:
             await self.send('switch', {'switch': 'off'})
 

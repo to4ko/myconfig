@@ -79,9 +79,19 @@
   action:
     - service: light.turn_on
       entity_id: light.led_strip_hb
-      data_template:
-        brightness_pct: 100
-        kelvin: 5000
+      data_template: 
+        brightness_pct: >
+          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10%}
+            1
+          {% else %}
+            100
+          {%endif%}
+        kelvin: >
+          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10%}
+            3000
+          {% else %}
+            5000
+          {%endif%}
 
 # ##################################
 # Hall Big - Auto Night Light Off 60s without movements
@@ -589,17 +599,21 @@
     event_data:
       entity_id: binary_sensor.switch_158d00023d3206
       click_type: single
+  condition:
+    - condition: state
+      entity_id: binary_sensor.family_home
+      state: 'off'
   action:
     - service: media_player.volume_set
       data_template:
-        entity_id: media_player.mpd
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         volume_level: '0.3'
     - service: notify.telegram
       data_template:
         message: "\U0001f4a1 Выключаем освещение"
     - service: tts.yandextts_say
-      entity_id: media_player.mpd
       data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         message: 'Выключ+аю освещ+ение!'
     - delay: '00:00:03'
     - service: script.turn_on
@@ -608,9 +622,35 @@
       data_template:
         message: "\U0001f4a1 Освещение выключено"
     - service: tts.yandextts_say
-      entity_id: media_player.mpd
       data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         message: 'Освещ+ение в+ыключено! Всег+о хор+ошего!'
+
+# ##################################
+# Hall Big - left home - abort - somebody home
+# ##################################
+- alias: hall_big_left_home_abort
+  initial_state: 'true'
+  trigger:
+    platform: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: binary_sensor.switch_158d00023d3206
+      click_type: single
+  condition:
+    - condition: state
+      entity_id: binary_sensor.family_home
+      state: 'on'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '0.3'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: 'Выключ+ение освещ+ения невозможно - дома кто-то есть!'
+
 
 # ##################################
 # Hall Big - Sasha Button - Weather fcst - long
@@ -626,7 +666,7 @@
   action:
     - service: script.weather_tts
       data_template:
-        entity_id: media_player.mpd
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         volume_level: '0.3'
         
 # ##################################
@@ -644,11 +684,11 @@
   action:
     - service: media_player.volume_set
       data_template:
-        entity_id: media_player.mpd
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         volume_level: '0.3'
     - service: tts.yandextts_say
-      entity_id: media_player.mpd
       data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         message: 'Вним+ание! Холод+ильник н+е закр+ыт!'
     - service: notify.telegram
       data_template:
@@ -668,11 +708,11 @@
   action:
     - service: media_player.volume_set
       data_template:
-        entity_id: media_player.mpd
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         volume_level: '0.3'
     - service: tts.yandextts_say
-      entity_id: media_player.mpd
       data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         message: 'Вним+ание! Мороз+ильник н+е закр+ыт!'
     - service: notify.telegram
       data_template:
@@ -739,7 +779,7 @@
         message: "{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}\U0001F513\U0001F53D Нижний замок открыт!{% else %}\U0001F512\U0001F53D Нижний замок закрыт!{% endif %}"
 #    - service: media_player.volume_set
 #      data_template:
-#        entity_id: media_player.mpd
+#        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
 #        volume_level: '0.3'
 #    - service: script.turn_on
 #      data_template:
@@ -768,7 +808,7 @@
         message: "{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}\U0001F513\U0001F53C Верхний замок открыт!{% else %}\U0001F512\U0001F53C Верхний замок закрыт!{% endif %}"
 #    - service: media_player.volume_set
 #      data_template:
-#        entity_id: media_player.mpd
+#        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
 #        volume_level: '0.3'
 #    - service_template: >
 #        {% if is_state('binary_sensor.tod_day','on') %} script.top_lock_tts
