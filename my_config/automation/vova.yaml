@@ -247,18 +247,44 @@
 # ##################################
 # Vova - Iconbit Off with TV Off
 # ##################################
-- alias: vova_iconbit_off_tv_off
+- alias: vova_tv_box_off_tv_off
   initial_state: 'true'
   trigger:
-    platform: state
-    entity_id: binary_sensor.tv_v
-    to: 'off'
-    for:
-      minutes: 5
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+      - condition: state
+        entity_id: binary_sensor.iconbit
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.tv_v
+        state: 'off'
+        for:
+          minutes: 1
   action:
-    - service: media_player.turn_off
-      entity_id: media_player.kodi_v
-      
+    - service: script.turn_on
+      entity_id: script.iconbit_toggle
+
+# ##################################
+# Vova - TV Box Off with TV Off
+# ##################################
+- alias: vova_tv_box_off_tv_off
+  initial_state: 'false'
+  trigger:
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+      - condition: state
+        entity_id: binary_sensor.kodi_v_lan
+        state: 'on'
+      - condition: state
+        entity_id: binary_sensor.tv_v
+        state: 'off'
+        for:
+          minutes: 2
+  action:
+    - service: script.turn_on
+      entity_id: script.kodi_v_toggle
 
 #  condition:
 #      - condition: state
@@ -273,7 +299,7 @@
 # Vova - Iconbit Restart
 # ##################################
 - alias: vova_iconbit_restart
-  initial_state: 'false'
+  initial_state: 'true'
   trigger:
     platform: state
     entity_id: binary_sensor.tv_v
@@ -290,7 +316,6 @@
     - delay: '00:02:00'
     - service: switch.turn_on
       entity_id: switch.plug_158d000290a0bc
-
 
 # ##################################
 # Vova - Square LED Reset 

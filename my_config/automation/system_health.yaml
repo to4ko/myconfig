@@ -315,3 +315,21 @@
         - binary_sensor.ro_mineralized_flow_manual
         - binary_sensor.ro_non_mineralized_flow_manual
         - binary_sensor.ro_postmembrane_flow_manual
+
+# ##################################
+# System - Hourly errors
+# ##################################
+- alias: system_health_hourly_errors
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: sensor.error_counter_stats
+  condition:
+    - condition: template
+      value_template: "{{ (state_attr('sensor.error_counter_stats','change')|int % 50) == 0 }}"
+    - condition: template
+      value_template: "{{ state_attr('sensor.error_counter_stats','change')|int > 200 }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4a5 Внимание! Количество ошибок в час >{{state_attr('sensor.error_counter_stats','change')|int}}!"

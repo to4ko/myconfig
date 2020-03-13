@@ -152,6 +152,9 @@
   condition:
     - condition: template
       value_template: "{{ trigger.to_state.state|int(-9999) > trigger.from_state.state|int(-9999) }}"
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 2
   action:
     - service: notify.telegram
       data_template: 
@@ -364,11 +367,11 @@
       entity_id: script.entrance_snapshot_sasha
     - service: media_player.volume_set
       data_template:
-        entity_id: media_player.mpd
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         volume_level: '0.3'
     - service: tts.yandextts_say
-      entity_id: media_player.mpd
       data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         message: >
           {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, ', 'З+аяц, ', 'Зайка, '] | random %}
           {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я б+уду скуч+ать!'] | random %}
@@ -647,5 +650,52 @@
     - service: switch.turn_on
       entity_id: switch.plug_158d000358c773
 
-
- 
+# ##################################
+# System - HACS Update Available
+# ##################################
+- alias: system_hacs_update_available
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.hacs
+  condition:
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}  
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f31f HACS - доступны обновления {{states('sensor.hacs')}}!"
+        
+# ##################################
+# System - Main Audio Selector
+# ##################################
+- alias: system_main_audio_selector
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: input_select.main_audio_out
+  condition:
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}  
+  action:
+    - service: input_boolean.set_value
+      data_template:
+        entity_id: input_text.bedroom
+        value: >
+          {% if is_state("input_select.main_audio_out", "Kitchen GHM") %} media_player.home_mini_k
+          {% elif is_state("input_select.main_audio_out", "Vova's room GHM") %} media_player.home_mini_v
+          {% elif is_state("input_select.main_audio_out", "Sasha's room GHM") %} media_player.home_mini_s
+          {% elif is_state("input_select.main_audio_out", "Master Bedroom GHM ") %} media_player.home_mini_mb
+          {% elif is_state("input_select.main_audio_out", "MPD") %} media_player.mpd
+          {% elif is_state("input_select.main_audio_out", "Hall big GHM") %} media_player.home_mini_hb
+          {% elif is_state("input_select.main_audio_out", "Everywhere") %} media_player.all_speakers
+          {% elif is_state("input_select.main_audio_out", "Minis") %} media_player.google_home_minis
+          {% endif %}

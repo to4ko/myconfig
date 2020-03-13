@@ -14,6 +14,9 @@ resources:
     type: module
   - url: /community_plugin/button-card/button-card.js
     type: module
+  
+  - url: /hacsfiles/flex-horseshoe-card/flex-horseshoe-card.js
+    type: module
 
 title: Home - Main Server
 views:
@@ -651,12 +654,12 @@ views:
                 tap_action:
                   action: call-service
                   service: script.tv_v_toggle
-              - entity: binary_sensor.kodi_v_lan
+              - entity: binary_sensor.kodi_v_lan #binary_sensor.iconbit
                 icon: mdi:play-network
-                name: x96 V
+                name: x96 V #Iconbit
                 tap_action:
                   action: call-service
-                  service: script.kodi_v_toggle
+                  service: script.kodi_v_toggle #script.iconbit_toggle
           - type: glance
             #title: Sockets
             show_name: true
@@ -874,6 +877,34 @@ views:
         #TRIM - ИБП отрезает повышенное напряжение сети,
         #BOOST - ИБП усиливает пониженное напряжение сети,
 
+################################################################
+# Virus PAGE
+################################################################
+  - title: COIV-19D
+    icon: mdi:biohazard
+    show_header_toggle: false
+    cards:
+      - type: glance
+        columns: 4
+        entities:
+            - entity: sensor.worldwide_coronavirus_confirmed
+              name: WW Confirmed
+            - entity: sensor.worldwide_coronavirus_current
+              name: Current
+            - entity: sensor.worldwide_coronavirus_recovered
+              name: Recovered
+            - entity: sensor.worldwide_coronavirus_deaths
+              name: Deaths
+            
+            - entity: sensor.russia_coronavirus_confirmed
+              name: Russia Confirmed
+            - entity: sensor.russia_coronavirus_current
+              name: Current
+            - entity: sensor.russia_coronavirus_recovered
+              name: Recovered
+            - entity: sensor.russia_coronavirus_deaths
+              name: Deaths      
+  
 
 ################################################################
 # SECURITY PAGE
@@ -1693,11 +1724,32 @@ views:
               - type: gauge
                 name: Mercury 200
                 entity: sensor.esp32_domofon_power_meter
-                max: 12
+                max: 12000
                 severity:
-                  green: .1
-                  yellow: .5
-                  red: 1
+                  green: 100
+                  yellow: 5000
+                  red: 10000
+          - type: glance
+            show_header_toggle: false
+            state_color: true
+            columns: 4
+            entities:
+              - entity: sensor.energy_daily_day
+                name: D Day
+              - entity: sensor.energy_daily_night
+                name: D Night
+              - entity: sensor.energy_monthly_day
+                name: M Day
+              - entity: sensor.energy_monthly_night
+                name: M Night
+              - entity: sensor.energy_xiaomi_daily_day
+                name: xD Day
+              - entity: sensor.energy_xiaomi_daily_night
+                name: xD Night
+              - entity: sensor.energy_xiaomi_monthly_day
+                name: xM Day
+              - entity: sensor.energy_xiaomi_monthly_night
+                name: xM Night
 
           - type: glance
             title: By Room
@@ -2190,6 +2242,9 @@ views:
               - entity: input_number.battery_low_level
               - entity: script.battery_level_check
                 name: Check now
+          - type: entities
+            entities:
+              - input_select.main_audio_out
           - type: glance
             columns: 8
             state_color: true
@@ -2350,9 +2405,11 @@ views:
                 name: Code Lines
           - type: glance
             show_header_toggle: false
-            columns: 7
+            columns: 8
             state_color: true
             entities:
+              - entity: sensor.total_entities
+                name: Total
               - entity: sensor.tracker_count
                 icon: mdi:cellphone-link
                 name: Trackers
@@ -2408,6 +2465,7 @@ views:
                     
               - type: glance
                 state_color: true
+                columns: 6
                 entities:
                   - entity: counter.badlogin_counter
                     name: Bad Logins
@@ -2415,14 +2473,18 @@ views:
                     name: Restarts
                   - entity: counter.error_counter
                     name: Errors
-                    tap_action:
+                    hold_action:
                       action: call-service
                       service: script.error_reset
+                  - entity: sensor.error_counter_hourly
+                    name: perH
                   - entity: counter.warning_counter
                     name: Warnings
-                    tap_action:
+                    hold_action:
                       action: call-service
                       service: script.warning_reset
+                  - entity: sensor.warning_counter_hourly
+                    name: perH
               - type: glance
                 show_header_toggle: false
                 state_color: true
@@ -2856,6 +2918,39 @@ views:
                     name: S.Plug
                   - entity: sensor.server_z_hb
                     name: Power usage
+              - type: glance
+                columns: 4
+                state_color: true
+                show_state: false
+                entities:
+                  - entity: script.set_fans_to_30
+                    name: "30%"
+                    icon: mdi:fan
+                    hold_action: none
+                    tap_action:
+                      action: call-service
+                      service: script.set_fans_to_30
+                  - entity: script.set_fans_to_50
+                    name: "50%"
+                    icon: mdi:fan
+                    hold_action: none
+                    tap_action:
+                      action: call-service
+                      service: script.set_fans_to_50
+                  - entity: script.set_fans_to_75
+                    name: "75%"
+                    icon: mdi:fan
+                    hold_action: none
+                    tap_action:
+                      action: call-service
+                      service: script.set_fans_to_75
+                  - entity: script.set_fans_to_100
+                    name: "100%"
+                    icon: mdi:fan
+                    hold_action: none
+                    tap_action:
+                      action: call-service
+                      service: script.set_fans_to_100
               - type: custom:bar-card
                 title_position: top
                 columns: 1
@@ -3688,3 +3783,4 @@ views:
               - script.humidifier2_restart
               - type: divider
               - script.bedside_lamp_restart
+    
