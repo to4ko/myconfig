@@ -11,7 +11,7 @@ class GroupCard extends HTMLElement {
     if (!cardConfig.card.type) cardConfig.card.type = 'entities';
     const element = document.createElement(`hui-${cardConfig.card.type}-card`);
     this.appendChild(element);
-    this._config = cardConfig;
+    this._config = JSON.parse(JSON.stringify(cardConfig));
   }
 
   set hass(hass) {

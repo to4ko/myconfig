@@ -23,12 +23,56 @@
   #     - 22
   #     - 595
 
+
+  - platform: alpha_vantage
+    api_key: !secret alpha_vantage_api_key
+    symbols:
+      - symbol: SLB
+        name: Schlumberger
+
+  - platform: rest
+    resource: https://www.cbr-xml-daily.ru/daily_json.js
+    name: USD_RUR
+    value_template: '{{ value_json.Valute.USD.Value }}'
+    unit_of_measurement: 'RUR'
+    scan_interval: 600
+
+  - platform: rest
+    resource: https://www.cbr-xml-daily.ru/daily_json.js
+    name: EUR_RUR
+    value_template: '{{ value_json.Valute.EUR.Value }}'
+    unit_of_measurement: 'RUR'
+    scan_interval: 600
+
   - platform: cups
     printers:
       - Officejet_Pro_8600_CB922C_
 
   - platform: template
     sensors:
+      worldwide_coronavirus_fatality:
+        friendly_name: Worldwide Coronavirus Fatality
+        value_template: "{{ (states('sensor.worldwide_coronavirus_deaths')|float * 100 / (states('sensor.worldwide_coronavirus_confirmed')|float ))|round(2) }}"
+        unit_of_measurement: "%"
+        icon_template: mdi:emoticon-dead
+      worldwide_coronavirus_recovery:
+        friendly_name: Worldwide Coronavirus Recovery
+        value_template: "{{ (states('sensor.worldwide_coronavirus_recovered')|float * 100 / (states('sensor.worldwide_coronavirus_confirmed')|float ))|round(2) }}"
+        unit_of_measurement: "%"
+        icon_template: mdi:emoticon-happy-outline
+
+
+      russia_coronavirus_fatality:
+        friendly_name: Russia Coronavirus Fatality
+        value_template: "{{ (states('sensor.russia_coronavirus_deaths')|float * 100 / (states('sensor.russia_coronavirus_confirmed')|float ))|round(2) }}"
+        unit_of_measurement: "%"
+        icon_template: mdi:emoticon-dead
+      russia_coronavirus_recovery:
+        friendly_name: Russia Coronavirus Recovery
+        value_template: "{{ (states('sensor.russia_coronavirus_recovered')|float * 100 / (states('sensor.russia_coronavirus_confirmed')|float ))|round(2) }}"
+        unit_of_measurement: "%"
+        icon_template: mdi:emoticon-happy-outline
+        
       vova_gps_last_update:
         value_template: "{{as_timestamp(states.device_tracker.life360_vova_tsymbal.attributes.last_seen)|timestamp_local}}"
         friendly_name: Vova GPS Last Update
