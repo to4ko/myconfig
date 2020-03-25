@@ -15,11 +15,11 @@
     from: 'off'
     to: 'on'
   action:
-    - delay: '00:00:01'
-    - service: camera.snapshot
-      data:
-        entity_id: camera.uvc_g3_flex_window
-        filename: "/config/www/cam_captures/window.jpg"
+#    - delay: '00:00:01'
+#    - service: camera.snapshot
+#      data:
+#        entity_id: camera.uvc_g3_flex_window
+#        filename: "/config/www/cam_captures/window.jpg"
     - delay: '00:00:01'
     - service: notify.telegram_cam
       data:
@@ -27,7 +27,8 @@
         message: "{{states('sensor.time')}} {{states('sensor.date')}}"
         data:
           photo:
-          - file: "/config/www/cam_captures/window.jpg"
+          #- file: "/config/www/cam_captures/window.jpg"
+          - url: http://192.168.1.14:8123{{state_attr('camera.uvc_g3_flex_window','entity_picture')}}
             caption: "{{states('sensor.time')}} {{states('sensor.date')}}"
 
 # ##################################
@@ -41,11 +42,11 @@
     from: 'off'
     to: 'on'
   action:
-    - delay: '00:00:01'
-    - service: camera.snapshot
-      data:
-        entity_id: camera.uvc_g3_flex_dixy
-        filename: "/config/www/cam_captures/dixy.jpg"
+#    - delay: '00:00:01'
+#    - service: camera.snapshot
+#      data:
+#        entity_id: camera.uvc_g3_flex_dixy
+#        filename: "/config/www/cam_captures/dixy.jpg"
     - delay: '00:00:01'
     - service: notify.telegram_cam
       data:
@@ -53,7 +54,8 @@
         message: "{{states('sensor.time')}} {{states('sensor.date')}}"
         data:
           photo:
-          - file: "/config/www/cam_captures/dixy.jpg"
+          #- file: "/config/www/cam_captures/dixy.jpg"
+          - url: http://192.168.1.14:8123{{state_attr('camera.uvc_g3_flex_dixy','entity_picture')}}
             caption: "{{states('sensor.time')}} {{states('sensor.date')}}"
 
 # ##################################
@@ -150,11 +152,17 @@
     platform: state
     entity_id: sensor.git_stars
   condition:
+#    - condition: template
+#      value_template: "{{ trigger.to_state.state|int(-9999) > trigger.from_state.state|int(-9999) }}"
+#    - condition: numeric_state
+#      entity_id: sensor.ha_uptime
+#      above: 2
     - condition: template
-      value_template: "{{ trigger.to_state.state|int(-9999) > trigger.from_state.state|int(-9999) }}"
-    - condition: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 2
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}
   action:
     - service: notify.telegram
       data_template: 
@@ -363,8 +371,8 @@
       # - condition: template
       #   value_template: "{{(now()|as_timestamp - states.binary_sensor.switch_158d0002fa99a8.last_updated|as_timestamp ) > 15}}"
   action:
-    - service: script.turn_on
-      entity_id: script.entrance_snapshot_sasha
+#    - service: script.turn_on
+#      entity_id: script.entrance_snapshot_sasha
     - service: media_player.volume_set
       data_template:
         entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
@@ -383,7 +391,8 @@
         message: "Фотография"
         data:
           photo:
-            - file: /config/www/cam_captures/entrance-sasha.jpg
+            #- file: /config/www/cam_captures/entrance-sasha.jpg
+            - url: http://192.168.1.14:8123{{state_attr('camera.uvc_g3_flex_entrance','entity_picture')}}
               caption: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
 
     # - service: notify.telegram
