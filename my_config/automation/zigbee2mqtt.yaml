@@ -1,0 +1,69 @@
+# #####################################################################################
+#
+# Zigbee2MQTT
+#
+# #####################################################################################
+# Z2M - Log Level
+# ##################################
+- alias: zigbee2mqtt_log_level
+  initial_state: "true"
+  trigger:
+    - platform: state
+      entity_id: input_select.zigbee2mqtt_log_level
+  action:
+    - service: mqtt.publish
+      data:
+        payload_template: "{{ states('input_select.zigbee2mqtt_log_level') }}"
+        topic: zigbee2mqtt/bridge/config/log_level
+
+# ##################################
+# Z2M - Automation to start timer when enable join is turned on
+# ##################################
+- alias: zigbee2mqtt_join_enable
+  initial_state: "true"
+  trigger:
+    - platform: state
+      entity_id: switch.zigbee2mqtt_main_join
+      to: "on"
+  action:
+    - service: timer.start
+      entity_id: timer.zigbee_permit_join
+
+# ##################################
+# Z2M - Automation to stop timer when switch turned off and turn off switch when timer finished
+# ##################################
+- alias: zigbee2mqtt_join_disabled
+  initial_state: "true"
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.zigbee_permit_join
+    - platform: state
+      entity_id: switch.zigbee2mqtt_main_join
+      to: "off"
+  action:
+    - service: timer.cancel
+      data:
+        entity_id: timer.zigbee_permit_join
+    - service: switch.turn_off
+      entity_id: switch.zigbee2mqtt_main_join
+
+# ##################################
+# Z2M - Successfull Interview
+# ##################################
+- alias: zigbee2mqtt_notify_successfull_interview
+  initial_state: "true"
+  trigger:
+    - platform: mqtt
+      topic: 'zigbee2mqtt/bridge/log'
+  condition:
+    - condition: template
+      value_template: '{{trigger.payload_json.type == "pairing" and trigger.payload_json.message == "interview_successful"}}'
+  action:
+    - service: persistent_notification.create
+      data_template:
+        title: Device joined the zigbee2mqtt network
+        message: "Name: {{trigger.payload_json.meta.friendly_name}},
+                  Vendor: {{trigger.payload_json.meta.vendor}},
+                  Description: {{trigger.payload_json.meta.description}}"

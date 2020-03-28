@@ -51,15 +51,15 @@
 - alias: snapshot_daily_snapshot
   initial_state: 'false'
   trigger:
-    platform: time
-    at: '3:00:00'
+    - platform: time
+      at: '3:00:00'
   action:
-  - service: hassio.snapshot_full
-    data_template:
-      name: auto_snap_main_{{ now().strftime('%d.%m.%Y') }}
-  - service: notify.telegram
-    data_template: 
-      message: "\U00002705 Резервное копирование выполнено"
+    - service: hassio.snapshot_full
+      data_template:
+        name: auto_snap_main_{{ now().strftime('%d.%m.%Y') }}
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002705 Резервное копирование выполнено"
 
 # ##################################
 # System - Hass.io Daily G-Drive Snapshot upload
@@ -67,8 +67,8 @@
 - alias: snapshot_daily_google_drive_upload
   initial_state: 'false'
   trigger:
-    platform: time
-    at: '06:00:00'
+    - platform: time
+      at: '06:00:00'
   action:
     - service: rest_command.google_backup
     - delay: '00:05:00'
@@ -81,15 +81,14 @@
       data_template: 
         message: "{% if (as_timestamp(now()) - as_timestamp(states.sensor.last_google_backup.last_updated)) < 600 %}\U00002705 G-Drive бэкап выполнен успешно!{% else %} \U00002757 Внимание! G-Drive бэкап не выполнен!{% endif %}"
         
-
 # ##################################
 # System - Hass.io Daily G-Drive updated
 # ##################################
 - alias: snapshot_daily_google_drive_update
   initial_state: 'false'
   trigger:
-    platform: state
-    entity_id: sensor.last_google_backup
+    - platform: state
+      entity_id: sensor.last_google_backup
   action:
     - service: notify.telegram
       data_template: 
