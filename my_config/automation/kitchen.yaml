@@ -8,21 +8,21 @@
 - alias: kitchen_table_lamp_on_if_lamp_off
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001ef61be
-      click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef61be
+        click_type: single
   condition:
-    condition: state
-    entity_id: light.led_color_k
-    state: 'off'    
+    - condition: state
+      entity_id: light.led_color_k
+      state: 'off'    
   action:
-  - service: light.turn_on
-    entity_id: light.led_color_k
-    data_template:
-      brightness_pct: 100
-      kelvin: 5000
+    - service: light.turn_on
+      entity_id: light.led_color_k
+      data_template:
+        brightness_pct: 100
+        kelvin: 5000
       
 # ##################################
 # Kitchen Table Lamp (Yeelight E27 Color) Off
@@ -30,18 +30,18 @@
 - alias: kitchen_table_lamp_off_if_lamp_on
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001ef61be
-      click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef61be
+        click_type: single
   condition:
-    condition: state
-    entity_id: light.led_color_k
-    state: 'on'    
+    - condition: state
+      entity_id: light.led_color_k
+      state: 'on'    
   action:
-  - service: light.turn_off
-    entity_id: light.led_color_k
+    - service: light.turn_off
+      entity_id: light.led_color_k
 
 # ##################################
 # Kitchen Table Lamp (Yeelight E27 Color) to bright
@@ -49,17 +49,17 @@
 - alias: kitchen_table_lamp_to_bright
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001ef61be
-      click_type: double
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef61be
+        click_type: double
   action:
-  - service: light.turn_on
-    entity_id: light.led_color_k
-    data_template:
-      brightness_pct: 100
-      kelvin: 5000
+    - service: light.turn_on
+      entity_id: light.led_color_k
+      data_template:
+        brightness_pct: 100
+        kelvin: 5000
 
 # ##################################
 # Kitchen Table Lamp (Yeelight E27 Color) to midnight
@@ -67,17 +67,17 @@
 - alias: kitchen_table_lamp_to_midnight
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001ef61be
-      click_type: long_click_press
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef61be
+        click_type: long_click_press
   action:
-  - service: light.turn_on
-    entity_id: light.led_color_k
-    data_template:
-      brightness_pct: 5
-      kelvin: 3000
+    - service: light.turn_on
+      entity_id: light.led_color_k
+      data_template:
+        brightness_pct: 5
+        kelvin: 3000
       
 # ##################################
 # Kitchen - Timer restart with movement
@@ -95,13 +95,13 @@
         entity_id: binary_sensor.motion_sensor_158d0002b48381
   condition:
     - condition: state
-      entity_id: switch.wall_switch_right_158d0002a36f7f
+      entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
       state: 'on'
   action:
-  - service: timer.cancel
-    entity_id: timer.main_light_k
-  - service: timer.start
-    entity_id: timer.main_light_k
+    - service: timer.cancel
+      entity_id: timer.main_light_k
+    - service: timer.start
+      entity_id: timer.main_light_k
 
 # ##################################
 # Kitchen - Timer off
@@ -109,15 +109,15 @@
 - alias: kitchen_timer_off
   initial_state: 'true'
   trigger:
-  - platform: state
-    entity_id: switch.wall_switch_right_158d0002a36f7f
-    to: 'off'
+    - platform: state
+      entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
+      to: 'off'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_k
     - service: automation.turn_off
       entity_id: automation.kitchen_auto_light_on
-    - delay: '00:00:10'
+    - delay: '00:00:15'
     - service: automation.turn_on
       entity_id: automation.kitchen_auto_light_on
     
@@ -128,9 +128,9 @@
 - alias: kitchen_timer_on
   initial_state: 'true'
   trigger:
-  - platform: state
-    entity_id: switch.wall_switch_right_158d0002a36f7f
-    to: 'on'
+    - platform: state
+      entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
+      to: 'on'
   # condition:
   #   condition: time
   #   after: '07:00:00'
@@ -153,17 +153,19 @@
 - alias: kitchen_auto_light_off
   initial_state: 'true'
   trigger:
-  - platform: event
-    event_type: timer.finished
-    event_data:
-      entity_id: timer.main_light_k
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.main_light_k
   condition:
     - condition: state
       entity_id: binary_sensor.tod_day
       state: 'on'
   action:
-    - service: switch.turn_off
-      entity_id: switch.wall_switch_right_158d0002a36f7f
+    #- service: switch.turn_off
+    #  entity_id: switch.wall_switch_right_158d0002a36f7f
+    - service: light.turn_off
+      entity_id: light.round_led_k
 
 # ##################################
 # Kitchen - Auto Light On
@@ -183,7 +185,7 @@
     condition: and
     conditions:
       - condition: state
-        entity_id: switch.wall_switch_right_158d0002a36f7f
+        entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
         state: 'off'
       - condition: state
         entity_id: binary_sensor.tod_day
@@ -192,9 +194,8 @@
         entity_id: sun.sun
         state: below_horizon
   action:
-    - service: switch.turn_on
-      entity_id: switch.wall_switch_right_158d0002a36f7f
-
+    - service: light.turn_on #switch.toggle
+      entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
 
 # ##################################
 # Kitchen - Auto Night Light
@@ -220,7 +221,7 @@
         entity_id: binary_sensor.tod_day
         state: 'off'
       - condition: state
-        entity_id: switch.wall_switch_right_158d0002a36f7f
+        entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
         state: 'off'
       - condition: state
         entity_id: switch.wall_switch_left_158d0002a365df
@@ -246,10 +247,10 @@
 - alias: kitchen_water_leak_detected
   initial_state: 'true'
   trigger:
-    platform: state
-    entity_id: binary_sensor.water_leak_sensor_158d00023297e7
-    from: 'off'
-    to: 'on'
+    - platform: state
+      entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+      from: 'off'
+      to: 'on'
   action:
     - service: media_player.volume_set
       data_template:
@@ -297,12 +298,11 @@
 - alias: kitchen_water_leak_off
   initial_state: 'true'
   trigger:
-    platform: state
-    entity_id: binary_sensor.water_leak_sensor_158d00023297e7
-    from: 'on'
-    to: 'off'
+    - platform: state
+      entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+      from: 'on'
+      to: 'off'
   condition:
-  
   action:
     - service: media_player.volume_set
       data_template:
@@ -350,13 +350,13 @@
 - alias: kitchen_check_tv_box
   initial_state: 'false'
   trigger:
-    platform: state
-    entity_id: binary_sensor.tv_box
-    to: 'on'
+    - platform: state
+      entity_id: binary_sensor.tv_box
+      to: 'on'
   condition:
-      - condition: state
-        entity_id: binary_sensor.tv_k
-        state: 'off'
+    - condition: state
+      entity_id: binary_sensor.tv_k
+      state: 'off'
   action:
     - delay: '00:01:00'
     - service: script.turn_on
@@ -373,14 +373,14 @@
     - platform: time_pattern
       minutes: '/1'
   condition:
-      - condition: state
-        entity_id: binary_sensor.tv_box
-        state: 'on'
-      - condition: state
-        entity_id: binary_sensor.tv_k
-        state: 'off'
-        for:
-          minutes: 2
+    - condition: state
+      entity_id: binary_sensor.tv_box
+      state: 'on'
+    - condition: state
+      entity_id: binary_sensor.tv_k
+      state: 'off'
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.tv_box_k_toggle
@@ -454,14 +454,14 @@
 - alias: kitchen_work_light_l
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d00023e5f2a
-      click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d00023e5f2a
+        click_type: single
   action:
-  - service: switch.toggle
-    entity_id: switch.wall_switch_left_158d0002a365df
+    - service: switch.toggle
+      entity_id: switch.wall_switch_left_158d0002a365df
 
 # ##################################
 # Kitchen - Work Light R
@@ -469,14 +469,14 @@
 - alias: kitchen_work_light_R
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.switch_158d0001ef609b
-      click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001ef609b
+        click_type: single
   action:
-  - service: switch.toggle
-    entity_id: switch.wall_switch_right_158d0002a365df
+    - service: switch.toggle
+      entity_id: switch.wall_switch_right_158d0002a365df
     
 # ##################################
 # Kitchen - Work Light Off
@@ -495,8 +495,8 @@
         entity_id: binary_sensor.switch_158d00023e5f2a
         click_type: double
   action:
-  - service_template: switch.turn_{%if is_state('switch.wall_switch_right_158d0002a365df','on') or is_state('switch.wall_switch_left_158d0002a365df','on')%}off{%else%}on{%endif%}
-    entity_id: switch.wall_switch_right_158d0002a365df, switch.wall_switch_left_158d0002a365df
+    - service_template: switch.turn_{%if is_state('switch.wall_switch_right_158d0002a365df','on') or is_state('switch.wall_switch_left_158d0002a365df','on')%}off{%else%}on{%endif%}
+      entity_id: switch.wall_switch_right_158d0002a365df, switch.wall_switch_left_158d0002a365df
 
 # ##################################
 # Kitchen - Hood On - Vent Close
@@ -522,14 +522,14 @@
 - alias: kitchen_hood_fan
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.wall_switch_right_158d0001e0784e
-      #click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.wall_switch_right_158d0001e0784e
+        #click_type: single
   action:
-  - service: switch.toggle
-    entity_id: switch.esp32_kitchen_fan1
+    - service: switch.toggle
+      entity_id: switch.esp32_kitchen_fan1
 
 # ##################################
 # Kitchen - Hood Light
@@ -537,11 +537,103 @@
 - alias: kitchen_hood_light
   initial_state: 'true'
   trigger:
-    platform: event
-    event_type: xiaomi_aqara.click
-    event_data:
-      entity_id: binary_sensor.wall_switch_left_158d0001e0784e
-      #click_type: single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.wall_switch_left_158d0001e0784e
+        #click_type: single
   action:
-  - service: switch.toggle
-    entity_id: switch.esp32_kitchen_light
+    - service: switch.toggle
+      entity_id: switch.esp32_kitchen_light
+
+# ##################################
+# Kitchen - Round LED S Reset 
+# ##################################
+- alias: kitchen_round_led_reset
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.round_led_k
+      to: 'unavailable'
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day_long
+      state: 'on'
+  action:
+    - service: script.turn_on
+      entity_id: script.round_led_k_restart
+
+# ##################################
+# Kitchen - Round LED status check
+# ##################################
+- alias: kitchen_round_led_status_check
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '07:00:01'
+  condition:
+    - condition: state
+      entity_id: light.round_led_k
+      state: 'unavailable'
+  action:
+    - service: script.turn_on
+      entity_id: script.round_led_k_restart
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Round LED K restart done(morning)!"
+        
+# ##################################
+# Kitchen Main Lamp (Xiaomi Round LED) - On
+# ##################################
+- alias: kitchen_main_lamp_on
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: switch.wall_switch_right_158d0002a36f7f
+      to: 'on'
+      from: 'off'
+    - platform: state
+      entity_id: switch.wall_switch_right_158d0002a36f7f
+      to: 'off'
+      from: 'on'
+  action:
+    - service: light.toggle
+      entity_id: light.round_led_k
+
+# ##################################
+# Kitchen Main Lamp (Xiaomi Round LED) - On
+# ##################################
+- alias: kitchen_main_lamp_set_brightness
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.round_led_k
+      to: 'on'
+      from: 'off'
+  action:
+    - service: light.turn_on
+      entity_id: light.round_led_k
+      data_template:
+        brightness_pct: 100
+        kelvin: 5000
+
+# ##################################
+# Kitchen Main Lamp (Xiaomi Round LED) - On
+# ##################################
+- alias: kitchen_main_lamp_off_auto_mode
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.round_led_k
+      to: 'off'
+      from: 'on'
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_k
+    - service: automation.turn_off
+      entity_id: automation.kitchen_auto_light_on
+    - delay: '00:00:10'
+    - service: automation.turn_on
+      entity_id: automation.kitchen_auto_light_on
