@@ -1,0 +1,64 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Doorbell
+# ##################################
+- alias: hall_big_doorbell
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.doorbell
+      from: 'off'
+      to: 'on'
+  action:
+#    - service: camera.snapshot
+#      data:
+#        entity_id: camera.door_hb
+#        filename: "/config/www/cam_captures/doorbell.jpg"
+    - service_template: script.turn_on
+      data_template:
+        entity_id: >
+          {% if states('input_boolean.doorbell_mute')=='off' %}script.doorbell_ring
+          {%else%}script.noop
+          {%endif%}
+    - service: notify.telegram_family
+      data:
+        title: Doorbell photo
+        message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+        data:
+          photo:
+          #- file: /config/www/cam_captures/doorbell.jpg
+          - url: http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
+            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+
+# binary_sensor.motion_sensor_158d0001d5995e friendly_name: Motion Mid Door HB
+# binary_sensor.motion_sensor_158d0001e05856 friendly_name: Motion Entrance HB
+# binary_sensor.motion_sensor_158d0002b482e9 friendly_name: Motion Fridge HB
+# binary_sensor.motion_sensor_158d0001ae9f61 friendly_name: Motion HS
+# binary_sensor.motion_sensor_158d0002b4729d friendly_name: Motion K
+# binary_sensor.motion_sensor_158d0002b48381 friendly_name: Motion 2 K
+# binary_sensor.motion_sensor_158d0001e53cda friendly_name: Motion MB
+# binary_sensor.motion_sensor_158d000236bb94 friendly_name: Motion V
+# binary_sensor.motion_sensor_158d0001aea602 friendly_name: Motion St
+# binary_sensor.motion_sensor_158d000236bc6d friendly_name: Motion B
+# binary_sensor.motion_sensor_158d0001e54280 friendly_name: Motion T
+# binary_sensor.motion_sensor_158d000224f89f friendly_name: Motion S
+
+#    - service: notify.telegram_sandra
+#      data:
+#        title: Doorbell photo
+#        message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+#        data:
+#          photo:
+#          - file: /config/www/cam_captures/doorbell.jpg
+#            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+#    - service: notify.telegram_vova
+#      data:
+#        title: Doorbell photo
+#        message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+#        data:
+#          photo:
+#          - file: /config/www/cam_captures/doorbell.jpg
+#            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"

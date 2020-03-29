@@ -1,0 +1,69 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Main Door Bottom Lock
+# ##################################
+- alias: hall_big_bottom_lock
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0002a1a4b2
+      from: 'on'
+      to: 'off'
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0002a1a4b2
+      from: 'off'
+      to: 'on'
+  action:
+    - service: script.turn_on
+      data_template:
+        entity_id: >
+          script.bottom_lock_yellow_led_blink_{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}off{% else %}on{% endif %}
+    - service: notify.telegram
+      data_template:
+        message: "{% if is_state('binary_sensor.door_window_sensor_158d0002a1a4b2','on') %}\U0001F513\U0001F53D Нижний замок открыт!{% else %}\U0001F512\U0001F53D Нижний замок закрыт!{% endif %}"
+#    - service: media_player.volume_set
+#      data_template:
+#        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+#        volume_level: '{{states("input_number.main_volume")|float}}'
+#    - service: script.turn_on
+#      data_template:
+#        entity_id: >
+#          {% if is_state('binary_sensor.tod_day','on') %}
+#            script.bottom_lock_tts
+#          {% endif %}
+
+# ##################################
+# Hall Big - Main Door Top Lock
+# ##################################
+- alias: hall_big_top_lock
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0002b7c2c8
+      from: 'on'
+      to: 'off'
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d0002b7c2c8
+      from: 'off'
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}\U0001F513\U0001F53C Верхний замок открыт!{% else %}\U0001F512\U0001F53C Верхний замок закрыт!{% endif %}"
+#    - service: media_player.volume_set
+#      data_template:
+#        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+#        volume_level: '{{states("input_number.main_volume")|float}}'
+#    - service_template: >
+#        {% if is_state('binary_sensor.tod_day','on') %} script.top_lock_tts
+#        {% else%} script.noop
+#        {% endif %}
+    - service_template: "light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}on{% else %}off{% endif %}"
+      data:
+        entity_id: light.esp32_domofon_yellow_led
+    - service_template: "light.turn_{% if is_state('binary_sensor.door_window_sensor_158d0002b7c2c8','on') %}off{% else %}on{% endif %}"
+      data:
+        entity_id: light.esp32_domofon_yellow_led

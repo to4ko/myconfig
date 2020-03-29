@@ -1,0 +1,144 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Main power turned off
+# ##################################
+- alias: hall_big_main_power_turned_off
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: switch.wall_plug_158d000230fc52
+      to: 'off'
+      from: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS (1050)"
+
+# ##################################
+# Hall Big - Main plug pulled out
+# ##################################
+- alias: hall_big_main_plug_pulled_out
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.fridge_hb
+      below: 10
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Нагрузка в главной розетке упала! Проверь кабель!"
+
+# ##################################
+# Hall Big - Main power - over-power
+# ##################################
+- alias: hall_big_main_power_overpower
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.fridge_hb
+      above: 1700 
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Внимание! Перегрузка главной розетки! Отключите лишние потребители!"
+
+# ##################################
+# Hall Big - UPS - OB
+# ##################################
+- alias: hall_big_ups_ob
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.ippon_hb_status_data
+      to: 'OB'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Внимание! Запущен UPS (1050)!"
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Запущен UPS (1050)"
+
+# ##################################
+# Hall Big - UPS - LB
+# ##################################
+- alias: hall_big_ups_lb
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.ippon_hb_status_data
+      to: 'LB'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Заряд батареи (1050) критический! Завершение работы!"
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "UPS полностью разряжен! Завершаем работу!"
+    - service: hassio.host_shutdown
+
+# ##################################
+# Hall Big - UPS - OL
+# ##################################
+- alias: hall_big_ups_ol
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.ippon_hb_status_data
+      to: 'OL'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1050)!"
+
+# ##################################
+# Hall Big - UPS - Unknown
+# ##################################
+- alias: hall_big_ups_unknown
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.ippon_hb_status_data
+      to: "unknown"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Связь с UPS(1050) потеряна!"
+    #- service: notify.mobile_app_iphone_8_dtsymbal
+    #  data:
+    #    title: "Внимание!"
+    #    message: "Связь с UPS потеряна!"
+
+# ##################################
+# Hall Big - UPS - Unknown to OL
+# ##################################
+- alias: hall_big_ups_unknown_to_ol
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.ippon_hb_status_data
+      from: "unknown"
+      to: "OL"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Связь с UPS(1050) восстановлена!"
+
+# ##################################
+# Hall Big - Main power turned on
+# ##################################
+- alias: hall_big_main_power_turned_on
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: switch.wall_plug_158d000230fc52
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1050)!"

@@ -1,0 +1,75 @@
+# #####################################################################################
+#
+# BATHROOM
+#
+# #####################################################################################
+# Bathroom - Water Leak Detected
+# ##################################
+- alias: bathroom_water_leak_detected
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.water_leak_sensor_158d0002373a67
+      from: 'off'
+      to: 'on'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        message: 'Вним+ание! Вним+ание! Обнар+ужена ут+ечка вод+ы в в+анне! Обнар+ужена ут+ечка вод+ы в в+анне! Вод+а перекрыв+ается!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Обнаружена утечка воды в ванне! Обнаружена утечка воды в ванне! Вода перекрывается!"
+    - service: switch.turn_on
+      entity_id: switch.plug_158d00020d8679
+    - delay: '00:00:25'
+    - service: switch.turn_off
+      entity_id: switch.plug_158d00020d8679
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        message: 'Вним+ание! Вод+а перекр+ыта! Устран+ите прот+ечку вод+ы в в+анне дл+я включ+ения вод+ы!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Вода перекрыта! Устраните протечку воды в ванне для включения воды!"
+    - service: notify.telegram
+      data:
+        title: "Внимание!"
+        message: "Сработал датчик протечки в ванне! Краны закрыты!"
+
+# ##################################
+# Bathroom - Water Leak - Off
+# ##################################
+- alias: bathroom_water_leak_off
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.water_leak_sensor_158d0002373a67
+      from: 'on'
+      to: 'off'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        message: 'Прот+ечка вод+ы в в+анне устранен+а! Спас+ибо!'
+    - service: notify.telegram
+      data_template:
+        message: "\U00002705 Протечка воды в ванне устранена!"
