@@ -1,0 +1,144 @@
+# #####################################################################################
+#
+# BATHROOM
+#
+# #####################################################################################
+# Bathroom Fan - On Manual
+# ##################################
+- alias: bathroom_fan_on_manual
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001b94abe
+        click_type: single
+  condition:
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f9ebd8
+    - delay: '00:10:00'
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f9ebd8
+
+# ##################################
+# Bathroom Fan - Off Manual
+# ##################################
+- alias: bathroom_fan_off_manual
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001b94abe
+        click_type: single
+  condition:
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f9ebd8
+
+# ##################################
+# Bathroom Fan - Fans - Off
+# ##################################
+- alias: bathroom_fans_check_off
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.humidity_b_delta
+      below: 10
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0001f9ebd8
+    - delay: '00:15:00'
+    - service: switch.turn_off
+      entity_id: switch.plug_158d0003926263
+    - service: automation.turn_on
+      entity_id: automation.bathroom_bottom_fan_toggle
+
+# ##################################
+# Bathroom Fan - Fans - On
+# ##################################
+- alias: bathroom_fans_ckeck_on
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.humidity_b_delta
+      above: 10
+    - condition: state
+      entity_id: switch.plug_158d0001f9ebd8
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d0001f9ebd8, switch.plug_158d0003926263
+    - service: automation.turn_off
+      entity_id: automation.bathroom_bottom_fan_toggle
+
+# ##################################
+# Bathroom - Bottom Fan On
+# ##################################
+- alias: bathroom_bottom_fan
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '07:00:03'
+    - platform: time
+      at: '23:00:03'
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+  action:
+    - service_template: "switch.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}"
+      data:
+        entity_id: switch.plug_158d0003926263
+
+# ##################################
+# Bathroom - Bottom Fan
+# ##################################
+- alias: bathroom_bottom_fan_manual
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0001b94abe
+        click_type: double
+  action:
+    - service: switch.toggle
+      entity_id: switch.plug_158d0003926263
+      
+# ##################################
+# Bathroom - Bottom Fan Toggle
+# ##################################
+- alias: bathroom_bottom_fan_toggle
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+  condition:
+    condition: and
+    conditions: 
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+  action:
+    - service: switch.toggle
+      entity_id: switch.plug_158d0003926263

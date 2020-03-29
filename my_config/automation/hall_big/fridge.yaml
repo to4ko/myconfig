@@ -1,0 +1,120 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Fridge open for more than 
+# ##################################
+- alias: hall_big_fridge_not_closed_5m
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000253722b
+      #from: 'off'
+      to: 'on'
+      for:
+       minutes: 5
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: 'Вним+ание! Холод+ильник н+е закр+ыт!'
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F441 Внимание! Холодильник не закрыт!"
+            
+# ##################################
+# Hall Big - Freezer open for more than 
+# ##################################
+- alias: hall_big_freezer_not_closed_5m
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000252acba
+      to: 'on'
+      for:
+       minutes: 5
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: 'Вним+ание! Мороз+ильник н+е закр+ыт!'
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F441 Внимание! Морозильник не закрыт!"
+
+# ##################################
+# Hall big - Fridge door open time
+# ##################################
+- alias: hall_big_fridge_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000253722b
+      from: 'off'
+      to: 'on'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.fridge_door_open_time
+        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int}}"
+
+# ##################################
+# Hall big - Fridge door closed after 5 mins
+# ##################################
+- alias: hall_big_fridge_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000253722b
+      from: 'on'
+      to: 'off'
+  condition:
+    - condition: template
+      value_template: "{{ (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int - states('input_number.fridge_door_open_time')|int)  > 310  }}"
+  action:
+  - service: notify.telegram
+    data:
+      message: Холодильник успешно закрыт после 5 минут.
+
+# ##################################
+# Hall big - Freezer door open time
+# ##################################
+- alias: hall_big_freezer_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000252acba
+      from: 'off'
+      to: 'on'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.freezer_door_open_time
+        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int}}"
+
+# ##################################
+# Hall big - Freezer door closed after 5 mins
+# ##################################
+- alias: hall_big_freezer_door_open_time
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.door_window_sensor_158d000252acba
+      from: 'on'
+      to: 'off'
+  condition:
+    - condition: template
+      value_template: "{{ (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int - states('input_number.freezer_door_open_time')|int)  > 310  }}"
+  action:
+  - service: notify.telegram
+    data:
+      message: Морозилка успешно закрыта после 5 минут.

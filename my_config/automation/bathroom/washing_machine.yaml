@@ -1,0 +1,36 @@
+# #####################################################################################
+#
+# BATHROOM
+#
+# #####################################################################################
+
+# Bathroom - Washing Machine notification
+# ##################################
+- alias: bathroom_washing_machine
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.washer_b
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.washer_b
+      from: 'on'
+      to: 'off'
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 5
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "{% if is_state('binary_sensor.washer_b','on') %}\U000023F3 Стирка начата!{% else %}\U0000231B Стирка завершена! Время стирки составило {{ ( (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))| round(0) - as_timestamp(states.timer.washer_b.last_changed)| int) / 60 )| round(0) }}мин.{% endif %}"
+    - service_template: >
+        {% if is_state('binary_sensor.tod_day','on') %}
+          script.washing_machine_tts
+        {%else%}
+          script.noop
+        {% endif %}
+    - service: script.turn_on
+      data_template: 
+        entity_id: "{% if is_state('binary_sensor.washer_b','on') %}script.washer_timer_on{% else %}script.washer_timer_off{% endif %}"

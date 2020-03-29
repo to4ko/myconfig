@@ -33,16 +33,16 @@
   - platform: rest
     resource: https://www.cbr-xml-daily.ru/daily_json.js
     name: USD_RUR
-    value_template: '{{ value_json.Valute.USD.Value }}'
+    value_template: '{{ value_json.Valute.USD.Value | float | round(2) }}'
     unit_of_measurement: 'RUR'
-    scan_interval: 600
+    scan_interval: 1200
 
   - platform: rest
     resource: https://www.cbr-xml-daily.ru/daily_json.js
     name: EUR_RUR
-    value_template: '{{ value_json.Valute.EUR.Value }}'
+    value_template: '{{ value_json.Valute.EUR.Value | float | round(2) }}'
     unit_of_measurement: 'RUR'
-    scan_interval: 600
+    scan_interval: 1200
 
   - platform: cups
     printers:
@@ -60,7 +60,6 @@
         value_template: "{{ (states('sensor.worldwide_coronavirus_recovered')|float * 100 / (states('sensor.worldwide_coronavirus_confirmed')|float ))|round(2) }}"
         unit_of_measurement: "%"
         icon_template: mdi:emoticon-happy-outline
-
 
       russia_coronavirus_fatality:
         friendly_name: Russia Coronavirus Fatality
@@ -169,13 +168,13 @@
     sensors:
       pressure_gradient:
         friendly_name: Pressure Gradient
-        value_template: "{{(states.binary_sensor.pressure_falling_fast.attributes.gradient|float * 3600*100)|int(0)}}"
+        value_template: "{{(state_attr('binary_sensor.pressure_falling_fast','gradient')|float * 3600*100)|int(0)}}"
         icon_template: mdi:chart-line-variant
         unit_of_measurement: 'Pah'
 
       pressure_gradient_air_valve:
         friendly_name: Pressure Gradient (Air Valve)
-        value_template: "{{(states.binary_sensor.pressure_rising_fast_air_valve.attributes.gradient|float * 3600*100)|int(0)}}"
+        value_template: "{{(state_attr('binary_sensor.pressure_rising_fast_air_valve','gradient')|float * 3600*100)|int(0)}}"
         icon_template: mdi:chart-line-variant
         unit_of_measurement: 'Pah'
 
@@ -276,20 +275,20 @@
         
       git_stars:
         friendly_name: GitHub Stars
-        value_template: '{{states.sensor.myconfig.attributes.stargazers|int}}'
+        value_template: "{{state_attr('sensor.myconfig','stargazers')|int}}"
         icon_template: mdi:star
 
       home_status:
         friendly_name: Home Occupation
         #device_class: presence
         value_template: >
-          {% if states.binary_sensor.family_home.state == "on" %}
+          {% if states('binary_sensor.family_home') == "on" %}
           Occupied
           {% else %}
           Empty
           {% endif %}
         icon_template: >
-          {% if states.binary_sensor.family_home.state == "on" %}
+          {% if states('binary_sensor.family_home') == "on" %}
           mdi:home-account
           {% else %}
           mdi:home-outline
