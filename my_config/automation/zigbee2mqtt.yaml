@@ -67,3 +67,56 @@
         message: "Name: {{trigger.payload_json.meta.friendly_name}},
                   Vendor: {{trigger.payload_json.meta.vendor}},
                   Description: {{trigger.payload_json.meta.description}}"
+                  
+# ##################################
+# Z2M -  Zigbee2Mqtt not running
+# ##################################
+- alias: zigbee2mqtt_z2m_addon_status
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.zigbee2mqtt_addon
+  condition:
+    - condition: template
+      value_template: "{{ not is_state('sensor.zigbee2mqtt_addon','started') }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f31f Внимание! Z2M: {{trigger.from_state.state}} -> {{trigger.to_state.state}} !"
+
+# ##################################
+# Z2M -  Zigbee2Mqtt Update
+# ##################################
+- alias: zigbee2mqtt_z2m_addon_update
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.zigbee2mqtt_addon
+  condition:
+    - condition: template
+      value_template: "{{ state_attr('sensor.zigbee2mqtt_addon', 'version') != state_attr('sensor.zigbee2mqtt_addon', 'version_latest') }} }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f31f Внимание! Z2M {{state_attr('sensor.zigbee2mqtt_addon', 'version_latest')}} обновление доступно! !"
+
+        
+#{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}
+        
+# ##################################
+# Z2M -  MQTT offline
+# ##################################
+- alias: zigbee2mqtt_mqtt_status
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      seconds: "/10"
+    - platform: state
+      entity_id: sensor.zigbee2mqtt_addon
+  condition:
+    - condition: template
+      value_template: "{{ states('sensor.mqtt_uptime')|int(-9999) == (-9999) }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f31f Внимание! MQTT брокер не запущен!"

@@ -25,6 +25,57 @@
     - service: switch.toggle
       entity_id: switch.0x00158d000366815b_switch_l2, switch.0x00158d0001a248e9_switch_l2
 
+- alias: test_3
+  initial_state: 'false'
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: WARNING
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: ERROR
+  condition:
+    condition: template
+    value_template: "{{ 'Update' in trigger.event.data.message|join(' ') }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{{trigger.event.data.message}}"
+
+
+- alias: test_4
+  initial_state: 'false'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+    - platform: state
+      entity_id:
+        - binary_sensor.unifi_motion_hall
+        - binary_sensor.unifi_motion_entrance
+#  condition:
+#    condition: template
+#    value_template: "{{ 'Update' in trigger.event.data.message|join(' ') }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{{trigger.event.data.entity_id}}"
+
+
+# - alias: test_z2m_5
+#   initial_state: 'true'
+#   trigger:
+#     - platform: device
+#       device_id: 0x00158d00023e5e90
+#       domain: mqtt
+#       subtype: arrow_left_click
+#       type: action
+#   action:
+#     - service: switch.toggle
+#       entity_id: switch.0x00158d000366815b_switch_l1, switch.0x00158d0001a248e9_switch_l1
+
+
 
 #- alias: test_one
 #  initial_state: 'false'

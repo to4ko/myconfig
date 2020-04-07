@@ -2,6 +2,22 @@
 #{{ 'on' if is_state('sensor.fibaro_system_unknown_type_0701_id_4001_access_control', 23) else 'off' }}
   - platform: template
     sensors:
+
+      updater_supervisor:
+        friendly_name: 'Updater - Supervisor'
+        device_class: problem
+        entity_id: sensor.supervisor_updates
+        value_template: "{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}"
+        availability_template: "{{ (states('sensor.supervisor_updates') | int(-1)) > -1 }}"
+  
+      updater_addons:
+        friendly_name: 'Updater - Addons'
+        device_class: problem
+        entity_id: sensor.supervisor_updates
+        value_template: "{{ states('sensor.supervisor_updates') | int > 0 }}"
+
+
+
       ro_raw_flow_manual:
         entity_id: sensor.esp32_water_filter_raw, sensor.time
         icon_template: mdi:water-pump
@@ -196,10 +212,24 @@
         value_template: "{{ state_attr('switch.plug_158d000290a0bc','load_power') > 2 }}"
 
       breather_v:
-        friendly_name: Breather Status
+        friendly_name: Breather V Status
         icon_template: mdi:power
-        entity_id: switch.plug_158d000344998e
+        entity_id: switch.plug_158d000344998e, sensor.time
         value_template: "{{ state_attr('switch.plug_158d000344998e','load_power') > 5 }}"
+
+      breather_s:
+        friendly_name: Breather S Status
+        icon_template: mdi:power
+        entity_id: switch.plug_158d00036148b9, sensor.time
+        value_template: "{{ state_attr('switch.plug_158d00036148b9','load_power') > 5 }}"
+
+      breather_mb:
+        friendly_name: Breather MB Status
+        icon_template: mdi:power
+        entity_id: switch.plug_158d000345119e, sensor.time
+        value_template: "{{ state_attr('switch.plug_158d000345119e','load_power') > 5 }}"
+
+
 
       hood_k:
         friendly_name: Hood Status

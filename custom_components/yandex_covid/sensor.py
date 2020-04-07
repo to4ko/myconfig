@@ -80,6 +80,17 @@ class YandexCovid(Entity):
             _LOGGER.error(f"Update World error: {e}")
 
         try:
+            for city in data['isolation']['cities']:
+                name = city['name']
+                if name in self._attrs:
+                    self._attrs[name]['isolation'] = city['level']
+                else:
+                    self._attrs[name] = {'isolation': city['level']}
+
+        except Exception as e:
+            _LOGGER.error(f"Update Isolation error: {e}")
+
+        try:
             tests = int(data['tests'].replace(' ', ''))
             items = [int(p.replace('\xa0', ''))
                      for p in RE_DIV.findall(text)]

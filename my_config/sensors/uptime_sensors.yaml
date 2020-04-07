@@ -1,5 +1,38 @@
+# ############################################################################
+# MQTT Brocker Uptime sensor
+# ############################################################################
+  - platform: mqtt
+    name: MQTT uptime
+    state_topic: "$SYS/broker/uptime"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ value.split(' ').0|int }}"
+    icon: mdi:av-timer
+    unit_of_measurement: seconds
+  
+  - platform: template
+    sensors:
+      mqtt_uptime_text:
+        friendly_name: MQTT Uptime Text
+        icon_template: mdi:av-timer
+        entity_id: sensor.time, sensor.mqtt_uptime
+        value_template: >
+          {%- set test = states('sensor.mqtt_uptime')|int -%}
+          {% set minutes = ((test % 3600) / 60) | int %}
+          {% set hours = ((test % 86400) / 3600) | int %}
+          {% set days = (test / 86400) | int %}
+          {% set weeks = (test / 604800) | int %}
+          
+          {%if weeks >0 %}{{weeks}}w {%endif%}{%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{%if minutes > 0%}{{ minutes}}m{%else%}<1m{%endif%}
+        attribute_templates:
+          weeks: "{{ (states('sensor.mqtt_uptime')|int / 604800) | int }}"
+          days: "{{ (states('sensor.mqtt_uptime')|int / 86400) | int }}"
+          hours: "{{ ((states('sensor.mqtt_uptime')|int % 86400) / 3600) | int }}"
+          minutes: "{{ ((states('sensor.mqtt_uptime')|int % 3600) / 60) | int }}"
+          raw: "{{ states('sensor.mqtt_uptime')|int }}"
 
-  - platform: start_time
+    
   
 # ############################################################################
 # Uptime sensor
@@ -16,16 +49,19 @@
         entity_id: sensor.time, sensor.ha_uptime
         value_template: >
           {%- set test = states('sensor.ha_uptime')|int -%}
+          {%- set minutes = (test % 60) | int %} 
           {%- set hours = ((test % 1440) /60) | int %}
           {%- set days = (test / 1440)|int -%}
-          {%- set minutes = (test % 60) | int %} 
+          {%- set weeks = (test / 10080)|int %}
+
           
-          {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{{ minutes}}m
+          {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{%if minutes > 0%}{{ minutes}}m{%else%}<1m{%endif%}
         attribute_templates:
-          days: "{{((states('sensor.ha_uptime')|int)/1440)|int}}"
-          hours: "{{ (((states('sensor.ha_uptime')|int) % 1440) /60) | int }}"
-          minutes: "{{ ((states('sensor.ha_uptime')|int) % 60) | int }}"
-          raw: "{{(states('sensor.ha_uptime')|float)}}"
+          weeks: "{{ (states('sensor.ha_uptime')|int / 10080)|int }}"
+          days: "{{( states('sensor.ha_uptime')|int / 1440)|int }}"
+          hours: "{{ ((states('sensor.ha_uptime')|int % 1440) /60) | int }}"
+          minutes: "{{ (states('sensor.ha_uptime')|int % 60) | int }}"
+          raw: "{{ (states('sensor.ha_uptime')|float) }}"
 
 # ############################################################################
 # HA Uptime CLI sensor
@@ -50,13 +86,16 @@
         entity_id: sensor.time, sensor.host_uptime
         value_template: >
           {%- set test = states('sensor.host_uptime')|int -%}
+          {%- set minutes = (test % 60) | int %} 
           {%- set hours = ((test % 1440) /60) | int %}
           {%- set days = (test / 1440)|int -%}
-          {%- set minutes = (test % 60) | int %} 
+          {%- set weeks = (test / 10080)|int %}
 
-          {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{{ minutes}}m
+          
+          {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{%if minutes > 0%}{{ minutes}}m{%else%}<1m{%endif%}
         attribute_templates:
-          days: "{{((states('sensor.host_uptime')|int)/1440)|int}}"
-          hours: "{{ (((states('sensor.host_uptime')|int) % 1440) /60) | int }}"
-          minutes: "{{ ((states('sensor.host_uptime')|int) % 60) | int }}"
-          raw: "{{(states('sensor.host_uptime')|float)}}"
+          weeks: "{{ (states('sensor.host_uptime')|int / 10080)|int }}"
+          days: "{{ (states('sensor.host_uptime')|int / 1440)|int }}"
+          hours: "{{ ((states('sensor.host_uptime')|int % 1440) /60) | int }}"
+          minutes: "{{ (states('sensor.host_uptime')|int % 60) | int }}"
+          raw: "{{ (states('sensor.ha_uptime')|float) }}"
