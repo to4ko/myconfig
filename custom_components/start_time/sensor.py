@@ -1,34 +1,48 @@
 import logging
+from collections import OrderedDict
 from datetime import datetime
+from logging import LogRecord
 
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.info("Started tracking time")
 
 DOMAIN = 'start_time'
 
 
+class LogsHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.add_entities = None
+        self.attrs = {}
+
+    def handle(self, record: LogRecord) -> None:
+        if record.msg.startswith("Setup of domain"):
+            self.attrs[record.args[0]] = round(record.args[1], 1)
+
+        elif (record.msg.startswith("Home Assistant initialized") and
+              self.add_entities):
+            self.add_entities([StartTime(record.args[0], self.attrs)])
+
+
+handler = LogsHandler()
+
+logging.getLogger('homeassistant.bootstrap').addHandler(handler)
+logging.getLogger('homeassistant.setup').addHandler(handler)
+
+
 async def async_setup_platform(hass: HomeAssistantType, config, add_entities,
                                discovery_info=None):
-    logger = logging.getLogger('homeassistant.bootstrap')
-    real_info = logger.info
-
-    def monkey_info(msg: str, *args):
-        if msg.startswith("Home Assistant initialized"):
-            add_entities([StartTime(args[0])])
-        real_info(msg, *args)
-
-    logger.info = monkey_info
-
+    handler.add_entities = add_entities
     return True
 
 
 class StartTime(Entity):
-    def __init__(self, duration: float):
-        self._attrs = {
-            'datetime': datetime.now(),
-        }
+    def __init__(self, duration: float, attrs: dict):
+        attrs = sorted(attrs.items(), key=lambda t: t[1], reverse=True)
+        self._attrs = OrderedDict([('datetime', datetime.now())] + attrs)
         self._state = round(duration, 1)
 
     @property

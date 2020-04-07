@@ -23,6 +23,15 @@
   #     - 22
   #     - 595
 
+  - platform: command_line
+    name: Supervisor updates
+    command: 'curl http://supervisor/supervisor/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"addons":[.data.addons[] | select(.version != .installed)]}'''
+    value_template: "{{ value_json.addons | length }}"
+    json_attributes:
+    - newest_version
+    - current_version
+    - addons
+
 
   - platform: alpha_vantage
     api_key: !secret alpha_vantage_api_key
