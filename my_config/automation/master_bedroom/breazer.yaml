@@ -1,0 +1,56 @@
+# #####################################################################################
+#
+# MASTER BEDROOM - Breazer
+#
+# #####################################################################################
+# Master Bedroom- Breazer On
+# ################################## 
+- alias: master_bedroom_breazer_on
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.z19_co2_mb
+      above: 1000
+    - condition: state
+      entity_id: binary_sensor.breather_mb
+      state: 'off'
+    - condition: state
+      entity_id: binary_sensor.door_window_sensor_158d000200ad58
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.digma_ir_mb_breather_pwr
+
+# ##################################
+# Master Bedroom- Breazer Off
+# ################################## 
+- alias: master_bedroom_breazer_off
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    condition: or
+    conditions:
+      - condition: and
+        conditions:
+        - condition: numeric_state
+          entity_id: sensor.z19_co2_mb
+          below: 800
+        - condition: state
+          entity_id: binary_sensor.breather_mb
+          state: 'on'
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.door_window_sensor_158d000200ad58
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.breather_mb
+          state: 'on'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.digma_ir_mb_breather_pwr

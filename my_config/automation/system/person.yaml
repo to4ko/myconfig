@@ -1,0 +1,142 @@
+# #####################################################################################
+#
+# SYSTEM - Persons
+#
+# #####################################################################################
+# System - Dima At home
+# ##################################
+- alias: system_presence_dima_at_home
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_dima_tsymbal
+      entity_id: person.dima
+      to: 'home'
+      for:
+        minutes: 3
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F9D4 Дима дома!"
+        
+# ##################################
+# System - Vova At home
+# ##################################
+- alias: system_presence_vova_at_home
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_vova_tsymbal
+      entity_id: person.vova
+      to: 'home'
+      for:
+        minutes: 3
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F471 Вова дома!"
+
+# ##################################
+# System - Sandra At home
+# ##################################
+- alias: system_presence_sandra_at_home
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_sandra_tsymbal
+      entity_id: person.sandra
+      to: 'home'
+      for:
+        minutes: 3
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F467 Саша дома!"
+
+# ##################################
+# System - Sasha At home
+# ##################################
+#- alias: system_presence_sasha_at_home
+#  initial_state: 'true'
+#  trigger:
+#    - platform: state
+#      #entity_id: device_tracker.life360_sandra_tsymbal
+#      entity_id: person.sasha
+#      to: "home"
+#  action: 
+#    - service: notify.telegram
+#      data_template:
+#        message: "\U0001F467 Санек дома!"
+
+# ##################################
+# System - Sasha tracker - Toggle
+# ##################################
+- alias: system_sasha_tracker_toggle
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.switch_158d0002fa99a8
+        click_type: single
+  action:
+    - service: input_boolean.toggle
+      entity_id: input_boolean.sasha_tracker
+
+# ##################################
+# System - Sasha tracker
+# ##################################
+- alias: system_sasha_tracker
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sasha_tracker
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F476 Sasha Tracker {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
+    - service: device_tracker.see
+      data_template:
+        dev_id: sasha
+        location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
+
+# ##################################
+# System - Sasha tracker - Audio
+# ##################################
+- alias: system_sasha_audio_tts
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sasha_tracker
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'on'
+      # - condition: template
+      #   value_template: "{{(now()|as_timestamp - states.binary_sensor.switch_158d0002fa99a8.last_updated|as_timestamp ) > 15}}"
+  action:
+#    - service: script.turn_on
+#      entity_id: script.entrance_snapshot_sasha
+    - service: media_player.volume_set
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: >
+          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, ', 'З+аяц, ', 'Зайка, '] | random %}
+          {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я б+уду скуч+ать!'] | random %}
+          {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ур+а! Ур+а! Ты верн+улся дом+ой!'] | random %}
+          
+          {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
+    - service: notify.telegram
+      data_template:
+        message: "Фотография"
+        data:
+          photo:
+            #- file: /config/www/cam_captures/entrance-sasha.jpg
+            - url: http://192.168.1.14:8123{{state_attr('camera.uvc_g3_flex_entrance','entity_picture')}}
+              caption: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"

@@ -1,0 +1,165 @@
+# #####################################################################################
+#
+# KITCHEN - General
+#
+# #####################################################################################
+# Kitchen - Sockets on
+# ##################################
+- alias: kitchen_sockets_on
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0002b4729d
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0002b48381
+  condition:
+      - condition: state
+        entity_id: switch.plug_158d000232481a
+        state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000232481a, switch.plug_158d00028c9875, switch.plug_158d00028a54e4, switch.plug_158d0001e85086
+#    - service: homeassistant.turn_on
+#      entity_id: automation.kitchen_check_tv_box
+
+# ##################################
+# Kitchen - TV box Check
+# ##################################
+- alias: kitchen_check_tv_box
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.tv_box
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tv_k
+      state: 'off'
+  action:
+    - delay: '00:01:00'
+    - service: script.turn_on
+      entity_id: script.tv_box_k_toggle
+    - service: homeassistant.turn_off
+      entity_id: automation.kitchen_check_tv_box
+
+# ##################################
+# Kitchen - TV Box Off with TV Off
+# ##################################
+- alias: kitchen_tv_box_off_tv_off
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: '/1'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tv_box
+      state: 'on'
+    - condition: state
+      entity_id: binary_sensor.tv_k
+      state: 'off'
+      for:
+        minutes: 2
+  action:
+    - service: script.turn_on
+      entity_id: script.tv_box_k_toggle
+
+# ##################################
+# Kitchen - Weather announcement
+# ##################################
+- alias: kitchen_weather_announcement
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0002b4729d
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.motion_sensor_158d0002b48381
+  condition:
+    condition: and
+    conditions:
+      - condition: time
+        after: '07:20:00'
+        before: '07:30:00'
+      - condition: template
+        value_template: "{{(as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))-as_timestamp(state_attr('automation.kitchen_weather_announcement', 'last_triggered')))|int(0) > 601 }}"
+      - condition: state
+        entity_id: binary_sensor.workday_sensor
+        state: 'on'
+  action:
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.weather_announcement_flag
+    - service: script.weather_tts
+      data_template:
+        entity_id: media_player.home_mini_k
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    #- service: script.weather_telegram
+
+# ##################################
+# Kitchen - Smoke Detected
+# ##################################
+- alias: kitchen_smoke_detected
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.smoke_sensor_158d0002c92f31
+      to: 'on'
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: '\U000026d4 Внимание! Сработал датчик дыма!'
+        
+# ##################################
+# Kitchen - Gas Detected
+# ##################################
+- alias: kitchen_gas_detected
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.natgas_sensor_158d00024bcf85
+      to: 'on'
+  action: 
+    - service: notify.telegram
+      data_template:
+        message: '\U000026d4 Внимание! Сработал датчик газа!'
+
+# ##################################
+# Kitchen - Hood On - Vent Close
+# ##################################
+- alias: kitchen_ventilation_auto
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.hood_k
+  condition:
+    - condition: template
+      value_template: "{{not trigger.from_state.state in ['unavailable', 'unknown', 'none']}}"
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 5
+  action: 
+    - service_template: >
+        script.kitchen_vent_{%if is_state('binary_sensor.hood_k','on')%}close{%elif is_state('binary_sensor.hood_k','off')%}open{%endif%}
+
+# ##################################
+# Kitchen - Hood Fan
+# ##################################
+- alias: kitchen_hood_fan
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: binary_sensor.wall_switch_right_158d0001e0784e
+        #click_type: single
+  action:
+    - service: switch.toggle
+      entity_id: switch.esp32_kitchen_fan1
+

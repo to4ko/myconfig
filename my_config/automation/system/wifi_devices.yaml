@@ -1,0 +1,67 @@
+# #####################################################################################
+#
+# SYSTEM - WiFi Devices
+#
+# #####################################################################################
+# System - Critical WiFi Devices state
+# ##################################
+- alias: system_critical_wifi_devices_state
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: 
+        - light.square_led_v
+        - light.round_led_mb
+        - light.round_led_s
+        - light.round_led_k
+        - light.led_strip_hb
+        - light.bedside_mb
+        - fan.humidifier2
+        - switch.sonoff_basic_1_relay
+        - switch.sonoff_basic_2_relay
+      to: 'unavailable'
+    - platform: state
+      entity_id: 
+        - light.square_led_v
+        - light.round_led_mb
+        - light.round_led_s
+        - light.round_led_k
+        - light.led_strip_hb
+        - light.bedside_mb
+        - fan.humidifier2
+        - switch.sonoff_basic_1_relay
+        - switch.sonoff_basic_2_relay
+      from: 'unavailable'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - Non-Critical WiFi Devices state
+# ##################################
+- alias: system_noncritical_wifi_devices_state
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: 
+        - light.led_color_v
+        - light.led_color_k
+        - light.philips_e27_s
+        - light.philips_e27_v
+        - fan.purifier2s
+      to: 'unavailable'
+      for:
+        minutes: 05
+#    - platform: state
+#      entity_id: 
+#        - light.led_color_v
+#        - light.led_color_k
+#        - light.philips_e27_s
+#        - light.philips_e27_v
+#        - fan.purifier2s
+#      from: 'unavailable'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"

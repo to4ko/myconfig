@@ -1,6 +1,6 @@
 # #####################################################################################
 #
-# SASHA
+# SASHA - Lights
 #
 # #####################################################################################
 # Sasha Table Lamp (Philips E27)
@@ -122,7 +122,7 @@
       entity_id: light.philips_e27_s
 
 # ##################################
-# Sasha - Auto Night Light\Humidifier On
+# Sasha - Auto Night Light
 # ##################################
 - alias: sasha_auto_nightlight_on
   initial_state: 'true'
@@ -152,20 +152,6 @@
       entity_id: light.philips_e27_s
       data:
           scene: 4
-
-# ##################################
-# Sasha - Humidifier2 State Flag
-# ##################################
-- alias: sasha_humidifier2_flag
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: fan.humidifier2
-      to: 'on'
-  action:
-    - service: input_boolean.turn_off
-      data:
-        entity_id: input_boolean.humidifier2_auto_off
 
 # ##################################
 # Sasha - Auto Night Light Off 30m without movements
@@ -227,119 +213,6 @@
     - delay: '00:00:30'
     - service: light.turn_off
       entity_id: light.led_strip_hb, light.philips_e27_s, light.gateway_light_7811dcb8d612
-
-
-#ube	cube	MFKZQ01LM	off (always)	xiaomi_aqara.cube_action	action_type, action_value (rotate)	flip90, flip180, move, tap_twice, shake_air, swing, alert, free_fall, rotate (degrees at action_value)
-
-# ##################################
-# Sasha - Cube play 
-# ##################################
-- alias: sasha_play_night
-  initial_state: 'false'
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.cube_action
-      event_data:
-        entity_id: binary_sensor.cube_158d000116b03f
-        action_type: shake_air
-  condition: 
-    - condition: or
-      conditions:
-        - condition: state
-          entity_id: media_player.home_mini_s
-          state: 'off'
-        - condition: state
-          entity_id: media_player.home_mini_s
-          state: 'idle'
-    - condition: time
-      after: '07:00'
-      before: '06:00'  
-  action:
-    - service:  media_player.turn_on
-      entity_id: media_player.home_mini_s
-    - service:  media_player.volume_set
-      entity_id: media_player.home_mini_s
-      data:
-        volume_level: 0.1
-    - service: media_player.play_media
-      entity_id: media_player.home_mini_s
-      data:
-        media_content_id: "http://192.168.1.14:8123/local/mp3/goodnight.mp3"
-        media_content_type: "audio/mp3"
-
-# ##################################
-# Sasha - Cube stop
-# ##################################
-- alias: sasha_stop_night
-  initial_state: 'false'
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.cube_action
-      event_data:
-        entity_id: binary_sensor.cube_158d000116b03f
-        action_type: shake_air
-  condition: 
-    - condition: or
-      conditions:
-        - condition: state
-          entity_id: media_player.home_mini_s
-          state: 'on'
-        - condition: state
-          entity_id: media_player.home_mini_s
-          state: 'playing'
-    - condition: time
-      after: '07:00'
-      before: '06:00'  
-  action:
-    - service:  media_player.turn_off
-      entity_id: media_player.home_mini_s
-#    - service:  media_player.volume_set
-#      entity_id: media_player.home_mini_s
-#      data:
-#        volume_level: 1
-#    - service: media_player.play_media
-#      entity_id: media_player.home_mini_s
-#      data:
-#        media_content_id: "http://192.168.1.14:8123/local/goodnight.mp3"
-#        media_content_type: "audio/mp3"
-      
-# ##################################
-# Sasha - Humidifier 2 low water notify to Telegram
-# ##################################
-- alias: sasha_humidifier_water_low_water_cond
-  initial_state: 'true'
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.humidifier_water_level
-      below: 10
-  condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.tod_day_long
-        state: 'on'
-      - condition: state
-        entity_id: person.dima
-        state: 'home'
-  action:
-    service: notify.telegram
-    data_template:
-      message: "\U0001f4a7 Увлажнитель - осталось менее 10% воды!"
-      
-# ##################################
-# Sasha - Humidifier2  Reset
-# ##################################
-- alias: sasha_humidifier_reset
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: fan.humidifier2
-      to: 'unavailable'
-      for:
-        minutes: 5
-  action:
-    - service: script.turn_on
-      entity_id: script.humidifier2_restart
 
 # ##################################
 # Sasha - Round LED Reset 
@@ -454,61 +327,6 @@
   action:
     - service: light.turn_off
       entity_id: light.round_led_s
-
- 
-
-# ##################################
-# Sasha- Breazer On
-# ################################## 
-- alias: sasha_breazer_on
-  initial_state: 'true'
-  trigger:
-    - platform: time_pattern
-      minutes: "/1"
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.z19_co2_s
-      above: 1000
-    - condition: state
-      entity_id: binary_sensor.breather_s
-      state: 'off'
-    - condition: state
-      entity_id: binary_sensor.door_window_sensor_158d00025370d1
-      state: 'off'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.digma_ir_s_breather_pwr
-
-# ##################################
-# Sasha - Breazer On
-# ################################## 
-- alias: sasha_breazer_off
-  initial_state: 'true'
-  trigger:
-    - platform: time_pattern
-      minutes: "/1"
-  condition:
-    condition: or
-    conditions:
-      - condition: and
-        conditions:
-        - condition: numeric_state
-          entity_id: sensor.z19_co2_s
-          below: 800
-        - condition: state
-          entity_id: binary_sensor.breather_s
-          state: 'on'
-      - condition: and
-        conditions:
-        - condition: state
-          entity_id: binary_sensor.door_window_sensor_158d00025370d1
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.breather_s
-          state: 'on'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.digma_ir_s_breather_pwr
 
 # ##################################
 # Sasha - Auto Light On

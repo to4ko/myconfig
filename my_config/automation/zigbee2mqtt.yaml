@@ -67,7 +67,31 @@
         message: "Name: {{trigger.payload_json.meta.friendly_name}},
                   Vendor: {{trigger.payload_json.meta.vendor}},
                   Description: {{trigger.payload_json.meta.description}}"
+    - service: notify.telegram
+      data_template:
+        message: "Name: {{trigger.payload_json.meta.friendly_name}},
+                  Vendor: {{trigger.payload_json.meta.vendor}},
+                  Description: {{trigger.payload_json.meta.description}}"
+
                   
+
+# ##################################
+# Z2M -  Zigbee2Mqtt bridge issue
+# ##################################
+- alias: zigbee2mqtt_z2m_bridge_status
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.zigbee2mqtt_bridge_state
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {%if is_state('sensor.zigbee2mqtt_bridge_state','online')%}{{"\U00002705"}} Z2M онлайн!
+          {%elif is_state('sensor.zigbee2mqtt_bridge_state','offline') and is_state('sensor.zigbee2mqtt_addon_restart','ON')%}{{"\U0000267b"}} Внимание! Z2M рестарт аддона!
+          {%else%}{{"\U0000274C"}} Внимание! Z2M Отказ!
+          {%endif%}
+
 # ##################################
 # Z2M -  Zigbee2Mqtt not running
 # ##################################
@@ -76,9 +100,9 @@
   trigger:
     - platform: state
       entity_id: sensor.zigbee2mqtt_addon
-  condition:
-    - condition: template
-      value_template: "{{ not is_state('sensor.zigbee2mqtt_addon','started') }}"
+  # condition:
+  #   - condition: template
+  #     value_template: "{{ not is_state('sensor.zigbee2mqtt_addon','started') }}"
   action:
     - service: notify.telegram
       data_template:
@@ -110,9 +134,7 @@
   initial_state: 'true'
   trigger:
     - platform: time_pattern
-      seconds: "/10"
-    - platform: state
-      entity_id: sensor.zigbee2mqtt_addon
+      minutes: "/1"
   condition:
     - condition: template
       value_template: "{{ states('sensor.mqtt_uptime')|int(-9999) == (-9999) }}"
@@ -120,3 +142,17 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f31f Внимание! MQTT брокер не запущен!"
+
+
+- alias: zigbee2mqtt_test
+  initial_state: 'false'
+  trigger:
+    - platform: mqtt
+      topic: 'zigbee2mqtt/#'
+  condition:
+    - condition: template
+      value_template: '{{ trigger.payload_json.availability == "offline" }}'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{{trigger.payload_json}}"

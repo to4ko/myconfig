@@ -1,0 +1,390 @@
+# #####################################################################################
+#
+# SYSTEM - General
+#
+# #####################################################################################
+# System - Errors counter
+# ##################################
+- alias: system_error_counter
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: ERROR
+  action:
+    - service: counter.increment
+      entity_id: counter.error_counter
+
+# ##################################
+# System - Warning counter
+# ##################################
+- alias: system_warning_counter
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: WARNING
+  action:
+    - service: counter.increment
+      entity_id: counter.warning_counter
+
+# ##################################
+# System - START message
+# ##################################
+- alias: system_start_message
+  initial_state: 'true'
+  trigger:
+    - platform: homeassistant
+      event: start
+  action:
+    - service: homeassistant.update_entity
+      entity_id: 
+        - sensor.host_uptime
+        - sensor.ha_uptime
+        - sensor.ha_init
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F603 Сервер запущен за {{states('sensor.ha_init')|int}}сек!"
+    - service: script.turn_on
+      entity_id: script.system_start
+    - service: counter.increment
+      entity_id: counter.restart_counter
+    
+# ##################################
+# System - STOP message
+# ##################################
+- alias: system_stop_message
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: homeassistant_stop
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
+        
+# ##################################
+# System - Github star
+# ##################################
+- alias: system_github_star
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.git_stars
+  condition:
+#    - condition: template
+#      value_template: "{{ trigger.to_state.state|int(-9999) > trigger.from_state.state|int(-9999) }}"
+#    - condition: numeric_state
+#      entity_id: sensor.ha_uptime
+#      above: 2
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002b50 GitHub Star -> {{ trigger.to_state.state }}! "
+
+# ##################################
+# System - Hass.io NEW Device
+# ##################################
+- alias: system_new_device_found
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: device_tracker_new_device
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002734 Новое устройство: {{ trigger.event.data.host_name if trigger.event.data.host_name is defined else 'NA' }} - ({{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }})"
+
+# ##################################
+# System - Entity Change
+# ##################################
+- alias: system_entity_change
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: entity_registry_updated
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
+
+
+# ##################################
+# System - Hass.io NEW Version
+# ##################################
+- alias: system_hassio_new_version
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.updater
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.update_available 
+      from: 'off'
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data_template: 
+        message: "\U00002733 Hass.io {{states('sensor.ha_latest_version')}} доступен!"
+
+# ##################################
+# System - NEW DAY
+# ##################################
+- alias: system_new_day_telegram
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '00:00:02'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а)."
+    - service: counter.reset
+      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.weather_announcement_flag
+
+# ##################################
+# System - Weather FCST to Telegram
+# ##################################
+- alias: system_weather_to_telegram
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '07:00:00'
+    #- platform: time
+    #  at: '17:00:00'
+    - platform: time
+      at: '21:00:00'
+  action:
+    - service: script.turn_on
+      entity_id: script.weather_telegram
+
+# ##################################
+# System - login failure message
+# ##################################
+- alias: system_login_failure
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: persistent_notification.http_login
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state != off }}"
+  action:
+    - service: counter.increment
+      entity_id: counter.badlogin_counter
+    - service: notify.telegram
+      data_template:
+        message: "\U0000274C Неудачная попытка подлючения. Неверно введен пароль! {{ state_attr('persistent_notification.http_login','message') }}"
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: http_login
+
+# ##################################
+# System - Sensors Low Battery Notification
+# ##################################
+- alias: system_low_battery
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: "20:30:00"
+  condition:
+    - condition: template
+      value_template: >
+        {{ states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count >= 1 }}
+  action:  
+  - service: notify.telegram
+    data_template:
+      message: >
+        {%- set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') -%}
+        {{"\U0001f6a8"}} Низкий заряд батарей: {{ low_batteries }}
+          
+# ##################################
+# System - Home weather (ya)
+# ##################################
+- alias: system_weather_home
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: sensor.ya_weather_home
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
+  action:
+    - service: notify.telegram_family
+      data_template:
+        message: "\U00002602 Погода дома: {{states('sensor.ya_weather_home')}}"
+
+# ##################################
+# System - Database Purge
+# ##################################
+- alias: system_database_purge
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '02:00:00'
+  action:
+    - service: recorder.purge
+      data:
+        keep_days: 2
+        repack: true
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4ab Database Purge"
+        
+# ##################################
+# System - Transmission completed Torrent
+# ##################################
+- alias: system_transmission_completed_torrent
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: transmission_downloaded_torrent
+  action:
+    - service: notify.telegram
+      data_template:
+        #title: "Torrent completed!"
+        message: "\U0001F4AF Загрузка завершена {{trigger.event.data.name}}"
+
+# ##################################
+# System - Telegram message on Config error
+# ##################################
+- alias: system_config_error_notification
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: persistent_notification.homeassistant_check_config
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{{ '\U0000274C' }} Перезапуск отменён. Конфигурация содержит ошибки."
+    - service: persistent_notification.dismiss
+      data:
+        notification_id: homeassistant_check_config
+        
+# ##################################
+# System - Pinhole restart
+# ##################################
+- alias: system_pinhole_restart
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '03:00:00'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d000322e1d9
+    - delay: '00:00:05'
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000322e1d9
+
+# ##################################
+# System - Digma100 restart
+# ##################################
+- alias: system_digma100_restart
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: device_tracker.digma_division_100
+      from: 'home'
+      to: 'not_home'
+      for:
+        minutes: 3
+  action:
+    - service: switch.turn_off
+      entity_id: switch.plug_158d000358c773
+    - delay: '00:00:15'
+    - service: switch.turn_on
+      entity_id: switch.plug_158d000358c773
+
+# ##################################
+# System - HACS Update Available
+# ##################################
+- alias: system_hacs_update_available
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.hacs
+  condition:
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}  
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U00002b55 HACS - доступны обновления {{states('sensor.hacs')}}!"
+
+# ##################################
+# System - Supervisor Update Available
+# ##################################
+- alias: system_supervisor_update_available
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.updater_supervisor
+      from: 'off'
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6e0 Supervisor - доступна новая версия {{ state_attr('sensor.supervisor_updates', 'newest_version') }} !"
+
+
+# ##################################
+# System - Addons Update Available
+# ##################################
+- alias: system_addons_update_available
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.updater_addons
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{ states('sensor.supervisor_updates')|int >0 }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f530 Addons - доступно обновлений {{ states('sensor.supervisor_updates') }}!"
+
+# ##################################
+# System - Gateway Plugs turn on
+# ##################################
+- alias: system_gateway_plugs_restore
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: 
+        - switch.gateway_plug_hb
+        - switch.gateway_plug_hs
+        - switch.gateway_plug_k
+        - switch.gateway_plug_s
+        - switch.gateway_plug_v
+        - switch.gateway_plug_mb
+      to: 'off'
+      for:
+        seconds: 15
+  action:
+    - service: switch.turn_on
+      entity_id: 
+      - switch.gateway_plug_hb
+      - switch.gateway_plug_hs
+      - switch.gateway_plug_k
+      - switch.gateway_plug_s
+      - switch.gateway_plug_v
+      - switch.gateway_plug_mb
