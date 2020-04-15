@@ -1,0 +1,82 @@
+# #####################################################################################
+#
+# KITCHEN - Water Leaks
+#
+# #####################################################################################
+# Kitchen - Water Leak Detected
+# ##################################
+- alias: kitchen_water_leak_detected
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+      from: 'off'
+      to: 'on'
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        message: 'Вним+ание! Вним+ание! Обнар+ужена ут+ечка вод+ы н+а к+ухне! Обнар+ужена ут+ечка вод+ы н+а к+ухне! Вод+а перекрыв+ается!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Обнаружена утечка воды на кухне! Обнаружена утечка воды на кухне! Вода перекрывается!"
+    - service: switch.turn_on
+      entity_id: switch.plug_158d00020d8679
+    - delay: '00:00:25'
+    - service: switch.turn_off
+      entity_id: switch.plug_158d00020d8679
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        message: 'Вним+ание! Вод+а перекр+ыта! Устран+ите прот+ечку вод+ы н+а к+ухне дл+я включ+ения вод+ы!'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Внимание! Вода перекрыта! Устраните протечку воды на кухне для включения воды!"
+    - service: notify.notify
+      data:
+        title: "Внимание!"
+        message: "Сработал датчик протечки на кухне! Краны закрыты!"
+
+# ##################################
+# Kitchen - Water Leak Off
+# ##################################
+- alias: kitchen_water_leak_off
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.water_leak_sensor_158d00023297e7
+      from: 'on'
+      to: 'off'
+  condition:
+  action:
+    - service: media_player.volume_set
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data_template:
+        entity_id: 
+          - media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.home_mini_k
+        message: 'Прот+ечка вод+ы н+а к+ухне устранен+а! Спас+ибо!'
+    - service: notify.telegram
+      data_template:
+        message: "\U00002705 Протечка воды в кухне устранена!"

@@ -1,5 +1,6 @@
 
 #{{ 'on' if is_state('sensor.fibaro_system_unknown_type_0701_id_4001_access_control', 23) else 'off' }}
+
   - platform: template
     sensors:
 
@@ -17,6 +18,11 @@
         value_template: "{{ states('sensor.supervisor_updates') | int > 0 }}"
 
 
+
+      ro_pump_status:
+        friendly_name: RO Pump Status
+        icon_template: mdi:water-pump
+        value_template: "{{ is_state('binary_sensor.door_window_sensor_158d000423f316','off') }}"
 
       ro_raw_flow_manual:
         entity_id: sensor.esp32_water_filter_raw, sensor.time
@@ -40,34 +46,6 @@
 
   - platform: trend
     sensors:
-      # ro_raw_flow:
-      #   entity_id: sensor.esp32_water_filter_raw
-      #   friendly_name: Raw Water Flow
-      #   sample_duration: 50
-      #   max_samples: 2
-      #   #min_gradient: 0.005
-
-      # ro_mineralized_flow:
-      #   entity_id: sensor.esp32_water_filter_mineralized
-      #   friendly_name: Mineralized Water Flow
-      #   sample_duration: 50
-      #   max_samples: 2
-      #   #min_gradient: 0.005
-
-      # ro_non_mineralized_flow:
-      #   entity_id: sensor.esp32_water_filter_nonmineralized
-      #   friendly_name: NonMineralized Water Flow
-      #   sample_duration: 50
-      #   max_samples: 2
-      #   #min_gradient: 0.005
-
-      # ro_postmembrane_flow:
-      #   entity_id: sensor.esp32_water_filter_postmembrane
-      #   friendly_name: Postmembrane Water Flow
-      #   sample_duration: 50
-      #   max_samples: 2
-      #   #min_gradient: 0.005
-
       bathroom_humidity_rising:
         entity_id: sensor.humidity_158d00020d7c3a
         friendly_name: Humidity B Rising
@@ -275,27 +253,27 @@
         entity_id: switch.plug_158d00028a54e4
         value_template: "{{ state_attr('switch.plug_158d00028a54e4','load_power') > 10 }}"
 
+
+
       ippon_hb_status:
         friendly_name: Ippon 1050 Status HB
-        value_template: >
-          {% if states('sensor.ippon_hb_status_data') == none or is_state('sensor.ippon_hb_status_data','unknown') or is_state('sensor.ippon_hb_status_data','unavailable') %}
-          false
-          {% else %}
-          true
-          {% endif %}
+        value_template: "{{ states('sensor.ippon_hb_status_data') not in ['none','unknown','unavailable'] }}"
         icon_template: mdi:battery
         device_class: power
       
       ippon_mb_status:
         friendly_name: Ippon 650 Status MB
-        value_template: >
-          {% if states('sensor.ippon_mb_status_data') == none or is_state('sensor.ippon_mb_status_data.state','unknown') or is_state('sensor.ippon_mb_status_data','unavailable') %}
-          false
-          {% else %}
-          true
-          {% endif %}
+        value_template: "{{ states('sensor.ippon_mb_status_data') not in ['none','unknown','unavailable'] }}"
         icon_template: mdi:battery
         device_class: power
+
+      cyber650_k_status:
+        friendly_name: Cyber 650 Status K
+        value_template: "{{ states('sensor.cyber650_k_status_data') not in ['none','unknown','unavailable'] }}"
+        icon_template: mdi:battery
+        device_class: power
+
+
 
       family_home:
         friendly_name: Family Home
@@ -318,6 +296,8 @@
         device_class: motion
         icon_template: mdi:walk
         value_template: "{{ is_state('binary_sensor.motion_sensor_158d0002b4729d', 'on') or is_state('binary_sensor.motion_sensor_158d0002b48381', 'on') }}"
+
+
       
       bottom_lock:
         friendly_name: Bottom Lock

@@ -1,0 +1,84 @@
+# #####################################################################################
+#
+# VOVA - Lights
+#
+# #####################################################################################
+# Vova- Breazer On
+# ################################## 
+- alias: vova_breazer_on
+  initial_state: 'false'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.z19_co2_v
+      above: 1000
+    - condition: state
+      entity_id: binary_sensor.breather_v
+      state: 'off'
+    - condition: state
+      entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+      state: 'off'
+  action:
+    - service: script.turn_on
+      entity_id: script.breather_v_toggle
+
+# ##################################
+# Vova - Breazer Off
+# ################################## 
+- alias: vova_breazer_off
+  initial_state: 'false'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    condition: or
+    conditions:
+      - condition: and
+        conditions:
+        - condition: numeric_state
+          entity_id: sensor.z19_co2_v
+          below: 800
+        - condition: state
+          entity_id: binary_sensor.breather_v
+          state: 'on'
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.breather_v
+          state: 'on'
+  action:
+    - service: script.turn_on
+      entity_id: script.breather_v_toggle
+
+
+# ##################################
+# Vova - Breather Control
+# ##################################
+#- alias: vova_breather_control
+#  initial_state: 'true'
+#  trigger:
+#    - platform: state
+#      entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+#      from: 'off'
+#      to: 'on'
+#    - platform: state
+#      entity_id: binary_sensor.door_window_sensor_158d00022ccffe
+#      from: 'on'
+#      to: 'off'
+#  condition:
+#    - condition: template
+#      value_template: "{{ states('binary_sensor.door_window_sensor_158d00022ccffe') == states('binary_sensor.breather_v') }}"
+#  action:
+#    - service: script.breather_v_toggle
+#    - delay: '00:02:00'
+#    - service_template: >
+#        {% if states('binary_sensor.door_window_sensor_158d00022ccffe') == states('binary_sensor.breather_v') %}
+#          script.breather_v_toggle
+#        {% else %}
+#          script.noop
+#        {% endif %}

@@ -1,0 +1,56 @@
+# #####################################################################################
+#
+# SASHA - Breazer
+#
+# #####################################################################################
+# Sasha- Breazer On
+# ################################## 
+- alias: sasha_breazer_on
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.z19_co2_s
+      above: 1000
+    - condition: state
+      entity_id: binary_sensor.breather_s
+      state: 'off'
+    - condition: state
+      entity_id: binary_sensor.door_window_sensor_158d00025370d1
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.digma_ir_s_breather_pwr
+
+# ##################################
+# Sasha - Breazer On
+# ################################## 
+- alias: sasha_breazer_off
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    condition: or
+    conditions:
+      - condition: and
+        conditions:
+        - condition: numeric_state
+          entity_id: sensor.z19_co2_s
+          below: 800
+        - condition: state
+          entity_id: binary_sensor.breather_s
+          state: 'on'
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.door_window_sensor_158d00025370d1
+          state: 'on'
+        - condition: state
+          entity_id: binary_sensor.breather_s
+          state: 'on'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.digma_ir_s_breather_pwr
