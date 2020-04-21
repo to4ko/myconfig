@@ -30,14 +30,29 @@
     
 
   - platform: rest
-    resource: http://192.168.1.57:8123/api/hassio/addons/7ad98f9c_zigbee2mqtt/info
+    resource: http://192.168.1.30:8123/api/hassio/addons/7ad98f9c_zigbee2mqtt/info
     name: zigbee2mqtt_addon
     value_template: '{{ value_json.data.state }}'
     scan_interval: 60
     headers:
-      Authorization: !secret rpi_long_token
+      Authorization: !secret mqtt_long_token
       Content-Type: application/json
     json_attributes_path: "$.data"
     json_attributes:
       - version
       - version_latest
+      
+  - platform: mqtt
+    name: SLS Gateway Uptime
+    icon: mdi:timeline-clock
+    unit_of_measurement: ""
+    availability_topic: "sls_gateway/bridge/state"
+    state_topic: "sls_gateway/bridge/config"
+    #value_template: "{{ value_json.UptimeStr }}"
+    value_template: >
+      {%- set test = value_json.Uptime |int -%}
+      {%- set minutes = ((test % 3600) / 60) | int %}
+      {%- set hours = ((test % 86400) / 3600) | int %}
+      {%- set days = (test / 86400) | int -%}
+      
+      {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{%if minutes > 0%}{{ minutes}}m{%else%}<1m{%endif%}

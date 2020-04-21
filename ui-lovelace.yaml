@@ -2631,14 +2631,19 @@ views:
                     
               - type: glance
                 state_color: true
-                columns: 6
+                columns: 7
                 entities:
                   - entity: counter.badlogin_counter
                     name: Bad Logins
                   - entity: counter.restart_counter
                     name: Restarts
+                    hold_action:
+                      action: call-service
+                      service: script.error_reset
                   - entity: counter.error_counter
                     name: Errors
+                  - entity: counter.automation_error_counter
+                    name: A Errors
                     hold_action:
                       action: call-service
                       service: script.error_reset
@@ -3563,6 +3568,24 @@ views:
               - sensor.ipmi_vmemcdvrm_temp
           - type: entities
             show_header_toggle: false
+            title: MQTT Server
+            state_color: true
+            entities:
+              - sensor.mqtt_telemetry_last_update
+              - sensor.mqtt_uptime
+              - sensor.mqtt_cpu_temp
+              - sensor.mqtt_cpu_usage
+              - sensor.mqtt_ram_usage
+              - sensor.mqtt_ssd_usage
+              - sensor.mqtt_ssd_temp
+              - sensor.mqtt_ssd_total_lba_written
+              - sensor.mqtt_ssd_session_write
+              - sensor.mqtt_sda_gb_per_hour
+              - sensor.mqtt_sda_gb_per_day
+              - sensor.mqtt_sda_life_left
+
+          - type: entities
+            show_header_toggle: false
             title: RPI
             state_color: true
             entities:
@@ -3576,6 +3599,7 @@ views:
               - sensor.rpi_cpu_usage
               - sensor.rpi_ram_usage
               - sensor.rpi_ssd_usage
+              - sensor.rpi_ssd_temp
               - sensor.rpi_ssd_total_lba_written
               - sensor.rpi_ssd_session_write
               - sensor.rpi_sda_gb_per_hour
@@ -3596,6 +3620,7 @@ views:
               - sensor.j3455_cpu_usage
               - sensor.j3455_ram_usage
               - sensor.j3455_ssd_usage
+              - sensor.j3455_ssd_temp
               - sensor.j3455_ssd_total_lba_written
               - sensor.j3455_ssd_session_write
               - sensor.j3455_sda_gb_per_hour
@@ -3713,6 +3738,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - binary_sensor.esp32_ble_tracker_status
           - binary_sensor.esp32_kitchen_status
           - binary_sensor.esp32_water_filter_status
           - binary_sensor.d1mini_co2_mb_status
@@ -3737,6 +3763,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - sensor.esp32_ble_tracker_wifi_rssi
           - sensor.esp32_kitchen_wifi_rssi
           - sensor.esp32_water_filter_wifi_rssi
           - sensor.d1mini_co2_mb_wifi_rssi
@@ -3762,6 +3789,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - sensor.esp32_ble_tracker_uptime
           - sensor.esp32_kitchen_uptime
           - sensor.esp32_water_filter_uptime
           - sensor.d1mini_co2_mb_uptime
@@ -4056,6 +4084,18 @@ views:
               - sensor.zigbee2mqtt_addon_restart
               - entity: script.zigbee2mqtt_restart
       - type: entities
+        title: SLS Gateway
+        show_header_toggle: false
+        state_color: true
+        entities:
+          - binary_sensor.sls_gateway_state
+          - type: divider
+          - device_tracker.sls_gateway
+          - light.sls_gateway
+          - sensor.sls_gateway_uptime
+          - switch.sls_gateway_join
+          
+      - type: entities
         entities:
           - switch.0x00158d000366815b_switch_l1
           - switch.0x00158d0001a248e9_switch_l1
@@ -4063,17 +4103,27 @@ views:
           - switch.0x00158d000366815b_switch_l2
           - switch.0x00158d0001a248e9_switch_l2
           - type: divider
-          - entity: sensor.0x00158d000224e3e4_power
-            name: socket
-          - sensor.tv_k
-      - type: entities
-        entities:
-          - entity: sensor.0x00158d00039258de_power
-            name: plug
           - switch.0x00158d00039258de_switch
-
-      - type: entities
-        entities:
-          - sensor.0x00158d000239ad5b_humidity
-          - sensor.0x00158d000239ad5b_linkquality
-          - sensor.0x00158d000239ad5b_temperature
+      - type: custom:stack-in-card
+        mode: vertical
+        cards:
+          - type: glance
+            entities:
+              - entity: binary_sensor.esp32_ble_tracker_green
+                name: green
+              - entity: binary_sensor.esp32_ble_tracker_pink
+                name: pink
+              - entity: binary_sensor.esp32_ble_tracker_grey
+                name: grey
+              - entity: binary_sensor.esp32_ble_tracker_white
+                name: white
+          - type: glance
+            entities:
+              - entity: sensor.esp32_ble_tracker_green_rssi
+                name: green
+              - entity: sensor.esp32_ble_tracker_pink_rssi
+                name: pink
+              - entity: sensor.esp32_ble_tracker_grey_rssi
+                name: grey
+              - entity: sensor.esp32_ble_tracker_white_rssi
+                name: white

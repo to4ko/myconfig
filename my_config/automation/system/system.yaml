@@ -147,9 +147,9 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а)."
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а)."
     - service: counter.reset
-      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb
+      entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb, counter.automation_error_counter
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.weather_announcement_flag
@@ -388,3 +388,28 @@
       - switch.gateway_plug_s
       - switch.gateway_plug_v
       - switch.gateway_plug_mb
+
+# ##################################
+# System - System Automation Errors
+# ##################################
+- alias: system_automation_error
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: ERROR
+  condition:
+    - condition: template
+      value_template: "{{ 'Error while executing automation' in trigger.event.data.message }}"
+    - condition: template
+      value_template: "{{ not 'automation.system_automation_error' in trigger.event.data.message }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: |
+          {{ '\U0000274C' }} Ошибка выполнения автоматизации: 
+          {{ trigger.event.data.message }}.
+    - service: counter.increment
+      data:
+        entity_id: counter.automation_error_counter

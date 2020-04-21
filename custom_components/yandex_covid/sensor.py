@@ -13,7 +13,6 @@ DOMAIN = 'yandex_covid'
 
 RE_HTML = re.compile(r'class="config-view">(.+?)<')
 RE_TIME = re.compile(r', (.+?) \(')
-RE_DIV = re.compile(r'"covid-stat-view__item-value">(.+?)<')
 
 
 async def async_setup_platform(hass: HomeAssistantType, config, add_entities,
@@ -85,14 +84,19 @@ class YandexCovid(Entity):
             _LOGGER.error(f"Update World error: {e}")
 
         try:
-            items = [int(p.replace('\xa0', ''))
-                     for p in RE_DIV.findall(text)]
-            self._attrs['Россия'] = {
-                'cases': items[0],
-                'new_cases': items[1],
-                'cured': items[2],
-                'deaths': items[3],
+            self._attrs['Россия'] = ru = {
+                'cases': 0,
+                'cured': 0,
+                'deaths': 0,
+                'new_cases': (data['histogram'][-1]['value'] -
+                              data['histogram'][-2]['value']),
+                'tests': int(data['tests'].replace(' ', ''))
             }
+            for p in data['items']:
+                if p.get('ru'):
+                    ru['cases'] += p['cases']
+                    ru['cured'] += p['cured']
+                    ru['deaths'] += p['deaths']
 
         except Exception as e:
             _LOGGER.error(f"Update Russia error: {e}")
@@ -116,9 +120,6 @@ class YandexCovid(Entity):
                     self._attrs[name]['isolation'] = city['level']
                 else:
                     self._attrs[name] = {'isolation': city['level']}
-
-            self._attrs['Россия']['tests'] = \
-                int(data['data']['tests'].replace(' ', ''))
 
         except Exception as e:
             _LOGGER.error(f"Update Isolation error: {e}")
