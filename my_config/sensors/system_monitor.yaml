@@ -92,6 +92,45 @@
           {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
           {%endif%}
 
+      mqtt_sda_gb_per_hour:
+        friendly_name: MQTT sda Gb per hour
+        unit_of_measurement: Gb
+        entity_id: sensor.mqtt_ssd_session_write, sensor.time
+        icon_template: mdi:clock
+        value_template: >-
+          {% set uptime = states('sensor.mqtt_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (states('sensor.mqtt_ssd_session_write')|float / states('sensor.mqtt_uptime')|float)|round(2) }}
+          {% else %}
+          {{states('sensor.mqtt_ssd_session_write')|float | round(2)}}
+          {% endif %}
+      mqtt_sda_gb_per_day:
+        friendly_name: mqtt sda Gb per day
+        unit_of_measurement: Gb
+        icon_template: mdi:calendar
+        entity_id: sensor.mqtt_ssd_session_write, sensor.time
+        value_template: >-
+          {% set uptime = states('sensor.mqtt_uptime') %}
+          {% if uptime | float  > 0 %}
+          {{ (((states('sensor.mqtt_ssd_session_write')|float) / (states('sensor.mqtt_uptime')|float)*24)|float)|round(2) }}
+          {% else %}
+          {{ (states('sensor.mqtt_ssd_session_write')|float*24) | round(2)}}
+          {% endif %}
+      mqtt_sda_life_left:
+        friendly_name: mqtt sda Calculated life left
+        unit_of_measurement: years
+        entity_id: sensor.mqtt_ssd_session_write, sensor.time
+        icon_template: mdi:calendar-clock
+        value_template: >-
+          {%set tbw = 40 %}
+          {%set per_day = states('sensor.mqtt_sda_gb_per_day')|float%}
+          {%set total = states('sensor.mqtt_ssd_total_lba_written')|float%}
+          {%if per_day == 0 %}
+          {{ ((tbw-total)*1024/1/365)|round(2)  }}
+          {%else%}
+          {{ ((tbw-total)*1024/per_day/365)|round(2)  }}
+          {%endif%}
+
       rpi_sda_gb_per_hour:
         friendly_name: RPI sda Gb per hour
         unit_of_measurement: Gb
@@ -500,6 +539,90 @@
 #    value_template: '{{ value | replace("temp=", "") | replace("''C", "") | round(0) }}'
 
 # ############################################################################
+# Hardware sensors (MQTT Serv) - MQTT
+# ############################################################################
+  - platform: mqtt
+    name: MQTT Telemetry Last Update
+    state_topic: "mqtt_serv/last_update"
+    value_template: '{{ value }}'
+    expire_after: 150
+    icon: mdi:calendar
+
+
+  - platform: mqtt
+    name: "MQTT Uptime"
+    state_topic: "mqtt_serv/system_uptime"
+    value_template: '{{ ((value | float)/3600) | round(2) }}'
+    unit_of_measurement: 'h'
+    expire_after: 150
+    icon: mdi:timer
+
+  - platform: mqtt
+    name: "MQTT CPU Usage"
+    state_topic: "mqtt_serv/cpu_percent"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    expire_after: 150
+    icon: mdi:speedometer
+    
+  - platform: mqtt
+    name: "MQTT CPU Temp"
+    state_topic: "mqtt_serv/sensors_temperatures/coretemp/0"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '°C'
+    expire_after: 150
+    device_class: temperature
+    
+  - platform: mqtt
+    name: "MQTT RAM Usage"
+    state_topic: "mqtt_serv/virtual_memory/percent"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    expire_after: 150
+    icon: mdi:memory
+
+  - platform: mqtt
+    name: "MQTT SSD Usage"
+    state_topic: "mqtt_serv/disk_usage/percent/|"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '%'
+    expire_after: 150
+    icon: mdi:chip
+
+  - platform: mqtt
+    name: "MQTT SSD Total LBA Written"
+    state_topic: "mqtt_serv/sda_lba_total"
+    value_template: '{{ ( value | float * 512 / 1024 / 1024 / 1024 / 1024) |round(1) }}'
+    unit_of_measurement: 'Tb'
+    expire_after: 150
+    icon: mdi:chip
+
+  - platform: mqtt
+    name: "MQTT SSD Session Read"
+    state_topic: "mqtt_serv/disk_stat/sda_gb_read"
+    value_template: '{{ ( value | float ) |round(1) }}'
+    unit_of_measurement: 'Gb'
+    expire_after: 150
+    icon: mdi:alpha-r-box
+
+  - platform: mqtt
+    name: "MQTT SSD Session Write"
+    state_topic: "mqtt_serv/disk_stat/sda_gb_write"
+    value_template: '{{ ( value | float ) |round(1) }}'
+    unit_of_measurement: 'Gb'
+    expire_after: 150
+    icon: mdi:alpha-w-box
+
+  - platform: mqtt
+    name: "MQTT SSD Temp"
+    state_topic: "mqtt_serv/disk_temp/sda"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '°C'
+    expire_after: 150
+    device_class: temperature
+
+
+# ############################################################################
 # Hardware sensors (RPI) - MQTT
 # ############################################################################
   - platform: mqtt
@@ -572,6 +695,14 @@
     unit_of_measurement: 'Gb'
     expire_after: 150
     icon: mdi:alpha-w-box
+
+  - platform: mqtt
+    name: "RPI SSD Temp"
+    state_topic: "rpi/disk_temp/sda"
+    value_template: '{{ value | int | round(0) }}'
+    unit_of_measurement: '°C'
+    expire_after: 150
+    device_class: temperature
 
 # ############################################################################
 # Hardware sensors (j3455) - MQTT
