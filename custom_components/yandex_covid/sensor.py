@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from datetime import datetime
 
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity
@@ -102,8 +103,8 @@ class YandexCovid(Entity):
             _LOGGER.error(f"Update Russia error: {e}")
 
         try:
-            m = re.search(r', ?(.+?) \(', data['subtitle'])
-            self._state = m[1]
+            ts = datetime.fromtimestamp(data['ts'])
+            self._state = ts.strftime("%H:%M")
 
         except Exception as e:
             _LOGGER.error(f"Update Sensor error: {e}")
