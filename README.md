@@ -18,7 +18,18 @@ Main Server:
   - 3ea WD Green in HW Raid0 (Torrent heap) via Adaptec 71605
   - Corsair HX1200i
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
- 
+
+MQTT\Zigbee2MQTT Server:
+  - Celeron j3455
+  - 16gb DDR3 RAM
+  - 120Gb SSD Crucial BX500
+  - CC2538 Zigbee Stick
+
+BackupT Server:
+  - Celeron j3455
+  - 16gb DDR3 RAM
+  - 120Gb SSD Crucial BX500
+
 Network(500mb\s):
   - Ubiquiti USG 3
   - Switch 24
