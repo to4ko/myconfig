@@ -20,9 +20,9 @@
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'off'
-      - condition: state
-        entity_id: light.led_strip_hb
-        state: 'off'
+      #- condition: state
+      #  entity_id: light.led_strip_hb
+      #  state: 'off'
       - condition: state
         entity_id: switch.wall_switch_left_158d000223921b
         state: 'off'
@@ -81,13 +81,13 @@
       entity_id: light.led_strip_hb
       data_template: 
         brightness_pct: >
-          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10%}
+          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
             1
           {% else %}
             100
           {%endif%}
         kelvin: >
-          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10%}
+          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
             3000
           {% else %}
             5000
@@ -374,3 +374,85 @@
   action:
     - service: switch.turn_on
       entity_id: switch.wall_plug_158d00023e5812
+      
+# ##################################
+# Hall Big - Wadrobe Auto Light On
+# ##################################
+- alias: hall_big_wadrobe_auto_light_on
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy
+      from: 'off'
+      to: 'on'
+  action:
+    - service: script.turn_on
+      data_template: 
+        entity_id: >
+          {% if is_state('binary_sensor.tod_night','on') or (states('sensor.time').split(':').0|int < 10 and states('binary_sensor.workday_sensor')=='off') %}
+            script.wadrobe_mirror_led_night_mode
+          {% else %}
+            script.wadrobe_mirror_led_day_mode
+          {%endif%}
+
+# ##################################
+# Hall Big - Wadrobe LED Timer start on light on
+# ################################## 
+- alias: hall_big_wadrobe_led_timer_start
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.lt11_1_led
+      to: 'on'
+  action:
+    - service: timer.cancel
+      entity_id: timer.wadrobe_led_strip_hb
+    - service: timer.start
+      entity_id: timer.wadrobe_led_strip_hb
+
+# ##################################
+# Hall Big - Wadrobe LED Timer restart
+# ################################## 
+- alias: hall_big_wadrobe_led_timer_restart
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: light.lt11_1_led
+      state: 'on'
+  action:
+    - service: timer.cancel
+      entity_id: timer.wadrobe_led_strip_hb
+    - service: timer.start
+      entity_id: timer.wadrobe_led_strip_hb
+
+# ##################################
+# Hall Big - Wadrobe LED Timer stop
+# ################################## 
+- alias: hall_big_wadrobe_led_timer_off
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.lt11_1_led
+      to: 'off'
+  action:
+    - service: timer.cancel
+      entity_id: timer.wadrobe_led_strip_hb
+      
+# ##################################
+# Hall Big - Wadrobe LED Auto Light Off
+# ################################## 
+- alias: hall_big_wadrobe_led_auto_off
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.wadrobe_led_strip_hb
+  action:
+    - service: light.turn_off
+      entity_id: light.lt11_1_led

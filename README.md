@@ -88,7 +88,7 @@ Add-On's:
   - Hass.io Google Drive Backup
   - IDE
   - Log Viewer
-  - Mosquitto Brocker
+  - Mosquitto Broker
   - Portainer
   - RPC shutdown
   - zigbee2mqtt

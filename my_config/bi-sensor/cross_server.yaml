@@ -1,23 +1,6 @@
 # ####################################################
 # Servers Statuses
 # ####################################################
-
-  # - platform: rest
-  #   resource: http://192.168.1.14:8123/api/states/binary_sensor.automation_status
-  #   name: main_automation
-  #   headers: 
-  #     authorization: !secret main_long_token
-  #   value_template: '{{ value_json.state }}'
-  #   scan_interval: 5
-
-  # - platform: rest
-  #   resource: http://192.168.1.14:8123/api/states/binary_sensor.j3455_lead
-  #   name: j3455_lead
-  #   headers: 
-  #     authorization: !secret main_long_token
-  #   value_template: '{{ value_json.state }}'
-  #   scan_interval: 5
-
   - platform: rest
     resource: http://192.168.1.60:8123/api/states/binary_sensor.automation_status
     name: j3455_automation
@@ -77,7 +60,6 @@
         friendly_name: j3455 HA State
         device_class: power
         entity_id: sensor.j3455_state, sensor.time
-#        value_template: "{{ (as_timestamp(now())|int-as_timestamp(states.sensor.j3455_state.last_updated)|int) < 10 }}"
         value_template: >
           {% if is_state('sensor.j3455_state','unavailable') %}
           false
@@ -89,9 +71,30 @@
         friendly_name: RPI Host State
         device_class: power
         entity_id: sensor.rpi_state, sensor.time
-#        value_template: "{{ (as_timestamp(now())|int-as_timestamp(states.sensor.rpi_state.last_updated)|int) < 10 }}"
         value_template: >
           {% if is_state('sensor.rpi_state','unavailable') %}
+          false
+          {%else%}
+          true
+          {%endif%}
+
+      mqtt_state:
+        friendly_name: MQTT Host State
+        device_class: power
+        entity_id: sensor.mqtt_state, sensor.time
+        value_template: >
+          {% if is_state('sensor.mqtt_state','unavailable') %}
+          false
+          {%else%}
+          true
+          {%endif%}
+
+      nuc_state:
+        friendly_name: NUC Host State
+        device_class: power
+        entity_id: sensor.nuc_state, sensor.time
+        value_template: >
+          {% if is_state('sensor.nuc_state','unavailable') %}
           false
           {%else%}
           true
