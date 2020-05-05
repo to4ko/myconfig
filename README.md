@@ -25,9 +25,13 @@ MQTT\Zigbee2MQTT Server:
   - 120Gb SSD Crucial BX500
   - CC2538 Zigbee Stick
 
-BackupT Server:
+Backup Server:
   - Celeron j3455
   - 16gb DDR3 RAM
+  - 120Gb SSD Crucial BX500
+
+Test Server:
+  - Raspberry Pi 3B+
   - 120Gb SSD Crucial BX500
 
 Network(500mb\s):
