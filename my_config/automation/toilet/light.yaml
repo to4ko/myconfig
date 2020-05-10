@@ -8,13 +8,17 @@
 - alias: toilet_timer_restart
   initial_state: 'true'
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id:  binary_sensor.motion_sensor_158d0001e54280
+#    - platform: event
+#      event_type: xiaomi_aqara.motion
+#      event_data:
+#        entity_id:  binary_sensor.motion_sensor_158d0001e54280
+    - platform: state
+      entity_id: binary_sensor.0x00158d0001e54280_occupancy
+      from: 'off'
+      to: 'on'
   condition:
     - condition: state
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       state: 'on'
   action:
     - service: timer.cancel
@@ -29,7 +33,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       to: 'off'
       from: 'on'
   action:
@@ -43,7 +47,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       to: 'on'
       from: 'off'
   action:
@@ -58,16 +62,20 @@
 - alias: toilet_timer_pause_on
   initial_state: 'true'
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.motion_sensor_158d0001e54280
+#    - platform: event
+#      event_type: xiaomi_aqara.motion
+#      event_data:
+#        entity_id:  binary_sensor.motion_sensor_158d0001e54280
+    - platform: state
+      entity_id: binary_sensor.0x00158d0001e54280_occupancy
+      from: 'off'
+      to: 'on'
   condition:
     - condition: state
       entity_id: binary_sensor.door_window_sensor_158d000232ddd6
       state: 'off'
     - condition: state
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       state: 'on'
   action:
     - service: timer.pause
@@ -87,7 +95,7 @@
       to: 'on'
   condition:
     - condition: state
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       state: 'on'
   action:
     - service: timer.start
@@ -101,26 +109,34 @@
 - alias: toilet_auto_light_on
   initial_state: 'true'
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.motion_sensor_158d0001e54280
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: binary_sensor.switch_158d0001b97111
-        click_type: single
+#    - platform: event
+#      event_type: xiaomi_aqara.motion
+#      event_data:
+#        entity_id:  binary_sensor.motion_sensor_158d0001e54280
+    - platform: state
+      entity_id: binary_sensor.0x00158d0001e54280_occupancy
+      from: 'off'
+      to: 'on'
+
+    # - platform: event
+    #   event_type: xiaomi_aqara.click
+    #   event_data:
+    #     entity_id: binary_sensor.switch_158d0001b97111
+    #     click_type: single
+    - platform: state
+      entity_id: sensor.0x00158d0001b97111_click
+      to: 'single'
     - platform: state
       entity_id: binary_sensor.door_window_sensor_158d000232ddd6
       to: 'off'
       from: 'on'
   condition:
     - condition: state
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       state: 'off'
   action:
     - service: switch.turn_on
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
     
 # ##################################
 # Toilet - Auto Light Off
@@ -134,7 +150,7 @@
         entity_id: timer.main_light_t
   action:
     - service: switch.turn_off
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
 
 # ##################################
 # Toilet - Auto Light off - No Motion 2m and Cover Closed
@@ -143,7 +159,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: binary_sensor.motion_sensor_158d0001e54280
+      entity_id: binary_sensor.0x00158d0001e54280_occupancy #binary_sensor.motion_sensor_158d0001e54280
       to: 'off'
       for:
         minutes: 10
@@ -154,7 +170,7 @@
         entity_id: binary_sensor.door_window_sensor_158d000232ddd6
         state: 'on'
       - condition: state
-        entity_id: switch.wall_switch_left_158d0002a36f7f
+        entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
         state: 'on'
   action:
     - service: timer.finish
@@ -172,4 +188,4 @@
         entity_id: binary_sensor.wall_switch_right_158d0001e0a622
   action:
     - service: switch.toggle
-      entity_id: switch.wall_switch_left_158d0002a36f7f
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
