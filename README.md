@@ -49,9 +49,10 @@ Surveillance:
 
 Smart Home:
   Xiaomi\Aqara:
-  - Xiaomi Gateway (7ea)
+  - Xiaomi Gateway (7ea) used as alarm devices (audio\visual)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
+  - Yeelight 480
   - Yeelight LED Strip
   - Philips Xiaomi E27 Bulb (2ea)
   - Yeelight E27 Color Led Bulb v2 (2ea)
@@ -74,20 +75,25 @@ Smart Home:
   - Xiaomi IR controller
   - Xiaomi Smoke Detector (1ea)
   - Xiaomi Natural Gas Detector (1ea)
+  - Aqara Zigbee Relay (3ea)
   - Google Home Mini (5ea)
   
   ESPHome devices:
   - Sonoff Basic
-  - Sonoff S26 Plug
+  - Sonoff S26 Plugs
+  - Blitzwolf SHP2 (2ea) and SHP6 (2ea)
   - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea 
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Kitchen Air valve, hood fan\light with IR controller
   - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
+  - Blitzwolf LT11
+  - Digma IR Remote (2ea)
       
 Software:
-  - Ubuntu Server 18.04 LTS
+  - Ubuntu Server 20.04 LTS
   - Hass.Io in Docker
   - MotionEye
+  - Mosquitto
 
 DB used:
   - PostgreSQL
@@ -95,7 +101,7 @@ DB used:
 
 Add-On's: 
   - AirCast
-  - Configurator
+  - File Editor
   - Custom deps deployment
   - Dropbox Sync
   - ESPhome
@@ -103,7 +109,6 @@ Add-On's:
   - Hass.io Google Drive Backup
   - IDE
   - Log Viewer
-  - Mosquitto Broker
   - Portainer
   - RPC shutdown
   - zigbee2mqtt
