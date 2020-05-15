@@ -13,7 +13,7 @@
     #   event_data:
     #     entity_id: binary_sensor.motion_sensor_158d0001e05856
     - platform: state
-      entity_id: binary_sensor.0x00158d0001e05856_occupancy
+      entity_id: binary_sensor.0x00158d0001e05856_occupancy, binary_sensor.unifi_motion_entrance, binary_sensor.0x00158d0002b43ad4_occupancy
       from: 'off'
       to: 'on'
   condition:
@@ -22,14 +22,14 @@
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'off'
-      #- condition: state
-      #  entity_id: light.led_strip_hb
-      #  state: 'off'
       - condition: state
-        entity_id: switch.wall_switch_left_158d000223921b
+        entity_id: light.led_strip_hb
         state: 'off'
       - condition: state
-        entity_id: switch.wall_switch_right_158d000253f04a
+        entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
+        state: 'off'
+      - condition: state
+        entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
         state: 'off'
   action:
     - service: light.turn_on
@@ -55,10 +55,10 @@
     #   event_type: xiaomi_aqara.motion
     #   event_data:
     #     entity_id: binary_sensor.motion_sensor_158d0002b482e9
-      - platform: state
-        entity_id: binary_sensor.motion_hb #.motion_sensor_158d0001e05856
-        from: 'off'
-        to: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x00158d0001e05856_occupancy, binary_sensor.0x00158d0002b482e9_occupancy #, binary_sensor.unifi_motion_entrance, binary_sensor.unifi_motion_hall
+      from: 'off'
+      to: 'on'
     # - platform: state
     #   entity_id: binary_sensor.motion_sensor_158d0002b482e9
     #   from: 'off'
@@ -73,10 +73,10 @@
         entity_id: light.led_strip_hb
         state: 'off'
       - condition: state
-        entity_id: switch.wall_switch_left_158d000223921b
+        entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
         state: 'off'
       - condition: state
-        entity_id: switch.wall_switch_right_158d000253f04a
+        entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
         state: 'off'
   action:
     - service: light.turn_on
@@ -135,7 +135,7 @@
     #  for:
     #    seconds: 1
     - platform: state
-      entity_id: binary_sensor.motion_hb
+      entity_id: binary_sensor.motion_hb #, binary_sensor.unifi_motion_entrance, binary_sensor.unifi_motion_hall
       to: 'off'
       from: 'on'
       for:
@@ -198,60 +198,59 @@
     - service: script.turn_on
       entity_id: script.open_door_photo
 
-# ##################################
-# Hall Big - Auto Light On Entrance
-# ##################################
-- alias: hall_big_auto_light_on_entrance
-  initial_state: 'true'
-  trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.motion
-    #   event_data:
-    #     entity_id: binary_sensor.motion_sensor_158d0001e05856
-    - platform: state
-      entity_id: binary_sensor.0x00158d0001e05856_occupancy
-      from: 'off'
-      to: 'on'
-  condition:
-    condition: and
-    conditions:
-      - condition: numeric_state
-        entity_id: sensor.0x00158d0001e05856_illuminance #sensor.illuminnation_158d0001e05856
-        below: 10
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: 'on'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.wall_switch_left_158d000223921b
+# # ##################################
+# # Hall Big - Auto Light On Entrance
+# # ##################################
+# - alias: hall_big_auto_light_on_entrance
+#   initial_state: 'false'
+#   trigger:
+#     # - platform: event
+#     #   event_type: xiaomi_aqara.motion
+#     #   event_data:
+#     #     entity_id: binary_sensor.motion_sensor_158d0001e05856
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d0001e05856_occupancy
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     condition: and
+#     conditions:
+#       - condition: numeric_state
+#         entity_id: sensor.0x00158d0001e05856_illuminance #sensor.illuminnation_158d0001e05856
+#         below: 10
+#       - condition: state
+#         entity_id: binary_sensor.tod_day
+#         state: 'on'
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
 
-
-# ##################################
-# Hall Big - Auto Light On Fridge
-# ##################################
-- alias: hall_big_auto_light_on_fridge
-  initial_state: 'false'
-  trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.motion
-    #   event_data:
-    #     entity_id: binary_sensor.motion_sensor_158d0002b482e9
-    - platform: state
-      entity_id: binary_sensor.0x00158d0002b482e9_occupancy
-      from: 'off'
-      to: 'on'
-  condition:
-    condition: and
-    conditions:
-      - condition: numeric_state
-        entity_id: sensor.0x00158d0002b482e9_illuminance #sensor.illuminnation_158d0002b482e9
-        below: 10
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: 'on'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.wall_switch_right_158d000253f04a
+# # ##################################
+# # Hall Big - Auto Light On Fridge
+# # ##################################
+# - alias: hall_big_auto_light_on_fridge
+#   initial_state: 'false'
+#   trigger:
+#     # - platform: event
+#     #   event_type: xiaomi_aqara.motion
+#     #   event_data:
+#     #     entity_id: binary_sensor.motion_sensor_158d0002b482e9
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d0002b482e9_occupancy
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     condition: and
+#     conditions:
+#       - condition: numeric_state
+#         entity_id: sensor.0x00158d0002b482e9_illuminance #sensor.illuminnation_158d0002b482e9
+#         below: 10
+#       - condition: state
+#         entity_id: binary_sensor.tod_day
+#         state: 'on'
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
       
 # ##################################
 # Hall big - Timer start on light on
@@ -260,11 +259,11 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.wall_switch_left_158d000223921b
+      entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
       to: 'on'
       from: 'off'
     - platform: state
-      entity_id: switch.wall_switch_right_158d000253f04a
+      entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
       to: 'on'
       from: 'off'
   action:
@@ -280,11 +279,11 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.wall_switch_left_158d000223921b
+      entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
       to: 'off'
       from: 'on'
     - platform: state
-      entity_id: switch.wall_switch_right_158d000253f04a
+      entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
       to: 'off'
       from: 'on'
   action:
@@ -303,7 +302,7 @@
         entity_id: timer.main_light_hb
   action:
     - service: switch.turn_off
-      entity_id: switch.wall_switch_left_158d000223921b, switch.wall_switch_right_158d000253f04a
+      entity_id: switch.0x00158d000223921b_switch_left, switch.0x00158d000253f04a_switch_right
 
 # ##################################
 # Hall big - Timer restart with movement
@@ -316,25 +315,25 @@
     #   event_data:
     #     entity_id: binary_sensor.motion_sensor_158d0001e05856
     - platform: state
-      entity_id: binary_sensor.0x00158d0001e05856_occupancy
+      entity_id: binary_sensor.0x00158d0001e05856_occupancy, binary_sensor.0x00158d0002b482e9_occupancy
       from: 'off'
       to: 'on'
     # - platform: event
     #   event_type: xiaomi_aqara.motion
     #   event_data:
     #     entity_id: binary_sensor.motion_sensor_158d0002b482e9
-    - platform: state
-      entity_id: binary_sensor.0x00158d0002b482e9_occupancy
-      from: 'off'
-      to: 'on'
+    # - platform: state
+    #   entity_id: binary_sensor.0x00158d0002b482e9_occupancy
+    #   from: 'off'
+    #   to: 'on'
   condition:
     condition: or
     conditions:
       - condition: state
-        entity_id: switch.wall_switch_left_158d000223921b
+        entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
         state: 'on'
       - condition: state
-        entity_id: switch.wall_switch_right_158d000253f04a
+        entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
         state: 'on'
   action:
     - service: timer.cancel
@@ -349,10 +348,16 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.wall_switch_left_158d000253f04a
+      entity_id: switch.0x00158d000253f04a_switch_left #switch.wall_switch_left_158d000253f04a
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: switch.0x00158d000253f04a_switch_left #switch.wall_switch_left_158d000253f04a
+      from: 'on'
+      to: 'off'
   action:
     - service: switch.toggle
-      entity_id: switch.wall_switch_left_158d000223921b
+      entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
 
 # ##################################
 # Hall Big - Fridge light On from Entrance
@@ -361,10 +366,16 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.wall_switch_right_158d000223921b
+      entity_id: switch.0x00158d000223921b_switch_right #switch.wall_switch_left_158d000253f04a
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: switch.0x00158d000223921b_switch_right #switch.wall_switch_left_158d000253f04a
+      from: 'on'
+      to: 'off'
   action:
     - service: switch.toggle
-      entity_id: switch.wall_switch_right_158d000253f04a
+      entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
 
 
 # ##################################
@@ -439,7 +450,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy
+      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy, binary_sensor.unifi_motion_entrance
       from: 'off'
       to: 'on'
   condition:

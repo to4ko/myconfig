@@ -209,6 +209,27 @@
       message: >
         {%- set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') + states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') -%}
         {{"\U0001f6a8"}} Низкий заряд батарей: {{ low_batteries }}
+
+# ##################################
+# System - Switches overheating
+# ##################################
+- alias: system_switch_temperature
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/10"
+  condition: 
+    - condition: template
+      value_template: >
+        {{ ( states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | list | count ) >1 }}
+  action:  
+  - service: notify.telegram
+    data_template:
+      message: >
+        {%- set switch_list = states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | map(attribute='name') | list | join(', ') -%}
+        {{"\U0001f321"}} Внимание! Высокая температура: {{ switch_list }}
+
+
           
 # ##################################
 # System - Home weather (ya)
