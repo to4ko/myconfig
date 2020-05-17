@@ -64,7 +64,7 @@
     - service: persistent_notification.create
       data_template:
         title: Device joined the zigbee2mqtt network
-        message: "Name: {{trigger.payload_json.meta.friendly_name}},
+        message: "\U00002733 Name: {{trigger.payload_json.meta.friendly_name}},
                   Vendor: {{trigger.payload_json.meta.vendor}},
                   Description: {{trigger.payload_json.meta.description}}"
     - service: notify.telegram
@@ -126,9 +126,9 @@
 #{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}
         
 # ##################################
-# Z2M -  MQTT offline
+# Z2M -  MQTT broker offline
 # ##################################
-- alias: zigbee2mqtt_mqtt_status
+- alias: zigbee2mqtt_mqtt_broker_status
   initial_state: 'true'
   trigger:
     - platform: time_pattern
@@ -136,10 +136,78 @@
   condition:
     - condition: template
       value_template: "{{ states('sensor.mqtt_broker_uptime')|int(-9999) == (-9999) }}"
+    - condition: template
+      value_template: "{{ is_state('binary_sensor.mqtt','on')  }}"
   action:
     - service: notify.telegram
       data_template:
         message: "\U0001f31f Внимание! MQTT брокер не запущен!"
+
+# ##################################
+# Z2M -  MQTT server offline
+# ##################################
+- alias: zigbee2mqtt_mqtt_server_status
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: template
+      value_template: "{{ is_state('binary_sensor.mqtt','off') }}"
+  action:
+    - service: counter.increment
+      entity_id: counter.mqtt_server_offline_warning
+    - service: notify.telegram
+      data_template:
+        message: "\U000026a0 Внимание! MQTT сервер - нет связи. Попытка - {{states('counter.mqtt_server_offline_warning')}}!"
+
+# ##################################
+# Z2M -  MQTT server offline reset
+# ##################################
+- alias: zigbee2mqtt_mqtt_server_status_reset
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: template
+      value_template: "{{ is_state('binary_sensor.mqtt','on') }}"
+    - condition: template
+      value_template: "{{ states('counter.mqtt_server_offline_warning')|int(-9999) > 0 }}"
+  action:
+    - service: counter.reset
+      entity_id: counter.mqtt_server_offline_warning
+    - service: notify.telegram
+      data_template:
+        message: "\U00002705 MQTT сервер - сброс счетчика выполнен -> {{states('counter.mqtt_server_offline_warning')}}!"
+
+
+# ##################################
+# Z2M -  MQTT server restart
+# ##################################
+- alias: zigbee2mqtt_mqtt_server_restart
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      seconds: "/90"
+  condition:
+    - condition: template
+      value_template: "{{ is_state('counter.mqtt_server_offline_warning','10') }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4a5 Внимание! MQTT сервер - запуск перезагрузки {{states('counter.mqtt_server_offline_warning')}}!"
+    - service: switch.turn_off
+      entity_id: switch.shp2_socket_1_relay
+    - delay: '00:00:15'
+    - service: switch.turn_on
+      entity_id: switch.shp2_socket_1_relay
+    - service: counter.reset
+      entity_id: counter.mqtt_server_offline_warning
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4a5 Внимание! MQTT сервер - перезагрузка выполнена -> {{states('counter.mqtt_server_offline_warning')}}!"
+
 
 
 - alias: zigbee2mqtt_test
