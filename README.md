@@ -48,7 +48,7 @@ Surveillance:
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 Smart Home:
-  Xiaomi\Aqara WiFi Devices:
+Xiaomi\Aqara WiFi Devices:
   - Xiaomi Gateway (7ea) used as alarm devices (audio\visual)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
@@ -62,7 +62,7 @@ Smart Home:
   - Xiaomi Wifi Plugs v2 (7ea)
   - Xiaomi IR controller
 
-  Xiaomi\Aqara Zigbee Devices:
+Xiaomi\Aqara Zigbee Devices:
   - Aqara Wall Socket (13ea)
   - Aqara Wall Switch Double (6ea)
   - Aqara Wall Switch Single (1ea)
@@ -79,11 +79,11 @@ Smart Home:
   - Aqara Zigbee Relay (3ea)
   - Aqara Opple Wireless Switch (3ea)
 
-  Other Devices:
+Other Devices:
   - DIYRuZ_FreePad v1
   - Google Home Mini (5ea)
   
-  ESPHome devices:
+ESPHome devices:
   - Sonoff Basic
   - Sonoff S26 Plugs
   - Blitzwolf SHP2 (2ea) and SHP6 (2ea)
