@@ -6,7 +6,7 @@ First of all - HUGE THANKS to [Omh](https://github.com/omhy/ha), [OXOTH1K](https
 And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [ESPHome Channel](https://t.me/esphome)
 
 
-Main Server: 
+**Main Server:** 
   - Xeon E5-2620v3 cooled by Noctua NH-U12DX i4
   - 64gb ECC DDR4 RAM
   - 128Gb Kingston SSD as Boot drive
@@ -19,36 +19,35 @@ Main Server:
   - Corsair HX1200i
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
 
-MQTT\Zigbee2MQTT Server:
+**MQTT\Zigbee2MQTT Server:**
   - Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
   - CC2538 Zigbee Stick
 
-Backup Server:
+**Backup Server:**
   - Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
 
-Test Server:
+**Test Server:**
   - Raspberry Pi 3B+
   - 120Gb SSD Crucial BX500
 
-Network(500mb\s):
+**Network(WAN 500mb\s):**
   - Ubiquiti USG 3
   - Switch 24
   - Switch 8-60W (3ea)
   - UAP-AC-AP-Lite (5ea)
   - Tp-Link "dumb" switch (1ea)
   
-Surveillance: 
+**Surveillance:** 
   - Ubiquiti Video (running as service)
   - Ubiquiti G3 Flex Cameras (4ea)
   - Digma 100
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
-Smart Home:
-Xiaomi\Aqara WiFi Devices:
+**Xiaomi\Aqara WiFi Devices:**
   - Xiaomi Gateway (7ea) used as alarm devices (audio\visual)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
@@ -62,7 +61,7 @@ Xiaomi\Aqara WiFi Devices:
   - Xiaomi Wifi Plugs v2 (7ea)
   - Xiaomi IR controller
 
-Xiaomi\Aqara Zigbee Devices:
+**Xiaomi\Aqara Zigbee Devices:**
   - Aqara Wall Socket (13ea)
   - Aqara Wall Switch Double (6ea)
   - Aqara Wall Switch Single (1ea)
@@ -79,32 +78,33 @@ Xiaomi\Aqara Zigbee Devices:
   - Aqara Zigbee Relay (3ea)
   - Aqara Opple Wireless Switch (3ea)
 
-Other Devices:
-  - DIYRuZ_FreePad v1
-  - Google Home Mini (5ea)
-  
-ESPHome devices:
-  - Sonoff Basic
-  - Sonoff S26 Plugs
+**ESPHome devices:**
+  - Sonoff Basic (3ea)
+  - Sonoff S26 Plugs (2(ea)
+  - Sonoff L1
   - Blitzwolf SHP2 (2ea) and SHP6 (2ea)
-  - MH-Z19B CO2 sensors on Wemos D1 mini, 3ea 
+  - Blitzwolf LT11
+  - MH-Z19B CO2 sensors on Wemos D1 mini (3ea )
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Kitchen Air valve, hood fan\light with IR controller
   - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
-  - Blitzwolf LT11
   - Digma IR Remote (2ea)
-      
-Software:
+
+**Other Devices:**
+  - DIYRuZ_FreePad v1
+  - Google Home Mini (5ea)
+  
+**Software:**
   - Ubuntu Server 20.04 LTS
   - Home Assistant Core Supervised
   - MotionEye (Pibhole camera motion detection)
   - Mosquitto
 
-DB used:
+**DB used:**
   - PostgreSQL
   - InfluxDB
 
-Add-On's: 
+**Add-On's:** 
   - AirCast
   - File Editor
   - Custom deps deployment
@@ -119,7 +119,7 @@ Add-On's:
   - zigbee2mqtt assistant
 
 
-  Scripts:
+**Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
   - **ha_log_parser.sh**  Backing up HA log to my home directory and splitting it to Error, Warning, Info message type as well as keeping full log. Logs rotated every 5 days.
   - **ya_weather.sh** Yandex weather fcst ( thanks to [Ivan](https://t.me/configit)  )
