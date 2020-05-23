@@ -48,6 +48,8 @@
       entity_id: binary_sensor.nuc
       to: 'off'
       from: 'on'
+      for:
+        minutes: 1
     - platform: state
       entity_id: binary_sensor.nuc
       from: 'off'
@@ -56,14 +58,15 @@
       entity_id: binary_sensor.nuc_state
       to: 'off'
       from: 'on'
+      for:
+        minutes: 1
     - platform: state
       entity_id: binary_sensor.nuc_state
       from: 'off'
       to: 'on'
-#  condition:
-#    - condition: state
-#      entity_id: automation.06_bathroom_cell_power
-#      state: 'off'     
+  condition:
+    - condition: template
+      value_template: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 30 }}"
   action:
     - service: notify.telegram
       data:

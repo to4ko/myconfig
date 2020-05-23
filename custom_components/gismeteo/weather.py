@@ -4,60 +4,73 @@
 #  (see LICENSE.md or https://creativecommons.org/licenses/by-nc-sa/4.0/)
 #
 """
-The Gismeteo component.
+The Gismeteo Weather Provider.
 
 For more details about this platform, please refer to the documentation at
-https://github.com/Limych/HomeAssistantComponents/
+https://github.com/Limych/ha-gismeteo/
 """
 import logging
-import os
 
 import voluptuous as vol
-from homeassistant.components.weather import (
-    PLATFORM_SCHEMA, WeatherEntity)
+from homeassistant.components.weather import PLATFORM_SCHEMA, WeatherEntity
 from homeassistant.const import (
-    TEMP_CELSIUS, CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME, CONF_API_KEY,
-    CONF_MODE)
+    TEMP_CELSIUS,
+    CONF_LATITUDE,
+    CONF_LONGITUDE,
+    CONF_NAME,
+    CONF_API_KEY,
+    CONF_MODE,
+)
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.storage import STORAGE_DIR
 
 from . import Gismeteo
 from .const import (
-    ATTRIBUTION, DEFAULT_NAME, MIN_TIME_BETWEEN_UPDATES, CONF_CACHE_DIR,
-    DEFAULT_CACHE_DIR, VERSION, FORECAST_MODE_HOURLY, FORECAST_MODE_DAILY)
+    ATTRIBUTION,
+    DEFAULT_NAME,
+    MIN_TIME_BETWEEN_UPDATES,
+    CONF_CACHE_DIR,
+    FORECAST_MODE_HOURLY,
+    FORECAST_MODE_DAILY,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_API_KEY): cv.string,
-    vol.Optional(CONF_LATITUDE): cv.latitude,
-    vol.Optional(CONF_LONGITUDE): cv.longitude,
-    vol.Optional(CONF_MODE, default=FORECAST_MODE_HOURLY): vol.In(
-        [FORECAST_MODE_HOURLY, FORECAST_MODE_DAILY]),
-    vol.Optional(CONF_CACHE_DIR, default=DEFAULT_CACHE_DIR): cv.string,
-})
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_API_KEY): cv.string,
+        vol.Optional(CONF_LATITUDE): cv.latitude,
+        vol.Optional(CONF_LONGITUDE): cv.longitude,
+        vol.Optional(CONF_MODE, default=FORECAST_MODE_HOURLY): vol.In(
+            [FORECAST_MODE_HOURLY, FORECAST_MODE_DAILY]
+        ),
+        vol.Optional(CONF_CACHE_DIR): cv.string,
+    }
+)
 
 
+# pylint: disable=unused-argument
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the Gismeteo weather platform."""
-    _LOGGER.debug('Version %s', VERSION)
-    _LOGGER.info('if you have ANY issues with this, please report them here:'
-                 ' https://github.com/Limych/HomeAssistantComponents')
-
     name = config.get(CONF_NAME)
     latitude = config.get(CONF_LATITUDE, round(hass.config.latitude, 6))
     longitude = config.get(CONF_LONGITUDE, round(hass.config.longitude, 6))
-    cache_dir = config.get(CONF_CACHE_DIR)
+    cache_dir = config.get(CONF_CACHE_DIR, hass.config.path(STORAGE_DIR))
     mode = config.get(CONF_MODE)
 
-    gm = Gismeteo(latitude, longitude, mode, params={
-        'timezone': str(hass.config.time_zone),
-        'cache_dir': str(cache_dir) + '/gismeteo'
-        if os.access(cache_dir, os.X_OK | os.W_OK) else None,
-        'cache_time': MIN_TIME_BETWEEN_UPDATES.total_seconds(),
-    })
+    gism = Gismeteo(
+        latitude,
+        longitude,
+        mode,
+        params={
+            "timezone": str(hass.config.time_zone),
+            "cache_dir": cache_dir,
+            "cache_time": MIN_TIME_BETWEEN_UPDATES.total_seconds(),
+        },
+    )
 
-    add_entities([GismeteoWeather(name, gm)], True)
+    add_entities([GismeteoWeather(name, gism)], True)
 
 
 class GismeteoWeather(WeatherEntity):

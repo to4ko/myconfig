@@ -1,7 +1,7 @@
 # My Home Assistant configuration
 
 
-First of all - HUGE THANKS to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs. Special thanks to [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s], [@lapatoc](https://github.com/bastshoes) for help and support! 
+First of all - HUGE THANKS to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs. Special thanks to [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s](https://github.com/Spirituss), [@lapatoc](https://github.com/bastshoes) for help and support! 
 
 And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [ESPHome Channel](https://t.me/esphome)
 
@@ -48,7 +48,7 @@ Surveillance:
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 Smart Home:
-  Xiaomi\Aqara:
+  Xiaomi\Aqara WiFi Devices:
   - Xiaomi Gateway (7ea) used as alarm devices (audio\visual)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
@@ -56,26 +56,31 @@ Smart Home:
   - Yeelight LED Strip
   - Philips Xiaomi E27 Bulb (2ea)
   - Yeelight E27 Color Led Bulb v2 (2ea)
-  - Aqara Wall Socket (12ea)
-  - Aqara Wall Switch 2 Rockers (6ea)
-  - Aqara Wireless Switch 2 Rockers (6ea)
-  - Aqara Door Sensor (26ea)
-  - Aqara Water Leak Sensor (3ea)
-  - Aqara Vibration Sensor (3ea)
-  - Aqara\Xiaomi Motion Sensor (12ea)
-  - Aqara Wireless Switch (7ea)
-  - Aqara Temp\Himidity\Pressure sensor (3ea)
-  - Xiaomi Zigbee Plug (22ea)
-  - Xiaomi Temp\Humidity Sensor (8ea)
-  - Xiaomi Wireless switch (6ea)
   - Xiaomi Smart WiFi Power Strip (1ea)
   - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
-  - Xiaomi Wifi Plugs v2 (7ea) - used to restart Gateways remotely
+  - Xiaomi Wifi Plugs v2 (7ea)
   - Xiaomi IR controller
+
+  Xiaomi\Aqara Zigbee Devices:
+  - Aqara Wall Socket (13ea)
+  - Aqara Wall Switch Double (6ea)
+  - Aqara Wall Switch Single (1ea)
+  - Aqara Wireless Switch Double (8ea)
+  - Aqara Door Sensor (23ea)
+  - Aqara Water Leak Sensor (3ea)
+  - Aqara Vibration Sensor (3ea)
+  - Aqara\Xiaomi Motion Sensor (14ea)
+  - Aqara\Xiaomi Wireless Button (14ea)
+  - Aqara\Xiaomi Temp\Himidity sensor (12ea)
+  - Xiaomi Plug (30ea)
   - Xiaomi Smoke Detector (1ea)
   - Xiaomi Natural Gas Detector (1ea)
   - Aqara Zigbee Relay (3ea)
+  - Aqara Opple Wireless Switch (3ea)
+
+  Other Devices:
+  - DIYRuZ_FreePad v1
   - Google Home Mini (5ea)
   
   ESPHome devices:
@@ -91,8 +96,8 @@ Smart Home:
       
 Software:
   - Ubuntu Server 20.04 LTS
-  - Hass.Io in Docker
-  - MotionEye
+  - Home Assistant Core Supervised
+  - MotionEye (Pibhole camera motion detection)
   - Mosquitto
 
 DB used:
@@ -111,7 +116,7 @@ Add-On's:
   - Log Viewer
   - Portainer
   - RPC shutdown
-  - zigbee2mqtt
+  - zigbee2mqtt assistant
 
 
   Scripts:
