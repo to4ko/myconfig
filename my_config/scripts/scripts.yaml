@@ -80,3 +80,15 @@
         data_template:
           entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
           message: "Проверка звука!"
+          
+  zigbee2mqtt_test:
+    alias: Zigbee2Mqtt Devices Responce Test
+    sequence:
+      - service: notify.telegram
+        data_template:
+          message: >
+            {% set time_limit = as_timestamp(now())-4*60*60 %}
+            {% set missing = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | join(', ') %}
+            {% set missing_count = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | count %}
+            
+            {% if missing_count >0 %}{{"\U0001f4f6"}} No Response for last 4hrs from: {{ missing }}{%else%}{{"\U00002705"}}All devices online!{%endif%}

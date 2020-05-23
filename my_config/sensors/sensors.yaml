@@ -23,6 +23,20 @@
   #     - 22
   #     - 595
 
+  - platform: rest
+    resource: http://192.168.1.14:8123/api/hassio/addons/40817795_mopidy/info
+    name: mopidy
+    value_template: '{{ value_json.data.state }}'
+    scan_interval: 60
+    headers:
+      Authorization: !secret main_long_token
+      Content-Type: application/json
+    json_attributes_path: "$.data"
+    json_attributes:
+      - version
+      - version_latest
+
+
   - platform: command_line
     name: Supervisor updates
     command: 'curl http://supervisor/supervisor/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"addons":[.data.addons[] | select(.version != .installed)]}'''

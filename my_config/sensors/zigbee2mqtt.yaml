@@ -15,12 +15,12 @@
     state_topic: "zigbee2mqtt/bridge/config"
     value_template: "{{ value_json.coordinator }}"
     icon: mdi:chip
-  # Sensor for Showing Last Log Message
-  - platform: mqtt
-    name: Zigbee2mqtt Last Message
-    state_topic: "zigbee2mqtt/bridge/log"
-    value_template: "{{ value_json.coordinator }}"
-    icon: mdi:chip
+  # # Sensor for Showing Last Log Message
+  # - platform: mqtt
+  #   name: Zigbee2mqtt Last Message
+  #   state_topic: "zigbee2mqtt/bridge/log"
+  #   value_template: "{{ value_json }}"
+  #   icon: mdi:chip
 
   # Sensor for monitoring the addon restart tpoic
   - platform: mqtt
@@ -56,3 +56,39 @@
       {%- set days = (test / 86400) | int -%}
       
       {%if days > 0 %}{{days}}d {% endif %}{%if hours > 0 %}{{hours}}h {% endif %}{%if minutes > 0%}{{ minutes}}m{%else%}<1m{%endif%}
+
+  - platform: template
+    sensors:
+        zigbee_health:
+         friendly_name: Zigbee health
+         entity_id: sensor.time
+         icon_template: >-
+          {% if states('sensor.zigbee_health') | int == 0 %}
+            mdi:wifi
+          {% else %}
+            mdi:wifi-off
+          {% endif %}
+         value_template: >-
+            {%- macro GetDroppedZigbee() -%}
+            {% for state in states.sensor -%}
+            {%- if state.attributes.linkquality %}
+            {%- if "linkquality" in state.name and  (as_timestamp(now()) - as_timestamp(state.last_updated) > (4*60*60) ) -%}
+             X 
+            {%- endif -%}
+            {%- endif -%}
+            {%- endfor %}
+            {%- endmacro -%}
+            {%- if GetDroppedZigbee()[0] == "X" -%}
+            {{GetDroppedZigbee()|list|length }}
+            {%- else -%}
+            0
+            {%- endif -%} 
+         attribute_templates:
+          off_device: >-
+              {% for state in states.sensor-%}
+              {%- if state.attributes.linkquality %}
+              {%- if "linkquality" in state.name and  (as_timestamp(now()) - as_timestamp(state.last_updated) > (4*60*60) ) %}
+              [[ {{ relative_time(state.last_updated)}} for {{state.name | lower | replace("_linkquality", "") }} ]]  
+              {%- endif -%}
+              {%- endif -%}
+              {%- endfor %}

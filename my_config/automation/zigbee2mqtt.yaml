@@ -208,17 +208,21 @@
       data_template:
         message: "\U0001f4a5 Внимание! MQTT сервер - перезагрузка выполнена -> {{states('counter.mqtt_server_offline_warning')}}!"
 
-
-
-- alias: zigbee2mqtt_test
-  initial_state: 'false'
+# ##################################
+# System - Sensors Low Battery Notification
+# ##################################
+- alias: zigbee2mqtt_scan_devices_response
+  initial_state: 'true'
   trigger:
-    - platform: mqtt
-      topic: 'zigbee2mqtt/#'
+    - platform: time
+      at: "20:30:00"
+    - platform: time_pattern
+      hours: "/6"
   condition:
     - condition: template
-      value_template: '{{ trigger.payload_json.availability == "offline" }}'
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "{{trigger.payload_json}}"
+      value_template: >
+        {% set time_limit = as_timestamp(now())-4*60*60 %}
+        {{ states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | count  >= 1 }}
+  action:  
+  - service: script.turn_on
+    entity_id: script.zigbee2mqtt_test
