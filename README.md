@@ -128,6 +128,9 @@ Add-On's:
 
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
 
+#Zigbee Map
+![Zigbee Map](https://i.ibb.co/5cSzMC0/Network-Map-DTsymbal.jpg)
+
 # Main page
 ![Main Page](https://i.ibb.co/BTcVZtt/page1.jpg)
 # Security page
