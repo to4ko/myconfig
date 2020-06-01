@@ -47,11 +47,13 @@
       - service: script.turn_on
         data_template:
           entity_id: >
-              {% if states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count >= 1 %}
-                script.battery_level_low
-              {% else %}
-                script.battery_level_ok
-              {% endif%}
+            {% set num_low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
+            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
+            {% if (num_low_bat + num_low_bat_z2m) >0 %}
+              script.battery_level_low
+            {% else %}
+              script.battery_level_ok
+            {% endif%}
 
   battery_level_low:
     alias: Battery Level Low
@@ -59,15 +61,21 @@
       - service: notify.telegram
         data_template:
           message: >
-            {%- set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') -%}
-            {{"\U0001f6a8"}} Низкий заряд батарей: {{ low_batteries }}
-
+            {% set low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
+            {% set low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
+            
+            {% set num_low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
+            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
+            
+            {{"\U0001f6a8"}} Низкий заряд батарей ({{ num_low_bat + num_low_bat_z2m }}шт): {%if num_low_bat >0 %}{{low_bat}}{%endif%}{%if num_low_bat >0 and num_low_bat_z2m>0 %}, {%endif%}{%if num_low_bat_z2m >0%}{{low_bat_z2m}}{%endif%}
+  
   battery_level_ok:
     alias: Battery Level Ok
     sequence:
       - service: notify.telegram
         data:
           message: "\U0001f50b Батарей с уровнем заряда ниже {{states('input_number.battery_low_level')|int}}% не найдено!"
+
 
   tts_test:
     alias: Test TTS
@@ -81,14 +89,3 @@
           entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
           message: "Проверка звука!"
           
-  zigbee2mqtt_test:
-    alias: Zigbee2Mqtt Devices Responce Test
-    sequence:
-      - service: notify.telegram
-        data_template:
-          message: >
-            {% set time_limit = as_timestamp(now())-4*60*60 %}
-            {% set missing = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | join(', ') %}
-            {% set missing_count = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | count %}
-            
-            {% if missing_count >0 %}{{"\U0001f4f6"}} No Response for last 4hrs from: {{ missing }}{%else%}{{"\U00002705"}}All devices online!{%endif%}

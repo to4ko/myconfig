@@ -57,12 +57,18 @@ class HacsPlugin(HacsRepository):
         # Run common registration steps.
         await self.common_registration()
 
-    async def update_repository(self, ignore_issues=False):
+    async def update_repository(self):
         """Update."""
-        await self.common_update(ignore_issues)
+        if self.hacs.github.ratelimits.remaining == 0:
+            return
+        # Run common update steps.
+        await self.common_update()
 
         # Get plugin objects.
         find_file_name(self)
+
+        # Get JS type
+        await self.parse_readme_for_jstype()
 
         if self.content.path.remote is None:
             self.validate.errors.append("Repostitory structure not compliant")
@@ -80,3 +86,25 @@ class HacsPlugin(HacsRepository):
                 self.data.authors = package["author"]
         except Exception:  # pylint: disable=broad-except
             pass
+
+    async def parse_readme_for_jstype(self):
+        """Parse the readme looking for js type."""
+        readme = None
+        readme_files = ["readme", "readme.md"]
+        root = await self.repository_object.get_contents("")
+        for file in root:
+            if file.name.lower() in readme_files:
+                readme = await self.repository_object.get_contents(file.name)
+                break
+
+        if readme is None:
+            return
+
+        readme = readme.content
+        for line in readme.splitlines():
+            if "type: module" in line:
+                self.information.javascript_type = "module"
+                break
+            elif "type: js" in line:
+                self.information.javascript_type = "js"
+                break

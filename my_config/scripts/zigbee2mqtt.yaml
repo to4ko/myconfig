@@ -1,5 +1,5 @@
   zigbee2mqtt_rename:
-    alias: Zigbee2mqtt Rename
+    alias: zigbee2mqtt Rename
     sequence:
       - service: mqtt.publish
         data_template:
@@ -11,7 +11,7 @@
             }
 
   zigbee2mqtt_remove:
-    alias: Zigbee2mqtt Remove
+    alias: zigbee2mqtt Remove
     sequence:
       - service: mqtt.publish
         data_template:
@@ -19,10 +19,81 @@
           payload_template: "{{ states.input_text.zigbee2mqtt_remove.state | string }}"
 
   zigbee2mqtt_restart:
-    alias: Zigbee2MQTT restart
+    alias: zigbee2mqtt restart
     sequence:
       - service: mqtt.publish
         data_template:
           topic: zigbee2mqtt_addon_restart
           payload: "ON"
           retain: true
+
+  zigbee2mqtt_map_rebuild:
+    alias: zigbee2mqtt Map Rebuild
+    sequence:
+      - service: mqtt.publish
+        data_template:
+          topic: zigbee2mqtt/bridge/networkmap
+          payload: "raw"
+
+  zigbee2mqtt_map_rebuild_graphviz:
+    alias: zigbee2mqtt Map Rebuild Graphviz
+    sequence:
+      - service: mqtt.publish
+        data_template:
+          topic: zigbee2mqtt/bridge/networkmap
+          payload: "graphviz"
+
+  zigbee2mqtt_permit_join:
+    alias: zigbee2mqtt Permit Join On
+    sequence:
+      - service: mqtt.publish
+        data_template:
+          topic: zigbee2mqtt/bridge/config/permit_join
+          payload: "true"
+      #- delay: '00:00:05'
+      - service: timer.cancel
+        entity_id: timer.zigbee_permit_join
+
+  zigbee2mqtt_test:
+    alias: zigbee2mqtt Devices Responce Test
+    sequence:
+      - service: notify.telegram
+        data_template:
+          message: >
+            {% set time_limit = as_timestamp(now())-4*60*60 %}
+            {% set missing = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | join(', ') %}
+            {% set missing_count = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | count %}
+            
+            {% if missing_count >0 %}{{"\U0001f4f6"}} No Response for last 4hrs from: {{ missing }}{%else%}{{"\U00002705"}}All devices online!{%endif%}
+            
+  zigbee2mqtt_linkuality_check:
+    alias: zigbee2mqtt Linkquality Check
+    sequence:
+      - service: script.turn_on
+        data_template:
+          entity_id: >
+            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 3 ) | map(attribute='name') | list | count %}
+            
+            {% if num_low_link >0 %}
+              script.zigbee2mqtt_link_level_low
+            {% else %}
+              script.zigbee2mqtt_link_level_ok
+            {% endif%}
+
+  zigbee2mqtt_link_level_low:
+    alias: zigbee2mqtt Linkquality Low
+    sequence:
+      - service: notify.telegram
+        data_template:
+          message: >
+            {% set low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 3 ) | map(attribute='name') | list | join(', ') %}
+            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 3 ) | map(attribute='name') | list | count %}
+              
+            {{"\U0001f6a8"}} Низкий сигнал ({{ num_low_link }}шт): {%if num_low_link>0%}{{low_link}}{%endif%}
+
+  zigbee2mqtt_link_level_ok:
+    alias: Link Level Ok
+    sequence:
+      - service: notify.telegram
+        data:
+          message: "\U0001f50b Устройств с низким уровнем сигнала не найдено!"

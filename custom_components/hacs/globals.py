@@ -1,7 +1,6 @@
 # pylint: disable=invalid-name, missing-docstring
 hacs = []
 removed_repositories = []
-rules = {}
 
 
 def get_hacs():

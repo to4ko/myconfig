@@ -370,6 +370,13 @@ views:
                     name: B
                   - entity: sensor.0x00158d0001e58754_humidity #sensor.humidity_158d0001e58754
                     name: T
+          - type: glance
+            entities:
+              - sensor.humidity_average
+              - entity: sensor.0x04cf8cdf3c77271d_illuminance_lux
+                name: S
+              - entity: sensor.0x04cf8cdf3c7754a8_illuminance_lux
+                name: MB
               
       # ##################################
       # Right Block
@@ -422,7 +429,7 @@ views:
             #title: Lights
             show_name: true
             show_state: false
-            columns: 6
+            columns: 5
             state_color: true
             entities:
               - entity: light.led_strip_hb
@@ -542,9 +549,12 @@ views:
                 tap_action:
                   action: toggle
 
-              - entity: switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
+              - entity: switch.0x00158d0002a36433_switch_right #switch.wall_switch_158d000248bf53
                 name: Main St
-                icon: mdi:ceiling-light
+                tap_action:
+                  action: toggle
+              - entity: switch.0x00158d0002a36433_switch_left #switch.wall_switch_158d000248bf53
+                name: Sec St
                 tap_action:
                   action: toggle
           
@@ -1193,7 +1203,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
+          - switch.0x00158d0002a36433_switch_right #switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
 
 ################################################################
 # SENSORS BY ROOM PAGE
@@ -1274,7 +1284,7 @@ views:
           # - binary_sensor.wall_switch_both_158d0001712d55
           # - binary_sensor.wall_switch_left_158d0001712d55
           # - binary_sensor.wall_switch_right_158d0001712d55
-          - ssensor.0x00158d0001e58714_humidity #ensor.humidity_158d0001e58714
+          - sensor.0x00158d0001e58714_humidity #ensor.humidity_158d0001e58714
           - sensor.0x00158d000236bb94_illuminance #sensor.illumination_158d000236bb94
           - sensor.illumination_7c49ebb19080
           - sensor.0x00158d0001e58714_temperature #sensor.temperature_158d0001e58714
@@ -1397,8 +1407,10 @@ views:
         cards:
           - type: custom:mini-graph-card
             entities:
-              - sensor.water_change_60m
+              - sensor.water_hour_single
             name: Water usage
+            group_by: hour
+            aggregate_func: max
             show:
               graph: bar
             line_color: blue
@@ -1438,7 +1450,8 @@ views:
           - type: custom:mini-graph-card
             icon: mdi:flash
             entities:
-              - sensor.power_consumption
+              - sensor.energy_hourly_single
+              #- sensor.energy_xiaomi_hourly_single
             name: Power Consumption
             show:
               graph: bar
@@ -3884,30 +3897,6 @@ views:
           - sensor.tv_box_on
           - sensor.tv_v_on
           - sensor.iconbit_on
-
-      - type: entities
-        title: Monthly
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - sensor.brix_on_monthly
-          - sensor.i5_on_monthly
-          - sensor.m6800_on_monthly
-          - sensor.r418_on_monthly
-          - sensor.u430p_on_monthly
-          - type: divider
-          - sensor.kettle_on_monthly
-          - sensor.washer_on_monthly
-          - type: divider
-          - sensor.led_strip_hb_on_monthly
-          - sensor.round_led_mb_on_monthly
-          - sensor.round_led_s_on_monthly
-          - sensor.square_led_v_on_monthly
-          - type: divider
-          - sensor.tv_k_on_monthly
-          - sensor.tv_box_on_monthly
-          - sensor.tv_v_on_monthly
-          - sensor.iconbit_on_monthly
           
       - type: entities
         title: Offline Rate
@@ -4111,14 +4100,24 @@ views:
             show_header_toggle: false
             entities:
               - entity: sensor.zigbee2mqtt_bridge_state
+              - entity: sensor.zigbee2mqtt_permit_join
               - entity: sensor.zigbee2mqtt_version
               - entity: sensor.coordinator_version
+              - type: divider
+              - entity: input_text.zigbee2mqtt_map_rebuild
+              - entity: sensor.zigbee2mqtt_last_message
               - entity: input_select.zigbee2mqtt_log_level
               - type: divider
-              - entity: script.zigbee2mqtt_test
-              - type: divider
+              - entity: script.zigbee2mqtt_permit_join
               - entity: switch.zigbee2mqtt_main_join
               - entity: timer.zigbee_permit_join
+              - type: divider
+              - entity: script.zigbee2mqtt_linkuality_check
+              - entity: script.zigbee2mqtt_test
+              - entity: script.zigbee2mqtt_map_rebuild
+              - type: divider
+              - sensor.zigbee2mqtt_addon_restart
+              - entity: script.zigbee2mqtt_restart
               - type: divider
               - entity: input_text.zigbee2mqtt_old_name
               - entity: input_text.zigbee2mqtt_new_name
@@ -4126,9 +4125,7 @@ views:
               - type: divider
               - entity: input_text.zigbee2mqtt_remove
               - entity: script.zigbee2mqtt_remove
-              - type: divider
-              - sensor.zigbee2mqtt_addon_restart
-              - entity: script.zigbee2mqtt_restart
+
       - type: entities
         title: SLS Gateway
         show_header_toggle: false
@@ -4141,7 +4138,8 @@ views:
           - sensor.sls_gateway_uptime
           - switch.sls_gateway_join
           - type: divider
-          - binary_sensor.motioneye_camera_status
+          - binary_sensor.pinhole_camera_status
+          - binary_sensor.digma100_camera_status
       - type: entities
         entities:
           - entity: switch.0x00158d000366815b_switch_l1
@@ -4245,3 +4243,103 @@ views:
     cards:
       - type: 'custom:camera-card'
         entity: camera.door_hb
+        
+
+  - title: Temperature
+    icon: mdi:home-thermometer-outline
+    cards:
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000233fb72_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e6d85a_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e58754_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000239ad5b_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e586af_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d00020d7c3a_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000222c746_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0002464ec0_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000237167c_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0002461e5b_temperature
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e58714_temperature
+          
+          
+          
+  - title: Humidity
+    icon: mdi:water-percent
+    cards:
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000233fb72_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e6d85a_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e58754_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000239ad5b_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e586af_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d00020d7c3a_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000222c746_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0002464ec0_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d000237167c_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0002461e5b_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.0x00158d0001e58714_humidity
+          
