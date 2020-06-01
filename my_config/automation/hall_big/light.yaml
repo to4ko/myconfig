@@ -22,12 +22,12 @@
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'off'
+      #- condition: state
+      #  entity_id: light.led_strip_hb
+      #  state: 'off'
       - condition: state
-        entity_id: light.led_strip_hb
+        entity_id: light.lt11_1_led
         state: 'off'
-      # - condition: state
-      #   entity_id: light.lt11_1_led
-      #   state: 'off'
       - condition: state
         entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
         state: 'off'
@@ -35,22 +35,22 @@
         entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
         state: 'off'
   action:
+    #- service: light.turn_on
+    #  entity_id: light.led_strip_hb
+    #  data:
+    #    brightness_pct: 1
+    #    kelvin: 3000
     - service: light.turn_on
-      entity_id: light.led_strip_hb
-      data:
-        brightness_pct: 1
-        kelvin: 3000
-    # - service: light.turn_on
-    #   entity_id: light.lt11_1_led
-    #   data_template: 
-    #     brightness_pct: 10
-    #     rgb_color: [255, 180, 107]
-    #     white_value: 10
+      entity_id: light.lt11_1_led
+      data_template: 
+        brightness_pct: 45
+        rgb_color: [255, 180, 107]
+        white_value: 25
     - delay: '00:00:30'
+    #- service: light.turn_off
+    #  entity_id: light.led_strip_hb
     - service: light.turn_off
-      entity_id: light.led_strip_hb
-    # - service: light.turn_off
-    #   entity_id: light.lt11_1_led
+      entity_id: light.lt11_1_led
 
 
 # ##################################
@@ -81,6 +81,9 @@
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'on'
+      - condition: state
+        entity_id: binary_sensor.dark_mode
+        state: 'off'
       - condition: state
         entity_id: light.led_strip_hb
         state: 'off'
@@ -127,10 +130,27 @@
       entity_id: binary_sensor.tod_day
       state: 'off'
   action:
+    #- service: light.turn_off
+    #  entity_id: light.led_strip_hb
+     - service: light.turn_off
+       entity_id: light.lt11_1_led
+
+# ##################################
+# Hall Big - Yeelight strip off
+# ##################################
+- alias: hall_big_yeelight_off
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '21:00:00'
+  condition:
+    - condition: state
+      entity_id: light.led_strip_hb
+      state: 'on'
+  action:
     - service: light.turn_off
       entity_id: light.led_strip_hb
-    # - service: light.turn_off
-    #   entity_id: light.lt11_1_led
+
       
 # ##################################
 # Hall Big - Auto Light Off 1m without movements
@@ -426,7 +446,7 @@
 # Hall Big - Wadrobe Auto Light On
 # ##################################
 - alias: hall_big_wadrobe_auto_light_on
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: binary_sensor.0x00158d0002b43ad4_occupancy
@@ -446,7 +466,7 @@
 # Hall Big - Wadrobe LED Timer start on light on
 # ################################## 
 - alias: hall_big_wadrobe_led_timer_start
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: light.lt11_1_led
@@ -461,7 +481,7 @@
 # Hall Big - Wadrobe LED Timer restart
 # ################################## 
 - alias: hall_big_wadrobe_led_timer_restart
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: binary_sensor.0x00158d0002b43ad4_occupancy, binary_sensor.unifi_motion_entrance
@@ -481,7 +501,7 @@
 # Hall Big - Wadrobe LED Timer stop
 # ################################## 
 - alias: hall_big_wadrobe_led_timer_off
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: light.lt11_1_led
@@ -494,7 +514,7 @@
 # Hall Big - Wadrobe LED Auto Light Off
 # ################################## 
 - alias: hall_big_wadrobe_led_auto_off
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: event
       event_type: timer.finished

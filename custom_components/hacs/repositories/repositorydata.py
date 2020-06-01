@@ -8,52 +8,32 @@ import attr
 class RepositoryData:
     """RepositoryData class."""
 
-    archived: bool = False
-    authors: List[str] = []
-    category: str = ""
-    content_in_root: bool = False
-    country: List[str] = []
-    config_flow: bool = False
-    default_branch: str = None
-    description: str = ""
-    domain: str = ""
-    domains: List[str] = []
-    downloads: int = 0
-    file_name: str = ""
-    filename: str = ""
-    first_install: bool = False
-    fork: bool = False
-    full_name: str = ""
-    hacs: str = None  # Minimum HACS version
-    hide: bool = False
-    hide_default_branch: bool = False
-    homeassistant: str = None  # Minimum Home Assistant version
     id: int = 0
-    iot_class: str = None
-    installed: bool = False
-    installed_commit: str = None
-    installed_version: str = None
-    open_issues: int = 0
-    last_commit: str = None
-    last_version: str = None
-    last_updated: str = 0
-    manifest_name: str = None
-    new: bool = True
-    persistent_directory: str = None
+    full_name: str = ""
     pushed_at: str = ""
-    releases: bool = False
-    render_readme: bool = False
-    published_tags: List[str] = []
-    selected_tag: str = None
-    show_beta: bool = False
-    stargazers_count: int = 0
+    category: str = ""
+    archived: bool = False
+    description: str = ""
+    manifest_name: str = None
     topics: List[str] = []
+    fork: bool = False
+    domain: str = ""
+    default_branch: str = None
+    stargazers_count: int = 0
+    last_commit: str = ""
+    file_name: str = ""
+    content_in_root: bool = False
     zip_release: bool = False
-
-    @property
-    def stars(self):
-        """Return the stargazers count."""
-        return self.stargazers_count or 0
+    filename: str = ""
+    render_readme: bool = False
+    hide_default_branch: bool = False
+    domains: List[str] = []
+    country: List[str] = []
+    authors: List[str] = []
+    homeassistant: str = None  # Minimum Home Assistant version
+    hacs: str = None  # Minimum HACS version
+    persistent_directory: str = None
+    iot_class: str = None
 
     @property
     def name(self):
@@ -73,22 +53,9 @@ class RepositoryData:
         for key in source:
             if key in data.__dict__:
                 if key == "pushed_at":
-                    if source[key] == "":
-                        continue
-                    if "Z" in source[key]:
-                        setattr(
-                            data,
-                            key,
-                            datetime.strptime(source[key], "%Y-%m-%dT%H:%M:%SZ"),
-                        )
-                    else:
-                        setattr(
-                            data,
-                            key,
-                            datetime.strptime(source[key], "%Y-%m-%dT%H:%M:%S"),
-                        )
-                elif key == "id":
-                    setattr(data, key, str(source[key]))
+                    setattr(
+                        data, key, datetime.strptime(source[key], "%Y-%m-%dT%H:%M:%SZ")
+                    )
                 elif key == "county":
                     if isinstance(source[key], str):
                         setattr(data, key, [source[key]])
@@ -103,20 +70,9 @@ class RepositoryData:
         for key in data:
             if key in self.__dict__:
                 if key == "pushed_at":
-                    if data[key] == "":
-                        continue
-                    if "Z" in data[key]:
-                        setattr(
-                            self,
-                            key,
-                            datetime.strptime(data[key], "%Y-%m-%dT%H:%M:%SZ"),
-                        )
-                    else:
-                        setattr(
-                            self, key, datetime.strptime(data[key], "%Y-%m-%dT%H:%M:%S")
-                        )
-                elif key == "id":
-                    setattr(self, key, str(data[key]))
+                    setattr(
+                        self, key, datetime.strptime(data[key], "%Y-%m-%dT%H:%M:%SZ")
+                    )
                 elif key == "county":
                     if isinstance(data[key], str):
                         setattr(self, key, [data[key]])

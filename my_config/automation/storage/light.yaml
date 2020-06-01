@@ -18,10 +18,10 @@
       to: 'on'
   action:
     - service: switch.turn_on
-      entity_id: switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
+      entity_id: switch.0x00158d0002a36433_switch_right #switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
 
 # ##################################
-# Storage - Auto Light On
+# Storage - Auto Light Off
 # ##################################
 - alias: storage_light_off
   initial_state: 'true'
@@ -32,7 +32,7 @@
         entity_id: timer.main_light_st
   action:
     - service: switch.turn_off
-      entity_id: switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
+      entity_id: switch.0x00158d0002a36433_switch_right, switch.0x00158d0002a36433_switch_left #switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
     - service: timer.cancel
       entity_id: timer.main_light_st
 
@@ -43,7 +43,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
+      entity_id: switch.0x00158d0002a36433_switch_right, switch.0x00158d0002a36433_switch_left #switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
       to: 'on'
   action:
     - service: timer.cancel
@@ -65,11 +65,15 @@
       entity_id: binary_sensor.0x00158d0001aea602_occupancy
       from: 'off'
       to: 'on'
-
   condition:
-    - condition: state
-      entity_id: switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
-      state: 'on'
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: switch.0x00158d0002a36433_switch_right
+        state: 'on'
+      - condition: state
+        entity_id: switch.0x00158d0002a36433_switch_left
+        state: 'on'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_st
@@ -83,7 +87,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
+      entity_id: switch.0x00158d0002a36433_switch_right, switch.0x00158d0002a36433_switch_left #switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
       to: 'off'
   action:
     - service: timer.cancel
@@ -110,7 +114,7 @@
       to: 'single'
   action:
     - service: homeassistant.turn_off
-      entity_id: switch.0x00158d0001f5501f_switch, switch.0x00158d000216528c_switch, light.gateway_light_7811dcb8cb4b, switch.0x00158d000248bf53_switch, light.led_strip_hb
+      entity_id: switch.0x00158d0001f5501f_switch, switch.0x00158d000216528c_switch, light.gateway_light_7811dcb8cb4b, switch.0x00158d0002a36433_switch_right, switch.0x00158d0002a36433_switch_left, light.led_strip_hb, light.lt11_1_led
       
 # ##################################
 # Storage - Hall big Light Auto turn off
@@ -133,9 +137,9 @@
   action:
     - service: homeassistant.turn_off
       entity_id: automation.hall_big_auto_light_on, automation.hall_big_auto_night_light_on
-    - delay: '01:00:00'
-    - service: homeassistant.turn_on
-      entity_id: automation.hall_big_auto_light_on, automation.hall_big_auto_night_light_on
+    # - delay: '01:00:00'
+    # - service: homeassistant.turn_on
+    #   entity_id: automation.hall_big_auto_light_on, automation.hall_big_auto_night_light_on
 
 # ##################################
 # Storage - Hall big Light Auto turn on
@@ -161,6 +165,12 @@
       to: 'double'
     - platform: state
       entity_id: switch.0x00158d000223921b_switch_left, switch.0x00158d000223921b_switch_right, switch.0x00158d000253f04a_switch_left, switch.0x00158d000253f04a_switch_right
+      from: 'on'
+      to: 'off'
+    - platform: state
+      entity_id: switch.0x00158d000223921b_switch_left, switch.0x00158d000223921b_switch_right, switch.0x00158d000253f04a_switch_left, switch.0x00158d000253f04a_switch_right
+      from: 'off'
+      to: 'on'
   condition:
     - condition: state
       entity_id: automation.hall_big_auto_light_on

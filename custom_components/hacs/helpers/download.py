@@ -26,7 +26,7 @@ def should_try_releases(repository):
         return False
     if repository.data.category not in ["plugin", "theme"]:
         return False
-    if not repository.data.releases:
+    if not repository.releases.releases:
         return False
     return True
 

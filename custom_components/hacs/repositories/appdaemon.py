@@ -1,5 +1,5 @@
 """Class for appdaemon apps in HACS."""
-from aiogithubapi import AIOGitHubAPIException
+from aiogithubapi import AIOGitHubException
 from integrationhelper import Logger
 
 from .repository import HacsRepository
@@ -30,7 +30,7 @@ class HacsAppdaemon(HacsRepository):
         # Custom step 1: Validate content.
         try:
             addir = await self.repository_object.get_contents("apps", self.ref)
-        except AIOGitHubAPIException:
+        except AIOGitHubException:
             raise HacsException(
                 f"Repostitory structure for {self.ref.replace('tags/','')} is not compliant"
             )
@@ -64,9 +64,11 @@ class HacsAppdaemon(HacsRepository):
         # Set local path
         self.content.path.local = self.localpath
 
-    async def update_repository(self, ignore_issues=False):
+    async def update_repository(self):
         """Update."""
-        await self.common_update(ignore_issues)
+        if self.hacs.github.ratelimits.remaining == 0:
+            return
+        await self.common_update()
 
         # Get appdaemon objects.
         if self.repository_manifest:

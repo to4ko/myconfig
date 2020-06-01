@@ -64,12 +64,12 @@
     - service: persistent_notification.create
       data_template:
         title: Device joined the zigbee2mqtt network
-        message: "\U00002733 Name: {{trigger.payload_json.meta.friendly_name}},
+        message: "\U00002714 Name: {{trigger.payload_json.meta.friendly_name}},
                   Vendor: {{trigger.payload_json.meta.vendor}},
                   Description: {{trigger.payload_json.meta.description}}"
     - service: notify.telegram
       data_template:
-        message: "\U00002733 Z2M new device - Name: {{trigger.payload_json.meta.friendly_name}}, Vendor: {{trigger.payload_json.meta.vendor}}, Description: {{trigger.payload_json.meta.description}}"
+        message: "\U00002705 Z2M new device - Name: {{trigger.payload_json.meta.friendly_name}}, Vendor: {{trigger.payload_json.meta.vendor}}, Description: {{trigger.payload_json.meta.description}}"
 
                   
 
@@ -215,9 +215,15 @@
   initial_state: 'true'
   trigger:
     - platform: time
-      at: "20:30:00"
-    - platform: time_pattern
-      hours: "/6"
+      at: "07:00:00"
+    - platform: time
+      at: "13:00:00"
+    - platform: time
+      at: "18:00:00"
+    - platform: time
+      at: "22:00:00"
+    # - platform: time_pattern
+    #   hours: "/6"
   condition:
     - condition: template
       value_template: >
@@ -226,3 +232,20 @@
   action:  
   - service: script.turn_on
     entity_id: script.zigbee2mqtt_test
+    
+# ##################################
+# Z2M - Map Update
+# ##################################
+- alias: zigbee2mqtt_map_update
+  initial_state: 'true'
+  trigger:
+    - platform: mqtt
+      topic: 'zigbee2mqtt/bridge/networkmap/raw'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f5fa Z2M map updated at {{now().strftime('%d.%m.%Y %H:%M:%S')}}"
+    - service: input_text.set_value
+      data_template:
+        entity_id: input_text.zigbee2mqtt_map_rebuild
+        value: "{{now().strftime('%d.%m.%Y %H:%M:%S')}}"

@@ -74,9 +74,11 @@ class HacsIntegration(HacsRepository):
         # Set local path
         self.content.path.local = self.localpath
 
-    async def update_repository(self, ignore_issues=False):
+    async def update_repository(self):
         """Update."""
-        await self.common_update(ignore_issues)
+        if self.hacs.github.ratelimits.remaining == 0:
+            return
+        await self.common_update()
 
         if self.data.content_in_root:
             self.content.path.remote = ""

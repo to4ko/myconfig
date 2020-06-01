@@ -204,11 +204,14 @@
       value_template: >
         {{ (states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count + states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count)  >= 1 }}
   action:  
-  - service: notify.telegram
-    data_template:
-      message: >
-        {%- set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') + states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') -%}
-        {{"\U0001f6a8"}} Низкий заряд батарей: {{ low_batteries }}
+  - service: script.turn_on
+    entity_id: script.battery_level_check
+    # data_template:
+    #   message: >
+    #     {% set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
+    #     {% set low_batteries_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
+        
+    #     {{"\U0001f6a8"}} Низкий заряд батарей: {{ low_batteries }} + {{ low_batteries_z2m }}
 
 
 # ##################################
@@ -459,8 +462,6 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f525 Перезапуск розетки {{ trigger.to_state.entity_id }} !"
-        
-        
 
 # ##################################
 # System - Mopidy restart
@@ -477,3 +478,45 @@
     - service: hassio.addon_restart
       data:
         addon: 40817795_mopidy
+
+# ##################################
+# System - IP Blocked
+# ##################################
+- alias: system_blocked_ip
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: persistent_notification.ip_ban
+  action:
+    - service: input_text.set_value
+      data_template: 
+        entity_id: input_text.ip_ban
+        value: "{{ state_attr('persistent_notification.ip_ban', 'message').split('Too many login attempts from ')[1] }}"
+    - delay: '00:00:01'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Слишком много попыток некорректного входа. Заблокирован IP: http://whatismyipaddress.com/ip/{{ states('input_text.ip_ban') }}."
+        
+
+# ##################################
+# System - RPI restart
+# ##################################
+- alias: system_rpi_restart
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.rpi_state
+      to: 'off'
+      for: '00:10:00'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4a5 Внимание! RPI сервер - запуск перезагрузки!"
+    - service: switch.turn_off
+      entity_id: switch.shp6_socket_1_relay
+    - delay: '00:00:15'
+    - service: switch.turn_on
+      entity_id: switch.shp6_socket_1_relay
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4a5 Внимание! RPI сервер - перезагрузка выполнена!"
