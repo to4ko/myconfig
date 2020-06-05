@@ -132,6 +132,18 @@
               Стоимость: {{ ((states('sensor.water_cost'))|float)}} руб.
       - delay:
           seconds: 1
+
+      - service: mqtt.publish
+        data_template:
+          topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
+          payload: "{{states('sensor.hot_water_meter')|float}}"
+          retain: true
+      - service: mqtt.publish
+        data_template:
+          topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
+          payload: "{{states('sensor.cold_water_meter')|float}}"
+          retain: true
+
       - service: input_number.set_value
         data_template:
           entity_id: input_number.hot_water_meter_last_month
@@ -161,6 +173,18 @@
               Электричество (день) Т1: {{ ((states('sensor.power_consumption_month_t1'))|float)}} кВт*ч
               Электричество (ночь) Т2: {{ ((states('sensor.power_consumption_month_t2'))|float)}} кВт*ч
               Стоимость: {{ ((states('sensor.power_consumption_month_cost'))|float) }} руб.
+      
+      - service: mqtt.publish
+        data_template:
+          topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t1"
+          payload: "{{states('sensor.power_t1')|float}}"
+          retain: true
+      - service: mqtt.publish
+        data_template:
+          topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t2"
+          payload: "{{states('sensor.power_t2')|float}}"
+          retain: true
+      
       - service: input_number.set_value
         data_template:
           entity_id: input_number.power_meter_last_month_t1

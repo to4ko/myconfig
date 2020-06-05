@@ -1,2 +1,2 @@
-var webhook_trigger_update_url = 'http://192.168.1.14:8123/api/webhook/83f011d2caa0d2abc735b1ede1a209b7b64c30a3106e7041c7e486d32fd90f94';
-var webhook_check_update_url = 'http://192.168.1.14:8123/api/webhook/c50b8d829f1eaf01c25d472ab2aef25d1d184ae9226277507769b3f5da6bfd18';
+var webhook_trigger_update_url = 'http://broadband-95-84-150-247.ip.moscow.rt.ru:823/api/webhook/0b26abcbf98d6f496244ad5906d93228f531f2b0b20550af253508616dd3dbb7';
+var webhook_check_update_url = 'http://broadband-95-84-150-247.ip.moscow.rt.ru:823/api/webhook/d28035b883783c6d9f56746bdb60b2358d4654487c0463778f780cb56229f9d7';

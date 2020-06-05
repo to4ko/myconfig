@@ -39,6 +39,8 @@
         {%- else -%}
         5000
         {% endif %}
+      # brightness_pct: "{{states('sensor.circadian_values')|int}}"
+      # kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
       
 # ##################################
 # Vova Bedside Lamp - Off
@@ -145,8 +147,48 @@
     service: light.turn_on
     entity_id: light.square_led_v
     data_template:
-       brightness_pct: 95
-       kelvin: 5000
+      brightness_pct: 95
+      kelvin: 5000
+      #brightness_pct: "{{states('sensor.circadian_values')|int}}"
+      #kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
+
+# ##################################
+# Vova Main Lamp (Xiaomi Round LED) - Auto
+# ##################################
+- alias: vova_main_lamp_set_brightness_auto
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: sensor.circadian_values
+  condition:
+    - condition: state
+      entity_id: light.square_led_v
+      state: 'on'
+  action:
+    - service: light.turn_on
+      entity_id: light.square_led_v
+      data_template:
+        brightness_pct: "{{states('sensor.circadian_values')|int}}"
+        kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
+
+# ##################################
+# Vova Bedside Lamp  - Auto
+# ##################################
+- alias: vova_bedside_lamp_set_brightness_auto
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: sensor.circadian_values
+  condition:
+    - condition: state
+      entity_id: light.bedside_mb
+      state: 'on'
+  action:
+    - service: light.turn_on
+      entity_id: light.bedside_mb
+      data_template:
+        brightness_pct: "{{states('sensor.circadian_values')|int}}"
+        kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
 
 # ##################################
 # Vova Main Lamp (Xiaomi Sqaure LED) - Turn Plug On if Off

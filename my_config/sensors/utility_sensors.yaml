@@ -6,6 +6,20 @@
 # ############################################################################
 # Utility (water + Power Cost sensor
 # ############################################################################
+
+  - platform: min_max
+    type: mean
+    name: Voltage
+    round_digits: 1
+    entity_ids:
+      - sensor.ippon_hb_input_voltage
+      - sensor.ippon_mb_input_voltage
+      - sensor.cyber650_input_voltage
+      - sensor.shp2_socket_1_v
+      - sensor.shp2_socket_2_v
+      - sensor.shp6_socket_1_v
+      - sensor.shp6_socket_2_v
+
   - platform: template
     sensors:
       server_daily_cost:
@@ -29,19 +43,6 @@
 # ############################################################################
 # Power monitoring sensors
 # ############################################################################
-      # power_consumption_light:
-      #   friendly_name: 'Power light/Current'
-      #   unit_of_measurement: W
-      #   icon_template: mdi:gauge
-      #   value_template: "{{ ((states('switch.0x00158d0002a36f7f_switch_left')|replace('on','1'))|int*32) + ((states('switch.wall_switch_left_158d0002a36f7f')|replace('on','1'))|int*10) + ((states('switch.0x00158d0002a36e26_switch_right')|replace('on','1'))|int*20) + ((states('switch.0x00158d0002a36e26_switch_left')|replace('on','1'))|int*7) + (state_attr('switch.plug_158d0002482619','load_power')|float(0)) + (state_attr('switch.plug_158d00020b4971','load_power')|float(0)) + ((states('light.round_led_s')|replace('on','1'))|int*50) + ((states('switch.0x00158d000248bf53_switch')|replace('on','1'))|int*16) + ((states('switch.0x00158d000223921b_switch_left')|replace('on','1'))|int*32.5) + ((states('switch.0x00158d000253f04a_switch_right')|replace('on','1'))|int*32.5) + (state_attr('switch.0x00158d00023e5812_switch','power')|float(0))|float + state_attr('switch.0x00158d000216528c_switch','power')|float(0)|float }}"
-      #   entity_id: sensor.time
-
-      # power_consumption_socket:
-      #   value_template: "{{ (states('sensor.shp6_socket_2_w')|float + state_attr('switch.0x00158d000322e30c_switch','power')|float + state_attr('switch.0x00158d00035f44a7_switch','power')|float(0) + state_attr('switch.0x00158d0001f2630e_switch','power')|float(0) + state_attr('switch.0x00158d00024517fe_switch','power')|float(0) + state_attr('switch.0x00158d000230fc52_switch','power')|float(0) + state_attr('switch.0x00158d000239097a_switch','power')|float(0) + state_attr('switch.0x00158d0002395d58_switch','power')|float(0)+ state_attr('switch.0x00158d0002468fbd_switch','power')|float(0)+ state_attr('switch.0x00158d0002395dc9_switch','power')|float(0)+ state_attr('switch.0x00158d000246776f_switch','power')|float(0)+ state_attr('switch.0x00158d0002467773_switch','power')|float(0)+ state_attr('switch.0x00158d000205a835_switch','power')|float(0)+ state_attr('switch.0x00158d000249b26b_switch','power')|float(0)+ 3 + state_attr('switch.0x00158d0002451850_switch','power')|float(0)+ state_attr('switch.0x00158d0002476ed1_switch','power')|float(0)+ state_attr('switch.0x00158d000249b25b_switch','power')|float(0)+ state_attr('switch.0x00158d000232481a_switch','power')|float(0)+ state_attr('switch.0x00158d0002924790_switch','power')|float(0)+ state_attr('switch.0x00158d0001e85086_switch','power')|float(0) + state_attr('switch.0x00158d000358c773_switch','power')|float(0) + states.fan.humidifier2.state|replace('on','1')|int*10 + 5 + 5 + 1)|round(2) }}"
-      #   unit_of_measurement: W
-      #   friendly_name: 'Power socket/Current'
-      #   icon_template: mdi:gauge
-      #   entity_id: sensor.time
 
       power_consumption:
         value_template: "{{ states('sensor.power_consumption_k')|int + states('sensor.power_consumption_t')|int + states('sensor.power_consumption_b')|int + states('sensor.power_consumption_hs')|int + states('sensor.power_consumption_mb')|int + states('sensor.power_consumption_st')|int + states('sensor.power_consumption_hb')|int +states('sensor.power_consumption_v')|int + states('sensor.power_consumption_s')|int }}"
@@ -112,17 +113,41 @@
         friendly_name: 'Power HB'
         icon_template: mdi:gauge
         #entity_id: sensor.time
-    
-      voltage:
-        value_template: "{{((states('sensor.ippon_hb_input_voltage')|float(220)+states('sensor.ippon_mb_input_voltage')|float(220)+states('sensor.cyber650_input_voltage')|float(220))/3)|round(1)}}"
-        unit_of_measurement: "V"
-        icon_template: mdi:gauge
-      
+
       total_current:
         icon_template: mdi:current-ac
         value_template: "{{ (((states('sensor.power_consumption')|float / states('sensor.voltage')|float)|float))|round(1) }}"
         unit_of_measurement: "A"
         friendly_name: "Total current"
+
+# New
+      power_meter_t1:
+        unit_of_measurement: kWh
+        icon_template: mdi:gauge
+        friendly_name: 'Power meter T1'
+        value_template: "{{(states('input_number.power_meter_t1')|float + states('sensor.energy_monthly_day')|float)|round(2) }}"
+
+      power_meter_t2:
+        unit_of_measurement: kWh
+        icon_template: mdi:gauge
+        friendly_name: 'Power meter T2'
+        value_template: "{{(states('input_number.power_meter_t2')|float + states('sensor.energy_monthly_night')|float)|round(2) }}"
+
+      power_meter_t1_prev:
+        unit_of_measurement: kWh
+        icon_template: mdi:gauge
+        friendly_name: 'Power meter T1 Prev'
+        value_template: "{{state_attr('sensor.energy_monthly_day','last_period')|float }}"
+
+      power_meter_t2_prev:
+        unit_of_measurement: kWh
+        icon_template: mdi:gauge
+        friendly_name: 'Power meter T2 Prev'
+        value_template: "{{state_attr('sensor.energy_monthly_night','last_period')|float }}"
+
+#
+
+
 
       power_t1:
         unit_of_measurement: kWh
@@ -216,40 +241,40 @@
           {{ (( (((states('input_number.cold_water_meter_month'))|float))) +
           (((states('input_number.hot_water_meter_month'))|float)) )|round(2) }}
       
-      water_change_1m:
-        value_template: "{{ states.sensor.total_water_1m.attributes.change }}"
-        friendly_name: "Water change 1m"
-      water_change_10m:
-        value_template: "{{ states.sensor.total_water_10m.attributes.change }}"
-        friendly_name: "Water change 10m"
-      water_change_30m:
-        value_template: "{{ states.sensor.total_water_30m.attributes.change }}"
-        friendly_name: "Water change 30m"
-      water_change_60m:
-        value_template: "{{ states.sensor.total_water_60m.attributes.change }}"
-        friendly_name: "Water change 60m"
+#       water_change_1m:
+#         value_template: "{{ states.sensor.total_water_1m.attributes.change }}"
+#         friendly_name: "Water change 1m"
+#       water_change_10m:
+#         value_template: "{{ states.sensor.total_water_10m.attributes.change }}"
+#         friendly_name: "Water change 10m"
+#       water_change_30m:
+#         value_template: "{{ states.sensor.total_water_30m.attributes.change }}"
+#         friendly_name: "Water change 30m"
+#       water_change_60m:
+#         value_template: "{{ states.sensor.total_water_60m.attributes.change }}"
+#         friendly_name: "Water change 60m"
   
 
-# ############################################################################
-# Water statistics sensors
-# ############################################################################
-  - platform: statistics
-    name: Total water 1m
-    entity_id: sensor.water
-    max_age:
-      minutes: 1
-  - platform: statistics
-    name: Total Water 10m
-    entity_id: sensor.water
-    max_age:
-      minutes: 10
-  - platform: statistics
-    name: Total Water 30m
-    entity_id: sensor.water
-    max_age:
-      minutes: 30
-  - platform: statistics
-    name: Total Water 60m
-    entity_id: sensor.water
-    max_age:
-      minutes: 60
+# # ############################################################################
+# # Water statistics sensors
+# # ############################################################################
+#   - platform: statistics
+#     name: Total water 1m
+#     entity_id: sensor.water
+#     max_age:
+#       minutes: 1
+#   - platform: statistics
+#     name: Total Water 10m
+#     entity_id: sensor.water
+#     max_age:
+#       minutes: 10
+#   - platform: statistics
+#     name: Total Water 30m
+#     entity_id: sensor.water
+#     max_age:
+#       minutes: 30
+#   - platform: statistics
+#     name: Total Water 60m
+#     entity_id: sensor.water
+#     max_age:
+#       minutes: 60
