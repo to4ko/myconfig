@@ -23,6 +23,7 @@
       data_template:
         entity_id: input_number.cold_water_meter_month
         value: "{{ (states('input_number.cold_water_meter_month')|float + 0.01 ) | round(2) }}"
+
     - service: mqtt.publish
       data_template:
         topic: "utility/main/cold_water_meter"
@@ -61,6 +62,7 @@
       data_template:
         entity_id: input_number.hot_water_meter_month
         value: "{{ (states('input_number.hot_water_meter_month')|float + 0.01 ) | round(2) }}"
+
     - service: mqtt.publish
       data_template:
         topic: "utility/main/hot_water_meter"
@@ -84,15 +86,83 @@
   initial_state: 'true'
   trigger:
     - platform: time
-      at: '00:00:03'
+      at: '00:00:02'
   condition:
     - condition: template
       value_template: "{{ strptime(states('sensor.date'), '%Y-%m-%d').day|int == 21 }}"
   action:
-    - service: script.turn_on
-      entity_id: script.system_water_new_month_action
-    - service: script.turn_on
-      entity_id: script.system_power_new_month_action
+
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_meter_t1
+        value: "{{ (states('sensor.power_meter_t1')) | float}}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.power_meter_t2
+        value: "{{ (states('sensor.power_meter_t2')) | float}}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.cold_water_meter
+        value: "{{ (states('sensor.cold_water_meter')) | float}}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.hot_water_meter
+        value: "{{ (states('sensor.hot_water_meter')) | float}}"
+    
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
+        payload: "{{states('sensor.hot_water_meter')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
+        payload: "{{states('sensor.cold_water_meter')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t1"
+        payload: "{{states('sensor.power_meter_t1')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t2"
+        payload: "{{states('sensor.power_meter_t2')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
+        payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S')}}"
+        retain: true    
+
+    - service: notify.telegram
+      data_template: 
+        message: >-
+            {{ "\U0001f4a6" }}
+            Холодная вода: {{ states('sensor.cold_water_meter')|float }}м3
+            Горячая вода: {{ states('sensor.hot_water_meter')|float }}м3
+            
+            
+            Расход за месяц:
+            Холодная вода: {{ states('sensor.cold_water_meter')|float }}м3
+            Горячая вода: {{ states('sensor.hot_water_meter')|float }}м3
+            Стоимость: {{ ((states('sensor.water_cost'))|float)}}руб.
+
+    - service: notify.telegram
+      data_template: 
+        message: >-
+            {{ "\U0001f50c" }}
+            Электричество (день) Т1: {{ ((states('sensor.power_t1'))|float)}} кВт*ч
+            Электричество (ночь) Т2: {{ ((states('sensor.power_t2'))|float)}} кВт*ч
+          
+            
+            Расход за месяц:
+            Электричество (день) Т1: {{ ((states('sensor.power_consumption_month_t1'))|float)}} кВт*ч
+            Электричество (ночь) Т2: {{ ((states('sensor.power_consumption_month_t2'))|float)}} кВт*ч
+            Стоимость: {{ ((states('sensor.power_consumption_month_cost'))|float) }} руб.
+
+    
+
 
 # #####################################################################################
 #
@@ -224,8 +294,7 @@
     - service: utility_meter.select_tariff
       data_template:
         entity_id:
-          - utility_meter.energy_daily
           - utility_meter.energy_monthly
-          - utility_meter.energy_xiaomi_daily
           - utility_meter.energy_xiaomi_monthly
         tariff: "{%- if is_state('binary_sensor.tariff_t1','on') -%}day{%- else -%}night{%- endif -%}"
+  

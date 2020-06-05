@@ -50,9 +50,31 @@
     - platform: state
       entity_id: switch.0x00158d0002476ed1_switch
   action:
-    - service: notify.telegram
+    - service: mqtt.publish
       data_template:
-        message: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 180 }}"
+        topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
+        payload: "{{states('sensor.hot_water_meter')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
+        payload: "{{states('sensor.cold_water_meter')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t1"
+        payload: "{{states('sensor.power_meter_t1')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t2"
+        payload: "{{states('sensor.power_meter_t2')|float}}"
+        retain: true
+    - service: mqtt.publish
+      data_template:
+        topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
+        payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S')}}"
+        retain: true
 
 
 # - alias: test_z2m_5

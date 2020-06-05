@@ -45,13 +45,36 @@
   condition:
     - condition: state
       entity_id: light.round_led_s
-      state: 'off'    
+      state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.round_led_s
       data_template:
         brightness_pct: 95
         kelvin: 5000
+        #brightness_pct: "{{states('sensor.circadian_values')|int}}"
+        #kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
+
+
+# ##################################
+# Sasha Main Lamp (Xiaomi Round LED) - Auto
+# ##################################
+- alias: sasha_main_lamp_set_brightness_auto
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: sensor.circadian_values
+  condition:
+    - condition: state
+      entity_id: light.round_led_s
+      state: 'on'
+  action:
+    - service: light.turn_on
+      entity_id: light.round_led_s
+      data_template:
+        brightness_pct: "{{states('sensor.circadian_values')|int}}"
+        kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
+
       
 # ##################################
 # Sasha Main Lamp (Xiaomi Round LED) - Off
