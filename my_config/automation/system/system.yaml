@@ -536,3 +536,35 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f4a5 Внимание! RPI сервер - перезагрузка выполнена!"
+        
+
+# ##################################
+# System - Rain sensor
+# ##################################
+- alias: system_rain_sensor
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d00035c6905_contact
+      from: 'on'
+      to: 'off'
+      for: '00:05:00'
+    - platform: state
+      entity_id: binary_sensor.0x00158d00035c6905_contact
+      from: 'off'
+      to: 'on'
+      for: '00:05:00'
+  condition:
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}  
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {% if is_state('binary_sensor.0x00158d00035c6905_contact','on') %} {{"\U0001f327"}} Кажется дождь собирается!
+          {% else %} {{"\U0001f324"}} Тучки уходят!
+          {% endif %}
