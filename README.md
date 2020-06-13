@@ -1,7 +1,7 @@
 # My Home Assistant configuration
 
 
-First of all - HUGE THANKS to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant) and [AlexKvazis](https://github.com/kvazis/homeassistant) for cool stuff borrowed from their configs. Special thanks to [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s](https://github.com/Spirituss), [@lapatoc](https://github.com/bastshoes) for help and support! 
+First of all - HUGE THANKS to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s](https://github.com/Spirituss), [@lapatoc](https://github.com/bastshoes) for help and support!
 
 And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [ESPHome Channel](https://t.me/esphome)
 
@@ -13,7 +13,6 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 512Gb ADATA 8200Pro Raid 1 as Root drive
   - 256Gb ADATA 8200Pro NVME for DB
   - 7ea WD RED 2Tb (NAS section) in HW Raid 6 via Adaptec 71605
-  - 2ea Samsung 840 Pro 256Gb in HW Raid 0 as temp drive via Adaptec 71605
   - 1Tb WD Purple for cameras
   - 3ea WD Green in HW Raid0 (Torrent heap) via Adaptec 71605
   - Corsair HX1200i
@@ -39,7 +38,6 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Switch 24
   - Switch 8-60W (3ea)
   - UAP-AC-AP-Lite (5ea)
-  - Tp-Link "dumb" switch (1ea)
   
 **Surveillance:** 
   - Ubiquiti Video (running as service)
@@ -71,7 +69,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Aqara Vibration Sensor (3ea)
   - Aqara\Xiaomi Motion Sensor (14ea)
   - Aqara\Xiaomi Wireless Button (14ea)
-  - Aqara\Xiaomi Temp\Himidity sensor (12ea)
+  - Aqara\Xiaomi Temp\Himidity sensor (13ea)
   - Xiaomi Plug (30ea)
   - Xiaomi Smoke Detector (1ea)
   - Xiaomi Natural Gas Detector (1ea)
@@ -81,10 +79,11 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 **ESPHome devices:**
   - Sonoff Basic (3ea)
   - Sonoff S26 Plugs (2(ea)
+  - Sonoff Pow R2
   - Sonoff L1
-  - Blitzwolf SHP2 (2ea) and SHP6 (2ea)
+  - Blitzwolf SHP2 (3ea) and SHP6 (2ea)
   - Blitzwolf LT11
-  - MH-Z19B CO2 sensors on Wemos D1 mini (3ea )
+  - MH-Z19B CO2 sensors on Wemos D1 mini (4ea )
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Kitchen Air valve, hood fan\light with IR controller
   - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
