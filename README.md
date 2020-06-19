@@ -127,7 +127,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
 
-#Zigbee Map
+# Zigbee Map
 ![Zigbee Map](https://i.ibb.co/5cSzMC0/Network-Map-DTsymbal.jpg)
 
 # Main page
