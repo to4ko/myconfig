@@ -8,27 +8,26 @@
 - alias: master_bedroom_table_lamp_toggle
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d00023d3116
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x00158d00023d3116_click
       to: 'single'
-    #- platform: event
-    #  event_type: xiaomi_aqara.movement
-    #  event_data:
-    #     entity_id: binary_sensor.vibration_158d0002a2412d
-    #     movement_type: vibrate 
-    #- platform: event
-    #  event_type: xiaomi_aqara.movement
-    #  event_data:
-    #     entity_id: binary_sensor.vibration_158d0002a2412d
-    #     movement_type: tilt
   action:
     - service: light.toggle
-      entity_id: light.philips_e27_mb
+      entity_id: light.0x00124b000aa3b061_light #light.philips_e27_mb
+      data_template:
+        transition: 1
+        brightness_pct: >
+          {%- if is_state('binary_sensor.tod_day','off') -%}
+          3
+          {%- else -%}
+          100
+          {% endif %}
+        kelvin: >
+          {%- if is_state('binary_sensor.tod_day','off') -%}
+          3000
+          {%- else -%}
+          5000
+          {% endif %}
 
 # ##################################
 # Master_bedroom Table Lamp (Philips E27) - Switch to Bright
@@ -36,19 +35,21 @@
 - alias: master_bedroom_table_lamp_bright
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d00023d3116
-    #     click_type: double
     - platform: state
       entity_id: sensor.0x00158d00023d3116_click
       to: 'double'
   action:
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.philips_e27_mb
-      data:
-        scene: 1
+    # - service: xiaomi_miio.light_set_scene
+    #   entity_id: light.philips_e27_mb
+    #   data:
+    #     scene: 1
+    - service: light.turn_on
+      entity_id: light.0x00124b000aa3b061_light
+      data_template:
+        transition: 1
+        brightness_pct: 100
+        kelvin: 5000
+
 
 # ##################################
 # Master_bedroom Table Lamp (Philips E27) - Switch to Mid-Night
@@ -56,19 +57,21 @@
 - alias: master_bedroom_table_lamp_night
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d00023d3116
-    #     click_type: long_click_press
     - platform: state
       entity_id: sensor.0x00158d00023d3116_click
       to: 'long'
   action:
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.philips_e27_mb
-      data:
-        scene: 4
+    # - service: xiaomi_miio.light_set_scene
+    #   entity_id: light.philips_e27_mb
+    #   data:
+    #     scene: 4
+    - service: light.turn_on
+      entity_id: light.0x00124b000aa3b061_light
+      data_template:
+        transition: 1
+        brightness_pct: 3
+        kelvin: 3000
+
 
 # ##################################        
 # Master Bedroom Main Lamp (Xiaomi Round LED) - On
@@ -76,11 +79,6 @@
 - alias: master_bedroom_main_lamp_on_if_lamp_off
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.wall_switch_right_158d00013e6aa5
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x00158d00013e6aa5_click
       to: 'right'
@@ -94,41 +92,14 @@
       data_template:
         brightness_pct: 95
         kelvin: 5000
-        #brightness_pct: "{{states('sensor.circadian_values')|int}}"
-        #kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
-
-# ##################################
-# Master Bedroom Main Lamp (Xiaomi Round LED) - Auto
-# ##################################
-- alias: master_bedroom_main_lamp_set_brightness_auto
-  initial_state: 'false'
-  trigger:
-    - platform: state
-      entity_id: sensor.circadian_values
-  condition:
-    - condition: state
-      entity_id: light.round_led_mb
-      state: 'on'
-  action:
-    - service: light.turn_on
-      entity_id: light.round_led_mb
-      data_template:
-        brightness_pct: "{{states('sensor.circadian_values')|int}}"
-        kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
 
 
-      
 # ##################################
 # Master Bedroom Main Lamp (Xiaomi Round LED) - Off
 # ##################################
 - alias: master_bedroom_main_lamp_off_if_lamp_on
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.wall_switch_right_158d00013e6aa5
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x00158d00013e6aa5_click
       to: 'right'
@@ -146,11 +117,6 @@
 - alias: master_bedroom_main_lamp_on_30_if_lamp_off
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.wall_switch_left_158d00013e6aa5
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x00158d00013e6aa5_click
       to: 'left'
@@ -171,11 +137,6 @@
 - alias: master_bedroom_main_lamp_off_if_lamp_on_with_left_button
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.wall_switch_left_158d00013e6aa5
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x00158d00013e6aa5_click
       to: 'left'
@@ -198,10 +159,6 @@
       to: 'unavailable'
       for:
         minutes: 5
-  # condition:
-  #   - condition: state
-  #     entity_id: binary_sensor.tod_day_long
-  #     state: 'on'
   action:
     - service: script.turn_on
       entity_id: script.round_led_mb_restart

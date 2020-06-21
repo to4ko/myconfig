@@ -51,7 +51,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Yeelight Pro 90W
   - Yeelight 480
   - Yeelight LED Strip
-  - Philips Xiaomi E27 Bulb (2ea)
+  - Philips Xiaomi E27 Bulb (2ea) - not in use
   - Yeelight E27 Color Led Bulb v2 (2ea)
   - Xiaomi Smart WiFi Power Strip (1ea)
   - Xiaomi Smartmi Humidifier 2
@@ -91,6 +91,8 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 **Other Devices:**
   - DIYRuZ_FreePad v1
+  - LifeControl E27 RGB Lamp (2ea)
+  - LifeControl Plug
   - Google Home Mini (5ea)
   
 **Software:**
