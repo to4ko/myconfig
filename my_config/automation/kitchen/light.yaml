@@ -321,43 +321,45 @@
       entity_id: switch.esp32_kitchen_light
 
 # ##################################
-# Kitchen - Round LED S Reset 
+# Kitchen - Round Led K restart
 # ##################################
-- alias: kitchen_round_led_reset
+- alias: kitchen_main_lamp_restart
   initial_state: 'true'
   trigger:
-    - platform: state
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: state
       entity_id: light.round_led_k
-      to: 'unavailable'
+      state: 'unavailable'
       for:
-        minutes: 5
-  # condition:
-  #   - condition: state
-  #     entity_id: binary_sensor.tod_day_long
-  #     state: 'on'
+        seconds: 120
   action:
     - service: script.turn_on
       entity_id: script.round_led_k_restart
 
 # ##################################
-# Kitchen - Round LED status check
+# Kitchen - Turn Lamp Switch On if Off
 # ##################################
-- alias: kitchen_round_led_status_check
+- alias: kitchen_main_lamp_switch_on_if_off
   initial_state: 'true'
   trigger:
-    - platform: time
-      at: '07:00:01'
+    - platform: state
+      entity_id: switch.0x00158d0002a36f7f_switch_right
+      to: 'on'
+      from: 'off'
+    - platform: state
+      entity_id: switch.0x00158d0002a36f7f_switch_right
+      to: 'off'
+      from: 'on'
   condition:
-    - condition: state
-      entity_id: light.round_led_k
-      state: 'unavailable'
+    condition: state
+    entity_id: switch.sonoff_basic_2_relay
+    state: 'off'
   action:
-    - service: script.turn_on
-      entity_id: script.round_led_k_restart
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f6a8 Round LED K restart done(morning)!"
-        
+    service: switch.turn_on
+    entity_id: switch.sonoff_basic_2_relay
+
 # ##################################
 # Kitchen Main Lamp (Xiaomi Round LED) - On
 # ##################################

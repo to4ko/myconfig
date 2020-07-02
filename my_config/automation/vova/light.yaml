@@ -153,102 +153,11 @@
       #kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
 
 # ##################################
-# Vova Main Lamp (Xiaomi Round LED) - Auto
-# ##################################
-- alias: vova_main_lamp_set_brightness_auto
-  initial_state: 'false'
-  trigger:
-    - platform: state
-      entity_id: sensor.circadian_values
-  condition:
-    - condition: state
-      entity_id: light.square_led_v
-      state: 'on'
-  action:
-    - service: light.turn_on
-      entity_id: light.square_led_v
-      data_template:
-        brightness_pct: "{{states('sensor.circadian_values')|int}}"
-        kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
-
-# ##################################
-# Vova Bedside Lamp  - Auto
-# ##################################
-- alias: vova_bedside_lamp_set_brightness_auto
-  initial_state: 'false'
-  trigger:
-    - platform: state
-      entity_id: sensor.circadian_values
-  condition:
-    - condition: state
-      entity_id: light.bedside_mb
-      state: 'on'
-  action:
-    - service: light.turn_on
-      entity_id: light.bedside_mb
-      data_template:
-        brightness_pct: "{{states('sensor.circadian_values')|int}}"
-        kelvin: "{{state_attr('sensor.circadian_values','colortemp')|int}}"
-
-# ##################################
-# Vova Main Lamp (Xiaomi Sqaure LED) - Turn Plug On if Off
-# ##################################
-- alias: vova_main_lamp_plug_on_if_off
-  initial_state: 'true'
-  trigger:
-    # platform: event
-    # event_type: xiaomi_aqara.click
-    # event_data:
-    #   entity_id: binary_sensor.wall_switch_left_158d0001712d55
-    #   click_type: single
-    - platform: state
-      entity_id: sensor.0x00158d0001712d55_click
-      to: 'left'
-  condition:
-    condition: state
-    entity_id: switch.plug_158d00020b4971
-    state: 'off'    
-  action:
-    service: switch.turn_on
-    entity_id: switch.plug_158d00020b4971
-
-# ##################################
-# Vova Main Lamp (Xiaomi Sqaure LED) - Turn Plug On if Off
-# ##################################
-- alias: vova_main_lamp_plug_on_if_off
-  initial_state: 'false'
-  trigger:
-    # platform: event
-    # event_type: xiaomi_aqara.click
-    # event_data:
-    #   entity_id: binary_sensor.wall_switch_both_158d0001712d55
-    #   click_type: both
-    - platform: state
-      entity_id: sensor.0x00158d0001712d55_click
-      to: 'both'
-  condition:
-    - condition: state
-      entity_id: light.square_led_v
-      state: 'unavailable'
-    - condition: state
-      entity_id: switch.plug_158d00020b4971
-      state: 'on'    
-  action:
-    service: switch.turn_off
-    entity_id: switch.plug_158d00020b4971
-
-
-# ##################################
 # Vova Main Lamp (Xiaomi Sqaure LED) - On 5%\3000k
 # ##################################
 - alias: vova_main_lamp_on_5_if_lamp_off
   initial_state: 'true'
   trigger:
-    # platform: event
-    # event_type: xiaomi_aqara.click
-    # event_data:
-    #   entity_id: binary_sensor.wall_switch_right_158d0001712d55
-    #   click_type: single
     - platform: state
       entity_id: sensor.0x00158d0001712d55_click
       to: 'right'
@@ -269,22 +178,12 @@
 - alias: vova_main_lamp_off_if_lamp_on
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.wall_switch_right_158d0001712d55
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x00158d0001712d55_click
       to: 'left'
     - platform: state
       entity_id: sensor.0x00158d0001712d55_click
       to: 'right'
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.wall_switch_left_158d0001712d55
-    #     click_type: single
   condition:
     condition: state
     entity_id: light.square_led_v
@@ -299,11 +198,6 @@
 - alias: vova_main_lamp_with_bed_switch
   initial_state: 'true'
   trigger:
-    # platform: event
-    # event_type: xiaomi_aqara.click
-    # event_data:
-    #   entity_id: binary_sensor.wall_switch_right_158d00026eb820
-    #   click_type: single
     - platform: state
       entity_id: sensor.0x00158d00026eb820_click
       to: 'right'
@@ -323,37 +217,17 @@
 - alias: vova_square_led_reset
   initial_state: 'true'
   trigger:
-    platform: state
-    entity_id: light.square_led_v
-    to: 'unavailable'
-    for:
-      minutes: 5
-  # condition:
-  #   - condition: state
-  #     entity_id: binary_sensor.tod_day_long
-  #     state: 'on'
-  action:
-    - service: script.turn_on
-      entity_id: script.square_led_restart
-
-# ##################################
-# Vova - Square LED status check
-# ##################################
-- alias: vova_square_led_status_check
-  initial_state: 'true'
-  trigger:
-    platform: time
-    at: '07:00:01'
+    - platform: time_pattern
+      minutes: "/1"
   condition:
-    condition: state
-    entity_id: light.square_led_v
-    state: 'unavailable'
+    - condition: state
+      entity_id: light.square_led_v
+      state: 'unavailable'
+      for:
+        seconds: 120
   action:
     - service: script.turn_on
-      entity_id: script.square_led_restart
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f6a8 Square LED V restart done (morning)!"
+      entity_id: script.square_led_v_restart
 
 # ##################################
 # Vova - Square LED Power Switch Turn On
@@ -362,29 +236,13 @@
   initial_state: 'false'
   trigger:
     platform: state
-    entity_id: switch.plug_158d00020b4971
+    entity_id: switch.sonoff_basic_4_relay #switch.plug_158d00020b4971
     to: 'off'
     for:
       seconds: 3
   action:
     - service: switch.turn_on
-      entity_id: switch.plug_158d00020b4971
-
-# ##################################
-# Vova - Bedside Lamp status check
-# ##################################
-- alias: vova_bedside_lamp_status_check
-  initial_state: 'false'
-  trigger:
-    platform: time
-    at: '08:00:00'
-  condition:
-    condition: state
-    entity_id: light.bedside_mb
-    state: 'unavailable'
-  action:
-    - service: script.turn_on
-      entity_id: script.bedside_lamp_restart
+      entity_id: switch.sonoff_basic_4_relay #switch.plug_158d00020b4971
 
 # ##################################
 # Vova - Bedside Lamp Reset 
@@ -397,10 +255,6 @@
     to: 'unavailable'
     for:
       minutes: 5
-  # condition:
-  #   - condition: time
-  #     after: '07:00:00'
-  #     before: '23:00:00'
   action:
     - service: script.turn_on
-      entity_id: script.bedside_lamp_restart
+      entity_id: script.bedside_mb_restart
