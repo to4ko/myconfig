@@ -24,10 +24,26 @@
   trigger:
     - platform: state
       entity_id: switch.zigbee2mqtt_main_join
-      to: "on"
+      from: 'off'
+      to: 'on'
   action:
     - service: timer.start
       entity_id: timer.zigbee_permit_join
+
+# ##################################
+# Z2M - Automation to start timer when enable join is turned on
+# ##################################
+- alias: zigbee2mqtt_join_disable
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: switch.zigbee2mqtt_main_join
+      from: 'on'
+      to: 'off'
+  action:
+    - service: timer.cancel
+      entity_id: timer.zigbee_permit_join
+
 
 # ##################################
 # Z2M - Automation to stop timer when switch turned off and turn off switch when timer finished
@@ -39,13 +55,17 @@
       event_type: timer.finished
       event_data:
         entity_id: timer.zigbee_permit_join
-    - platform: state
+    # - platform: state
+    #   entity_id: switch.zigbee2mqtt_main_join
+    #   to: "off"
+  condition:
+    - condition: state
       entity_id: switch.zigbee2mqtt_main_join
-      to: "off"
+      state: 'on'
   action:
-    - service: timer.cancel
-      data:
-        entity_id: timer.zigbee_permit_join
+    # - service: timer.cancel
+    #   data:
+    #     entity_id: timer.zigbee_permit_join
     - service: switch.turn_off
       entity_id: switch.zigbee2mqtt_main_join
 
@@ -247,6 +267,22 @@
         entity_id: input_text.zigbee2mqtt_map_rebuild
         value: "{{now().strftime('%d.%m.%Y %H:%M:%S')}}"
 
+# ##################################
+# Z2M - Permit Join
+# ##################################
+- alias: zigbee2mqtt_permit_join
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.zigbee2mqtt_permit_join
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {%if is_state('sensor.zigbee2mqtt_permit_join','true')%}{{"\U00002705"}} Z2M - сопряжение включено!
+          {%elif is_state('sensor.zigbee2mqtt_permit_join','false')%}{{"\U0000274c"}} Z2M - сопряжение выключено!
+          {%else%}{{"\U00002049"}} Z2M - сопряжение - неизвестно!
+          {%endif%}
 
 # ##################################
 # Z2M - Log update

@@ -52,6 +52,8 @@
     - service: notify.telegram
       data_template:
         message: "\U0001F467 Саша дома!"
+    - service: fan.turn_on
+      entity_id: fan.purifier2s
 
 # ##################################
 # System - Sasha At home
@@ -145,5 +147,22 @@
         data:
           photo:
             #- file: /config/www/cam_captures/entrance-sasha.jpg
-            - url: http://192.168.1.14:8123{{state_attr('camera.uvc_g3_flex_entrance','entity_picture')}}
+            - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_entrance','entity_picture')}}
               caption: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+              
+# ##################################
+# System - Sandra left home
+# ##################################
+- alias: system_presence_sandra_left_home
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      #entity_id: device_tracker.life360_sandra_tsymbal
+      entity_id: person.sandra
+      from: 'home'
+      to: 'away'
+      for:
+        minutes: 3
+  action: 
+    - service: fan.turn_off
+      entity_id: fan.purifier2s

@@ -19,9 +19,17 @@
         - fan.humidifier2
         - switch.sonoff_basic_1_relay
         - switch.sonoff_basic_2_relay
+        - switch.sonoff_basic_3_relay
+        - switch.sonoff_basic_4_relay
+        - light.led_color_v
+        - light.led_color_k
+        #- light.philips_e27_s
+        #- light.philips_e27_v
+        - fan.purifier2s
+        - switch.shp2_socket_server_relay
       to: 'unavailable'
-      for: 
-        seconds: 30
+      for:
+        minutes: 2
     - platform: state
       entity_id: 
         - light.square_led_v
@@ -33,10 +41,18 @@
         - fan.humidifier2
         - switch.sonoff_basic_1_relay
         - switch.sonoff_basic_2_relay
+        - switch.sonoff_basic_3_relay
+        - switch.sonoff_basic_4_relay
+        - light.led_color_v
+        - light.led_color_k
+        #- light.philips_e27_s
+        #- light.philips_e27_v
+        - fan.purifier2s
+        - switch.shp2_socket_server_relay
       from: 'unavailable'
   condition:
     - condition: template
-      value_template: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 30 }}"
+      value_template: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 60 }}"
   action:
     - service: notify.telegram
       data_template:
@@ -46,7 +62,7 @@
 # System - Non-Critical WiFi Devices state
 # ##################################
 - alias: system_noncritical_wifi_devices_state
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: 
@@ -56,16 +72,6 @@
         - light.philips_e27_v
         - fan.purifier2s
       to: 'unavailable'
-      for:
-        minutes: 05
-#    - platform: state
-#      entity_id: 
-#        - light.led_color_v
-#        - light.led_color_k
-#        - light.philips_e27_s
-#        - light.philips_e27_v
-#        - fan.purifier2s
-#      from: 'unavailable'
   action:
     - service: notify.telegram
       data_template:
@@ -87,6 +93,23 @@
     - service: notify.telegram
       data_template:
         message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-        
-        
-        
+
+
+# ##################################
+# System - BLE Devices tracker restart
+# ##################################
+- alias: system_ble_device_tracker_restart
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.esp32_ble_tracker_status
+      to: 'off'
+      for:
+        minutes: 3
+  action:
+    - service: switch.turn_off
+      entity_id: switch.gateway_plug_entrance_hb_usb
+    - delay: "00:00:15"
+    - service: switch.turn_on
+      entity_id: switch.gateway_plug_entrance_hb_usb
+    

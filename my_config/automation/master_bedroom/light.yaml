@@ -154,49 +154,38 @@
 - alias: master_bedroom_round_led_reset
   initial_state: 'true'
   trigger:
-    - platform: state
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: state
       entity_id: light.round_led_mb
-      to: 'unavailable'
+      state: 'unavailable'
       for:
-        minutes: 5
+        seconds: 120
   action:
     - service: script.turn_on
       entity_id: script.round_led_mb_restart
 
 # ##################################
-# Master Bedroom - Round LED status check
+# Master Bedroom - Turn Lamp Switch On if Off
 # ##################################
-- alias: master_bedroom_round_led_status_check
+- alias: master_bedroom_main_lamp_switch_on_if_off
   initial_state: 'true'
   trigger:
-    - platform: time
-      at: '07:00:01'
-  condition:
-    - condition: state
-      entity_id: light.round_led_mb
-      state: 'unavailable'
-  action:
-    - service: script.turn_on
-      entity_id: script.round_led_mb_restart
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f6a8 Round LED MB restart done(morning)!"
-      
-# ##################################
-# Master Bedroom - Round LED Power Switch Turn On
-# ##################################
-- alias: master_bedroom_round_led_switch_on
-  initial_state: 'false'
-  trigger:
     - platform: state
-      entity_id: switch.sonoff_basic_3_relay
-      to: 'off'
-      for:
-        seconds: 3
+      entity_id: sensor.0x00158d00013e6aa5_click
+      to: 'left'
+    - platform: state
+      entity_id: sensor.0x00158d00013e6aa5_click
+      to: 'right'
+  condition:
+    condition: state
+    entity_id: switch.sonoff_basic_3_relay
+    state: 'off'
   action:
-    - service: switch.turn_on
-      entity_id: switch.sonoff_basic_3_relay
-      
+    service: switch.turn_on
+    entity_id: switch.sonoff_basic_3_relay
+
 # # ##################################
 # # Master Bedroom - Timer restart with movement
 # # ################################## 

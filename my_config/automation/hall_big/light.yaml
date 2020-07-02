@@ -13,7 +13,7 @@
     #   event_data:
     #     entity_id: binary_sensor.motion_sensor_158d0001e05856
     - platform: state
-      entity_id: binary_sensor.0x00158d0001e05856_occupancy, binary_sensor.unifi_motion_entrance, binary_sensor.0x00158d0002b43ad4_occupancy
+      entity_id: binary_sensor.0x00158d0001e05856_occupancy, binary_sensor.0x00158d0002b43ad4_occupancy, binary_sensor.motion_g3_flex_entrance
       from: 'off'
       to: 'on'
   condition:
@@ -418,15 +418,18 @@
 - alias: hall_big_led_strip_reset
   initial_state: 'true'
   trigger:
-    - platform: state
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: state
       entity_id: light.led_strip_hb
-      to: 'unavailable'
+      state: 'unavailable'
       for:
-        minutes: 5
+        seconds: 120
   action:
     - service: script.turn_on
-      entity_id: script.led_strip_restart
-
+      entity_id: script.led_strip_hb_restart
+      
 # ##################################
 # Hall Big - LED Strip Power Switch Turn On
 # ##################################
@@ -484,7 +487,7 @@
   initial_state: 'false'
   trigger:
     - platform: state
-      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy, binary_sensor.unifi_motion_entrance
+      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy, binary_sensor.motion_g3_flex_entrance #binary_sensor.unifi_motion_entrance
       from: 'off'
       to: 'on'
   condition:

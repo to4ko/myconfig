@@ -225,46 +225,44 @@
       data_template:
         transition: 1
 
-
 # ##################################
 # Sasha - Round LED Reset 
 # ##################################
 - alias: sasha_round_led_reset
   initial_state: 'true'
   trigger:
-    - platform: state
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: state
       entity_id: light.round_led_s
-      to: 'unavailable'
+      state: 'unavailable'
       for:
-        minutes: 5
-  # condition:
-  #   - condition: state
-  #     entity_id: binary_sensor.tod_day_long
-  #     state: 'on'
+        seconds: 120
   action:
     - service: script.turn_on
       entity_id: script.round_led_s_restart
 
 # ##################################
-# Sasha - Round LED status check
+# Sasha - Turn Lamp Switch On if Off
 # ##################################
-- alias: sasha_round_led_status_check
+- alias: sasha_main_lamp_switch_on_if_off
   initial_state: 'true'
   trigger:
-    - platform: time
-      at: '07:00:01'
+    - platform: state
+      entity_id: sensor.0x00158d0003fa6077_click
+      to: 'left'
+    - platform: state
+      entity_id: sensor.0x00158d0003fa6077_click
+      to: 'right'
   condition:
-    - condition: state
-      entity_id: light.round_led_s
-      state: 'unavailable'
+    condition: state
+    entity_id: switch.sonoff_basic_1_relay
+    state: 'off'
   action:
-    - service: script.turn_on
-      entity_id: script.round_led_s_restart
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f6a8 Round LED S restart done(morning)!"
-        
-        
+    service: switch.turn_on
+    entity_id: switch.sonoff_basic_1_relay
+
 # ##################################
 # Sasha - Timer restart with movement
 # ################################## 

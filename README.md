@@ -34,14 +34,14 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 120Gb SSD Crucial BX500
 
 **Network(WAN 500mb\s):**
-  - Ubiquiti USG 3
-  - Switch 24
-  - Switch 8-60W (3ea)
-  - UAP-AC-AP-Lite (5ea)
+  - Unifi Dream Machine Pro
+  - Unifi Switch 16-50W
+  - Unifi Switch 8-60W (3ea)
+  - Unifi AC-AP-Lite (5ea)
   
 **Surveillance:** 
-  - Ubiquiti Video (running as service)
-  - Ubiquiti G3 Flex Cameras (4ea)
+  - Unifi Protect running on UDM pro
+  - Ubiquiti G3 Flex Cameras (5ea)
   - Digma 100
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
@@ -77,8 +77,8 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Aqara Opple Wireless Switch (3ea)
 
 **ESPHome devices:**
-  - Sonoff Basic (3ea)
-  - Sonoff S26 Plugs (2(ea)
+  - Sonoff Basic (4ea)
+  - Sonoff S26 Plugs (2ea)
   - Sonoff Pow R2
   - Sonoff L1
   - Blitzwolf SHP2 (3ea) and SHP6 (2ea)
@@ -98,7 +98,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 **Software:**
   - Ubuntu Server 20.04 LTS
   - Home Assistant Core Supervised
-  - MotionEye (Pibhole camera motion detection)
+  - MotionEye (Pinhole camera motion detection)
   - Mosquitto
 
 **DB used:**
