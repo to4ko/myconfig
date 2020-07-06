@@ -12,6 +12,10 @@
       entity_id: switch.0x00158d000230fc52_switch #switch.wall_plug_158d000230fc52
       to: 'off'
       from: 'on'
+  condition:
+    - condition: state
+      entity_id: sensor.zigbee2mqtt_bridge_state
+      state: 'online'
   action:
     - service: notify.telegram
       data_template:
@@ -91,6 +95,9 @@
     - platform: state
       entity_id: sensor.ippon_hb_status_data
       to: 'OL'
+  condition:
+    - condition: template
+      value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
   action:
     - service: notify.telegram
       data_template:
@@ -104,7 +111,9 @@
   trigger:
     - platform: state
       entity_id: sensor.ippon_hb_status_data
-      to: "unknown"
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state in ['unknown','unavailable','none'] }}"
   action:
     - service: notify.telegram
       data_template:
@@ -122,8 +131,9 @@
   trigger:
     - platform: state
       entity_id: sensor.ippon_hb_status_data
-      from: "unknown"
-      to: "OL"
+  condition:
+    - condition: template
+      value_template: "{{ trigger.from_state.state in ['unknown','unavailable','none'] }}"
   action:
     - service: notify.telegram
       data_template:
@@ -138,6 +148,10 @@
     - platform: state
       entity_id: switch.0x00158d000230fc52_switch #switch.wall_plug_158d000230fc52
       to: 'on'
+  condition:
+    - condition: state
+      entity_id: sensor.zigbee2mqtt_bridge_state
+      state: 'online'
   action:
     - service: notify.telegram
       data_template:

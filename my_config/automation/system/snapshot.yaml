@@ -49,3 +49,28 @@
           photo:
           - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_dixy','entity_picture')}}
             caption: "Dixy {{states('sensor.time')}} {{states('sensor.date')}}"
+
+
+# ##################################
+# System - Street Cam Snapshot on Motion
+# ##################################
+- alias: system_street_snapshot
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.motion_g3_flex_street #binary_sensor.unifi_motion_dixy
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{as_timestamp(now())-as_timestamp(states.automation.system_street_snapshot.attributes.last_triggered) > 10}}"
+  action:
+    - delay: '00:00:01'
+    - service: notify.telegram_cam
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        data:
+          photo:
+          - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_street','entity_picture')}}
+            caption: "Street {{states('sensor.time')}} {{states('sensor.date')}}"

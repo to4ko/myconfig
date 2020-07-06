@@ -3,9 +3,9 @@
 # SYSTEM - WiFi Devices
 #
 # #####################################################################################
-# System - Critical WiFi Devices state
+# System - Critical WiFi Devices state - Unavailable
 # ##################################
-- alias: system_critical_wifi_devices_state
+- alias: system_critical_wifi_devices_unavailable
   initial_state: 'true'
   trigger:
     - platform: state
@@ -30,6 +30,17 @@
       to: 'unavailable'
       for:
         minutes: 2
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - Critical WiFi Devices state - available
+# ##################################
+- alias: system_critical_wifi_devices_available
+  initial_state: 'true'
+  trigger:
     - platform: state
       entity_id: 
         - light.square_led_v
