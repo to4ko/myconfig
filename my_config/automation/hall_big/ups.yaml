@@ -19,7 +19,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS (1050)"
+        message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS (1200)"
 
 # ##################################
 # Hall Big - Main plug pulled out
@@ -56,16 +56,16 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_hb_status_data
+      entity_id: sensor.ippon_1200_status_data
       to: 'OB'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Внимание! Запущен UPS (1050)!"
+        message: "\U0001f50b Внимание! Запущен UPS (1200)!"
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         title: "Внимание!"
-        message: "Запущен UPS (1050)"
+        message: "Запущен UPS (1200)"
 
 # ##################################
 # Hall Big - UPS - LB
@@ -74,12 +74,12 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_hb_status_data
+      entity_id: sensor.ippon_1200_status_data
       to: 'LB'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Внимание! Заряд батареи (1050) критический! Завершение работы!"
+        message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы!"
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         title: "Внимание!"
@@ -93,7 +93,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_hb_status_data
+      entity_id: sensor.ippon_1200_status_data
       to: 'OL'
   condition:
     - condition: template
@@ -101,7 +101,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1050)!"
+        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1200)!"
 
 # ##################################
 # Hall Big - UPS - Unknown
@@ -110,14 +110,20 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_hb_status_data
+      entity_id: sensor.ippon_1200_status_data
+      to: 'unknown'
+      for:
+        minutes: 5
   condition:
     - condition: template
-      value_template: "{{ trigger.to_state.state in ['unknown','unavailable','none'] }}"
+      value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Внимание! Связь с UPS(1050) потеряна!"
+        message: "\U0001f6a8 Внимание! Связь с UPS(1200) потеряна!"
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.ippon_1200_announce
     #- service: notify.mobile_app_iphone_8_dtsymbal
     #  data:
     #    title: "Внимание!"
@@ -127,17 +133,25 @@
 # Hall Big - UPS - Unknown to OL
 # ##################################
 - alias: hall_big_ups_unknown_to_ol
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_hb_status_data
+      entity_id: sensor.ippon_1200_status_data
+      to: 'OL'
   condition:
     - condition: template
       value_template: "{{ trigger.from_state.state in ['unknown','unavailable','none'] }}"
+    - condition: state
+      entity_id: input_boolean.ippon_1200_announce
+      state: 'on'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Связь с UPS(1050) восстановлена!"
+        message: "\U0001f50b Связь с UPS(1200) восстановлена!"
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.ippon_1200_announce
+
 
 # ##################################
 # Hall Big - Main power turned on
@@ -155,4 +169,4 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1050)!"
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1200)!"
