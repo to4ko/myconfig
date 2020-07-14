@@ -19,7 +19,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50c Внимание! Вторая розетка отключена! Запущен UPS (650)"
+        message: "\U0001f50c Внимание! Вторая розетка отключена! Запущен UPS (1050)"
 
 # ##################################
 # Master Bedroom - Main plug pulled out
@@ -56,16 +56,16 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_mb_status_data
+      entity_id: sensor.ippon_1050_status_data
       to: 'OB'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Внимание! Запущен UPS (650)!"
+        message: "\U0001f50b Внимание! Запущен UPS (1050)!"
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         title: "Внимание!"
-        message: "Запущен UPS (650)"
+        message: "Запущен UPS (1050)"
 
 # ##################################
 # Master Bedroom- UPS - LB
@@ -74,12 +74,12 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_mb_status_data
+      entity_id: sensor.ippon_1050_status_data
       to: 'LB'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Внимание! Заряд батареи (650) критический! Завершение работы j3455!"
+        message: "\U0001f6a8 Внимание! Заряд батареи (1050) критический! Завершение работы j3455!"
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         title: "Внимание!"
@@ -92,7 +92,7 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_mb_status_data
+      entity_id: sensor.ippon_1050_status_data
       to: 'OL'
   condition:
     - condition: template
@@ -100,7 +100,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи(650)!"
+        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи(1050)!"
 
 # ##################################
 # Master Bedroom- UPS - Unknown
@@ -109,31 +109,44 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_mb_status_data
+      entity_id: sensor.ippon_1050_status_data
+      to: 'unknown'
+      for:
+        minutes: 5
   condition:
     - condition: template
-      value_template: "{{ trigger.to_state.state in ['unknown','unavailable','none'] }}"
+      value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6a8 Внимание! Связь с UPS(650) потеряна!"
+        message: "\U0001f6a8 Внимание! Связь с UPS(1050) потеряна!"
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.ippon_1050_announce
 
 # ##################################
 # Master Bedroom- UPS - Unknown to OL
 # ##################################
 - alias: master_bedroom_ups_unknown_to_ol
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
-      entity_id: sensor.ippon_mb_status_data
+      entity_id: sensor.ippon_1050_status_data
       to: "OL"
   condition:
     - condition: template
       value_template: "{{ trigger.from_state.state in ['unknown','unavailable','none'] }}"
+    - condition: state
+      entity_id: input_boolean.ippon_1050_announce
+      state: 'on'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50b Связь с UPS(650) восстановлена!"
+        message: "\U0001f50b Связь с UPS(1050) восстановлена!"
+    - service: input_boolean.turn_off
+      data:
+        entity_id: input_boolean.ippon_1050_announce
+
 
 # ##################################
 # Master Bedroom- Main power turned on
@@ -151,4 +164,4 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(650)!"
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS (1050)!"
