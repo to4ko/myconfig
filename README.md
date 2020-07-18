@@ -46,7 +46,6 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway (7ea) used as alarm devices (audio\visual)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
   - Yeelight 480
@@ -92,7 +91,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 **Other Devices:**
   - DIYRuZ_FreePad v1
   - LifeControl E27 RGB Lamp (2ea)
-  - LifeControl Plug
+  - LifeControl Plug (2ea)
   - Google Home Mini (5ea)
   
 **Software:**
