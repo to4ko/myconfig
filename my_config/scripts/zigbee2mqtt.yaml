@@ -64,7 +64,9 @@
             {% set missing = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | join(', ') %}
             {% set missing_count = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | count %}
             
-            {% if missing_count >0 %}{{"\U0001f4f6"}} 4 часа нет ответа от: {{ missing }}{%else%}{{"\U00002705"}}Все устройства доступны!{%endif%}
+            {% if missing_count >0 and states('sensor.mqtt_uptime')|float > 4 %}{{"\U0001f4f6"}} 4 часа (аптайм больше 4) нет ответа от: {{ missing }}
+            {% elif missing_count >0 and states('sensor.mqtt_uptime')|float < 4 %}{{"\U0001f4f6"}} 4 часа (аптайм меньше 4) нет ответа от: {{ missing }}
+            {%else%}{{"\U00002705"}}Все устройства доступны!{%endif%}
             
   zigbee2mqtt_linkuality_check:
     alias: zigbee2mqtt Linkquality Check
