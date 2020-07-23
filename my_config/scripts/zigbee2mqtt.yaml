@@ -61,12 +61,15 @@
         data_template:
           message: >
             {% set time_limit = as_timestamp(now())-4*60*60 %}
-            {% set missing = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | join(', ') %}
-            {% set missing_count = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='name') | list | count %}
-            
-            {% if missing_count >0 and states('sensor.mqtt_uptime')|float > 4 %}{{"\U0001f4f6"}} 4 часа (аптайм больше 4) нет ответа от: {{ missing }}
-            {% elif missing_count >0 and states('sensor.mqtt_uptime')|float < 4 %}{{"\U0001f4f6"}} 4 часа (аптайм меньше 4) нет ответа от: {{ missing }}
+            {% set missing = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='attributes.device.friendlyName') | unique | list  | join(', ') %}
+            {% set missing_count = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='attributes.device.friendlyName') | unique | list | count %}
+            {% set z2m_uptime = ((states('sensor.zigbee2mqtt_bridge_uptime')|int) / 3600)|round(1) %}
+
+            {% if missing_count >0 %}{{"\U0001f4f6"}} 4 часа (аптайм z2m: {{z2m_uptime}}ч) нет ответа от: {{ missing }}
             {%else%}{{"\U00002705"}}Все устройства доступны!{%endif%}
+
+# {{states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| map(attribute='attributes.linkquality') | list | join(', ') }}
+
             
   zigbee2mqtt_linkuality_check:
     alias: zigbee2mqtt Linkquality Check
@@ -74,7 +77,7 @@
       - service: script.turn_on
         data_template:
           entity_id: >
-            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 3 ) | map(attribute='name') | list | count %}
+            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 5 )| map(attribute='attributes.device.friendlyName') | unique | list | count %}
             
             {% if num_low_link >0 %}
               script.zigbee2mqtt_link_level_low
@@ -88,9 +91,9 @@
       - service: notify.telegram
         data_template:
           message: >
-            {% set low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 3 ) | map(attribute='name') | list | join(', ') %}
-            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 3 ) | map(attribute='name') | list | count %}
-              
+            {% set low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 5 ) | map(attribute='attributes.device.friendlyName') | unique | list | join(', ') %}
+            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 5 )| map(attribute='attributes.device.friendlyName') | unique | list | count %}
+                          
             {{"\U0001f6a8"}} Низкий сигнал ({{ num_low_link }}шт): {%if num_low_link>0%}{{low_link}}{%endif%}
 
   zigbee2mqtt_link_level_ok:

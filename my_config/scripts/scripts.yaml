@@ -101,3 +101,16 @@
           - switch.circadian_lighting_s
           - switch.circadian_lighting_v
           - switch.circadian_lighting_mb
+
+  unknown_state:
+    alias: Unknown State
+    sequence:
+      - service: notify.telegram
+        data_template:
+          message: >
+            {% set unk_list = states | selectattr ('state', 'in', ['unknown','unavailable']) | map(attribute='entity_id') | list | join(', ') %}
+            {% set unk_count = states | selectattr ('state', 'in', ['unknown','unavailable']) | list | length  %}
+            
+            {% if unk_count >0 %}{{"\U0001f4f6"}} Не определено {{unk_count}}сущностей: {{unk_list}}
+            {%else%}{{"\U00002705"}}Все сущности определены!{%endif%}
+        

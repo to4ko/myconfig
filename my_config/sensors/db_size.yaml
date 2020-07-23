@@ -19,7 +19,7 @@
       query: "SELECT (pg_database_size('hass')/1024/1024) as db_size;"
       column: "db_size"
       unit_of_measurement: Mb
-    scan_interval: 30
+    scan_interval: 60
 
   # - platform: sql
   #   db_url: !secret mariadb_url
@@ -39,21 +39,40 @@
     queries:
       - name: InfluxDB Size
         unit_of_measurement: MB
-        value_template: '{{ (value | float / 1024 /1024) | round(1) }}'
-        group_function: sum
+        value_template: '{{ (value | float / 1024 /1024) | round(0) }}'
+        group_function: mean
         measurement: '"monitor"."shard"'
         database: _internal
-        where: 'time > now() - 10s'
-        field: diskBytes
-        
-      # - name: InfluxDB Size
-      #   unit_of_measurement: MB
-      #   value_template: '{{ (value | float / 1024 /1024) | round(0) }}'
-      #   group_function: mean
-      #   measurement: '"monitor"."shard"'
-      #   database: _internal
-      #   where: 'time > now() - 1m AND "database"=''hass'''
-      #   field: diskBytes 
+        where: 'time > now() - 1m AND "database"=''hass'''
+        field: diskBytes 
+
+  - platform: mqtt
+    name: InfluxDB Hass size
+    state_topic: "ubuntu/db_stats/influxdb_hass_size"
+    value_template: '{{ ( value | float / 1024) |round(0) }}'
+    unit_of_measurement: 'Mb'
+    expire_after: 150
+    icon: mdi:database
+    force_update: true
+
+  - platform: mqtt
+    name: InfluxDB total Size
+    state_topic: "ubuntu/db_stats/influxdb_size"
+    value_template: '{{ ( value | float / 1024 ) |round(0) }}'
+    unit_of_measurement: 'Mb'
+    expire_after: 150
+    icon: mdi:database
+    force_update: true
+
+  - platform: mqtt
+    name: PostgreSQL total Size
+    state_topic: "ubuntu/db_stats/postgre_size"
+    value_template: '{{ ( value | float / 1024 ) |round(0) }}'
+    unit_of_measurement: 'Mb'
+    expire_after: 150
+    icon: mdi:database
+    force_update: true
+    
 
 # ############################################################################
 # DB size sensors - Speed
