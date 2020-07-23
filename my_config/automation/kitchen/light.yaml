@@ -96,23 +96,18 @@
 # ################################## 
 - alias: kitchen_timer_restart
   initial_state: 'true'
+  mode: single
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.motion
-    #   event_data:
-    #     entity_id: binary_sensor.motion_sensor_158d0002b4729d
     - platform: state
       entity_id: binary_sensor.0x00158d0002b4729d_occupancy, binary_sensor.0x00158d0002b48381_occupancy
       from: 'off'
       to: 'on'
-    # - platform: event
-    #   event_type: xiaomi_aqara.motion
-    #   event_data:
-    #     entity_id: binary_sensor.motion_sensor_158d0002b48381
   condition:
     - condition: state
       entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
       state: 'on'
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_timer_restart','last_triggered'))|int) > 15 }}"
   action:
     - service: timer.cancel
       entity_id: timer.main_light_k
@@ -158,8 +153,8 @@
       entity_id: timer.main_light_k
     - service: timer.start
       entity_id: timer.main_light_k
-    - service: switch.turn_off
-      entity_id: switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+    - service: light.turn_off #switch.turn_off
+      entity_id: light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
     - service: automation.turn_off
       entity_id: automation.kitchen_auto_night_light
         
@@ -239,7 +234,7 @@
     condition: and
     conditions:
       - condition: state
-        entity_id: switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+        entity_id: light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
         state: 'off'
       - condition: state
         entity_id: binary_sensor.tod_day
@@ -257,11 +252,11 @@
         entity_id: switch.esp32_kitchen_light
         state: 'off'
   action:
-    - service: switch.turn_on
-      entity_id: switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+    - service: light.turn_on #switch.turn_on
+      entity_id: light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
     - delay: '00:00:30'
-    - service: switch.turn_off
-      entity_id: switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+    - service: light.turn_off #switch.turn_off
+      entity_id: light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
     - service: automation.turn_off
       entity_id: automation.kitchen_auto_night_light
       

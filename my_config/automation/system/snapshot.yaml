@@ -5,7 +5,7 @@
 # #####################################################################################
 # System - Window Cam Snapshot on Motion
 # ##################################
-- alias: system_window_snapshot
+- alias: system_snapshot_window
   initial_state: 'true'
   trigger:
     - platform: state
@@ -14,7 +14,7 @@
       to: 'on'
   condition:
     - condition: template
-      value_template: "{{as_timestamp(now())-as_timestamp(states.automation.system_window_snapshot.attributes.last_triggered) > 10}}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_window','last_triggered'))|int) > 5 }}"
   action:
     - delay: '00:00:01'
     - service: notify.telegram_cam
@@ -29,7 +29,7 @@
 # ##################################
 # System - Dixy Cam Snapshot on Motion
 # ##################################
-- alias: system_dixy_snapshot
+- alias: system_snapshot_dixy
   initial_state: 'true'
   trigger:
     - platform: state
@@ -38,7 +38,7 @@
       to: 'on'
   condition:
     - condition: template
-      value_template: "{{as_timestamp(now())-as_timestamp(states.automation.system_dixy_snapshot.attributes.last_triggered) > 10}}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_dixy','last_triggered'))|int) > 5 }}"
   action:
     - delay: '00:00:01'
     - service: notify.telegram_cam
@@ -50,11 +50,10 @@
           - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_dixy','entity_picture')}}
             caption: "Dixy {{states('sensor.time')}} {{states('sensor.date')}}"
 
-
 # ##################################
 # System - Street Cam Snapshot on Motion
 # ##################################
-- alias: system_street_snapshot
+- alias: system_snapshot_street
   initial_state: 'true'
   trigger:
     - platform: state
@@ -63,7 +62,7 @@
       to: 'on'
   condition:
     - condition: template
-      value_template: "{{as_timestamp(now())-as_timestamp(states.automation.system_street_snapshot.attributes.last_triggered) > 10}}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_street','last_triggered'))|int) > 5 }}"
   action:
     - delay: '00:00:01'
     - service: notify.telegram_cam
@@ -74,3 +73,52 @@
           photo:
           - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_street','entity_picture')}}
             caption: "Street {{states('sensor.time')}} {{states('sensor.date')}}"
+
+
+# ##################################
+# System - Motion Outside
+# ##################################
+- alias: system_snaphot_outside_esp32
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.esp32_domofon_motion
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_outside_esp32','last_triggered'))|int) > 5 }}"
+  action:
+    - delay: '00:00:01'
+    - service: notify.telegram_cam
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "ESP32 - Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
+        data:
+          photo:
+          - url: http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
+            caption: "ESP32! {{states('sensor.time')}} {{states('sensor.date')}} "
+
+# ##################################
+# System - Motion Outside
+# ##################################
+- alias: system_snaphot_outside_motioneye
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.pinhole_camera_motion
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_outside_motioneye','last_triggered'))|int) > 5 }}"
+  action:
+    - delay: '00:00:01'
+    - service: notify.telegram_cam
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
+        data:
+          photo:
+          - url: http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
+            caption: "MotionEye! {{states('sensor.time')}} {{states('sensor.date')}} "
