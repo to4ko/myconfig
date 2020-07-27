@@ -8,11 +8,6 @@
 - alias: toilet_fan_on
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0001b97111
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x00158d0001b97111_click
       to: 'single'
@@ -21,27 +16,16 @@
       to: 'off'
       for: 
         minutes: 2
+  condition:
+    - condition: state
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+      state: 'on'
+    - condition: state
+      entity_id: switch.0x00158d0001a248e9_switch_l2 #switch.wall_switch_left_158d0002a36f7f
+      state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.0x00158d0001a248e9_switch_l2 #switch.plug_158d0001f54f91
-
-# ##################################
-# Toilet Fan - On
-# ##################################
-#- alias: toilet_fan_on
-#  initial_state: 'true'
-#  trigger:
-#    platform: event
-#    event_type: xiaomi_aqara.click
-#    event_data:
-#      entity_id: binary_sensor.switch_158d0001b97111
-#      click_type: double
-#  action:
-#  - service: switch.turn_on
-#    entity_id: switch.plug_158d0001f54f91
-#  - delay: 00:20:00
-#  - service: switch.turn_off
-#    entity_id: switch.plug_158d0001f54f91
 
 # ##################################
 # Toilet Fan - Off
@@ -49,18 +33,17 @@
 - alias: toilet_fan_off
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0001b97111
-    #     click_type: long_click_press
     - platform: state
-      entity_id: sensor.0x00158d0001b97111_action
-      to: 'hold'
+      entity_id: sensor.0x00158d0001b97111_click
+      to: 'single'
     - platform: event
       event_type: timer.finished
       event_data:
         entity_id: timer.fan_t
+  condition:
+    - condition: state
+      entity_id: switch.0x00158d0001a248e9_switch_l2 #switch.wall_switch_left_158d0002a36f7f
+      state: 'on'
   action:
     - service: switch.turn_off
       entity_id: switch.0x00158d0001a248e9_switch_l2 #switch.plug_158d0001f54f91
@@ -81,3 +64,4 @@
       entity_id: timer.fan_t
     - service: timer.start
       entity_id: timer.fan_t
+
