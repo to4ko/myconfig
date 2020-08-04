@@ -1,6 +1,5 @@
 import logging
 from collections import OrderedDict
-from logging import LogRecord
 
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
@@ -11,20 +10,29 @@ _LOGGER.info("Started tracking time")
 DOMAIN = 'start_time'
 
 
-class LogsHandler(logging.Handler):
+class LogsHandler:
     state = None
     attrs = {}
     add_entities = None
 
-    def handle(self, record: LogRecord) -> None:
-        if record.msg.startswith("Setup of domain"):
-            self.attrs[record.args[0]] = round(record.args[1], 1)
+    def add_logger(self, name: str):
+        logger = logging.getLogger(name)
+        real_info = logger.info
 
-        elif record.msg.startswith("Home Assistant initialized"):
-            self.state = round(record.args[0], 1)
-            at = sorted(self.attrs.items(), key=lambda t: t[1], reverse=True)
-            self.attrs = OrderedDict(at)
-            self.update()
+        def monkey_info(msg: str, *args):
+            if msg.startswith("Setup of domain"):
+                self.attrs[args[0]] = round(args[1], 1)
+
+            elif msg.startswith("Home Assistant initialized"):
+                self.state = round(args[0], 1)
+                at = sorted(self.attrs.items(), key=lambda t: t[1],
+                            reverse=True)
+                self.attrs = OrderedDict(at)
+                self.update()
+
+            real_info(msg, *args)
+
+        logger.info = monkey_info
 
     def update(self):
         if self.state and self.add_entities:
@@ -32,9 +40,8 @@ class LogsHandler(logging.Handler):
 
 
 handler = LogsHandler()
-
-logging.getLogger('homeassistant.bootstrap').addHandler(handler)
-logging.getLogger('homeassistant.setup').addHandler(handler)
+handler.add_logger('homeassistant.bootstrap')
+handler.add_logger('homeassistant.setup')
 
 
 async def async_setup_platform(hass: HomeAssistantType, config, add_entities,
