@@ -8,18 +8,13 @@
 - alias: vova_sockets_on
   initial_state: 'true'
   trigger:
-    # platform: event
-    # event_type: xiaomi_aqara.motion
-    # event_data:
-    #   entity_id: binary_sensor.motion_sensor_158d000236bb94
     - platform: state
       entity_id: binary_sensor.0x00158d000236bb94_occupancy
       from: 'off'
       to: 'on'
   condition:
-      - condition: state
-        entity_id: switch.0x00158d000290a093_switch #switch.plug_158d000290a093
-        state: 'off'
+      - condition: template
+        value_template: "{{is_state('switch.0x00158d000290a093_switch','off') or is_state('switch.0x00158d000290a0bc_switch','off') or is_state('switch.0x00158d000344998e_switch','off') or is_state('switch.0x00158d0003600ea4_switch','off')}}"
   action:
     - service: switch.turn_on
       entity_id: 
@@ -27,8 +22,6 @@
         - switch.0x00158d000290a0bc_switch #switch.plug_158d000290a0bc
         - switch.0x00158d000344998e_switch #switch.plug_158d000344998e
         - switch.0x00158d0003600ea4_switch #switch.plug_158d0003600ea4
-    #- service: homeassistant.turn_on
-    #  entity_id: automation.vova_iconbit_check
 
 # ##################################
 # Vova - TV Box Off with TV Off
@@ -61,44 +54,4 @@
     at: '23:00:00'
   action:
     - service: switch.turn_off
-      entity_id: switch.0x00158d00028b4fc3_switch, switch.0x00158d000246776f_switch #switch.wall_plug_158d000246776f
-      
-# ##################################
-# Vova - Day mode
-# ##################################
-- alias: vova_day_mode
-  initial_state: 'true'
-  trigger:
-    platform: time
-    at: '08:00:00'
-  condition:
-    condition: time
-    weekday:
-      - mon
-      - tue
-      - wed
-      - thu
-      - fri
-      #- sat
-      #- sun
-  action:
-    - service: switch.turn_on
-      entity_id: switch.0x00158d00028b4fc3_switch #, switch.wall_plug_158d000246776f
-
-# ##################################
-# Vova - Day mode - weekends
-# ##################################
-- alias: vova_day_mode_we
-  initial_state: 'true'
-  trigger:
-    platform: time
-    at: '10:00:00'
-  condition:
-    condition: time
-    weekday:
-      - sat
-      - sun
-  action:
-    - service: switch.turn_on
-      entity_id: switch.0x00158d00028b4fc3_switch #, switch.wall_plug_158d000246776f
-
+      entity_id: switch.0x00158d000246776f_switch #switch.0x00158d00028b4fc3_switch, switch.wall_plug_158d000246776f

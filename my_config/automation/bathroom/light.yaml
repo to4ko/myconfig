@@ -17,9 +17,14 @@
       from: 'off'
       to: 'on'
   condition:
-    - condition: state
-      entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
-      state: 'on'
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+        state: 'on'
+      - condition: state
+        entity_id: switch.0x00158d0001a248e3_switch_l1
+        state: 'on'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_b
@@ -35,11 +40,12 @@
     - platform: state
       entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
       to: 'off'
+      from: 'on'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_b
     - service: switch.turn_off
-      entity_id: switch.0x00158d0001a248e3_switch_l1
+      entity_id: switch.0x00158d0001a248e3_switch_l1, switch.0x00158d0002a36e26_switch_right
     
 # ##################################
 # Bathroom - Timer start on light on
@@ -48,8 +54,17 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+      entity_id: switch.0x00158d0002a36e26_switch_right
       to: 'on'
+      from: 'off'
+    - platform: state
+      entity_id: switch.0x00158d0001a248e3_switch_l1
+      to: 'on'
+      from: 'off'
+  condition:
+    - condition: state
+      entity_id: timer.main_light_b
+      state: 'idle'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_b
@@ -74,9 +89,17 @@
     - condition: state
       entity_id: binary_sensor.0x00158d0002a14c5e_contact #binary_sensor.door_window_sensor_158d0002a14c5e
       state: 'off'
-    - condition: state
-      entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
-      state: 'on'
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+          state: 'on'
+        - condition: state
+          entity_id: switch.0x00158d0001a248e3_switch_l1
+          state: 'on'
+    # - condition: state
+    #   entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+    #   state: 'on'
   action:
     - service: timer.pause
       entity_id: timer.main_light_b
@@ -94,9 +117,14 @@
       from: 'off'
       to: 'on'
   condition:
-    - condition: state
-      entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
-      state: 'on'
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+        state: 'on'
+      - condition: state
+        entity_id: switch.0x00158d0001a248e3_switch_l1
+        state: 'on'
   action:
     - service: timer.start
       entity_id: timer.main_light_b
@@ -123,10 +151,25 @@
       state: 'off'
   action:
     - service: switch.turn_on
-      entity_id: switch.0x00158d0002a36e26_switch_right
+      entity_id: switch.0x00158d0001a248e3_switch_l1
+      # data_template:
+      #   entity_id: >
+      #     {% if is_state('binary_sensor.tod_day','off') %}
+      #       switch.0x00158d0001a248e3_switch_l1
+      #     {% else %}
+      #       switch.0x00158d0002a36e26_switch_right
+      #     {% endif %}
+    - delay: '00:00:02'
     - service: switch.turn_on
-      entity_id: switch.0x00158d0002a36e26_switch_right
-  
+      entity_id: switch.0x00158d0001a248e3_switch_l1
+      # data_template:
+      #   entity_id: >
+      #     {% if is_state('binary_sensor.tod_day','off') %}
+      #       switch.0x00158d0001a248e3_switch_l1
+      #     {% else %}
+      #       switch.0x00158d0002a36e26_switch_right
+      #     {% endif %}
+        
 # ##################################
 # Bathroom - Auto Light Off
 # ##################################
@@ -196,4 +239,27 @@
       to: 'off'
   action:
     - service: switch.toggle
+      entity_id: switch.0x00158d0001a248e3_switch_l1
+      
+# ##################################
+# Bathroom - Mirror light off
+# ##################################
+- alias: bathroom_mirror_light_off
+  initial_state: 'true'
+  trigger:
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id:  binary_sensor.motion_sensor_158d000236bc6d
+    - platform: state
+      entity_id: binary_sensor.0x00158d000236bc6d_occupancy
+      from: 'on'
+      to: 'off'
+      for: '00:05:00'
+  # condition:
+  #   - condition: state
+  #     entity_id: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+  #     state: 'off'
+  action:
+    - service: switch.turn_off
       entity_id: switch.0x00158d0001a248e3_switch_l1

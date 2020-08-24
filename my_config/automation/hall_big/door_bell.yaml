@@ -20,7 +20,7 @@
     - service_template: script.turn_on
       data_template:
         entity_id: >
-          {% if states('input_boolean.doorbell_mute')=='off' %}script.doorbell_ring
+          {% if is_state('input_boolean.doorbell_mute','off') or is_state('binary_sensor.tod_day','on') %}script.doorbell_ring
           {%else%}script.noop
           {%endif%}
     - service: notify.telegram_family
@@ -62,3 +62,14 @@
 #          photo:
 #          - file: /config/www/cam_captures/doorbell.jpg
 #            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+
+
+# - alias: hall_big_doorbell_test
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d00035c6905_contact
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "Doorbell contact {{trigger.from_state.state}} -> {{trigger.to_state.state}}"

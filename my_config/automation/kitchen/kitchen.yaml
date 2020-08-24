@@ -8,27 +8,16 @@
 - alias: kitchen_sockets_on
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.motion
-    #   event_data:
-    #     entity_id: binary_sensor.motion_sensor_158d0002b4729d
     - platform: state
       entity_id: binary_sensor.0x00158d0002b4729d_occupancy, binary_sensor.0x00158d0002b48381_occupancy
       from: 'off'
       to: 'on'
-    # - platform: event
-    #   event_type: xiaomi_aqara.motion
-    #   event_data:
-    #     entity_id: binary_sensor.motion_sensor_158d0002b48381
   condition:
-      - condition: state
-        entity_id: switch.0x00158d000232481a_switch #switch.plug_158d000232481a
-        state: 'off'
+      - condition: template
+        value_template: "{{is_state('switch.0x00158d000232481a_switch','off') or is_state('switch.0x00158d00028c9875_switch','off') or is_state('switch.0x00158d00028a54e4_switch','off') or is_state('switch.0x00158d0001e85086_switch','off')}}"
   action:
     - service: switch.turn_on
       entity_id: switch.0x00158d000232481a_switch, switch.0x00158d00028c9875_switch, switch.0x00158d00028a54e4_switch, switch.0x00158d0001e85086_switch
-#    - service: homeassistant.turn_on
-#      entity_id: automation.kitchen_check_tv_box
 
 # ##################################
 # Kitchen - TV box Check
@@ -149,6 +138,8 @@
   condition:
     - condition: template
       value_template: "{{not trigger.from_state.state in ['unavailable', 'unknown', 'none']}}"
+    - condition: template
+      value_template: "{{not trigger.to_state.state in ['unavailable', 'unknown', 'none']}}"
     - condition: numeric_state
       entity_id: sensor.ha_uptime
       above: 5

@@ -29,16 +29,16 @@
 # ##################################
 # Toilet - Timer off
 # ################################## 
-- alias: toilet_timer_off
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-      to: 'off'
-      from: 'on'
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_t
+# - alias: toilet_timer_off
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+#       to: 'off'
+#       from: 'on'
+#   action:
+#     - service: timer.cancel
+#       entity_id: timer.main_light_t
     
 # ##################################
 # Toilet - Timer start
@@ -59,45 +59,45 @@
 # ##################################
 # Toilet - Timer pause on
 # ################################## 
-- alias: toilet_timer_pause_on
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x00158d0001e54280_occupancy
-      from: 'off'
-      to: 'on'
-  condition:
-    - condition: state
-      entity_id: binary_sensor.0x00158d000232ddd6_contact
-      state: 'off'
-    - condition: state
-      entity_id: switch.0x00158d0002a36f7f_switch_left
-      state: 'on'
-  action:
-    - service: timer.pause
-      entity_id: timer.main_light_t
-    - service: automation.turn_off
-      entity_id: automation.toilet_timer_restart
+# - alias: toilet_timer_pause_on
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d0001e54280_occupancy
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     - condition: state
+#       entity_id: binary_sensor.0x00158d000232ddd6_contact
+#       state: 'off'
+#     - condition: state
+#       entity_id: switch.0x00158d0002a36f7f_switch_left
+#       state: 'on'
+#   action:
+#     - service: timer.pause
+#       entity_id: timer.main_light_t
+#     - service: automation.turn_off
+#       entity_id: automation.toilet_timer_restart
     
 # ##################################
 # Bathroom - Timer pause off
 # ################################## 
-- alias: toilet_timer_pause_off
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x00158d000232ddd6_contact #binary_sensor.door_window_sensor_158d000232ddd6
-      from: 'off'
-      to: 'on'
-  condition:
-    - condition: state
-      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-      state: 'on'
-  action:
-    - service: timer.start
-      entity_id: timer.main_light_t
-    - service: automation.turn_on
-      entity_id: automation.toilet_timer_restart
+# - alias: toilet_timer_pause_off
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d000232ddd6_contact #binary_sensor.door_window_sensor_158d000232ddd6
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     - condition: state
+#       entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+#       state: 'on'
+#   action:
+#     - service: timer.start
+#       entity_id: timer.main_light_t
+#     - service: automation.turn_on
+#       entity_id: automation.toilet_timer_restart
     
 # ##################################
 # Toilet - Auto Light On
@@ -125,15 +125,20 @@
       entity_id: binary_sensor.0x00158d000232ddd6_contact #binary_sensor.door_window_sensor_158d000232ddd6
       to: 'off'
       from: 'on'
-  condition:
-    - condition: state
-      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-      state: 'off'
+  # condition:
+  #   - condition: state
+  #     entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+  #     state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.0x00158d0002a36f7f_switch_left
+    - delay: '00:00:01'
     - service: switch.turn_on
       entity_id: switch.0x00158d0002a36f7f_switch_left
+    - delay: '00:00:01'
+    - service: switch.turn_on
+      entity_id: switch.0x00158d0002a36f7f_switch_left
+
     
 # ##################################
 # Toilet - Auto Light Off
@@ -191,4 +196,33 @@
       entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       
       
-      
+# ##################################
+# Toilet - Indicator On
+# ##################################
+- alias: toilet_indicator_on
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d000232ddd6_contact
+      from: 'on'
+      to: 'off'
+  action:
+    - service: light.turn_on
+      data_template:
+        entity_id: light.btf_pixel_strip_toilet
+        effect: 'Color Wipe'
+        brightness_pct: 75
+
+# ##################################
+# Toilet - Indicator Off
+# ##################################
+- alias: toilet_indicator_off
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d000232ddd6_contact
+      from: 'off'
+      to: 'on'
+  action:
+    - service: light.turn_off
+      entity_id: light.btf_pixel_strip_toilet

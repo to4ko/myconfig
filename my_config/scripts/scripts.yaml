@@ -49,7 +49,7 @@
         data_template:
           entity_id: >
             {% set num_low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
-            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
+            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.linkquality', 'defined') |selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='attributes.device.friendlyName') | unique | list | count %}
             {% if (num_low_bat + num_low_bat_z2m) >0 %}
               script.battery_level_low
             {% else %}
@@ -63,10 +63,10 @@
         data_template:
           message: >
             {% set low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
-            {% set low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
+            {% set low_bat_z2m = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='attributes.device.friendlyName') | unique | list | join(', ') %}
             
             {% set num_low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
-            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
+            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.linkquality', 'defined') |selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='attributes.device.friendlyName') | unique | list | count %}
             
             {{"\U0001f6a8"}} Низкий заряд батарей ({{ num_low_bat + num_low_bat_z2m }}шт): {%if num_low_bat >0 %}{{low_bat}}{%endif%}{%if num_low_bat >0 and num_low_bat_z2m>0 %}, {%endif%}{%if num_low_bat_z2m >0%}{{low_bat_z2m}}{%endif%}
   

@@ -61,7 +61,7 @@
 # System - Server HDD Disks Temp
 # ##################################
 - alias: system_health_hdd_temp_45
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: numeric_state
       entity_id:
@@ -72,10 +72,12 @@
         - sensor.main4_temp
         - sensor.main5_temp
         - sensor.main6_temp
-        - sensor.media_temp
+        - sensor.media1_temp
+        - sensor.media2_temp
+        - sensor.media3_temp
         - sensor.temp_temp
         - sensor.video_temp
-      above: 45
+      above: 50
   action:
     - service: notify.telegram
       data_template:
@@ -85,7 +87,7 @@
 # System - Server HDD Disks Temp
 # ##################################
 - alias: system_health_hdd_temp_50
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: numeric_state
       entity_id:
@@ -96,14 +98,49 @@
         - sensor.main4_temp
         - sensor.main5_temp
         - sensor.main6_temp
-        - sensor.media_temp
+        - sensor.media1_temp
+        - sensor.media2_temp
+        - sensor.media3_temp
         - sensor.temp_temp
         - sensor.video_temp
-      above: 50
+      above: 55
   action:
     - service: notify.telegram
       data_template:
         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >50°!"
+
+
+# ##################################
+# System - Server HDD Disks Temp
+# ##################################
+- alias: system_health_hdd_temp
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.main0_temp
+        - sensor.main1_temp
+        - sensor.main2_temp
+        - sensor.main3_temp
+        - sensor.main4_temp
+        - sensor.main5_temp
+        - sensor.main6_temp
+        - sensor.media1_temp
+        - sensor.media2_temp
+        - sensor.media3_temp
+        - sensor.temp_temp
+        - sensor.video_temp
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state|int % 5 == 0 }}"
+    - condition: template
+      value_template: "{{ trigger.to_state.state|int > 50 }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} {{ trigger.to_state.state }}°!"
+
+
 
 # ##################################
 # System - Server SSD Disks Temp
@@ -117,8 +154,6 @@
         - sensor.nvme1_temp
         - sensor.nvme2_temp
         - sensor.boot_temp
-        - sensor.840pro_1_temp
-        - sensor.840pro_2_temp
       above: 50
       for:
         minutes: 3
@@ -139,8 +174,6 @@
         - sensor.nvme1_temp
         - sensor.nvme2_temp
         - sensor.boot_temp
-        - sensor.840pro_1_temp
-        - sensor.840pro_2_temp
       above: 55
       for:
         minutes: 3
@@ -161,8 +194,6 @@
         - sensor.nvme1_temp
         - sensor.nvme2_temp
         - sensor.boot_temp
-        - sensor.840pro_1_temp
-        - sensor.840pro_2_temp
       above: 60
       for:
         minutes: 1
@@ -202,7 +233,7 @@
       entity_id: sensor.71605_cpu_temp
   condition:
     - condition: template
-      value_template: "{{ (states('sensor.71605_cpu_temp')|int) >= 95 }}"
+      value_template: "{{ (states('sensor.71605_cpu_temp')|int) >= 90 }}"
   action:
     - service: notify.telegram
       data_template:

@@ -24,7 +24,6 @@
 # System - Warning counter
 # ##################################
 - alias: system_warning_counter
-  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: event
@@ -469,8 +468,10 @@
 - alias: system_mopidy_restart
   initial_state: 'true'
   trigger:
-    - platform: time_pattern
-      hours: "/1"
+    - platform: state
+      entity_id: media_player.mpd
+      to: 'unavailable'
+      for: '00:00:05'
     # - platform: time
     # at: "15:32:00"
   condition: 
@@ -572,3 +573,17 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f534 Критическая ошибка системы: {{ trigger.event.data.message }}!"
+        
+# ##################################
+# System - Radiation alert
+# ##################################
+- alias: system_radiation_alart
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x00124b001ec8dc5c_action
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.0x00124b001ec8dc5c_radiation_dose_per_hour')|int}}мкР/ч!"
