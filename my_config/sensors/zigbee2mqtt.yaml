@@ -19,10 +19,28 @@
     icon: mdi:zigbee
   # Sensor for Showing the Coordinator Version
   - platform: mqtt
-    name: Coordinator Version
+    name: Zigbee2mqtt Coordinator Version
     state_topic: "zigbee2mqtt/bridge/config"
     value_template: "{{ value_json.coordinator }}"
     icon: mdi:chip
+
+  - platform: mqtt
+    name: Zigbee2mqtt Network Channel
+    state_topic: "zigbee2mqtt/bridge/config"
+    value_template: "{{ value_json.network.channel }}"
+    icon: mdi:wifi
+
+  - platform: mqtt
+    name: Zigbee2mqtt Network PanID
+    state_topic: "zigbee2mqtt/bridge/config"
+    value_template: "{{ value_json.network.panID }}"
+    icon: mdi:wifi
+
+  - platform: mqtt
+    name: Zigbee2mqtt Network Extended PanID
+    state_topic: "zigbee2mqtt/bridge/config"
+    value_template: "{{ value_json.network.extendedPanID }}"
+    icon: mdi:wifi
 
   # Sensor for Log Parsing
   - platform: mqtt
@@ -85,6 +103,120 @@
     json_attributes:
       - version
       - version_latest
+
+#####################################################
+# Zigbee 2 Mqtt 2
+#####################################################
+  # Sensor for monitoring the bridge start time
+  - platform: mqtt
+    name: Zigbee2mqtt2 Bridge Uptime
+    state_topic: "zigbee2mqtt2_start_at"
+    value_template: '{{ as_timestamp(now()) - value | int }}'
+    unit_of_measurement: 's'
+    force_update: true
+    icon: mdi:av-timer
+  # Sensor for monitoring the bridge state
+  - platform: mqtt
+    name: Zigbee2mqtt2 Bridge State
+    state_topic: "zigbee2mqtt2/bridge/state"
+    icon: mdi:router-wireless
+  # Sensor for Showing the Zigbee2mqtt Version
+  - platform: mqtt
+    name: Zigbee2mqtt2 Version
+    state_topic: "zigbee2mqtt2/bridge/config"
+    value_template: "{{ value_json.version }}"
+    icon: mdi:zigbee
+  # Sensor for Showing the Coordinator Version
+  - platform: mqtt
+    name: Zigbee2mqtt2 Coordinator Version
+    state_topic: "zigbee2mqtt2/bridge/config"
+    value_template: "{{ value_json.coordinator }}"
+    icon: mdi:chip
+
+  - platform: mqtt
+    name: Zigbee2mqtt2 Network Channel
+    state_topic: "zigbee2mqtt2/bridge/config"
+    value_template: "{{ value_json.network.channel }}"
+    icon: mdi:wifi
+
+  - platform: mqtt
+    name: Zigbee2mqtt2 Network PanID
+    state_topic: "zigbee2mqtt2/bridge/config"
+    value_template: "{{ value_json.network.panID }}"
+    icon: mdi:wifi
+
+  - platform: mqtt
+    name: Zigbee2mqtt2 Network Extended PanID
+    state_topic: "zigbee2mqtt2/bridge/config"
+    value_template: "{{ value_json.network.extendedPanID }}"
+    icon: mdi:wifi
+
+  # Sensor for Log Parsing
+  - platform: mqtt
+    name: Zigbee2mqtt2 Last Message
+    state_topic: "zigbee2mqtt2/bridge/log"
+    value_template: "{{ value_json.type }}"
+    icon: mdi:message-alert
+
+  - platform: mqtt
+    name: Zigbee2mqtt2 Last Message FN
+    state_topic: "zigbee2mqtt2/bridge/log"
+    value_template: "{{ value_json.meta.friendly_name }}"
+    icon: mdi:message-alert
+
+  - platform: mqtt
+    name: Zigbee2mqtt2 Last Message FN2
+    state_topic: "zigbee2mqtt2/bridge/log"
+    value_template: "{{ value_json.message.friendly_name }}"
+    icon: mdi:message-alert
+
+
+  # Sensor for monitoring the addon restart tpoic
+  - platform: mqtt
+    name: Zigbee2mqtt2 Addon Restart
+    state_topic: "zigbee2mqtt2_addon_restart"
+    icon: mdi:restart
+
+
+  # Sensor for monitoring the bridge state pairing
+  - platform: mqtt
+    name: Zigbee2mqtt2 Permit Join
+    state_topic: "zigbee2mqtt2/bridge/config/permit_join"
+    force_update: true
+    icon: mdi:shape-plus
+
+  - platform: mqtt
+    name: Last Motion B
+    state_topic: zigbee2mqtt/Motion_B
+    device_class: timestamp
+    value_template: "{{ now() if value_json.occupancy else states('sensor.last_motion_b') }}"
+    availability_topic: zigbee2mqtt/bridge/state
+
+  - platform: mqtt
+    name: Last Motion T
+    state_topic: zigbee2mqtt/Motion_T
+    device_class: timestamp
+    value_template: "{{ now() if value_json.occupancy else states('sensor.last_motion_t') }}"
+    availability_topic: zigbee2mqtt/bridge/state
+
+
+  - platform: rest
+    resource: http://192.168.1.39:8123/api/hassio/addons/7ad98f9c_zigbee2mqtt/info
+    name: zigbee2mqtt2_addon
+    value_template: '{{ value_json.data.state }}'
+    scan_interval: 60
+    headers:
+      Authorization: !secret nuc_long_token
+      Content-Type: application/json
+    json_attributes_path: "$.data"
+    json_attributes:
+      - version
+      - version_latest
+
+
+
+##########################################################################33
+
       
   - platform: mqtt
     name: SLS Gateway Uptime
@@ -103,8 +235,8 @@
 
   - platform: template
     sensors:
-        zigbee_health:
-         friendly_name: Zigbee health
+        zigbee2mqtt_health:
+         friendly_name: Zigbee2mqtt health
          entity_id: sensor.time
          icon_template: >-
           {% if states('sensor.zigbee_health') | int == 0 %}
@@ -114,25 +246,26 @@
           {% endif %}
          value_template: >-
             {%- macro GetDroppedZigbee() -%}
-            {% for state in states.sensor -%}
-            {%- if state.attributes.linkquality %}
-            {%- if "linkquality" in state.name and  (as_timestamp(now()) - as_timestamp(state.last_updated) > (4*60*60) ) -%}
-             X 
-            {%- endif -%}
-            {%- endif -%}
+            {% for state in states -%}
+              {%- if state.attributes.linkquality %}
+                {%- if (as_timestamp(now()) - as_timestamp(state.last_updated) > (4*60*60) ) -%}
+                  X
+                {%- endif -%}
+              {%- endif -%}
             {%- endfor %}
             {%- endmacro -%}
+            
             {%- if GetDroppedZigbee()[0] == "X" -%}
-            {{GetDroppedZigbee()|list|length }}
+              {{GetDroppedZigbee()|list|length }}
             {%- else -%}
             0
-            {%- endif -%} 
+            {%- endif -%}
          attribute_templates:
           off_device: >-
-              {% for state in states.sensor-%}
-              {%- if state.attributes.linkquality %}
-              {%- if "linkquality" in state.name and  (as_timestamp(now()) - as_timestamp(state.last_updated) > (4*60*60) ) %}
-              [[ {{ relative_time(state.last_updated)}} for {{state.name | lower | replace("_linkquality", "") }} ]]  
-              {%- endif -%}
-              {%- endif -%}
+              {% for state in states -%}
+                {%- if state.attributes.linkquality %}
+                  {%- if (as_timestamp(now()) - as_timestamp(state.last_updated) > (4*60*60) ) %}
+                    [[ {{ relative_time(state.last_updated)}} for {{state.attributes.device.friendlyName }}  ]]  
+                  {%- endif -%}
+                {%- endif -%}
               {%- endfor %}
