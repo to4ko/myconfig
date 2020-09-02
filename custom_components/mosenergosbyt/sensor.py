@@ -6,7 +6,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from functools import partial
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union, Any
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
@@ -28,6 +28,7 @@ from .mosenergosbyt import MosenergosbytException, ServiceType, MESElectricityMe
 if TYPE_CHECKING:
     from types import MappingProxyType
     from .mosenergosbyt import API
+    from homeassistant.core import Context
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,7 +39,13 @@ ATTR_METER_CODE = "meter_code"
 ATTR_INDICATIONS = "indications"
 ATTR_INCREMENTAL = "incremental"
 ATTR_IGNORE_PERIOD = "ignore_period"
-ATTR_NOTIFICATION = "create_notification"
+ATTR_NOTIFICATION = "notification"
+ATTR_PERIOD = "period"
+ATTR_CHARGED = "charged"
+ATTR_INDICATIONS_DICT = "indications_dict"
+ATTR_COMMENT = "comment"
+ATTR_SUCCESS = "success"
+ATTR_CALL_PARAMS = "call_params"
 
 DEFAULT_MAX_INDICATIONS = 3
 INDICATIONS_SCHEMA = vol.Any(
@@ -263,153 +270,178 @@ async def async_register_services(hass: HomeAssistantType):
             ])
         return call_data[ATTR_INDICATIONS]
 
+    def _fire_callback_event(event_id: str, event_data: Dict[str, Any], context: Optional['Context'] = None):
+        _LOGGER.log(
+            logging.INFO if event_data[ATTR_SUCCESS] else logging.ERROR,
+            event_data[ATTR_COMMENT]
+        )
+
+        _LOGGER.debug("Firing event '%s' with data: %s" % (event_id, event_data))
+
+        hass.bus.async_fire(
+            event_type=event_id,
+            event_data=event_data,
+            context=context
+        )
+
     async def async_push_indications(call: ServiceCallType):
         entry_id, meter_sensor = _find_meter_entity(call.data)
 
+        event_data = {
+            ATTR_CALL_PARAMS: dict(call.data),
+            ATTR_SUCCESS: False,
+            ATTR_ENTITY_ID: None,
+            ATTR_METER_CODE: None,
+            ATTR_INDICATIONS: None,
+            ATTR_COMMENT: None,
+        }
+
         if meter_sensor is None:
-            _LOGGER.error('Provided `%s` does not match any existing meter' % entry_id)
-            return
+            event_data[ATTR_COMMENT] = 'Конфигурация `%s` не соответствует существующему счётчику' % entry_id
 
-        if not isinstance(meter_sensor.meter, _SubmittableMeter):
-            _LOGGER.error('Meter \'%s\' does not support indications pushing' % meter_sensor.meter.meter_code)
-            return
-
-        ignore_period = call.data[ATTR_IGNORE_PERIOD]
-        indications = _get_real_indications(meter_sensor, call.data)
-
-        try:
-            comment = await meter_sensor.meter.submit_indications(
-                indications,
-                ignore_period_check=ignore_period,
-                ignore_indications_check=False
-            )
-
-            event_data = {
-                'entity_id': meter_sensor.entity_id,
-                'meter_code': meter_sensor.meter.meter_code,
-                'indications': indications,
-                'comment': comment,
-            }
-
-            hass.bus.async_fire(
-                event_type=EVENT_PUSH_RESULT,
-                event_data=event_data,
-                context=call.context
-            )
-
+        else:
             meter_code = meter_sensor.meter.meter_code
 
-            notification_content = call.data[ATTR_NOTIFICATION]
-            if notification_content:
-                payload = {
-                    persistent_notification.ATTR_TITLE:
-                        f"Переданы показания - №{meter_code}",
-                    persistent_notification.ATTR_NOTIFICATION_ID:
-                        f"mosenergosbyt_push_indications_{meter_code}",
-                    persistent_notification.ATTR_MESSAGE:
-                        f"Показания переданы для счётчика №{meter_code} за период "
-                        f"{meter_sensor.meter.period_start_date} &mdash; {meter_sensor.meter.period_end_date}"
-                }
+            event_data[ATTR_ENTITY_ID] = meter_sensor.entity_id
+            event_data[ATTR_METER_CODE] = meter_code
 
-                if notification_content is not True:
-                    payload.update({
-                        key: value.format(**event_data)
-                        for key, value in notification_content.items()
-                    })
+            if not isinstance(meter_sensor.meter, _SubmittableMeter):
+                event_data[ATTR_COMMENT] = 'Счётчик \'%s\' не поддерживает передачу показаний' % meter_code
 
-                hass.async_create_task(
-                    hass.services.async_call(
-                        persistent_notification.DOMAIN,
-                        persistent_notification.SERVICE_CREATE,
-                        payload,
+            else:
+                ignore_period = call.data[ATTR_IGNORE_PERIOD]
+                indications = _get_real_indications(meter_sensor, call.data)
+
+                event_data[ATTR_INDICATIONS] = indications
+
+                try:
+                    comment = await meter_sensor.meter.submit_indications(
+                        indications,
+                        ignore_period_check=ignore_period,
+                        ignore_indications_check=False
                     )
-                )
 
-            # @TODO: this check might be ultra-redundant
-            if DATA_UPDATERS in hass.data and entry_id in hass.data[DATA_UPDATERS]:
-                _LOGGER.debug('Issuing account update')
-                hass.async_create_task(
-                    hass.data[DATA_UPDATERS][entry_id][1]()
-                )
+                    event_data[ATTR_COMMENT] = comment
 
-        except IndicationsCountException as e:
-            _LOGGER.error('Error: %s' % e)
-            return
+                    event_data[ATTR_SUCCESS] = True
 
-        except MosenergosbytException as e:
-            _LOGGER.error('API returned error: %s' % e)
-            return
+                    notification_content = call.data[ATTR_NOTIFICATION]
+                    if notification_content:
+                        payload = {
+                            persistent_notification.ATTR_TITLE:
+                                f"Переданы показания - №{meter_code}",
+                            persistent_notification.ATTR_NOTIFICATION_ID:
+                                f"mosenergosbyt_push_indications_{meter_code}",
+                            persistent_notification.ATTR_MESSAGE:
+                                f"Показания переданы для счётчика №{meter_code} за период "
+                                f"{meter_sensor.meter.period_start_date} &mdash; {meter_sensor.meter.period_end_date}"
+                        }
+
+                        if notification_content is not True:
+                            payload.update({
+                                key: value.format(**event_data)
+                                for key, value in notification_content.items()
+                            })
+
+                        hass.async_create_task(
+                            hass.services.async_call(
+                                persistent_notification.DOMAIN,
+                                persistent_notification.SERVICE_CREATE,
+                                payload,
+                            )
+                        )
+
+                    # @TODO: this check might be ultra-redundant
+                    if DATA_UPDATERS in hass.data and entry_id in hass.data[DATA_UPDATERS]:
+                        _LOGGER.debug('Issuing account update')
+                        hass.async_create_task(
+                            hass.data[DATA_UPDATERS][entry_id][1]()
+                        )
+
+                except IndicationsCountException as e:
+                    event_data[ATTR_COMMENT] = 'Error: %s' % e
+
+                except MosenergosbytException as e:
+                    event_data[ATTR_COMMENT] = 'API returned error: %s' % e
+
+        _fire_callback_event(EVENT_PUSH_RESULT, event_data, call.context)
 
     async def async_calculate_indications(call: ServiceCallType):
         entry_id, meter_sensor = _find_meter_entity(call.data)
 
+        event_data = {
+            ATTR_CALL_PARAMS: dict(call.data),
+            ATTR_SUCCESS: False,
+            ATTR_ENTITY_ID: None,
+            ATTR_METER_CODE: None,
+            ATTR_INDICATIONS: None,
+            ATTR_PERIOD: None,
+            ATTR_CHARGED: None,
+            ATTR_INDICATIONS_DICT: None,
+            ATTR_COMMENT: None,
+        }
+
         if meter_sensor is None:
-            _LOGGER.error('Provided `%s` does not match any existing meter' % entry_id)
-            return
+            event_data[ATTR_COMMENT] = 'Конфигурация `%s` не соответствует существующему счётчику' % entry_id
 
-        if not isinstance(meter_sensor.meter, _SubmittableMeter):
-            _LOGGER.error('Meter \'%s\' does not support indications calculations' % meter_sensor.meter.meter_code)
-            return
-
-        ignore_period = call.data[ATTR_IGNORE_PERIOD]
-        indications = _get_real_indications(meter_sensor, call.data)
-
-        try:
-            calculation = await meter_sensor.meter.calculate_indications(
-                indications,
-                ignore_period_check=ignore_period,
-                ignore_indications_check=False
-            )
-
+        else:
             meter_code = meter_sensor.meter.meter_code
 
-            event_data = {
-                'entity_id': meter_sensor.entity_id,
-                'meter_code': meter_code,
-                'indications': indications,
-                'period': str(calculation.period),
-                'charged': calculation.charged,
-                'indications_dict': calculation.indications,
-                'comment': calculation.comment,
-            }
+            if not isinstance(meter_sensor.meter, _SubmittableMeter):
+                event_data[ATTR_COMMENT] = 'Счётчик \'%s\' не поддерживает подсчёт показаний' % meter_code
 
-            hass.bus.async_fire(
-                event_type=EVENT_CALCULATION_RESULT,
-                event_data=event_data,
-                context=call.context
-            )
+            else:
 
-            notification_content = call.data[ATTR_NOTIFICATION]
-            if notification_content:
-                payload = {
-                    persistent_notification.ATTR_TITLE:
-                        f"Подсчёт начислений - №{meter_code}",
-                    persistent_notification.ATTR_NOTIFICATION_ID:
-                        f"mosenergosbyt_calculate_indications_{meter_code}",
-                    persistent_notification.ATTR_MESSAGE: calculation.comment,
-                }
+                ignore_period = call.data[ATTR_IGNORE_PERIOD]
+                indications = _get_real_indications(meter_sensor, call.data)
 
-                if notification_content is not True:
-                    payload.update({
-                        key: value.format(**event_data)
-                        for key, value in notification_content.items()
-                    })
+                event_data[ATTR_INDICATIONS] = indications
 
-                hass.async_create_task(
-                    hass.services.async_call(
-                        persistent_notification.DOMAIN,
-                        persistent_notification.SERVICE_CREATE,
-                        payload,
+                try:
+                    calculation = await meter_sensor.meter.calculate_indications(
+                        indications,
+                        ignore_period_check=ignore_period,
+                        ignore_indications_check=False
                     )
-                )
 
-        except IndicationsCountException as e:
-            _LOGGER.error('Error: %s' % e)
-            return
+                    event_data[ATTR_PERIOD] = str(calculation.period)
+                    event_data[ATTR_CHARGED] = calculation.charged
+                    event_data[ATTR_INDICATIONS_DICT] = calculation.indications
+                    event_data[ATTR_COMMENT] = calculation.comment
 
-        except MosenergosbytException as e:
-            _LOGGER.error('API returned error: %s' % e)
-            return
+                    event_data[ATTR_SUCCESS] = True
+
+                    notification_content = call.data[ATTR_NOTIFICATION]
+                    if notification_content:
+                        payload = {
+                            persistent_notification.ATTR_TITLE:
+                                f"Подсчёт начислений - №{meter_code}",
+                            persistent_notification.ATTR_NOTIFICATION_ID:
+                                f"mosenergosbyt_calculate_indications_{meter_code}",
+                            persistent_notification.ATTR_MESSAGE: calculation.comment,
+                        }
+
+                        if notification_content is not True:
+                            payload.update({
+                                key: value.format(**event_data)
+                                for key, value in notification_content.items()
+                            })
+
+                        hass.async_create_task(
+                            hass.services.async_call(
+                                persistent_notification.DOMAIN,
+                                persistent_notification.SERVICE_CREATE,
+                                payload,
+                            )
+                        )
+
+                except IndicationsCountException as e:
+                    event_data[ATTR_COMMENT] = 'Error: %s' % e
+
+                except MosenergosbytException as e:
+                    event_data[ATTR_COMMENT] = 'API returned error: %s' % e
+
+        _fire_callback_event(EVENT_CALCULATION_RESULT, event_data, call.context)
 
     hass.services.async_register(
         DOMAIN,

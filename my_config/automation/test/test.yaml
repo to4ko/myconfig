@@ -204,3 +204,40 @@
 #     - service: notify.telegram
 #       data_template:
 #         message: "тра-та-та"
+
+# ##################################
+# test timer
+# ################################## 
+- alias: test_timer
+  initial_state: 'false'
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d0002b4729d_occupancy
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.test_timer','last_triggered'))|int) > 15 }}"
+  action:
+    - service: timer.start
+      entity_id: timer.test_timer
+      
+# ##################################
+# test timer
+# ################################## 
+- alias: test_timer_telegram
+  initial_state: 'false'
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d0002b4729d_occupancy
+    - platform: state
+      entity_id: timer.test_timer
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}},
+          motion: {{states('binary_sensor.0x00158d0002b4729d_occupancy')}},
+          timer: {{states('timer.test_timer')}}

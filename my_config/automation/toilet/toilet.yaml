@@ -1,0 +1,48 @@
+# ##################################
+# Toilet - Air Freshener Counter
+# ##################################
+- alias: toilet_air_freshener_counter
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: switch.air_freshener_spray
+      from: 'on'
+      to: 'off'
+  action:
+    - service: counter.increment
+      entity_id: counter.air_freshener_toilet
+    - service: input_text.set_value
+      data_template:
+        entity_id: input_text.air_freshener_last_spray
+        value: "{{now().strftime('%d.%m.%Y %H:%M')}}"
+
+# ##################################
+# Toilet - Air Freshener Spray
+# ##################################
+- alias: toilet_air_freshener_spray
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x00158d0001b97111_click
+      to: 'double'
+  condition:
+    - condition: state
+      entity_id: switch.air_freshener_spray
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.air_freshener_spray
+
+# ##################################
+# Toilet - Air Freshener Battery Alert
+# ##################################
+- alias: toilet_air_freshener_battery_alert
+  initial_state: 'false'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.esp01_air_freshener_vcc
+      below: 2.8
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f50b Низкий заряд батареи освежителя!"
