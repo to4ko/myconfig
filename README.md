@@ -18,11 +18,18 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Corsair HX1200i
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
 
-**MQTT\Zigbee2MQTT Server:**
+**MQTT\Zigbee2MQTT Server #1:**
   - Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
   - CC2538 Zigbee Stick
+
+**MQTT\Zigbee2MQTT Server #2:**
+  - Celeron N2830
+  - 4gb DDR3 RAM
+  - 120Gb SSD OCZ Vertex 3 MaxIOps
+  - CC2538 Zigbee Stick
+
 
 **Backup Server:**
   - Celeron j3455
