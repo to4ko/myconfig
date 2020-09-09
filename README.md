@@ -26,7 +26,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 **MQTT\Zigbee2MQTT Server #2:**
   - Celeron N2830
-  - 4gb DDR3 RAM 
+  - 4gb DDR3 RAM
   - 120Gb SSD OCZ Vertex 3 MaxIOps
   - CC2538 Zigbee Stick
 
