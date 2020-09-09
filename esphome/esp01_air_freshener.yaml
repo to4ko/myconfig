@@ -1,0 +1,130 @@
+substitutions:
+  board_name: esp01_air_freshener
+  
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.141
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+mqtt:
+  broker: '192.168.1.30'
+  username: !secret mqtt_user
+  password: !secret mqtt_pass
+  discovery: True
+  discovery_retain: True
+  client_id: esp01_air_freshener
+
+logger:
+  baud_rate: 0
+
+# api:
+#   reboot_timeout: 0s
+
+ota:
+
+deep_sleep:
+  id: deep_sleep_1
+  run_duration: 20s
+  sleep_duration: 5min
+
+# web_server:
+#   port: 80
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+            if ((id(on_flag).state) == 1 and (id(sleep_avail).state) == 1){
+              id(script1).execute();}
+            if ((id(on_flag).state) == 0 and (id(sleep_avail).state) == 1){
+              id(script2).execute();}
+            if ((id(on_flag).state) == 0 and (id(sleep_avail).state) == 0){
+              id(script3).execute();}
+            if ((id(on_flag).state) == 1 and (id(sleep_avail).state) == 0){
+              id(script4).execute();}
+ 
+ 
+script:
+  - id: script1
+    then:
+      #- deep_sleep.prevent: deep_sleep_1
+      - mqtt.publish:
+          topic: esp01_air_freshener/air_fresh
+          payload: 0
+          retain: true
+      - switch.turn_on: spray
+      - delay: 1s
+      - deep_sleep.enter: deep_sleep_1
+ 
+  - id: script2
+    then:
+      - deep_sleep.enter: deep_sleep_1
+ 
+  - id: script3
+    then:
+      - deep_sleep.prevent: deep_sleep_1
+ 
+  - id: script4
+    then:
+      - mqtt.publish:
+          topic: esp01_air_freshener/air_fresh
+          payload: 0
+          retain: true
+      - switch.turn_on: spray
+      
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 5s
+
+  - platform: mqtt_subscribe
+    name: ${board_name}_on_flag
+    id: on_flag
+    topic: esp01_air_freshener/air_fresh
+
+  - platform: mqtt_subscribe
+    name: ${board_name}_sleep_avail
+    id: sleep_avail
+    topic: esp01_air_freshener/sleep_avail
+
+  - platform: adc
+    pin: VCC
+    name: ${board_name}_Vcc
+    update_interval: 5s
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+  - platform: gpio
+    pin: GPIO03
+    name: ${board_name}_switch
+    internal: true
+    id: valve
+  
+  - platform: template
+    name: ${board_name}_valve
+    icon: mdi:spray
+    id: spray
+    turn_on_action:
+    - switch.turn_on: valve
+    - delay: 100ms
+    - switch.turn_off: valve

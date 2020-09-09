@@ -1,0 +1,220 @@
+substitutions:
+  board_name: btf_pixel_strip
+ 
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp8285
+  comment: BTF Led Pixel Strip
+  
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.75
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 0s
+
+# mqtt:
+#   broker: 192.168.1.30
+#   username: !secret mqtt_user
+#   password: !secret mqtt_pass
+#   client_id: btf_pixel_strip
+#   discovery: false
+
+ota:
+
+# web_server:
+#   port: 80
+  
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B
+    pin: GPIO3
+    num_leds: 227
+    rgb_order: GRB
+    name: ${board_name}_LED
+    id: light1
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+
+  - platform: partition
+    name: ${board_name}_top
+    segments:
+      - id: light1
+        from: 0
+        to: 52
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:        
+  
+  - platform: partition
+    name: ${board_name}_wadrobe
+    segments:
+      - id: light1
+        from: 53
+        to: 227
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+
+  - platform: partition
+    name: ${board_name}_toilet
+    id: light1_toilet
+    segments:
+      - id: light1
+        from: 210
+        to: 227
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+      - automation:
+          name: "Occupied"
+          sequence:
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 50%
+                transition_length: 3s
+                red: 0%
+                green: 100%
+                blue: 0%
+            - delay: 2s
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 20%
+                transition_length: 2s
+                red: 0%
+                green: 100%
+                blue: 0%
+            - delay: 2s
+
+  - platform: partition
+    name: ${board_name}_bathroom
+    id: light1_bathroom
+    segments:
+      - id: light1
+        from: 152
+        to: 170
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:      
+      - automation:
+          name: "Occupied"
+          sequence:
+            - light.turn_on:
+                id: light1_bathroom
+                brightness: 50%
+                transition_length: 3s
+                red: 0%
+                green: 0%
+                blue: 100%
+            - delay: 2s
+            - light.turn_on:
+                id: light1_bathroom
+                brightness: 20%
+                transition_length: 2s
+                red: 0%
+                green: 0%
+                blue: 100%
+            - delay: 2s
+            
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s    
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time

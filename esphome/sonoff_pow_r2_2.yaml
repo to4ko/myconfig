@@ -1,0 +1,157 @@
+substitutions:
+  board_name: sonoff_pow_r2_2
+  ip_address: 192.168.1.132
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp01_1m
+  on_boot:
+    priority: -10
+    then:
+      - light.turn_on: main_led
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  manual_ip:
+    static_ip: 192.168.1.132
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+uart:
+  rx_pin: RX
+  baud_rate: 4800
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+# i2c:
+#   sda: GPIO04
+#   scl: GPIO05
+#   scan: True
+
+fan:
+  platform: speed
+  output: pwm_output
+  name: ${board_name}_Fan
+  speed:
+    low: 0.33
+    medium: 0.66
+    high: 1
+
+# status_led:
+#   pin:
+#     number: GPIO13
+#     #inverted: yes
+
+output:
+  - platform: esp8266_pwm
+    id: blue_led
+    pin: GPIO13
+    inverted: True
+  - platform: esp8266_pwm
+    pin: GPIO05
+    frequency: 20000 Hz
+    id: pwm_output
+
+light:
+  - platform: binary
+    name: ${board_name}_StatusLED
+    internal: true
+    output: blue_led
+    id: main_led
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    name: ${board_name}_Button
+    on_press:
+      - switch.toggle: relay
+      
+  - platform: status
+    name: ${board_name}_Status
+
+
+switch:
+  - platform: gpio
+    name: ${board_name}_Relay
+    pin: GPIO12
+    restore_mode: RESTORE_DEFAULT_ON
+    id: relay
+
+  - platform: restart
+    name: ${board_name}_Restart
+
+  - platform: gpio
+    name: ${board_name}_Bottom_Fan
+    pin: 
+      number: GPIO5 
+      mode: OUTPUT_OPEN_DRAIN
+    inverted: true
+    id: bottom_fan
+
+sensor:
+  - platform: cse7766
+    update_interval: 15s
+    current:
+      name: ${board_name}_Current
+    voltage:
+      name: ${board_name}_Voltage
+    power:
+      name: ${board_name}_Power
+      id: power
+
+
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time

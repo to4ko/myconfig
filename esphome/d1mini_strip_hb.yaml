@@ -1,0 +1,150 @@
+substitutions:
+  board_name: d1mini_strip_hb
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: d1_mini
+  
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  manual_ip:
+    static_ip: 192.168.1.89
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 0s
+  services:
+    - service: led_control
+      variables:
+        start_led: int
+        end_led: int
+        # red: int
+        # green: int
+        # blue: int
+        # brightness: int
+      then:
+        - light.turn_off: my_light
+        - light.addressable_set:
+            id: my_light
+            range_from: !lambda 'return start_led;'
+            range_to: !lambda 'return end_led;'
+        - light.turn_on: my_light
+
+ota:
+
+# web_server:
+#   port: 80
+
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B
+    pin: GPIO14
+    id: my_light
+    num_leds: 163
+    rgb_order: GRB
+    name: ${board_name}_LED
+    effects:
+      # Use default parameters:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+  - platform: partition
+    name: first_part
+    segments:
+      - id: my_light
+        from: 0
+        to: 150
+    effects:
+      # Use default parameters:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+  - platform: partition
+    name: second_part
+    segments:
+      - id: my_light
+        from: 100
+        to: 163
+    effects:
+      # Use default parameters:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+  
+time:
+  - platform: homeassistant
+    id: homeassistant_time
