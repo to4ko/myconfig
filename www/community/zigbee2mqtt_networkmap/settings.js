@@ -1,2 +1,0 @@
-var webhook_trigger_update_url = 'http://broadband-95-84-150-247.ip.moscow.rt.ru:823/api/webhook/0b26abcbf98d6f496244ad5906d93228f531f2b0b20550af253508616dd3dbb7';
-var webhook_check_update_url = 'http://broadband-95-84-150-247.ip.moscow.rt.ru:823/api/webhook/d28035b883783c6d9f56746bdb60b2358d4654487c0463778f780cb56229f9d7';
