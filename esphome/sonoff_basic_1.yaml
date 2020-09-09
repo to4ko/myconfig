@@ -1,0 +1,119 @@
+substitutions:
+  board_name: sonoff_basic_1
+
+esphome:
+  name: sonoff_basic_1
+  platform: ESP8266
+  board: esp01_1m
+  on_boot:
+    then:
+      - switch.turn_on: relay
+  comment: Round LED S Switch
+  
+wifi:
+  ssid: !secret wifi_ssid_hb
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.197
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+api:
+  reboot_timeout: 0s
+
+logger:
+
+ota:
+
+web_server:
+  port: 80
+
+# status_led:
+#   pin:
+#     number: GPIO13
+#     inverted: yes
+
+output:
+  - platform: esp8266_pwm
+    id: green_led
+    pin: GPIO13
+    inverted: True
+
+light:
+  - platform: binary
+    name: ${board_name}_StatusLED
+    internal: true
+    output: green_led
+    id: main_led
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    name: ${board_name}_Button
+    on_press:
+      - switch.toggle: relay
+      
+  - platform: status
+    name: ${board_name}_Status
+
+switch:
+  - platform: gpio
+    name: ${board_name}_Relay
+    pin: GPIO12
+    id: relay
+    on_turn_on:
+      then:
+        - light.turn_on: main_led
+    on_turn_off:
+      then:
+        - light.turn_off: main_led
+
+  - platform: restart
+    name: ${board_name}_Restart
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time

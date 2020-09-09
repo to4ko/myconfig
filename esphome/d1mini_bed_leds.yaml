@@ -1,0 +1,123 @@
+substitutions:
+  board_name: d1mini_bed_leds
+  
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: d1_mini
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.140
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.14
+    dns2: 8.8.8.8
+
+logger:
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+output:
+  - platform: esp8266_pwm
+    id: left_strip
+    pin: GPIO4
+
+  - platform: esp8266_pwm
+    id: right_strip
+    pin: GPIO5
+
+light:
+  - platform: monochromatic
+    name: ${board_name}_Strip_L
+    output: left_strip
+
+  - platform: monochromatic
+    name: ${board_name}_Strip_R
+    output: right_strip
+  
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+  - platform: gpio
+    pin:
+      number: GPIO14
+      inverted: false
+    name: ${board_name}_Motion_R
+    device_class: motion
+
+  - platform: gpio
+    pin:
+      number: GPIO12
+      inverted: false
+    name: ${board_name}_Motion_L
+    device_class: motion
+
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: adc
+    pin: A0
+    name: ${board_name}_Light
+    update_interval: 2s
+    filters:
+      - multiply: 3.3
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

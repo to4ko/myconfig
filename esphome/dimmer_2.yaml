@@ -1,0 +1,101 @@
+substitutions:
+  board_name: dimmer_2
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  manual_ip:
+    static_ip: 192.168.1.91
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+logger:
+ baud_rate: 0
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+# MS-105 serial communication
+uart:
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 9600
+
+# Register the Tuya MCU connection. Check your log for the correct values
+tuya:
+#[21:12:30][C][tuya:034]:   Datapoint 6: int value (value: 0)
+#[21:12:30][C][tuya:032]:   Datapoint 1: switch (value: OFF)
+#[21:12:30][C][tuya:034]:   Datapoint 2: int value (value: 717)
+
+# [00:06:26][C][tuya:032]:   Datapoint 1: switch (value: OFF)
+# [00:06:26][C][tuya:034]:   Datapoint 6: int value (value: 0)
+# [00:06:26][C][tuya:034]:   Datapoint 2: int value (value: 223)
+
+light:
+  - platform: "tuya"
+    name: ${board_name}_light
+    dimmer_datapoint: 2
+    switch_datapoint: 1
+    min_value: 0
+    max_value: 1000
+
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+    
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+    
+time:
+  - platform: homeassistant
+    id: homeassistant_time

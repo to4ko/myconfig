@@ -1,0 +1,113 @@
+substitutions:
+  board_name: tl11_1
+  ip_address: 192.168.1.136
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp8285
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  manual_ip:
+    static_ip: ${ip_address}
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+logger:
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    name: ${board_name}_Button
+    on_press:
+      - light.toggle: led_light
+
+  - platform: status
+    name: ${board_name}_Status
+
+
+output:
+- platform: esp8266_pwm
+  pin: GPIO14
+  frequency: 1000 Hz
+  id: pwm_b
+- platform: esp8266_pwm
+  pin: GPIO12
+  frequency: 1000 Hz
+  id: pwm_g
+- platform: esp8266_pwm
+  pin: GPIO4
+  frequency: 1000 Hz
+  id: pwm_r
+- platform: esp8266_pwm
+  pin: GPIO5
+  frequency: 1000 Hz
+  id: pwm_w
+
+light:
+- platform: rgbw
+  name: ${board_name}_LED
+  red: pwm_r
+  green: pwm_g
+  blue: pwm_b
+  white: pwm_w
+  id: led_light
+  
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time

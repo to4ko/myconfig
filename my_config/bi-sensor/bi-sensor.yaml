@@ -42,6 +42,18 @@
         icon_template: mdi:cup-off
         value_template: "{{as_timestamp(now())|int-as_timestamp(states.sensor.esp32_water_filter_postmembrane.last_changed)|int <2 }}"
 
+      noise_allowed:
+        value_template: >-
+          {% set x = states('sensor.time') %}
+          {% set hour = now().strftime("%H") | int  %}
+          {{ states('binary_sensor.workday_sensor') == 'on' and ( ( hour >= 9 and hour < 13 ) or ( hour >= 15 and hour < 19) ) }}
+        icon_template: >
+          {% if is_state('binary_sensor.noise_allowed','on') %}
+          mdi:volume-high
+          {% else %}
+          mdi:volume-off
+          {% endif %}
+
   - platform: trend
     sensors:
       bathroom_humidity_rising:

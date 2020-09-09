@@ -125,6 +125,25 @@
       data_template: 
         message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
 
+# ##################################
+# System - Device Delition
+# ##################################
+- alias: system_entity_change
+  initial_state: 'true'
+  mode: parallel
+  trigger:
+    - platform: event
+      event_type: device_registry_updated
+  action:
+    - service: python_script.exec
+      data_template:
+        device_id: "{{ trigger.event.data.device_id }}"
+        source: |
+          registry = hass.data['device_registry']
+          device = registry.async_get(data['device_id'])
+          if device and device.name_by_user == 'delete':
+              registry.async_remove_device(data['device_id'])
+
 
 # ##################################
 # System - Hass.io NEW Version
