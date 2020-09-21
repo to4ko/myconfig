@@ -14,12 +14,6 @@ from datetime import timedelta
 
 from homeassistant.components.weather import ATTR_FORECAST_CONDITION
 
-# Base component constants
-DOMAIN = "gismeteo"
-VERSION = "2.0.14"
-ISSUE_URL = "https://github.com/Limych/ha-gismeteo/issues"
-ATTRIBUTION = "Data provided by Gismeteo"
-
 BASE_URL = "https://services.gismeteo.ru/inform-service/inf_chrome"
 
 MMHG2HPA = 1.333223684

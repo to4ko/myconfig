@@ -60,9 +60,6 @@ from .const import (
     BASE_URL,
     MMHG2HPA,
     MS2KMH,
-    VERSION,
-    ISSUE_URL,
-    DOMAIN,
 )
 
 try:
@@ -72,6 +69,13 @@ except TypeError:
     import xml.etree.ElementTree as etree  # type: ignore
 
 _LOGGER = logging.getLogger(__name__)
+
+
+# Base component constants
+DOMAIN = "gismeteo"
+VERSION = '2.0.15'
+ISSUE_URL = "https://github.com/Limych/ha-gismeteo/issues"
+ATTRIBUTION = "Data provided by Gismeteo"
 
 
 # pylint: disable=unused-argument

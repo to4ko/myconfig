@@ -1,6 +1,6 @@
 substitutions:
-  board_name: tl11_1
-  ip_address: 192.168.1.136
+  board_name: monostrip
+  ip_address: 192.168.1.93
 
 esphome:
   name: ${board_name}
@@ -11,7 +11,10 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_pass
   domain: .localdomain
-  reboot_timeout: 0s
+  reboot_timeout: 15min
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
   manual_ip:
     static_ip: ${ip_address}
     gateway: 192.168.1.1
@@ -27,48 +30,24 @@ ota:
 web_server:
   port: 80
 
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: GPIO0
-      mode: INPUT_PULLUP
-      inverted: True
-    name: ${board_name}_Button
-    on_press:
-      - light.toggle: led_light
-
-  - platform: status
-    name: ${board_name}_Status
-
+light:
+  - platform: monochromatic
+    name: ${board_name}_light
+    output: pwm1
+    effects:
+      - flicker:
+      - strobe:
 
 output:
-- platform: esp8266_pwm
-  pin: GPIO14
-  frequency: 1000 Hz
-  id: pwm_b
-- platform: esp8266_pwm
-  pin: GPIO12
-  frequency: 1000 Hz
-  id: pwm_g
-- platform: esp8266_pwm
-  pin: GPIO4
-  frequency: 1000 Hz
-  id: pwm_r
-- platform: esp8266_pwm
-  pin: GPIO5
-  frequency: 1000 Hz
-  id: pwm_w
+  - platform: esp8266_pwm
+    id: pwm1
+    pin: GPIO12
+    frequency: 1000 Hz
 
-light:
-- platform: rgbw
-  name: ${board_name}_LED
-  red: pwm_r
-  green: pwm_g
-  blue: pwm_b
-  white: pwm_w
-  id: led_light
-  
-
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    
 switch:
   - platform: restart
     name: ${board_name}_Restart
@@ -76,6 +55,7 @@ switch:
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
+    icon: mdi:clock-outline
     id: uptime_sensor
 
   - platform: wifi_signal
@@ -108,6 +88,7 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+    
 time:
   - platform: homeassistant
     id: homeassistant_time

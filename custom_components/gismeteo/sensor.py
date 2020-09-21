@@ -24,9 +24,8 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.storage import STORAGE_DIR
 
-from . import Gismeteo
+from . import Gismeteo, ATTRIBUTION
 from .const import (
-    ATTRIBUTION,
     DEFAULT_NAME,
     MIN_TIME_BETWEEN_UPDATES,
     CONF_CACHE_DIR,

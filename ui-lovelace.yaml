@@ -21,7 +21,7 @@ views:
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 7
+                columns: 8
                 entities:
                   - entity: switch.air_freshener_spray
                     name: Spray
@@ -40,6 +40,10 @@ views:
                       service: automation.toggle
                       service_data:
                         entity_id: automation.hall_big_auto_light_on
+                  - entity: input_boolean.silent_mode
+                    name: Zz
+                    tap_action:
+                      action: toggle
                   - entity: sensor.0x00158d0001e8995a_temperature #sensor.temperature_158d0001e8995a
                     name: Temp
                   - entity: sensor.0x00158d0001e8995a_humidity #sensor.temperature_158d0001e8995a
@@ -85,14 +89,14 @@ views:
                 columns: 6
                 state_color: true
                 entities:
-                  - entity: sensor.cpu_package_temp
+                  - entity: sensor.processor_temperature #sensor.cpu_package_temp
                     name: CPUT
                   - entity: sensor.ipmi_fan1
                     name: FAN1
-                  - entity: sensor.cpu_usage
+                  - entity: sensor.processor_use #sensor.cpu_usage
                     name: CPU
                     icon: mdi:desktop-tower
-                  - entity: sensor.ram_usage
+                  - entity: sensor.memory_use_percent #sensor.ram_usage
                     name: RAM
                     icon: mdi:chip
                   - entity:  sensor.db_size
@@ -230,7 +234,7 @@ views:
                 name: HB
               - entity: binary_sensor.0x00158d0001d5995e_occupancy #binary_sensor.motion_sensor_158d0001d5995e
                 name: HB Door
-              - entity: binary_sensor.0x00158d0001ae9f61_occupancy #binary_sensor.motion_sensor_158d0001ae9f61
+              - entity: binary_sensor.motion_hs #binary_sensor.0x00158d0001ae9f61_occupancy #binary_sensor.motion_sensor_158d0001ae9f61
                 name: HS
               - entity: binary_sensor.motion_k
                 name: K
@@ -292,23 +296,23 @@ views:
                     icon: mdi:cached
                     tap_action:
                       action: toggle
-                  - entity: switch.0x00158d0001a248e9_switch_l1 #switch.plug_158d0001f9ebd8
+                  - entity: switch.sonoff_4ch_relay_3 #switch.0x00158d0001a248e9_switch_l1 #switch.plug_158d0001f9ebd8
                     name: Fan B
                     icon: mdi:fan
                     tap_action:
                       action: toggle
-                  - entity: switch.0x00158d0001a248e9_switch_l2 #switch.plug_158d0001f54f91
+                  - entity: switch.sonoff_4ch_relay_4 #switch.0x00158d0001a248e9_switch_l2 #switch.plug_158d0001f54f91
                     name: Fan T
                     icon: mdi:fan
                     tap_action:
                       action: toggle
-                  - entity: switch.0x00158d000366815b_switch_l2 #switch.plug_158d0001f54f90
+                  - entity: switch.sonoff_4ch_relay_2 #switch.0x00158d000366815b_switch_l2 #switch.plug_158d0001f54f90
                     name: W.ON
                     icon: mdi:valve-open
                     tap_action:
                       action: call-service
                       service: script.water_on
-                  - entity: switch.0x00158d000366815b_switch_l1 #switch.plug_158d00020d8679
+                  - entity: switch.sonoff_4ch_relay_1 #switch.0x00158d000366815b_switch_l1 #switch.plug_158d00020d8679
                     name: W.OFF
                     icon: mdi:valve-closed
                     tap_action:
@@ -502,7 +506,7 @@ views:
             #title: Lights
             show_name: true
             show_state: false
-            columns: 5
+            columns: 6
             state_color: true
             entities:
               - entity: light.led_strip_hb
@@ -529,11 +533,22 @@ views:
                 icon: mdi:card
                 tap_action:
                   action: toggle
-              - entity: light.led_color_v
-                name: Desk V
-                icon: mdi:desk-lamp
+              - entity: light.bedside_mb
+                name: Lava V
+                icon: mdi:lava-lamp
                 tap_action:
                   action: toggle
+              - entity: light.d1mini_bed_leds_strip_l
+                name: Bed L
+                icon: mdi:led-strip-variant
+                tap_action:
+                  action: toggle
+              - entity: light.d1mini_bed_leds_strip_r
+                name: Bed R
+                icon: mdi:led-strip-variant
+                tap_action:
+                  action: toggle
+
               
               - entity: light.round_led_mb
                 name: Main MB
@@ -545,18 +560,18 @@ views:
                 icon: mdi:desk-lamp
                 tap_action:
                   action: toggle
-              
+
+              - entity: light.round_led_s
+                name: Main S
+                icon: mdi:decagram
+                tap_action:
+                  action: toggle
               - entity: light.d1mini_co2_s_led
                 name: Str S
                 icon: mdi:alarm-light-outline
                 tap_action:
                   action: call-service
                   service: script.strip_s_effects
-              - entity: light.round_led_s
-                name: Main S
-                icon: mdi:decagram
-                tap_action:
-                  action: toggle
               - entity: light.philips_e27_s
                 name: Desk S
                 icon: mdi:desk-lamp
@@ -567,8 +582,13 @@ views:
                 icon: mdi:desk-lamp
                 tap_action:
                   action: toggle
+              - entity: light.led_color_v
+                name: Desk V
+                icon: mdi:desk-lamp
+                tap_action:
+                  action: toggle
 
-              - entity: switch.0x00158d0002a36e26_switch_left #switch.wall_switch_left_158d0002a36e26
+              - entity: switch.0x04cf8cdf3c7a9a48_switch_left #switch.0x00158d0002a36e26_switch_left #switch.wall_switch_left_158d0002a36e26
                 name: Main HS
                 icon: mdi:ceiling-light
                 tap_action:
@@ -578,35 +598,38 @@ views:
                 icon: mdi:candle
                 tap_action:
                   action: toggle
-              - entity: light.magichome_mono_strip_light
-                name: Strip K
-                tap_action:
-                  action: toggle
-              
-              - entity: switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+
+              - entity: switch.0x04cf8cdf3c7a9a48_switch_center #switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
                 name: Bath
                 icon: mdi:spotlight
                 tap_action:
                   action: toggle
-              - entity: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-                name: Toilet
-                icon: mdi:spotlight
+              - entity: light.mirror_light_b
+                name: Mirror
+                icon: mdi:mirror
                 tap_action:
                   action: toggle
+                  
+              - entity: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+                name: Main T
+                #icon: mdi:spotlight
+                tap_action:
+                  action: toggle
+              - entity: switch.sonoff_mini_2_relay
+                name: LED T
+                #icon: mdi:spotlight
+                tap_action:
+                  action: toggle
+
                   
               - entity: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
                 name: Main K
                 icon: mdi:circle-slice-8
                 tap_action:
                   action: toggle
-              - entity: switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+              - entity: light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
                 name: Night K
                 icon: mdi:candle
-                tap_action:
-                  action: toggle
-              - entity: light.bedside_mb
-                name: Lava V
-                icon: mdi:lava-lamp
                 tap_action:
                   action: toggle
               - entity: switch.0x00158d0002a365df_switch_left #switch.wall_switch_left_158d0002a365df
@@ -736,11 +759,11 @@ views:
                 icon: mdi:power-socket-au
                 tap_action:
                   action: toggle
-              - entity: switch.0x00158d000232481a_switch #switch.plug_158d000232481a
-                name: Air K
-                icon: mdi:power-socket
-                tap_action:
-                  action: toggle
+              # - entity: switch.0x00158d000232481a_switch #switch.plug_158d000232481a
+              #   name: Air K
+              #   icon: mdi:power-socket
+              #   tap_action:
+              #     action: toggle
 
               - entity: switch.0x00158d0002467773_switch #switch.wall_plug_158d0002467773
                 name: PC MB
@@ -1156,7 +1179,7 @@ views:
         entities:
           - light.round_led_k
           - switch.0x00158d0002a36f7f_switch_right #switch.wall_switch_right_158d0002a36f7f
-          - switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+          - light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
           - light.bedside_mb
           - switch.ss5_hood_light #switch.esp32_kitchen_light
           - switch.0x00158d0002a365df_switch_left #switch.wall_switch_right_158d0002a365df
@@ -1171,7 +1194,7 @@ views:
           - switch.0x00158d0002476ed1_switch #switch.wall_plug_158d0002476ed1
           - switch.0x00158d000249b25b_switch #switch.wall_plug_158d000249b25b
           - type: divider
-          - switch.0x00158d000232481a_switch #switch.plug_158d000232481a
+          #- switch.0x00158d000232481a_switch #switch.plug_158d000232481a
           - switch.0x00158d0001e85086_switch #switch.plug_158d0001e85086
           - type: divider
           - switch.0x00158d00039bd56d_switch #switch.plug_158d00039bd56d
@@ -1182,7 +1205,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - switch.0x00158d0002a36e26_switch_left #switch.wall_switch_left_158d0002a36e26
+          - switch.0x04cf8cdf3c7a9a48_switch_left #switch.0x00158d0002a36e26_switch_left #switch.wall_switch_left_158d0002a36e26
           - light.btf_pixel_strip_led
           - type: divider
           - light.btf_pixel_strip_top #switch.0x00158d0001f5501f_switch #switch.plug_158d0001f5501f
@@ -1199,27 +1222,25 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
+          - switch.0x04cf8cdf3c7a9a48_switch_center #switch.0x00158d0002a36e26_switch_right #switch.wall_switch_right_158d0002a36e26
           - light.mirror_light_b
           - type: divider
           - switch.sonoff_pow_r2_1_relay #switch.0x00158d0002c3d86e_switch #switch.plug_158d0002c3d86e
           - switch.0x00158d0002482619_switch #switch.0x00158d0003926263_switch #switch.plug_158d0003926263
-          - switch.0x00158d0001a248e9_switch_l1 #switch.plug_158d0001f9ebd8
+          - switch.sonoff_4ch_relay_3 #switch.0x00158d0001a248e9_switch_l1 #switch.plug_158d0001f9ebd8
           - type: divider
-          - switch.0x00158d000366815b_switch_l2 #switch.plug_158d0001f54f90
-          - switch.0x00158d000366815b_switch_l1 #switch.plug_158d00020d8679
-          - type: divider
-          - switch.0x00158d0001a248e3_switch_l1
-          - switch.0x00158d0001a248e3_switch_l2
-          
+          - switch.sonoff_4ch_relay_2 #switch.0x00158d000366815b_switch_l2 #switch.plug_158d0001f54f90
+          - switch.sonoff_4ch_relay_1 #switch.0x00158d000366815b_switch_l1 #switch.plug_158d00020d8679
+
       - type: entities
         title: Toilet
         show_header_toggle: false
         state_color: true
         entities:
           - switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+          - switch.sonoff_mini_2_relay
           - type: divider
-          - switch.0x00158d0001a248e9_switch_l2 #switch.plug_158d0001f54f91
+          - switch.sonoff_4ch_relay_4 #switch.0x00158d0001a248e9_switch_l2 #switch.plug_158d0001f54f91
 
       - type: entities
         title: Storage
@@ -1227,6 +1248,7 @@ views:
         state_color: true
         entities:
           - switch.0x00158d0002a36433_switch_right #switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
+          - switch.0x00158d0002a36433_switch_left #switch.0x00158d000248bf53_switch #switch.wall_switch_158d000248bf53
 
 ################################################################
 # SENSORS BY ROOM PAGE
@@ -1246,9 +1268,6 @@ views:
           - binary_sensor.0x00158d0002b482e9_occupancy #binary_sensor.motion_sensor_158d0002b482e9
           - binary_sensor.0x00158d0002b43ad4_occupancy
           - sensor.0x00158d00023d3206_click #binary_sensor.switch_158d00023d3206
-          - sensor.0x00158d0001e05856_illuminance #sensor.illumination_158d0001e05856
-          #- sensor.illumination_7811dcb8cb4b
-          - sensor.0x00158d0002b482e9_illuminance #sensor.illumination_158d0002b482e9
           - sensor.0x00158d000237167c_temperature #sensor.temperature_158d000237167c
           - sensor.0x00158d000237167c_pressure #sensor.pressure_158d000237167c
           - sensor.0x00158d000237167c_humidity #sensor.humidity_158d000237167c
@@ -1270,15 +1289,9 @@ views:
           - binary_sensor.0x00158d0003140824_occupancy
           - sensor.0x00158d00019c8afd_click #binary_sensor.switch_158d00019c8afd
           - sensor.0x00158d0001f3627d_click #binary_sensor.switch_158d0001f3627d
-          - sensor.0x00158d000224f89f_illuminance #sensor.illumination_158d000224f89f
-          #- sensor.illumination_7811dcb8d612
           - sensor.0x00158d0001e6d85a_temperature #sensor.temperature_158d0001e6d85a
           - sensor.0x00158d0001e6d85a_humidity #sensor.humidity_158d0001e6d85a
 
-          #- binary_sensor.vibration_158d0002a8ac3c
-          #- sensor.bed_activity_158d0002a8ac3c
-          #- sensor.coordination_158d0002a8ac3c
-          #- sensor.tilt_angle_158d0002a8ac3c
       - type: entities
         title: Kitchen
         show_header_toggle: false
@@ -1287,11 +1300,9 @@ views:
           - binary_sensor.0x00158d00025371f6_contact #binary_sensor.door_window_sensor_158d00025371f6
           - binary_sensor.0x00158d0002b4729d_occupancy #binary_sensor.motion_sensor_158d0002b4729d
           - binary_sensor.0x00158d0002b48381_occupancy #binary_sensor.motion_sensor_158d0002b48381
-          - sensor.0x00158d0002b4729d_illuminance #sensor.illumination_158d0002b4729d
           - binary_sensor.0x00158d00023297e7_water_leak #binary_sensor.water_leak_sensor_158d00023297e7
           - sensor.0x00158d0001e586af_temperature #sensor.temperature_158d0001e586af
           - sensor.0x00158d0001e586af_humidity #sensor.humidity_158d0001e586af
-          #- sensor.illumination_04cf8c97808b
           - binary_sensor.0x00158d00024bcf85_gas #binary_sensor.natgas_sensor_158d00024bcf85
           - binary_sensor.0x00158d0002c92f31_smoke #binary_sensor.smoke_sensor_158d0002c92f31
       - type: entities
@@ -1304,12 +1315,7 @@ views:
           - binary_sensor.0x00158d000236bb94_occupancy #binary_sensor.motion_sensor_158d000236bb94
           - sensor.0x00158d00016bdb4a_click #binary_sensor.switch_158d00016bdb4a
           - sensor.0x00158d0001712d55_click
-          # - binary_sensor.wall_switch_both_158d0001712d55
-          # - binary_sensor.wall_switch_left_158d0001712d55
-          # - binary_sensor.wall_switch_right_158d0001712d55
           - sensor.0x00158d0001e58714_humidity #ensor.humidity_158d0001e58714
-          - sensor.0x00158d000236bb94_illuminance #sensor.illumination_158d000236bb94
-          #- sensor.illumination_7c49ebb19080
           - sensor.0x00158d0001e58714_temperature #sensor.temperature_158d0001e58714
       - type: entities
         title: Hall Small
@@ -1317,7 +1323,6 @@ views:
         state_color: true
         entities:
           - binary_sensor.0x00158d0001ae9f61_occupancy #binary_sensor.motion_sensor_158d0001ae9f61
-          #- sensor.illumination_7c49eb195e21
       - type: entities
         title: Master Bedroom
         show_header_toggle: false
@@ -1326,18 +1331,9 @@ views:
           - binary_sensor.0x00158d000200ad58_contact #binary_sensor.door_window_sensor_158d000200ad58
           - binary_sensor.0x00158d00025315e9_contact #binary_sensor.door_window_sensor_158d00025315e9
           - binary_sensor.0x00158d0001e53cda_occupancy #binary_sensor.motion_sensor_158d0001e53cda
-          #- binary_sensor.wall_switch_both_158d00013e6aa5
-          #- binary_sensor.wall_switch_left_158d00013e6aa5
-          #- binary_sensor.wall_switch_right_158d00013e6aa5
           - sensor.0x00158d00013e6aa5_click
           - sensor.0x00158d000222c746_humidity #sensor.humidity_158d000222c746
-          - sensor.0x00158d0001e53cda_illuminance #sensor.illumination_158d0001e53cda
-          #- sensor.illumination_7c49ebb1b5e1
           - sensor.0x00158d000222c746_temperature #sensor.temperature_158d000222c746
-          #- binary_sensor.vibration_158d0002a2412d
-          #- sensor.bed_activity_158d0002a2412d
-          #- sensor.coordination_158d0002a2412d
-          #- sensor.tilt_angle_158d0002a2412d
 
       - type: entities
         title: Bathroom
@@ -1350,7 +1346,6 @@ views:
           - binary_sensor.0x00158d0002373a67_water_leak #binary_sensor.water_leak_sensor_158d0002373a67
           - sensor.0x00158d00020d7c3a_temperature #sensor.temperature_158d00020d7c3a
           - sensor.0x00158d00020d7c3a_humidity #sensor.humidity_158d00020d7c3a
-          - sensor.0x00158d000236bc6d_illuminance #sensor.illumination_158d000236bc6d
       - type: entities
         title: Toilet
         show_header_toggle: false
@@ -1361,7 +1356,6 @@ views:
           - binary_sensor.0x00158d0001e54280_occupancy #binary_sensor.motion_sensor_158d0001e54280
           - sensor.0x00158d0001b97111_click #binary_sensor.switch_158d0001b97111
           - binary_sensor.0x00158d00023684c2_water_leak #binary_sensor.water_leak_sensor_158d00023684c2
-          - sensor.0x00158d0001e54280_illuminance #sensor.illumination_158d0001e54280
           - sensor.0x00158d0001e58754_temperature #sensor.temperature_158d0001e58754
           - sensor.0x00158d0001e58754_humidity #sensor.humidity_158d0001e58754
       - type: entities
@@ -1762,9 +1756,6 @@ views:
               - sensor.utility_hs
               - type: divider
               - sensor.washer_b
-              - sensor.relay_fan_b
-              - sensor.relay_valve_b
-              - sensor.relay_aux_b
 
           - type: entities
             title: Master bedroom
@@ -1805,8 +1796,6 @@ views:
               - sensor.pc_k
               - sensor.tv_k
               - sensor.oven_k
-              - sensor.air_filter_k
-              - sensor.night_k
               - sensor.plug_tv_k
               - sensor.plug_top_k
 
@@ -2518,6 +2507,7 @@ views:
                   - input_select.main_audio_out
                   - input_number.main_volume
                   - script.tts_test
+                  - input_boolean.silent_mode
           - type: glance
             columns: 9
             state_color: true
@@ -3896,6 +3886,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - binary_sensor.sonoff_mini_2_status
           - binary_sensor.sonoff_mini_1_status
           - binary_sensor.sonoff_4ch_status
           - binary_sensor.d1mini_bed_leds_status
@@ -3931,6 +3922,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - sensor.sonoff_mini_2_wifi_rssi
           - sensor.sonoff_mini_1_wifi_rssi
           - sensor.sonoff_4ch_wifi_rssi
           - sensor.d1mini_bed_leds_wifi_rssi
@@ -3967,6 +3959,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - sensor.sonoff_mini_2_uptime
           - sensor.sonoff_mini_1_uptime
           - sensor.sonoff_4ch_uptime
           - sensor.d1mini_bed_leds_uptime
@@ -4182,6 +4175,8 @@ views:
               - light.bedside_mb
               - type: divider
               - light.mirror_light_b
+              - type: divider
+              - light.led_strip_hb
       - type: vertical-stack
         cards: 
           - type: entities
@@ -4202,6 +4197,8 @@ views:
               - switch.0x00158d00039bd56d_switch
               - type: divider
               - switch.sonoff_mini_1_relay
+              - type: divider
+              - switch.0x00158d00023e5812_switch
       - type: vertical-stack
         cards: 
           - type: entities
@@ -4222,7 +4219,8 @@ views:
               - script.bedside_mb_restart
               - type: divider
               - script.mirror_light_b_restart
-
+              - type: divider
+              - script.led_strip_hb_restart
 
 ################################################################
 # z2m
@@ -4303,24 +4301,24 @@ views:
       #     - binary_sensor.pinhole_camera_status
       #     - binary_sensor.digma100_camera_status
 
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - entity: switch.0x00158d000366815b_switch_l1
-          - entity: switch.0x00158d000366815b_switch_l2
-          - entity: switch.0x00158d0001a248e9_switch_l1
-          - entity: switch.0x00158d0001a248e9_switch_l2
-          - entity: switch.0x00158d0001a248e3_switch_l1
-          - entity: switch.0x00158d0001a248e3_switch_l2
-          - type: divider
-          - entity: sensor.0x00158d000239ad5b_temperature
-          - entity: sensor.0x00158d000239ad5b_humidity
-          - type: divider
-          - entity: binary_sensor.0x00158d000253722b_contact
-            name: old
-          - entity: binary_sensor.0x00158d000323c87c_contact
-            name: new
+      # - type: entities
+      #   show_header_toggle: false
+      #   state_color: true
+      #   entities:
+      #     - entity: switch.sonoff_4ch_relay_1 #switch.0x00158d000366815b_switch_l1
+      #     - entity: switch.sonoff_4ch_relay_2 #switch.0x00158d000366815b_switch_l2
+      #     - entity: switch.sonoff_4ch_relay_3 #switch.0x00158d0001a248e9_switch_l1
+      #     - entity: switch.sonoff_4ch_relay_4 #switch.0x00158d0001a248e9_switch_l2
+      #     # - entity: switch.0x00158d0001a248e3_switch_l1
+      #     # - entity: switch.0x00158d0001a248e3_switch_l2
+      #     - type: divider
+      #     - entity: sensor.0x00158d000239ad5b_temperature
+      #     - entity: sensor.0x00158d000239ad5b_humidity
+      #     - type: divider
+      #     - entity: binary_sensor.0x00158d000253722b_contact
+      #       name: old
+      #     - entity: binary_sensor.0x00158d000323c87c_contact
+      #       name: new
 
       - type: custom:stack-in-card
         mode: vertical
@@ -4376,10 +4374,6 @@ views:
       - type: history-graph
         hours_to_show: 48
         entities:
-          - sensor.0x00158d000239ad5b_temperature
-      - type: history-graph
-        hours_to_show: 48
-        entities:
           - sensor.0x00158d0001e586af_temperature
       - type: history-graph
         hours_to_show: 48
@@ -4409,7 +4403,10 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x00158d0001e8995a_temperature
-          
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.sonoff_4ch_temperature
   - title: Humidity
     icon: mdi:water-percent
     cards:
@@ -4425,10 +4422,6 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x00158d0001e58754_humidity
-      - type: history-graph
-        hours_to_show: 48
-        entities:
-          - sensor.0x00158d000239ad5b_humidity
       - type: history-graph
         hours_to_show: 48
         entities:
@@ -4461,6 +4454,10 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x00158d0001e8995a_humidity
+      - type: history-graph
+        hours_to_show: 48
+        entities:
+          - sensor.sonoff_4ch_humidity
           
   - title: Motion
     icon: mdi:run
@@ -4470,22 +4467,28 @@ views:
         #columns: 7
         entities:
           - entity: binary_sensor.0x00158d0001d5995e_occupancy
-            name: mD
+            name: HB - Mid Dooor
             secondary_info: last-changed
           - entity: binary_sensor.0x00158d0001e05856_occupancy
-            name: eHB
+            name: HB - Entrance
             secondary_info: last-changed
           - entity: binary_sensor.0x00158d0002b482e9_occupancy
-            name: fHB
+            name: HB - Fridge
+            secondary_info: last-changed
+          - entity: binary_sensor.0x00158d0002b43ad4_occupancy
+            name: HB - Mirror
             secondary_info: last-changed
           - entity: binary_sensor.0x00158d000224f89f_occupancy
-            name: S
+            name: S - Entrance
             secondary_info: last-changed
           - entity: binary_sensor.0x00158d0003140824_occupancy
-            name: wS
+            name: S - Window
             secondary_info: last-changed
           - entity: binary_sensor.0x00158d0001ae9f61_occupancy
-            name: HS
+            name: HS - Near
+            secondary_info: last-changed
+          - entity: binary_sensor.0x158d0003f27ce2_motion
+            name: HS - Far
             secondary_info: last-changed
           - entity: binary_sensor.0x00158d0001aea602_occupancy
             name: St
@@ -4502,36 +4505,26 @@ views:
           - entity: binary_sensor.0x00158d000236bc6d_occupancy
             name: B
             secondary_info: last-changed
-          - entity: binary_sensor.0x00158d0002b43ad4_occupancy
-            name: mHB
-            secondary_info: last-changed
           - entity: binary_sensor.0x00158d0002b4729d_occupancy
-            name: K
+            name: K - Main
             secondary_info: last-changed
           - entity: binary_sensor.0x00158d0002b48381_occupancy
-            name: 2K
+            name: K - Entrance
             secondary_info: last-changed
 
-  - title: Swtiches
-    icon: mdi:power-plug
-    cards:
       - type: entities
         show_header_toggle: false
         state_color: true
         entities:
-          - switch.0x00158d0001a248e3_switch_l1
-          - switch.0x00158d0001a248e3_switch_l2
-          - switch.0x00158d0001a248e9_switch_l1
-          - switch.0x00158d0001a248e9_switch_l2
           - switch.0x00158d0001e85086_switch
           - switch.0x00158d0001f2630e_switch
-          - switch.0x00158d0001f5501f_switch
+          #- switch.0x00158d0001f5501f_switch
           - switch.0x00158d000205a835_switch
-          - switch.0x00158d000216528c_switch
+          #- switch.0x00158d000216528c_switch
           - switch.0x00158d000223921b_switch_left
           - switch.0x00158d000223921b_switch_right
           - switch.0x00158d000230fc52_switch
-          - switch.0x00158d000232481a_switch
+          #- switch.0x00158d000232481a_switch
           - switch.0x00158d000239097a_switch
           - switch.0x00158d0002395d58_switch
           - switch.0x00158d0002395dc9_switch
@@ -4558,8 +4551,9 @@ views:
           - switch.0x00158d0002a36433_switch_right
           - switch.0x00158d0002a365df_switch_left
           - switch.0x00158d0002a365df_switch_right
-          - switch.0x00158d0002a36e26_switch_left
-          - switch.0x00158d0002a36e26_switch_right
+          - switch.0x04cf8cdf3c7a9a48_switch_left #switch.0x00158d0002a36e26_switch_left
+          - switch.0x04cf8cdf3c7a9a48_switch_center #switch.0x00158d0002a36e26_switch_right
+          - switch.0x04cf8cdf3c7a9a48_switch_right
           - switch.0x00158d0002a36f7f_switch_left
           - switch.0x00158d0002a36f7f_switch_right
           - switch.0x00158d000322e1d9_switch
@@ -4574,8 +4568,6 @@ views:
           - switch.0x00158d00035f44a7_switch
           - switch.0x00158d0003600ea4_switch
           - switch.0x00158d00036148b9_switch
-          - switch.0x00158d000366815b_switch_l1
-          - switch.0x00158d000366815b_switch_l2
           - switch.0x00158d00039258de_switch
           - switch.0x00158d000392623d_switch
           - switch.0x00158d00039bd56d_switch

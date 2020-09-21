@@ -8,6 +8,7 @@
 - alias: system_error_counter
   initial_state: 'true'
   mode: parallel
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: system_log_event
@@ -15,7 +16,7 @@
         level: ERROR
   condition:
     - condition: template
-      value_template: "{{ not 'automation.system_error_counter' in trigger.event.data.message }}"
+      value_template: "{{ not 'system_error_counter' in trigger.event.data.message }}"
   action:
     - service: counter.increment
       entity_id: counter.error_counter
@@ -25,6 +26,7 @@
 # ##################################
 - alias: system_warning_counter
   mode: parallel
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: system_log_event
@@ -32,7 +34,7 @@
         level: WARNING
   condition:
     - condition: template
-      value_template: "{{ not 'automation.system_warning_counter' in trigger.event.data.message }}"
+      value_template: "{{ not 'system_warning_counter' in trigger.event.data.message }}"
   action:
     - service: counter.increment
       entity_id: counter.warning_counter
@@ -249,7 +251,7 @@
   initial_state: 'true'
   trigger:
     - platform: time_pattern
-      minutes: "/10"
+      minutes: "/15"
   condition: 
     - condition: template
       value_template: >
@@ -606,3 +608,24 @@
     - service: notify.telegram
       data_template:
         message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.0x00124b001ec8dc5c_radiation_dose_per_hour')|int}}мкР/ч!"
+        
+# ##################################
+# System - Silent Mode Toggle
+# ##################################
+- alias: system_silent_mode_toggle
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.silent_mode
+      from: 'on'
+      to: 'off'
+    - platform: state
+      entity_id: input_boolean.silent_mode
+      from: 'off'
+      to: 'on'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.main_volume
+        value: "{% if is_state('input_boolean.silent_mode','on') %}0{%else%}0.3{%endif%}"
+        

@@ -254,9 +254,8 @@
     sensors:
 
       nonsmoker:
-        value_template: "{{ (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"
+        value_template: "{{ states('sensor.time') and (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"
         friendly_name: 'Not smoking'
-        entity_id: sensor.time
         unit_of_measurement: 'Days'
         icon_template: mdi:smoking-off
 
@@ -310,37 +309,38 @@
       last_motion:
         friendly_name: 'Last Motion'
         value_template: >
-          {%- set sensors = [states.binary_sensor['0x00158d0001ae9f61_occupancy'],states.binary_sensor['0x00158d0003140824_occupancy'],states.binary_sensor['0x00158d0001aea602_occupancy'],states.binary_sensor['0x00158d0002b43ad4_occupancy'],states.binary_sensor['0x00158d0001d5995e_occupancy'],states.binary_sensor['0x00158d0001e05856_occupancy'],states.binary_sensor['0x00158d0001e53cda_occupancy'],states.binary_sensor['0x00158d0001e54280_occupancy'],states.binary_sensor['0x00158d000224f89f_occupancy'],states.binary_sensor['0x00158d000236bb94_occupancy'],states.binary_sensor['0x00158d000236bc6d_occupancy'],states.binary_sensor['0x00158d0002b4729d_occupancy'],states.binary_sensor['0x00158d0002b482e9_occupancy'],states.binary_sensor['0x00158d0002b48381_occupancy'] ] %}
+          {%- set sensors = [states.binary_sensor['0x00158d0001ae9f61_occupancy'],states.binary_sensor['0x00158d0003140824_occupancy'],states.binary_sensor['0x00158d0001aea602_occupancy'],states.binary_sensor['0x00158d0001e05856_occupancy'],states.binary_sensor['0x00158d0001e53cda_occupancy'],states.binary_sensor['0x00158d0001e54280_occupancy'],states.binary_sensor['0x00158d000224f89f_occupancy'],states.binary_sensor['0x00158d000236bb94_occupancy'],states.binary_sensor['0x00158d000236bc6d_occupancy'],states.binary_sensor['0x00158d0002b4729d_occupancy'],states.binary_sensor['0x00158d0002b482e9_occupancy'],states.binary_sensor['0x00158d0002b48381_occupancy'] ] %}
           {% for sensor in sensors %}
             {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
               {{ sensor.name }}
             {% endif %}
           {% endfor %}
-        entity_id: binary_sensor.0x00158d0001ae9f61_occupancy, binary_sensor.0x00158d0003140824_occupancy, binary_sensor.0x00158d0001aea602_occupancy, binary_sensor.0x00158d0002b43ad4_occupancy, binary_sensor.0x00158d0001d5995e_occupancy, binary_sensor.0x00158d0001e05856_occupancy, binary_sensor.0x00158d0001e53cda_occupancy, binary_sensor.0x00158d0001e54280_occupancy, binary_sensor.0x00158d000224f89f_occupancy, binary_sensor.0x00158d000236bb94_occupancy, binary_sensor.0x00158d000236bc6d_occupancy, binary_sensor.0x00158d0002b4729d_occupancy, binary_sensor.0x00158d0002b482e9_occupancy, binary_sensor.0x00158d0002b48381_occupancy
+
+# ,states.binary_sensor['0x00158d0002b43ad4_occupancy'],states.binary_sensor['0x00158d0001d5995e_occupancy']
+
       last_motion_time:
         friendly_name: 'Last Motion Time'
         value_template: '{{ as_timestamp(states.group.motion.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
 
-      # bathroom_no_motion_since:
-      #   friendly_name: 'Bathroom No Motion Since'
-      #   value_template: "{{ states.binary_sensor.motion_sensor_158d000236bc6d.attributes['No motion since'] | int}}"
-      #   unit_of_measurement: 's'
-      #   entity_id: sensor.time
-      #   entity_id: binary_sensor.motion_sensor_158d000236bc6d
+      # # bathroom_no_motion_since:
+      # #   friendly_name: 'Bathroom No Motion Since'
+      # #   value_template: "{{ states.binary_sensor.motion_sensor_158d000236bc6d.attributes['No motion since'] | int}}"
+      # #   unit_of_measurement: 's'
+      # #   entity_id: sensor.time
+      # #   entity_id: binary_sensor.motion_sensor_158d000236bc6d
 
-      # security_last_change:
-      #   friendly_name: 'Last change motion sensor'
-      #   value_template: >
-      #     {%- set sensors = [states.binary_sensor['0x00158d0001ae9f61_occupancy'],states.binary_sensor['0x00158d0003140824_occupancy'],states.binary_sensor['0x00158d0001aea602_occupancy'],states.binary_sensor['0x00158d0002b43ad4_occupancy'],states.binary_sensor['0x00158d0001d5995e_occupancy'],states.binary_sensor['0x00158d0001e05856_occupancy'],states.binary_sensor['0x00158d0001e53cda_occupancy'],states.binary_sensor['0x00158d0001e54280_occupancy'],states.binary_sensor['0x00158d000224f89f_occupancy'],states.binary_sensor['0x00158d000236bb94_occupancy'],states.binary_sensor['0x00158d000236bc6d_occupancy'],states.binary_sensor['0x00158d0002b4729d_occupancy'],states.binary_sensor['0x00158d0002b482e9_occupancy'],states.binary_sensor['0x00158d0002b48381_occupancy'] ] %}
-      #     {% for sensor in sensors %}
-      #       {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-      #         {{ sensor.name }}
-      #       {% endif %}
-      #     {% endfor %}
-      security_last_change_time:
-        friendly_name: 'Last change sensor time'
-        value_template: '{{ (now()-states.sensor.last_motion.last_changed) | timestamp_custom("%H:%M:%S") }}'
-        entity_id: sensor.last_motion
+      # # security_last_change:
+      # #   friendly_name: 'Last change motion sensor'
+      # #   value_template: >
+      # #     {%- set sensors = [states.binary_sensor['0x00158d0001ae9f61_occupancy'],states.binary_sensor['0x00158d0003140824_occupancy'],states.binary_sensor['0x00158d0001aea602_occupancy'],states.binary_sensor['0x00158d0002b43ad4_occupancy'],states.binary_sensor['0x00158d0001d5995e_occupancy'],states.binary_sensor['0x00158d0001e05856_occupancy'],states.binary_sensor['0x00158d0001e53cda_occupancy'],states.binary_sensor['0x00158d0001e54280_occupancy'],states.binary_sensor['0x00158d000224f89f_occupancy'],states.binary_sensor['0x00158d000236bb94_occupancy'],states.binary_sensor['0x00158d000236bc6d_occupancy'],states.binary_sensor['0x00158d0002b4729d_occupancy'],states.binary_sensor['0x00158d0002b482e9_occupancy'],states.binary_sensor['0x00158d0002b48381_occupancy'] ] %}
+      # #     {% for sensor in sensors %}
+      # #       {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+      # #         {{ sensor.name }}
+      # #       {% endif %}
+      # #     {% endfor %}
+      # security_last_change_time:
+      #   friendly_name: 'Last change sensor time'
+      #   value_template: '{{ (now()-states.sensor.last_motion.last_changed) | timestamp_custom("%H:%M:%S") }}'
 
       door_last_change:
         friendly_name: 'Last change door sensor'
@@ -351,11 +351,9 @@
               {{ sensor.name }}
             {% endif %}
           {% endfor %}
-        entity_id: binary_sensor.0x00158d00027129ae_contact, binary_sensor.0x00158d0001ef2ffc_contact, binary_sensor.0x00158d0002a14c5e_contact, binary_sensor.0x00158d0002529b9c_contact, binary_sensor.0x00158d00025315e9_contact, binary_sensor.0x00158d0001e5d6be_contact, binary_sensor.0x00158d0002531749_contact
       door_last_change_time:
         friendly_name: 'Last change door sensor time'
         value_template: '{{ (now()-states.sensor.door_last_change.last_changed) | timestamp_custom("%H:%M:%S") }}'
-        entity_id: sensor.door_last_change
 
       window_last_change:
         friendly_name: 'Last change window sensor'
@@ -366,12 +364,10 @@
               {{ sensor.name }}
             {% endif %}
           {% endfor %}
-        entity_id: binary_sensor.0x00158d00025371f6_contact, binary_sensor.0x00158d000200ad58_contact, binary_sensor.0x00158d00022ccffe_contact, binary_sensor.0x00158d00025370d1_contact
       window_last_change_time:
         friendly_name: 'Last change window sensor time'
         value_template: '{{ (now()-states.sensor.window_last_change.last_changed) | timestamp_custom("%H:%M:%S") }}'
-        entity_id: sensor.window_last_change
-      
+
       stove:
         value_template: "{{ state_attr('switch.0x00158d000249b25b_switch','power')|float }}"
         unit_of_measurement: 'W'
@@ -387,7 +383,7 @@
       people_home:
         friendly_name: Persons At Home
         value_template: "{{states.person | map(attribute='state') | select('eq','home')| list | length }}"
-        entity_id: person.dima, person.sandra, person.vova, person.sasha
+        #entity_id: person.dima, person.sandra, person.vova, person.sasha
         unit_of_measurement: 'ea'
         icon_template: mdi:account-group
 
@@ -403,3 +399,16 @@
       - 'time_date'
       - 'time_utc'
       - 'beat'
+      
+  - platform: template
+    sensors:
+      current_year:
+        value_template: "{{states('sensor.date').split('-')[0]}}"
+      current_month:
+        value_template: "{{states('sensor.date').split('-')[1]}}"
+      current_day:
+        value_template: "{{states('sensor.date').split('-')[2]}}"
+      current_hour:
+        value_template: "{{states('sensor.time').split(':')[0]}}"
+      current_minute:
+        value_template: "{{states('sensor.time').split(':')[1]}}"      

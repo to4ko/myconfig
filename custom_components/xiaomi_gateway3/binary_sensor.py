@@ -1,6 +1,7 @@
 import logging
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorEntity, \
+    DEVICE_CLASS_DOOR, DEVICE_CLASS_MOISTURE
 from homeassistant.core import callback
 from homeassistant.helpers.event import async_call_later
 
@@ -10,7 +11,8 @@ from .gateway3 import Gateway3
 _LOGGER = logging.getLogger(__name__)
 
 DEVICE_CLASS = {
-    'contact': 'door'
+    'contact': DEVICE_CLASS_DOOR,
+    'water_leak': DEVICE_CLASS_MOISTURE,
 }
 
 
@@ -60,7 +62,8 @@ class Gateway3MotionSensor(Gateway3BinarySensor):
     def update(self, data: dict = None):
         if self._attr not in data:
             return
-        self._state = data[self._attr] == 1
+        # gas and smoke => 1 and 2
+        self._state = data[self._attr] >= 1
         self.schedule_update_ha_state()
 
         if self._state:

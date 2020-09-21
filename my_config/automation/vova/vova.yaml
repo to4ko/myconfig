@@ -19,7 +19,7 @@
     - service: switch.turn_on
       entity_id: 
         - switch.0x00158d000290a093_switch #switch.plug_158d000290a093
-        - switch.0x00158d000290a0bc_switch #switch.plug_158d000290a0bc
+        #- switch.0x00158d000290a0bc_switch #switch.plug_158d000290a0bc
         - switch.0x00158d000344998e_switch #switch.plug_158d000344998e
         - switch.0x00158d0003600ea4_switch #switch.plug_158d0003600ea4
 
@@ -41,8 +41,8 @@
         for:
           minutes: 2
   action:
-    - service: switch.turn_on
-      entity_id: switch.digma_ir_v_tv_box_pwr
+    - service: switch.turn_off
+      entity_id: switch.0x00158d000290a0bc_switch
 
 # ##################################
 # Vova - Night mode
@@ -55,3 +55,21 @@
   action:
     - service: switch.turn_off
       entity_id: switch.0x00158d000246776f_switch #switch.0x00158d00028b4fc3_switch, switch.wall_plug_158d000246776f
+      
+# ##################################
+# Vova - TV Box Plug Off with TV Off
+# ##################################
+- alias: vova_tv_box_plug_off_with_tv_off
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.tv_v
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.tv_v
+      from: 'on'
+      to: 'off'
+  action:
+    - service_template: switch.turn_{{states('binary_sensor.tv_v')}}
+      entity_id: switch.0x00158d000290a0bc_switch
