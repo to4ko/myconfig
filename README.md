@@ -19,20 +19,20 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
 
 **MQTT\Zigbee2MQTT Server #1:**
-  - Celeron j3455
+  - Gigabyte Brix Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
   - CC2538 Zigbee Stick
 
 **MQTT\Zigbee2MQTT Server #2:**
-  - Celeron N2830
+  - Intel Nuc Celeron N2830
   - 4gb DDR3 RAM
   - 120Gb SSD OCZ Vertex 3 MaxIOps
   - CC2538 Zigbee Stick
 
 
 **Backup Server:**
-  - Celeron j3455
+  - MiniITX Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
 
@@ -42,9 +42,11 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 **Network(WAN 500mb\s):**
   - Unifi Dream Machine Pro
-  - Unifi Switch 16-50W
+  - Unifi Switch 16-150W
   - Unifi Switch 8-60W (3ea)
-  - Unifi AC-AP-Lite (5ea)
+  - not in use - Unifi AC-AP-Lite (5ea)
+  - Unifi AC AP Pro
+  - Unifi NanoHD
   
 **Surveillance:** 
   - Unifi Protect running on UDM pro
@@ -57,17 +59,19 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Yeelight Pro 90W
   - Yeelight 480
   - Yeelight LED Strip
-  - Philips Xiaomi E27 Bulb (2ea) - not in use
+  - Philips Xiaomi E27 Bulb (2ea)
+  - Philips Zhurui Downlight
   - Yeelight E27 Color Led Bulb v2 (2ea)
   - Xiaomi Smart WiFi Power Strip (1ea)
   - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
-  - Xiaomi Wifi Plugs v2 (7ea)
-  - Xiaomi IR controller
+  - not in use - Xiaomi Wifi Plugs v2 (7ea)
+  - non in use - Xiaomi IR controller
 
 **Xiaomi\Aqara Zigbee Devices:**
   - Aqara Wall Socket (13ea)
   - Aqara Wall Switch Double (6ea)
+  - Aqara D1 Wall Switch Tripple (1ea)
   - Aqara Wall Switch Single (1ea)
   - Aqara Wireless Switch Double (8ea)
   - Aqara Door Sensor (23ea)
@@ -79,7 +83,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Xiaomi Plug (30ea)
   - Xiaomi Smoke Detector (1ea)
   - Xiaomi Natural Gas Detector (1ea)
-  - Aqara Zigbee Relay (3ea)
+  - not in use - Aqara Zigbee Relay (3ea)
   - Aqara Opple Wireless Switch (3ea)
 
 **ESPHome devices:**
@@ -87,22 +91,26 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Sonoff S26 Plugs (2ea)
   - Sonoff Pow R2
   - Sonoff L1
+  - Sonoff Mini (3ea)
+  - Sonoff 4ch
   - Blitzwolf SHP2 (3ea) and SHP6 (2ea)
   - Blitzwolf LT11
+  - Blitzwolf SS5 dual gang relay
   - MH-Z19B CO2 sensors on Wemos D1 mini (4ea )
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Kitchen Air valve, hood fan\light with IR controller
   - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
-  - Digma IR Remote (2ea)
+  - Digma IR Remote (3ea)
 
 **Other Devices:**
-  - DIYRuZ_FreePad v1
-  - LifeControl E27 RGB Lamp (2ea)
-  - LifeControl Plug (2ea)
+  - not in use - DIYRuZ_FreePad v1
+  - not in use - LifeControl E27 RGB Lamp (2ea)
+  - not in use - LifeControl Plug (2ea)
+  - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (3ea)
   - Google Home Mini (5ea)
   
 **Software:**
-  - Ubuntu Server 20.04 LTS
+  - Ubuntu Server 20.04.1 LTS
   - Home Assistant Core Supervised
   - MotionEye (Pinhole camera motion detection)
   - Mosquitto
@@ -115,7 +123,6 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - AirCast
   - File Editor
   - Custom deps deployment
-  - Dropbox Sync
   - ESPhome
   - Grafana
   - Hass.io Google Drive Backup
