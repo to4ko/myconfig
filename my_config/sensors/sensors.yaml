@@ -96,13 +96,13 @@
     name: config_line_count_sh
     command: 'bash /config/line_count.sh'
     unit_of_measurement: 'lines'
-    scan_interval: 120
+    scan_interval: 1800
 
   - platform: command_line
     name: config_line_count_sh_code
     unit_of_measurement: 'lines'
     command: 'bash /config/line_count_code.sh'
-    scan_interval: 120
+    scan_interval: 1800
 
   - platform: template
     sensors:
@@ -112,25 +112,25 @@
         unit_of_measurement: '%'
         icon_template: mdi:brightness-percent
 
-  - platform: mqtt
-    name: Config Line Count
-    state_topic: "ubuntu/config_linecount"
-    qos: 0
-    expire_after: 150
-    force_update: true
-    value_template: "{{ value }}"
-    unit_of_measurement: 'lines'
-    icon: mdi:format-list-bulleted
+  # - platform: mqtt
+  #   name: Config Line Count
+  #   state_topic: "ubuntu/config_linecount"
+  #   qos: 0
+  #   expire_after: 150
+  #   force_update: true
+  #   value_template: "{{ value }}"
+  #   unit_of_measurement: 'lines'
+  #   icon: mdi:format-list-bulleted
 
-  - platform: mqtt
-    name: Config Line Count Code
-    state_topic: "ubuntu/config_linecount_code"
-    qos: 0
-    expire_after: 150
-    force_update: true
-    value_template: "{{ value }}"
-    unit_of_measurement: 'lines'
-    icon: mdi:format-list-numbered
+  # - platform: mqtt
+  #   name: Config Line Count Code
+  #   state_topic: "ubuntu/config_linecount_code"
+  #   qos: 0
+  #   expire_after: 150
+  #   force_update: true
+  #   value_template: "{{ value }}"
+  #   unit_of_measurement: 'lines'
+  #   icon: mdi:format-list-numbered
 
 #  - platform: command_line
 #    name: ya_weather_city
@@ -254,7 +254,7 @@
     sensors:
 
       nonsmoker:
-        value_template: "{{ states('sensor.time') and (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"
+        value_template: "{{ states('sensor.date') and (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"
         friendly_name: 'Not smoking'
         unit_of_measurement: 'Days'
         icon_template: mdi:smoking-off
@@ -309,43 +309,33 @@
       last_motion:
         friendly_name: 'Last Motion'
         value_template: >
-          {%- set sensors = [states.binary_sensor['0x00158d0001ae9f61_occupancy'],states.binary_sensor['0x00158d0003140824_occupancy'],states.binary_sensor['0x00158d0001aea602_occupancy'],states.binary_sensor['0x00158d0001e05856_occupancy'],states.binary_sensor['0x00158d0001e53cda_occupancy'],states.binary_sensor['0x00158d0001e54280_occupancy'],states.binary_sensor['0x00158d000224f89f_occupancy'],states.binary_sensor['0x00158d000236bb94_occupancy'],states.binary_sensor['0x00158d000236bc6d_occupancy'],states.binary_sensor['0x00158d0002b4729d_occupancy'],states.binary_sensor['0x00158d0002b482e9_occupancy'],states.binary_sensor['0x00158d0002b48381_occupancy'] ] %}
+          {%- set sensors = expand('group.motioninternal') %}
           {% for sensor in sensors %}
             {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
               {{ sensor.name }}
             {% endif %}
           {% endfor %}
-
-# ,states.binary_sensor['0x00158d0002b43ad4_occupancy'],states.binary_sensor['0x00158d0001d5995e_occupancy']
-
       last_motion_time:
         friendly_name: 'Last Motion Time'
-        value_template: '{{ as_timestamp(states.group.motion.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
+        value_template: '{{ as_timestamp(states.group.motioninternal.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
 
-      # # bathroom_no_motion_since:
-      # #   friendly_name: 'Bathroom No Motion Since'
-      # #   value_template: "{{ states.binary_sensor.motion_sensor_158d000236bc6d.attributes['No motion since'] | int}}"
-      # #   unit_of_measurement: 's'
-      # #   entity_id: sensor.time
-      # #   entity_id: binary_sensor.motion_sensor_158d000236bc6d
-
-      # # security_last_change:
-      # #   friendly_name: 'Last change motion sensor'
-      # #   value_template: >
-      # #     {%- set sensors = [states.binary_sensor['0x00158d0001ae9f61_occupancy'],states.binary_sensor['0x00158d0003140824_occupancy'],states.binary_sensor['0x00158d0001aea602_occupancy'],states.binary_sensor['0x00158d0002b43ad4_occupancy'],states.binary_sensor['0x00158d0001d5995e_occupancy'],states.binary_sensor['0x00158d0001e05856_occupancy'],states.binary_sensor['0x00158d0001e53cda_occupancy'],states.binary_sensor['0x00158d0001e54280_occupancy'],states.binary_sensor['0x00158d000224f89f_occupancy'],states.binary_sensor['0x00158d000236bb94_occupancy'],states.binary_sensor['0x00158d000236bc6d_occupancy'],states.binary_sensor['0x00158d0002b4729d_occupancy'],states.binary_sensor['0x00158d0002b482e9_occupancy'],states.binary_sensor['0x00158d0002b48381_occupancy'] ] %}
-      # #     {% for sensor in sensors %}
-      # #       {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-      # #         {{ sensor.name }}
-      # #       {% endif %}
-      # #     {% endfor %}
-      # security_last_change_time:
-      #   friendly_name: 'Last change sensor time'
-      #   value_template: '{{ (now()-states.sensor.last_motion.last_changed) | timestamp_custom("%H:%M:%S") }}'
+      security_devices_last_triggered:
+        friendly_name: 'Last Triggered SecurityDevices'
+        value_template: >
+          {%- set sensors = expand('group.securitydevices') %}
+          {% for sensor in sensors %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+              {{ sensor.name }}
+            {% endif %}
+          {% endfor %}
+      security_devices_last_triggered_time:
+        friendly_name: 'Last Triggered SecurityDevices Time'
+        value_template: '{{ as_timestamp(states.group.securitydevices.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
 
       door_last_change:
         friendly_name: 'Last change door sensor'
         value_template: >
-          {%- set sensors = [ states.binary_sensor['0x00158d00027129ae_contact'], states.binary_sensor['0x00158d0001ef2ffc_contact'], states.binary_sensor['0x00158d0002a14c5e_contact'], states.binary_sensor['0x00158d0002529b9c_contact'], states.binary_sensor['0x00158d00025315e9_contact'], states.binary_sensor['0x00158d0001e5d6be_contact'], states.binary_sensor['0x00158d0002531749_contact'] ] %}
+          {%- set sensors = expand('group.doors') %}
           {% for sensor in sensors %}
             {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
               {{ sensor.name }}
@@ -358,7 +348,7 @@
       window_last_change:
         friendly_name: 'Last change window sensor'
         value_template: >
-          {%- set sensors = [ states.binary_sensor['0x00158d00025371f6_contact'], states.binary_sensor['0x00158d000200ad58_contact'], states.binary_sensor['0x00158d00022ccffe_contact'], states.binary_sensor['0x00158d00025370d1_contact'] ] %}
+          {%- set sensors = expand('group.windows') %}
           {% for sensor in sensors %}
             {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
               {{ sensor.name }}
@@ -382,8 +372,7 @@
 
       people_home:
         friendly_name: Persons At Home
-        value_template: "{{states.person | map(attribute='state') | select('eq','home')| list | length }}"
-        #entity_id: person.dima, person.sandra, person.vova, person.sasha
+        value_template: "{{ expand('group.persons') | map(attribute='state') | select('eq','home')| list | length }}"
         unit_of_measurement: 'ea'
         icon_template: mdi:account-group
 
@@ -411,4 +400,4 @@
       current_hour:
         value_template: "{{states('sensor.time').split(':')[0]}}"
       current_minute:
-        value_template: "{{states('sensor.time').split(':')[1]}}"      
+        value_template: "{{states('sensor.time').split(':')[1]}}"

@@ -17,9 +17,14 @@
       from: 'off'
       to: 'on'
   condition:
-    - condition: state
-      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-      state: 'on'
+    condition: or
+    conditions:
+      - condition: state
+        entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+        state: 'on'
+      - condition: state
+        entity_id: light.esp01_led_toilet_light
+        state: 'on'
   action:
     # - service: timer.cancel
     #   entity_id: timer.main_light_t
@@ -50,6 +55,14 @@
       entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       to: 'on'
       from: 'off'
+    - platform: state
+      entity_id: light.esp01_led_toilet_light
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: timer.main_light_t
+      state: 'idle'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_t
@@ -105,19 +118,30 @@
 - alias: toilet_auto_light_on
   initial_state: 'true'
   trigger:
-#    - platform: event
-#      event_type: xiaomi_aqara.motion
-#      event_data:
-#        entity_id:  binary_sensor.motion_sensor_158d0001e54280
     - platform: state
       entity_id: binary_sensor.0x00158d0001e54280_occupancy
       from: 'off'
       to: 'on'
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0001b97111
-    #     click_type: single
+  condition:
+    - condition: state
+      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+      state: 'off'
+    - condition: state
+      entity_id: light.esp01_led_toilet_light
+      state: 'off'
+  action:
+    - service: homeassistant.turn_on
+      data_template:
+        entity_id: >
+          {% if is_state('binary_sensor.tod_day','on') %}switch.0x00158d0002a36f7f_switch_left{%else%}light.esp01_led_toilet_light{%endif%}
+
+
+# ##################################
+# Toilet - Light On
+# ##################################
+- alias: toilet_light_on
+  initial_state: 'true'
+  trigger:
     - platform: state
       entity_id: sensor.0x00158d0001b97111_click
       to: 'single'
@@ -129,6 +153,9 @@
     - condition: state
       entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
       state: 'off'
+    - condition: state
+      entity_id: light.esp01_led_toilet_light
+      state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.0x00158d0002a36f7f_switch_left
@@ -139,7 +166,6 @@
     - service: switch.turn_on
       entity_id: switch.0x00158d0002a36f7f_switch_left
 
-    
 # ##################################
 # Toilet - Auto Light Off
 # ##################################
@@ -153,6 +179,8 @@
   action:
     - service: switch.turn_off
       entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+    - service: light.turn_off
+      entity_id: light.esp01_led_toilet_light
 
 # ##################################
 # Toilet - Auto Light off - No Motion 2m and Cover Closed
@@ -164,24 +192,32 @@
       entity_id: binary_sensor.0x00158d0001e54280_occupancy #binary_sensor.motion_sensor_158d0001e54280
       to: 'off'
       for:
-        minutes: 2
+        minutes: 5
   condition:
     condition: and
     conditions:
       - condition: state
         entity_id: binary_sensor.0x00158d000232ddd6_contact #binary_sensor.door_window_sensor_158d000232ddd6
         state: 'on'
-      - condition: state
-        entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-        state: 'on'
+      - condition: or
+        conditions:
+          - condition: state
+            entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
+            state: 'on'
+          - condition: state
+            entity_id: light.esp01_led_toilet_light
+            state: 'on'
   action:
+    - service: notify.telegram
+      data:
+        message: "Toilet - no motion for 5 min. turning lights off"
     - service: timer.finish
       entity_id: timer.main_light_t
 
 # ##################################
 # Toilet - Light Toggle with Repeater
 # ##################################
-- alias: toilet_light_toggle_repeater
+- alias: toilet_light_toggle
   initial_state: 'true'
   trigger:
     # - platform: event
@@ -192,9 +228,16 @@
       entity_id: sensor.0x00158d0001e0a622_click
       to: 'right'
   action:
-    - service: switch.toggle
-      entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-      
+    - service_template: homeassistant.turn_{% if is_state('switch.0x00158d0002a36f7f_switch_left','on') or is_state('light.esp01_led_toilet_light','on')%}off{%else%}on{%endif%}
+      data_template:
+        entity_id: >
+          {% if is_state('switch.0x00158d0002a36f7f_switch_left','off') and is_state('light.esp01_led_toilet_light','off') %}
+            switch.0x00158d0002a36f7f_switch_left
+          {% else %}
+            switch.0x00158d0002a36f7f_switch_left, light.esp01_led_toilet_light
+          {% endif %}
+
+
       
 # ##################################
 # Toilet - Indicator On
@@ -230,3 +273,8 @@
   action:
     - service: light.turn_off
       entity_id: light.btf_pixel_strip_toilet
+    - delay: '00:01:00'
+    - service: light.turn_off
+      entity_id: light.esp01_led_toilet_light
+      
+      

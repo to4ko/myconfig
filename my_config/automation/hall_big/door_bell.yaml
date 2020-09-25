@@ -13,25 +13,20 @@
       from: 'off'
       to: 'on'
   action:
-#    - service: camera.snapshot
-#      data:
-#        entity_id: camera.door_hb
-#        filename: "/config/www/cam_captures/doorbell.jpg"
-    - service_template: script.turn_on
-      data_template:
-        entity_id: >
-          {% if is_state('input_boolean.doorbell_mute','off') or is_state('binary_sensor.tod_day','on') %}script.doorbell_ring
-          {%else%}script.noop
-          {%endif%}
     - service: notify.telegram_family
       data:
         title: Doorbell photo
         message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
         data:
           photo:
-          #- file: /config/www/cam_captures/doorbell.jpg
           - url: http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
             caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+    - service_template: script.turn_on
+      data_template:
+        entity_id: >
+          {% if is_state('input_boolean.doorbell_mute','off') %}script.doorbell_ring
+          {%else%}script.noop
+          {%endif%}
 
 # binary_sensor.motion_sensor_158d0001d5995e friendly_name: Motion Mid Door HB
 # binary_sensor.motion_sensor_158d0001e05856 friendly_name: Motion Entrance HB

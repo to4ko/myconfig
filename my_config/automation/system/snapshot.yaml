@@ -14,7 +14,7 @@
       to: 'on'
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_window','last_triggered'))|int) > 5 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_window','last_triggered'))|int) > 10 }}"
   action:
     - delay: '00:00:01'
     - service: notify.telegram_cam
@@ -38,7 +38,7 @@
       to: 'on'
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_dixy','last_triggered'))|int) > 5 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_dixy','last_triggered'))|int) > 10 }}"
   action:
     - delay: '00:00:01'
     - service: notify.telegram_cam
@@ -62,7 +62,7 @@
       to: 'on'
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_street','last_triggered'))|int) > 5 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_street','last_triggered'))|int) > 10 }}"
   action:
     - delay: '00:00:01'
     - service: notify.telegram_cam
@@ -78,16 +78,20 @@
 # ##################################
 # System - Motion Outside
 # ##################################
-- alias: system_snaphot_outside_esp32
+- alias: system_snaphot_outside
   initial_state: 'true'
   trigger:
     - platform: state
       entity_id: binary_sensor.esp32_domofon_motion
       from: 'off'
       to: 'on'
+    - platform: state
+      entity_id: binary_sensor.pinhole_camera_motion
+      from: 'off'
+      to: 'on'
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_outside_esp32','last_triggered'))|int) > 5 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_outside_esp32','last_triggered'))|int) > 10 }}"
   action:
     - delay: '00:00:01'
     - service: notify.telegram_cam
@@ -97,28 +101,28 @@
         data:
           photo:
           - url: http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
-            caption: "ESP32! {{states('sensor.time')}} {{states('sensor.date')}} "
+            caption: "Outside! {{states('sensor.time')}} {{states('sensor.date')}} "
 
 # ##################################
 # System - Motion Outside
 # ##################################
-- alias: system_snaphot_outside_motioneye
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.pinhole_camera_motion
-      from: 'off'
-      to: 'on'
-  condition:
-    - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_outside_motioneye','last_triggered'))|int) > 5 }}"
-  action:
-    - delay: '00:00:01'
-    - service: notify.telegram_cam
-      data:
-        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-        message: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
-        data:
-          photo:
-          - url: http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
-            caption: "MotionEye! {{states('sensor.time')}} {{states('sensor.date')}} "
+# - alias: system_snaphot_outside_motioneye
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.pinhole_camera_motion
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     - condition: template
+#       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_outside_motioneye','last_triggered'))|int) > 5 }}"
+#   action:
+#     - delay: '00:00:01'
+#     - service: notify.telegram_cam
+#       data:
+#         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+#         message: "Движение за дверью! {{states('sensor.time')}} {{states('sensor.date')}} "
+#         data:
+#           photo:
+#           - url: http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
+#             caption: "MotionEye! {{states('sensor.time')}} {{states('sensor.date')}} "
