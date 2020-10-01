@@ -17,10 +17,6 @@
       from: 'off'
       to: 'on'
     - platform: state
-      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy
-      from: 'off'
-      to: 'on'
-    - platform: state
       entity_id: binary_sensor.motion_g3_flex_entrance
       from: 'off'
       to: 'on'
@@ -31,7 +27,7 @@
         entity_id: binary_sensor.tod_day
         state: 'off'
       - condition: state
-        entity_id: light.lt11_1_led
+        entity_id: light.led_strip_entrance_hb
         state: 'off'
       - condition: state
         entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
@@ -39,23 +35,24 @@
       - condition: state
         entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
         state: 'off'
+      - condition: state
+        entity_id: input_boolean.dark_mode
+        state: 'off'
   action:
-    #- service: light.turn_on
-    #  entity_id: light.led_strip_hb
-    #  data:
-    #    brightness_pct: 1
-    #    kelvin: 3000
     - service: light.turn_on
-      entity_id: light.lt11_1_led
-      data_template: 
-        brightness_pct: 45
-        rgb_color: [255, 180, 107]
-        white_value: 25
+      entity_id: light.led_strip_entrance_hb
+      data_template:
+        brightness_pct: 1
+        kelvin: 3000
+    # - service: light.turn_on
+    #   entity_id: light.lt11_1_led
+    #   data_template: 
+    #     brightness_pct: 45
+    #     rgb_color: [255, 180, 107]
+    #     white_value: 25
     - delay: '00:00:30'
-    #- service: light.turn_off
-    #  entity_id: light.led_strip_hb
     - service: light.turn_off
-      entity_id: light.lt11_1_led
+      entity_id: light.led_strip_entrance_hb
 
 
 # ##################################
@@ -92,7 +89,7 @@
         entity_id: binary_sensor.tod_day
         state: 'on'
       - condition: state
-        entity_id: binary_sensor.dark_mode
+        entity_id: input_boolean.dark_mode
         state: 'off'
       - condition: state
         entity_id: light.led_strip_hb
@@ -121,9 +118,9 @@
           {%endif%}
 
 # ##################################
-# Hall Big - Auto Night Light Off 60s without movements
+# Hall Big - Auto Night Light Off 30s without movements
 # ##################################
-- alias: hall_big_night_auto_off_60s
+- alias: hall_big_night_auto_off_30s
   initial_state: 'true'
   trigger:
     # - platform: state
@@ -140,24 +137,26 @@
       entity_id: binary_sensor.tod_day
       state: 'off'
   action:
+    # - service: notify.telegram
+    #   data:
+    #     message: "HB - no motion for 30sec. Turning lights off"
     - service: light.turn_off
-      entity_id: light.led_strip_hb
-    - service: light.turn_off
-      entity_id: light.lt11_1_led
+      entity_id: light.led_strip_hb, light.led_strip_entrance_hb
 
 # ##################################
-# Hall Big - Yeelight strip off
+# Hall Big - Night mode prep at 21:00
 # ##################################
-- alias: hall_big_yeelight_off
+- alias: hall_big_night_mode_prep
   initial_state: 'true'
   trigger:
     - platform: time
       at: '21:00:00'
   action:
     - service: light.turn_off
-      entity_id: light.led_strip_hb
-    - service: automation.turn_on
-      entity_id: automation.hall_big_auto_light_on
+      entity_id: light.led_strip_hb, light.led_strip_entrance_hb
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.dark_mode
       
 # ##################################
 # Hall Big - Auto Light Off 1m without movements
@@ -199,10 +198,13 @@
       entity_id: binary_sensor.0x00158d0001e5d6be_contact #binary_sensor.door_window_sensor_158d0001e5d6be
       from: 'off'
       to: 'on'
-#  condition:
+  condition:
 #    - condition: state
 #      entity_id: light.led_strip_hb
 #      state: 'off'
+    - condition: state
+      entity_id: input_boolean.dark_mode
+      state: 'off'
   action:
     - service: input_number.set_value
       data_template:
@@ -469,87 +471,98 @@
       entity_id: switch.0x00158d00023e5812_switch #switch.wall_plug_158d00023e5812
       
 # ##################################
-# Hall Big - Wadrobe Auto Light On
+# Hall Big - LED Strip Entrance Reset 
 # ##################################
-- alias: hall_big_wadrobe_auto_light_on
-  initial_state: 'false'
+- alias: hall_big_led_strip_entrance_reset
+  initial_state: 'true'
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy
-      from: 'off'
-      to: 'on'
+    - platform: time_pattern
+      minutes: "/1"
+  condition:
+    - condition: state
+      entity_id: light.led_strip_entrance_hb
+      state: 'unavailable'
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
-      data_template: 
-        entity_id: >
-          {% if is_state('binary_sensor.tod_night','on') or (states('sensor.time').split(':').0|int < 10 and states('binary_sensor.workday_sensor')=='off') %}
-            script.wadrobe_mirror_led_night_mode
+      entity_id: script.led_strip_entrance_hb_restart
+      
+# ##################################      
+# Hall Big - LED Entrance Turn_on
+# ##################################
+- alias: hall_big_led_entance_turn_on
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d0003991051_action
+      to: 'single'
+  condition:
+    - condition: state
+      entity_id: light.led_strip_entrance_hb
+      state: 'off'
+  action:
+    - service: light.turn_on
+      entity_id: light.led_strip_entrance_hb
+      data_template:
+        brightness_pct: >
+          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
+            15
           {% else %}
-            script.wadrobe_mirror_led_day_mode
+            100
+          {%endif%}
+        kelvin: >
+          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
+            3000
+          {% else %}
+            5000
           {%endif%}
 
 # ##################################
-# Hall Big - Wadrobe LED Timer start on light on
-# ################################## 
-- alias: hall_big_wadrobe_led_timer_start
-  initial_state: 'false'
-  trigger:
-    - platform: state
-      entity_id: light.lt11_1_led
-      to: 'on'
-  action:
-    - service: timer.cancel
-      entity_id: timer.wadrobe_led_strip_hb
-    - service: timer.start
-      entity_id: timer.wadrobe_led_strip_hb
-
+# Hall Big - LED Entrance Turn_off
 # ##################################
-# Hall Big - Wadrobe LED Timer restart
-# ################################## 
-- alias: hall_big_wadrobe_led_timer_restart
-  initial_state: 'false'
+- alias: hall_big_led_entance_turn_off
+  initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: binary_sensor.0x00158d0002b43ad4_occupancy
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.motion_g3_flex_entrance
-      from: 'off'
-      to: 'on'
+      entity_id: sensor.0x158d0003991051_action
+      to: 'single'
   condition:
     - condition: state
-      entity_id: light.lt11_1_led
+      entity_id: light.led_strip_entrance_hb
       state: 'on'
   action:
-    - service: timer.cancel
-      entity_id: timer.wadrobe_led_strip_hb
-    - service: timer.start
-      entity_id: timer.wadrobe_led_strip_hb
-
-# ##################################
-# Hall Big - Wadrobe LED Timer stop
-# ################################## 
-- alias: hall_big_wadrobe_led_timer_off
-  initial_state: 'false'
-  trigger:
-    - platform: state
-      entity_id: light.lt11_1_led
-      to: 'off'
-  action:
-    - service: timer.cancel
-      entity_id: timer.wadrobe_led_strip_hb
+    - service: light.turn_off
+      entity_id: light.led_strip_entrance_hb
       
 # ##################################
-# Hall Big - Wadrobe LED Auto Light Off
-# ################################## 
-- alias: hall_big_wadrobe_led_auto_off
-  initial_state: 'false'
+# Hall Big - LED Entrance Bright
+# ##################################
+- alias: hall_big_led_entance_bright
+  initial_state: 'true'
   trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.wadrobe_led_strip_hb
+    - platform: state
+      entity_id: sensor.0x158d0003991051_action
+      to: 'double'
   action:
-    - service: light.turn_off
-      entity_id: light.lt11_1_led
+    - service: light.turn_on
+      entity_id: light.led_strip_entrance_hb
+      data_template:
+        brightness_pct: 100
+        kelvin: 5000
+        
+# ##################################
+# Hall Big - LED Entrance Turn_off
+# ##################################
+- alias: hall_big_led_entance_midnight
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d0003991051_action
+      to: 'hold'
+  action:
+    - service: light.turn_on
+      entity_id: light.led_strip_entrance_hb
+      data_template:
+        brightness_pct: 15
+        kelvin: 3000

@@ -61,13 +61,13 @@
       - service: notify.telegram
         data_template:
           message: >
-            {% set time_limit = as_timestamp(now())-4*60*60 %}
+            {% set time_limit = as_timestamp(now())-2*60*60 %}
             {% set missing = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='attributes.device.friendlyName') | unique | list  | join(', ') %}
             {% set missing_count = states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='attributes.device.friendlyName') | unique | list | count %}
             {% set z2m_uptime = ((states('sensor.zigbee2mqtt_bridge_uptime')|int) / 3600)|round(1) %}
             {% set z2m2_uptime = ((states('sensor.zigbee2mqtt2_bridge_uptime')|int) / 3600)|round(1) %}
 
-            {% if missing_count >0 %}{{"\U0001f4f6"}} 4 часа (аптайм z2m: {{z2m_uptime}}ч, z2m2: {{z2m2_uptime}}ч) нет ответа от: {{ missing }}
+            {% if missing_count >0 %}{{"\U0001f4f6"}} 2 часа (аптайм z2m: {{z2m_uptime}}ч, z2m2: {{z2m2_uptime}}ч) нет ответа от: {{ missing }}
             {%else%}{{"\U00002705"}}Все устройства доступны!{%endif%}
 
 # {{states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| map(attribute='attributes.linkquality') | list | join(', ') }}
@@ -94,7 +94,7 @@
         data_template:
           message: >
             {% set low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 5 ) | map(attribute='attributes.device.friendlyName') | unique | list | join(', ') %}
-            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 5 )| map(attribute='attributes.device.friendlyName') | unique | list | count %}
+            {% set num_low_link = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.linkquality','<', 5 )| map(attribute='attributes.device.friendlyName') | unique | count %}
                           
             {{"\U0001f6a8"}} Низкий сигнал ({{ num_low_link }}шт): {%if num_low_link>0%}{{low_link}}{%endif%}
 

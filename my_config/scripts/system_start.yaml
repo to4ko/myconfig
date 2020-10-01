@@ -4,23 +4,27 @@
       - service: automation.trigger
         entity_id: automation.system_health_monitoring_update
       - service_template: >
-          script.toilet_timer_{{ states('switch.0x00158d0002a36f7f_switch_left') | lower }}
+          script.toilet_timer_{{ states('switch.0x158d0002a36f7f_channel_1')|lower or states('light.esp01_led_toilet_light')|lower }}
       - service_template: >
-          script.toilet_fan_timer_{{ states('switch.sonoff_4ch_relay_4') | lower }}
+          script.toilet_fan_timer_{{ states('switch.sonoff_4ch_relay_4')|lower }}
       - service_template: >
-          script.kitchen_timer_{{ states('light.round_led_k') | lower }}
+          script.kitchen_timer_{{ states('light.round_led_k')|lower }}
       - service_template: >
-          script.bathroom_timer_{{ states('switch.0x04cf8cdf3c7a9a48_switch_center') | lower }}
+          script.bathroom_timer_{{ states('switch.0x4cf8cdf3c7a9a48_channel_2')|lower or states('light.mirror_light_b')|lower }}
       - service_template: >
-          script.bathroom_fan_timer_{{ states('switch.sonoff_4ch_relay_3') | lower }}
+          script.bathroom_fan_timer_{{ states('switch.sonoff_4ch_relay_3')|lower }}
       - service_template: >
-          script.bathroom_bottom_fan_timer_{{ states('switch.0x00158d0002482619_switch') | lower }}
+          script.bathroom_bottom_fan_timer_{{ states('switch.0x158d0002482619_switch')|lower }}
       - service_template: >
-          script.hallbig_timer_{{ states('group.light_hb') | lower }}
+          script.hallbig_timer_{{ states('group.light_hb')|lower }}
       - service_template: >
-          script.storage_timer_{{ states('switch.0x00158d0002a36433_switch_right') | lower }} 
+          script.storage_timer_{{ states('switch.0x00158d0002a36433_switch_right')|lower }} 
       - service_template: >
-          {% if is_state('binary_sensor.0x00158d000232ddd6_contact','on')%}script.toilet_indicator_off{%else%}script.noop{%endif%}
+          {% if is_state('binary_sensor.0x158d000232ddd6_contact','on')%}script.toilet_indicator_off{%else%}script.noop{%endif%}
+      - service: light.turn_off
+        entity_id: light.led_strip_hb, light.led_strip_entrance_hb
+        data_template:
+          transition: 300
       - service: input_boolean.turn_on
         data:
           entity_id: input_boolean.weather_announcement_flag
@@ -31,7 +35,7 @@
       - service: script.washing_machine_state
       - delay: 00:00:30
       - service: light.turn_off
-        entity_id: light.btf_pixel_strip_top #switch.0x00158d0001f5501f_switch #switch.plug_158d0001f5501f
+        entity_id: light.btf_pixel_strip_top
       - service: switch.turn_on
         entity_id: switch.esp32_kitchen_openvalve
       - delay: 00:00:45

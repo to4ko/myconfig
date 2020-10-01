@@ -25,12 +25,26 @@
 
 #  - platform: authenticated
 
+  - platform: statistics
+    name: out_temperature_stats
+    entity_id: sensor.0x00158d0001e8995a_temperature
+    sampling_size: 100000
+    max_age:
+      hours: 24
+  
+  - platform: template
+    sensors:
+      out_temperature_min_value:
+        value_template: "{{ state_attr('sensor.out_temperature_stats', 'min_value') }}"
+        unit_of_measurement: '°C'
+
+
   - platform: min_max
     type: mean
     name: Humidity Average
     round_digits: 0
     entity_ids:
-      - sensor.0x00158d0001e586af_humidity
+      - sensor.0x158d0001e586af_humidity
       - sensor.0x00158d0001e58714_humidity
       - sensor.0x00158d0001e6d85a_humidity
       - sensor.0x00158d000222c746_humidity
@@ -358,17 +372,17 @@
         friendly_name: 'Last change window sensor time'
         value_template: '{{ (now()-states.sensor.window_last_change.last_changed) | timestamp_custom("%H:%M:%S") }}'
 
-      stove:
-        value_template: "{{ state_attr('switch.0x00158d000249b25b_switch','power')|float }}"
-        unit_of_measurement: 'W'
+      # stove:
+      #   value_template: "{{ state_attr('switch.0x00158d000249b25b_switch','power')|float }}"
+      #   unit_of_measurement: 'W'
         
-      kettle:
-        value_template: "{{ state_attr('switch.0x00158d00028c9875_switch','power')|float }}"
-        unit_of_measurement: 'W'
+      # kettle:
+      #   value_template: "{{ states('switch.0x158d00028c9875_power')|float }}"
+      #   unit_of_measurement: 'W'
         
-      mw: 
-        value_template: "{{ state_attr('switch.0x00158d00028a54e4_switch','power')|float }}"
-        unit_of_measurement: 'W'
+      # mw: 
+      #   value_template: "{{ states('sensor.0x158d00028a54e4_power')|float }}"
+      #   unit_of_measurement: 'W'
 
       people_home:
         friendly_name: Persons At Home

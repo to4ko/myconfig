@@ -229,10 +229,10 @@
   trigger:
     - platform: time
       at: "20:30:00"
-  condition:
-    - condition: template
-      value_template: >
-        {{ (states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count + states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count)  >= 1 }}
+  # condition:
+  #   - condition: template
+  #     value_template: >
+  #       {{ (states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count + states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count)  >= 1 }}
   action:  
   - service: script.turn_on
     entity_id: script.battery_level_check
@@ -629,3 +629,21 @@
         entity_id: input_number.main_volume
         value: "{% if is_state('input_boolean.silent_mode','on') %}0{%else%}0.3{%endif%}"
         
+# ##################################
+# System - HP 178 Toner Level
+# ##################################
+- alias: system_printer_toner_level
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.hp_178_black
+        - sensor.hp_178_cyan
+        - sensor.hp_178_magenta
+        - sensor.hp_178_yellow
+      below: 30
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178_black')|int}}%, C {{states('sensor.hp_178_cyan')|int}}%, M {{states('sensor.hp_178_magenta')|int}}%, Y {{states('sensor.hp_178_yellow')|int}}%"
+  
