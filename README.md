@@ -68,7 +68,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
   - not in use - Xiaomi Wifi Plugs v2 (7ea)
-  - non in use - Xiaomi IR controller
+  - not in use - Xiaomi IR controller
 
 **Xiaomi\Aqara Zigbee Devices:**
   - Aqara Wall Socket (13ea)
