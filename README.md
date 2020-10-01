@@ -1,7 +1,7 @@
 # My Home Assistant configuration
 
 
-First of all - HUGE THANKS to [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s](https://github.com/Spirituss), [@lapatoc](https://github.com/bastshoes) for help and support!
+First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s](https://github.com/Spirituss), [@lapatoc](https://github.com/bastshoes) for help and support!
 
 And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [ESPHome Channel](https://t.me/esphome)
 
@@ -55,10 +55,12 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 **Xiaomi\Aqara WiFi Devices:**
+  - Xiaomi Gateway v3 (3ea)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
   - Yeelight 480
   - Yeelight LED Strip
+  - Yeelight LED Strip Plus
   - Philips Xiaomi E27 Bulb (2ea)
   - Philips Zhurui Downlight
   - Yeelight E27 Color Led Bulb v2 (2ea)
@@ -94,9 +96,9 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Sonoff Mini (3ea)
   - Sonoff 4ch
   - Blitzwolf SHP2 (3ea) and SHP6 (2ea)
-  - Blitzwolf LT11
+  - Blitzwolf LT11 (not use - flickering on low brightness)
   - Blitzwolf SS5 dual gang relay
-  - MH-Z19B CO2 sensors on Wemos D1 mini (4ea )
+  - MH-Z19B CO2 sensors on Wemos D1 mini (4ea)
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Kitchen Air valve, hood fan\light with IR controller
   - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
@@ -130,8 +132,6 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Log Viewer
   - Portainer
   - RPC shutdown
-  - zigbee2mqtt assistant
-
 
 **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
@@ -141,9 +141,6 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
-
-# Zigbee Map
-![Zigbee Map](https://i.ibb.co/5cSzMC0/Network-Map-DTsymbal.jpg)
 
 # Main page
 ![Main Page](https://i.ibb.co/BTcVZtt/page1.jpg)
