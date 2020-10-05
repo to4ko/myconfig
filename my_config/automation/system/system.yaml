@@ -247,21 +247,21 @@
 # ##################################
 # System - Switches overheating
 # ##################################
-- alias: system_switch_temperature
-  initial_state: 'true'
-  trigger:
-    - platform: time_pattern
-      minutes: "/15"
-  condition: 
-    - condition: template
-      value_template: >
-        {{ ( states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | list | count ) >1 }}
-  action:  
-  - service: notify.telegram
-    data_template:
-      message: >
-        {%- set switch_list = states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | map(attribute='name') | list | join(', ') -%}
-        {{"\U0001f321"}} Внимание! Высокая температура: {{ switch_list }}
+# - alias: system_switch_temperature
+#   initial_state: 'true'
+#   trigger:
+#     - platform: time_pattern
+#       minutes: "/15"
+#   condition: 
+#     - condition: template
+#       value_template: >
+#         {{ ( states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | list | count ) >1 }}
+#   action:  
+#   - service: notify.telegram
+#     data_template:
+#       message: >
+#         {%- set switch_list = states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | map(attribute='name') | list | join(', ') -%}
+#         {{"\U0001f321"}} Внимание! Высокая температура: {{ switch_list }}
 
 
 # ##################################
@@ -607,7 +607,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.0x00124b001ec8dc5c_radiation_dose_per_hour')|int}}мкР/ч!"
+        message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.geiger_radiation_dose_per_hour')|int}}мкР/ч!"
         
 # ##################################
 # System - Silent Mode Toggle
@@ -646,4 +646,22 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178_black')|int}}%, C {{states('sensor.hp_178_cyan')|int}}%, M {{states('sensor.hp_178_magenta')|int}}%, Y {{states('sensor.hp_178_yellow')|int}}%"
-  
+
+# ##################################
+# System - GW3 State
+# ##################################
+- alias: system_gw3_state
+  initial_state: 'true'
+  mode: parallel
+  trigger:
+    # - plarfotm: time_pattern
+    #   minutes: "/1"
+    - platform: state
+      entity_id:
+        - remote.0x588e81fffedcb38d_pair
+        - remote.0x842e14fffe1508a6_pair
+        - remote.0x588e81fffedd3c41_pair
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"

@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2019, Andrey "Limych" Khrolenok <andrey@khrolenok.ru>
+#  Copyright (c) 2019-2020, Andrey "Limych" Khrolenok <andrey@khrolenok.ru>
 #  Creative Commons BY-NC-SA 4.0 International Public License
 #  (see LICENSE.md or https://creativecommons.org/licenses/by-nc-sa/4.0/)
 #
@@ -17,7 +17,6 @@ from homeassistant.const import (
     ATTR_ATTRIBUTION,
     CONF_MONITORED_CONDITIONS,
     CONF_NAME,
-    TEMP_CELSIUS,
     CONF_API_KEY,
 )
 from homeassistant.helpers import config_validation as cv
@@ -35,28 +34,14 @@ from .const import (
     ATTR_WEATHER_PRECIPITATION_INTENSITY,
     ATTR_WEATHER_STORM,
     ATTR_WEATHER_GEOMAGNETIC_FIELD,
+    SENSOR_TYPES,
+    FORECAST_SENSOR_TYPE,
+    CONF_FORECAST,
+    CONF_LANGUAGE,
+    PRECIPITATION_AMOUNT,
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-CONF_FORECAST = "forecast"
-CONF_LANGUAGE = "language"
-
-PRECIPITATION_AMOUNT = (0, 2, 6, 16)
-
-SENSOR_TYPES = {
-    "weather": ["Condition", None, None],
-    "temperature": ["Temperature", TEMP_CELSIUS, None],
-    "wind_speed": ["Wind speed", "m/s", "mdi:weather-windy"],
-    "wind_bearing": ["Wind bearing", "°", "mdi:weather-windy"],
-    "humidity": ["Humidity", "%", None],
-    "pressure": ["Pressure", "hPa", None],
-    "clouds": ["Cloud coverage", "%", "mdi:weather-partlycloudy"],
-    "rain": ["Rain", "mm", "mdi:weather-rainy"],
-    "snow": ["Snow", "mm", "mdi:weather-snowy"],
-    "storm": ["Storm", None, "mdi:weather-lightning"],
-    "geomagnetic": ["Geomagnetic field", "", "mdi:magnet-on"],
-}
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -108,7 +93,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         )
 
     if forecast:
-        SENSOR_TYPES["forecast"] = ["Forecast", None, None]
+        SENSOR_TYPES["forecast"] = FORECAST_SENSOR_TYPE
         dev.append(
             GismeteoSensor(
                 name,

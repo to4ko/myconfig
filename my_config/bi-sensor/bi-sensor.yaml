@@ -120,6 +120,11 @@
         friendly_name: HA Update Available
         device_class: occupancy
         value_template: "{{(states('sensor.ha_latest_version') > states('sensor.ha_installed_version')) and (states('sensor.ha_latest_version') not in ['unavailable', 'unknown', 'none'])}}"
+
+      sandra_home:
+        friendly_name: Sandra home
+        value_template: "{{is_state('person.vova','home')}}"
+        delay_off: 120
         
       dark_mode:
         friendly_name: Dark Mode
@@ -137,7 +142,7 @@
         icon_template: mdi:bell-ring
         delay_off:
           seconds: 3
-        value_template: "{{ is_state('binary_sensor.0x158d0003262ba8_contact','on') }}"
+        value_template: "{{ is_state('binary_sensor.0x158d0003262ba8_contact','off') }}"
   
       doorbell_mute:
         friendly_name: Doorbell Mute
@@ -177,61 +182,45 @@
       monitor_brix_v:
         friendly_name: Dell LCD status
         icon_template: mdi:monitor
-        value_template: "{{ state_attr('switch.0x00158d0003600ea4_switch','power')|float > 5 }}"
+        value_template: "{{ states('sensor.0x158d0003600ea4_power')|float > 5 }}"
 
-      # tv_v_pwr:
-      #   friendly_name: TV status (power))
-      #   icon_template: mdi:television
-      #   value_template: "{{ state_attr('switch.0x00158d000290a093_switch','power')|float > 10 }}"
-          
       tv_v:
         friendly_name: TV V Status
         icon_template: mdi:television
-        value_template: "{{ is_state('binary_sensor.0x00158d000236fdc9_contact','off') }}"
+        value_template: "{{ is_state('binary_sensor.0x158d000236fdc9_contact','off') }}"
 
-#      kodi_v:
-#        friendly_name: Kodi V Status
-#        icon_template: mdi:animation-play
-#        entity_id: sensor.time
-#        value_template: "{{ not is_state('media_player.kodi_v','off') }}"
+      mi_box_v:
+        friendly_name: Mi Box V Status
+        icon_template: mdi:play-network
+        value_template: "{{ is_state_attr('device_tracker.mi_box_v','vlan',0)}}"
 
-      # iconbit_v:
-      #   friendly_name: Iconbit status
-      #   icon_template: mdi:animation-play
-      #   value_template: "{{ state_attr('switch.0x00158d000290a0bc_switch','power')|float > 2 }}"
+      tv_k:
+        friendly_name: TV K Status
+        icon_template: mdi:television-box
+        value_template: "{{ is_state('binary_sensor.0x158d0002a1a47a_contact','off') }}"
+
+      mi_stick_k:
+        friendly_name: Mi Stick K Status
+        icon_template: mdi:youtube-tv
+        value_template: "{{ is_state_attr('device_tracker.mi_stick_k','vlan',0)}}"
 
       breather_v:
         friendly_name: Breather V Status
         icon_template: mdi:power
-        value_template: "{{ state_attr('switch.0x00158d000344998e_switch','power')|float > 5 }}"
+        value_template: "{{ states('sensor.0x158d000344998e_power')|float > 5 }}"
 
       breather_s:
         friendly_name: Breather S Status
         icon_template: mdi:power
-        value_template: "{{ state_attr('switch.0x00158d00036148b9_switch','power')|float > 5 }}"
+        value_template: "{{ states('sensor.0x158d00036148b9_power')|float > 5 }}"
 
       breather_mb:
         friendly_name: Breather MB Status
         icon_template: mdi:power
         value_template: "{{ states('sensor.0x158d000345119e_power')|float > 5 }}"
 
-      # hood_k:
-      #   friendly_name: Hood Status
-      #   icon_template: mdi:fan
-      #   entity_id: switch.ss5_hood_fan #switch.esp32_kitchen_fan1, switch.esp32_kitchen_fan2, switch.esp32_kitchen_fan3
-      #   #value_template: "{{ is_state('switch.esp32_kitchen_fan1','on') or is_state('switch.esp32_kitchen_fan2','on') or is_state('switch.esp32_kitchen_fan3','on') }}"
-      #   value_template: "{{ is_state('switch.ss5_hood_fan','on') }}"
-        
-      
-      # hood_lights_k:
-      #   friendly_name: Hood Lights Status
-      #   icon_template: mdi:spotlight-beam
-      #   entity_id: switch.ss5_hood_light #switch.0x00158d000232481a_switch #switch.plug_158d000232481a
-      #   value_template: "{{ is_state('switch.ss5_hood_light','on') }}" #switch.0x00158d000232481a_switch','power')|float >10 and state_attr('switch.0x00158d000232481a_switch','power')|float <30 }}"
-
       washer_b:
         friendly_name: Washing machine status
-        #icon_template: mdi:washing-machine
         delay_off:
           minutes: 2
         value_template: "{{ states('sensor.sonoff_pow_r2_1_power')|float > 5 }}"
@@ -252,16 +241,6 @@
         icon_template: mdi:kettle
         value_template: "{{ states('sensor.0x158d00028c9875_power')|float > 10 }}"
       
-      # tv_k_pwr:
-      #   friendly_name: TV K Status (power)
-      #   icon_template: mdi:television-box
-      #   value_template: "{{ state_attr('switch.0x00158d0001e85086_switch','power')|float > 5 }}"
-      
-      tv_k:
-        friendly_name: TV K Status
-        icon_template: mdi:television-box
-        value_template: "{{ is_state('binary_sensor.0x158d0002a1a47a_contact','off') }}"
-
       microwave_k:
         friendly_name: Microwave status
         icon_template: mdi:microwave
@@ -324,7 +303,7 @@
       motion_s:
         friendly_name: Motion S
         device_class: motion
-        value_template: "{{ is_state('binary_sensor.0x00158d000224f89f_occupancy', 'on') or is_state('binary_sensor.0x00158d0003140824_occupancy', 'on') }}"
+        value_template: "{{ is_state('binary_sensor.0x158d000224f89f_motion', 'on') or is_state('binary_sensor.0x158d0003140824_motion', 'on') }}"
         icon_template: >
           {% if is_state('binary_sensor.motion_hb','on') %}
           mdi:run
@@ -335,7 +314,7 @@
       motion_hs:
         friendly_name: Motion HS
         device_class: motion
-        value_template: "{{ is_state('binary_sensor.0x158d0001ae9f61_motion', 'on') or is_state('binary_sensor.0x158d0003f27ce2_motion', 'on') }}"        
+        value_template: "{{ is_state('binary_sensor.0x158d0001ae9f61_motion', 'on') or is_state('binary_sensor.0x158d0002b43ad4_motion', 'on') }}"
         icon_template: >
           {% if is_state('binary_sensor.motion_hb','on') %}
           mdi:run
