@@ -17,9 +17,13 @@ from homeassistant.const import (
     TEMP_CELSIUS,
     SPEED_METERS_PER_SECOND,
     DEGREE,
-    PERCENTAGE,
     PRESSURE_HPA,
 )
+
+try:
+    from homeassistant.const import PERCENTAGE
+except ImportError:
+    from homeassistant.const import UNIT_PERCENTAGE as PERCENTAGE
 
 BASE_URL = "https://services.gismeteo.ru/inform-service/inf_chrome"
 

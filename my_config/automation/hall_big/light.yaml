@@ -35,9 +35,9 @@
       - condition: state
         entity_id: switch.0x158d000253f04a_channel_2
         state: 'off'
-      - condition: state
-        entity_id: input_boolean.dark_mode
-        state: 'off'
+      # - condition: state
+      #   entity_id: input_boolean.dark_mode
+      #   state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.led_strip_entrance_hb
@@ -157,7 +157,7 @@
   action:
     - service: light.turn_off
       entity_id: light.led_strip_hb, light.led_strip_entrance_hb
-    - service: input_boolean.turn_on
+    - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.dark_mode
       
@@ -205,18 +205,29 @@
 #    - condition: state
 #      entity_id: light.led_strip_hb
 #      state: 'off'
-    - condition: state
-      entity_id: input_boolean.dark_mode
-      state: 'off'
   action:
     - service: input_number.set_value
       data_template:
         entity_id: input_number.main_door_open
-        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))}}"
+        value: "{{as_timestamp(now())|int }}"
     - service: timer.cancel
       entity_id: timer.main_door_open_hb
     - service: timer.start
       entity_id: timer.main_door_open_hb
+    - service: counter.increment
+      entity_id: counter.main_door_hb
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }})"
+    - service: notify.telegram_cam
+      data_template:
+        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }})"
+    - delay: '00:00:09'
+    - service: script.turn_on
+      entity_id: script.open_door_photo
+    - condition: state
+      entity_id: input_boolean.dark_mode
+      state: 'off'
     - service: light.turn_on
       entity_id: light.led_strip_hb
       data_template:
@@ -232,17 +243,7 @@
           {%- else -%}
           5000
           {% endif %}
-    - service: counter.increment
-      entity_id: counter.main_door_hb
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }})"
-    - service: notify.telegram_cam
-      data_template:
-        message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }})"
-    - delay: '00:00:09'
-    - service: script.turn_on
-      entity_id: script.open_door_photo
+
 
 # # ##################################
 # # Hall Big - Auto Light On Entrance
