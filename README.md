@@ -1,7 +1,7 @@
 # My Home Assistant configuration
 
 
-First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [@Vasilchuk](https://github.com/Anonym-tsk), [@S_p_i_r_i_t_u_s](https://github.com/Spirituss), [@lapatoc](https://github.com/bastshoes) for help and support!
+First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [Vasilchuk](https://github.com/Anonym-tsk), [S_p_i_r_i_t_u_s](https://github.com/Spirituss), [lapatoc](https://github.com/bastshoes) for help and support!
 
 And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [ESPHome Channel](https://t.me/esphome)
 
@@ -13,7 +13,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 512Gb ADATA 8200Pro Raid 1 as Root drive
   - 256Gb ADATA 8200Pro NVME for DB
   - 7ea WD RED 2Tb (NAS section) in HW Raid 6 via Adaptec 71605
-  - 1Tb WD Purple for cameras
+  - 1Tb WD Purple for pinhole camera records
   - 3ea WD Green in HW Raid0 (Torrent heap) via Adaptec 71605
   - Corsair HX1200i
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
@@ -24,12 +24,11 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 120Gb SSD Crucial BX500
   - CC2538 Zigbee Stick
 
-**MQTT\Zigbee2MQTT Server #2:**
+**Zigbee2MQTT Server #2 (not in use):**
   - Intel Nuc Celeron N2830
   - 4gb DDR3 RAM
   - 120Gb SSD OCZ Vertex 3 MaxIOps
   - CC2538 Zigbee Stick
-
 
 **Backup Server:**
   - MiniITX Celeron j3455
@@ -49,13 +48,14 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Unifi NanoHD
   
 **Surveillance:** 
-  - Unifi Protect running on UDM pro
+  - Unifi Protect
+  - 3Tb WD Purple
   - Ubiquiti G3 Flex Cameras (5ea)
   - Digma 100
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (3ea)
+  - Xiaomi Gateway v3 (3ea + 1ea as a backup)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
   - Yeelight 480
@@ -103,12 +103,15 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - ESP32 - Kitchen Air valve, hood fan\light with IR controller
   - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
   - Digma IR Remote (3ea)
+  - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
+  - D1 Mini LED Bed light
 
 **Other Devices:**
   - not in use - DIYRuZ_FreePad v1
   - not in use - LifeControl E27 RGB Lamp (2ea)
   - not in use - LifeControl Plug (2ea)
   - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (3ea)
+  - DIYRuZ_Geiger Sensor
   - Google Home Mini (5ea)
   
 **Software:**
