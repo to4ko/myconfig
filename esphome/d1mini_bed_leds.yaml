@@ -75,6 +75,7 @@ binary_sensor:
                 - sun.is_below_horizon:
                 - not:
                     binary_sensor.is_off: ha_led
+                - light.is_off: light_s
             then:
               - light.turn_on: 
                   id: light_s
@@ -95,6 +96,7 @@ binary_sensor:
                 - sun.is_below_horizon:
                 - not:
                     binary_sensor.is_off: ha_led
+                - light.is_off: light_d
             then:
               - light.turn_on: 
                   id: light_d
@@ -135,7 +137,7 @@ sensor:
   - platform: adc
     pin: A0
     name: ${board_name}_Light
-    update_interval: 2s
+    update_interval: 15s
     filters:
       - multiply: 3.3
 
@@ -163,19 +165,27 @@ time:
         then:
           - if:
               condition:
-                for:
-                  time: 30s
-                  condition:
-                    binary_sensor.is_off: motion_d
+                and: 
+                  - for:
+                      time: 20s
+                      condition:
+                        binary_sensor.is_off: motion_d
+                  - light.is_on: light_d
               then:
-                - light.turn_off: light_d
+                - light.turn_off: 
+                    id: light_d
+                    transition_length: 5s
       - seconds: 15
         then:
           - if:
               condition:
-                for:
-                  time: 30s
-                  condition:
-                    binary_sensor.is_off: motion_s
+                  - for:
+                      time: 20s
+                      condition:
+                        binary_sensor.is_off: motion_s
+                  - light.is_on: light_s      
               then:
-                - light.turn_off: light_s       
+                - light.turn_off:
+                    id: light_s
+                    transition_length: 5s
+                
