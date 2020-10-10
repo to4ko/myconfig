@@ -42,31 +42,63 @@ output:
 
 light:
   - platform: monochromatic
-    name: ${board_name}_Strip_L
+    name: ${board_name}_Strip_Dima
     output: left_strip
+    id: light_d
 
   - platform: monochromatic
-    name: ${board_name}_Strip_R
+    name: ${board_name}_Strip_Sandra
     output: right_strip
+    id: light_s
   
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
+  - platform: homeassistant
+    name: ${board_name}_ha_bed_led_enabled
+    id: ha_led
+    entity_id: input_boolean.bed_led_enable
+
   - platform: gpio
     pin:
       number: GPIO14
       inverted: false
-    name: ${board_name}_Motion_R
+    name: ${board_name}_Motion_Sandra
     device_class: motion
+    id: motion_s
+    on_press:
+      then:
+        - if:
+            condition:
+              and: 
+                - sun.is_below_horizon:
+                - not:
+                    binary_sensor.is_off: ha_led
+            then:
+              - light.turn_on: 
+                  id: light_s
+                  brightness: 25%
 
   - platform: gpio
     pin:
       number: GPIO12
       inverted: false
-    name: ${board_name}_Motion_L
+    name: ${board_name}_Motion_Dima
     device_class: motion
-
+    id: motion_d
+    on_press:
+      then:
+        - if:
+            condition:
+              and: 
+                - sun.is_below_horizon:
+                - not:
+                    binary_sensor.is_off: ha_led
+            then:
+              - light.turn_on: 
+                  id: light_d
+                  brightness: 25%
 
 text_sensor:
   - platform: template
@@ -115,9 +147,35 @@ switch:
   - platform: restart
     name: ${board_name}_Restart
 
+sun:
+  latitude: !secret my_lat
+  longitude: !secret my_long
+
 time:
   - platform: homeassistant
     id: homeassistant_time
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow
+    on_time:
+      # Every 5 minutes
+      - seconds: 15
+        then:
+          - if:
+              condition:
+                for:
+                  time: 30s
+                  condition:
+                    binary_sensor.is_off: motion_d
+              then:
+                - light.turn_off: light_d
+      - seconds: 15
+        then:
+          - if:
+              condition:
+                for:
+                  time: 30s
+                  condition:
+                    binary_sensor.is_off: motion_s
+              then:
+                - light.turn_off: light_s       
