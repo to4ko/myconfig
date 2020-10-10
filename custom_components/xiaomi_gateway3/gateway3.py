@@ -23,7 +23,8 @@ class Gateway3(Thread):
     pair_model = None
     pair_payload = None
 
-    def __init__(self, host: str, token: str, config: dict, zha: bool = False):
+    def __init__(self, host: str, token: str, config: dict, ble: bool = True,
+                 zha: bool = False):
         super().__init__(daemon=True)
 
         self.host = host
@@ -37,7 +38,7 @@ class Gateway3(Thread):
         self.mqtt.on_message = self.on_message
         self.mqtt.connect_async(host)
 
-        self.ble = GatewayBLE(self)
+        self.ble = GatewayBLE(self) if ble else None
 
         self.debug = config['debug'] if 'debug' in config else ''
         self.devices = config['devices'] if 'devices' in config else {}
@@ -70,7 +71,8 @@ class Gateway3(Thread):
                 break
 
         # start bluetooth read loop
-        self.ble.start()
+        if self.ble:
+            self.ble.start()
 
         while True:
             # if not telnet - enable it
@@ -295,7 +297,8 @@ class Gateway3(Thread):
                     'model': data[did + '.model'],
                     'type': 'zigbee',
                     'zb_ver': data[did + '.version'],
-                    'init': utils.fix_xiaomi_props(params)
+                    'init': utils.fix_xiaomi_props(params),
+                    'online': retain.get('alive', 1) == 1
                 }
                 devices.append(device)
 
@@ -314,7 +317,7 @@ class Gateway3(Thread):
             resp = self.miio.send("enable_telnet_service")
             return resp[0] == 'ok'
         except Exception as e:
-            _LOGGER.exception(f"Can't enable telnet: {e}")
+            _LOGGER.debug(f"Can't enable telnet: {e}")
             return False
 
     def _enable_mqtt(self):
@@ -383,10 +386,14 @@ class Gateway3(Thread):
         _LOGGER.debug(f"{self.host} | MQTT connected")
         self.mqtt.subscribe('#')
 
+        self.process_gw_message({'online': True})
+
     def on_disconnect(self, client, userdata, rc):
         _LOGGER.debug(f"{self.host} | MQTT disconnected")
         # force end mqtt.loop_forever()
         self.mqtt.disconnect()
+
+        self.process_gw_message({'online': False})
 
     def on_message(self, client: Client, userdata, msg: MQTTMessage):
         if 'mqtt' in self.debug:
@@ -395,6 +402,9 @@ class Gateway3(Thread):
         if msg.topic == 'zigbee/send':
             payload = json.loads(msg.payload)
             self.process_message(payload)
+        elif msg.topic.endswith('/heartbeat'):
+            payload = json.loads(msg.payload)
+            self.process_gw_message(payload)
         elif self.pair_model and msg.topic.endswith('/commands'):
             self.process_pair(msg.payload)
 
@@ -438,10 +448,11 @@ class Gateway3(Thread):
             pkey = 'res_list'
         elif data['cmd'] == 'report':
             pkey = 'params' if 'params' in data else 'mi_spec'
-        elif data['cmd'] == 'write_rsp':
+        elif data['cmd'] in ('write_rsp', 'read_rsp'):
             pkey = 'results'
         else:
-            raise NotImplemented(f"Unsupported cmd: {data}")
+            _LOGGER.warning(f"Unsupported cmd: {data}")
+            return
 
         did = data['did']
 
@@ -471,6 +482,9 @@ class Gateway3(Thread):
             elif prop == 'battery' and param['value'] > 1000:
                 # xiaomi light sensor
                 payload[prop] = round((min(param['value'], 3200) - 2500) / 7)
+            elif prop == 'alive':
+                # {'res_name':'8.0.2102','value':{'status':'online','time':0}}
+                device['online'] = (param['value']['status'] == 'online')
             elif prop == 'angle':
                 # xiaomi cube 100 points = 360 degrees
                 payload[prop] = param['value'] * 4
@@ -494,6 +508,24 @@ class Gateway3(Thread):
             device['type'] = 'zigbee'
             device['init'] = payload
             self.setup_devices([device])
+
+    def process_gw_message(self, payload: json):
+        _LOGGER.debug(f"{self.host} | gateway <= {payload}")
+
+        if 'lumi.0' not in self.updates:
+            return
+
+        if 'networkUp' in payload:
+            payload = {
+                'network_pan_id': payload['networkPanId'],
+                'radio_tx_power': payload['radioTxPower'],
+                'radio_channel': payload['radioChannel'],
+            }
+        elif 'online' in payload:
+            self.device['online'] = payload['online']
+
+        for handler in self.updates['lumi.0']:
+            handler(payload)
 
     def process_pair(self, raw: bytes):
         # get shortID and eui64 of paired device
@@ -530,8 +562,10 @@ class Gateway3(Thread):
                 if 'mac' in data['dev'] else \
                 'ble_' + did.replace('blt.3.', '')
             self.devices[did] = device = {
-                'did': did, 'mac': mac, 'init': {}, 'device_name': "BLE",
-                'type': 'ble'}
+                'did': did, 'mac': mac, 'init': {}, 'type': 'ble'}
+            pdid = data['dev'].get('pdid')
+            desc = ble.get_device(pdid)
+            device.update(desc)
         else:
             device = self.devices[did]
 
@@ -587,6 +621,27 @@ class Gateway3(Thread):
 
         payload = json.dumps(payload, separators=(',', ':')).encode()
         self.mqtt.publish('zigbee/recv', payload)
+
+    def send_telnet(self, *args: str):
+        try:
+            telnet = Telnet(self.host, timeout=5)
+            telnet.read_until(b"login: ")
+            telnet.write(b"admin\r\n")
+            telnet.read_until(b"\r\n# ")  # skip greeting
+
+            for command in args:
+                telnet.write(command.encode() + b'\r\n')
+                telnet.read_until(b"\r\n")  # skip command
+
+            telnet.close()
+
+        except Exception as e:
+            _LOGGER.exception(f"Telnet command error: {e}")
+
+    def send_mqtt(self, cmd: str):
+        if cmd == 'publishstate':
+            mac = self.device['mac'][2:].upper()
+            self.mqtt.publish(f"gw/{mac}/publishstate")
 
     def get_device(self, mac: str) -> Optional[dict]:
         for device in self.devices.values():

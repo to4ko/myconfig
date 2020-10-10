@@ -565,7 +565,7 @@
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
         {{ trigger.from_state.state not in ignore and
            trigger.to_state.state not in ignore and
-           trigger.to_state.state != trigger.from_state.state }}  
+           trigger.to_state.state != trigger.from_state.state }}
   action:
     - service: notify.telegram
       data_template:
@@ -661,7 +661,35 @@
         - remote.0x588e81fffedcb38d_pair
         - remote.0x842e14fffe1508a6_pair
         - remote.0x588e81fffedd3c41_pair
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
   action:
     - service: notify.telegram
       data_template:
         message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+
+# ##################################
+# System - GW3 Connection lost
+# ##################################
+- alias: system_gw3_connection_lost
+  initial_state: 'false'
+  mode: parallel
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.gw3_hb_state
+        - binary_sensor.gw3_hs_state
+        - binary_sensor.gw3_s_state
+      to: 'off'
+      for:
+        minutes: 5
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "HA MAIN RESTART in 10 sec! {{trigger.to_state.attributes.friendly_name }} {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+    - delay:
+        seconds: 10
+    - service: homeassistant.restart
+    

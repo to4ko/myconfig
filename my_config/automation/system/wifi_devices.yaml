@@ -114,14 +114,56 @@
 - alias: system_ble_device_tracker_restart
   initial_state: 'true'
   trigger:
-    - platform: state
+    - platform: time_pattern
+      minutes: "/5"
+  condition:
+    - condition: state
       entity_id: binary_sensor.esp32_ble_tracker_status
-      to: 'off'
+      state: 'off'
       for:
         minutes: 3
+    # - platform: state
+    #   entity_id: binary_sensor.esp32_ble_tracker_status
+    #   to: 'off'
+    #   for:
+    #     minutes: 3
   action:
+    - service: notify.telegram
+      data_template:
+        message: "ble restart"
     - service: switch.turn_off
       entity_id: switch.gateway_plug_entrance_hb_usb
     - delay: "00:00:15"
     - service: switch.turn_on
       entity_id: switch.gateway_plug_entrance_hb_usb
+    
+      
+# ##################################
+# System - Water filter MCU restart
+# ##################################
+- alias: system_water_filter_mcu_restart
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/15"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.esp32_water_filter_status
+      state: 'off'
+      for:
+        minutes: 5
+    # - platform: state
+    #   entity_id: binary_sensor.esp32_water_filter_status
+    #   to: 'off'
+    #   for:
+    #     minutes: 3
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "esp32 water filter restart"
+    - service: switch.turn_off
+      entity_id: switch.sonoff_1000d03987_1
+    - delay: "00:00:15"
+    - service: switch.turn_on
+      entity_id: switch.sonoff_1000d03987_1
+      

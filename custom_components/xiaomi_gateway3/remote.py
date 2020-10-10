@@ -37,18 +37,19 @@ class Gateway3Entity(Gateway3Device, ToggleEntity):
         return self._state
 
     @property
+    def state_attributes(self):
+        return self._attrs
+
+    @property
     def icon(self):
         return 'mdi:zigbee'
 
     def update(self, data: dict = None):
         if 'pairing_start' in data:
             self._state = True
-            self.schedule_update_ha_state()
 
         elif 'pairing_stop' in data:
             self._state = False
-            self.schedule_update_ha_state()
-
             self.gw.pair_model = None
 
         elif 'added_device' in data:
@@ -57,6 +58,11 @@ class Gateway3Entity(Gateway3Device, ToggleEntity):
             )
             persistent_notification.async_create(self.hass, text,
                                                  "Xiaomi Gateway 3")
+
+        elif 'network_pan_id' in data:
+            self._attrs.update(data)
+
+        self.schedule_update_ha_state()
 
     def turn_on(self):
         self.gw.send(self.device, {'pairing_start': 60})
@@ -75,3 +81,7 @@ class Gateway3Entity(Gateway3Device, ToggleEntity):
                 self.gw.pair_model = (model[:-3] if model.endswith('.v1')
                                       else model)
                 self.turn_on()
+            elif cmd == 'reboot':
+                self.gw.send_telnet('reboot')
+            elif cmd == 'publishstate':
+                self.gw.send_mqtt('publishstate')

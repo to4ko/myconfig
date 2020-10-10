@@ -10,7 +10,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Xeon E5-2620v3 cooled by Noctua NH-U12DX i4
   - 64gb ECC DDR4 RAM
   - 128Gb Kingston SSD as Boot drive
-  - 512Gb ADATA 8200Pro Raid 1 as Root drive
+  - 512Gb * 2ea ADATA 8200Pro Raid 1 as Root drive
   - 256Gb ADATA 8200Pro NVME for DB
   - 7ea WD RED 2Tb (NAS section) in HW Raid 6 via Adaptec 71605
   - 1Tb WD Purple for pinhole camera records
@@ -22,7 +22,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Gigabyte Brix Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
-  - CC2538 Zigbee Stick
+  - CC2652R Zigbee Stick
 
 **Zigbee2MQTT Server #2 (not in use):**
   - Intel Nuc Celeron N2830
@@ -44,8 +44,15 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Unifi Switch 16-150W
   - Unifi Switch 8-60W (3ea)
   - not in use - Unifi AC-AP-Lite (5ea)
-  - Unifi AC AP Pro
-  - Unifi NanoHD
+  - Unifi AC AP Pro (2ea)
+  - Unifi NanoHD (not in use)
+  - Unifi AP AC Mesh
+
+**UPS**
+  - Ippon Smart Power Pro 1200
+  - Ippon Back Basic 1050
+  - Ippon Back Basic 650
+  - CyberPower UT650EG 
   
 **Surveillance:** 
   - Unifi Protect
@@ -55,7 +62,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (3ea + 1ea as a backup)
+  - Xiaomi Gateway v3 (3ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
   - Yeelight 650 (2ea)
   - Yeelight Pro 90W
   - Yeelight 480
@@ -102,17 +109,20 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Kitchen Air valve, hood fan\light with IR controller
   - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
+  - ESP32 - BLE Tracker (Nut find 3)
   - Digma IR Remote (3ea)
   - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
+  - ESP01 Weight Cell
   - D1 Mini LED Bed light
 
 **Other Devices:**
   - not in use - DIYRuZ_FreePad v1
-  - not in use - LifeControl E27 RGB Lamp (2ea)
+  - not in use - LifeControl E27 RGB Lamp
   - not in use - LifeControl Plug (2ea)
-  - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (3ea)
+  - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (2ea)
   - DIYRuZ_Geiger Sensor
   - Google Home Mini (5ea)
+  - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN)
   
 **Software:**
   - Ubuntu Server 20.04.1 LTS

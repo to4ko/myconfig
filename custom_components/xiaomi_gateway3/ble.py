@@ -1,6 +1,19 @@
 from datetime import datetime
 from typing import Optional
 
+DEVICES = {
+    152: ["Xiaomi", "Flower Care", "HHCCJCY01"],
+    426: ["Xiaomi", "TH Sensor", "LYWSDCGQ/01ZM"],
+    1034: ["Xiaomi", "Mosquito Repellent", "WX08ZM"],
+    1115: ["Xiaomi", "TH Clock", "LYWSD02MMC"],
+    1249: ["Xiaomi", "Magic Cube", "XMMF01JQD"],
+    1371: ["Xiaomi", "TH Sensor 2", "LYWSD03MMC"],
+    1694: ["Aqara", "Door Lock N100", "ZNMS16LM"],
+    1747: ["Xaiomi", "ZenMeasure Clock", "MHO-C303"],
+    1983: ["Yeelight", "Button S1", "YLAI003"],
+    2443: ["Xiaomi", "Door Sensor 2", "MCCGQ02HL"],
+}
+
 BLE_FINGERPRINT_ACTION = [
     "Match successful", "Match failed", "Timeout", "Low quality",
     "Insufficient area", "Skin is too dry", "Skin is too wet"
@@ -103,7 +116,7 @@ def parse_xiaomi_ble(event: dict) -> Optional[dict]:
         return {'humidity': int.from_bytes(data, 'little') / 10.0}
 
     elif eid == 0x1007 and length == 3:
-        # Range: 0-120000
+        # Range: 0-120000, lux
         return {'illuminance': int.from_bytes(data, 'little')}
 
     elif eid == 0x1008 and length == 1:
@@ -220,3 +233,18 @@ def parse_xiaomi_ble(event: dict) -> Optional[dict]:
         }
 
     return None
+
+
+def get_device(pdid: int) -> Optional[dict]:
+    if pdid in DEVICES:
+        desc = DEVICES[pdid]
+        return {
+            'device_manufacturer': desc[0],
+            'device_name': desc[0] + ' ' + desc[1],
+            'device_model': desc[2] if len(desc) > 2 else pdid
+        }
+    else:
+        return {
+            'device_name': "BLE",
+            'device_model': pdid
+        }
