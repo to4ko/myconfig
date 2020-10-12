@@ -55,7 +55,7 @@
         - sensor.ha_init
     - service: notify.telegram
       data_template:
-        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.ha_init')|int}}сек!"
+        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int}}сек!"
     - service: script.turn_on
       entity_id: script.system_start
     - service: counter.increment
@@ -669,12 +669,11 @@
       data_template:
         message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 
-
 # ##################################
 # System - GW3 Connection lost
 # ##################################
-- alias: system_gw3_connection_lost
-  initial_state: 'false'
+- alias: system_gw3_connection
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: state
@@ -682,14 +681,46 @@
         - binary_sensor.gw3_hb_state
         - binary_sensor.gw3_hs_state
         - binary_sensor.gw3_s_state
-      to: 'off'
-      for:
-        minutes: 5
+        - binary_sensor.gw3_hb_state_2
+        - binary_sensor.gw3_hs_state_2
+        - binary_sensor.gw3_s_state_2
+        - binary_sensor.gw3_hb_state_3
+        - binary_sensor.gw3_hs_state_3
+        - binary_sensor.gw3_s_state_3
+      # to: 'off'
+      # for:
+      #   minutes: 5
   action:
     - service: notify.telegram
       data_template:
-        message: "HA MAIN RESTART in 10 sec! {{trigger.to_state.attributes.friendly_name }} {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-    - delay:
-        seconds: 10
-    - service: homeassistant.restart
-    
+        message: "\U0001f6a9 {{trigger.to_state.attributes.friendly_name }} {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - Watchdog
+# ##################################
+- alias: system_watchdog
+  initial_state: 'true'
+  mode: parallel
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d000323c87c_contact
+      for:
+        seconds: 2
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "Watchdog: API {%if is_state('binary_sensor.0x158d000323c87c_contact','off') %}Connected{%else%}Disconnected{%endif%}!"
+        
+        
+# ##################################
+# System - Dark Mode dbug
+# ##################################
+- alias: system_dark_mode_debug
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.dark_mode
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "Dark Mode: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"

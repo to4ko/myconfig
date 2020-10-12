@@ -17,20 +17,6 @@
   action:
     - service: light.toggle
       entity_id: light.philips_e27_mb
-      # data_template:
-      #   transition: 1
-      #   brightness_pct: >
-      #     {%- if is_state('binary_sensor.tod_day','off') -%}
-      #     3
-      #     {%- else -%}
-      #     100
-      #     {% endif %}
-      #   kelvin: >
-      #     {%- if is_state('binary_sensor.tod_day','off') -%}
-      #     3000
-      #     {%- else -%}
-      #     5000
-      #     {% endif %}
 
 # # ##################################
 # # MB Table Lamp (Philips E27) Toggle Entrance
@@ -97,42 +83,34 @@
       data:
         scene: 4
 
-# ##################################        
-# Master Bedroom Main Lamp (Xiaomi Round LED) - On
 # ##################################
-- alias: master_bedroom_main_lamp_on_if_lamp_off
+# Master Bedroom Main Lamp (Xiaomi Round LED)
+# ##################################
+- alias: master_bedroom_main_lamp
   initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.0x158d00013e6aa5_action
       to: 'button_2_single'
-  condition:
-    - condition: state
-      entity_id: light.round_led_mb
-      state: 'off'    
   action:
-    - service: light.turn_on
-      entity_id: light.round_led_mb
-      data_template:
-        brightness_pct: 95
-        kelvin: 5000
-
-# ##################################
-# Master Bedroom Main Lamp (Xiaomi Round LED) - Off
-# ##################################
-- alias: master_bedroom_main_lamp_off_if_lamp_on
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d00013e6aa5_action
-      to: 'button_2_single'
-  condition:
-    - condition: state
-      entity_id: light.round_led_mb
-      state: 'on'    
-  action:
-    - service: light.turn_off
-      entity_id: light.round_led_mb
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.round_led_mb
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.round_led_mb
+              data_template:
+                brightness_pct: 100
+                kelvin: 5000
 
 # # ##################################
 # # Master Bedroom Main Lamp (Xiaomi Round LED) - Brightness change with left button 33%
@@ -195,9 +173,6 @@
 - alias: master_bedroom_main_lamp_switch_on_if_off
   initial_state: 'true'
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x00158d00013e6aa5_click
-    #   to: 'left'
     - platform: state
       entity_id: sensor.0x158d00013e6aa5_action
       to: 'button_2_single'

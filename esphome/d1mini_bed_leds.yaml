@@ -72,7 +72,11 @@ binary_sensor:
         - if:
             condition:
               and: 
-                - sun.is_below_horizon:
+                - or:
+                    - sun.is_below_horizon: 
+                    - sensor.in_range:
+                        id: sun_elevation
+                        below: 5.0     
                 - not:
                     binary_sensor.is_off: ha_led
                 - light.is_off: light_s
@@ -92,8 +96,12 @@ binary_sensor:
       then:
         - if:
             condition:
-              and: 
-                - sun.is_below_horizon:
+              and:
+                - or:
+                    - sun.is_below_horizon: 
+                    - sensor.in_range:
+                        id: sun_elevation
+                        below: 5.0                
                 - not:
                     binary_sensor.is_off: ha_led
                 - light.is_off: light_d
@@ -144,6 +152,15 @@ sensor:
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
+
+  - platform: sun
+    name: ${board_name}_Sun_Elevation
+    type: elevation
+    id: sun_elevation
+  - platform: sun
+    name: ${board_name}_Sun_Azimuth
+    type: azimuth  
+    id: sun_azimuth
 
 switch:
   - platform: restart

@@ -22,8 +22,8 @@
         entity_id: light.esp01_led_toilet_light
         state: 'on'
   action:
-    # - service: timer.cancel
-    #   entity_id: timer.main_light_t
+    - service: timer.cancel
+      entity_id: timer.main_light_t
     - service: timer.start
       entity_id: timer.main_light_t
 
@@ -118,6 +118,13 @@
       entity_id: binary_sensor.0x158d0001e54280_motion
       from: 'off'
       to: 'on'
+    - platform: state
+      entity_id: sensor.0x158d0001b97111_action
+      to: 'single'
+    - platform: state
+      entity_id: binary_sensor.0x158d000232ddd6_contact
+      to: 'off'
+      from: 'on'
   condition:
     - condition: state
       entity_id: switch.0x158d0002a36f7f_channel_1
@@ -131,12 +138,11 @@
         entity_id: >
           {% if is_state('binary_sensor.tod_day','on') %}switch.0x158d0002a36f7f_channel_1{%else%}light.esp01_led_toilet_light{%endif%}
 
-
 # ##################################
 # Toilet - Light On
 # ##################################
 - alias: toilet_light_on
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: sensor.0x158d0001b97111_action
@@ -220,29 +226,10 @@
             switch.0x158d0002a36f7f_channel_1, light.esp01_led_toilet_light
           {% endif %}
 
-
-      
 # ##################################
-# Toilet - Indicator On
+# Toilet - Indicator
 # ##################################
-- alias: toilet_indicator_on
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      from: 'on'
-      to: 'off'
-  action:
-    - service: light.turn_on
-      data_template:
-        entity_id: light.btf_pixel_strip_toilet
-        effect: 'Color Wipe'
-        brightness_pct: 60
-
-# ##################################
-# Toilet - Indicator Off
-# ##################################
-- alias: toilet_indicator_off
+- alias: toilet_indicator
   initial_state: 'true'
   mode: restart
   trigger:
@@ -250,15 +237,26 @@
       entity_id: binary_sensor.0x158d000232ddd6_contact
       from: 'off'
       to: 'on'
-    # - platform: state
-    #   entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-    #   to: 'off'
-    #   from: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d000232ddd6_contact
+      from: 'on'
+      to: 'off'
   action:
-    - service: light.turn_off
-      entity_id: light.btf_pixel_strip_toilet
-    - delay: '00:01:00'
-    - service: light.turn_off
-      entity_id: light.esp01_led_toilet_light
-      
-      
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x158d000232ddd6_contact
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.btf_pixel_strip_toilet
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x158d000232ddd6_contact
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              data_template:
+                entity_id: light.btf_pixel_strip_toilet
+                effect: 'Color Wipe'
+                brightness_pct: 40
