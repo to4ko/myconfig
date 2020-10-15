@@ -1,8 +1,9 @@
 substitutions:
   board_name: esp32_domofon
+  ip_address: 192.168.1.101
 
 esphome:
-  name: esp32_domofon
+  name: ${board_name}
   platform: ESP32
   board: lolin32
 
@@ -14,15 +15,20 @@ wifi:
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
+  # networks:
+  #   - ssid: !secret wifi_ssid_hb
+  #     password: !secret wifi_pass
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass  
   manual_ip:
-    static_ip: 192.168.1.101
+    static_ip: ${ip_address}
     gateway: 192.168.1.1
     subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
 
-# Enable logging
 logger:
 
-# Enable Home Assistant API
 api:
   reboot_timeout: 0s
 
@@ -31,20 +37,10 @@ ota:
 web_server:
   port: 80
 
-  
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
-  # - platform: gpio
-  #   pin: 
-  #     number: GPIO12 # TO GPIO13
-  #     inverted: true
-  #   name: ${board_name}_Meter_Imp
-  #   filters:
-  #     - delayed_on: 15ms
-  #     - delayed_off: 15ms
-    
   - platform: gpio
     pin:
       number: GPIO32

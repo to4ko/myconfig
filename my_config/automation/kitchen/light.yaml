@@ -204,8 +204,8 @@
         entity_id: sensor.0x4cf8cdf3c77271d_illuminance
         below: 250
   action:
-    - service: light.turn_on #switch.toggle
-      entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
+    - service: light.turn_on
+      entity_id: light.round_led_k
 
 # ##################################
 # Kitchen - Auto Night Light
@@ -254,11 +254,6 @@
 - alias: kitchen_work_light_l
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d00023e5f2a
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x158d00023e5f2a_action
       to: 'single'
@@ -272,11 +267,6 @@
 - alias: kitchen_work_light_R
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0001ef609b
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x158d0001ef609b_action
       to: 'single'
@@ -290,17 +280,12 @@
 - alias: kitchen_hood_light
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.wall_switch_left_158d0001e0784e
-    #     #click_type: single
     - platform: state
       entity_id: sensor.0x158d0001e0784e_action
       to: 'button_1_single'
   action:
     - service: switch.toggle
-      entity_id: switch.ss5_hood_light #switch.esp32_kitchen_light
+      entity_id: switch.ss5_hood_light
 
 # ##################################
 # Kitchen - Round Led K restart
@@ -326,14 +311,6 @@
 - alias: kitchen_main_lamp_switch_on_if_off
   initial_state: 'true'
   trigger:
-    # - platform: state
-    #   entity_id: switch.0x00158d0002a36f7f_switch_right
-    #   to: 'on'
-    #   from: 'off'
-    # - platform: state
-    #   entity_id: switch.0x00158d0002a36f7f_switch_right
-    #   to: 'off'
-    #   from: 'on'
     - platform: state
       entity_id: sensor.0x158d0002a36f7f_action
       to: 'button_2_single'
@@ -355,25 +332,41 @@
       entity_id: sensor.0x158d0002a36f7f_action
       to: 'button_2_single'
   action:
-    - service: light.toggle
-      entity_id: light.round_led_k
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_k
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.round_led_k
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_k
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.round_led_k
+              data_template:
+                brightness_pct: 100
+                kelvin: 5000
 
 # ##################################
 # Kitchen Main Lamp (Xiaomi Round LED) - On
 # ##################################
-- alias: kitchen_main_lamp_set_brightness
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: light.round_led_k
-      to: 'on'
-      from: 'off'
-  action:
-    - service: light.turn_on
-      entity_id: light.round_led_k
-      data_template:
-        brightness_pct: 100
-        kelvin: 5000
+# - alias: kitchen_main_lamp_set_brightness
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: light.round_led_k
+#       to: 'on'
+#       from: 'off'
+#   action:
+#     - service: light.turn_on
+#       entity_id: light.round_led_k
+#       data_template:
+#         brightness_pct: 100
+#         kelvin: 5000
         
 # ##################################
 # Kitchen Main Lamp (Xiaomi Round LED) - On

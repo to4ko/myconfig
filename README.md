@@ -63,15 +63,17 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 **Xiaomi\Aqara WiFi Devices:**
   - Xiaomi Gateway v3 (3ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
-  - Yeelight 650 (2ea)
-  - Yeelight Pro 90W
-  - Yeelight 480
-  - Yeelight LED Strip
-  - Yeelight LED Strip Plus
-  - Philips Xiaomi E27 Bulb (2ea)
-  - Philips Zhurui Downlight
-  - Yeelight E27 Color Led Bulb v2 (2ea)
-  - Xiaomi Smart WiFi Power Strip (1ea)
+  - Yeelight LED Ceiling Lamp650 (YLXD02YL) (2ea)
+  - Yeelight LED Ceiling Lamp Pro White 960mm (YLXD08YL)
+  - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
+  - Yeelight LED Ceiling Lamp 480mm White (YLXD05YL)
+  - Yeelight LED Light Strip (YLDD01YL)
+  - Yeelight LED Light Strip Plus (YLDD04YL) 
+  - Yeelight Jiaoyue 260 (YLXD62YI)
+  - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
+  - Xiaomi Philips Zhirui Downlight (9290012799)
+  - Yeelight Xiaomi Led Bulb (Color) (YLDP06YL) (2ea)
+  - not in use - Xiaomi Smart WiFi Power Strip (2ea)
   - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
   - not in use - Xiaomi Wifi Plugs v2 (7ea)
