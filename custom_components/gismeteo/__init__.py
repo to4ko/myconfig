@@ -151,7 +151,7 @@ class Gismeteo:
         if func is not None:
             try:
                 res = func(res)
-            except ValueError:
+            except (TypeError, ValueError, ArithmeticError):
                 return None
         return res
 

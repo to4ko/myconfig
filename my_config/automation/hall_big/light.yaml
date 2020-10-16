@@ -206,6 +206,25 @@
 #      entity_id: light.led_strip_hb
 #      state: 'off'
   action:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{is_state('binary_sensor.tod_day','off') and is_state('input_boolean.dark_mode','off')}}"
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_strip_hb
+              data:
+                brightness_pct: 2
+                kelvin: 3000
+        - conditions:
+            - condition: template
+              value_template: "{{is_state('binary_sensor.tod_day','on') and is_state('input_boolean.dark_mode','off')}}"
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_strip_hb
+              data:
+                brightness_pct: 100
+                kelvin: 5000
     - service: input_number.set_value
       data_template:
         entity_id: input_number.main_door_open
@@ -225,24 +244,24 @@
     - delay: '00:00:09'
     - service: script.turn_on
       entity_id: script.open_door_photo
-    - condition: state
-      entity_id: input_boolean.dark_mode
-      state: 'off'
-    - service: light.turn_on
-      entity_id: light.led_strip_hb
-      data_template:
-        brightness_pct: >
-          {%- if is_state('binary_sensor.tod_day','off') -%}
-          2
-          {%- else -%}
-          100
-          {% endif %}
-        kelvin: >
-          {%- if is_state('binary_sensor.tod_day','off') -%}
-          3000
-          {%- else -%}
-          5000
-          {% endif %}
+    # - condition: state
+    #   entity_id: input_boolean.dark_mode
+    #   state: 'off'
+    # - service: light.turn_on
+    #   entity_id: light.led_strip_hb
+    #   data_template:
+    #     brightness_pct: >
+    #       {%- if is_state('binary_sensor.tod_day','off') -%}
+    #       2
+    #       {%- else -%}
+    #       100
+    #       {% endif %}
+    #     kelvin: >
+    #       {%- if is_state('binary_sensor.tod_day','off') -%}
+    #       3000
+    #       {%- else -%}
+    #       5000
+    #       {% endif %}
 
 
 # # ##################################

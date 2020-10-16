@@ -178,23 +178,48 @@
 # ##################################
 # Bathroom - Mirror Light
 # ##################################
-- alias: bathroom_mirror_light
+- alias: bathroom_mirror_light_toggle
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: binary_sensor.sonoff_mini_1_sw #binary_sensor.0x00158d0003262acc_contact
+      entity_id: binary_sensor.sonoff_mini_1_sw
       from: 'off'
       to: 'on'
     - platform: state
-      entity_id: binary_sensor.sonoff_mini_1_sw #binary_sensor.0x00158d0003262acc_contact
+      entity_id: binary_sensor.sonoff_mini_1_sw
       from: 'on'
       to: 'off'
+  action:
+    - service: light.toggle
+      entity_id: light.mirror_light_b
+
+# ##################################
+# Bathroom - Mirror Light Manual
+# ##################################
+- alias: bathroom_mirror_light_manual
+  initial_state: 'true'
+  trigger:
     - platform: state
       entity_id: sensor.0x4cf8cdf3c7a9a48_action
       to: 'button_3_single'
   action:
-    - service: light.toggle
-      entity_id: light.mirror_light_b #switch.0x00158d0001a248e3_switch_l1
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.mirror_light_b
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.mirror_light_b
+        - conditions:
+            - condition: state
+              entity_id: light.mirror_light_b
+              state: 'off'
+          sequence:
+            - service: xiaomi_miio.light_set_scene
+              entity_id: light.mirror_light_b
+              data_template:
+                scene: 4
 
 # ##################################
 # Bathroom - Mirror Light Bright
@@ -227,21 +252,21 @@
       data_template:
         scene: "{% if is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') %}4{%else%}1{%endif%}"
 
-# ##################################
-# Bathroom - Mirror light off
-# ##################################
-- alias: bathroom_mirror_light_off
-  initial_state: 'false'
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d000236bc6d_motion
-      from: 'on'
-      to: 'off'
-      for: 
-        minutes: 10
-  action:
-    - service: light.turn_off
-      entity_id: light.mirror_light_b
+# # ##################################
+# # Bathroom - Mirror light off
+# # ##################################
+# - alias: bathroom_mirror_light_off
+#   initial_state: 'false'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x158d000236bc6d_motion
+#       from: 'on'
+#       to: 'off'
+#       for: 
+#         minutes: 15
+#   action:
+#     - service: light.turn_off
+#       entity_id: light.mirror_light_b
       
 # ##################################
 # Bathroom - Mirror Light Reset 

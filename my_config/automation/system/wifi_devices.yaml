@@ -11,9 +11,10 @@
     - platform: state
       entity_id: 
         - light.square_led_v
+        - light.square_led_s
         - light.round_led_mb
-        - light.round_led_s
         - light.round_led_k
+        - light.round_led_hs
         - light.led_strip_hb
         - light.led_strip_entrance_hb
         - light.bedside_mb
@@ -45,9 +46,10 @@
     - platform: state
       entity_id: 
         - light.square_led_v
+        - light.square_led_s
         - light.round_led_mb
-        - light.round_led_s
         - light.round_led_k
+        - light.round_led_hs
         - light.led_strip_hb
         - light.led_strip_entrance_hb
         - light.bedside_mb
@@ -59,7 +61,7 @@
         - light.led_color_v
         - light.led_color_k
         - light.philips_e27_s
-        - light.philips_e27_mb
+        - light.philips_e27_v
         - fan.purifier2s
         - switch.shp2_socket_server_relay
       from: 'unavailable'
@@ -122,15 +124,10 @@
       state: 'off'
       for:
         minutes: 3
-    # - platform: state
-    #   entity_id: binary_sensor.esp32_ble_tracker_status
-    #   to: 'off'
-    #   for:
-    #     minutes: 3
   action:
-    - service: notify.telegram
-      data_template:
-        message: "ble restart"
+    # - service: notify.telegram
+    #   data_template:
+    #     message: "ble restart"
     - service: switch.turn_off
       entity_id: switch.gateway_plug_entrance_hb_usb
     - delay: "00:00:15"
@@ -145,25 +142,45 @@
   initial_state: 'true'
   trigger:
     - platform: time_pattern
-      minutes: "/15"
+      minutes: "/5"
   condition:
     - condition: state
       entity_id: binary_sensor.esp32_water_filter_status
       state: 'off'
       for:
-        minutes: 5
-    # - platform: state
-    #   entity_id: binary_sensor.esp32_water_filter_status
-    #   to: 'off'
-    #   for:
-    #     minutes: 3
+        minutes: 3
   action:
-    - service: notify.telegram
-      data_template:
-        message: "esp32 water filter restart"
+    # - service: notify.telegram
+    #   data_template:
+    #     message: "esp32 water filter restart"
     - service: switch.turn_off
       entity_id: switch.sonoff_1000d03987_1
     - delay: "00:00:15"
     - service: switch.turn_on
       entity_id: switch.sonoff_1000d03987_1
       
+# ##################################
+# System - Critical Switches toggle
+# ##################################
+- alias: system_critical_switches_toggle
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: 
+        - switch.0x158d00023e5812_switch
+        - switch.0x158d000392623d_switch
+        - switch.sonoff_mini_1_relay
+        - switch.sonoff_mini_2_relay
+        - switch.gateway_plug_entrance_hb
+        - switch.0x158d00039bd56d_switch
+        - switch.0x4cf8cdf3c7a9a48_channel_1
+        - switch.0x158d0002a36f7f_channel_2
+        - switch.sonoff_basic_3_relay
+        - switch.sonoff_basic_4_relay
+      to: 'off'
+      for:
+        seconds: 30
+  action:
+    - service: switch.turn_on
+      data:
+        entity_id: "{{ trigger.entity_id }}"
