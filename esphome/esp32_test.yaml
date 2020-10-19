@@ -15,7 +15,7 @@ wifi:
   fast_connect: true
   power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.247
+    static_ip: 192.168.1.249
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
@@ -30,24 +30,15 @@ ota:
 
 web_server:
   port: 80
-  
 
+dallas:
+  - pin: GPIO13  
+    update_interval: 10s
+    id: dallas_13
+    
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
-
-# output:
-#   - platform: ledc
-#     id: internal_led_pin
-#     pin: GPIO04
-    
-# light:
-#   - platform: monochromatic
-#     name: ${board_name}_internal_led
-#     output: internal_led_pin
-#     id: internal_led
-#     effects:
-#       - strobe:
 
 text_sensor:
   - platform: template
@@ -85,14 +76,17 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
+  - platform: dallas
+    address: 0xF001144BC0C4AA28
+    name: ${board_name}_temperature_ali
+
+  - platform: dallas
+    address: 0x710320977998E728
+    name: ${board_name}_temperature_amperkot
+
 switch:
   - platform: restart
     name: ${board_name}_Restart
-    
-  - platform: gpio
-    pin: GPIO4
-    id: test_switch
-    name: ${board_name}_API_Switch
 
 sun:
   latitude: !secret my_lat
@@ -101,24 +95,3 @@ sun:
 time:
   - platform: homeassistant
     id: homeassistant_time
-  - platform: sntp
-    id: sntp_time
-    on_time:
-      - seconds: 5
-        then:
-          - if:
-              condition:
-                - api.connected:
-              then:
-                - logger.log: -------->>>>  API Connected!
-                - switch.turn_on: test_switch
-
-      - seconds: 5
-        then:
-          - if:
-              condition:
-                not:
-                  - api.connected:
-              then:
-                - logger.log: -------->>>>  API Disconnected!
-                - switch.turn_off: test_switch

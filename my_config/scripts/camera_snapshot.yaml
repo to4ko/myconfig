@@ -23,13 +23,13 @@
           data:
             photo:
             #- file: /config/www/cam_captures/entrance.jpg
-            - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_entrance','entity_picture')}}
+            - url: !secret entrance_snap #http://192.168.1.170/snap.jpeg #http://192.168.1.14:8123{{state_attr('camera.g3_flex_entrance','entity_picture')}}
               caption: Вход
             #- file: /config/www/cam_captures/entrance2.jpg
             - url: http://192.168.1.14:8123{{state_attr('camera.digma100','entity_picture')}}
               caption: Digma100
             #- file: /config/www/cam_captures/hall.jpg
-            - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_hall','entity_picture')}}
+            - url: !secret hall_snap #http://192.168.1.171/snap.jpeg #http://192.168.1.14:8123{{state_attr('camera.g3_flex_hall','entity_picture')}}
               caption: Коридор
 
 
@@ -66,7 +66,7 @@
           data:
             photo:
             #- file: /config/www/cam_captures/dixy.jpg
-            - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_dixy','entity_picture')}}
+            - url: !secret dixy_snap #http://192.168.1.14:8123{{state_attr('camera.g3_flex_dixy','entity_picture')}}
   
   entrance_snapshot:
     alias: Snapshot - Entrance
@@ -95,10 +95,6 @@
   hall_snapshot:
     alias: Snapshot - Hall
     sequence:
-#      - service: camera.snapshot
-#        data:
-#          entity_id: camera.g3_flex_hall
-#          filename: "/config/www/cam_captures/hall.jpg"
       - delay: 00:00:03
       - service: notify.telegram
         data:
@@ -106,21 +102,4 @@
           message: "Фотография" 
           data:
             photo:
-            #- file: /config/www/cam_captures/hall.jpg
-              - url: http://192.168.1.14:8123{{state_attr('camera.g3_flex_hall','entity_picture')}}
-
-  hall_video:
-    alias: Video - Hall
-    sequence:
-    - service: camera.record
-      data_template:
-        entity_id: camera.g3_flex_hall
-        filename: "/config/www/cam_captures/hall.mp4"
-        duration: 5
-    - delay: 00:00:10
-    - service: telegram_bot.send_video
-      data_template:
-        target:
-         - !secret tel_chat_id
-        file: "/config/www/cam_captures/hall.mp4"
-        caption: "Видео сделано в - {{ states('sensor.time_date') }}"
+              - url: !secret hall_snap #http://192.168.1.14:8123{{state_attr('camera.g3_flex_hall','entity_picture')}}
