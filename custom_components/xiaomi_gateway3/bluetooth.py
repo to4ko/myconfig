@@ -14,9 +14,13 @@ DEVICES = {
     1747: ["Xaiomi", "ZenMeasure Clock", "MHO-C303"],
     1983: ["Yeelight", "Button S1", "YLAI003"],
     2443: ["Xiaomi", "Door Sensor 2", "MCCGQ02HL"],
+    2480: ["Xiaomi", "Safe Box", "BGX-5/X1-3001"],
     # Mesh
+    948: ["Yeelight", "Mesh Downlight", "YLSD01YL"],
+    996: ["Yeelight", "Mesh Bulb E27", "YLDP10YL"],
     1771: ["Xiaomi", "Mesh Bulb", "MJDP09YL"],
     1772: ["Xiaomi", "Mesh Downlight", "MJTS01YL"],
+    2076: ["Yeelight", "Mesh Downlight M2", "YLTS02YL/YLTS04YL"],
     2342: ["Yeelight", "Mesh Bulb M2", "YLDP25YL/YLDP26YL"],
 }
 
@@ -148,6 +152,10 @@ def parse_xiaomi_ble(event: dict) -> Optional[dict]:
         # 0x00: unlock state (all bolts retracted)
         # TODO: other values
         return {'lock': 1 if data[0] == 0 else 0}
+
+    elif eid == 0x100F and length == 1:
+        # 1 => true => on => dooor opening
+        return {'opening': 1 if data[0] == 0 else 0}
 
     elif eid == 0x1010 and length == 2:
         return {'formaldehyde': int.from_bytes(data, 'little') / 100.0}
