@@ -173,16 +173,13 @@
   initial_state: 'true'
   trigger:
     - platform: time
-      at: '00:00:02'
+      at: '23:59:58'
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а)."
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а). Чайник включали - {{states('sensor.kettle_on')|int}}раз(а)."
     - service: counter.reset
       entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb, counter.automation_error_counter
-    - service: input_boolean.turn_off
-      data:
-        entity_id: input_boolean.weather_announcement_flag
 
 # ##################################
 # System - Weather FCST to Telegram
@@ -529,7 +526,7 @@
     - platform: state
       entity_id: binary_sensor.rpi_state
       to: 'off'
-      for: '00:10:00'
+      for: '00:20:00'
   action:
     - service: notify.telegram
       data_template:
@@ -624,11 +621,25 @@
       from: 'off'
       to: 'on'
   action:
+    - service_template: >
+        {% if states('input_boolean.silent_mode') != states('input_boolean.domofon_mute') %}
+          script.domofon_mute_toggle
+        {%else%}
+          script.noop
+        {%endif%}  
     - service: input_number.set_value
       data_template:
         entity_id: input_number.main_volume
         value: "{% if is_state('input_boolean.silent_mode','on') %}0{%else%}0.3{%endif%}"
-        
+    - service: notify.telegram
+      data_template:
+        message: >
+          {% if is_state('input_boolean.silent_mode','on') %}
+            {{'\U0001f515'}} Звуки выключены
+          {%else%}
+            {{'\U0001f514'}} Звуки включены
+          {%endif%}
+          
 # ##################################
 # System - HP 178 Toner Level
 # ##################################
@@ -709,7 +720,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "Watchdog: API {%if is_state('binary_sensor.0x158d000323c87c_contact','off') %}Connected{%else%}Disconnected{%endif%}!"
+        message: "\U000026A0 Watchdog: API {%if is_state('binary_sensor.0x158d000323c87c_contact','off') %}Connected{%else%}Disconnected{%endif%}!"
         
         
 # ##################################
@@ -723,4 +734,9 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "Dark Mode: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        message: >
+          {% if is_state('input_boolean.dark_mode','on') %}
+            {{'\U0001f318'}} Режим темноты включен
+          {%else%}
+            {{'\U00002600'}} Режим темноты выключен
+          {%endif%}

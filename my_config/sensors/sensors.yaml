@@ -25,6 +25,22 @@
 
 #  - platform: authenticated
 
+  - platform: history_stats
+    name: Kettle On
+    entity_id: binary_sensor.kettle_k
+    state: 'on'
+    type: count
+    start: '{{ now().replace(hour=0,minute=0,second=0) }}'
+    end: '{{ now() }}'
+
+  - platform: history_stats
+    name: Main Door Open
+    entity_id: binary_sensor.0x158d0001e5d6be_contact
+    state: 'on'
+    type: count
+    start: '{{ now().replace(hour=0,minute=0,second=0) }}'
+    end: '{{ now() }}'
+
   - platform: statistics
     name: out_temperature_stats
     entity_id: sensor.0x158d0001e8995a_temperature
@@ -37,6 +53,12 @@
       out_temperature_min_value:
         value_template: "{{ state_attr('sensor.out_temperature_stats', 'min_value') }}"
         unit_of_measurement: '°C'
+        device_class: temperature
+
+      out_temperature_max_value:
+        value_template: "{{ state_attr('sensor.out_temperature_stats', 'max_value') }}"
+        unit_of_measurement: '°C'
+        device_class: temperature
 
 
   - platform: min_max
@@ -51,6 +73,18 @@
       - sensor.0x158d000233fb72_humidity
       - sensor.0x158d0002464ec0_humidity
 
+  - platform: min_max
+    type: mean
+    name: Temperature Average
+    round_digits: 0
+    entity_ids:
+      - sensor.0x158d0001e586af_temperature
+      - sensor.0x158d0001e58714_temperature
+      - sensor.0x158d0001e6d85a_temperature
+      - sensor.0x158d000222c746_temperature
+      - sensor.0x158d000233fb72_temperature
+      - sensor.0x158d0002464ec0_temperature
+
   - platform: template
     sensors:
        bathroom_absulute_humidity:
@@ -64,6 +98,18 @@
            {% endif %}
          unit_of_measurement: 'g/m³'
          friendly_name: 'Bathroom absolute humidity'
+
+       home_absulute_humidity:
+         value_template: >-
+           {% set h, t = states('sensor.humidity_average') | float, states('sensor.temperature_average') %}
+           {% if not h or t == 'unknown' -%}
+             'unknown'
+           {%- else %}
+            {% set t = t | float %}
+            {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
+           {% endif %}
+         unit_of_measurement: 'g/m³'
+         friendly_name: 'Home absolute humidity'
 
   - platform: command_line
     name: Supervisor updates

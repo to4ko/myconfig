@@ -84,6 +84,12 @@ sensor:
     address: 0x710320977998E728
     name: ${board_name}_temperature_amperkot
 
+  - platform: homeassistant
+    name: ${board_name}_ha_kettle_temperature
+    entity_id: input_number.mi_kettle
+    unit_of_measurement: "°C"
+    id: ha_sensor
+
 switch:
   - platform: restart
     name: ${board_name}_Restart
@@ -95,3 +101,14 @@ sun:
 time:
   - platform: homeassistant
     id: homeassistant_time
+    on_time:
+      - seconds: 5
+        then:
+          - if:
+              condition:
+                lambda: |-
+                  return id(ha_sensor).has_state();
+              then:
+                - logger.log: "Has State"
+              else: 
+                - logger.log: "Has NO State"

@@ -21,16 +21,17 @@ views:
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 3
+                columns: 4
                 entities:
                   - sensor.mi_kettle
+                  - sensor.kettle_on
                   - sensor.mi_kettle_action
                   - sensor.mi_kettle_mode
               - type: glance
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 8
+                columns: 6
                 entities:
                   - entity: switch.air_freshener_spray
                     name: Spray
@@ -50,6 +51,16 @@ views:
                     name: Zz
                     tap_action:
                       action: toggle
+              - type: glance
+                show_name: true
+                show_state: true
+                state_color: true
+                columns: 4
+                entities:
+                  - entity: sensor.out_temperature_min_value
+                    name: Tmin
+                  - entity: sensor.out_temperature_max_value
+                    name: Tmax
                   - entity: sensor.0x158d0001e8995a_temperature
                     name: Temp
                   - entity: sensor.0x158d0001e8995a_humidity
@@ -429,9 +440,15 @@ views:
                   - entity: sensor.0x158d0001e58754_humidity
                     name: T
           - type: glance
+            columns: 7
+            state_color: true
             entities:
               - entity: sensor.humidity_average
                 name: avg(H)
+              - entity: sensor.home_absulute_humidity
+                name: abs(H)
+              - entity: sensor.bathroom_absulute_humidity
+                name: abs(B)
               - entity: sensor.0x4cf8cdf3c77271d_illuminance
                 name: S
               - entity: sensor.0x4cf8cdf3c7754a8_illuminance
@@ -450,16 +467,16 @@ views:
           - type: horizontal-stack
             cards:
               - type: glance
-                columns: 8
+                columns: 7
                 state_color: true
                 entities:
                   - entity: binary_sensor.doorbell
                     name: Doorbell
-                  - entity: binary_sensor.doorbell_mute
-                    name: Mute
-                    tap_action:
-                      action: call-service
-                      service: script.doorbell_mute
+                  # - entity: binary_sensor.doorbell_mute
+                  #   name: Mute
+                  #   tap_action:
+                  #     action: call-service
+                  #     service: script.doorbell_mute
                   - entity: binary_sensor.esp32_domofon_incomingcall
                     name: Call
                   - entity: script.domofon_open_door
@@ -468,7 +485,7 @@ views:
                     tap_action:
                       action: call-service
                       service: script.domofon_open_door
-                  - entity: binary_sensor.domofon_mute
+                  - entity: input_boolean.domofon_mute
                     name: Mute
                     tap_action:
                       action: call-service
@@ -566,6 +583,11 @@ views:
                 tap_action:
                   action: toggle
               - entity: light.philips_e27_mb
+                name: Table MB
+                icon: mdi:lamp
+                tap_action:
+                  action: toggle
+              - entity: light.led_color_mb
                 name: Desk MB
                 icon: mdi:desk-lamp
                 tap_action:
@@ -583,11 +605,6 @@ views:
                   service: script.strip_s_effects
               - entity: light.philips_e27_s
                 name: Desk S
-                icon: mdi:desk-lamp
-                tap_action:
-                  action: toggle
-              - entity: light.led_color_k
-                name: Desk 2 S
                 icon: mdi:desk-lamp
                 tap_action:
                   action: toggle
@@ -1109,7 +1126,7 @@ views:
           - light.square_led_s
           - light.philips_e27_s
           #- light.gateway_light_7811dcb8d612
-          - entity: light.led_color_k
+          - entity: light.led_color_mb
             name: Desk Color S
           - type: divider
           - fan.humidifier2
@@ -1640,7 +1657,8 @@ views:
           - type: history-graph
             hours_to_show: 12
             entities:
-              - sensor.esp01_weight_pad_load
+              - entity: sensor.esp01_weight_pad_load
+                name: Water Tank Weight
 
 ################################################################
 # POWER LOADS PAGE
@@ -1814,7 +1832,7 @@ views:
   #         - device_tracker.e27_s
   #         - device_tracker.e27_mb
   #         - device_tracker.led_color_v
-  #         - device_tracker.led_color_k
+  #         - device_tracker.led_color_mb
   #         - device_tracker.round_led_mb
   #         - device_tracker.round_led_s
   #         - device_tracker.round_led_k
@@ -2017,12 +2035,14 @@ views:
           - device_tracker.philips_e27_s
           - device_tracker.philips_e27_mb
           - device_tracker.led_color_v
-          - device_tracker.led_color_k
+          - device_tracker.led_color_mb
           - device_tracker.round_led_k
           - device_tracker.round_led_mb
-          - device_tracker.round_led_s
+          - device_tracker.round_led_hs
           - device_tracker.square_led_v
+          - device_tracker.square_led_s
           - device_tracker.led_strip_hb
+          - device_tracker.led_strip_entrance_hb
           # - type: divider
           # - device_tracker.gateway_hb
           # - device_tracker.gateway_plug_entrance_hb
@@ -2040,9 +2060,9 @@ views:
           # - device_tracker.gateway_plug_s
           # - device_tracker.gateway_plug_mb_2
           # - device_tracker.server_plug_hb_2
-          - device_tracker.power_strip_wifi
-          - device_tracker.power_strip_s
-          - device_tracker.round_led_s_switch
+          # - device_tracker.power_strip_wifi
+          # - device_tracker.power_strip_s
+          # - device_tracker.round_led_s_switch
           - type: divider
           - device_tracker.humidifier_2
           - device_tracker.purifier_2s_mb
@@ -2106,11 +2126,12 @@ views:
           - device_tracker.switch_8_60_k
           - device_tracker.switch_8_60_s
           - device_tracker.switch_8_60_mb
-          - device_tracker.ap_hb
-          - device_tracker.ap_hs
-          - device_tracker.ap_s
+          - device_tracker.ap_pro_hb
+          - device_tracker.ap_pro_hs
+          - device_tracker.ap_pro_s
           - device_tracker.ap_v
           - device_tracker.ap_mb
+          - device_tracker.ap_nanohd_hb
       
       - type: entities
         title: Others
@@ -2517,8 +2538,6 @@ views:
                 tap_action: none
               - entity: sensor.shp2_socket_1_w
                 name:  MQTT
-              - entity: counter.mqtt_server_offline_warning
-                name: counter
 
               - entity: switch.shp6_socket_2_relay
                 name: NUC
@@ -2653,6 +2672,15 @@ views:
       #############
       - type: vertical-stack
         cards:
+          - type: history-graph
+            entities:
+              - entity: remote.0x588e81fffedcb38d_pair
+                name: HB
+              - entity: remote.0x842e14fffe1508a6_pair
+                name: HS
+              - entity: remote.0x588e81fffedd3c41_pair
+                name: S
+              
           - type: glance
             columns: 6
             entities:
@@ -2837,49 +2865,84 @@ views:
       - type: vertical-stack
         cards:
             # ######################################
-            # Load bars for 8 threads CPU (i7 3770s)
+            # Load bars for 12 threads CPU (e2620 v3)
             # ######################################
+          # - type: custom:bar-card
+          #   title_position: top
+          #   columns: 3
+          #   height: 20px
+          #   min: 0
+          #   max: 24.4
+          #   target: 19
+          #   severity:
+          #     - value: 3
+          #       color: '#40bf40'
+          #     - value: 6
+          #       color: '#bf9540'
+          #     - value: 9
+          #       color: '#bf4040'
+          #     - value: 12 
+          #       color: '#ff0000'
+          #   padding: 2px
+          #   direction: right
+          #   entities:
+          #     - sensor.load_1m
+          #     - sensor.load_5m
+          #     - sensor.load_15m
           - type: custom:bar-card
-            title_position: top
             columns: 3
-            height: 20px
+            height: 30px
             min: 0
-            max: 24.4
-            target: 19
+            max: 14
+            target: 20
+            positions:
+              icon: 'off'
+              indicator: inside
+              name: inside
             severity:
-              - value: 3
-                color: '#40bf40'
-              - value: 6
-                color: '#bf9540'
-              - value: 9
-                color: '#bf4040'
-              - value: 12 
-                color: '#ff0000'
+              - color: '#40bf40'
+                from: 0
+                to: 4
+              - color: '#bf9540'
+                from: 4
+                to: 8
+              - color: '#bf4040'
+                from: 8 
+                to: 12
+              - color: '#ff0000'
+                from: 12
+                to: 20
             padding: 2px
             direction: right
             entities:
               - sensor.load_1m
               - sensor.load_5m
               - sensor.load_15m
-          
           - type: custom:stack-in-card
             mode: vertical
-            cards:          
+            cards:
               - type: custom:bar-card
-                title_position: top
                 columns: 3
-                height: 25px
+                height: 30px
                 min: 20
                 max: 100
+                positions:
+                  icon: 'off'
+                  indicator: inside
+                  name: inside
                 severity:
-                  - value: 40
-                    color: '#40bf40'
-                  - value: 50
-                    color: '#bf9540'
-                  - value: 60
-                    color: '#bf4040'
-                  - value: 70
-                    color: '#ff0000'
+                  - color: '#40bf40'
+                    from: 0
+                    to: 45
+                  - color: '#bf9540'
+                    from: 45
+                    to: 55
+                  - color: '#bf4040'
+                    from: 55 
+                    to: 65
+                  - color: '#ff0000'
+                    from: 65
+                    to: 100
                 padding: 2px
                 direction: right
                 entities:
@@ -2923,7 +2986,7 @@ views:
                     state_not: 'off'
                 card:
                   type: glance
-                  columns: 5
+                  columns: 3
                   state_color: true
                   entities:
                     - entity: sensor.ippon_1200_status_data
@@ -2936,10 +2999,10 @@ views:
                       name: Charge
                     #- entity: sensor.ippon_1200_battery_voltage
                     #  name: Voltage
-                    - entity: sensor.ippon_1200_input_voltage
-                      name: Input
-                    - entity: sensor.ippon_1200_output_voltage
-                      name: Output
+                    # - entity: sensor.ippon_1200_input_voltage
+                    #   name: Input
+                    # - entity: sensor.ippon_1200_output_voltage
+                    #   name: Output
               - type: conditional
                 state_color: true
                 conditions:
@@ -3103,22 +3166,28 @@ views:
       - type: vertical-stack
         cards:
           - type: custom:bar-card
-            title_position: top
-            #title: none
             columns: 3
-            height: 20px
+            height: 30px
             min: 0
-            max: 24.4
-            target: 19
+            max: 14
+            target: 20
+            positions:
+              icon: 'off'
+              indicator: inside
+              name: inside
             severity:
-              - value: 3
-                color: '#40bf40'
-              - value: 6
-                color: '#bf9540'
-              - value: 9
-                color: '#bf4040'
-              - value: 12 
-                color: '#ff0000'
+              - color: '#40bf40'
+                from: 0
+                to: 4
+              - color: '#bf9540'
+                from: 4
+                to: 8
+              - color: '#bf4040'
+                from: 8 
+                to: 12
+              - color: '#ff0000'
+                from: 12
+                to: 20
             padding: 2px
             direction: right
             entities:
@@ -3127,72 +3196,104 @@ views:
               - sensor.load_15m
           
           - type: vertical-stack
-            cards:          
+            cards:
               - type: custom:bar-card
-                title_position: top
                 columns: 3
-                height: 25px
+                height: 30px
                 min: 20
                 max: 100
+                positions:
+                  icon: 'off'
+                  indicator: inside
+                  name: inside
                 severity:
-                  - value: 40
-                    color: '#40bf40'
-                  - value: 50
-                    color: '#bf9540'
-                  - value: 60
-                    color: '#bf4040'
-                  - value: 70
-                    color: '#ff0000'
+                  - color: '#40bf40'
+                    from: 0
+                    to: 45
+                  - color: '#bf9540'
+                    from: 45
+                    to: 55
+                  - color: '#bf4040'
+                    from: 55 
+                    to: 65
+                  - color: '#ff0000'
+                    from: 65
+                    to: 100
                 padding: 2px
                 direction: right
                 entities:
-                  - sensor.ipmi_cpu_temp
-                  - sensor.ipmi_pch_temp
-                  - sensor.ipmi_system_temp
+                  - entity: sensor.ipmi_cpu_temp
+                    name: CPU
+                  - entity: sensor.ipmi_pch_temp
+                    name: PCH
+                  - entity: sensor.ipmi_system_temp
+                    name: System
               - type: custom:bar-card
-                title_position: top
                 columns: 4
-                height: 25px
+                height: 30px
                 min: 20
                 max: 100
+                positions:
+                  icon: 'off'
+                  indicator: inside
+                  name: inside
                 severity:
-                  - value: 40
-                    color: '#40bf40'
-                  - value: 50
-                    color: '#bf9540'
-                  - value: 60
-                    color: '#bf4040'
-                  - value: 70
-                    color: '#ff0000'
+                  - color: '#40bf40'
+                    from: 0
+                    to: 45
+                  - color: '#bf9540'
+                    from: 45
+                    to: 55
+                  - color: '#bf4040'
+                    from: 55 
+                    to: 65
+                  - color: '#ff0000'
+                    from: 65
+                    to: 100
                 padding: 2px
                 direction: right
                 entities:
-                  - sensor.ipmi_peripheral_temp
-                  - sensor.ipmi_vcpuvrm_temp
-                  - sensor.ipmi_vmemabvrm_temp
-                  - sensor.ipmi_vmemcdvrm_temp
+                  - entity: sensor.ipmi_peripheral_temp
+                    name: Periph
+                  - entity: sensor.ipmi_vcpuvrm_temp
+                    name: VRM
+                  - entity: sensor.ipmi_vmemabvrm_temp
+                    name: VrmAB
+                  - entity: sensor.ipmi_vmemcdvrm_temp
+                    name: VrmCD
               - type: custom:bar-card
-                title_position: top
                 columns: 4
-                height: 25px
-                min: 25
-                max: 85
+                height: 30px
+                min: 20
+                max: 100
+                positions:
+                  icon: 'off'
+                  indicator: inside
+                  name: inside
                 severity:
-                  - value: 40
-                    color: '#40bf40'
-                  - value: 50
-                    color: '#bf9540'
-                  - value: 60
-                    color: '#bf4040'
-                  - value: 70
-                    color: '#ff0000'
+                  - color: '#40bf40'
+                    from: 0
+                    to: 45
+                  - color: '#bf9540'
+                    from: 45
+                    to: 55
+                  - color: '#bf4040'
+                    from: 55 
+                    to: 65
+                  - color: '#ff0000'
+                    from: 65
+                    to: 100
                 padding: 2px
                 direction: right
                 entities:
-                  - sensor.ipmi_dimma1_temp
-                  - sensor.ipmi_dimmb1_temp
-                  - sensor.ipmi_dimmc1_temp
-                  - sensor.ipmi_dimmd1_temp
+                  - entity: sensor.ipmi_dimma1_temp
+                    name: A1
+                  - entity: sensor.ipmi_dimmb1_temp
+                    name: B1
+                  - entity: sensor.ipmi_dimmc1_temp
+                    name: C1
+                  - entity: sensor.ipmi_dimmd1_temp
+                    name: D1
 
               - type: glance
                 #title: Ubuntu Status
@@ -3218,18 +3319,24 @@ views:
                     name: Power usage
 
               - type: custom:bar-card
-                title_position: top
                 columns: 1
-                height: 25px
+                height: 30px
                 min: 200
                 max: 1700
+                positions:
+                  icon: 'off'
+                  indicator: inside
+                  name: inside
                 severity:
-                  - value: 500
-                    color: '#4040bf'
-                  - value: 1500
-                    color: '#40bf40'
-                  - value: 3500
-                    color: '#bf4040'
+                  - color: '#40bf40'
+                    from: 0
+                    to: 1000
+                  - color: '#bf9540'
+                    from: 1000
+                    to: 1500
+                  - color: '#bf4040'
+                    from: 1500 
+                    to: 2000
                 padding: 2px
                 direction: right
                 entities:

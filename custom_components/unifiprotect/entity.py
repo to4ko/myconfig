@@ -1,8 +1,7 @@
-"""Shared Entity definition for Unifi Protect Integration."""
-import homeassistant.helpers.device_registry as dr
 from homeassistant.helpers.entity import Entity
+import homeassistant.helpers.device_registry as dr
 
-from .const import DEFAULT_BRAND, DOMAIN
+from .const import DOMAIN, DEFAULT_BRAND
 
 
 class UnifiProtectEntity(Entity):
@@ -40,7 +39,6 @@ class UnifiProtectEntity(Entity):
 
     @property
     def device_info(self):
-        """Return Device Info."""
         return {
             "connections": {(dr.CONNECTION_NETWORK_MAC, self._mac)},
             "name": self._camera_name,

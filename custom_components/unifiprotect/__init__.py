@@ -6,22 +6,31 @@ import logging
 
 from aiohttp import CookieJar
 from aiohttp.client_exceptions import ServerDisconnectedError
-from pyunifiprotect import NotAuthorized, NvrError, UpvServer
+
+from pyunifiprotect import UpvServer, NotAuthorized, NvrError
+
+from homeassistant.const import (
+    ATTR_ATTRIBUTION,
+    CONF_ID,
+    CONF_HOST,
+    CONF_PORT,
+    CONF_USERNAME,
+    CONF_PASSWORD,
+    CONF_FILENAME,
+    CONF_SCAN_INTERVAL,
+)
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_HOST,
-    CONF_ID,
-    CONF_PASSWORD,
-    CONF_PORT,
-    CONF_SCAN_INTERVAL,
-    CONF_USERNAME,
-)
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-import homeassistant.helpers.device_registry as dr
 from homeassistant.helpers.typing import ConfigType, HomeAssistantType
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+import homeassistant.helpers.device_registry as dr
 
 from .const import (
     CONF_SNAPSHOT_DIRECT,
@@ -87,8 +96,8 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
             "Could not Authorize against Unifi Protect. Please reinstall the Integration."
         )
         return
-    except (NvrError, ServerDisconnectedError) as notreadyerror:
-        raise ConfigEntryNotReady from notreadyerror
+    except (NvrError, ServerDisconnectedError):
+        raise ConfigEntryNotReady
 
     await coordinator.async_refresh()
     hass.data[DOMAIN][entry.entry_id] = {

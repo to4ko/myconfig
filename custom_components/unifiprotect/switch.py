@@ -1,4 +1,4 @@
-"""This component provides Switches for Unifi Protect."""
+""" This component provides Switches for Unifi Protect."""
 
 import logging
 
@@ -7,20 +7,22 @@ try:
 except ImportError:
     # Prior to HA v0.110
     from homeassistant.components.switch import SwitchDevice
-
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import HomeAssistantType
-
 from .const import (
     ATTR_CAMERA_TYPE,
-    CONF_IR_OFF,
     CONF_IR_ON,
-    DEFAULT_ATTRIBUTION,
+    CONF_IR_OFF,
     DOMAIN,
+    DEFAULT_ATTRIBUTION,
     TYPE_RECORD_ALLWAYS,
     TYPE_RECORD_MOTION,
     TYPE_RECORD_NEVER,
+    TYPE_IR_AUTO,
+    TYPE_IR_OFF,
+    TYPE_IR_LED_OFF,
+    TYPE_IR_ON,
 )
 from .entity import UnifiProtectEntity
 
@@ -37,7 +39,7 @@ SWITCH_TYPES = {
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
-    """Set up switches for UniFi Protect integration."""
+    """A Ubiquiti Unifi Protect Sensor."""
     upv_object = hass.data[DOMAIN][entry.entry_id]["upv"]
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     if not coordinator.data:
@@ -58,12 +60,7 @@ async def async_setup_entry(
         for camera in coordinator.data:
             switches.append(
                 UnifiProtectSwitch(
-                    upv_object,
-                    coordinator,
-                    camera,
-                    switch,
-                    ir_on,
-                    ir_off,
+                    upv_object, coordinator, camera, switch, ir_on, ir_off,
                 )
             )
             _LOGGER.debug("UNIFIPROTECT SWITCH CREATED: %s", switch)

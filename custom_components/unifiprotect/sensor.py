@@ -1,12 +1,17 @@
-"""This component provides sensors for Unifi Protect."""
+""" This component provides sensors for Unifi Protect."""
 import logging
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
+from homeassistant.const import ATTR_ATTRIBUTION
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import HomeAssistantType
-
-from .const import ATTR_CAMERA_TYPE, DEFAULT_ATTRIBUTION, DOMAIN, TYPE_RECORD_NEVER
+from .const import (
+    ATTR_CAMERA_TYPE,
+    ATTR_EVENT_SCORE,
+    DOMAIN,
+    DEFAULT_ATTRIBUTION,
+    TYPE_RECORD_NEVER,
+)
 from .entity import UnifiProtectEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,7 +24,7 @@ SENSOR_TYPES = {
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
-    """Set up sensors for UniFi Protect integration."""
+    """A Ubiquiti Unifi Protect Sensor."""
     upv_object = hass.data[DOMAIN][entry.entry_id]["upv"]
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     if not coordinator.data:

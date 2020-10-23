@@ -1,4 +1,4 @@
-"""This component provides binary sensors for Unifi Protect."""
+""" This component provides binary sensors for Unifi Protect."""
 import logging
 
 try:
@@ -10,16 +10,19 @@ except ImportError:
     from homeassistant.components.binary_sensor import BinarySensorDevice
 
 from homeassistant.components.binary_sensor import DEVICE_CLASS_MOTION
+from homeassistant.const import (
+    ATTR_ATTRIBUTION,
+    ATTR_LAST_TRIP_TIME,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION, ATTR_LAST_TRIP_TIME
 from homeassistant.helpers.typing import HomeAssistantType
-
+from homeassistant.util import slugify
 from .const import (
-    ATTR_EVENT_LENGTH,
     ATTR_EVENT_SCORE,
+    ATTR_EVENT_LENGTH,
+    DOMAIN,
     DEFAULT_ATTRIBUTION,
     DEVICE_CLASS_DOORBELL,
-    DOMAIN,
 )
 from .entity import UnifiProtectEntity
 
@@ -29,7 +32,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
-    """Set up binary sensors for UniFi Protect integration."""
+    """A Ubiquiti Unifi Protect Binary Sensor."""
     upv_object = hass.data[DOMAIN][entry.entry_id]["upv"]
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     if not coordinator.data:
@@ -81,7 +84,8 @@ class UnifiProtectBinarySensor(UnifiProtectEntity, BinarySensorDevice):
         """Return true if the binary sensor is on."""
         if self._device_class == DEVICE_CLASS_DOORBELL:
             return self._camera_data["event_ring_on"]
-        return self._camera_data["event_on"]
+        else:
+            return self._camera_data["event_on"]
 
     @property
     def device_class(self):
@@ -94,7 +98,8 @@ class UnifiProtectBinarySensor(UnifiProtectEntity, BinarySensorDevice):
         if self._device_class == DEVICE_CLASS_DOORBELL:
             if self._camera_data["event_ring_on"]:
                 return "mdi:bell-ring-outline"
-            return "mdi:doorbell-video"
+            else:
+                return "mdi:doorbell-video"
 
     @property
     def device_state_attributes(self):
@@ -104,9 +109,10 @@ class UnifiProtectBinarySensor(UnifiProtectEntity, BinarySensorDevice):
                 ATTR_ATTRIBUTION: DEFAULT_ATTRIBUTION,
                 ATTR_LAST_TRIP_TIME: self._camera_data["last_ring"],
             }
-        return {
-            ATTR_ATTRIBUTION: DEFAULT_ATTRIBUTION,
-            ATTR_LAST_TRIP_TIME: self._camera_data["last_motion"],
-            ATTR_EVENT_SCORE: self._camera_data["event_score"],
-            ATTR_EVENT_LENGTH: self._camera_data["event_length"],
-        }
+        else:
+            return {
+                ATTR_ATTRIBUTION: DEFAULT_ATTRIBUTION,
+                ATTR_LAST_TRIP_TIME: self._camera_data["last_motion"],
+                ATTR_EVENT_SCORE: self._camera_data["event_score"],
+                ATTR_EVENT_LENGTH: self._camera_data["event_length"],
+            }
