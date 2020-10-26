@@ -1,29 +1,33 @@
 """Support for Ubiquiti's Unifi Protect NVR."""
 import logging
+
 from homeassistant.components.camera import SUPPORT_STREAM, Camera
-from homeassistant.const import (
-    ATTR_ATTRIBUTION,
-    ATTR_LAST_TRIP_TIME,
-)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import HomeAssistantType
+from homeassistant.const import ATTR_ATTRIBUTION, ATTR_LAST_TRIP_TIME
 from homeassistant.helpers import entity_platform
+from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import (
     ATTR_CAMERA_ID,
-    ATTR_UP_SINCE,
     ATTR_ONLINE,
-    DOMAIN,
+    ATTR_UP_SINCE,
     DEFAULT_ATTRIBUTION,
     DEFAULT_BRAND,
     DEVICE_CLASS_DOORBELL,
+    DOMAIN,
+    SAVE_THUMBNAIL_SCHEMA,
+    SERVICE_SAVE_THUMBNAIL,
+    SERVICE_SET_DOORBELL_LCD_MESSAGE,
+    SERVICE_SET_HDR_MODE,
+    SERVICE_SET_HIGHFPS_VIDEO_MODE,
     SERVICE_SET_IR_MODE,
     SERVICE_SET_RECORDING_MODE,
-    SERVICE_SAVE_THUMBNAIL,
     SERVICE_SET_STATUS_LIGHT,
+    SET_DOORBELL_LCD_MESSAGE_SCHEMA,
+    SET_HDR_MODE_SCHEMA,
+    SET_HIGHFPS_VIDEO_MODE_SCHEMA,
     SET_IR_MODE_SCHEMA,
     SET_RECORDING_MODE_SCHEMA,
-    SAVE_THUMBNAIL_SCHEMA,
     SET_STATUS_LIGHT_SCHEMA,
 )
 from .entity import UnifiProtectEntity
@@ -36,16 +40,16 @@ async def async_setup_entry(
 ) -> None:
     """Discover cameras on a Unifi Protect NVR."""
     upv_object = hass.data[DOMAIN][entry.entry_id]["upv"]
-    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    protect_data = hass.data[DOMAIN][entry.entry_id]["protect_data"]
     snapshot_direct = hass.data[DOMAIN][entry.entry_id]["snapshot_direct"]
-    if not coordinator.data:
+    if not protect_data.data:
         return
 
-    cameras = [camera for camera in coordinator.data]
+    cameras = [camera for camera in protect_data.data]
 
     async_add_entities(
         [
-            UnifiProtectCamera(upv_object, coordinator, camera, snapshot_direct)
+            UnifiProtectCamera(upv_object, protect_data, camera, snapshot_direct)
             for camera in cameras
         ]
     )
@@ -67,6 +71,22 @@ async def async_setup_entry(
     )
 
     platform.async_register_entity_service(
+        SERVICE_SET_HDR_MODE, SET_HDR_MODE_SCHEMA, "async_set_hdr_mode"
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_HIGHFPS_VIDEO_MODE,
+        SET_HIGHFPS_VIDEO_MODE_SCHEMA,
+        "async_set_highfps_video_mode",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_DOORBELL_LCD_MESSAGE,
+        SET_DOORBELL_LCD_MESSAGE_SCHEMA,
+        "async_set_doorbell_lcd_message",
+    )
+
+    platform.async_register_entity_service(
         SERVICE_SAVE_THUMBNAIL, SAVE_THUMBNAIL_SCHEMA, "async_save_thumbnail"
     )
 
@@ -76,9 +96,9 @@ async def async_setup_entry(
 class UnifiProtectCamera(UnifiProtectEntity, Camera):
     """A Ubiquiti Unifi Protect Camera."""
 
-    def __init__(self, upv_object, coordinator, camera_id, snapshot_direct):
+    def __init__(self, upv_object, protect_data, camera_id, snapshot_direct):
         """Initialize an Unifi camera."""
-        super().__init__(upv_object, coordinator, camera_id, None)
+        super().__init__(upv_object, protect_data, camera_id, None)
         self._snapshot_direct = snapshot_direct
         self._name = self._camera_data["name"]
         self._stream_source = self._camera_data["rtsp"]
@@ -102,7 +122,7 @@ class UnifiProtectCamera(UnifiProtectEntity, Camera):
 
     @property
     def brand(self):
-        """The Cameras Brand."""
+        """Return the Cameras Brand."""
         return DEFAULT_BRAND
 
     @property
@@ -171,12 +191,23 @@ class UnifiProtectCamera(UnifiProtectEntity, Camera):
         """Set camera Status Light."""
         await self.upv_object.set_camera_status_light(self._camera_id, light_on)
 
-    async def async_update(self):
-        """Update the entity.
+    async def async_set_hdr_mode(self, hdr_on):
+        """Set camera HDR mode."""
+        await self.upv_object.set_camera_hdr_mode(self._camera_id, hdr_on)
 
-        Only used by the generic entity update service.
-        """
-        await self.coordinator.async_request_refresh()
+    async def async_set_highfps_video_mode(self, high_fps_on):
+        """Set camera High FPS video mode."""
+        await self.upv_object.set_camera_video_mode_highfps(
+            self._camera_id, high_fps_on
+        )
+
+    async def async_set_doorbell_lcd_message(self, message, duration):
+        """Set LCD Message on Doorbell display."""
+        if not duration.isnumeric():
+            duration = None
+        await self.upv_object.set_doorbell_custom_text(
+            self._camera_id, message, duration
+        )
 
     async def async_enable_motion_detection(self):
         """Enable motion detection in camera."""
@@ -193,7 +224,7 @@ class UnifiProtectCamera(UnifiProtectEntity, Camera):
         _LOGGER.debug("Motion Detection Disabled for Camera: %s", self._name)
 
     async def async_camera_image(self):
-        """ Return the Camera Image. """
+        """Return the Camera Image."""
         if self._snapshot_direct:
             last_image = await self.upv_object.get_snapshot_image_direct(
                 self._camera_id
@@ -204,5 +235,5 @@ class UnifiProtectCamera(UnifiProtectEntity, Camera):
         return self._last_image
 
     async def stream_source(self):
-        """ Return the Stream Source. """
+        """Return the Stream Source."""
         return self._stream_source

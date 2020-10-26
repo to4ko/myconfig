@@ -1,11 +1,8 @@
-""" Constant definitions for Unifi Protect Integration."""
+"""Constant definitions for Unifi Protect Integration."""
 
 import voluptuous as vol
+from homeassistant.const import ATTR_ENTITY_ID, CONF_FILENAME
 from homeassistant.helpers import config_validation as cv
-from homeassistant.const import (
-    ATTR_ENTITY_ID,
-    CONF_FILENAME,
-)
 
 DOMAIN = "unifiprotect"
 UNIQUE_ID = "unique_id"
@@ -16,6 +13,7 @@ ATTR_UP_SINCE = "up_since"
 ATTR_ONLINE = "online"
 ATTR_EVENT_SCORE = "event_score"
 ATTR_EVENT_LENGTH = "event_length"
+ATTR_EVENT_OBJECT = "event_object"
 
 CONF_THUMB_WIDTH = "image_width"
 CONF_RECORDING_MODE = "recording_mode"
@@ -24,6 +22,10 @@ CONF_IR_MODE = "ir_mode"
 CONF_IR_ON = "ir_on"
 CONF_IR_OFF = "ir_off"
 CONF_STATUS_LIGHT = "light_on"
+CONF_HDR_ON = "hdr_on"
+CONF_HIGH_FPS_ON = "high_fps_on"
+CONF_MESSAGE = "message"
+CONF_DURATION = "duration"
 
 DEFAULT_PORT = 7443
 DEFAULT_ATTRIBUTION = "Powered by Unifi Protect Server"
@@ -37,6 +39,9 @@ SERVICE_SAVE_THUMBNAIL = "save_thumbnail_image"
 SERVICE_SET_RECORDING_MODE = "set_recording_mode"
 SERVICE_SET_IR_MODE = "set_ir_mode"
 SERVICE_SET_STATUS_LIGHT = "set_status_light"
+SERVICE_SET_HDR_MODE = "set_hdr_mode"
+SERVICE_SET_HIGHFPS_VIDEO_MODE = "set_highfps_video_mode"
+SERVICE_SET_DOORBELL_LCD_MESSAGE = "set_doorbell_lcd_message"
 
 TYPE_RECORD_MOTION = "motion"
 TYPE_RECORD_ALLWAYS = "always"
@@ -45,6 +50,8 @@ TYPE_IR_AUTO = "auto"
 TYPE_IR_ON = "always_on"
 TYPE_IR_LED_OFF = "led_off"
 TYPE_IR_OFF = "always_off"
+TYPE_HIGH_FPS_ON = "highFps"
+TYPE_HIGH_FPS_OFF = "default"
 
 TYPES_IR_OFF = [
     TYPE_IR_OFF,
@@ -95,5 +102,27 @@ SET_STATUS_LIGHT_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Optional(CONF_STATUS_LIGHT, default=True): vol.In(VALID_LIGHT_MODES),
+    }
+)
+
+SET_HDR_MODE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Optional(CONF_HDR_ON, default=True): vol.In(VALID_LIGHT_MODES),
+    }
+)
+
+SET_HIGHFPS_VIDEO_MODE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Optional(CONF_HIGH_FPS_ON, default=True): vol.In(VALID_LIGHT_MODES),
+    }
+)
+
+SET_DOORBELL_LCD_MESSAGE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Required(CONF_MESSAGE): cv.string,
+        vol.Optional(CONF_DURATION, default="None"): cv.string,
     }
 )

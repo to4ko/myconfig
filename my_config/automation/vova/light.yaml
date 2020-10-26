@@ -3,7 +3,7 @@
 # VOVA - Lights
 #
 # #####################################################################################
-# Vova Bedside Lamp (Yeelight Color E27) On
+# Vova Bedside Lamp
 # ##################################
 - alias: vova_bedside_lamp
   initial_state: 'true'
@@ -41,146 +41,8 @@
                   5000
                   {% endif %}
 
-# # ##################################
-# # Vova Bedside Lamp - Off
-# # ##################################
-# - alias: vova_bedside_off_if_lamp_on
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id: sensor.0x158d00026eb820_action
-#       to: 'button_1_single'
-#   condition:
-#     condition: state
-#     entity_id: light.bedside_mb
-#     state: 'on'
-#   action:
-#   - service: light.turn_off
-#     entity_id: light.bedside_mb
-
-
 # ##################################
-# Vova Table Lamp (Yeelight Color E27) Toggle
-# ##################################
-- alias: vova_table_lamp_toggle
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d00016bdb4a_action
-      to: 'single'
-  action:
-    - service: light.toggle
-      entity_id: light.led_color_v
-
-# ##################################
-# Vova Table Lamp (Yeelight Color E27) - Switch to Bright
-# ##################################
-- alias: vova_table_lamp_bright
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d00016bdb4a_action
-      to: 'double'
-  action:
-    - service: light.turn_on
-      entity_id: light.led_color_v
-      data_template:
-        brightness_pct: 100
-        kelvin: 5000
-      
-# ##################################
-# Vova Table Lamp (Yeelight Color E27) - Switch to Mid-Night
-# ##################################
-- alias: vova_table_lamp_night
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d00016bdb4a_action
-      to: 'hold'
-  action:
-    service: light.turn_on
-    entity_id: light.led_color_v
-    data_template:
-      brightness_pct: 5
-      kelvin: 3000
-      
-# ##################################
-# Vova Main Lamp (Xiaomi Sqaure LED) - On 100%\4500k
-# ##################################
-- alias: vova_main_lamp_on_if_lamp_off
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0001712d55_action
-      to: 'button_1_single'
-  condition:
-    condition: and
-    conditions:
-    - condition: state
-      entity_id: light.square_led_v
-      state: 'off'
-    - condition: state
-      entity_id: light.square_led_v_nightlight
-      state: 'off'
-  action:
-    service: light.turn_on
-    entity_id: light.square_led_v
-    data_template:
-      brightness_pct: 100
-      kelvin: 5000
-
-# ##################################
-# Vova Main Lamp (Xiaomi Sqaure LED) - On 5%\3000k
-# ##################################
-- alias: vova_main_lamp_on_5_if_lamp_off
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0001712d55_action
-      to: 'button_2_single'
-  condition:
-    condition: or
-    conditions:
-    - condition: state
-      entity_id: light.square_led_v
-      state: 'off'
-    - condition: state
-      entity_id: light.square_led_v_nightlight
-      state: 'off'
-  action:
-    service: light.turn_on
-    entity_id: light.square_led_v
-    data_template:
-       brightness_pct: 5
-       kelvin: 3000
-       
-# ##################################
-# Vova Main Lamp (Xiaomi Sqaure LED) - Off if On
-# ##################################
-- alias: vova_main_lamp_off_if_lamp_on
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0001712d55_action
-      to: 'button_1_single'
-    - platform: state
-      entity_id: sensor.0x158d0001712d55_action
-      to: 'button_2_single'
-  condition:
-    condition: or
-    conditions:
-    - condition: state
-      entity_id: light.square_led_v
-      state: 'on'
-    - condition: state
-      entity_id: light.square_led_v_nightlight
-      state: 'on'
-  action:
-  - service: light.turn_off
-    entity_id: light.square_led_v, light.square_led_v_nightlight
-
-# ##################################
-# Vova Main Lamp (Xiaomi Sqaure LED) - Bed Switch
+# Vova Main Lamp (Xiaomi Square LED) - Bed Switch
 # ##################################
 - alias: vova_main_lamp_with_bed_switch
   initial_state: 'true'
@@ -206,8 +68,6 @@
               entity_id: light.square_led_v_nightlight
               data:
                 brightness: 35
-
-  
     # service_template: >-
     #   {% if is_state('light.square_led_v','on') and (state_attr('light.square_led_v','brightness') < 100) %}
     #     script.square_lamp_to_100
@@ -216,6 +76,195 @@
     #   {% elif is_state('light.square_led_v','off') %}
     #     script.square_lamp_to_30
     #   {% endif %}
+
+# ##################################
+# Vova Table Lamp (Yeelight Color E27)
+# ##################################
+- alias: vova_table_lamp
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d00016bdb4a_action
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00016bdb4a_action
+              state: 'single'
+          sequence:
+            - service: light.toggle
+              entity_id: light.led_color_v
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00016bdb4a_action
+              state: 'double'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_color_v
+              data_template:
+                brightness_pct: 100
+                kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00016bdb4a_action
+              state: 'hold'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_color_v
+              data_template:
+                brightness_pct: 5
+                kelvin: 3000
+
+# ##################################
+# Vova Main Lamp (Xiaomi Square LED) - Main Switch Left Button
+# ##################################
+- alias: vova_main_lamp_left_button
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d0001712d55_action
+      to: 'button_1_single'
+  action:
+    - choose:
+        - conditions:
+            - condition: and
+              conditions:
+                - condition: state
+                  entity_id: light.square_led_v
+                  state: 'off'
+                - condition: state
+                  entity_id: light.square_led_v_nightlight
+                  state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.square_led_v
+              data_template:
+                brightness_pct: 100
+                kelvin: 5000
+        - conditions:
+            - condition: or
+              conditions:
+                - condition: state
+                  entity_id: light.square_led_v
+                  state: 'on'
+                - condition: state
+                  entity_id: light.square_led_v_nightlight
+                  state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.square_led_v, light.square_led_v_nightlight
+
+# ##################################
+# Vova Main Lamp (Xiaomi Square LED) - Main Switch Right Button
+# ##################################
+- alias: vova_main_lamp_right_button
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d0001712d55_action
+      to: 'button_2_single'
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.square_led_v
+              state: 'off'
+            - condition: state
+              entity_id: light.square_led_v_nightlight
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.square_led_v
+              data_template:
+                brightness_pct: 5
+                kelvin: 3000
+        - conditions:
+            - condition: or
+              conditions:
+                - condition: state
+                  entity_id: light.square_led_v
+                  state: 'on'
+                - condition: state
+                  entity_id: light.square_led_v_nightlight
+                  state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.square_led_v, light.square_led_v_nightlight
+      
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - On 100%\4500k
+# ##################################
+# - alias: vova_main_lamp_on_if_lamp_off
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x158d0001712d55_action
+#       to: 'button_1_single'
+#   condition:
+#     condition: and
+#     conditions:
+#     - condition: state
+#       entity_id: light.square_led_v
+#       state: 'off'
+#     - condition: state
+#       entity_id: light.square_led_v_nightlight
+#       state: 'off'
+#   action:
+#     service: light.turn_on
+#     entity_id: light.square_led_v
+#     data_template:
+#       brightness_pct: 100
+#       kelvin: 5000
+
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - On 5%\3000k
+# ##################################
+# - alias: vova_main_lamp_on_5_if_lamp_off
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x158d0001712d55_action
+#       to: 'button_2_single'
+#   condition:
+#     condition: and
+#     conditions:
+#     - condition: state
+#       entity_id: light.square_led_v
+#       state: 'off'
+#     - condition: state
+#       entity_id: light.square_led_v_nightlight
+#       state: 'off'
+#   action:
+#     service: light.turn_on
+#     entity_id: light.square_led_v
+#     data_template:
+#       brightness_pct: 5
+#       kelvin: 3000
+       
+# ##################################
+# Vova Main Lamp (Xiaomi Sqaure LED) - Off if On
+# ##################################
+# - alias: vova_main_lamp_off_if_lamp_on
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x158d0001712d55_action
+#       to: 'button_1_single'
+#     - platform: state
+#       entity_id: sensor.0x158d0001712d55_action
+#       to: 'button_2_single'
+#   condition:
+#     condition: or
+#     conditions:
+#     - condition: state
+#       entity_id: light.square_led_v
+#       state: 'on'
+#     - condition: state
+#       entity_id: light.square_led_v_nightlight
+#       state: 'on'
+#   action:
+#   - service: light.turn_off
+#     entity_id: light.square_led_v, light.square_led_v_nightlight
 
 # ##################################
 # Vova - Square LED Reset 

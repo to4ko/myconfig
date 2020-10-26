@@ -1,25 +1,26 @@
 substitutions:
-  board_name: esp32_test
-
+  board_name: d1mini_temperature_node
+  
 esphome:
-  name: esp32_test
-  platform: ESP32
-  board: lolin32
+  name: ${board_name}
+  platform: ESP8266
+  board: d1_mini
 
 wifi:
   ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .localdomain
-  reboot_timeout: 15min
+  reboot_timeout: 30min
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.249
+    static_ip: 192.168.1.85
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
     dns2: 8.8.8.8
+
 
 logger:
 
@@ -32,9 +33,9 @@ web_server:
   port: 80
 
 dallas:
-  - pin: GPIO13  
-    update_interval: 10s
-    id: dallas_13
+  - pin: GPIO05
+    update_interval: 5s
+    id: dallas_node
     
 binary_sensor:
   - platform: status
@@ -66,49 +67,46 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
     update_interval: 15s
-    
+
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
   - platform: dallas
     address: 0xF001144BC0C4AA28
-    name: ${board_name}_temperature_long
+    name: ${board_name}_Cold_Pipe
 
   - platform: dallas
     address: 0x710320977998E728
-    name: ${board_name}_temperature_short
+    name: ${board_name}_Hot_Hot
 
-  # - platform: homeassistant
-  #   name: ${board_name}_ha_kettle_temperature
-  #   entity_id: input_number.mi_kettle
-  #   unit_of_measurement: "°C"
-  #   id: ha_sensor
+  # - platform: dht
+  #   pin: GPIO04
+  #   temperature:
+  #     name: ${board_name}_Temperature
+  #     unit_of_measurement: "°C"
+  #     accuracy_decimals: 1
+  #   humidity:
+  #     name: ${board_name}_Humidity
+  #     unit_of_measurement: "%"
+  #     accuracy_decimals: 1
+  #   update_interval: 5s
+  #   model: AM2302
+
+  - platform: adc
+    pin: VCC
+    name: ${board_name}_Vcc
 
 switch:
   - platform: restart
     name: ${board_name}_Restart
 
-sun:
-  latitude: !secret my_lat
-  longitude: !secret my_long
-
 time:
   - platform: homeassistant
-    id: homeassistant_time
-    # on_time:
-    #   - seconds: 5
-    #     then:
-    #       - if:
-    #           condition:
-    #             lambda: |-
-    #               return id(ha_sensor).has_state();
-    #           then:
-    #             - logger.log: "Has State"
-    #           else: 
-    #             - logger.log: "Has NO State"
+    id: homeassistant_time    

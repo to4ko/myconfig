@@ -3,85 +3,45 @@
 # MASTER BEDROOM - Lights
 #
 # #####################################################################################
-# MB Table Lamp (Philips E27) Toggle
+# MB Table Lamp (Philips E27)
 # ##################################
-- alias: master_bedroom_table_lamp_toggle
+- alias: master_bedroom_table_lamp
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.0x158d00023d3116_action
-      to: 'single'
-    - platform: state
-      entity_id: sensor.0x158d00013e6aa5_action
-      to: 'button_1_single'
+      entity_id: sensor.0x158d00023d3116_action, sensor.0x158d00013e6aa5_action
   action:
-    - service: light.toggle
-      entity_id: light.philips_e27_mb
-
-# # ##################################
-# # MB Table Lamp (Philips E27) Toggle Entrance
-# # ##################################
-# - alias: master_bedroom_table_lamp_toggle_entrance
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id: sensor.0x00158d00013e6aa5_click
-#       to: 'left'
-#   condition:
-#     - condition: state
-#       entity_id: light.philips_e27_mb
-#       state: 'off'
-#   action:
-#     - choose:
-#         - conditions:
-#             - condition: state
-#               entity_id: binary_sensor.tod_day
-#               state: 'on'
-#           sequence:
-#             - service: light.turn_on
-#               data_template:
-#                 entity_id: light.philips_e27_mb
-#                 scene: 1
-#         - conditions:
-#             - condition: state
-#               entity_id: binary_sensor.tod_day
-#               state: 'off'
-#           sequence:
-#             - service: light.turn_on
-#               data_template:
-#                 entity_id: light.philips_e27_mb
-#                 scene: 4
-
-
-# ##################################
-# Master_bedroom Table Lamp (Philips E27) - Switch to Bright
-# ##################################
-- alias: master_bedroom_table_lamp_bright
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d00023d3116_action
-      to: 'double'
-  action:
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.philips_e27_mb
-      data:
-        scene: 1
-
-# ##################################
-# Master_bedroom Table Lamp (Philips E27) - Switch to Mid-Night
-# ##################################
-- alias: master_bedroom_table_lamp_night
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d00023d3116_action
-      to: 'hold'
-  action:
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.philips_e27_mb
-      data:
-        scene: 4
+    - choose:
+        - conditions:
+            - condition: or
+              conditions:
+                - condition: state
+                  entity_id: sensor.0x158d00023d3116_action
+                  state: 'single'
+                - condition: state
+                  entity_id: sensor.0x158d00013e6aa5_action
+                  state: 'button_1_single'
+          sequence:
+            - service: light.toggle
+              entity_id: light.philips_e27_mb
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00023d3116_action
+              state: 'double'
+          sequence:
+            - service: xiaomi_miio.light_set_scene
+              entity_id: light.philips_e27_mb
+              data:
+                scene: 1
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00023d3116_action
+              state: 'hold'
+          sequence:
+            - service: xiaomi_miio.light_set_scene
+              entity_id: light.philips_e27_mb
+              data:
+                scene: 4
 
 # ##################################
 # Master Bedroom Main Lamp (Xiaomi Round LED)
@@ -112,43 +72,6 @@
                 brightness_pct: 100
                 kelvin: 5000
 
-# # ##################################
-# # Master Bedroom Main Lamp (Xiaomi Round LED) - Brightness change with left button 33%
-# # ##################################
-# - alias: master_bedroom_main_lamp_on_30_if_lamp_off
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id: sensor.0x00158d00013e6aa5_click
-#       to: 'left'
-#   condition:
-#     - condition: state
-#       entity_id: light.round_led_mb
-#       state: 'off'    
-#   action:
-#     - service: light.turn_on
-#       entity_id: light.round_led_mb
-#       data_template:
-#         brightness_pct: 5
-#         kelvin: 3000
-      
-# # ##################################
-# # Master Bedroom Main Lamp (Xiaomi Round LED) - Turn Off with Left Button
-# # ##################################
-# - alias: master_bedroom_main_lamp_off_if_lamp_on_with_left_button
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id: sensor.0x00158d00013e6aa5_click
-#       to: 'left'
-#   condition:
-#     - condition: state
-#       entity_id: light.round_led_mb
-#       state: 'on'
-#   action:
-#     - service: light.turn_off
-#       entity_id: light.round_led_mb
-    
 # ##################################
 # Master Bedroom - Round LED Reset 
 # ##################################
@@ -297,3 +220,42 @@
 #     - service: script.turn_on
 #       data_template:
 #         entity_id: script.master_bedroom_ambilight_{{ states('light.round_led_mb') | lower }}
+
+
+# ##################################
+# Master Bedroom Table Lamp (Yeelight Color E27)
+# ##################################
+- alias: master_bedroom_color_table_lamp
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d0001ef61be_action
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001ef61be_action
+              state: 'single'
+          sequence:
+            - service: light.toggle
+              entity_id: light.led_color_mb
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001ef61be_action
+              state: 'double'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_color_mb
+              data_template:
+                brightness_pct: 100
+                kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001ef61be_action
+              state: 'hold'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_color_mb
+              data_template:
+                brightness_pct: 5
+                kelvin: 3000

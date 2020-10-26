@@ -25,21 +25,23 @@
 
 #  - platform: authenticated
 
-  - platform: history_stats
-    name: Kettle On
-    entity_id: binary_sensor.kettle_k
-    state: 'on'
-    type: count
-    start: '{{ now().replace(hour=0,minute=0,second=0) }}'
-    end: '{{ now() }}'
-
-  - platform: history_stats
-    name: Main Door Open
-    entity_id: binary_sensor.0x158d0001e5d6be_contact
-    state: 'on'
-    type: count
-    start: '{{ now().replace(hour=0,minute=0,second=0) }}'
-    end: '{{ now() }}'
+  # - platform: sql
+  #   queries:
+  #     - name: Temp Out Yesterday
+  #       query: >
+  #           SELECT
+  #               state
+  #           FROM
+  #               states
+  #           WHERE
+  #               entity_id = 'sensor.0x158d0001e8995a_temperature'
+  #               and state <> 'unavailable'
+  #               and created < DATETIME('NOW','-1 DAY')
+  #           ORDER BY state_id DESC
+  #           LIMIT 1;
+  #       column: 'state'
+  #       unit_of_measurement: '°C'
+  #   scan_interval: 60
 
   - platform: statistics
     name: out_temperature_stats
@@ -120,13 +122,6 @@
       - current_version
       - addons
 
-
-  # - platform: alpha_vantage
-  #   api_key: !secret alpha_vantage_api_key
-  #   symbols:
-  #     - symbol: SLB
-  #       name: Schlumberger
-
   - platform: rest
     resource: https://www.cbr-xml-daily.ru/daily_json.js
     name: USD_RUR
@@ -140,10 +135,6 @@
     value_template: '{{ value_json.Valute.EUR.Value | float | round(2) }}'
     unit_of_measurement: 'RUR'
     scan_interval: 1200
-
-#  - platform: cups
-#    printers:
-#      - Officejet_Pro_8600_CB922C_
 
   - platform: template
     sensors:
@@ -430,18 +421,6 @@
       window_last_change_time:
         friendly_name: 'Last change window sensor time'
         value_template: '{{ (now()-states.sensor.window_last_change.last_changed) | timestamp_custom("%H:%M:%S") }}'
-
-      # stove:
-      #   value_template: "{{ state_attr('switch.0x00158d000249b25b_switch','power')|float }}"
-      #   unit_of_measurement: 'W'
-        
-      # kettle:
-      #   value_template: "{{ states('switch.0x158d00028c9875_power')|float }}"
-      #   unit_of_measurement: 'W'
-        
-      # mw: 
-      #   value_template: "{{ states('sensor.0x158d00028a54e4_power')|float }}"
-      #   unit_of_measurement: 'W'
 
       people_home:
         friendly_name: Persons At Home
