@@ -127,32 +127,26 @@
   action:
     - choose:
         - conditions:
-            - condition: and
-              conditions:
-                - condition: state
-                  entity_id: light.square_led_v
-                  state: 'off'
-                - condition: state
-                  entity_id: light.square_led_v_nightlight
-                  state: 'off'
+            - condition: template
+              value_template: "{{ is_state('light.square_led_v','on') or is_state('light.square_led_v_nightlight','on') }}"
           sequence:
+            - service: notify.telegram
+              data_template:
+                message: "Condition 1, main - {{states('light.square_led_v')}}, nightlight - {{states('light.square_led_v_nightlight')}}"
+            - service: light.turn_off
+              entity_id: light.square_led_v, light.square_led_v_nightlight
+        - conditions:
+            - condition: template 
+              value_template: "{{ is_state('light.square_led_v','off') and is_state('light.square_led_v_nightlight','off') }}"
+          sequence:
+            - service: notify.telegram
+              data_template:
+                message: "Condition 2, main - {{states('light.square_led_v')}}, nightlight - {{states('light.square_led_v_nightlight')}}"
             - service: light.turn_on
               entity_id: light.square_led_v
               data_template:
                 brightness_pct: 100
                 kelvin: 5000
-        - conditions:
-            - condition: or
-              conditions:
-                - condition: state
-                  entity_id: light.square_led_v
-                  state: 'on'
-                - condition: state
-                  entity_id: light.square_led_v_nightlight
-                  state: 'on'
-          sequence:
-            - service: light.turn_off
-              entity_id: light.square_led_v, light.square_led_v_nightlight
 
 # ##################################
 # Vova Main Lamp (Xiaomi Square LED) - Main Switch Right Button

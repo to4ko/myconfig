@@ -1,30 +1,37 @@
 substitutions:
-  board_name: esp32_test
-
+  board_name: d1mini_air_freshener
+  
 esphome:
-  name: esp32_test
-  platform: ESP32
-  board: lolin32
+  name: ${board_name}
+  platform: ESP8266
+  board: d1_mini
 
 wifi:
   ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .localdomain
-  reboot_timeout: 15min
+  reboot_timeout: 30min
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.249
+    static_ip: 192.168.1.98
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
     dns2: 8.8.8.8
 
+
 logger:
 
 api:
   reboot_timeout: 0s
+
+i2c:
+  scl: GPIO05
+  sda: GPIO04
+  scan: True
+  id: i2c_bus
 
 ota:
 
@@ -34,6 +41,11 @@ web_server:
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
+
+  - platform: gpio
+    pin: GPIO14
+    name: ${board_name}_Motion
+    device_class: motion
 
 text_sensor:
   - platform: template
@@ -61,71 +73,42 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
     update_interval: 15s
-    
+
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
+
+  - platform: adc
+    pin: A0
+    name: ${board_name}_ADC
+    id: adc_value
+    filters:
+      - multiply: 3.3
+    update_interval: 5s
+
+  - platform: template
+    name: ${board_name}_AirQ
+    lambda: return ((id(adc_value).state)*(-30.303)+100);
+    unit_of_measurement: "%"
+    update_interval: 5s
+    icon: mdi:air-filter
+  
+  - platform: vl53l0x
+    name: ${board_name}_Distance
+    address: 0x29
+    update_interval: 10s
+    long_range: True
 
 switch:
   - platform: restart
     name: ${board_name}_Restart
 
-  - platform: gpio
-    pin: 
-      number: GPIO16
-      inverted: yes
-    name: gp16
-
-  - platform: gpio
-    pin: 
-      number: GPIO17
-      inverted: yes
-    name: gp17
-
-  - platform: gpio
-    pin: 
-      number: GPIO18
-      inverted: yes
-    name: gp18
-
-  - platform: gpio
-    pin: 
-      number: GPIO19
-      inverted: yes
-    name: gp19
-
-  - platform: gpio
-    pin: 
-      number: GPIO21
-      inverted: yes
-    name: gp21
-
-  - platform: gpio
-    pin: 
-      number: GPIO22
-      inverted: yes
-    name: gp22
-
-sun:
-  latitude: !secret my_lat
-  longitude: !secret my_long
-
 time:
   - platform: homeassistant
-    id: homeassistant_time
-    # on_time:
-    #   - seconds: 5
-    #     then:
-    #       - if:
-    #           condition:
-    #             lambda: |-
-    #               return id(ha_sensor).has_state();
-    #           then:
-    #             - logger.log: "Has State"
-    #           else: 
-    #             - logger.log: "Has NO State"
+    id: homeassistant_time    

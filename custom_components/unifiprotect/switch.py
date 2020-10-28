@@ -18,11 +18,11 @@ from .const import (
     CONF_IR_ON,
     DEFAULT_ATTRIBUTION,
     DOMAIN,
+    TYPE_HIGH_FPS_OFF,
+    TYPE_HIGH_FPS_ON,
     TYPE_RECORD_ALLWAYS,
     TYPE_RECORD_MOTION,
     TYPE_RECORD_NEVER,
-    TYPE_HIGH_FPS_ON,
-    TYPE_HIGH_FPS_OFF,
 )
 from .entity import UnifiProtectEntity
 
@@ -42,8 +42,10 @@ async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
     """Set up switches for UniFi Protect integration."""
-    upv_object = hass.data[DOMAIN][entry.entry_id]["upv"]
-    protect_data = hass.data[DOMAIN][entry.entry_id]["protect_data"]
+    entry_data = hass.data[DOMAIN][entry.entry_id]
+    upv_object = entry_data["upv"]
+    protect_data = entry_data["protect_data"]
+
     if not protect_data.data:
         return
 
@@ -61,30 +63,27 @@ async def async_setup_entry(
     for switch in SWITCH_TYPES:
         for camera in protect_data.data:
             # Only Add Switches if Camera supports it.
-            _camera_Type = protect_data.data[camera].get("model")
-            _g4_camera = True if "G4" in _camera_Type else False
-            _add_switch = True
-            if switch == "high_fps" and not _g4_camera:
-                _add_switch = False
-            if switch == "hdr_mode" and _g4_camera:
-                _add_switch = False
+            if switch == "high_fps" and not protect_data.data[camera].get(
+                "has_highfps"
+            ):
+                # High FPS is only supported on certain cameras
+                continue
+            if switch == "hdr_mode" and not protect_data.data[camera].get("has_hdr"):
+                continue
 
-            if _add_switch:
-                switches.append(
-                    UnifiProtectSwitch(
-                        upv_object,
-                        protect_data,
-                        camera,
-                        switch,
-                        ir_on,
-                        ir_off,
-                    )
+            switches.append(
+                UnifiProtectSwitch(
+                    upv_object,
+                    protect_data,
+                    camera,
+                    switch,
+                    ir_on,
+                    ir_off,
                 )
-                _LOGGER.debug("UNIFIPROTECT SWITCH CREATED: %s", switch)
+            )
+            _LOGGER.debug("UNIFIPROTECT SWITCH CREATED: %s", switch)
 
     async_add_entities(switches)
-
-    return True
 
 
 class UnifiProtectSwitch(UnifiProtectEntity, SwitchDevice):
@@ -123,7 +122,7 @@ class UnifiProtectSwitch(UnifiProtectEntity, SwitchDevice):
         elif self._switch_type == "ir_mode":
             enabled = True if self._camera_data["ir_mode"] == self._ir_on_cmd else False
         elif self._switch_type == "hdr_mode":
-            enabled = True if self._camera_data["hdr_mode"] == True else False
+            enabled = self._camera_data["hdr_mode"] is True
         elif self._switch_type == "high_fps":
             enabled = (
                 True if self._camera_data["video_mode"] == TYPE_HIGH_FPS_ON else False

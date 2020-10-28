@@ -8,6 +8,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 **Main Server:** 
   - Xeon E5-2620v3 cooled by Noctua NH-U12DX i4
+  - Supermicro X10SRL-F
   - 64gb ECC DDR4 RAM
   - 128Gb Kingston SSD as Boot drive
   - 512Gb * 2ea ADATA 8200Pro Raid 1 as Root drive
