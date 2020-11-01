@@ -13,6 +13,7 @@ DEVICES = {
     1694: ["Aqara", "Door Lock N100", "ZNMS16LM"],
     1747: ["Xaiomi", "ZenMeasure Clock", "MHO-C303"],
     1983: ["Yeelight", "Button S1", "YLAI003"],
+    2038: ["Xiaomi", "Night Light 2", "MJYD02YL-A"],
     2443: ["Xiaomi", "Door Sensor 2", "MCCGQ02HL"],
     2480: ["Xiaomi", "Safe Box", "BGX-5/X1-3001"],
     # Mesh
@@ -82,6 +83,11 @@ BLE_LOCK_ERROR = {
     0xC0DE1004: "Mechanical failure",
 }
 
+ACTIONS = {
+    1249: ['right', 'left'],
+    1983: ['single', 'double', 'hold']
+}
+
 
 def get_ble_domain(param: str) -> Optional[str]:
     if param in (
@@ -98,7 +104,7 @@ def get_ble_domain(param: str) -> Optional[str]:
     return None
 
 
-def parse_xiaomi_ble(event: dict) -> Optional[dict]:
+def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
     """Parse Xiaomi BLE Data
     https://iot.mi.com/new/doc/embedded-development/ble/object-definition
     """
@@ -106,9 +112,11 @@ def parse_xiaomi_ble(event: dict) -> Optional[dict]:
     data = bytes.fromhex(event['edata'])
     length = len(data)
 
-    # TODO: check
-    if eid == 0x1001 and length == 3:  # magic cube
-        return {'action': 'right' if data[0] == 0 else 'left'}
+    if eid == 0x1001 and length == 3:  # magic cube or button
+        if pdid in ACTIONS and data[0] < len(ACTIONS[pdid]):
+            return {'action': ACTIONS[pdid][data[0]]}
+        else:
+            return {'action': data[0]}
 
     elif eid == 0x1002 and length == 1:
         # No sleep (0x00), falling asleep (0x01)

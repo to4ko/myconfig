@@ -1,7 +1,7 @@
 # My Home Assistant configuration
 
 
-First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [Vasilchuk](https://github.com/Anonym-tsk), [S_p_i_r_i_t_u_s](https://github.com/Spirituss), [lapatoc](https://github.com/bastshoes) for help and support!
+First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [Vasilchuk](https://github.com/Anonym-tsk), [S_p_i_r_i_t_u_s](https://github.com/Spirituss), [lapatoc](https://github.com/bastshoes), [Vtel](https://github.com/zvldz)for help and support!
 
 And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [ESPHome Channel](https://t.me/esphome)
 
@@ -10,13 +10,13 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Xeon E5-2620v3 cooled by Noctua NH-U12DX i4
   - Supermicro X10SRL-F
   - 64gb ECC DDR4 RAM
-  - 128Gb Kingston SSD as Boot drive
-  - 512Gb * 2ea ADATA 8200Pro Raid 1 as Root drive
-  - 256Gb ADATA 8200Pro NVME for DB
-  - 7ea WD RED 2Tb (NAS section) in HW Raid 6 via Adaptec 71605
+  - 128Gb Kingston SSD Boot drive
+  - 512Gb * 2ea ADATA 8200Pro in Raid-1 Root drive
+  - 256Gb ADATA 8200Pro as DB drive
+  - 7ea WD RED 2Tb (NAS section) in HW Raid-6 via Adaptec 71605
   - 1Tb WD Purple for pinhole camera records
-  - 3ea WD Green in HW Raid0 (Torrent heap) via Adaptec 71605
-  - Corsair HX1200i
+  - 3ea WD Green in HW Raid-0 (Torrent heap) via Adaptec 71605
+  - Corsair HX1200i Power supply
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
 
 **MQTT\Zigbee2MQTT Server #1:**
@@ -32,7 +32,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - CC2538 Zigbee Stick
 
 **Backup Server:**
-  - MiniITX Celeron j3455
+  - Asrock 3455-ITX with integrated Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
 
@@ -45,9 +45,9 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Unifi Switch 16-150W
   - Unifi Switch 8-60W (3ea)
   - not in use - Unifi AC-AP-Lite (5ea)
-  - Unifi AC AP Pro (2ea)
+  - Unifi AC AP Pro (3ea)
   - Unifi NanoHD (not in use)
-  - Unifi AP AC Mesh
+  - Unifi AP AC Mesh with UMA-D
 
 **UPS**
   - Ippon Smart Power Pro 1200
@@ -99,13 +99,13 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Aqara Opple Wireless Switch (3ea)
 
 **ESPHome devices:**
-  - Sonoff Basic (4ea)
-  - Sonoff S26 Plugs (2ea)
+  - Sonoff Basic (2ea)
+  - not in use - Sonoff S26 Plugs (5ea)
   - Sonoff Pow R2
   - Sonoff L1
   - Sonoff Mini (3ea)
   - Sonoff 4ch
-  - Blitzwolf SHP2 (3ea) and SHP6 (2ea)
+  - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
   - Blitzwolf LT11 (not use - flickering on low brightness)
   - Blitzwolf SS5 dual gang relay
   - MH-Z19B CO2 sensors on Wemos D1 mini (4ea)
@@ -124,8 +124,8 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - not in use - LifeControl Plug (2ea)
   - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (2ea)
   - DIYRuZ_Geiger Sensor
-  - Google Home Mini (5ea)
-  - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN)
+  - Google Home Mini (6ea)
+  - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
   
 **Software:**
   - Ubuntu Server 20.04.1 LTS

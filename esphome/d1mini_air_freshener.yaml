@@ -46,6 +46,15 @@ binary_sensor:
     pin: GPIO14
     name: ${board_name}_Motion
     device_class: motion
+    id: sr602_motion
+
+  - platform: gpio
+    pin:
+      number: GPIO13
+      #mode: INPUT_PULLUP
+    name: ${board_name}_Button
+    id: button
+    
 
 text_sensor:
   - platform: template
@@ -90,24 +99,77 @@ sensor:
     id: adc_value
     filters:
       - multiply: 3.3
-    update_interval: 5s
+    update_interval: 15s
 
   - platform: template
     name: ${board_name}_AirQ
     lambda: return ((id(adc_value).state)*(-30.303)+100);
     unit_of_measurement: "%"
-    update_interval: 5s
+    update_interval: 15s
     icon: mdi:air-filter
   
   - platform: vl53l0x
     name: ${board_name}_Distance
     address: 0x29
-    update_interval: 10s
+    update_interval: 15s
     long_range: True
+    id: vlx_distance
+
+  - platform: bme680
+    temperature:
+      name: ${board_name}_Temperature
+      oversampling: 4x
+      id: bme680_temperature
+    pressure:
+      name: ${board_name}_Pressure
+      oversampling: 4x
+      id: bme680_pressure
+    humidity:
+      name: ${board_name}_Humidity
+      oversampling: 4x
+      id: bme680_humidity
+    gas_resistance:
+      name: ${board_name}_Gas_Resistance
+      id: bme680_gas_resistance
+      unit_of_measurement: '%'
+      filters:
+        - calibrate_linear:
+            - 5000.0 -> 0.0
+            - 15000.0 -> 100.0
+    address: 0x77
+    update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_Absolute_Humidity
+    lambda: |-
+      const float mw = 18.01534;    // molar mass of water g/mol
+      const float r = 8.31447215;   // Universal gas constant J/mol/K
+      return (6.112 * powf(2.718281828, (17.67 * id(bme680_temperature).state) /
+        (id(bme680_temperature).state + 243.5)) * id(bme680_humidity).state * mw) /
+        ((273.15 + id(bme680_temperature).state) * r); // in grams/m^3
+    accuracy_decimals: 1
+    update_interval: 15s
+    icon: 'mdi:water'
+    unit_of_measurement: 'g/m³'
 
 switch:
   - platform: restart
     name: ${board_name}_Restart
+
+  - platform: gpio
+    pin: GPIO12
+    name: ${board_name}_Switch
+    internal: true
+    id: valve
+  
+  - platform: template
+    name: ${board_name}_Valve
+    icon: mdi:spray
+    id: spray
+    turn_on_action:
+    - switch.turn_on: valve
+    - delay: 100ms
+    - switch.turn_off: valve
 
 time:
   - platform: homeassistant

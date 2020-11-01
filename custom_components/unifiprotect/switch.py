@@ -1,4 +1,4 @@
-"""This component provides Switches for Unifi Protect."""
+""" This component provides Switches for Unifi Protect."""
 
 import logging
 
@@ -7,22 +7,22 @@ try:
 except ImportError:
     # Prior to HA v0.110
     from homeassistant.components.switch import SwitchDevice
-
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import HomeAssistantType
-
 from .const import (
     ATTR_CAMERA_TYPE,
-    CONF_IR_OFF,
     CONF_IR_ON,
-    DEFAULT_ATTRIBUTION,
+    CONF_IR_OFF,
     DOMAIN,
-    TYPE_HIGH_FPS_OFF,
-    TYPE_HIGH_FPS_ON,
+    DEFAULT_ATTRIBUTION,
     TYPE_RECORD_ALLWAYS,
     TYPE_RECORD_MOTION,
     TYPE_RECORD_NEVER,
+    TYPE_IR_AUTO,
+    TYPE_IR_OFF,
+    TYPE_IR_LED_OFF,
+    TYPE_IR_ON,
 )
 from .entity import UnifiProtectEntity
 
@@ -33,20 +33,16 @@ SWITCH_TYPES = {
     "record_always": ["Record Always", "video", "record_always"],
     "ir_mode": ["IR Active", "brightness-4", "ir_mode"],
     "status_light": ["Status Light On", "led-on", "status_light"],
-    "hdr_mode": ["HDR Mode", "brightness-7", "hdr_mode"],
-    "high_fps": ["High FPS", "video-high-definition", "high_fps"],
 }
 
 
 async def async_setup_entry(
     hass: HomeAssistantType, entry: ConfigEntry, async_add_entities
 ) -> None:
-    """Set up switches for UniFi Protect integration."""
-    entry_data = hass.data[DOMAIN][entry.entry_id]
-    upv_object = entry_data["upv"]
-    protect_data = entry_data["protect_data"]
-
-    if not protect_data.data:
+    """A Ubiquiti Unifi Protect Sensor."""
+    upv_object = hass.data[DOMAIN][entry.entry_id]["upv"]
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    if not coordinator.data:
         return
 
     ir_on = entry.data[CONF_IR_ON]
@@ -61,37 +57,25 @@ async def async_setup_entry(
 
     switches = []
     for switch in SWITCH_TYPES:
-        for camera in protect_data.data:
-            # Only Add Switches if Camera supports it.
-            if switch == "high_fps" and not protect_data.data[camera].get(
-                "has_highfps"
-            ):
-                # High FPS is only supported on certain cameras
-                continue
-            if switch == "hdr_mode" and not protect_data.data[camera].get("has_hdr"):
-                continue
-
+        for camera in coordinator.data:
             switches.append(
                 UnifiProtectSwitch(
-                    upv_object,
-                    protect_data,
-                    camera,
-                    switch,
-                    ir_on,
-                    ir_off,
+                    upv_object, coordinator, camera, switch, ir_on, ir_off,
                 )
             )
             _LOGGER.debug("UNIFIPROTECT SWITCH CREATED: %s", switch)
 
-    async_add_entities(switches)
+    async_add_entities(switches, True)
+
+    return True
 
 
 class UnifiProtectSwitch(UnifiProtectEntity, SwitchDevice):
     """A Unifi Protect Switch."""
 
-    def __init__(self, upv_object, protect_data, camera_id, switch, ir_on, ir_off):
+    def __init__(self, upv_object, coordinator, camera_id, switch, ir_on, ir_off):
         """Initialize an Unifi Protect Switch."""
-        super().__init__(upv_object, protect_data, camera_id, switch)
+        super().__init__(upv_object, coordinator, camera_id, switch)
         self.upv = upv_object
         self._name = f"{SWITCH_TYPES[switch][0]} {self._camera_data['name']}"
         self._icon = f"mdi:{SWITCH_TYPES[switch][1]}"
@@ -121,12 +105,6 @@ class UnifiProtectSwitch(UnifiProtectEntity, SwitchDevice):
             )
         elif self._switch_type == "ir_mode":
             enabled = True if self._camera_data["ir_mode"] == self._ir_on_cmd else False
-        elif self._switch_type == "hdr_mode":
-            enabled = self._camera_data["hdr_mode"] is True
-        elif self._switch_type == "high_fps":
-            enabled = (
-                True if self._camera_data["video_mode"] == TYPE_HIGH_FPS_ON else False
-            )
         else:
             enabled = True if self._camera_data["status_light"] == "True" else False
         return enabled
@@ -155,18 +133,10 @@ class UnifiProtectSwitch(UnifiProtectEntity, SwitchDevice):
         elif self._switch_type == "ir_mode":
             _LOGGER.debug("Turning on IR")
             await self.upv.set_camera_ir(self._camera_id, self._ir_on_cmd)
-        elif self._switch_type == "hdr_mode":
-            _LOGGER.debug("Turning on HDR mode")
-            await self.upv.set_camera_hdr_mode(self._camera_id, True)
-        elif self._switch_type == "high_fps":
-            _LOGGER.debug("Turning on High FPS mode")
-            await self.upv.set_camera_video_mode_highfps(
-                self._camera_id, TYPE_HIGH_FPS_ON
-            )
         else:
             _LOGGER.debug("Changing Status Light to On")
             await self.upv.set_camera_status_light(self._camera_id, True)
-        await self.protect_data.async_refresh(force_camera_update=True)
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs):
         """Turn the device off."""
@@ -176,15 +146,7 @@ class UnifiProtectSwitch(UnifiProtectEntity, SwitchDevice):
         elif self._switch_type == "status_light":
             _LOGGER.debug("Changing Status Light to Off")
             await self.upv.set_camera_status_light(self._camera_id, False)
-        elif self._switch_type == "hdr_mode":
-            _LOGGER.debug("Turning off HDR mode")
-            await self.upv.set_camera_hdr_mode(self._camera_id, False)
-        elif self._switch_type == "high_fps":
-            _LOGGER.debug("Turning off High FPS mode")
-            await self.upv.set_camera_video_mode_highfps(
-                self._camera_id, TYPE_HIGH_FPS_OFF
-            )
         else:
             _LOGGER.debug("Turning off Recording")
             await self.upv.set_camera_recording(self._camera_id, TYPE_RECORD_NEVER)
-        await self.protect_data.async_refresh(force_camera_update=True)
+        await self.coordinator.async_request_refresh()
