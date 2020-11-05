@@ -23,7 +23,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Gigabyte Brix Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
-  - CC2652R Zigbee Stick
+  - zzh CC2652R Zigbee Stick
 
 **Zigbee2MQTT Server #2 (not in use):**
   - Intel Nuc Celeron N2830
@@ -43,6 +43,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 **Network(WAN 500mb\s):**
   - Unifi Dream Machine Pro
   - Unifi Switch 16-150W
+  - not in use - Unifi Switch 24
   - Unifi Switch 8-60W (3ea)
   - not in use - Unifi AC-AP-Lite (5ea)
   - Unifi AC AP Pro (3ea)
@@ -81,22 +82,23 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - not in use - Xiaomi IR controller
 
 **Xiaomi\Aqara Zigbee Devices:**
-  - Aqara Wall Socket (13ea)
-  - Aqara Wall Switch Double (6ea)
+  - Aqara Wall Socket (21ea)
+  - Aqara Wall Switch Double (4ea)
   - Aqara D1 Wall Switch Tripple (1ea)
-  - Aqara Wall Switch Single (1ea)
-  - Aqara Wireless Switch Double (8ea)
-  - Aqara Door Sensor (23ea)
+  - not in use - Aqara Wall Switch Single (0ea)
+  - Aqara Wireless Switch Double (6ea)
+  - Aqara\Xiaomi Door Sensor (25ea)
   - Aqara Water Leak Sensor (3ea)
   - Aqara Vibration Sensor (3ea)
   - Aqara\Xiaomi Motion Sensor (14ea)
-  - Aqara\Xiaomi Wireless Button (14ea)
-  - Aqara\Xiaomi Temp\Himidity sensor (13ea)
-  - Xiaomi Plug (30ea)
+  - Aqara\Xiaomi Wireless Button (9ea)
+  - Aqara\Xiaomi Temp\Himidity sensor (12ea)
+  - Xiaomi Plug (26ea)
   - Xiaomi Smoke Detector (1ea)
   - Xiaomi Natural Gas Detector (1ea)
-  - not in use - Aqara Zigbee Relay (3ea)
-  - Aqara Opple Wireless Switch (3ea)
+  - Aqara Zigbee Relay (1ea)
+  - Xiaomi Light Sensor (2ea)
+  - not in use - Aqara Opple Wireless Switch (3ea)
 
 **ESPHome devices:**
   - Sonoff Basic (2ea)

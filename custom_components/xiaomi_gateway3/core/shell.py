@@ -15,10 +15,10 @@ CHECK_BUSYBOX = "(md5sum /data/busybox | grep 099137899ece96f311ac5ab554ea6fec)"
 DOWNLOAD_BUSYBOX = "(curl -k -o /data/busybox https://busybox.net/downloads/binaries/1.21.1/busybox-mipsel && chmod +x /data/busybox)"
 LOCK_FIRMWARE = "/data/busybox chattr +i /data/firmware.bin"
 UNLOCK_FIRMWARE = "/data/busybox chattr -i /data/firmware.bin"
+RUN_FTP = "(/data/busybox tcpsvd -vE 0.0.0.0 21 /data/busybox ftpd -w &)"
 
-MIIO_PTRN = "ble_event|properties_changed"
 # use awk because buffer
-MIIO2MQTT = f"(miio_client -l 4 -d /data/miio | awk '/{MIIO_PTRN}/{{print $0;fflush()}}' | mosquitto_pub -t log/miio -l &)"
+MIIO2MQTT = "(miio_client -l 4 -d /data/miio | awk '/%s/{print $0;fflush()}' | mosquitto_pub -t log/miio -l &)"
 
 
 class TelnetShell(Telnet):
@@ -38,7 +38,13 @@ class TelnetShell(Telnet):
         return self.exec(f"{CHECK_SOCAT} || {DOWNLOAD_SOCAT}")
 
     def run_socat(self):
-        self.exec(f"{CHECK_SOCAT} && {RUN_SOCAT}")
+        self.exec(f"{CHECK_SOCAT} && {RUN_SOCAT} &")
+
+    def stop_socat(self):
+        self.exec(f"killall socat")
+
+    def run_lumi_zigbee(self):
+        self.exec("daemon_app.sh &")
 
     def stop_lumi_zigbee(self):
         self.exec("killall daemon_app.sh; killall Lumi_Z3GatewayHost_MQTT")
@@ -55,11 +61,14 @@ class TelnetShell(Telnet):
         command = LOCK_FIRMWARE if enable else UNLOCK_FIRMWARE
         self.exec(f"{CHECK_BUSYBOX} && {command}")
 
+    def run_ftp(self):
+        self.exec(f"{CHECK_BUSYBOX} && {RUN_FTP}")
+
     def sniff_bluetooth(self):
         self.write(b"killall silabs_ncp_bt; silabs_ncp_bt /dev/ttyS1 1\r\n")
 
     def run_public_mosquitto(self):
-        self.exec("killall mosquitto; sleep .5; mosquitto -d")
+        self.exec("killall mosquitto")
         time.sleep(.5)
         self.exec("mosquitto -d")
         time.sleep(.5)
@@ -69,10 +78,10 @@ class TelnetShell(Telnet):
     def get_running_ps(self) -> str:
         return self.exec("ps")
 
-    def redirect_miio2mqtt(self):
+    def redirect_miio2mqtt(self, pattern: str):
         self.exec("killall daemon_miio.sh; killall miio_client")
         time.sleep(.5)
-        self.exec(MIIO2MQTT)
+        self.exec(MIIO2MQTT % pattern)
         self.exec("daemon_miio.sh &")
 
     def run_public_zb_console(self):
@@ -91,3 +100,9 @@ class TelnetShell(Telnet):
             self.write(f"cat {filename}\r\n".encode())
             self.read_until(b"\r\n")  # skip command
             return self.read_until(b"# ")[:-2]
+
+    def stop_buzzer(self):
+        self.exec("killall daemon_miio.sh; killall -9 basic_gw")
+        # run dummy process with same str in it
+        self.exec("sh -c 'sleep 999d' dummy:basic_gw &")
+        self.exec("daemon_miio.sh &")

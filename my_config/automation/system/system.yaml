@@ -716,7 +716,6 @@
       data_template:
         message: "\U000026A0 Watchdog: API {%if is_state('binary_sensor.0x158d000323c87c_contact','off') %}Connected{%else%}Disconnected{%endif%}!"
         
-        
 # ##################################
 # System - Dark Mode dbug
 # ##################################
@@ -735,3 +734,45 @@
             {{'\U00002600'}} Режим темноты выключен
           {%endif%}
           
+# ##################################
+# System - HACS Update Pending
+# ##################################
+- alias: system_hacs_update_pending
+  trigger:
+    platform: state
+    entity_id: sensor.hacs
+  condition:
+    - condition: template
+      value_template: "{{ states(trigger.entity_id) != 'unknown'}}"
+    - condition: template
+      value_template: "{{ (states(trigger.entity_id) | float) != 0}}"
+  action:
+    service: persistent_notification.create
+    data_template:
+      title: Updates pending in HACS
+      message: >-
+        {% for repo in state_attr(trigger.entity_id, 'repositories') %}
+          {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
+        {% endfor %}
+
+# ##################################
+# System - HACS Update Pending
+# ##################################
+- alias: system_hacs_new_repo
+  trigger:
+    platform: event
+    event_type: hacs/repository
+    event_data:
+      action: registration
+  condition:
+    condition: template
+    value_template: "{{ trigger.event.data.repository is defined }}"
+  action:
+    service: persistent_notification.create
+    data_template:
+      title: New repository in HACS
+      message: >-
+        {% set repo = trigger.event.data.repository %}
+        {% set id = trigger.event.data.repository_id %}
+        [{{ repo }}](/hacs/repository/{{ id }})
+        was just added to HACS.

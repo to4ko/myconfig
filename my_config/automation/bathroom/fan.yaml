@@ -5,31 +5,88 @@
 # #####################################################################################
 # Bathroom Fan - On Manual
 # ##################################
-- alias: bathroom_fan_on_manual
+- alias: bathroom_button_b
   initial_state: 'true'
+  mode: restart
   trigger:
     - platform: state
       entity_id: sensor.0x158d0001b94abe_action
-      to: 'single'
+  condition:
+    - condition: template
+      value_template: >-
+        {{ trigger.to_state.state in ['single', 'double', 'hold'] }}
   action:
     - choose:
         - conditions:
             - condition: state
-              entity_id: switch.sonoff_4ch_relay_3
-              state: 'on'
+              entity_id: sensor.0x158d0001b94abe_action
+              state: 'single'
+            - condition: template
+              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
           sequence:
-            - service: switch.turn_off
-              entity_id: switch.sonoff_4ch_relay_3
+            - service: xiaomi_miio.light_set_scene
+              entity_id: light.mirror_light_b
+              data:
+                scene: 4
         - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001b94abe_action
+              state: 'double'
+            - condition: template
+              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
+          sequence:
+            - service: automation.turn_off
+              entity_id: automation.bathroom_mirror_light_mode
+            - service: xiaomi_miio.light_set_scene
+              entity_id: light.mirror_light_b
+              data_template:
+                scene: 1
+            - service: automation.turn_on
+              entity_id: automation.bathroom_mirror_light_mode
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001b94abe_action
+              state: 'hold'
+            - condition: template
+              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+              
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001b94abe_action
+              state: 'single'
             - condition: state
               entity_id: switch.sonoff_4ch_relay_3
               state: 'off'
+            - condition: template
+              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
           sequence:
-            - service: switch.turn_on
+            - service: script.bathroom_fan_10m
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001b94abe_action
+              state: 'single'
+            - condition: state
               entity_id: switch.sonoff_4ch_relay_3
-            - delay: '00:10:00'
+              state: 'on'
+            - condition: template
+              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
+          sequence:
             - service: switch.turn_off
               entity_id: switch.sonoff_4ch_relay_3
+              
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001b94abe_action
+              state: 'double'
+            - condition: template
+              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
+          sequence:
+            - service: switch.toggle
+              entity_id: switch.0x158d0002482619_switch
+
 
 # ##################################
 # Bathroom Fan - Fans - Off
@@ -38,7 +95,7 @@
   initial_state: 'true'
   trigger:
     - platform: time_pattern
-      minutes: '/2'
+      minutes: '/3'
   action:
     - choose:
         - conditions:
@@ -73,19 +130,6 @@
       data:
         entity_id: switch.0x158d0002482619_switch
 
-# ##################################
-# Bathroom - Bottom Fan
-# ##################################
-- alias: bathroom_bottom_fan_manual
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0001b94abe_action
-      to: 'double'
-  action:
-    - service: switch.toggle
-      entity_id: switch.0x158d0002482619_switch
-      
 # ##################################
 # Bathroom - Bottom Fan Toggle
 # ##################################

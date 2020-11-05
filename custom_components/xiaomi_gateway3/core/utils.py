@@ -69,7 +69,7 @@ DEVICES = [{
         ['0.13.85', None, 'consumption', 'sensor'],
         # ['0.14.85', None, '?', 'sensor'],  # 5.01, 6.13
         ['4.1.85', 'channel_0', 'channel 1', 'switch'],
-        ['4.2.85', 'channel_1', 'channel 2', 'switch'],
+        ['4.2.85', 'channel 1', 'channel 2', 'switch'],
         # [?, 'enable_motor_mode', 'interlock', None]
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
@@ -97,7 +97,7 @@ DEVICES = [{
     'lumi.switch.b2lacn02': ["Aqara", "D1 Wall Double Switch", "QBKG22LM"],
     'params': [
         ['4.1.85', 'channel_0', 'channel 1', 'switch'],
-        ['4.2.85', 'channel_1', 'channel 2', 'switch'],
+        ['4.2.85', 'channel 1', 'channel 2', 'switch'],
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
         [None, None, 'action', 'sensor'],
@@ -121,8 +121,8 @@ DEVICES = [{
         ['0.12.85', 'load_power', 'power', 'sensor'],
         ['0.13.85', None, 'consumption', 'sensor'],
         ['4.1.85', 'channel_0', 'channel 1', 'switch'],
-        ['4.2.85', 'channel_1', 'channel 2', 'switch'],
-        ['4.3.85', 'channel_2', 'channel 3', 'switch'],
+        ['4.2.85', 'channel 1', 'channel 2', 'switch'],
+        ['4.3.85', 'channel 2', 'channel 3', 'switch'],
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
         ['13.3.85', None, 'button_3', None],
@@ -291,6 +291,13 @@ DEVICES = [{
         ['14.2.85', None, 'motor', 'cover'],
         ['14.3.85', 'cfg_param', 'cfg_param', None],
         ['14.4.85', 'run_state', 'run_state', None],
+        ['8.0.2001', 'battery', 'battery', 'sensor'],
+    ]
+}, {
+    'lumi.lock.acn02': ["Aqara", "Door Lock S2", "ZNMS12LM"],
+    'params': [
+        ['13.1.85', None, 'key_id', 'sensor'],
+        ['13.20.85', 'lock_state', 'lock', 'binary_sensor'],
         ['8.0.2001', 'battery', 'battery', 'sensor'],
     ]
 }]

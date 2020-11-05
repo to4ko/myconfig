@@ -9,7 +9,7 @@ from typing import Optional, Union
 from paho.mqtt.client import Client, MQTTMessage
 from . import bluetooth, utils
 from .miio_fix import Device
-from .shell import TelnetShell, MIIO_PTRN
+from .shell import TelnetShell
 from .unqlite import Unqlite, SQLite
 from .utils import GLOBAL_PROP
 
@@ -18,6 +18,8 @@ _LOGGER = logging.getLogger(__name__)
 RE_NWK_KEY = re.compile(r'lumi send-nwk-key (0x.+?) {(.+?)}')
 RE_MAC = re.compile('^0x0*')
 RE_JSON = re.compile(b'{.+}')
+# MAC reverse
+RE_REVERSE = re.compile(r'(..)(..)(..)(..)(..)(..)')
 
 
 class Gateway3(Thread):
@@ -41,6 +43,7 @@ class Gateway3(Thread):
         self.mqtt.connect_async(host)
 
         self._debug = config['debug'] if 'debug' in config else ''
+        self._disable_buzzer = config.get('buzzer') is False
         self.default_devices = config['devices']
 
         self.devices = {}
@@ -81,21 +84,12 @@ class Gateway3(Thread):
                 time.sleep(30)
                 continue
 
-            if not self.zha:
-                # if not mqtt - enable it
-                if not self._mqtt_connect() and not self._prepeare_gateway():
-                    time.sleep(60)
-                    continue
-
-                self.mqtt.loop_forever()
-
-            elif not self._check_port(8888) and not self._prepeare_gateway():
+            # if not mqtt - enable it (handle Mi Home and ZHA mode)
+            if not self._mqtt_connect() and not self._prepeare_gateway():
                 time.sleep(60)
                 continue
 
-            else:
-                # ZHA works fine, check every 60 seconds
-                time.sleep(60)
+            self.mqtt.loop_forever()
 
     def _check_port(self, port: int):
         """Check if gateway port open."""
@@ -128,10 +122,17 @@ class Gateway3(Thread):
                 self.debug("Run public mosquitto")
                 shell.run_public_mosquitto()
 
-            # TODO: fix me
-            if MIIO_PTRN not in ps:
+            # all data or only necessary events
+            pattern = '\\{"' if 'miio' in self._debug \
+                else "ble_event|properties_changed"
+
+            if f"awk /{pattern} {{" not in ps:
                 self.debug("Redirect miio to MQTT")
-                shell.redirect_miio2mqtt()
+                shell.redirect_miio2mqtt(pattern)
+
+            if self._disable_buzzer and "basic_gw -b" in ps:
+                _LOGGER.debug("Disable buzzer")
+                shell.stop_buzzer()
 
             if self.zha:
                 if "socat" not in ps:
@@ -143,6 +144,13 @@ class Gateway3(Thread):
                 if "Lumi_Z3GatewayHost_MQTT" in ps:
                     self.debug("Stop Lumi Zigbee")
                     shell.stop_lumi_zigbee()
+
+            else:
+                if "socat" in ps:
+                    shell.stop_socat()
+
+                if "Lumi_Z3GatewayHost_MQTT" not in ps:
+                    shell.run_lumi_zigbee()
             # elif "Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 -v" not in ps:
             #     self.debug("Run public Zigbee console")
             #     shell.run_public_zb_console()
@@ -236,20 +244,30 @@ class Gateway3(Thread):
                 }
                 devices.append(device)
 
-        # 3. Read mesh devices
+        # 3. Read bluetooth devices
         if self.ble:
             raw = shell.read_file('/data/miio/mible_local.db', as_base64=True)
             db = SQLite(raw)
-            tables = db.read_page(0)
-            device_page = next(table[3] - 1 for table in tables
-                               if table[1] == 'mesh_device')
-            rows = db.read_page(device_page)
+
+            # load BLE devices
+            rows = db.read_table('gateway_authed_table')
+            for row in rows:
+                device = {
+                    'did': row[4],
+                    'mac': RE_REVERSE.sub(r'\6\5\4\3\2\1', row[1]),
+                    'model': row[2],
+                    'type': 'ble'
+                }
+                devices.append(device)
+
+            # load Mesh devices
+            rows = db.read_table('mesh_device')
             for row in rows:
                 device = {
                     'did': row[0],
                     'mac': row[1].replace(':', ''),
                     'model': row[2],
-                    'type': 'bluetooth'
+                    'type': 'mesh'
                 }
                 devices.append(device)
 
@@ -308,6 +326,11 @@ class Gateway3(Thread):
             payload = json.loads(msg.payload)
             self.process_zb_message(payload)
 
+        # read only retained ble
+        elif msg.topic.startswith('ble') and msg.retain:
+            payload = json.loads(msg.payload)
+            self.process_ble_retain(msg.topic[4:], payload)
+
         elif self.pair_model and msg.topic.endswith('/commands'):
             self.process_pair(msg.payload)
 
@@ -344,7 +367,7 @@ class Gateway3(Thread):
                     attr = param[2]
                     self.setups[domain](self, device, attr)
 
-            elif device['type'] == 'bluetooth':
+            elif device['type'] == 'mesh':
                 desc = bluetooth.get_device(device['model'], 'Mesh')
                 device.update(desc)
 
@@ -364,6 +387,20 @@ class Gateway3(Thread):
                     time.sleep(1)
 
                 self.setups['light'](self, device, 'light')
+
+            elif device['type'] == 'ble':
+                # only save info for future
+                desc = bluetooth.get_device(device['model'], 'BLE')
+                device.update(desc)
+
+                # update params from config
+                default_config = self.default_devices.get(device['did'])
+                if default_config:
+                    device.update(default_config)
+
+                self.devices[device['did']] = device
+
+                device['init'] = {}
 
     def process_message(self, data: dict):
         if data['cmd'] == 'heartbeat':
@@ -436,7 +473,7 @@ class Gateway3(Thread):
             device['init'] = payload
             self.setup_devices([device])
 
-    def process_gw_message(self, payload: json):
+    def process_gw_message(self, payload: dict):
         self.debug(f"gateway <= {payload}")
 
         if 'lumi.0' not in self.updates:
@@ -463,11 +500,18 @@ class Gateway3(Thread):
         self.debug(f"{did} <= LQI {payload['linkQuality']}")
 
     def process_ble_event(self, raw: Union[bytes, str]):
-        if isinstance(raw, bytes):
-            m = RE_JSON.search(raw)
-            data = json.loads(m[0])['params']
-        else:
-            data = json.loads(raw)
+        try:
+            if isinstance(raw, bytes):
+                # fix two json bug
+                if b'}{' in raw:
+                    raw = raw[:raw.index(b'}{') + 1]
+                m = RE_JSON.search(raw)
+                data = json.loads(m[0])['params']
+            else:
+                data = json.loads(raw)
+        except:
+            self.debug(f"Wrong BLE input: {raw}")
+            return
 
         self.debug(f"Process BLE {data}")
 
@@ -525,20 +569,61 @@ class Gateway3(Thread):
             for handler in self.updates[did]:
                 handler(payload)
 
-    def process_mesh_data(self, raw: Union[bytes, list]):
-        if isinstance(raw, bytes):
-            m = RE_JSON.search(raw)
-            data = json.loads(m[0])['params']
-        else:
-            data = raw
+        raw = json.dumps(device['init'], separators=(',', ':'))
+        self.mqtt.publish(f"ble/{did}", raw, retain=True)
 
-        self.debug(f"Process Mesh {data}")
+    def process_ble_retain(self, did: str, payload: dict):
+        if did not in self.devices:
+            _LOGGER.debug(f"BLE device {did} is no longer on the gateway")
+            return
+
+        _LOGGER.debug(f"{did} retain: {payload}")
+
+        device = self.devices[did]
+
+        # init entities if needed
+        for k in payload.keys():
+            # don't retain action
+            if k in device['init'] or k == 'action':
+                continue
+
+            device['init'][k] = payload[k]
+
+            domain = bluetooth.get_ble_domain(k)
+            if not domain:
+                continue
+
+            # wait domain init
+            while domain not in self.setups:
+                time.sleep(1)
+
+            self.setups[domain](self, device, k)
+
+        if did in self.updates:
+            for handler in self.updates[did]:
+                handler(payload)
+
+    def process_mesh_data(self, raw: Union[bytes, list]):
+        try:
+            if isinstance(raw, bytes):
+                # fix two json bug
+                if b'}{' in raw:
+                    raw = raw[:raw.index(b'}{') + 1]
+                m = RE_JSON.search(raw)
+                data = json.loads(m[0])['params']
+            else:
+                data = raw
+        except:
+            self.debug(f"Wrong Mesh* input: {raw}")
+            return
+
+        # not always Mesh devices
+        self.debug(f"Process Mesh* {data}")
 
         data = bluetooth.parse_xiaomi_mesh(data)
         for did, payload in data.items():
             device = self.devices.get(did)
             if not device:
-                _LOGGER.warning("Unknown mesh device, reboot Hass may helps")
                 return
 
             if did in self.updates:
@@ -589,7 +674,11 @@ class Gateway3(Thread):
         try:
             shell = TelnetShell(self.host)
             for command in args:
-                shell.exec(command)
+                if command == 'ftp':
+                    shell.check_or_download_busybox()
+                    shell.run_ftp()
+                else:
+                    shell.exec(command)
             shell.close()
 
         except Exception as e:

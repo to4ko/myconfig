@@ -37,7 +37,7 @@ views:
                     name: Spray
                     tap_action:
                       action: toggle
-                  - entity: sensor.average_radiation_dose #sensor.geiger_radiation_dose_per_hour
+                  - entity: sensor.geiger_radiation_dose_per_hour
                     name: RA
                   - entity: binary_sensor.rain
                     name: Rain
@@ -138,9 +138,7 @@ views:
                         - entity: binary_sensor.ippon_1200_status
                           name: HB
                         - entity: sensor.ippon_1200_status_data
-                          name: Status
-#                        - entity: sensor.ippon_1200_battery_voltage
-#                          name: Voltage
+                          name:
 
                   - type: conditional
                     conditions:
@@ -154,9 +152,7 @@ views:
                         - entity: binary_sensor.ippon_1050_status
                           name: MB
                         - entity: sensor.ippon_1050_status_data
-                          name: Status
-#                        - entity: sensor.ippon_1050_battery_voltage
-#                          name: Voltage
+                          name:
 
                   - type: conditional
                     conditions:
@@ -170,9 +166,21 @@ views:
                         - entity: binary_sensor.cyber650_k_status
                           name: K
                         - entity: sensor.cyber650_k_status_data
-                          name: Status
-#                        - entity: sensor.cyber650_k_battery_voltage
-#                          name: Voltage
+                          name:
+
+                  - type: conditional
+                    conditions:
+                      - entity: binary_sensor.ippon_650_status
+                        state_not: 'off'
+                    card:
+                      type: glance
+                      columns: 2
+                      state_color: true
+                      entities:
+                        - entity: binary_sensor.ippon_650_status
+                          name: S
+                        - entity: sensor.ippon_650_status_data
+                          name:
 
           - type: glance
             columns: 6
@@ -560,6 +568,12 @@ views:
                 icon: mdi:card
                 tap_action:
                   action: toggle
+              - entity: light.square_led_v_nightlight
+                name: Night V
+                icon: mdi:card
+                tap_action:
+                  action: toggle
+
               - entity: light.bedside_mb
                 name: Lava V
                 icon: mdi:lava-lamp
@@ -1134,7 +1148,6 @@ views:
           - type: divider
           - switch.0x158d000239097a_switch
           - switch.0x158d0002395d58_switch
-          - switch.power_strip_s
           - type: divider
           - switch.0x158d000392623d_switch
           - entity: switch.sonoff_mini_2_relay
@@ -1203,7 +1216,6 @@ views:
           - switch.0x158d0002476ed1_switch
           - switch.0x158d000249b25b_switch
           - type: divider
-          - switch.sonoff_1000d03987_1          
           - switch.0x158d0001e85086_switch
           - switch.0x158d0002a36f7f_channel_2
 
@@ -2261,6 +2273,37 @@ views:
         show_state: false
 
 ################################################################
+# Cameras PAGE
+################################################################
+  - title: Cameras(doods)
+    icon: mdi:cctv
+    cards:
+      - type: picture-entity
+        camera_view: live
+        aspect_ratio: '16x9'
+        entity: camera.doods_dixy
+        show_name: false
+        show_state: false
+      - type: picture-entity
+        camera_view: live
+        aspect_ratio: '16x9'
+        entity: camera.doods_street
+        show_name: false
+        show_state: false
+      - type: picture-entity
+        camera_view: live
+        aspect_ratio: '16x9'
+        entity: camera.doods_hall
+        show_name: false
+        show_state: false
+      - type: picture-entity
+        camera_view: live
+        aspect_ratio: '16x9'
+        entity: camera.doods_window
+        show_name: false
+        show_state: false
+
+################################################################
 # CLIMATE PAGE
 ################################################################
   - title: Climate
@@ -2683,22 +2726,29 @@ views:
                 name: HS
               - entity: remote.0x588e81fffedd3c41_pair
                 name: S
+              - entity: remote.0x588e81fffe72678e_pair
+                name: K
               
           - type: glance
-            columns: 6
+            columns: 8
             entities:
               - entity: sensor.gw3_hb_radio_channel
-                name: HB Ch
+                name: HB
               - entity: sensor.gw3_hb_radio_tx_power
-                name: Tx
+                name: 
               - entity: sensor.gw3_hs_radio_channel
-                name: HS Ch
+                name: HS
               - entity: sensor.gw3_hs_radio_tx_power
-                name: Tx
+                name: 
               - entity: sensor.gw3_s_radio_channel
-                name: S Ch
+                name: S
               - entity: sensor.gw3_s_radio_tx_power
-                name: Tx
+                name: 
+              - entity: sensor.gw3_k_radio_channel
+                name: K
+              - entity: sensor.gw3_k_radio_tx_power
+                name: 
+
           - type: glance
             columns: 6
             entities:
@@ -2725,46 +2775,46 @@ views:
                 name: Total Lines
               - entity: sensor.config_line_count_sh_code
                 name: Code Lines
-          # - type: glance
-          #   show_header_toggle: false
-          #   columns: 8
-          #   state_color: true
-          #   entities:
-          #     - entity: sensor.total_entities
-          #       name: Total
-          #     - entity: sensor.tracker_count
-          #       icon: mdi:cellphone-link
-          #       name: Trackers
-          #       tap_action:
-          #         action: call-service
-          #         service: script.update_sensors_stats
-          #     - entity: sensor.lights_count
-          #       name: Lights
-          #       tap_action:
-          #         action: call-service
-          #         service: script.update_sensors_stats
-          #     - entity: sensor.sensor_count
-          #       name: Sensors
-          #       tap_action:
-          #         action: call-service
-          #         service: script.update_sensors_stats
-          #     - entity: sensor.binary_sensor_count
-          #       name: B-Sensors
-          #       tap_action:
-          #         action: call-service
-          #         service: script.update_sensors_stats
-          #     - entity: sensor.switch_count
-          #       name: Switches
-          #     - entity: sensor.automation_count
-          #       name: Auto
-          #       tap_action:
-          #         action: call-service
-          #         service: script.update_sensors_stats
-          #     - entity: sensor.script_count
-          #       name: Scripts
-          #       tap_action:
-          #         action: call-service
-          #         service: script.update_sensors_stats
+          - type: glance
+            show_header_toggle: false
+            columns: 8
+            state_color: true
+            entities:
+              - entity: sensor.total_entities
+                name: Total
+              - entity: sensor.tracker_count
+                icon: mdi:cellphone-link
+                name: Trackers
+                tap_action:
+                  action: call-service
+                  service: script.update_sensors_stats
+              - entity: sensor.lights_count
+                name: Lights
+                tap_action:
+                  action: call-service
+                  service: script.update_sensors_stats
+              - entity: sensor.sensor_count
+                name: Sensors
+                tap_action:
+                  action: call-service
+                  service: script.update_sensors_stats
+              - entity: sensor.binary_sensor_count
+                name: B-Sensors
+                tap_action:
+                  action: call-service
+                  service: script.update_sensors_stats
+              - entity: sensor.switch_count
+                name: Switches
+              - entity: sensor.automation_count
+                name: Auto
+                tap_action:
+                  action: call-service
+                  service: script.update_sensors_stats
+              - entity: sensor.script_count
+                name: Scripts
+                tap_action:
+                  action: call-service
+                  service: script.update_sensors_stats
           - type: custom:stack-in-card
             mode: vertical
             cards:
@@ -4015,7 +4065,6 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - binary_sensor.d1mini_air_freshener_status
           - binary_sensor.esp32_bathroom_node_status
           - binary_sensor.esp01_weight_pad_status
           - binary_sensor.sonoff_pow_r2_1_status
@@ -4052,7 +4101,6 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - sensor.d1mini_air_freshener_wifi_rssi
           - sensor.esp32_bathroom_node_wifi_rssi
           - sensor.esp01_weight_pad_wifi_rssi
           - sensor.sonoff_pow_r2_1_wifi_rssi
@@ -4090,7 +4138,6 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - sensor.d1mini_air_freshener_uptime
           - sensor.esp32_bathroom_node_uptime
           - sensor.esp01_weight_pad_uptime
           - sensor.sonoff_pow_r2_1_uptime
@@ -4123,59 +4170,6 @@ views:
           - sensor.shp6_socket_2_uptime
 
 ################################################################
-# Devices States
-################################################################
-  - title: Devices
-    icon: mdi:timer-sand
-    cards:
-      - type: entities
-        title: Daily
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - sensor.brix_on
-          - sensor.i5_on
-          - sensor.m6800_on
-          - sensor.r418_on
-          - sensor.u430p_on
-          - type: divider
-          - sensor.kettle_on
-          - sensor.washer_on
-          - sensor.fridge_on
-          - type: divider
-          - sensor.led_strip_hb_on
-          - sensor.round_led_mb_on
-          - sensor.round_led_s_on
-          - sensor.square_led_v_on
-          - type: divider
-          - sensor.tv_k_on
-          - sensor.tv_box_k_on
-          - sensor.tv_v_on
-          - sensor.tv_box_v_on
-          
-      - type: entities
-        title: Offline Rate
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - sensor.humidifier2_hourly_offline_rate
-          - sensor.led_strip_hb_hourly_offline_rate
-          - sensor.purifier2s_hourly_offline_rate
-          - sensor.round_led_mb_hourly_offline_rate
-          - sensor.round_led_s_hourly_offline_rate
-          - sensor.round_led_switch_hourly_offline_rate
-          - sensor.square_led_v_hourly_offline_rate
-      - type: entities
-        entities:
-          - sensor.esp32_domofon_daily_disconnected_time
-          - sensor.esp32_kitchen_daily_disconnected_time
-          - sensor.esp32_water_filter_daily_disconnected_time
-          - type: divider
-          - sensor.esp32_domofon_daily_unavailable_time
-          - sensor.esp32_kitchen_daily_unavailable_time
-          - sensor.esp32_water_filter_daily_unavailable_time
- 
-################################################################
 # Utility SENSORS
 ################################################################
   - title: Utility Sensors
@@ -4196,6 +4190,8 @@ views:
               - entity: sensor.hot_water_meter
               - entity: sensor.cold_water_month
               - entity: sensor.hot_water_month
+      - type: vertical-stack
+        cards:
           - type: glance
             entities:
               - entity: script.utility_value_from_j3455
@@ -4212,29 +4208,6 @@ views:
                 tap_action:
                   action: call-service
                   service: script.utility_value_from_rpi
-      - type: vertical-stack
-        cards:
-          - type: entities
-            title: j3455
-            show_header_toggle: false
-            state_color: true
-            entities:
-              - entity: sensor.power_t1_j3455
-                name: Power meter/T1
-              - entity: sensor.power_t2_j3455
-                name: Power meter/T2
-              - entity: sensor.power_consumption_month_t1_j3455
-                name: Power/Month/T1
-              - entity: sensor.power_consumption_month_t2_j3455
-                name: Power/Month/T2
-              - entity: sensor.cold_water_meter_j3455
-                name: 'Cold water meter'
-              - entity: sensor.hot_water_meter_j3455
-                name: 'Hot water meter'
-              - entity: sensor.cold_water_meter_month_j3455
-                name: 'Cold water/Month'
-              - entity: sensor.hot_water_meter_month_j3455
-                name: 'Hot water/Month'
           - type: glance
             entities:
               - entity: input_boolean.j3455_set_utility
@@ -4246,29 +4219,6 @@ views:
                     entity_id: input_boolean.j3455_set_utility
               - entity: binary_sensor.j3455_state
                 name: j3455 Server State
-      - type: vertical-stack
-        cards:
-          - type: entities
-            title: RPI
-            show_header_toggle: false
-            state_color: true
-            entities:
-              - entity: sensor.power_t1_rpi
-                name: Power meter/T1
-              - entity: sensor.power_t2_rpi
-                name: Power meter/T2
-              - entity: sensor.power_consumption_month_t1_rpi
-                name: Power/Month/T1
-              - entity: sensor.power_consumption_month_t2_rpi
-                name: Power/Month/T2
-              - entity: sensor.cold_water_meter_rpi
-                name: 'Cold water meter'
-              - entity: sensor.hot_water_meter_rpi
-                name: 'Hot water meter'
-              - entity: sensor.cold_water_meter_month_rpi
-                name: 'Cold water/Month'
-              - entity: sensor.hot_water_meter_month_rpi
-                name: 'Hot water/Month'
           - type: glance
             entities:
               - entity: input_boolean.rpi_set_utility
@@ -4416,8 +4366,6 @@ views:
                 name: grey
               - entity: binary_sensor.esp32_ble_tracker_white
                 name: white
-              - entity: binary_sensor.esp32_ble_tracker_itag_white
-                name: iTag W
 
           - type: glance
             entities:
@@ -4429,14 +4377,16 @@ views:
                 name: grey
               - entity: sensor.esp32_ble_tracker_white_rssi
                 name: white
-              - entity: sensor.esp32_ble_tracker_itag_white_rssi
-                name: iTag W
- 
+
   - title: Kiosk
     icon: mdi:camera
     cards:
-      - type: 'custom:camera-card'
+      - type: picture-entity
+        camera_view: live
+        aspect_ratio: '16x9'
         entity: camera.door_hb
+        show_name: false
+        show_state: false
         
 
   - title: Temperature
@@ -4486,10 +4436,7 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x158d0001e8995a_temperature
-      - type: history-graph
-        hours_to_show: 48
-        entities:
-          - sensor.sonoff_4ch_temperature
+
   - title: Humidity
     icon: mdi:water-percent
     cards:
@@ -4537,11 +4484,7 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x158d0001e8995a_humidity
-      - type: history-graph
-        hours_to_show: 48
-        entities:
-          - sensor.sonoff_4ch_humidity
-          
+
   - title: Switches
     icon: mdi:file-settings
     cards:
@@ -4946,28 +4889,6 @@ views:
           numeric: true
           reverse: true
 
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - device_tracker.d1mini_air_freshener
-          - sensor.d1mini_air_freshener_adc
-          - sensor.d1mini_air_freshener_absolute_humidity
-          - sensor.d1mini_air_freshener_airq
-          - binary_sensor.d1mini_air_freshener_button
-          - sensor.d1mini_air_freshener_distance
-          - sensor.d1mini_air_freshener_gas_resistance
-          - sensor.d1mini_air_freshener_humidity
-          - binary_sensor.d1mini_air_freshener_motion
-          - sensor.d1mini_air_freshener_pressure
-          - switch.d1mini_air_freshener_restart
-          - binary_sensor.d1mini_air_freshener_status
-          - sensor.d1mini_air_freshener_temperature
-          - sensor.d1mini_air_freshener_uptime
-          - sensor.d1mini_air_freshener_uptime_s
-          - switch.d1mini_air_freshener_valve
-          - sensor.d1mini_air_freshener_wifi_rssi
-          
       - type: entities
         show_header_toggle: false
         state_color: true
