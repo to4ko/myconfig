@@ -5,6 +5,7 @@ DEVICES = {
     # BLE
     152: ["Xiaomi", "Flower Care", "HHCCJCY01"],
     426: ["Xiaomi", "TH Sensor", "LYWSDCGQ/01ZM"],
+    839: ["Xiaomi", "Qingping TH Sensor", "CGG1"],
     1034: ["Xiaomi", "Mosquito Repellent", "WX08ZM"],
     1115: ["Xiaomi", "TH Clock", "LYWSD02MMC"],
     1249: ["Xiaomi", "Magic Cube", "XMMF01JQD"],
@@ -23,6 +24,8 @@ DEVICES = {
     1772: ["Xiaomi", "Mesh Downlight", "MJTS01YL"],
     2076: ["Yeelight", "Mesh Downlight M2", "YLTS02YL/YLTS04YL"],
     2342: ["Yeelight", "Mesh Bulb M2", "YLDP25YL/YLDP26YL"],
+    # Mesh Group
+    0: ["Mesh", "Mesh Group"]
 }
 
 BLE_FINGERPRINT_ACTION = [

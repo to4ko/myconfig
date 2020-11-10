@@ -6,7 +6,11 @@ from typing import Optional
 
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.helpers.device_registry import DeviceRegistry
+from homeassistant.helpers.entity_registry import EntityRegistry
 from homeassistant.helpers.typing import HomeAssistantType
+
+DOMAIN = 'xiaomi_gateway3'
 
 # https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/devices.js#L390
 # https://slsys.io/action/devicelists.html
@@ -17,6 +21,8 @@ from homeassistant.helpers.typing import HomeAssistantType
 DEVICES = [{
     'lumi.gateway.mgl03': ["Xiaomi", "Gateway 3", "ZNDMWG03LM"],
     'params': [
+        ['8.0.2012', None, 'power_tx', None],
+        ['8.0.2024', None, 'channel', None],
         ['8.0.2081', None, 'pairing_stop', None],
         ['8.0.2082', None, 'removed_did', None],
         ['8.0.2084', None, 'added_device', None],  # new devices added (info)
@@ -73,6 +79,7 @@ DEVICES = [{
         # [?, 'enable_motor_mode', 'interlock', None]
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
+        ['13.5.85', None, 'button_both', None],
         [None, None, 'action', 'sensor'],
     ]
 }, {
@@ -91,6 +98,7 @@ DEVICES = [{
         ['4.2.85', 'neutral_1', 'channel 2', 'switch'],
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
+        ['13.5.85', None, 'button_both', None],
         [None, None, 'action', 'sensor'],
     ]
 }, {
@@ -100,6 +108,7 @@ DEVICES = [{
         ['4.2.85', 'channel 1', 'channel 2', 'switch'],
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
+        ['13.5.85', None, 'button_both', None],
         [None, None, 'action', 'sensor'],
     ]
 }, {
@@ -112,6 +121,9 @@ DEVICES = [{
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
         ['13.3.85', None, 'button_3', None],
+        ['13.5.85', None, 'button_both_12', None],
+        ['13.6.85', None, 'button_both_13', None],
+        ['13.7.85', None, 'button_both_23', None],
         [None, None, 'action', 'sensor'],
     ]
 }, {
@@ -126,6 +138,9 @@ DEVICES = [{
         ['13.1.85', None, 'button_1', None],
         ['13.2.85', None, 'button_2', None],
         ['13.3.85', None, 'button_3', None],
+        ['13.5.85', None, 'button_both_12', None],
+        ['13.6.85', None, 'button_both_13', None],
+        ['13.7.85', None, 'button_both_23', None],
         [None, None, 'action', 'sensor'],
     ]
 }, {
@@ -273,7 +288,6 @@ DEVICES = [{
     'params': [
         ['0.1.85', 'density', 'gas density', 'sensor'],
         ['13.1.85', 'alarm', 'gas', 'binary_sensor'],
-        ['8.0.2001', 'battery', 'battery', 'sensor'],
     ]
 }, {
     'lumi.curtain': ["Aqara", "Curtain", "ZNCLDJ11LM"],
@@ -314,7 +328,6 @@ GLOBAL_PROP = {
     '8.0.2009': 'pv_state',
     '8.0.2010': 'cur_state',
     '8.0.2011': 'pre_state',
-    '8.0.2012': 'power_tx',
     '8.0.2013': 'CCA',
     '8.0.2014': 'protect',
     '8.0.2015': 'power',
@@ -372,6 +385,31 @@ def fix_xiaomi_props(params) -> dict:
     return params
 
 
+def remove_device(hass: HomeAssistantType, did: str):
+    """Remove device by did from Hass"""
+    assert did.startswith('lumi.'), did
+    # lumi.1234567890 => 0x1234567890
+    mac = '0x' + did[5:]
+    registry: DeviceRegistry = hass.data['device_registry']
+    device = registry.async_get_device({('xiaomi_gateway3', mac)}, None)
+    if device:
+        registry.async_remove_device(device.id)
+
+
+def migrate_unique_id(hass: HomeAssistantType):
+    """New unique_id format: `mac_attr`, no leading `0x`, spaces and uppercase.
+    """
+    old_id = re.compile('(^0x|[ A-F])')
+
+    registry: EntityRegistry = hass.data['entity_registry']
+    for entity in registry.entities.values():
+        if entity.platform != DOMAIN or not old_id.search(entity.unique_id):
+            continue
+
+        uid = entity.unique_id.replace('0x', '').replace(' ', '_').lower()
+        registry.async_update_entity(entity.entity_id, new_unique_id=uid)
+
+
 TITLE = "Xiaomi Gateway 3 Debug"
 NOTIFY_TEXT = '<a href="%s" target="_blank">Open Log<a>'
 HTML = (f'<!DOCTYPE html><html><head><title>{TITLE}</title>'
@@ -401,17 +439,25 @@ class XiaomiGateway3Debug(logging.Handler, HomeAssistantView):
         self.text += f"{dt}  {rec.levelname:7}  {module:12}  {rec.msg}\n"
 
     async def get(self, request: web.Request):
-        reload = request.query.get('r', '')
+        try:
+            if 'q' in request.query or 't' in request.query:
+                lines = self.text.split('\n')
 
-        if 'q' in request.query:
-            try:
-                reg = re.compile(fr"({request.query['q']})", re.IGNORECASE)
-                body = '\n'.join([p for p in self.text.split('\n')
-                                  if reg.search(p)])
-            except:
-                return web.Response(status=500)
-        else:
-            body = self.text
+                if 'q' in request.query:
+                    reg = re.compile(fr"({request.query['q']})", re.IGNORECASE)
+                    lines = [p for p in lines if reg.search(p)]
 
-        return web.Response(text=HTML % (reload, body),
-                            content_type="text/html")
+                if 't' in request.query:
+                    tail = int(request.query['t'])
+                    lines = lines[-tail:]
+
+                body = '\n'.join(lines)
+            else:
+                body = self.text
+
+            reload = request.query.get('r', '')
+            return web.Response(text=HTML % (reload, body),
+                                content_type="text/html")
+
+        except:
+            return web.Response(status=500)

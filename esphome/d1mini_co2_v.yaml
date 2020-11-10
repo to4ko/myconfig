@@ -2,9 +2,10 @@ substitutions:
   board_name: d1mini_co2_v
  
 esphome:
-  name: d1mini_co2_v
+  name: ${board_name}
   platform: ESP8266
   board: d1_mini
+  comment: D1 Mini CO2 TPH Node V
 
 wifi:
   ssid: !secret wifi_ssid
@@ -19,17 +20,15 @@ wifi:
     gateway: 192.168.1.1
     subnet: 255.255.255.0
 
-# Enable logging
 logger:
 
-# Enable Home Assistant API
 api:
   reboot_timeout: 0s
 
 ota:
 
-# web_server:
-#   port: 80
+web_server:
+  port: 80
   
 binary_sensor:
   - platform: status
@@ -39,6 +38,16 @@ uart:
   rx_pin: D1
   tx_pin: D2
   baud_rate: 9600
+
+dallas:
+  - pin: GPIO13
+    update_interval: 15s
+    id: dallas_node
+
+i2c:
+  sda: GPIO12
+  scl: GPIO14
+  scan: True
 
 text_sensor:
   - platform: template
@@ -72,13 +81,48 @@ sensor:
     id: uptime_sensor
     update_interval: 15s
 
+  - platform: dallas
+    address: 0x0101143E424CAA28
+    name: ${board_name}_Heating_Pipe
+
   - platform: mhz19
     co2:
       name: "Z19 CO2 V"
     temperature:
       name: "Z19 Temp V"
     update_interval: 60s
+  
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
 
+  - platform: bme680
+    temperature:
+      name: ${board_name}_Temperature
+      oversampling: 4x
+      id: bme680_temperature
+    pressure:
+      name: ${board_name}_Pressure
+      oversampling: 4x
+      id: bme680_pressure
+    humidity:
+      name: ${board_name}_Humidity
+      oversampling: 4x
+      id: bme680_humidity
+    gas_resistance:
+      name: ${board_name}_Gas_Resistance
+      id: bme680_gas_resistance
+    address: 0x76
+    update_interval: 15s
+
+
+  - platform: bh1750
+    name: ${board_name}_Illuminance
+    address: 0x23
+    measurement_time: 69
+    update_interval: 15s
+    accuracy_decimals: 0
+    
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s

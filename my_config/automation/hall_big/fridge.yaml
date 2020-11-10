@@ -73,12 +73,12 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.fridge_door_open_time
-        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int}}"
+        value: "{{ as_timestamp(now())|int }}"
 
 # ##################################
 # Hall big - Fridge door closed after 5 mins
 # ##################################
-- alias: hall_big_fridge_door_open_time
+- alias: hall_big_fridge_door_closed
   initial_state: 'true'
   trigger:
     - platform: state
@@ -87,11 +87,11 @@
       to: 'off'
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int - states('input_number.fridge_door_open_time')|int)  > 310  }}"
+      value_template: "{{ (as_timestamp(now())|int - states('input_number.fridge_door_open_time')|int)  > 310 }}"
   action:
   - service: notify.telegram
-    data:
-      message: Холодильник успешно закрыт после 5 минут.
+    data_template:
+      message: "Холодильник успешно закрыт спустя {{ ((as_timestamp(now())|int - states('input_number.fridge_door_open_time')|int)/60)|int }}м."
 
 # ##################################
 # Hall big - Freezer door open time
@@ -107,12 +107,12 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.freezer_door_open_time
-        value: "{{as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int}}"
-
+        value: "{{ as_timestamp(now())|int }}"
+        
 # ##################################
 # Hall big - Freezer door closed after 5 mins
 # ##################################
-- alias: hall_big_freezer_door_open_time
+- alias: hall_big_freezer_door_closed
   initial_state: 'true'
   trigger:
     - platform: state
@@ -121,11 +121,11 @@
       to: 'off'
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int - states('input_number.freezer_door_open_time')|int)  > 310  }}"
+      value_template: "{{ ( as_timestamp(now())|int - states('input_number.freezer_door_open_time')|int)  > 310  }}"
   action:
   - service: notify.telegram
     data:
-      message: Морозилка успешно закрыта после 5 минут.
+      message: "Морозилка успешно закрыта спустя {{ ((as_timestamp(now())|int - states('input_number.freezer_door_open_time')|int)/60)|int }}м."
       
 
 # ##################################

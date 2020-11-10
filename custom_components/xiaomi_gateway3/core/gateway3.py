@@ -58,6 +58,9 @@ class Gateway3(Thread):
         """Add handler to device update event."""
         self.updates.setdefault(did, []).append(handler)
 
+    def remove_update(self, did: str, handler):
+        self.updates.setdefault(did, []).remove(handler)
+
     def add_setup(self, domain: str, handler):
         """Add hass device setup funcion."""
         self.setups[domain] = handler
@@ -127,8 +130,9 @@ class Gateway3(Thread):
                 else "ble_event|properties_changed"
 
             if f"awk /{pattern} {{" not in ps:
-                self.debug("Redirect miio to MQTT")
-                shell.redirect_miio2mqtt(pattern)
+                new_version = 'FILE_STORE' in ps
+                self.debug(f"Redirect miio to MQTT, new: {new_version}")
+                shell.redirect_miio2mqtt(pattern, new_version)
 
             if self._disable_buzzer and "basic_gw -b" in ps:
                 _LOGGER.debug("Disable buzzer")
@@ -147,9 +151,11 @@ class Gateway3(Thread):
 
             else:
                 if "socat" in ps:
+                    self.debug("Stop socat")
                     shell.stop_socat()
 
                 if "Lumi_Z3GatewayHost_MQTT" not in ps:
+                    self.debug("Run Lumi Zigbee")
                     shell.run_lumi_zigbee()
             # elif "Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 -v" not in ps:
             #     self.debug("Run public Zigbee console")
@@ -260,16 +266,46 @@ class Gateway3(Thread):
                 }
                 devices.append(device)
 
-            # load Mesh devices
-            rows = db.read_table('mesh_device')
-            for row in rows:
-                device = {
-                    'did': row[0],
-                    'mac': row[1].replace(':', ''),
-                    'model': row[2],
-                    'type': 'mesh'
-                }
-                devices.append(device)
+            # load Mesh groups
+            try:
+                mesh_groups = {}
+
+                rows = db.read_table('mesh_group')
+                for row in rows:
+                    # don't know if 8 bytes enougth
+                    mac = int(row[0]).to_bytes(8, 'big').hex()
+                    device = {
+                        'did': 'group.' + row[0],
+                        'mac': mac,
+                        'model': 0,
+                        'childs': [],
+                        'type': 'mesh'
+                    }
+                    group_addr = row[1]
+                    mesh_groups[group_addr] = device
+
+                # load Mesh bulbs
+                rows = db.read_table('mesh_device')
+                for row in rows:
+                    device = {
+                        'did': row[0],
+                        'mac': row[1].replace(':', ''),
+                        'model': row[2],
+                        'type': 'mesh'
+                    }
+                    devices.append(device)
+
+                    group_addr = row[5]
+                    if group_addr in mesh_groups:
+                        # add bulb to group if exist
+                        mesh_groups[group_addr]['childs'].append(row[0])
+
+                for device in mesh_groups.values():
+                    if device['childs']:
+                        devices.append(device)
+
+            except:
+                _LOGGER.exception("Can't read mesh devices")
 
         return devices
 
@@ -313,10 +349,11 @@ class Gateway3(Thread):
             if 'miio' in self._debug:
                 _LOGGER.debug(f"[MI] {msg.payload}")
 
-            if b'_async.ble_event' in msg.payload:
-                self.process_ble_event(msg.payload)
-            elif b'properties_changed' in msg.payload:
-                self.process_mesh_data(msg.payload)
+            if self.ble:
+                if b'_async.ble_event' in msg.payload:
+                    self.process_ble_event(msg.payload)
+                elif b'properties_changed' in msg.payload:
+                    self.process_mesh_data(msg.payload)
 
         elif msg.topic.endswith('/heartbeat'):
             payload = json.loads(msg.payload)
@@ -622,10 +659,6 @@ class Gateway3(Thread):
 
         data = bluetooth.parse_xiaomi_mesh(data)
         for did, payload in data.items():
-            device = self.devices.get(did)
-            if not device:
-                return
-
             if did in self.updates:
                 for handler in self.updates[did]:
                     handler(payload)

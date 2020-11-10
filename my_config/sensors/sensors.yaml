@@ -62,6 +62,20 @@
         unit_of_measurement: '°C'
         device_class: temperature
 
+      dewpoint_b:
+        friendly_name: Bathroom Dew Point
+        unit_of_measurement: "°C"
+        device_class: temperature
+        value_template: >
+          {% set b = 17.368 %}
+          {% set c = 238.88 %}
+          {% set a = 6.1121 %}
+          {% set rh = states('sensor.0x158d00020d7c3a_humidity') | float %}
+          {% set t = states('sensor.0x158d00020d7c3a_temperature') | float %}
+          {% set a = 6.1121 %}
+          {% set gamma = log(rh / 100) + b * t / (c + t) %}
+          {{ (c * gamma / (b - gamma)) | round(1) }}
+
   - platform: min_max
     type: mean
     name: Humidity Average
