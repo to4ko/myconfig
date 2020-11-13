@@ -89,7 +89,7 @@
 
 
 # ##################################
-# Bathroom Fan - Fans - Off
+# Bathroom Fan - Auto
 # ##################################
 - alias: bathroom_fans_auto
   initial_state: 'true'
@@ -100,13 +100,15 @@
     - choose:
         - conditions:
             - condition: template
-              value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int - states('sensor.humidity_average')|int) <= 5 and is_state('switch.esp32_bathroom_node_relay_3','on') }}"
+              #value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int - states('sensor.humidity_average')|int) <= 5 and is_state('switch.esp32_bathroom_node_relay_3','on') }}"
+              value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int < 55) and is_state('switch.esp32_bathroom_node_relay_3','on') }}"
           sequence:
             - service: switch.turn_off
               entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch
         - conditions:
             - condition: template
-              value_template: "{{ ((states('sensor.0x158d00020d7c3a_humidity')|int - states('sensor.humidity_average')|int) >= 10) and (is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') and is_state('light.mirror_light_b','off')) and is_state('switch.esp32_bathroom_node_relay_3','off') }}"
+              #value_template: "{{ ((states('sensor.0x158d00020d7c3a_humidity')|int - states('sensor.humidity_average')|int) >= 10) and (is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') and is_state('light.mirror_light_b','off')) and is_state('switch.esp32_bathroom_node_relay_3','off') }}"
+              value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int > 60 and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') and is_state('light.mirror_light_b','off')) and is_state('switch.esp32_bathroom_node_relay_3','off') }}"
           sequence:
             - service: switch.turn_on
               entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch

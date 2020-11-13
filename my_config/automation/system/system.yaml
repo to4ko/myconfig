@@ -739,40 +739,68 @@
 # ##################################
 - alias: system_hacs_update_pending
   trigger:
-    platform: state
-    entity_id: sensor.hacs
+    - platform: state
+      entity_id: sensor.hacs
   condition:
     - condition: template
       value_template: "{{ states(trigger.entity_id) != 'unknown'}}"
     - condition: template
       value_template: "{{ (states(trigger.entity_id) | float) != 0}}"
   action:
-    service: persistent_notification.create
-    data_template:
-      title: Updates pending in HACS
-      message: >-
-        {% for repo in state_attr(trigger.entity_id, 'repositories') %}
-          {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
-        {% endfor %}
+    - service: persistent_notification.create
+      data_template:
+        title: Updates pending in HACS
+        message: >-
+          {% for repo in state_attr(trigger.entity_id, 'repositories') %}
+            {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
+          {% endfor %}
 
 # ##################################
 # System - HACS Update Pending
 # ##################################
 - alias: system_hacs_new_repo
   trigger:
-    platform: event
-    event_type: hacs/repository
-    event_data:
-      action: registration
+    - platform: event
+      event_type: hacs/repository
+      event_data:
+        action: registration
   condition:
-    condition: template
-    value_template: "{{ trigger.event.data.repository is defined }}"
+    - condition: template
+      value_template: "{{ trigger.event.data.repository is defined }}"
   action:
-    service: persistent_notification.create
-    data_template:
-      title: New repository in HACS
-      message: >-
-        {% set repo = trigger.event.data.repository %}
-        {% set id = trigger.event.data.repository_id %}
-        [{{ repo }}](/hacs/repository/{{ id }})
-        was just added to HACS.
+    - service: persistent_notification.create
+      data_template:
+        title: New repository in HACS
+        message: >-
+          {% set repo = trigger.event.data.repository %}
+          {% set id = trigger.event.data.repository_id %}
+          [{{ repo }}](/hacs/repository/{{ id }})
+          was just added to HACS.
+        
+# ##################################
+# System - Hot water pipe warning
+# ##################################
+- alias: system_hot_water_pipe
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.esp32_bathroom_node_hot_pipe
+      below: 40
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! Температура трубы горячей воды ниже 40°C"
+        
+# ##################################
+# System - Heating pipes warning
+# ##################################
+- alias: system_heating_pipes_warning
+  trigger:
+    - platform: numeric_state
+      entity_id: 
+        - sensor.esp32_node_v_heating_pipe
+        - sensor.d1mini_co2_mb_heating_pipe
+      below: 35
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! Температура трубы {{trigger.to_state.attributes.friendly_name}} ниже 35°C"

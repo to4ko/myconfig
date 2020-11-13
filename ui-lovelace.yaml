@@ -132,13 +132,11 @@ views:
                         state_not: 'off'
                     card:
                       type: glance
-                      columns: 2
+                      columns: 1
                       state_color: true
                       entities:
-                        - entity: binary_sensor.ippon_1200_status
-                          name: HB
                         - entity: sensor.ippon_1200_status_data
-                          name:
+                          name: HB
 
                   - type: conditional
                     conditions:
@@ -146,13 +144,11 @@ views:
                         state_not: 'off'
                     card:
                       type: glance
-                      columns: 2
+                      columns: 1
                       state_color: true
                       entities:
-                        - entity: binary_sensor.ippon_1050_status
-                          name: MB
                         - entity: sensor.ippon_1050_status_data
-                          name:
+                          name: MB
 
                   - type: conditional
                     conditions:
@@ -160,13 +156,11 @@ views:
                         state_not: 'off'
                     card:
                       type: glance
-                      columns: 2
+                      columns: 1
                       state_color: true
                       entities:
-                        - entity: binary_sensor.cyber650_k_status
-                          name: K
                         - entity: sensor.cyber650_k_status_data
-                          name:
+                          name: K
 
                   - type: conditional
                     conditions:
@@ -174,13 +168,11 @@ views:
                         state_not: 'off'
                     card:
                       type: glance
-                      columns: 2
+                      columns: 1
                       state_color: true
                       entities:
-                        - entity: binary_sensor.ippon_650_status
-                          name: S
                         - entity: sensor.ippon_650_status_data
-                          name:
+                          name: S
 
           - type: glance
             columns: 6
@@ -306,17 +298,17 @@ views:
           - type: horizontal-stack
             cards:
               - type: glance
-                columns: 7
+                columns: 6
                 show_state: true
                 state_color: true
                 entities:
-                  - entity: binary_sensor.esp32_kitchen_magnet
-                    name: Vent Door
-                    tap_action:
-                      action: call-service
-                      service: switch.toggle
-                      service_data:
-                        entity_id: switch.esp32_kitchen_airvalve_control
+                  # - entity: binary_sensor.esp32_kitchen_magnet
+                  #   name: Vent Door
+                  #   tap_action:
+                  #     action: call-service
+                  #     service: switch.toggle
+                  #     service_data:
+                  #       entity_id: switch.esp32_kitchen_airvalve_control
                   - binary_sensor.toilet_usage
                   - entity: switch.0x158d0002482619_switch
                     name: BFan B
@@ -1428,7 +1420,7 @@ views:
                 name: Cold Pipe
               - entity: sensor.d1mini_co2_mb_heating_pipe
                 name: Heat MB
-              - entity: sensor.d1mini_co2_v_heating_pipe
+              - entity: sensor.esp32_node_v_heating_pipe
                 name: Heat V
           - type: glance
             show_header_toggle: false
@@ -1550,6 +1542,18 @@ views:
           - type: entities
             #columns: 3
             state_color: true
+            title: Usage
+            show_header_toggle: false
+            entities:
+              - input_number.ro_filter1_usage
+              - input_number.ro_filter2_usage
+              - input_number.ro_filter3_usage
+              - input_number.ro_membrane_usage
+              - input_number.ro_postfilter_usage
+              - input_number.ro_mineralizer_usage
+          - type: entities
+            #columns: 3
+            state_color: true
             title: Wear
             show_header_toggle: false
             entities:
@@ -1559,21 +1563,39 @@ views:
               - sensor.ro_membrane_wearing
               - sensor.ro_postfilter_wearing
               - sensor.ro_mineralizer_wearing
-          - type: entities
-            #columns: 3
+          # - type: entities
+          #   #columns: 3
+          #   state_color: true
+          #   entities:
+          #     - sensor.ro_filter1_life_left
+          #     - sensor.ro_filter2_life_left
+          #     - sensor.ro_filter3_life_left
+          #     - sensor.ro_membrane_life_left
+          #     - sensor.ro_postfilter_life_left
+          #     - sensor.ro_mineralizer_life_left
+          - type: glance
+            columns: 6
             state_color: true
+            title: Reset
+            show_header_toggle: false
             entities:
-              - sensor.ro_filter1_life_left
-              - sensor.ro_filter2_life_left
-              - sensor.ro_filter3_life_left
-              - sensor.ro_membrane_life_left
-              - sensor.ro_postfilter_life_left
-              - sensor.ro_mineralizer_life_left
-
+              - entity: script.ro_filter1_replace
+                name: F1
+              - entity: script.ro_filter2_replace
+                name: F2
+              - entity: script.ro_filter3_replace
+                name: F3
+              - entity: script.ro_membrane_replace
+                name: M
+              - entity: script.ro_postfilter_replace
+                name: PostF
+              - entity: script.ro_mineralizer_replace
+                name: Mnr
+              
       - type: vertical-stack
         cards:
           - type: glance
-            columns: 5
+            columns: 6
             state_color: true
             title: Total
             show_header_toggle: false
@@ -1581,9 +1603,9 @@ views:
               - entity: sensor.water_raw_single
                 name: RAW
                 icon: mdi:water-pump
-              # - entity: sensor.water_postmembrane_single
-              #   name: PostM
-              #   icon: mdi:filter-menu
+              - entity: sensor.water_postmembrane_single
+                name: PostM
+                icon: mdi:filter-menu
               - entity: sensor.water_mineralized_single
                 name: M
                 icon: mdi:cup-water
@@ -1613,15 +1635,15 @@ views:
           #       icon: mdi:cup-off
 
           - type: glance
-            columns: 3
+            columns: 4
             state_color: true
             entities:
               - entity: sensor.water_raw_daily_single
                 name: Today RAW
                 icon: mdi:water-pump
-              # - entity: sensor.water_postmembrane_daily_single
-              #   name: PostM
-              #   icon: mdi:filter-menu
+              - entity: sensor.water_postmembrane_daily_single
+                name: PostM
+                icon: mdi:filter-menu
               - entity: sensor.water_mineralized_daily_single
                 name: M
                 icon: mdi:cup-water
@@ -1629,21 +1651,28 @@ views:
                 name: NM
                 icon: mdi:cup-off
           - type: glance
-            columns: 3
+            columns: 4
             state_color: true
             entities:
               - entity: sensor.water_raw_yesterday
                 name: Yesterday RAW
                 icon: mdi:water-pump
-              # - entity: sensor.water_postmembrane_yesterday
-              #   name: PostM
-              #   icon: mdi:filter-menu
+              - entity: sensor.water_postmembrane_yesterday
+                name: PostM
+                icon: mdi:filter-menu
               - entity: sensor.water_mineralized_yesterday
                 name: M
                 icon: mdi:cup-water
               - entity: sensor.water_nonmineralized_yesterday
                 name: NM
                 icon: mdi:cup-off
+          - type: entities
+            state_color: true
+            entities:
+              - entity: sensor.raw_water_flow
+                name: Max Flow (30s)
+              - entity: sensor.raw_water_flow_max
+                name: Max Flow (5d)
           - type: glance
             state_color: true
             entities:
@@ -1654,6 +1683,7 @@ views:
                 name: Filters changed at
               - entity: sensor.ro_filters_inuse
                 name: InUse
+              
       - type: vertical-stack
         cards:
           - type: entities
@@ -1662,9 +1692,9 @@ views:
             show_header_toggle: false
             title: Resource
             entities:
-              - input_number.ro_filer1_resource
-              - input_number.ro_filer2_resource
-              - input_number.ro_filer3_resource
+              - input_number.ro_filter1_resource
+              - input_number.ro_filter2_resource
+              - input_number.ro_filter3_resource
               - input_number.ro_membrane_resource
               - input_number.ro_postfilter_resource
               - input_number.ro_mineralizer_resource
@@ -4060,10 +4090,10 @@ views:
           - binary_sensor.shp2_socket_server_status
           - binary_sensor.esp32_ble_tracker_status
           - binary_sensor.esp32_kitchen_status
-          - binary_sensor.esp32_water_filter_status
+          #- binary_sensor.esp32_water_filter_status
           - binary_sensor.d1mini_co2_mb_status
           - binary_sensor.d1mini_co2_s_status
-          - binary_sensor.d1mini_co2_v_status
+          - binary_sensor.esp32_node_v_status
           #- binary_sensor.esp01_hdd_box_status
           - binary_sensor.esp32_domofon_status
           #- binary_sensor.esp12e_domofon_status
@@ -4093,10 +4123,10 @@ views:
           - sensor.shp2_socket_server_wifi_rssi
           - sensor.esp32_ble_tracker_wifi_rssi
           - sensor.esp32_kitchen_wifi_rssi
-          - sensor.esp32_water_filter_wifi_rssi
+          #- sensor.esp32_water_filter_wifi_rssi
           - sensor.d1mini_co2_mb_wifi_rssi
           - sensor.d1mini_co2_s_wifi_rssi
-          - sensor.d1mini_co2_v_wifi_rssi
+          - sensor.esp32_node_v_wifi_rssi
           #- sensor.esp01_hdd_box_wifi_rssi
           - sensor.esp32_domofon_wifi_rssi
           #- sensor.esp12e_domofon_wifi_rssi
@@ -4127,10 +4157,10 @@ views:
           - sensor.shp2_socket_server_uptime
           - sensor.esp32_ble_tracker_uptime
           - sensor.esp32_kitchen_uptime
-          - sensor.esp32_water_filter_uptime
+          #- sensor.esp32_water_filter_uptime
           - sensor.d1mini_co2_mb_uptime
           - sensor.d1mini_co2_s_uptime
-          - sensor.d1mini_co2_v_uptime
+          - sensor.esp32_node_v_uptime
           #- sensor.esp01_hdd_box_uptime
           - sensor.esp32_domofon_uptime
           #- sensor.esp12e_domofon_uptime
@@ -4409,6 +4439,7 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x158d0001e58714_temperature
+          - sensor.esp32_node_v_temperature
       - type: history-graph
         hours_to_show: 48
         entities:
@@ -4457,6 +4488,7 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x158d0001e58714_humidity
+          - sensor.esp32_node_v_humidity
       - type: history-graph
         hours_to_show: 48
         entities:
@@ -4903,3 +4935,14 @@ views:
           - sensor.esp32_bathroom_node_uptime
           - sensor.esp32_bathroom_node_uptime_s
           - sensor.esp32_bathroom_node_wifi_rssi
+          
+          
+      - type: entities
+        entities:
+          - sensor.esp32_kitchen_mineralized
+          - sensor.esp32_kitchen_nonmineralized
+          - sensor.esp32_kitchen_raw
+          - type: divider
+          - sensor.esp32_water_filter_mineralized
+          - sensor.esp32_water_filter_nonmineralized
+          - sensor.esp32_water_filter_raw

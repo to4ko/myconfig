@@ -5,13 +5,13 @@ esphome:
   name: esp32_kitchen
   platform: ESP32
   board: lolin32
-  on_boot:
-    then:
-      if:
-        condition:
-          lambda: 'return id(magnet).state == 1;'
-        then:
-          - switch.turn_on: valve_open
+  # on_boot:
+  #   then:
+  #     if:
+  #       condition:
+  #         lambda: 'return id(magnet).state == 1;'
+  #       then:
+  #         - switch.turn_on: valve_open
 
 wifi:
   ssid: !secret wifi_ssid_k
@@ -46,29 +46,20 @@ i2c:
   scl: GPIO22
   scan: True
 
-  # - id: bus_a
-  #   sda: 13
-  #   scl: 16
-  #   scan: True
-  # - id: bus_b
-  #   sda: 14
-  #   scl: 15
-  #   scan: True
-
 # as3935_i2c:
 #   irq_pin: GPIO32
   #spike_rejection: 2
   #indoor: false
   
-servo:
-  - id: air_valve_servo
-    output: pwm_output
+# servo:
+#   - id: air_valve_servo
+#     output: pwm_output
 
-output:
-  - platform: ledc
-    id: pwm_output
-    pin: GPIO27 # Servo Pin
-    frequency: 50 Hz
+# output:
+#   - platform: ledc
+#     id: pwm_output
+#     pin: GPIO27 # Servo Pin
+#     frequency: 50 Hz
 
 remote_transmitter:
   pin: GPIO26
@@ -82,14 +73,14 @@ binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
-  - platform: gpio
-    pin:
-      number: GPIO33
-      mode: INPUT_PULLDOWN
-      inverted: true
-    name: ${board_name}_Magnet
-    device_class: opening
-    id: magnet
+  # - platform: gpio
+  #   pin:
+  #     number: GPIO33
+  #     mode: INPUT_PULLDOWN
+  #     inverted: true
+  #   name: ${board_name}_Magnet
+  #   device_class: opening
+  #   id: magnet
 
   # - platform: gpio
   #   pin:
@@ -131,11 +122,6 @@ text_sensor:
     update_interval: 15s
 
 sensor:
-  # - platform: as3935
-  #   lightning_energy:
-  #     name: ${board_name}_Lightning_Energy
-  #   distance:
-  #     name: ${board_name}_Distance_Storm
 
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -174,44 +160,98 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
+  - platform: pulse_counter
+    name: ${board_name}_Mineralized
+    id: id_mineralized_pulse
+    pin: GPIO33
+    update_interval: 15s
+    unit_of_measurement: L
+# 0.25 because of update_interval 15s 
+    filters:
+      - lambda: |-
+          static float total_mineralized_value = 0.0;
+          total_mineralized_value += x * 0.25 / 2145;
+          return total_mineralized_value;         
+
+  - platform: pulse_counter
+    name: ${board_name}_NonMineralized
+    id: id_nonmineralized_pulse
+    pin: GPIO25
+    update_interval: 15s
+    unit_of_measurement: L
+# 0.25 because of update_interval 15s 
+    filters:
+      - lambda: |-
+          static float total_nonmineralized_value = 0.0;
+          total_nonmineralized_value += x * 0.25 / 2145;
+          return total_nonmineralized_value;
+
+  - platform: pulse_counter
+    name: ${board_name}_Raw
+    id: id_raw_pulse
+    pin: GPIO27
+    update_interval: 15s
+    unit_of_measurement: L
+# 0.25 because of update_interval 15s 
+    filters:
+      - lambda: |-
+          static float total_raw_value = 0.0;
+          total_raw_value += x * 0.25 / 2145;
+          return total_raw_value;
+
+  - platform: pulse_counter
+    name: ${board_name}_PostMembrane
+    id: id_postmembrane_pulse
+    pin: GPIO32
+    update_interval: 15s
+    unit_of_measurement: L
+# 0.25 because of update_interval 15s 
+    filters:
+      - lambda: |-
+          static float total_post_membrane_value = 0.0;
+          total_post_membrane_value += x * 0.25 / 2145;
+          return total_post_membrane_value;
+
+
+
 switch:
   - platform: restart
     name: ${board_name}_Restart
 
-  - platform: template
-    name: ${board_name}_OpenValve
-    icon: mdi:valve-open
-    id: valve_open
-    turn_on_action:
-      - servo.write:
-          id: air_valve_servo
-          level: 75%
+  # - platform: template
+  #   name: ${board_name}_OpenValve
+  #   icon: mdi:valve-open
+  #   id: valve_open
+  #   turn_on_action:
+  #     - servo.write:
+  #         id: air_valve_servo
+  #         level: 75%
 
-  - platform: template
-    name: ${board_name}_CloseValve
-    icon: mdi:valve-closed
-    turn_on_action:
-      - servo.write:
-          id: air_valve_servo
-          level: 0%
+  # - platform: template
+  #   name: ${board_name}_CloseValve
+  #   icon: mdi:valve-closed
+  #   turn_on_action:
+  #     - servo.write:
+  #         id: air_valve_servo
+  #         level: 0%
 
-  - platform: template
-    name: ${board_name}_AirValve_Control
-    icon: mdi:valve
-    lambda: |-
-      if (id(magnet).state) {
-        return true;
-      } else {
-        return false;
-      }
-    turn_on_action:
-      - servo.write:
-          id: air_valve_servo
-          level: 75%
-    turn_off_action:
-      - servo.write:
-          id: air_valve_servo
-          level: 0%
+  # - platform: template
+  #   name: ${board_name}_AirValve_Control
+  #   icon: mdi:valve
+  #   lambda: |-
+  #     if (id(magnet).state) {
+  #       return true;
+  #     } else {
+  #       return false;
+  #     }
+  #   turn_on_action:
+  #     - servo.write:
+  #         id: air_valve_servo
+  #         level: 75%
+  #   turn_off_action:
+  #     - servo.write:
+  #         id: air_valve_servo
+  #         level: 0%
 
 
   - platform: template
@@ -226,41 +266,6 @@ switch:
       - remote_transmitter.transmit_nec:
           address: 0x807F
           command: 0x02FD
-
-  # - platform: gpio
-  #   name: ${board_name}_Fan1
-  #   id: relay1
-  #   icon: mdi:fan
-  #   interlock: [relay1, relay2, relay3]
-  #   pin:
-  #     number: GPIO16
-  #     inverted: true
-
-  # - platform: gpio
-  #   name: ${board_name}_Fan2
-  #   id: relay2
-  #   icon: mdi:fan
-  #   interlock: [relay1, relay2, relay3]
-  #   pin: 
-  #     number: GPIO17
-  #     inverted: true
-
-  # - platform: gpio
-  #   name: ${board_name}_Fan3
-  #   id: relay3
-  #   icon: mdi:fan
-  #   interlock: [relay1, relay2, relay3]
-  #   pin:
-  #     number: GPIO18
-  #     inverted: true
-      
-  # - platform: gpio
-  #   name: ${board_name}_Light
-  #   icon: mdi:track-light
-  #   id: relay4
-  #   pin:
-  #     number: GPIO19
-  #     inverted: true
 
 time:
   - platform: homeassistant
