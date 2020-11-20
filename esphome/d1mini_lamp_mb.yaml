@@ -1,53 +1,70 @@
 substitutions:
-  board_name: d1mini_co2_mb
+  board_name: d1mini_lamp_mb
   
 esphome:
   name: ${board_name}
   platform: ESP8266
   board: d1_mini
-  comment: D1 Mini CO2 TPH Node MB
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_pass
   domain: .localdomain
-  reboot_timeout: 10min
+  reboot_timeout: 15min
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.104
+    static_ip: 192.168.1.51
     gateway: 192.168.1.1
     subnet: 255.255.255.0
+    dns1: 192.168.1.14
+    dns2: 8.8.8.8
 
 logger:
 
 api:
-  reboot_timeout: 5min
+  reboot_timeout: 10min
 
 ota:
 
 web_server:
   port: 80
-  
+
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B
+    pin: GPIO14
+    num_leds: 256
+    rgb_order: GRB
+    name: ${board_name}_LED
+    color_correct: [25%, 25%, 25%]
+    id: lamp
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+    
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
-    
-uart:
-  rx_pin: GPIO05
-  tx_pin: GPIO04
-  baud_rate: 9600
 
-dallas:
-  - pin: GPIO13
-    update_interval: 15s
-    id: dallas_node
-
-i2c:
-  sda: GPIO12
-  scl: GPIO14
-  scan: True
+  - platform: gpio
+    pin:
+      number: GPIO13
+      inverted: false
+    name: ${board_name}_Button
+    id: button
+    on_press:
+      then:
+        - light.toggle: lamp
 
 text_sensor:
   - platform: template
@@ -81,46 +98,30 @@ sensor:
     id: uptime_sensor
     update_interval: 15s
 
-  - platform: dallas
-    address: 0xA83C01D607703828
-    name: ${board_name}_Heating_Pipe
-
-  - platform: mhz19
-    co2:
-      name: "Z19 CO2 MB"
-    temperature:
-      name: "Z19 Temp MB"
-    update_interval: 60s
-  
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
-  - platform: bme280
-    temperature:
-      name: ${board_name}_Temperature
-      oversampling: 16x
-      id: bme280_temperature
-    pressure:
-      name: ${board_name}_Pressure
-      id: bme280_pressure
-    humidity:
-      name: ${board_name}_Humidity
-      id: bme280_humidity
-    address: 0x76
-    update_interval: 60s
-
-  - platform: bh1750
-    name: ${board_name}_Illuminance
-    address: 0x23
-    measurement_time: 69
-    update_interval: 60s
-    accuracy_decimals: 0
+  - platform: sun
+    name: ${board_name}_Sun_Elevation
+    type: elevation
+    id: sun_elevation
+  - platform: sun
+    name: ${board_name}_Sun_Azimuth
+    type: azimuth  
+    id: sun_azimuth
 
 switch:
   - platform: restart
     name: ${board_name}_Restart
 
+sun:
+  latitude: !secret my_lat
+  longitude: !secret my_long
+
 time:
   - platform: homeassistant
     id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

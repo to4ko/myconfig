@@ -5,13 +5,7 @@ esphome:
   name: esp32_kitchen
   platform: ESP32
   board: lolin32
-  # on_boot:
-  #   then:
-  #     if:
-  #       condition:
-  #         lambda: 'return id(magnet).state == 1;'
-  #       then:
-  #         - switch.turn_on: valve_open
+  comment: ESP32 CO2\TPH\RO_Filter\Oven_Temperature\Adressable_Led Node K
 
 wifi:
   ssid: !secret wifi_ssid_k
@@ -27,9 +21,10 @@ wifi:
     subnet: 255.255.255.0
 
 logger:
-
+  baud_rate: 0
+  
 api:
-  reboot_timeout: 0s
+  reboot_timeout: 5min
 
 ota:
 
@@ -37,29 +32,18 @@ web_server:
   port: 80
   
 uart:
-  rx_pin: GPIO23
-  tx_pin: GPIO4
+  rx_pin: GPIO03
+  tx_pin: GPIO01
   baud_rate: 9600
+
+spi:
+  miso_pin: GPIO14
+  clk_pin: GPIO15
 
 i2c:
   sda: GPIO21
   scl: GPIO22
   scan: True
-
-# as3935_i2c:
-#   irq_pin: GPIO32
-  #spike_rejection: 2
-  #indoor: false
-  
-# servo:
-#   - id: air_valve_servo
-#     output: pwm_output
-
-# output:
-#   - platform: ledc
-#     id: pwm_output
-#     pin: GPIO27 # Servo Pin
-#     frequency: 50 Hz
 
 remote_transmitter:
   pin: GPIO26
@@ -122,11 +106,15 @@ text_sensor:
     update_interval: 15s
 
 sensor:
-
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
     update_interval: 15s
+
+  - platform: max6675
+    name: ${board_name}_Oven
+    cs_pin: GPIO17
+    update_interval: 20s
     
   - platform: bme280
     temperature:
@@ -145,8 +133,8 @@ sensor:
   - platform: bh1750
     name: ${board_name}_Illuminance
     address: 0x23
-    measurement_time: 69
-    update_interval: 60s
+    measurement_time: 254
+    update_interval: 10s
     accuracy_decimals: 0
 
   - platform: mhz19
@@ -212,47 +200,17 @@ sensor:
           total_post_membrane_value += x * 0.25 / 2145;
           return total_post_membrane_value;
 
+  - platform: sun
+    name: ${board_name}_Sun_Elevation
+    type: elevation
+  - platform: sun
+    name: ${board_name}_Sun_Azimuth
+    type: azimuth
 
 
 switch:
   - platform: restart
     name: ${board_name}_Restart
-
-  # - platform: template
-  #   name: ${board_name}_OpenValve
-  #   icon: mdi:valve-open
-  #   id: valve_open
-  #   turn_on_action:
-  #     - servo.write:
-  #         id: air_valve_servo
-  #         level: 75%
-
-  # - platform: template
-  #   name: ${board_name}_CloseValve
-  #   icon: mdi:valve-closed
-  #   turn_on_action:
-  #     - servo.write:
-  #         id: air_valve_servo
-  #         level: 0%
-
-  # - platform: template
-  #   name: ${board_name}_AirValve_Control
-  #   icon: mdi:valve
-  #   lambda: |-
-  #     if (id(magnet).state) {
-  #       return true;
-  #     } else {
-  #       return false;
-  #     }
-  #   turn_on_action:
-  #     - servo.write:
-  #         id: air_valve_servo
-  #         level: 75%
-  #   turn_off_action:
-  #     - servo.write:
-  #         id: air_valve_servo
-  #         level: 0%
-
 
   - platform: template
     name: ${board_name}_TV_PWR
@@ -260,13 +218,20 @@ switch:
       - remote_transmitter.transmit_samsung:
           data: 0xE0E040BF
 
-  - platform: template
-    name: ${board_name}_TVBox_PWR
-    turn_on_action:
-      - remote_transmitter.transmit_nec:
-          address: 0x807F
-          command: 0x02FD
+  # - platform: template
+  #   name: ${board_name}_TVBox_PWR
+  #   turn_on_action:
+  #     - remote_transmitter.transmit_nec:
+  #         address: 0x807F
+  #         command: 0x02FD
+
+sun:
+  latitude: !secret my_lat
+  longitude: !secret my_long
 
 time:
   - platform: homeassistant
     id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

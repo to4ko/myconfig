@@ -55,7 +55,7 @@ views:
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 4
+                columns: 5
                 entities:
                   - entity: sensor.out_temperature_min_value
                     name: Tmin
@@ -63,6 +63,8 @@ views:
                     name: Tmax
                   - entity: sensor.0x158d0001e8995a_temperature
                     name: Temp
+                  - entity: sensor.esp32_node_mb_outside
+                    name: Dallas
                   - entity: sensor.0x158d0001e8995a_humidity
                     name: Hum
               - type: glance
@@ -402,7 +404,7 @@ views:
             mode: vertical
             cards:
               - type: glance
-                columns: 8
+                columns: 7
                 state_color: true
                 entities:
                   - entity: sensor.0x158d0002464ec0_temperature
@@ -417,12 +419,10 @@ views:
                     name: V
                   - entity: sensor.0x158d00020d7c3a_temperature
                     name: B
-                  - entity: sensor.esp32_bathroom_node_temperature
-                    name: B2
                   - entity: sensor.0x158d0001e58754_temperature
                     name: T
               - type: glance
-                columns: 8
+                columns: 7
                 show_name: false
                 show_state: true
                 state_color: true
@@ -439,12 +439,10 @@ views:
                     name: V
                   - entity: sensor.0x158d00020d7c3a_humidity
                     name: B
-                  - entity: sensor.esp32_bathroom_node_humidity
-                    name: B2
                   - entity: sensor.0x158d0001e58754_humidity
                     name: T
           - type: glance
-            columns: 7
+            columns: 6
             state_color: true
             entities:
               - entity: sensor.humidity_average
@@ -457,10 +455,18 @@ views:
                 name: S
               - entity: sensor.0x4cf8cdf3c7754a8_illuminance
                 name: MB
-              - entity: sensor.esp32_kitchen_illuminance
-                name: K
               - entity: input_select.washer_state
                 name: Washer
+          - type: glance
+            columns: 3
+            state_color: true
+            entities:
+              - entity: sensor.esp32_kitchen_illuminance
+                name: K
+              - entity: sensor.esp32_node_v_illuminance
+                name: V
+              - entity: sensor.esp32_node_mb_illuminance
+                name: MB
 
               
       # ##################################
@@ -1418,7 +1424,7 @@ views:
                 name: Hot Pipe
               - entity: sensor.esp32_bathroom_node_cold_pipe
                 name: Cold Pipe
-              - entity: sensor.d1mini_co2_mb_heating_pipe
+              - entity: sensor.esp32_node_mb_heating_pipe
                 name: Heat MB
               - entity: sensor.esp32_node_v_heating_pipe
                 name: Heat V
@@ -1449,6 +1455,16 @@ views:
               - type: divider
               - input_number.tariff_hot_water
               - input_number.tariff_cold_water
+          - type: glance
+            state_color: true
+            show_header_toggle: false
+            entities:
+              - entity: script.utility_counters_manual_reset
+                name: All
+              - entity: script.utility_counters_manual_reset_electricity
+                name: Electricity
+              - entity: script.utility_counters_manual_reset_water
+                name: Water
       - type:  vertical-stack
         cards:
           - type: custom:mini-graph-card
@@ -2140,6 +2156,7 @@ views:
           - device_tracker.iphone_8_dima
           #- device_tracker.iphone8_ping
           - device_tracker.meizu_m2_mini
+          - device_tracker.mimax_2
           
           - type: divider
           - device_tracker.life360_sandra_tsymbal
@@ -2149,7 +2166,6 @@ views:
           
           - type: divider
           - device_tracker.life360_vova_tsymbal
-          - device_tracker.mi_max_2
           #- device_tracker.mimax2_ping
           
           - type: divider
@@ -4082,65 +4098,80 @@ views:
         state_color: true
         entities:
           - binary_sensor.esp32_bathroom_node_status
-          - binary_sensor.esp01_weight_pad_status
           - binary_sensor.sonoff_pow_r2_1_status
-          - binary_sensor.d1mini_bed_leds_status
           - binary_sensor.btf_pixel_strip_status
-          - binary_sensor.ss5_hood_status
-          - binary_sensor.shp2_socket_server_status
-          - binary_sensor.esp32_ble_tracker_status
-          - binary_sensor.esp32_kitchen_status
-          #- binary_sensor.esp32_water_filter_status
-          - binary_sensor.d1mini_co2_mb_status
-          - binary_sensor.d1mini_co2_s_status
-          - binary_sensor.esp32_node_v_status
-          #- binary_sensor.esp01_hdd_box_status
-          - binary_sensor.esp32_domofon_status
-          #- binary_sensor.esp12e_domofon_status
-          - binary_sensor.sonoff_basic_3_status
-          - binary_sensor.sonoff_basic_4_status
-          - binary_sensor.digma_ir_mb_status
-          - binary_sensor.digma_ir_s_status
-          - binary_sensor.digma_ir_v_status
-          - binary_sensor.magichome_mono_strip_status
-          #- binary_sensor.s26_socket_5_status
           - binary_sensor.shp2_socket_1_status
-          - binary_sensor.shp2_socket_2_status
           - binary_sensor.shp6_socket_1_status
           - binary_sensor.shp6_socket_2_status
 
+          - type: divider
+          - binary_sensor.esp01_weight_pad_status
+          - binary_sensor.esp32_kitchen_status
+          - binary_sensor.magichome_mono_strip_status
+          - binary_sensor.ss5_hood_status
+
+          - type: divider        
+          - binary_sensor.d1mini_bed_leds_status
+          - binary_sensor.esp32_node_v_status
+          - binary_sensor.sonoff_basic_4_status
+          - binary_sensor.digma_ir_v_status
+
+          - type: divider          
+          - binary_sensor.shp2_socket_server_status
+          - binary_sensor.esp32_ble_tracker_status
+          - binary_sensor.esp32_domofon_status
+
+          - type: divider          
+          - binary_sensor.esp32_node_mb_status
+          - binary_sensor.digma_ir_mb_status
+          - binary_sensor.sonoff_basic_3_status
+          - binary_sensor.shp2_socket_2_status
+
+
+          - type: divider          
+          - binary_sensor.d1mini_co2_s_status
+          - binary_sensor.digma_ir_s_status
+
       - type: entities
-        title: WiFi
+        title: RSSI
         show_header_toggle: false
         state_color: true
         entities:
           - sensor.esp32_bathroom_node_wifi_rssi
-          - sensor.esp01_weight_pad_wifi_rssi
           - sensor.sonoff_pow_r2_1_wifi_rssi
-          - sensor.d1mini_bed_leds_wifi_rssi
           - sensor.btf_pixel_strip_wifi_rssi
-          - sensor.ss5_hood_wifi_rssi
-          - sensor.shp2_socket_server_wifi_rssi
-          - sensor.esp32_ble_tracker_wifi_rssi
-          - sensor.esp32_kitchen_wifi_rssi
-          #- sensor.esp32_water_filter_wifi_rssi
-          - sensor.d1mini_co2_mb_wifi_rssi
-          - sensor.d1mini_co2_s_wifi_rssi
-          - sensor.esp32_node_v_wifi_rssi
-          #- sensor.esp01_hdd_box_wifi_rssi
-          - sensor.esp32_domofon_wifi_rssi
-          #- sensor.esp12e_domofon_wifi_rssi
-          - sensor.sonoff_basic_3_wifi_rssi
-          - sensor.sonoff_basic_4_wifi_rssi
-          - sensor.digma_ir_mb_wifi_rssi
-          - sensor.digma_ir_s_wifi_rssi
-          - sensor.digma_ir_v_wifi_rssi
-          - sensor.magichome_mono_strip_wifi_rssi
-          #- sensor.s26_socket_5_wifi_rssi
           - sensor.shp2_socket_1_wifi_rssi
-          - sensor.shp2_socket_2_wifi_rssi
           - sensor.shp6_socket_1_wifi_rssi
           - sensor.shp6_socket_2_wifi_rssi
+
+          - type: divider
+          - sensor.esp01_weight_pad_wifi_rssi
+          - sensor.esp32_kitchen_wifi_rssi
+          - sensor.magichome_mono_strip_wifi_rssi
+          - sensor.ss5_hood_wifi_rssi
+
+          - type: divider          
+          - sensor.d1mini_bed_leds_wifi_rssi
+          - sensor.esp32_node_v_wifi_rssi
+          - sensor.sonoff_basic_4_wifi_rssi
+          - sensor.digma_ir_v_wifi_rssi
+          
+          - type: divider          
+          - sensor.shp2_socket_server_wifi_rssi
+          - sensor.esp32_ble_tracker_wifi_rssi
+          - sensor.esp32_domofon_wifi_rssi
+
+          - type: divider          
+          - sensor.esp32_node_mb_wifi_rssi
+          - sensor.digma_ir_mb_wifi_rssi
+          - sensor.sonoff_basic_3_wifi_rssi
+          - sensor.shp2_socket_2_wifi_rssi
+
+          - type: divider          
+
+
+          - sensor.d1mini_co2_s_wifi_rssi
+          - sensor.digma_ir_s_wifi_rssi
 
 
       - type: entities
@@ -4149,32 +4180,39 @@ views:
         state_color: true
         entities:
           - sensor.esp32_bathroom_node_uptime
-          - sensor.esp01_weight_pad_uptime
           - sensor.sonoff_pow_r2_1_uptime
-          - sensor.d1mini_bed_leds_uptime
           - sensor.btf_pixel_strip_uptime
-          - sensor.ss5_hood_uptime
-          - sensor.shp2_socket_server_uptime
-          - sensor.esp32_ble_tracker_uptime
-          - sensor.esp32_kitchen_uptime
-          #- sensor.esp32_water_filter_uptime
-          - sensor.d1mini_co2_mb_uptime
-          - sensor.d1mini_co2_s_uptime
-          - sensor.esp32_node_v_uptime
-          #- sensor.esp01_hdd_box_uptime
-          - sensor.esp32_domofon_uptime
-          #- sensor.esp12e_domofon_uptime
-          - sensor.sonoff_basic_3_uptime
-          - sensor.sonoff_basic_4_uptime
-          - sensor.digma_ir_mb_uptime
-          - sensor.digma_ir_s_uptime
-          - sensor.digma_ir_v_uptime
-          - sensor.magichome_mono_strip_uptime
-          #- sensor.s26_socket_5_uptime
           - sensor.shp2_socket_1_uptime
-          - sensor.shp2_socket_2_uptime
           - sensor.shp6_socket_1_uptime
           - sensor.shp6_socket_2_uptime
+
+          - type: divider
+          - sensor.esp01_weight_pad_uptime
+          - sensor.esp32_kitchen_uptime
+          - sensor.magichome_mono_strip_uptime
+          - sensor.ss5_hood_uptime
+
+          - type: divider          
+          - sensor.d1mini_bed_leds_uptime
+          - sensor.esp32_node_v_uptime
+          - sensor.sonoff_basic_4_uptime
+          - sensor.digma_ir_v_uptime
+
+          - type: divider          
+          - sensor.shp2_socket_server_uptime
+          - sensor.esp32_ble_tracker_uptime
+          - sensor.esp32_domofon_uptime
+
+          - type: divider          
+          - sensor.esp32_node_mb_uptime
+          - sensor.digma_ir_mb_uptime
+          - sensor.sonoff_basic_3_uptime
+          - sensor.shp2_socket_2_uptime
+
+          - type: divider          
+          - sensor.d1mini_co2_s_uptime
+          - sensor.digma_ir_s_uptime
+
 
 ################################################################
 # Utility SENSORS
@@ -4444,7 +4482,8 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x158d0001e8995a_temperature
-
+          - sensor.esp32_node_mb_outside
+          
   - title: Humidity
     icon: mdi:water-percent
     cards:
@@ -4833,8 +4872,21 @@ views:
           - sensor.esp01_weight_pad_uptime_s
           - sensor.esp01_weight_pad_vcc
           - sensor.esp01_weight_pad_wifi_rssi
-          - sensor.esp01_weight_pad_load          
-          
+          - sensor.esp01_weight_pad_load
+      - type: custom:auto-entities
+        show_empty: false
+        card:
+          type: entities
+          title: Lights on
+        filter:
+          include:
+            - domain: light
+              state: "on"
+              options:
+                tap_action:
+                  action: toggle
+          exclude:
+            - entity_id: "*esp32_domofon*"
       # - type: entities
       #   show_header_toggle: false
       #   state_color: true
@@ -4857,21 +4909,6 @@ views:
       #     - sensor.d1mini_matrix_uptime
       #     - sensor.d1mini_matrix_uptime_s
       #     - sensor.d1mini_matrix_wifi_rssi
-      # - type: entities
-      #   entities:
-      #     - sensor.mi_kettle
-      #     - input_number.kettle_test
-      #     - type: divider
-      #     - device_tracker.esp01_kettle_led
-      #     - switch.esp01_kettle_led_restart
-      #     - binary_sensor.esp01_kettle_led_status
-      #     - sensor.esp01_kettle_led_uptime
-      #     - sensor.esp01_kettle_led_uptime_s
-      #     - sensor.esp01_kettle_led_vcc
-      #     - sensor.esp01_kettle_led_wifi_rssi
-      #     - sensor.esp01_kettle_led_ha_kettle_mode
-      #     - sensor.esp01_kettle_led_ha_kettle_temperature
-      #     - light.esp01_kettle_led_light
 
       - type: history-graph
         hours_to_show: 48
@@ -4882,23 +4919,6 @@ views:
             name: Tmax
           - entity: sensor.out_temperature_min_value
             name: Tmin
-
-
-      - type: history-graph
-        hours_to_show: 48
-        entities:
-          - entity: sensor.0x158d00020d7c3a_humidity
-            name: Xiaomi
-          - entity: sensor.esp32_bathroom_node_humidity
-            name: DHT22
-
-      - type: history-graph
-        hours_to_show: 48
-        entities:
-          - entity: sensor.0x158d00020d7c3a_temperature
-            name: Xiaomi
-          - entity: sensor.esp32_bathroom_node_temperature
-            name: DHT22
 
       - type: custom:auto-entities
         card:
@@ -4935,14 +4955,24 @@ views:
           - sensor.esp32_bathroom_node_uptime
           - sensor.esp32_bathroom_node_uptime_s
           - sensor.esp32_bathroom_node_wifi_rssi
-          
-          
+
       - type: entities
+        show_header_toggle: false
+        state_color: true      
         entities:
-          - sensor.esp32_kitchen_mineralized
-          - sensor.esp32_kitchen_nonmineralized
-          - sensor.esp32_kitchen_raw
+          - device_tracker.esp32_node_mb
+          - sensor.z19_co2_mb
+          - sensor.z19_temp_mb
           - type: divider
-          - sensor.esp32_water_filter_mineralized
-          - sensor.esp32_water_filter_nonmineralized
-          - sensor.esp32_water_filter_raw
+          - sensor.esp32_node_mb_heating_pipe
+          - sensor.esp32_node_mb_outside          
+          - type: divider
+          - sensor.esp32_node_mb_temperature          
+          - sensor.esp32_node_mb_humidity
+          - sensor.esp32_node_mb_illuminance
+          - sensor.esp32_node_mb_pressure
+          - switch.esp32_node_mb_restart
+          - binary_sensor.esp32_node_mb_status
+          - sensor.esp32_node_mb_uptime
+          - sensor.esp32_node_mb_uptime_s
+          - sensor.esp32_node_mb_wifi_rssi

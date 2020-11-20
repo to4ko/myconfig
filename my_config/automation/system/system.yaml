@@ -640,23 +640,23 @@
             {{'\U0001f514'}} Звуки включены
           {%endif%}
           
-# ##################################
-# System - HP 178 Toner Level
-# ##################################
-- alias: system_printer_toner_level
-  initial_state: 'true'
-  trigger:
-    - platform: numeric_state
-      entity_id:
-        - sensor.hp_178_black
-        - sensor.hp_178_cyan
-        - sensor.hp_178_magenta
-        - sensor.hp_178_yellow
-      below: 30
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178_black')|int}}%, C {{states('sensor.hp_178_cyan')|int}}%, M {{states('sensor.hp_178_magenta')|int}}%, Y {{states('sensor.hp_178_yellow')|int}}%"
+# # ##################################
+# # System - HP 178 Toner Level
+# # ##################################
+# - alias: system_printer_toner_level
+#   initial_state: 'true'
+#   trigger:
+#     - platform: numeric_state
+#       entity_id:
+#         - sensor.hp_178_black
+#         - sensor.hp_178_cyan
+#         - sensor.hp_178_magenta
+#         - sensor.hp_178_yellow
+#       below: 30
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178_black')|int}}%, C {{states('sensor.hp_178_cyan')|int}}%, M {{states('sensor.hp_178_magenta')|int}}%, Y {{states('sensor.hp_178_yellow')|int}}%"
 
 # ##################################
 # System - GW3 State
@@ -738,6 +738,7 @@
 # System - HACS Update Pending
 # ##################################
 - alias: system_hacs_update_pending
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.hacs
@@ -756,9 +757,10 @@
           {% endfor %}
 
 # ##################################
-# System - HACS Update Pending
+# System - HACS New Repo
 # ##################################
 - alias: system_hacs_new_repo
+  initial_state: 'false'
   trigger:
     - platform: event
       event_type: hacs/repository
@@ -781,6 +783,7 @@
 # System - Hot water pipe warning
 # ##################################
 - alias: system_hot_water_pipe
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id: sensor.esp32_bathroom_node_hot_pipe
@@ -789,18 +792,70 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f321 Внимание! Температура трубы горячей воды ниже 40°C"
-        
+
+# ##################################
+# System - Cold water pipe warning
+# ##################################
+- alias: system_cold_water_pipe
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.esp32_bathroom_node_cold_pipe
+      above: 25
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_bathroom_node_cold_pipe')|int}}°C"
+
 # ##################################
 # System - Heating pipes warning
 # ##################################
 - alias: system_heating_pipes_warning
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id: 
         - sensor.esp32_node_v_heating_pipe
-        - sensor.d1mini_co2_mb_heating_pipe
+        - sensor.esp32_node_mb_heating_pipe
       below: 35
   action:
     - service: notify.telegram
       data_template:
         message: "\U0001f321 Внимание! Температура трубы {{trigger.to_state.attributes.friendly_name}} ниже 35°C"
+        
+# ##################################
+# System - No Motion
+# ##################################
+# - alias: system_no_motion
+#   initial_state: 'true'
+#   trigger:
+#     - platform: time_pattern
+#       minutes: "/5"
+#   condition:
+#     - condition: template
+#       value_template: "{{as_timestamp(now())-as_timestamp(states.group.motion.last_changed) > 300}}"
+#     - condition: state
+#       entity_id: group.motion
+#       state: 'off'
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0000231b Нет движения более 5 минут"
+
+
+# ##################################
+# System - RO Filter Membrane Flow
+# ##################################
+- alias: system_ro_membrane_flow
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.raw_water_flow_max 
+      below: 0.2
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f30a Скорость потока через мембрану фильтра упала ниже {{states('sensor.raw_water_flow_max')}}л/мин!"
+        
+        
+        

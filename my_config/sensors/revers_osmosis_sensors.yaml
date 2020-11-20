@@ -5,20 +5,28 @@
     sampling_size: 24
 
   - platform: statistics
-    name: raw_water_flow_stat_5d
-    entity_id: sensor.esp32_kitchen_raw
-    sampling_size: 1000
-    max_age:
-      hours: 120
-
-  - platform: statistics
     name: raw_water_flow_stat_30s
     entity_id: sensor.esp32_kitchen_raw
     max_age: '00:00:30' 
     sampling_size: 12
 
+  - platform: statistics
+    name: raw_water_flow_stat_5d
+    entity_id: sensor.raw_water_flow
+    sampling_size: 1000
+    max_age:
+      hours: 120
+
   - platform: template
     sensors:
+      raw_water_flow: #avg per min
+        unit_of_measurement: L/min
+        value_template: "{{ (2 * state_attr('sensor.raw_water_flow_stat_30s', 'change') | float(0) ) | round (2) }}"
+
+      raw_water_flow_max:  #max per 5 days
+        unit_of_measurement: L/min
+        value_template: "{{ state_attr('sensor.raw_water_flow_stat_5d', 'max_value') | float | round (2) }}"
+
       esp01_weight_pad_load_rate:
         friendly_name: esp01 Weight Pad Rate
         icon_template: mdi:speedometer
@@ -42,14 +50,6 @@
             {{((states('sensor.ro_drain')|float/states('sensor.water_raw_single')|float)*100)|int}}
           {% endif %}
 
-      raw_water_flow: #avg min
-        unit_of_measurement: L/min
-        value_template: "{{ (2 * state_attr('sensor.raw_water_flow_stat_30s', 'change') | float(0) ) | round (2) }}"
-
-      raw_water_flow_max:  #avg 5 days
-        unit_of_measurement: L/min
-        value_template: "{{ state_attr('sensor.raw_water_flow_stat_5d', 'max_value') | float | round (2) }}"
-          
       water_raw_yesterday:
         friendly_name: Raw Water Yesterday
         icon_template: mdi:gauge
