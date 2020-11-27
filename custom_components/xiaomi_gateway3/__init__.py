@@ -66,7 +66,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry):
 
     # init setup for each supported domains
     for domain in (
-            'binary_sensor', 'cover', 'light', 'remote', 'sensor', 'switch'
+            'binary_sensor', 'climate', 'cover', 'light', 'remote', 'sensor',
+            'switch'
     ):
         hass.async_create_task(hass.config_entries.async_forward_entry_setup(
             config_entry, domain))
@@ -224,6 +225,10 @@ class Gateway3Device(Entity):
     @property
     def available(self) -> bool:
         return self.device.get('online', True) or self._ignore_offline
+
+    @property
+    def device_state_attributes(self):
+        return self._attrs
 
     @property
     def device_info(self):

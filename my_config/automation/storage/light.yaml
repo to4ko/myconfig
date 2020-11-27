@@ -12,13 +12,13 @@
       entity_id: binary_sensor.0x158d0001aea602_motion
       from: 'off'
       to: 'on'
+  condition:
+    - condition: state
+      entity_id: timer.main_light_delay_st
+      state: 'idle'
   action:
     - service: switch.turn_on
       entity_id: switch.0x158d0002a36433_channel_2
-    # - service: switch.turn_on
-    #   entity_id: switch.0x158d0002a36433_channel_2
-    # - service: switch.turn_on
-    #   entity_id: switch.0x158d0002a36433_channel_2
 
 # ##################################
 # Storage - Auto Light Off
@@ -60,8 +60,8 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0001aea602_motion
-      from: 'off'
       to: 'on'
+      from: 'off'
   condition:
     condition: or
     conditions:
@@ -84,17 +84,17 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: switch.0x158d0002a36433_channel_1, switch.0x158d0002a36433_channel_2
+      entity_id: switch.0x158d0002a36433_channel_2
       to: 'off'
       from: 'on'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_st
-    - service: automation.turn_off
-      entity_id: automation.storage_auto_light_on
-    - delay: '00:00:15'
-    - service: automation.turn_on
-      entity_id: automation.storage_auto_light_on
+    - service: timer.cancel
+      entity_id: timer.main_light_delay_st
+    - service: timer.start
+      entity_id: timer.main_light_delay_st
+
 
 # ##################################
 # Storage - Night Off
@@ -109,8 +109,7 @@
     - service: homeassistant.turn_off
       entity_id: 
        - light.magichome_mono_strip_light
-       - light.btf_pixel_strip_top #switch.0x00158d0001f5501f_switch
-       #- switch.0x00158d000216528c_switch
+       - light.btf_pixel_strip_top
        - switch.0x158d0002a36433_channel_1
        - switch.0x158d0002a36433_channel_2
        - light.led_strip_hb

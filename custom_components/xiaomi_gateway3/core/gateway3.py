@@ -17,12 +17,31 @@ _LOGGER = logging.getLogger(__name__)
 
 RE_NWK_KEY = re.compile(r'lumi send-nwk-key (0x.+?) {(.+?)}')
 RE_MAC = re.compile('^0x0*')
-RE_JSON = re.compile(b'{.+}')
 # MAC reverse
 RE_REVERSE = re.compile(r'(..)(..)(..)(..)(..)(..)')
 
 
-class Gateway3(Thread):
+class GatewayV:
+    """Handling different firmware versions."""
+    ver = None
+
+    @property
+    def ver_mesh_group(self) -> str:
+        return 'mesh_group_v1' if self.ver >= '1.4.6_0043' else 'mesh_group'
+
+    @property
+    def ver_zigbee_db(self) -> str:
+        # https://github.com/AlexxIT/XiaomiGateway3/issues/14
+        # fw 1.4.6_0012 and below have one zigbee_gw.db file
+        # fw 1.4.6_0030 have many json files in this folder
+        return '*.json' if self.ver >= '1.4.6_0030' else 'zigbee_gw.db'
+
+    @property
+    def ver_miio(self) -> bool:
+        return self.ver >= '1.4.7_0063'
+
+
+class Gateway3(Thread, GatewayV):
     pair_model = None
     pair_payload = None
 
@@ -119,6 +138,10 @@ class Gateway3(Thread):
         self.debug("Prepare Gateway")
         try:
             shell = TelnetShell(self.host)
+
+            self.ver = shell.get_version()
+            self.debug(f"Version: {self.ver}")
+
             ps = shell.get_running_ps()
 
             if "mosquitto -d" not in ps:
@@ -130,9 +153,8 @@ class Gateway3(Thread):
                 else "ble_event|properties_changed"
 
             if f"awk /{pattern} {{" not in ps:
-                new_version = 'FILE_STORE' in ps
-                self.debug(f"Redirect miio to MQTT, new: {new_version}")
-                shell.redirect_miio2mqtt(pattern, new_version)
+                self.debug(f"Redirect miio to MQTT")
+                shell.redirect_miio2mqtt(pattern, self.ver_miio)
 
             if self._disable_buzzer and "basic_gw -b" in ps:
                 _LOGGER.debug("Disable buzzer")
@@ -207,10 +229,8 @@ class Gateway3(Thread):
 
         # 2. Read zigbee devices
         if not self.zha:
-            # https://github.com/AlexxIT/XiaomiGateway3/issues/14
-            # fw 1.4.6_0012 and below have one zigbee_gw.db file
-            # fw 1.4.6_0030 have many json files in this folder
-            raw = shell.read_file('/data/zigbee_gw/*', as_base64=True)
+            raw = shell.read_file('/data/zigbee_gw/' + self.ver_zigbee_db,
+                                  as_base64=True)
             if raw.startswith(b'unqlite'):
                 db = Unqlite(raw)
                 data = db.read_all()
@@ -270,7 +290,7 @@ class Gateway3(Thread):
             try:
                 mesh_groups = {}
 
-                rows = db.read_table('mesh_group')
+                rows = db.read_table(self.ver_mesh_group)
                 for row in rows:
                     # don't know if 8 bytes enougth
                     mac = int(row[0]).to_bytes(8, 'big').hex()
@@ -306,6 +326,11 @@ class Gateway3(Thread):
 
             except:
                 _LOGGER.exception("Can't read mesh devices")
+
+        # for testing purposes
+        for k, v in self.default_devices.items():
+            if k[0] == '_':
+                devices.append(v)
 
         return devices
 
@@ -349,11 +374,18 @@ class Gateway3(Thread):
             if 'miio' in self._debug:
                 _LOGGER.debug(f"[MI] {msg.payload}")
 
-            if self.ble:
-                if b'_async.ble_event' in msg.payload:
-                    self.process_ble_event(msg.payload)
-                elif b'properties_changed' in msg.payload:
-                    self.process_mesh_data(msg.payload)
+            if self.ble and (
+                    b'_async.ble_event' in msg.payload or
+                    b'properties_changed' in msg.payload
+            ):
+                try:
+                    for raw in utils.extract_jsons(msg.payload):
+                        if b'_async.ble_event' in raw:
+                            self.process_ble_event(raw)
+                        elif b'properties_changed' in raw:
+                            self.process_mesh_data(raw)
+                except:
+                    _LOGGER.warning(f"Can't read BT: {msg.payload}")
 
         elif msg.topic.endswith('/heartbeat'):
             payload = json.loads(msg.payload)
@@ -537,18 +569,10 @@ class Gateway3(Thread):
         self.debug(f"{did} <= LQI {payload['linkQuality']}")
 
     def process_ble_event(self, raw: Union[bytes, str]):
-        try:
-            if isinstance(raw, bytes):
-                # fix two json bug
-                if b'}{' in raw:
-                    raw = raw[:raw.index(b'}{') + 1]
-                m = RE_JSON.search(raw)
-                data = json.loads(m[0])['params']
-            else:
-                data = json.loads(raw)
-        except:
-            self.debug(f"Wrong BLE input: {raw}")
-            return
+        if isinstance(raw, bytes):
+            data = json.loads(raw)['params']
+        else:
+            data = json.loads(raw)
 
         self.debug(f"Process BLE {data}")
 
@@ -644,18 +668,10 @@ class Gateway3(Thread):
                 handler(payload)
 
     def process_mesh_data(self, raw: Union[bytes, list]):
-        try:
-            if isinstance(raw, bytes):
-                # fix two json bug
-                if b'}{' in raw:
-                    raw = raw[:raw.index(b'}{') + 1]
-                m = RE_JSON.search(raw)
-                data = json.loads(m[0])['params']
-            else:
-                data = raw
-        except:
-            self.debug(f"Wrong Mesh* input: {raw}")
-            return
+        if isinstance(raw, bytes):
+            data = json.loads(raw)['params']
+        else:
+            data = raw
 
         # not always Mesh devices
         self.debug(f"Process Mesh* {data}")

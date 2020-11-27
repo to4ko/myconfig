@@ -2,7 +2,7 @@ import logging
 import re
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
@@ -206,9 +206,9 @@ DEVICES = [{
         ['13.2.85', None, 'button_2', None],
         ['13.3.85', None, 'button_3', None],
         ['13.4.85', None, 'button_4', None],
-        ['13.5.85', None, 'button_both', None],
         ['13.6.85', None, 'button_5', None],
         ['13.7.85', None, 'button_6', None],
+        ['13.5.85', None, 'button_both', None],
         [None, None, 'action', 'sensor'],
         ['8.0.2001', 'battery', 'battery', 'sensor'],
     ]
@@ -310,11 +310,28 @@ DEVICES = [{
         ['8.0.2001', 'battery', 'battery', 'sensor'],
     ]
 }, {
+    'lumi.lock.aq1': ["Aqara", "Door Lock S1", "ZNMS11LM"],
     'lumi.lock.acn02': ["Aqara", "Door Lock S2", "ZNMS12LM"],
     'params': [
         ['13.1.85', None, 'key_id', 'sensor'],
         ['13.20.85', 'lock_state', 'lock', 'binary_sensor'],
         ['8.0.2001', 'battery', 'battery', 'sensor'],
+    ]
+}, {
+    # https://github.com/AlexxIT/XiaomiGateway3/issues/101
+    'lumi.airrtc.tcpecn02': ["Aqara", "Thermostat S2", "KTWKQ03ES"],
+    'params': [
+        ['3.1.85', None, 'power', None],
+        ['3.2.85', None, 'current_temperature', None],
+        ['14.2.85', None, 'climate', 'climate'],
+        ['14.8.85', None, 'mode', None],
+        ['14.9.85', None, 'target_temperature', None],
+        ['14.10.85', None, 'fan_mode', None],
+    ]
+}, {
+    'lumi.airrtc.vrfegl01': ["Xiaomi", "VRF Air Conditioning"],
+    'params': [
+        ['13.1.85', None, 'channels', 'sensor']
     ]
 }]
 
@@ -410,6 +427,29 @@ def migrate_unique_id(hass: HomeAssistantType):
 
         uid = entity.unique_id.replace('0x', '').replace(' ', '_').lower()
         registry.async_update_entity(entity.entity_id, new_unique_id=uid)
+
+
+RE_JSON = re.compile(b'msg:(.+) length:(\d+) bytes$')
+
+
+def extract_jsons(raw) -> List[bytes]:
+    """There can be multiple concatenated json on one line. And sometimes the
+    length does not match the message."""
+    m = RE_JSON.search(raw)
+    length = int(m[2])
+    raw = m[1][:length]
+    return raw.replace(b'}{', b'}\n{').split(b'\n')
+
+
+def get_buttons(model: str):
+    model, _ = model.split(' ', 1)
+    for device in DEVICES:
+        if model in device:
+            return [
+                param[2] for param in device['params']
+                if param[2].startswith('button')
+            ]
+    return None
 
 
 TITLE = "Xiaomi Gateway 3 Debug"

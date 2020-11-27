@@ -12,8 +12,6 @@
       entity_id: binary_sensor.esp32_domofon_incomingcall
       to: 'on'
   action:
-    #- service: automation.turn_off
-    #  entity_id: automation.hall_big_domofon_incoming_call
     - service: notify.telegram_cam
       data:
         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
@@ -31,9 +29,9 @@
             category: "domofon_call"
     - service: script.turn_on
       entity_id: script.domofon_script
-    - delay: '00:00:30'
-    - service: automation.turn_on
-      entity_id: automation.hall_big_domofon_incoming_call
+    #- delay: '00:00:30'
+    # - service: automation.turn_on
+    #   entity_id: automation.hall_big_domofon_incoming_call
     - delay: '00:15:00'
     - service: script.turn_on
       entity_id: script.domofon_check
@@ -92,6 +90,7 @@
 # ##################################
 - alias: hall_big_domofon_off_on_door open_close
   initial_state: 'true'
+  mode: restart
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0001e5d6be_contact
@@ -105,6 +104,7 @@
       entity_id: input_boolean.domofon_mute
       state: 'on'
   action:
+    - delay: '00:10:00'
     - service: script.turn_on
       entity_id: script.domofon_check
 
@@ -128,43 +128,30 @@
 - alias: hall_big_domofon_button_open
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0002f8dd54
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x158d0002f8dd54_action
       to: 'single'
   action:
-#    - service: camera.snapshot
-#      data:
-#        entity_id: camera.g3_flex_entrance
-#        filename: "/config/www/cam_captures/entrance_domofon.jpg"
     - service: switch.turn_on
-      entity_id: switch.esp32_domofon_relay4
-    #- delay: '00:00:01'
-    - service: switch.turn_on
-      entity_id: switch.esp32_domofon_relay1, switch.esp32_domofon_relay2
-    - delay: '00:00:01'
-    - service: switch.turn_on
-      entity_id: switch.esp32_domofon_relay3
-    - delay: '00:00:01'
-    - service: switch.turn_off
-      entity_id: switch.esp32_domofon_relay1, switch.esp32_domofon_relay2, switch.esp32_domofon_relay3
-    - service: switch.turn_off
-      entity_id: switch.esp32_domofon_relay4
+      entity_id: switch.esp32_domofon_open_door
+    # - service: switch.turn_on
+    #   entity_id: switch.esp32_domofon_relay4, switch.esp32_domofon_relay1, switch.esp32_domofon_relay2
+    # - delay: '00:00:01'
+    # - service: switch.turn_on
+    #   entity_id: switch.esp32_domofon_relay3
+    # - delay: '00:00:03'
+    # - service: switch.turn_off
+    #   entity_id: switch.esp32_domofon_relay1, switch.esp32_domofon_relay2, switch.esp32_domofon_relay3, switch.esp32_domofon_relay4
     - service: notify.telegram
       data_template:
         message: "\U0001f518 Домофон открыт вручную!"
         data:
           photo:
-            #- file: /config/www/cam_captures/entrance_domofon.jpg
-            - url: !secret entrance_snap #http://192.168.1.14:8123{{state_attr('camera.g3_flex_entrance','entity_picture')}}
+            - url: !secret entrance_snap
               caption: "\U0001f518 Домофон открыт вручную!"
-    - delay: '00:00:01'
-    - service: switch.turn_off
-      entity_id: switch.esp32_domofon_relay4
+    # - delay: '00:00:01'
+    # - service: switch.turn_off
+    #   entity_id: switch.esp32_domofon_relay4
 
 
 # ##################################
@@ -173,11 +160,6 @@
 - alias: hall_big_domofon_button_auto_open_once
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0002f8dd54
-    #     click_type: double
     - platform: state
       entity_id: sensor.0x158d0002f8dd54_action
       to: 'double'
@@ -191,11 +173,6 @@
 - alias: hall_big_domofon_button_auto_open
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0002f8dd54
-    #     click_type: long_click_press
     - platform: state
       entity_id: sensor.0x158d0002f8dd54_action
       to: 'hold'

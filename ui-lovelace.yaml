@@ -249,7 +249,7 @@ views:
                 name: MB
               - entity: binary_sensor.0x158d000224f89f_motion
                 name: S
-              - entity: binary_sensor.0x158d000236bb94_motion
+              - entity: binary_sensor.motion_v #binary_sensor.0x158d000236bb94_motion
                 name: V
               - entity: binary_sensor.motion_hb
                 name: HB
@@ -447,9 +447,9 @@ views:
             entities:
               - entity: sensor.humidity_average
                 name: avg(H)
-              - entity: sensor.home_absulute_humidity
+              - entity: sensor.home_abs_humidity
                 name: abs(H)
-              - entity: sensor.bathroom_absulute_humidity
+              - entity: sensor.bathroom_abs_humidity
                 name: abs(B)
               - entity: sensor.0x4cf8cdf3c77271d_illuminance
                 name: S
@@ -2728,20 +2728,27 @@ views:
             show_header_toggle: false
             state_color: true
             entities:
-              - entity: timer.main_light_b
               - entity: timer.fan_b
               - entity: timer.fan_bottom_b
               - entity: timer.fan_t
               - entity: timer.general_10m
               - entity: timer.general_5m
+              - entity: timer.main_door_open_hb
+              - entity: timer.main_light_b
+              - entity: timer.main_light_delay_k
+              - entity: timer.main_light_delay_st
               - entity: timer.main_light_hb
               - entity: timer.main_light_k
               - entity: timer.main_light_mb
-              - entity: timer.main_door_open_hb
               - entity: timer.main_light_s
               - entity: timer.main_light_st
               - entity: timer.main_light_t
+              - entity: timer.test_timer
+              - entity: timer.wadrobe_led_strip_hb
               - entity: timer.washer_b
+              - entity: timer.zigbee2mqtt2_permit_join
+              - entity: timer.zigbee2mqtt_permit_join
+              - entity: timer.zigbee_permit_join
             state_filter:
             - "active"
             - "paused"
@@ -2854,7 +2861,7 @@ views:
                 columns: 7
                 state_color: true
                 entities:
-                - entity: sensor.ha_init
+                - entity: sensor.start_time
                   name: HA Init
                 - entity: sensor.mqtt_broker_uptime_text
                   name: MQTT Up
@@ -3197,31 +3204,45 @@ views:
                         tap_action:
                           action: call-service
                           service: script.speedtest_manual
-                  - type: gauge
-                    name: Ping
-                    entity: sensor.speedtest_ping
-                    max: 30
-                    severity:
-                      green: 10
-                      yellow: 15
-                      red: 20
+                  - type: 'custom:mini-graph-card'
+                    entities:
+                      - entity: sensor.speedtest_download
+                        name: Download
+                        show_state: true
+                      - entity: sensor.speedtest_upload
+                        name: Upload
+                        show_state: true
+                    font_size: 70
+                    hour24: true
+                    hours_to_show: 24
+                    name: Speedtest
+                    points_per_hour: 1
+                    unit: Mbit/s                          
+                  # - type: gauge
+                  #   name: Ping
+                  #   entity: sensor.speedtest_ping
+                  #   max: 30
+                  #   severity:
+                  #     green: 10
+                  #     yellow: 15
+                  #     red: 20
 
-                  - type: gauge
-                    name: DL
-                    entity: sensor.speedtest_download
-                    max: 500
-                    severity:
-                      green: 400
-                      yellow: 250
-                      red: 50
-                  - type: gauge
-                    name: UL
-                    entity: sensor.speedtest_upload
-                    max: 500
-                    severity:
-                      green: 400
-                      yellow: 250
-                      red: 50
+                  # - type: gauge
+                  #   name: DL
+                  #   entity: sensor.speedtest_download
+                  #   max: 500
+                  #   severity:
+                  #     green: 400
+                  #     yellow: 250
+                  #     red: 50
+                  # - type: gauge
+                  #   name: UL
+                  #   entity: sensor.speedtest_upload
+                  #   max: 500
+                  #   severity:
+                  #     green: 400
+                  #     yellow: 250
+                  #     red: 50
               # - type: glance
               #   #title: Unifi Status
               #   columns: 7
@@ -3513,7 +3534,7 @@ views:
                   service: automation.trigger
                   service_data:
                     entity_id: automation.system_health_monitoring_update
-              - entity: sensor.ha_init
+              - entity: sensor.start_time
                 name: HA Init
               - entity: sensor.ha_uptime_text
                 name: HA Up
@@ -4479,7 +4500,7 @@ views:
           - sensor.0x158d0001e58714_temperature
           - sensor.esp32_node_v_temperature
       - type: history-graph
-        hours_to_show: 48
+        hours_to_show: 24
         entities:
           - sensor.0x158d0001e8995a_temperature
           - sensor.esp32_node_mb_outside

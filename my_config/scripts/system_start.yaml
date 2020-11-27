@@ -1,16 +1,14 @@
   system_start:
     alias: System start script
     sequence:
-      # - service: automation.trigger
-      #   entity_id: automation.system_health_monitoring_update
       - service_template: >
-          script.toilet_timer_{{ states('switch.0x158d0002a36f7f_channel_1')|lower or states('light.esp32_bathroom_node_light')|lower }}
+          script.toilet_timer_{% if is_state('switch.0x158d0002a36f7f_channel_1','on') or is_state('light.esp32_bathroom_node_light','on') %}on{%else%}off{%endif%}
       - service_template: >
           script.toilet_fan_timer_{{ states('switch.esp32_bathroom_node_relay_4')|lower }}
       - service_template: >
           script.kitchen_timer_{{ states('light.round_led_k')|lower }}
       - service_template: >
-          script.bathroom_timer_{{ states('switch.0x4cf8cdf3c7a9a48_channel_2')|lower or states('light.mirror_light_b')|lower }}
+          script.bathroom_timer_{% if is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') or is_state('light.mirror_light_b','on')%}on{%else%}off{%endif%}
       - service_template: >
           script.bathroom_fan_timer_{{ states('switch.esp32_bathroom_node_relay_3')|lower }}
       - service_template: >
@@ -18,9 +16,9 @@
       - service_template: >
           script.hallbig_timer_{{ states('group.light_hb')|lower }}
       - service_template: >
-          script.storage_timer_{{ states('switch.0x158d0002a36433_channel_1')|lower or states('switch.0x158d0002a36433_channel_2')|lower}} 
+          script.storage_timer_{% if is_state('switch.0x158d0002a36433_channel_1','on') or is_state('switch.0x158d0002a36433_channel_2','on')%}on{%else%}off{%endif%} 
       - service_template: >
-          {% if is_state('binary_sensor.0x158d000232ddd6_contact','on')%}script.toilet_indicator_off{%else%}script.noop{%endif%}
+          {% if is_state('binary_sensor.0x158d000232ddd6_contact','off')%}script.toilet_indicator_off{%else%}script.noop{%endif%}
       - service: light.turn_off
         entity_id: light.led_strip_hb, light.led_strip_entrance_hb, light.btf_pixel_strip_top, light.magichome_mono_strip_light
         data_template:
@@ -30,9 +28,6 @@
           dev_id: sasha
           location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
       - service: script.washing_machine_state
-      # - delay: 00:00:30
-      # - service: automation.trigger
-      #   entity_id: automation.system_health_monitoring_update
 
   toilet_indicator_off:
     alias: Toilet Indicator Off

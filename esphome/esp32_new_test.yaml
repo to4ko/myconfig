@@ -15,7 +15,13 @@ wifi:
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
-
+  manual_ip:
+    static_ip: 192.168.1.242
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+    
 logger:
   baud_rate: 0
   
@@ -27,10 +33,11 @@ ota:
 web_server:
   port: 80
   
-spi:
-  miso_pin: GPIO14
-  clk_pin: GPIO15
-
+dallas:
+  - pin: GPIO26
+    update_interval: 2s
+    id: dallas_node
+    
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
@@ -68,11 +75,11 @@ sensor:
     id: uptime_sensor
     update_interval: 15s
 
-  - platform: max6675
-    name: ${board_name}_Oven
-    cs_pin: GPIO17
-    update_interval: 20s
-    
+  - platform: dallas
+    address: 0x0C0120462D297E28
+    dallas_id: dallas_node
+    name: ${board_name}_test
+
 switch:
   - platform: restart
     name: ${board_name}_Restart

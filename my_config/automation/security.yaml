@@ -26,8 +26,6 @@
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.bed_led_enable
-    - service: automation.turn_off
-      entity_id: automation.kitchen_auto_light_on, automation.hall_big_auto_light_on
 
 # # ##################################
 # # Security - Sensors State change - Motion
@@ -94,6 +92,8 @@
         - binary_sensor.0x158d0001d5995e_motion
         - binary_sensor.motion_g3_flex_entrance
         - binary_sensor.motion_g3_flex_hall
+        - binary_sensor.d1mini_bed_leds_motion_dima
+        - binary_sensor.d1mini_bed_leds_motion_sandra
       from: 'off'
       to: 'on'
   condition:
@@ -105,8 +105,6 @@
       data:
         #title: "Внимание!"
         message: "\U0001f46e Сработал датчик {{trigger.to_state.attributes.friendly_name}}!"
-
-
 
 # ##################################
 # Security - Turn Off
@@ -197,3 +195,29 @@
     - service: notify.telegram
       data_template:
         message: "\U0001F6AA Внимание! Главная дверь - Вибрация!"
+        
+# ##################################
+# Security - Sensors State change over night
+# ##################################
+- alias: security_sensors_state_change_night
+  initial_state: 'true'
+  mode: parallel
+  trigger:
+    - platform: state
+      entity_id:
+        - binary_sensor.0x158d00025371f6_contact
+        - binary_sensor.0x158d000200ad58_contact
+        - binary_sensor.0x158d00022ccffe_contact
+        - binary_sensor.0x158d00025370d1_contact
+        - binary_sensor.0x158d0001e5d6be_contact
+        - binary_sensor.0x158d0002531749_contact
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'off'
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f46e Сработал датчик {{trigger.to_state.attributes.friendly_name}}!"
