@@ -6,6 +6,19 @@ esphome:
   name: ${board_name}
   platform: ESP32
   board: lolin32
+  comment: ESP32 Domofon\Power Meter\Motion Node
+  on_boot:
+    priority: -10
+    then:
+      - switch.turn_off: relay_phone
+      - switch.turn_off: relay3
+      - switch.turn_off: relay4
+      - script.execute: led_off
+
+globals:
+   - id: mute_mode
+     type: bool
+     initial_value: 'false'
 
 wifi:
   ssid: !secret wifi_ssid_hb
@@ -15,11 +28,6 @@ wifi:
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
-  # networks:
-  #   - ssid: !secret wifi_ssid_hb
-  #     password: !secret wifi_pass
-  #   - ssid: !secret wifi_ssid
-  #     password: !secret wifi_pass  
   manual_ip:
     static_ip: ${ip_address}
     gateway: 192.168.1.1
@@ -31,11 +39,185 @@ logger:
 
 api:
   reboot_timeout: 0s
+  services:
+    - service: accept_call
+      then:
+        - logger.log: "Call service 'Accept Call'"
+        - if:
+            condition:
+              binary_sensor.is_on: incoming_call
+            then: 
+              lambda: |-
+                if (id(mute_mode)) { id(call_accept_mute).execute(); 
+                }else { id(call_accept).execute();
+                }
+            else:
+              logger.log: "No incoming call"
+
+    - service: reject_call
+      then:
+        - logger.log: "Call service 'Reject Call'"
+        - if:
+            condition:
+              binary_sensor.is_on: incoming_call
+            then:
+              script.execute: call_reject
+            else:
+              logger.log: "No incoming call"  
 
 ota:
 
 web_server:
   port: 80
+
+script:
+  # Accept incoming call
+  - id: call_accept
+    then:
+      - logger.log: "Accept call"
+      - script.execute: state_no_call
+      - switch.turn_on: relay1
+      - switch.turn_on: relay2
+      - delay: 1s
+      - switch.turn_on: relay3
+      - delay: 2s
+      - switch.turn_off: relay3
+      - switch.turn_off: relay1
+      - switch.turn_off: relay2
+
+  - id: call_accept_mute
+    then:
+      - logger.log: "Accept call_mute"
+      - script.execute: state_no_call
+      - switch.turn_on: relay4
+      - switch.turn_on: relay1
+      - switch.turn_on: relay2
+      - delay: 1s
+      - switch.turn_on: relay3
+      - delay: 2s
+      - switch.turn_off: relay3
+      - switch.turn_off: relay1
+      - switch.turn_off: relay2
+      - switch.turn_off: relay4
+
+  - id: call_reject
+    then:
+      - logger.log: "Reject call"
+      - script.execute: state_no_call
+      - switch.turn_on: relay4
+      - switch.turn_on: relay1
+      - switch.turn_on: relay2
+      - delay: 3s
+      - switch.turn_off: relay1
+      - switch.turn_off: relay2
+      - switch.turn_off: relay4
+
+  # No call state
+  - id: state_no_call
+    then:
+      - logger.log: "Set state 'No call'"
+      - script.execute: led_off
+      - if:
+          condition:
+            switch.is_on: auto_open_once
+          then:
+            script.execute: led_green_soft
+      - if:
+          condition:
+            switch.is_on: auto_open
+          then:
+            script.execute: led_green_on
+      - if:
+          condition:
+            switch.is_on: auto_reject
+          then:
+            script.execute: led_red_on_soft
+      - if:
+          condition:
+            and:
+              - switch.is_off: auto_open_once
+              - switch.is_off: auto_open
+              - switch.is_off: auto_reject
+          then:
+            script.execute: led_off
+
+  # Call state
+  - id: state_call
+    then:
+      - logger.log: "Set state 'Incoming call'"
+      - script.execute: led_off
+      - if:
+          condition:
+            and:
+              - switch.is_off: auto_open
+              - switch.is_off: auto_open_once
+              - switch.is_off: auto_reject
+          then:
+            script.execute: led_red_on
+      - if:
+          condition:
+            switch.is_on: auto_reject
+          then:
+            script.execute: call_reject
+      - if:
+          condition:
+            switch.is_on: auto_open
+          then:
+            script.execute: call_accept
+      - if:
+          condition:
+            switch.is_on: auto_open_once
+          then:
+            - lambda: |-
+                if (id(mute_mode)) { id(call_accept_mute).execute(); 
+                }else { id(call_accept).execute();
+                }          
+            - delay: 1s
+            - switch.turn_off: auto_open_once
+
+  # blink green led
+  - id: led_green_soft
+    then:
+      - light.turn_on:
+          id: light_green_led
+          effect: "Blink"
+
+  # blink red led
+  - id: led_red_on_soft
+    then:
+      light.turn_on:
+        id: light_red_led
+        effect: "Blink"
+
+  # green led on
+  - id: led_green_on
+    then:
+      light.turn_on:
+        id: light_green_led
+        brightness: 50%
+
+  # red led on
+  - id: led_red_on
+    then:
+      light.turn_on:
+        id: light_red_led
+        brightness: 50%
+
+  # Turn off leds
+  - id: led_off
+    then:
+      - light.turn_off: light_blue_led
+      - light.turn_off: light_green_led
+      - light.turn_off: light_red_led
+      - light.turn_on:
+          id: light_blue_led
+          brightness: !lambda |-
+            if (id(mute_mode)) {
+            return 0.5;
+            } else {
+            return 0;
+            }
+
 
 binary_sensor:
   - platform: status
@@ -51,28 +233,19 @@ binary_sensor:
   - platform: gpio
     pin: 
       number: GPIO21
-#      inverted: true
-#      mode: INPUT_PULLUP
     name: ${board_name}_IncomingCall
     device_class: sound
+    id: incoming_call
     filters:
-      - delayed_off: 2500ms
+      - delayed_off: 3000ms
+    # automation start on ESP32      
+    # on_press:
+    #   then:
+    #     script.execute: state_call
+    # on_release:
+    #   then:
+    #     script.execute: state_no_call      
 
-    
-  # - platform: template
-  #   name: ${board_name}_IncomingCall
-  #   device_class: sound
-  #   lambda: |-
-  #     if (id(speakervoltage).state > 1.5) {
-  #       // Voltage >1.5v
-  #       return true;
-  #     } else {
-  #       // Valtage <1.5v
-  #       return false;
-  #     }
-  #   filters:
-  #     delayed_off: 3000ms
-  
 text_sensor:
   - platform: template
     name: ${board_name}_Uptime
@@ -109,21 +282,6 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
-  # - platform: adc
-  #   pin: GPIO32 #A0 #GPIO34
-  #   name: ${board_name}_PIR_V
-  #   update_interval: 1s
-  #   attenuation: 11db
-    
-  # - platform: adc
-  #   pin: GPIO34 #A0 #GPIO34
-  #   name: ${board_name}_SpeakerVoltage
-  #   update_interval: 1s
-  #   internal: true
-  #   id: speakervoltage
-  #   filters:
-  #     - multiply: 10
-
   - platform: pulse_counter
     pin: GPIO12 # TO GPIO13
     unit_of_measurement: 'W'
@@ -145,14 +303,18 @@ switch:
       inverted: yes
     name: ${board_name}_Relay1
     id: relay1
+    internal: true
     icon: mdi:phone
+    
   - platform: gpio
     pin: 
       number: GPIO18
       inverted: yes
     name: ${board_name}_Relay2
     id: relay2
+    internal: true
     icon: mdi:phone
+    
   - platform: gpio
     pin: 
       number: GPIO17
@@ -170,8 +332,8 @@ switch:
     icon: mdi:volume-off
 
   - platform: template
-    name: ${board_name}_OpenDoor
-    icon: mdi:door-open
+    name: ${board_name}_Open_Button
+    icon: mdi:gesture-tap-button
     turn_on_action:
     - switch.turn_on: relay3
     - delay: 2s
@@ -179,6 +341,7 @@ switch:
   
   - platform: template
     name: ${board_name}_Phone
+    id: relay_phone
     icon: mdi:phone
     lambda: |-
       if (id(relay1).state) {
@@ -194,7 +357,8 @@ switch:
       - switch.turn_off: relay2
 
   - platform: template
-    name: ${board_name}_Open_Door
+    name: ${board_name}_Open
+    icon: mdi:door
     turn_on_action:
       - switch.turn_on: relay4
       - switch.turn_on: relay1
@@ -207,6 +371,66 @@ switch:
       - switch.turn_off: relay2
       - switch.turn_off: relay4
 
+  # Automatically open door switch
+  - platform: template
+    name: ${board_name}_Auto_Open
+    id: auto_open
+    icon: "mdi:door-open"
+    optimistic: true
+    restore_state: true
+    on_turn_on:
+      - switch.turn_off: auto_open_once
+      - switch.turn_off: auto_reject
+      - script.execute: state_no_call
+    on_turn_off:
+      script.execute: state_no_call
+
+  # Automatically open door once switch
+  - platform: template
+    name: ${board_name}_Auto_Open_Once
+    id: auto_open_once
+    icon: "mdi:door-open"
+    optimistic: true
+    restore_state: true
+    on_turn_on:
+      - switch.turn_off: auto_open
+      - switch.turn_off: auto_reject
+      - script.execute: state_no_call
+    on_turn_off:
+      script.execute: state_no_call
+
+  # Automatically reject call switch
+  - platform: template
+    name: ${board_name}_Reject
+    id: auto_reject
+    icon: "mdi:door-closed-lock"
+    optimistic: true
+    restore_state: true
+    on_turn_on:
+      - switch.turn_off: auto_open
+      - switch.turn_off: auto_open_once
+      - script.execute: state_no_call
+    on_turn_off:
+      script.execute: state_no_call
+      
+  - platform: template
+    name: ${board_name}_Mute
+    id: mute
+    icon: "mdi:volume-off"
+    optimistic: true
+    restore_state: true
+    on_turn_on:
+      - globals.set:
+          id: mute_mode
+          value: 'true'
+      - switch.turn_on: relay4
+      - script.execute: led_off
+    on_turn_off:
+      - globals.set:
+          id: mute_mode
+          value: 'false'
+      - switch.turn_off: relay4
+      - script.execute: led_off
 
 output:
   - platform: ledc
@@ -229,7 +453,7 @@ output:
 light:
   - platform: monochromatic
     output: yellow_led
-    name: ${board_name}_yellow_led
+    name: ${board_name}_Yellow_LED
     default_transition_length: 50ms
     id: light_yellow_led
     effects:
@@ -269,7 +493,7 @@ light:
 
   - platform: monochromatic
     output: green_led
-    name: ${board_name}_green_led
+    name: ${board_name}_Green_LED
     default_transition_length: 50ms
     id: light_green_led
     effects:
@@ -309,7 +533,7 @@ light:
 
   - platform: monochromatic
     output: blue_led
-    name: ${board_name}_blue_led
+    name: ${board_name}_Blue_LED
     default_transition_length: 50ms
     id: light_blue_led
     effects:
@@ -349,7 +573,7 @@ light:
 
   - platform: monochromatic
     output: red_led
-    name: ${board_name}_red_led
+    name: ${board_name}_Red_LED
     default_transition_length: 50ms
     id: light_red_led
     effects:
@@ -407,23 +631,13 @@ light:
       - addressable_flicker:
 
   - platform: partition
-    name: ${board_name}_light4
+    name: ${board_name}_Light4
     id: light_4
     segments:
       - id: light_full
         from: 0
         to: 1
     effects:
-      - random:
-      - strobe:
-      - flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-      - addressable_scan:
-      - addressable_twinkle:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:        
       - automation:
           name: "Blink"
           sequence:
@@ -475,23 +689,13 @@ light:
 
 
   - platform: partition
-    name: ${board_name}_light3
+    name: ${board_name}_Light3
     id: light_3
     segments:
       - id: light_full
         from: 2
         to: 3
     effects:
-      - random:
-      - strobe:
-      - flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-      - addressable_scan:
-      - addressable_twinkle:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:        
       - automation:
           name: "Blink"
           sequence:
@@ -542,23 +746,13 @@ light:
                 blue: 1
 
   - platform: partition
-    name: ${board_name}_light2
+    name: ${board_name}_Light2
     id: light_2
     segments:
       - id: light_full
         from: 4
         to: 5
     effects:
-      - random:
-      - strobe:
-      - flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-      - addressable_scan:
-      - addressable_twinkle:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:        
       - automation:
           name: "Blink"
           sequence:
@@ -609,23 +803,13 @@ light:
                 blue: 0
 
   - platform: partition
-    name: ${board_name}_light1
+    name: ${board_name}_Light1
     id: light_1
     segments:
       - id: light_full
         from: 6
         to: 7
     effects:
-      - random:
-      - strobe:
-      - flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-      - addressable_scan:
-      - addressable_twinkle:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:        
       - automation:
           name: "Blink"
           sequence:

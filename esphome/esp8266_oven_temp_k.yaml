@@ -1,22 +1,22 @@
 substitutions:
-  board_name: esp32_node_mb
- 
+  board_name: esp8266_oven_temp_k
+
 esphome:
   name: ${board_name}
-  platform: ESP32
-  board: lolin32
-  comment: ESP32 CO2 TPH Node MB
+  platform: ESP8266
+  board: nodemcuv2
+  comment: ESP8266 Oven Temperature K
 
 wifi:
-  ssid: !secret wifi_ssid
+  ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .localdomain
   reboot_timeout: 15min
-  output_power: 17.5dB
+  output_power: 10dB
   fast_connect: true
   power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.104
+    static_ip: 192.168.1.29
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
@@ -32,30 +32,14 @@ ota:
 
 web_server:
   port: 80
-  
+
+spi:
+  miso_pin: GPIO12
+  clk_pin: GPIO14
+
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
-    
-uart:
-  rx_pin: GPIO03
-  tx_pin: GPIO01
-  baud_rate: 9600
-
-dallas:
-  - pin: GPIO26
-    update_interval: 15s
-    id: dallas_node_short
-
-  - pin: GPIO27
-    update_interval: 15s
-    id: dallas_node_long
-
-i2c:
-  sda: GPIO21
-  scl: GPIO22
-  scan: True
-
 text_sensor:
   - platform: template
     name: ${board_name}_Uptime
@@ -88,51 +72,18 @@ sensor:
     id: uptime_sensor
     update_interval: 15s
 
-  - platform: dallas
-    address: 0x0C0120462D297E28 #0x4601144BB16AAA28
-    dallas_id: dallas_node_long
-    name: ${board_name}_Outside
-    accuracy_decimals: 2
-    resolution: 12
-  
-  - platform: dallas
-    address: 0xA83C01D607703828
-    dallas_id: dallas_node_short
-    name: ${board_name}_Heating_Pipe
-    accuracy_decimals: 2
-    resolution: 12
-
-  - platform: mhz19
-    co2:
-      name: "Z19 CO2 MB"
-    temperature:
-      name: "Z19 Temp MB"
+  - platform: max6675
+    name: ${board_name}
+    cs_pin: GPIO15
     update_interval: 30s
 
-  - platform: bme280
-    temperature:
-      name: ${board_name}_Temperature
-      oversampling: 16x
-      id: bme280_temperature
-    pressure:
-      name: ${board_name}_Pressure
-      id: bme280_pressure
-    humidity:
-      name: ${board_name}_Humidity
-      id: bme280_humidity
-    address: 0x76
-    update_interval: 30s
-
-  - platform: bh1750
-    name: ${board_name}_Illuminance
-    address: 0x23
-    measurement_time: 254
-    update_interval: 15s
-    accuracy_decimals: 0
-    
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
+
+  - platform: adc
+    pin: VCC
+    name: ${board_name}_Vcc    
     
 switch:
   - platform: restart

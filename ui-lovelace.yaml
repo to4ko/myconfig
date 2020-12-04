@@ -57,9 +57,9 @@ views:
                 state_color: true
                 columns: 5
                 entities:
-                  - entity: sensor.out_temperature_min_value
+                  - entity: sensor.temperature_min_out
                     name: Tmin
-                  - entity: sensor.out_temperature_max_value
+                  - entity: sensor.temperature_max_out
                     name: Tmax
                   - entity: sensor.0x158d0001e8995a_temperature
                     name: Temp
@@ -442,15 +442,27 @@ views:
                   - entity: sensor.0x158d0001e58754_humidity
                     name: T
           - type: glance
-            columns: 6
+            columns: 7
             state_color: true
             entities:
               - entity: sensor.humidity_average
                 name: avg(H)
-              - entity: sensor.home_abs_humidity
+              - entity: sensor.abs_humidity_h
                 name: abs(H)
-              - entity: sensor.bathroom_abs_humidity
+              - entity: sensor.abs_humidity_b
                 name: abs(B)
+              - entity: sensor.dewpoint_b
+                name: Dew B
+              - entity: sensor.dewpoint_t
+                name: Dew T
+              - entity: sensor.esp32_bathroom_node_cold_pipe
+                name: cPipe
+              - entity: sensor.esp8266_oven_temp_k
+                name: Oven
+          - type: glance
+            columns: 3
+            state_color: true
+            entities:
               - entity: sensor.0x4cf8cdf3c77271d_illuminance
                 name: S
               - entity: sensor.0x4cf8cdf3c7754a8_illuminance
@@ -4130,6 +4142,7 @@ views:
           - binary_sensor.esp32_kitchen_status
           - binary_sensor.magichome_mono_strip_status
           - binary_sensor.ss5_hood_status
+          - binary_sensor.esp8266_oven_temp_k_status
 
           - type: divider        
           - binary_sensor.d1mini_bed_leds_status
@@ -4170,6 +4183,7 @@ views:
           - sensor.esp32_kitchen_wifi_rssi
           - sensor.magichome_mono_strip_wifi_rssi
           - sensor.ss5_hood_wifi_rssi
+          - sensor.esp8266_oven_temp_k_wifi_rssi
 
           - type: divider          
           - sensor.d1mini_bed_leds_wifi_rssi
@@ -4212,6 +4226,7 @@ views:
           - sensor.esp32_kitchen_uptime
           - sensor.magichome_mono_strip_uptime
           - sensor.ss5_hood_uptime
+          - sensor.esp8266_oven_temp_k_uptime
 
           - type: divider          
           - sensor.d1mini_bed_leds_uptime
@@ -4836,8 +4851,8 @@ views:
 
           
 
-  - title: Air Freshener
-    icon: mdi:home-group
+  - title: Testing
+    icon: mdi:ab-testing
     cards:
       - type: entities
         show_header_toggle: false
@@ -4852,9 +4867,12 @@ views:
             name: Last spray
           - entity: input_text.air_freshener_toilet_tank_replacement
             name: Last tank replace
+          - entity: input_text.air_freshener_last_heartbeat
+            name: Last hearbeat
           - entity: script.toilet_air_freshener_counter_reset
           - type: divider
-          - switch.esp01_air_freshener_restart
+          - entity: switch.esp01_air_freshener_restart
+            secondary_info: last-changed
           - binary_sensor.esp01_air_freshener_status
           - sensor.esp01_air_freshener_uptime_s
           - sensor.esp01_air_freshener_vcc
@@ -4882,18 +4900,6 @@ views:
           - binary_sensor.d1mini_bed_leds_ha_bed_led_enabled
           - light.d1mini_bed_leds_strip_dima
           - light.d1mini_bed_leds_strip_sandra
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - device_tracker.esp01_weight_cell
-          - switch.esp01_weight_pad_restart
-          - binary_sensor.esp01_weight_pad_status
-          - sensor.esp01_weight_pad_uptime
-          - sensor.esp01_weight_pad_uptime_s
-          - sensor.esp01_weight_pad_vcc
-          - sensor.esp01_weight_pad_wifi_rssi
-          - sensor.esp01_weight_pad_load
       - type: custom:auto-entities
         show_empty: false
         card:
@@ -4908,37 +4914,15 @@ views:
                   action: toggle
           exclude:
             - entity_id: "*esp32_domofon*"
-      # - type: entities
-      #   show_header_toggle: false
-      #   state_color: true
-      #   entities:
-      #     - input_number.matrix_brightness
-      #     - input_number.matrix_speed
-      #     - input_text.matrix_text
-      #     - input_boolean.matrix_enable
-      #     - input_boolean.matrix_invert
-      #     - type: divider
-      #     - device_tracker.d1mini_matrix
-      #     - sensor.d1mini_matrix_display_brightness
-      #     - sensor.d1mini_matrix_ha_brightness
-      #     - sensor.d1mini_matrix_ha_speed
-      #     - sensor.d1mini_matrix_ha_txt
-      #     - binary_sensor.d1mini_matrix_ha_matrix_enable
-      #     - binary_sensor.d1mini_matrix_ha_matrix_invert
-      #     - switch.d1mini_matrix_restart
-      #     - binary_sensor.d1mini_matrix_status
-      #     - sensor.d1mini_matrix_uptime
-      #     - sensor.d1mini_matrix_uptime_s
-      #     - sensor.d1mini_matrix_wifi_rssi
 
       - type: history-graph
         hours_to_show: 48
         entities:
           - entity: sensor.0x158d0001e8995a_temperature
             name: T
-          - entity: sensor.out_temperature_max_value
+          - entity: sensor.temperature_max_out
             name: Tmax
-          - entity: sensor.out_temperature_min_value
+          - entity: sensor.temperature_min_out
             name: Tmin
 
       - type: custom:auto-entities
@@ -4958,42 +4942,68 @@ views:
 
       - type: entities
         show_header_toggle: false
-        state_color: true
-        entities:
-          - device_tracker.esp32_bathroom_node
-          - sensor.esp32_bathroom_node_cold_pipe
-          - sensor.esp32_bathroom_node_hot_pipe
-          - sensor.esp32_bathroom_node_humidity
-          - switch.esp32_bathroom_node_relay_1
-          - switch.esp32_bathroom_node_relay_2
-          - switch.esp32_bathroom_node_relay_3
-          - switch.esp32_bathroom_node_relay_4
-          - switch.esp32_bathroom_node_relay_5
-          - switch.esp32_bathroom_node_relay_6
-          - switch.esp32_bathroom_node_restart
-          - binary_sensor.esp32_bathroom_node_status
-          - sensor.esp32_bathroom_node_temperature
-          - sensor.esp32_bathroom_node_uptime
-          - sensor.esp32_bathroom_node_uptime_s
-          - sensor.esp32_bathroom_node_wifi_rssi
-
-      - type: entities
-        show_header_toggle: false
         state_color: true      
         entities:
-          - device_tracker.esp32_node_mb
-          - sensor.z19_co2_mb
-          - sensor.z19_temp_mb
+          - device_tracker.esp32_node_hs
+          - sensor.esp32_node_hs_humidity
+          - sensor.esp32_node_hs_illuminance
+          - binary_sensor.esp32_node_hs_motion
+          - sensor.esp32_node_hs_pressure
+          - switch.esp32_node_hs_restart
+          - binary_sensor.esp32_node_hs_status
+          - sensor.esp32_node_hs_temperature
+          - sensor.esp32_node_hs_uptime
+          - sensor.esp32_node_hs_uptime_s
+          - sensor.esp32_node_hs_wifi_rssi
+          - light.esp32_node_hs_led
+          
+          
+  - title: Energy Stat
+    icon: mdi:current-ac
+    cards:
+      - type: entities
+        show_header_toggle: false
+        state_color: true
+        title: Day
+        entities:
+          - sensor.energy_monthly_day
+          - sensor.energy_xiaomi_monthly_day
           - type: divider
-          - sensor.esp32_node_mb_heating_pipe
-          - sensor.esp32_node_mb_outside          
+          - sensor.plug_fridge_hb_monthly_day
+          - sensor.plug_server_hb_monthly_day
+          - sensor.plug_utils_hs_monthly_day
+          - sensor.plug_wadrobe_v_monthly_day
+          - sensor.socket_entrance_v_monthly_day
+          - sensor.socket_fridge_hb_monthly_day
+          - sensor.socket_main_hs_monthly_day
+          - sensor.socket_oven_k_monthly_day
+          - sensor.socket_pc_k_monthly_day
+          - sensor.socket_pc_mb_monthly_day
+          - sensor.socket_pc_s_monthly_day
+          - sensor.socket_tv_k_monthly_day
+          - sensor.socket_tv_v_monthly_day
+          - sensor.socket_wadrobe_s_monthly_day
+          - sensor.pow_r2_1_washer_b_monthly_day
+      - type: entities
+        show_header_toggle: false
+        state_color: true
+        title: Night
+        entities:
+          - sensor.energy_monthly_night
+          - sensor.energy_xiaomi_monthly_night
           - type: divider
-          - sensor.esp32_node_mb_temperature          
-          - sensor.esp32_node_mb_humidity
-          - sensor.esp32_node_mb_illuminance
-          - sensor.esp32_node_mb_pressure
-          - switch.esp32_node_mb_restart
-          - binary_sensor.esp32_node_mb_status
-          - sensor.esp32_node_mb_uptime
-          - sensor.esp32_node_mb_uptime_s
-          - sensor.esp32_node_mb_wifi_rssi
+          - sensor.plug_fridge_hb_monthly_night
+          - sensor.plug_server_hb_monthly_night
+          - sensor.plug_utils_hs_monthly_night
+          - sensor.plug_wadrobe_v_monthly_night
+          - sensor.socket_entrance_v_monthly_night
+          - sensor.socket_fridge_hb_monthly_night
+          - sensor.socket_main_hs_monthly_night
+          - sensor.socket_oven_k_monthly_night
+          - sensor.socket_pc_k_monthly_night
+          - sensor.socket_pc_mb_monthly_night
+          - sensor.socket_pc_s_monthly_night
+          - sensor.socket_tv_k_monthly_night
+          - sensor.socket_tv_v_monthly_night
+          - sensor.socket_wadrobe_s_monthly_night
+          - sensor.pow_r2_1_washer_b_monthly_night

@@ -52,18 +52,18 @@
   
   - platform: template
     sensors:
-      out_temperature_min_value:
+      temperature_min_out:
         value_template: "{{ state_attr('sensor.out_temperature_stats', 'min_value') }}"
         unit_of_measurement: '°C'
         device_class: temperature
 
-      out_temperature_max_value:
+      temperature_max_out:
         value_template: "{{ state_attr('sensor.out_temperature_stats', 'max_value') }}"
         unit_of_measurement: '°C'
         device_class: temperature
 
       dewpoint_b:
-        friendly_name: Bathroom Dew Point
+        friendly_name: Dew Point B
         unit_of_measurement: "°C"
         device_class: temperature
         value_template: >
@@ -72,6 +72,20 @@
           {% set a = 6.1121 %}
           {% set rh = states('sensor.0x158d00020d7c3a_humidity') | float %}
           {% set t = states('sensor.0x158d00020d7c3a_temperature') | float %}
+          {% set a = 6.1121 %}
+          {% set gamma = log(rh / 100) + b * t / (c + t) %}
+          {{ (c * gamma / (b - gamma)) | round(1) }}
+
+      dewpoint_t:
+        friendly_name: Dew Point T
+        unit_of_measurement: "°C"
+        device_class: temperature
+        value_template: >
+          {% set b = 17.368 %}
+          {% set c = 238.88 %}
+          {% set a = 6.1121 %}
+          {% set rh = states('sensor.0x158d0001e58754_humidity') | float %}
+          {% set t = states('sensor.0x158d0001e58754_temperature') | float %}
           {% set a = 6.1121 %}
           {% set gamma = log(rh / 100) + b * t / (c + t) %}
           {{ (c * gamma / (b - gamma)) | round(1) }}
@@ -102,7 +116,7 @@
 
   - platform: template
     sensors:
-       bathroom_abs_humidity:
+       abs_humidity_b:
          value_template: >-
            {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float, states('sensor.0x158d00020d7c3a_temperature') %}
            {% if not h or t == 'unknown' -%}
@@ -112,9 +126,9 @@
             {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
            {% endif %}
          unit_of_measurement: 'g/m³'
-         friendly_name: 'Bathroom absolute humidity'
+         friendly_name: Absolute Humidity B
 
-       home_abs_humidity:
+       abs_humidity_h:
          value_template: >-
            {% set h, t = states('sensor.humidity_average') | float, states('sensor.temperature_average') %}
            {% if not h or t == 'unknown' -%}
@@ -124,7 +138,7 @@
             {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
            {% endif %}
          unit_of_measurement: 'g/m³'
-         friendly_name: 'Home absolute humidity'
+         friendly_name: Absolute Humidity H
 
   - platform: command_line
     name: Supervisor updates
@@ -189,25 +203,25 @@
         unit_of_measurement: '%'
         icon_template: mdi:brightness-percent
 
-  # - platform: mqtt
-  #   name: Config Line Count
-  #   state_topic: "ubuntu/config_linecount"
-  #   qos: 0
-  #   expire_after: 150
-  #   force_update: true
-  #   value_template: "{{ value }}"
-  #   unit_of_measurement: 'lines'
-  #   icon: mdi:format-list-bulleted
+  - platform: mqtt
+    name: Config Line Count
+    state_topic: "ubuntu/config_linecount"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ value }}"
+    unit_of_measurement: 'lines'
+    icon: mdi:format-list-bulleted
 
-  # - platform: mqtt
-  #   name: Config Line Count Code
-  #   state_topic: "ubuntu/config_linecount_code"
-  #   qos: 0
-  #   expire_after: 150
-  #   force_update: true
-  #   value_template: "{{ value }}"
-  #   unit_of_measurement: 'lines'
-  #   icon: mdi:format-list-numbered
+  - platform: mqtt
+    name: Config Line Count Code
+    state_topic: "ubuntu/config_linecount_code"
+    qos: 0
+    expire_after: 150
+    force_update: true
+    value_template: "{{ value }}"
+    unit_of_measurement: 'lines'
+    icon: mdi:format-list-numbered
 
 #  - platform: command_line
 #    name: ya_weather_city
@@ -225,7 +239,7 @@
 #    scan_interval: 120
 
   - platform: github
-    access_token: !secret github_access_token
+    access_token: !secret github_access_token_2
     repositories:
       - path: 'to4ko/myconfig'
 
@@ -541,3 +555,44 @@
           {% else %}
           mdi:kettle
           {% endif %}
+          
+      battery_levels:
+        friendly_name: Battery Levels
+        value_template: >
+          {%- set threshold = 50 -%}
+          {% set domains = ['sensor'] %}
+          {% for domain in domains -%}
+          {% for item in states[domain] if ( ("_battery" in item.entity_id and "0x" in item.entity_id and item.state| int < threshold) )-%}
+          {% if (item.state | int < threshold) -%}
+
+              {{ item.name }}: {{ item.state }}%{%- if not loop.last %};
+          {% endif -%}{% endif -%}
+
+          {% endfor %}
+          {%- endfor %}
+
+# {% if "_battery" in item.entity_id | lower and ((item.state | int < threshold and item.state|int != 0) or item.state | lower == "low" or item.state | lower == "unknown") -%}
+# {{ item.name }}: {{ item.state }}%{% if not loop.last %}; {%- endif %} {% endif -%}
+
+      battery_levels_2:
+        friendly_name: Battery Levels2
+        value_template: >
+          {%- macro LowBattery() -%}
+          {% for item in states.sensor -%}
+          {%- if "_battery" in item.entity_id and "0x" in item.entity_id and (item.state|int < 50 ) -%}
+          X 
+          {%- endif -%}
+          {%- endfor %}
+          {%- endmacro -%}
+          {%- if LowBattery()[0] == "X" -%}
+          {{LowBattery()|list|length }}
+          {%- else -%}
+          0
+          {%- endif -%} 
+        attribute_templates:
+          devices: >-
+            {% for item in states.sensor-%}
+            {%- if "_battery" in item.entity_id and "0x" in item.entity_id and (item.state|int < 50 ) %}
+            {{item.entity_id}}: {{ item.state }}%{% if not loop.last %}; {%- endif %}
+            {%- endif -%}
+            {%- endfor %}
