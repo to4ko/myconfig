@@ -230,9 +230,16 @@
   #   - condition: template
   #     value_template: >
   #       {{ (states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count + states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | list | count)  >= 1 }}
-  action:  
-  - service: script.turn_on
-    entity_id: script.battery_level_check
+  action:
+    - service: group.set
+      data_template:
+        object_id: batteries
+        entities: >-
+          {%-for state in states.sensor if state.entity_id.endswith("_battery")%}
+          {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
+          {%-endfor%}
+    - service: script.turn_on
+      entity_id: script.battery_level_check
     # data_template:
     #   message: >
     #     {% set low_batteries = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
@@ -602,7 +609,6 @@
           {% else %} {{"\U0001f324"}} Тучки уходят!
           {% endif %}
 
-
 # ##################################
 # System - Critical Error notification
 # ##################################
@@ -874,7 +880,6 @@
 #       data_template:
 #         message: "\U0000231b Нет движения более 5 минут"
 
-
 # ##################################
 # System - RO Filter Membrane Flow
 # ##################################
@@ -888,8 +893,7 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f30a Скорость потока через мембрану фильтра упала ниже {{states('sensor.raw_water_flow_max')}}л/мин!"
-        
-        
+
 # ##################################
 # System - RO Filter Membrane Flow
 # ##################################
@@ -1015,3 +1019,74 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f4a5 {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - Weather Geomagnetic
+# ##################################
+- alias: system_weather_geomagnetic
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      hours: "/1"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "on"
+    - condition: template
+      value_template: "{{(as_timestamp(now())|int - as_timestamp(states.sensor.sensor.gismeteo_geomagnetic_field.last_changed)|int) < 60*60 }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >-
+          {% set magnetic_conditions = ['Норма','Небольшие возмущения','Небольшие возмущения','Небольшие возмущения','Слабая буря','Умеренная буря','Сильная буря','Шторм','Экстремальный шторм'] %}
+          {{ "\U0001f9f2" }} Геомагнитная обстановка -> {{magnetic_conditions[states('sensor.gismeteo_geomagnetic_field')|int]}}
+
+# ##################################
+# System - Caller ID
+# ##################################
+- alias: system_caller_id
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.modem_callerid
+      to: "callerid"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "Call from {{ state_attr('sensor.modem_callerid', 'cid_name') }} at {{ state_attr('sensor.modem_callerid', 'cid_number') }}"
+
+# ##################################
+# System - GW3 Error
+# ##################################
+- alias: system_xiaomi_gw3_error
+  initial_state: 'true'
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: ERROR
+  condition:
+    - condition: template
+      value_template: '{{ "xiaomi_gateway3" in trigger.event.data.message[0] or "xiaomi_gateway3" in trigger.event.data.source[0] }}'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "GW3 Error Detected in System LOG!"
+
+# ##################################
+# System - NUT Error
+# ##################################
+- alias: system_nut_error
+  initial_state: 'false'
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: ERROR
+  condition:
+    - condition: template
+      value_template: '{{ "NUT" in trigger.event.data.message[0] }}'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "NUT Error Detected in System LOG!"

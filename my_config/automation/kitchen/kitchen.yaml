@@ -35,7 +35,7 @@
 #   action:
 #     - delay: '00:01:00'
 #     - service: switch.turn_on #script.turn_on
-#       entity_id: switch.esp32_kitchen_tvbox_pwr #script.tv_box_k_toggle
+#       entity_id: switch.esp32_node_k_tvbox_pwr #script.tv_box_k_toggle
 #     - service: homeassistant.turn_off
 #       entity_id: automation.kitchen_check_tv_box
 
@@ -58,7 +58,7 @@
 #         minutes: 2
 #   action:
 #     - service: switch.turn_on #script.turn_on
-#       entity_id: switch.esp32_kitchen_tvbox_pwr #script.tv_box_k_toggle
+#       entity_id: switch.esp32_node_k_tvbox_pwr #script.tv_box_k_toggle
 
 # ##################################
 # Kitchen - Weather announcement
@@ -142,7 +142,7 @@
 #       above: 5
 #   action: 
 #     - service_template: switch.turn_{%if is_state('switch.ss5_hood_fan','on')%}off{%elif is_state('switch.ss5_hood_fan','off')%}on{%endif%}
-#       entity_id: switch.esp32_kitchen_airvalve_control
+#       entity_id: switch.esp32_node_k_airvalve_control
 
 # ##################################
 # Kitchen - Hood Fan
@@ -160,7 +160,7 @@
       to: 'button_2_single'
   action:
     - service: switch.toggle
-      entity_id: switch.ss5_hood_fan #switch.esp32_kitchen_fan1
+      entity_id: switch.ss5_hood_fan #switch.esp32_node_k_fan1
 
 # ##################################
 # Kitchen - Kettle counter
@@ -212,3 +212,24 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f4a7 Данные фильтра воды обновлены!"
+
+# ##################################
+# Kitchen - Oven notify
+# ##################################
+- alias: kitchen_oven_notify
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.esp8266_oven_temp_k
+      above: 100
+    - condition: state
+      entity_id: binary_sensor.motion_k
+      state: 'off'
+      for: '00:30:00'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f321 Внимание! Духовка включена ({{states('sensor.esp8266_oven_temp_k')|int}}°C)!"

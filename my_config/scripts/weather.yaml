@@ -3,34 +3,27 @@
     sequence:
       - service: notify.telegram_family
         data_template:
-          message: |
+          message: |-
             {%- set date = as_timestamp(now()) -%}
-            {% set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
-            {% set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
-
-            {% set m_ok = date | timestamp_custom("%m") | int %}
-            {% set wd_ok = date | timestamp_custom("%w") | int %}
-
-            {% set weekday = weekday_list[wd_ok-1] %} 
-            {% set month = month_list[m_ok-1] %} 
-            {% set hour_num = now().hour | int %}
-            
-            {% if hour_num >=6 and hour_num <12 %} {{ "\U00002600" }}Доброе утро!
-            {% elif hour_num>=12 and hour_num<17 %} {{ "\U0001f31e" }}Добрый день!
-            {% elif hour_num>=17 and hour_num<22 %} {{ "\U0001f31d" }}Добрый вечер!
-            {% else %} {{ "\U0001f31a" }}Доброй ночи!
-            {% endif %}
-            {%if hour_num < 17 and hour_num >= 0 %}
-            Сегодня {{ weekday }}, {{ now().day|int }} {{ month_list[now().month-1] }}.
+            {%- set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
+            {%- set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
+            {%- set m_ok = date | timestamp_custom("%m") | int %}
+            {%- set wd_ok = date | timestamp_custom("%w") | int %}
+            {%- set weekday = weekday_list[wd_ok-1] %} 
+            {%- set month = month_list[m_ok-1] %} 
+            {%- set hour_num = now().hour | int %}
+            {% if hour_num >=6 and hour_num <12 %}{{"\U00002600"}}Доброе утро!{% elif hour_num>=12 and hour_num<17 %}{{"\U0001f31e"}}Добрый день!{% elif hour_num>=17 and hour_num<22 %}{{"\U0001f31d"}}Добрый вечер!{% else %}{{"\U0001f31a"}}Доброй ночи!{% endif %}
+            {% if hour_num < 17 and hour_num >= 0 %}Сегодня {{ weekday }}, {{ now().day|int }} {{ month_list[now().month-1] }}.
             {{ states('sensor.dark_sky_summary_0d') }}
-            Температура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}} °C. 
-            Вероятность осадков {{states('sensor.dark_sky_precip_probability_0d')|round(0)}} %. 
+            Температура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}}°C. 
+            Вероятность осадков {{states('sensor.dark_sky_precip_probability_0d')|round(0)}}%. 
             {%if states('sensor.dark_sky_precip_probability_0d')|int > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_0d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
+            Текущая температура {{states('sensor.esp32_node_mb_outside')|int}}°C.
             {% endif %}
             {% endif %}
             {%if hour_num >= 17 and hour_num <= 23 %}
             Прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
-            Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}} °C. 
+            Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}}°C. 
             Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|round(0)}} %.
             {%if states('sensor.dark_sky_precip_probability_1d')|int > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_1d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
             {% endif %}
@@ -47,62 +40,38 @@
       - service: tts.yandextts_say
         data_template:
           entity_id: "{{ entity_id }}"
-          message: >
+          message: >-
             {%- set date = as_timestamp(now()) -%}
-            {% set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
-            {% set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
-            {% set day_list = ['первое','второе','третье','четвертое','пятое','шестое','седьмое','восьмое','девятое','десятое','одиннадцатое','двенадцатое','тринадцатое','четырнадцатое','пятнадцатое','шестнадцатое','семнадцатое','восемнадцатое','девятнадцатое','двадцатое','двадцать первое','двадцать второе','двадцать третье','двадцать четвертое','двадцать пятое','двадцать шестое','двадцать седьмое','двадцать восьмое','двадцать девятое','тридцатое','тридцать первое'] %}
-            
-            {% set m_ok = date | timestamp_custom("%m") | int %}
-            {% set wd_ok = date | timestamp_custom("%w") | int %}
-            {% set d_ok = date | timestamp_custom("%d") | int %}
-  
-            {% set weekday = weekday_list[wd_ok-1] %} 
-            {% set day = day_list[d_ok-1] %}
-            {% set month = month_list[m_ok-1] %} 
-            {% set hour_num = now().hour | int %}
-            
-            {% if hour_num >=6 and hour_num <12 %}
-              Д+оброе +утро!
-            {% elif hour_num>=12 and hour_num<17 %}
-              Д+обрый д+ень!
-            {% elif hour_num>=17 and hour_num<22 %}
-              Д+обрый в+ечер!
-            {% else %}
-              Д+оброй н+очи!
-            {% endif %}
-            
+            {%- set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
+            {%- set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
+            {%- set day_list = ['первое','второе','третье','четвертое','пятое','шестое','седьмое','восьмое','девятое','десятое','одиннадцатое','двенадцатое','тринадцатое','четырнадцатое','пятнадцатое','шестнадцатое','семнадцатое','восемнадцатое','девятнадцатое','двадцатое','двадцать первое','двадцать второе','двадцать третье','двадцать четвертое','двадцать пятое','двадцать шестое','двадцать седьмое','двадцать восьмое','двадцать девятое','тридцатое','тридцать первое'] %}
+            {%- set m_ok = date | timestamp_custom("%m") | int %}
+            {%- set wd_ok = date | timestamp_custom("%w") | int %}
+            {%- set d_ok = date | timestamp_custom("%d") | int %}
+            {%- set weekday = weekday_list[wd_ok-1] %} 
+            {%- set day = day_list[d_ok-1] %}
+            {%- set month = month_list[m_ok-1] %} 
+            {%- set hour_num = now().hour | int %}
+            {%- if hour_num >=6 and hour_num <12 %}
+            Д+оброе +утро!
+            {%- elif hour_num>=12 and hour_num<17 %}
+            Д+обрый д+ень!
+            {%- elif hour_num>=17 and hour_num<22 %}
+            Д+обрый в+ечер!
+            {%- else %}
+            Д+оброй н+очи!
+            {%- endif %}        
             Сег+одня {{ weekday }} {{ day }} {{ month }}.
-              {{ states('sensor.dark_sky_summary_0d') }}. 
-              Температ+ура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}} °C. 
-              Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_0d')|round(0)}} %. 
-              {%if states('sensor.dark_sky_precip_probability_0d')|int > 0 %} В+ид ос+адков - 
-                {% if states('sensor.dark_sky_precip_0d') == "snow" %}
-                  сн+ег
-                {% elif states('sensor.dark_sky_precip_0d') == "rain" %}
-                  д+ождь
-                {% elif states('sensor.dark_sky_precip_0d') == "sleet" %}
-                  сн+ег с дожд+ем
-                {% else %}
-                  неизв+естно
-                {% endif %}
-              {% endif %}
-            
+            {{ states('sensor.dark_sky_summary_0d') }}
+            Температ+ура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}} °C. 
+            Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_0d')|round(0)}} %. 
+            {% if states('sensor.dark_sky_precip_probability_0d')|int > 0 %}В+ид ос+адков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_0d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{% endif %}
+            Текущая температура {{states('sensor.esp32_node_mb_outside')|int}}°C.
 
             {%if hour_num > 17 and hour_num < 6 %}
-              Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
-              Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}} °C. 
-              Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|round(0)}} %.
-              {%if states('sensor.dark_sky_precip_probability_1d')|int > 0 %}Вид осадков - 
-                {% if states('sensor.dark_sky_precip_1d') == "snow" %}
-                  снег
-                {% elif states('sensor.dark_sky_precip_1d') == "rain" %}
-                  дождь
-                {% elif states('sensor.dark_sky_precip_1d') == "sleet" %}
-                  снег с дождем
-                {% else %}
-                  неизвестно
-                {% endif %}
-            {% endif %}
+            Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
+            Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}} °C. 
+            Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|round(0)}} %.
+            {%if states('sensor.dark_sky_precip_probability_1d')|int > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_1d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}{% endif %}
             
             {% endif %}

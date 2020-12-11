@@ -15,6 +15,10 @@
       data_template:
         entity_id: input_text.air_freshener_last_spray
         value: "{{now().strftime('%d.%m.%Y %H:%M')}}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.air_freshener_last_spray
+        value: "{{ as_timestamp(now())|int }}"
 
 # ##################################
 # Toilet - Air Freshener Spray
@@ -52,7 +56,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.esp01_air_freshener_vcc
-      below: 3.2
+      below: 3
   action:
     - service: notify.telegram
       data_template:
@@ -75,6 +79,21 @@
       data_template:
         entity_id: input_text.air_freshener_last_heartbeat
         value: "{{ as_timestamp(states.sensor.esp01_air_freshener_vcc.last_updated)|timestamp_custom('%d.%m.%Y %H:%M',true) }}"
+
+# ##################################
+# Toilet - Air Freshener Hourly
+# ##################################
+- alias: toilet_air_freshener_hourly
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      hours: "/1"
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())|int - states('input_number.air_freshener_last_spray')|int ) > 60*60 }}"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.air_freshener_spray
 
 # ##################################
 # Toilet - cold water condensate

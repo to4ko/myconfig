@@ -260,7 +260,7 @@ class Gateway3(Thread, GatewayV):
 
                 params = {
                     p[2]: retain.get(p[1])
-                    for p in desc['params']
+                    for p in (desc['params'] or desc['mi_spec'])
                     if p[1] is not None
                 }
 
@@ -429,7 +429,7 @@ class Gateway3(Thread, GatewayV):
 
                 self.devices[device['did']] = device
 
-                for param in device['params']:
+                for param in (device['params'] or device['mi_spec']):
                     domain = param[3]
                     if not domain:
                         continue
@@ -487,6 +487,8 @@ class Gateway3(Thread, GatewayV):
             pkey = 'params' if 'params' in data else 'mi_spec'
         elif data['cmd'] in ('write_rsp', 'read_rsp'):
             pkey = 'results'
+        elif data['cmd'] == 'write_ack':
+            return
         else:
             _LOGGER.warning(f"Unsupported cmd: {data}")
             return
@@ -511,8 +513,10 @@ class Gateway3(Thread, GatewayV):
             if prop in GLOBAL_PROP:
                 prop = GLOBAL_PROP[prop]
             else:
-                prop = next((p[2] for p in device['params']
-                             if p[0] == prop), prop)
+                prop = next((
+                    p[2] for p in (device['params'] or device['mi_spec'])
+                    if p[0] == prop
+                ), prop)
 
             if prop in ('temperature', 'humidity', 'pressure'):
                 payload[prop] = param['value'] / 100.0
@@ -716,14 +720,18 @@ class Gateway3(Thread, GatewayV):
             self.mqtt.publish(f"gw/{mac}/MessageReceived", self.pair_payload)
 
     def send(self, device: dict, data: dict):
+        payload = {'cmd': 'write', 'did': device['did']}
+
         # convert hass prop to lumi prop
-        if device.get('model') in ('lumi.switch.l0agl1', 'lumi.switch.n0agl1'):
-            v = bool(data['switch'])
-            payload = {
-                'cmd': 'write',
-                'did': device['did'],
-                'mi_spec': [{'siid': 2, 'piid': 1, 'value': v}],
-            }
+        if device['mi_spec']:
+            params = []
+            for k, v in data.items():
+                if k == 'switch':
+                    v = bool(v)
+                k = next(p[0] for p in device['mi_spec'] if p[2] == k)
+                params.append({'siid': k[0], 'piid': k[1], 'value': v})
+
+            payload['mi_spec'] = params
         else:
             params = [{
                 'res_name': next(p[0] for p in device['params'] if p[2] == k),
@@ -762,7 +770,11 @@ class Gateway3(Thread, GatewayV):
     def send_mesh(self, device: dict, data: dict):
         did = device['did']
         payload = bluetooth.pack_xiaomi_mesh(did, data)
-        return self.miio.send('set_properties', payload)
+        try:
+            return self.miio.send('set_properties', payload)
+        except:
+            self.debug(f"Can't send mesh {did} => {data}")
+            return None
 
     def get_device(self, mac: str) -> Optional[dict]:
         for device in self.devices.values():

@@ -28,19 +28,19 @@
     alias: Turn Water Off
     sequence:
       - service: switch.turn_on
-        entity_id: switch.esp32_bathroom_node_relay_1 #switch.0x00158d000366815b_switch_l1 #switch.plug_158d00020d8679
+        entity_id: switch.esp32_bathroom_node_relay_1
       - delay: '00:00:25'
       - service: switch.turn_off
-        entity_id: switch.esp32_bathroom_node_relay_1 #switch.0x00158d000366815b_switch_l1 #switch.plug_158d00020d8679
+        entity_id: switch.esp32_bathroom_node_relay_1
 
   water_on:
     alias: Turn Water On
     sequence:
       - service: switch.turn_on
-        entity_id: switch.esp32_bathroom_node_relay_2 #switch.0x00158d000366815b_switch_l2 #switch.plug_158d0001f54f90
+        entity_id: switch.esp32_bathroom_node_relay_2
       - delay: '00:00:25'
       - service: switch.turn_off
-        entity_id: switch.esp32_bathroom_node_relay_2 #switch.0x00158d000366815b_switch_l2 #switch.plug_158d0001f54f90
+        entity_id: switch.esp32_bathroom_node_relay_2
 
   battery_level_check:
     alias: Battery Level Check
@@ -48,9 +48,8 @@
       - service: script.turn_on
         data_template:
           entity_id: >
-            {% set num_low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
-            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.linkquality', 'defined') |selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='attributes.device.friendlyName') | unique | list | count %}
-            {% if (num_low_bat + num_low_bat_z2m) >0 %}
+            {% set num_low_bat = expand('group.batteries') | selectattr('state','<=','50') | map(attribute='name') | list | count %}
+            {% if num_low_bat >0 %}
               script.battery_level_low
             {% else %}
               script.battery_level_ok
@@ -62,13 +61,12 @@
       - service: notify.telegram
         data_template:
           message: >
-            {% set low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | join(', ') %}
-            {% set low_bat_z2m = states | selectattr('attributes.linkquality', 'defined') | selectattr('attributes.battery', 'defined') | selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='attributes.device.friendlyName') | unique | list | join(', ') %}
-            
-            {% set num_low_bat = states | selectattr('attributes.battery_level', 'defined') | selectattr('attributes.battery_level','<', states('input_number.battery_low_level')|int ) | map(attribute='name') | list | count %}
-            {% set num_low_bat_z2m = states | selectattr('attributes.battery', 'defined') | selectattr('attributes.linkquality', 'defined') |selectattr('attributes.battery','<', states('input_number.battery_low_level')|int ) | map(attribute='attributes.device.friendlyName') | unique | list | count %}
-            
-            {{"\U0001f6a8"}} Низкий заряд батарей ({{ num_low_bat + num_low_bat_z2m }}шт): {%if num_low_bat >0 %}{{low_bat}}{%endif%}{%if num_low_bat >0 and num_low_bat_z2m>0 %}, {%endif%}{%if num_low_bat_z2m >0%}{{low_bat_z2m}}{%endif%}
+            {% set low_bat = expand('group.batteries') | selectattr('state','<=',states('input_number.battery_low_level')) | map(attribute='name') | list | join(', ') %}
+          
+            {% set num_low_bat = expand('group.batteries') | selectattr('state','<=',states('input_number.battery_low_level')) | map(attribute='name') | list | count %}
+            {{"\U0001f6a8"}} Низкий заряд батарей ({{ num_low_bat}}шт): {{low_bat}}
+
+
   
   battery_level_ok:
     alias: Battery Level Ok

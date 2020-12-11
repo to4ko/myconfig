@@ -31,15 +31,15 @@
       - condition: state
         entity_id: switch.0x158d000253f04a_channel_2
         state: 'off'
+      - condition: state
+        entity_id: input_boolean.dark_mode
+        state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.led_strip_entrance_hb
       data_template:
         brightness_pct: 1
         kelvin: 3000
-    # - delay: '00:00:30'
-    # - service: light.turn_off
-    #   entity_id: light.led_strip_entrance_hb
 
 # ##################################
 # Hall Big - Auto Light On
@@ -73,8 +73,14 @@
         state: 'off'
   action:
     - service: light.turn_on
-      entity_id: light.led_strip_hb
+      #entity_id: light.led_strip_hb
       data_template: 
+        entity_id: >
+          {% if states('sensor.time').split(':').0|int < 10 %}
+            light.led_strip_entrance_hb
+          {% else %}
+            light.led_strip_hb
+          {%endif%}
         brightness_pct: >
           {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
             1
@@ -202,61 +208,6 @@
     - service: script.turn_on
       entity_id: script.open_door_photo
 
-
-# # ##################################
-# # Hall Big - Auto Light On Entrance
-# # ##################################
-# - alias: hall_big_auto_light_on_entrance
-#   initial_state: 'false'
-#   trigger:
-#     # - platform: event
-#     #   event_type: xiaomi_aqara.motion
-#     #   event_data:
-#     #     entity_id: binary_sensor.motion_sensor_158d0001e05856
-#     - platform: state
-#       entity_id: binary_sensor.0x00158d0001e05856_occupancy
-#       from: 'off'
-#       to: 'on'
-#   condition:
-#     condition: and
-#     conditions:
-#       - condition: numeric_state
-#         entity_id: sensor.0x00158d0001e05856_illuminance #sensor.illuminnation_158d0001e05856
-#         below: 10
-#       - condition: state
-#         entity_id: binary_sensor.tod_day
-#         state: 'on'
-#   action:
-#     - service: switch.turn_on
-#       entity_id: switch.0x00158d000223921b_switch_left #switch.wall_switch_left_158d000223921b
-
-# # ##################################
-# # Hall Big - Auto Light On Fridge
-# # ##################################
-# - alias: hall_big_auto_light_on_fridge
-#   initial_state: 'false'
-#   trigger:
-#     # - platform: event
-#     #   event_type: xiaomi_aqara.motion
-#     #   event_data:
-#     #     entity_id: binary_sensor.motion_sensor_158d0002b482e9
-#     - platform: state
-#       entity_id: binary_sensor.0x00158d0002b482e9_occupancy
-#       from: 'off'
-#       to: 'on'
-#   condition:
-#     condition: and
-#     conditions:
-#       - condition: numeric_state
-#         entity_id: sensor.0x00158d0002b482e9_illuminance #sensor.illuminnation_158d0002b482e9
-#         below: 10
-#       - condition: state
-#         entity_id: binary_sensor.tod_day
-#         state: 'on'
-#   action:
-#     - service: switch.turn_on
-#       entity_id: switch.0x00158d000253f04a_switch_right #switch.wall_switch_right_158d000253f04a
-      
 # ##################################
 # Hall big - Timer start on light on
 # ################################## 

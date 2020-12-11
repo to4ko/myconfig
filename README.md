@@ -81,7 +81,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - not in use - Xiaomi Wifi Plugs v2 (7ea)
   - not in use - Xiaomi IR controller
 
-**At the moment, all Zigbee devices are connected via Xiaomi Gateways, except of DIY Geiger meter (it's sitting on ZZH CC2652R)**
+**At the moment, all my Zigbee devices are connected via Xiaomi Gateways, except of DIY Geiger meter (it's sitting on ZZH CC2652R)**
 
 **Xiaomi\Aqara Zigbee Devices:**
   - Aqara Wall Socket (21ea)

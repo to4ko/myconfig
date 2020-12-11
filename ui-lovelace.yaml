@@ -304,13 +304,13 @@ views:
                 show_state: true
                 state_color: true
                 entities:
-                  # - entity: binary_sensor.esp32_kitchen_magnet
+                  # - entity: binary_sensor.esp32_node_k_magnet
                   #   name: Vent Door
                   #   tap_action:
                   #     action: call-service
                   #     service: switch.toggle
                   #     service_data:
-                  #       entity_id: switch.esp32_kitchen_airvalve_control
+                  #       entity_id: switch.esp32_node_k_airvalve_control
                   - binary_sensor.toilet_usage
                   - entity: switch.0x158d0002482619_switch
                     name: BFan B
@@ -350,7 +350,7 @@ views:
                   action: call-service
                   service: switch.turn_on
                   service_data:
-                    entity_id: switch.digma_ir_v_breather_pwr #esp32_kitchen_tv_pwr
+                    entity_id: switch.digma_ir_v_breather_pwr #esp32_node_k_tv_pwr
               - entity: binary_sensor.breather_s
                 name: Breather S
                 tap_action:
@@ -473,7 +473,7 @@ views:
             columns: 3
             state_color: true
             entities:
-              - entity: sensor.esp32_kitchen_illuminance
+              - entity: sensor.esp32_node_k_illuminance
                 name: K
               - entity: sensor.esp32_node_v_illuminance
                 name: V
@@ -631,6 +631,8 @@ views:
                 tap_action:
                   action: call-service
                   service: script.strip_s_effects
+                double_tap_action:
+                  action: toggle
               - entity: light.philips_e27_s
                 name: Desk S
                 icon: mdi:desk-lamp
@@ -677,8 +679,12 @@ views:
               - entity: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
                 name: Main K
                 tap_action:
-                  action: toggle
-              - entity: light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+                  #action: toggle
+                  action: call-service
+                  service: automation.trigger
+                  service_data:
+                    entity_id: automation.kitchen_main_lamp_on
+              - entity: light.esp32_node_k_led #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
                 name: Night K
                 icon: mdi:candle
                 tap_action:
@@ -691,7 +697,7 @@ views:
                 name: R
                 tap_action:
                   action: toggle
-              - entity: switch.ss5_hood_light #switch.esp32_kitchen_light
+              - entity: switch.ss5_hood_light #switch.esp32_node_k_light
                 name: Hood
                 tap_action:
                   action: toggle
@@ -710,7 +716,7 @@ views:
             columns: 8
             state_color: true
             entities:
-              - entity: switch.ss5_hood_fan #switch.esp32_kitchen_fan1
+              - entity: switch.ss5_hood_fan #switch.esp32_node_k_fan1
                 name: Hood
                 icon: mdi:fan
                 tap_action:
@@ -729,7 +735,7 @@ views:
                   action: call-service
                   service: switch.turn_on
                   service_data:
-                    entity_id: switch.esp32_kitchen_tv_pwr
+                    entity_id: switch.esp32_node_k_tv_pwr
               - entity: binary_sensor.mi_stick_k
                 name: Stick
                 icon: mdi:youtube-tv
@@ -1216,15 +1222,15 @@ views:
         state_color: true
         entities:
           - light.round_led_k
-          - light.magichome_mono_strip_light #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
-          - switch.ss5_hood_light #switch.esp32_kitchen_light
+          - light.esp32_node_k_led #switch.0x00158d000216528c_switch #switch.plug_158d000216528c
+          - switch.ss5_hood_light #switch.esp32_node_k_light
           - switch.0x158d000366815b_channel_1
           - switch.0x158d000366815b_channel_2
           #- light.gateway_light_04cf8c97808b
           - type: divider
-          - switch.ss5_hood_fan #switch.esp32_kitchen_fan1
-          #- switch.esp32_kitchen_fan2
-          #- switch.esp32_kitchen_fan3
+          - switch.ss5_hood_fan #switch.esp32_node_k_fan1
+          #- switch.esp32_node_k_fan2
+          #- switch.esp32_node_k_fan3
           - type: divider
           - switch.0x158d0002451850_switch #switch.wall_plug_158d0002451850
           - switch.0x158d0002476ed1_switch
@@ -1907,214 +1913,12 @@ views:
               - sensor.microwave_k
               - sensor.ro_pump_k
 
-################################################################
-# DEVICE TRACKERS PAGE
-################################################################
-  # - title: Devices (NMAP))
-  #   icon: mdi:access-point-network
-  #   cards:
-  #     - type: entities
-  #       title: Smart Home
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.bedside_lamp_mb
-  #         - device_tracker.e27_s
-  #         - device_tracker.e27_mb
-  #         - device_tracker.led_color_v
-  #         - device_tracker.led_color_mb
-  #         - device_tracker.round_led_mb
-  #         - device_tracker.round_led_s
-  #         - device_tracker.round_led_k
-  #         - device_tracker.square_led_v
-  #         - device_tracker.led_strip_hb
-  #         # - type: divider
-  #         # - device_tracker.gateway_hb
-  #         # - device_tracker.gateway_entrance_hb
-  #         # - device_tracker.gateway_hs
-  #         # - device_tracker.gateway_k
-  #         # - device_tracker.gateway_v
-  #         # - device_tracker.gateway_s
-  #         # - device_tracker.gateway_mb
-  #         - type: divider
-  #         # - device_tracker.gateway_plug_hb
-  #         - device_tracker.gateway_plug_entr_hb
-  #         # - device_tracker.gateway_plug_hs
-  #         # - device_tracker.gateway_plug_k
-  #         # - device_tracker.gateway_plug_v
-  #         # - device_tracker.gateway_plug_s
-  #         # - device_tracker.gateway_plug_mb
-  #         - device_tracker.server_plug_hb
-  #         - device_tracker.power_strip_mb
-  #         - device_tracker.power_strip_s
-  #         - device_tracker.plug_top_k
-  #         - device_tracker.round_led_s_switch
-  #         - type: divider
-  #         - device_tracker.humi
-  #         - device_tracker.purifier2s
-  #         - type: divider
-  #         - device_tracker.mi_ir
-          
-  #     - type: entities
-  #       title: Phones
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.life360_dima_tsymbal
-  #         - device_tracker.dima_iphone_8
-  #         - device_tracker.iphone8_ping
-  #         - device_tracker.meizu_2
-          
-  #         - type: divider
-  #         - device_tracker.life360_sandra_tsymbal
-  #         - device_tracker.sandra_iphone_7
-  #         - device_tracker.iphone7_ping
-  #         - device_tracker.sandra_iphone_6
-  #         - device_tracker.sandra_iphone_4s
-          
-  #         - type: divider
-  #         - device_tracker.life360_vova_tsymbal
-  #         - device_tracker.vova_mimax
-  #         - device_tracker.mimax2_ping
-          
-  #         - type: divider
-  #         - device_tracker.sasha_iphone_5s
-          
-  #         - type: divider
-  #         - device_tracker.ipad_sandra
-  #         - device_tracker.ipad_dima
-  #         - device_tracker.lena_iphone
-  #         - device_tracker.iphone_saska
-      
-  #     - type: entities
-  #       title: PCs
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.z9pa_ipmi
-  #         - device_tracker.main_server #device_tracker.z9pa_bond0
-  #         - device_tracker.i5
-  #         - device_tracker.m6800_lan
-  #         - device_tracker.m6800_wifi
-  #         - device_tracker.r418_wifi
-  #         - device_tracker.u430p_wifi
-  #         - device_tracker.brix_3160_lan
-  #         - device_tracker.brix3455_lan
-  #         - device_tracker.brix3455_wifi
-  #         - device_tracker.rpi_lan
-  #         - device_tracker.rpi_wifi
-  #         - device_tracker.acer_722_wifi
-  #         - device_tracker.dell_5721_wifi
-  #         - device_tracker.asus_v1j
-  #         - device_tracker.j3455_lan
-  #         - device_tracker.a722_board
-      
-  #     - type: entities
-  #       title: Network
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.maingate
-  #         - device_tracker.unificloudkey
-  #         #- device_tracker.mainswitch
-  #         - device_tracker.switch_16_150_hb
-  #         - device_tracker.switch_8_60_k
-  #         - device_tracker.switch_8_60_s
-  #         - device_tracker.switch_8_60_mb
-  #         - device_tracker.ap_hb
-  #         - device_tracker.ap_hs
-  #         - device_tracker.ap_s
-  #         - device_tracker.ap_v
-  #         - device_tracker.ap_mb
-      
-  #     - type: entities
-  #       title: Others
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.320l
-  #         - device_tracker.kitchen_tv
-  #         #- device_tracker.iconbit_v
-  #         #- device_tracker.kodi_v_lan
-  #         #- device_tracker.kodi_v_wifi
-  #         - device_tracker.tv_box_ping
-  #         - device_tracker.h96_max
-  #         - device_tracker.checkmachine
-  #         - device_tracker.hp8600
-  #         - device_tracker.hp8600_lan
-  #         - device_tracker.security
-          
-  #     - type: entities
-  #       title: Cameras
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.g3_flex_kitchen
-  #         - device_tracker.g3_flex_window
-  #         - device_tracker.g3_flex_hall
-  #         - device_tracker.g3_flex_entrance
-  #         - device_tracker.g3_flex_street
-  #         - type: divider
-  #         - device_tracker.roundcam
-  #         - device_tracker.square_cam_hs
-  #         - device_tracker.360camera
-  #         - device_tracker.digma_100
-  #         - device_tracker.door_cam_hb
-      
-  #     - type: entities
-  #       title: Home Mini
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.home_mini_k
-  #         - device_tracker.home_mini_v
-  #         - device_tracker.home_mini_s
-  #         - device_tracker.home_mini_mb
-  #         - device_tracker.home_mini_hb
-      
-  #     - type: entities
-  #       title: Boards
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.rpi_cam_wifi
-  #         - device_tracker.rpi_zero
-  #         - device_tracker.orange_pi_zero_plus_2_mb
-          
-  #     - type: entities
-  #       title: ESPs
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.8266_test1
-  #         - device_tracker.8266_air_valve
-  #         - device_tracker.esp01_hdd
-  #         - device_tracker.esp32_cam_test1
-  #         - device_tracker.esp32_test1
-  #         - device_tracker.esp32_domofon
-  #         - device_tracker.esp32_kitchen
-  #         - device_tracker.d1_domofon
-  #         - device_tracker.d1_filter_flow
-  #         - device_tracker.d1_hood
-  #         - device_tracker.sonoff_mini
-  #         - device_tracker.sonoff_4ch
-
-  #     - type: entities
-  #       title: CO2 sensors
-  #       show_header_toggle: false
-  #       state_color: true
-  #       entities:
-  #         - device_tracker.d1_mini_co2_mb
-  #         - device_tracker.d1_mini_co2_v
-  #         - device_tracker.d1_mini_co2_s
-
-
 
 ################################################################
 # DEVICE TRACKERS PAGE
 ################################################################
-  - title: Devices via UNIFI
-    icon: mdi:router-network
+  - title: Device trackers
+    icon: mdi:map-search #mdi:router-network
     cards:
       - type: entities
         title: Smart Home
@@ -2133,23 +1937,23 @@ views:
           - device_tracker.square_led_s
           - device_tracker.led_strip_hb
           - device_tracker.led_strip_entrance_hb
-          # - type: divider
-          # - device_tracker.gateway_hb
+          - type: divider
+          - device_tracker.gateway3_hb
           # - device_tracker.gateway_plug_entrance_hb
-          # - device_tracker.gateway_hs
-          # - device_tracker.gateway_k
+          - device_tracker.gateway3_hs
+          - device_tracker.gateway3_k
           # - device_tracker.gateway_v
-          # - device_tracker.gateway_s
+          - device_tracker.gateway3_s
           # - device_tracker.gateway_mb
           - type: divider
-          # - device_tracker.gateway_plug_hb_2
+          - device_tracker.gateway_plug_hb
           - device_tracker.gateway_plug_entrance_hb
-          # - device_tracker.gateway_plug_hs
-          # - device_tracker.gateway_plug_k
+          - device_tracker.gateway_plug_hs
+          - device_tracker.gateway_plug_k
           # - device_tracker.gateway_plug_v_2
-          # - device_tracker.gateway_plug_s
+          - device_tracker.gateway_plug_s
           # - device_tracker.gateway_plug_mb_2
-          # - device_tracker.server_plug_hb_2
+          #- device_tracker.server_plug_hb
           # - device_tracker.power_strip_wifi
           # - device_tracker.power_strip_s
           # - device_tracker.round_led_s_switch
@@ -2229,10 +2033,8 @@ views:
         state_color: true
         entities:
           - device_tracker.d_link_dns_320l
-          - device_tracker.kodi_k_lan
-          - device_tracker.h96_max
-          - device_tracker.tv_box_ping
-          - device_tracker.h96_max
+          - device_tracker.mi_box_v
+          - device_tracker.mi_stick_k
           - device_tracker.checkmachine
           - device_tracker.hp_178nw
           - device_tracker.security_system
@@ -2283,7 +2085,7 @@ views:
       #   entities:
       #     #- device_tracker.esp01_hdd
       #     - device_tracker.esp32_domofon
-      #     - device_tracker.esp32_kitchen_main
+      #     - device_tracker.esp32_node_k_main
       #     - device_tracker.esp32_water_filter
           
       #     - device_tracker.sonoff_mini
@@ -2820,11 +2622,11 @@ views:
             state_color: true
             entities:
               - sensor.git_stars
-              - entity: sensor.config_line_count_sh_ratio
+              - entity: sensor.config_line_count_ratio
                 name: Config Ratio
-              - entity: sensor.config_line_count_sh
+              - entity: sensor.config_line_count
                 name: Total Lines
-              - entity: sensor.config_line_count_sh_code
+              - entity: sensor.config_line_count_code
                 name: Code Lines
           - type: glance
             show_header_toggle: false
@@ -3872,7 +3674,7 @@ views:
             hours_to_show: 72
             entities:
               - sensor.0x158d000233fb72_pressure
-              - sensor.esp32_kitchen_pressure
+              - sensor.esp32_node_k_pressure
           - type: history-graph
             hours_to_show: 72
             entities:
@@ -4139,8 +3941,7 @@ views:
 
           - type: divider
           - binary_sensor.esp01_weight_pad_status
-          - binary_sensor.esp32_kitchen_status
-          - binary_sensor.magichome_mono_strip_status
+          - binary_sensor.esp32_node_k_status
           - binary_sensor.ss5_hood_status
           - binary_sensor.esp8266_oven_temp_k_status
 
@@ -4180,8 +3981,7 @@ views:
 
           - type: divider
           - sensor.esp01_weight_pad_wifi_rssi
-          - sensor.esp32_kitchen_wifi_rssi
-          - sensor.magichome_mono_strip_wifi_rssi
+          - sensor.esp32_node_k_wifi_rssi
           - sensor.ss5_hood_wifi_rssi
           - sensor.esp8266_oven_temp_k_wifi_rssi
 
@@ -4223,8 +4023,7 @@ views:
 
           - type: divider
           - sensor.esp01_weight_pad_uptime
-          - sensor.esp32_kitchen_uptime
-          - sensor.magichome_mono_strip_uptime
+          - sensor.esp32_node_k_uptime
           - sensor.ss5_hood_uptime
           - sensor.esp8266_oven_temp_k_uptime
 
@@ -4315,13 +4114,13 @@ views:
 ################################################################
 # Lamps Reset
 ################################################################
-  - title: WiFi Lamps
+  - title: WiFi Devices Restart Control
     icon: mdi:lightbulb-off #mdi:file-settings-variant
     cards:
       - type: vertical-stack
         cards: 
           - type: entities
-            title: Lamps Stats
+            title: Statuses
             show_header_toggle: false
             state_color: true
             entities:
@@ -4348,7 +4147,7 @@ views:
       - type: vertical-stack
         cards: 
           - type: entities
-            title: Lamps Restart
+            title: Switches
             show_header_toggle: false
             state_color: true
             entities:
@@ -4858,6 +4657,13 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - switch.gateway_plug_hb
+          - switch.gateway_plug_hs
+          - switch.gateway_plug_k
+      - type: entities
+        show_header_toggle: false
+        state_color: true
+        entities:
           - entity: switch.air_freshener_spray
             name: Spray
           - entity: switch.air_freshener_sleep
@@ -5007,3 +4813,4 @@ views:
           - sensor.socket_tv_v_monthly_night
           - sensor.socket_wadrobe_s_monthly_night
           - sensor.pow_r2_1_washer_b_monthly_night
+      
