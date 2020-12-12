@@ -20,10 +20,6 @@
       entity_id: input_select.washer_state
       state: 'Stopped'
   action:
-    - service: timer.cancel
-      entity_id: timer.washer_b
-    - service: timer.start
-      entity_id: timer.washer_b
     - service: input_number.set_value
       data_template:
         entity_id: input_number.washer_start
@@ -61,9 +57,7 @@
         option: Drying
     - service: notify.telegram
       data_template: 
-        message: "\U0000231B Стирка завершена! Время стирки составило {{ ( (as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))| round(0) - as_timestamp(states.timer.washer_b.last_changed)| int) / 60 )| round(0) }}мин."
-    - service: timer.cancel
-      entity_id: timer.washer_b
+        message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int - states('input_number.washer_start')| int) / 60 )| round(0) }}мин."
     - condition: state
       entity_id: binary_sensor.tod_day
       state: 'on'
