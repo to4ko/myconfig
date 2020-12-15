@@ -1,9 +1,12 @@
 import logging
 import time
+from datetime import timedelta
 
 from homeassistant.const import *
+from homeassistant.util.dt import now
 
 from . import DOMAIN, Gateway3Device
+from .binary_sensor import DT_FORMAT
 from .core.gateway3 import Gateway3
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,16 +33,20 @@ ICONS = {
     'smoke density': 'mdi:google-circles-communities',
 }
 
+INFO = ['ieee', 'nwk', 'msg_received', 'msg_missed', 'unresponsive',
+        'link_quality', 'rssi', 'last_seen']
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+
+async def async_setup_entry(hass, entry, add_entities):
     def setup(gateway: Gateway3, device: dict, attr: str):
-        async_add_entities([
-            Gateway3Action(gateway, device, attr)
-            if attr == 'action' else
-            Gateway3Sensor(gateway, device, attr)
-        ])
+        if attr == 'action':
+            add_entities([Gateway3Action(gateway, device, attr)])
+        elif attr in INFO:
+            add_entities([Gateway3Info(gateway, device, attr)])
+        else:
+            add_entities([Gateway3Sensor(gateway, device, attr)])
 
-    gw: Gateway3 = hass.data[DOMAIN][config_entry.entry_id]
+    gw: Gateway3 = hass.data[DOMAIN][entry.entry_id]
     gw.add_setup('sensor', setup)
 
 
@@ -63,6 +70,94 @@ class Gateway3Sensor(Gateway3Device):
     def update(self, data: dict = None):
         if self._attr in data:
             self._state = data[self._attr]
+        self.async_write_ha_state()
+
+
+CLUSTERS = {
+    0x0000: 'Basic',
+    0x0001: 'PowerCfg',
+    0x0003: 'Identify',
+    0x0006: 'OnOff',
+    0x0008: 'LevelCtrl',
+    0x000A: 'Time',
+    0x000C: 'AnalogInput',  # cube, gas
+    0x0012: 'Multistate',
+    0x0019: 'OTA',  # illuminance sensor
+    0x0101: 'DoorLock',
+    0x0400: 'Illuminance',
+    0x0402: 'Temperature',
+    0x0403: 'Pressure',
+    0x0405: 'Humidity',
+    0x0406: 'Occupancy',
+    0x0500: 'IasZone',
+    0x0B04: 'ElectrMeasur',
+    0xFCC0: 'Xiaomi'
+}
+
+
+class Gateway3Info(Gateway3Device):
+    last_seq = None
+
+    def __init__(self, gateway: Gateway3, device: dict, attr: str):
+        self.gw = gateway
+        self.device = device
+
+        self._attr = attr
+
+        ieee = '0x' + device['did'][5:].rjust(16, '0').upper()
+        self._attrs = {
+            'ieee': ieee,
+            'nwk': None,
+            'msg_received': 0,
+            'msg_missed': 0,
+            'unresponsive': 0
+        }
+
+        self._unique_id = None
+        self._name = device['device_name']
+        self.entity_id = f"{DOMAIN}.{device['mac']}"
+
+    @property
+    def state(self):
+        return self._state
+
+    async def async_added_to_hass(self):
+        self.gw.add_info(self._attrs['ieee'], self.update)
+
+    async def async_will_remove_from_hass(self) -> None:
+        self.gw.remove_info(self._attrs['ieee'], self.update)
+
+    def update(self, data: dict = None):
+        if 'sourceAddress' in data:
+            self._attrs['nwk'] = data['sourceAddress']
+            self._attrs['link_quality'] = data['linkQuality']
+            self._attrs['rssi'] = data['rssi']
+            self._attrs['last_seen'] = now().strftime(DT_FORMAT)
+
+            cid = int(data['clusterId'], 0)
+            self._attrs['last_msg'] = CLUSTERS.get(cid, cid)
+
+            self._attrs['msg_received'] += 1
+
+            new_seq = int(data['APSCounter'], 0)
+            if self.last_seq is not None:
+                miss = new_seq - self.last_seq - 1
+                if miss < 0:  # 0xFF => 0x00
+                    miss += 256
+                if miss:
+                    self._attrs['msg_missed'] += miss
+            self.last_seq = new_seq
+
+            self._state = self._attrs[self._attr]
+
+        elif 'parent' in data:
+            ago = timedelta(seconds=data.pop('ago'))
+            data['last_seen'] = (now() - ago).strftime(DT_FORMAT)
+            self._attrs.update(data)
+
+        elif data.get('deviceState') == 17:
+            self._attrs['unresponsive'] += 1
+
         self.async_write_ha_state()
 
 

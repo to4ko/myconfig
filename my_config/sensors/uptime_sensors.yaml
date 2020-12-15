@@ -53,9 +53,16 @@
 # Uptime sensor
 # ############################################################################
   - platform: uptime
-    name: HA Uptime
-    unit_of_measurement: minutes
-    
+    name: HA Start
+
+  - platform: template
+    sensors:
+      ha_uptime:
+        friendly_name: HA Uptime 
+        icon_template: mdi:clock
+        value_template: "{{ ((as_timestamp(now())|int-as_timestamp(states('sensor.ha_start'))|int) / 60 )|int }}"
+        unit_of_measurement: minutes
+
   - platform: template
     sensors:
       ha_uptime_text:
@@ -88,7 +95,7 @@
       host_uptime:
         friendly_name: Host Uptime
         unit_of_measurement: minutes
-        value_template: "{{ states('sensor.time') and ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60) ) | round (0) }}"
+        value_template: "{{ ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60) ) | int }}"
         
       host_uptime_text:
         friendly_name: Host Uptime Text
