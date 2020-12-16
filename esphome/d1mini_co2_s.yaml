@@ -28,7 +28,10 @@ logger:
 # Enable Home Assistant API
 api:
   reboot_timeout: 5min
-
+  services:
+    - service: mhz19_calibrate_zero
+      then:
+        - mhz19.calibrate_zero: my_mhz19_id
 ota:
 
 # web_server:
@@ -96,6 +99,7 @@ sensor:
     update_interval: 15s
 
   - platform: mhz19
+    id: my_mhz19_id
     co2:
       name: "Z19 CO2 S"
     temperature:
@@ -109,6 +113,14 @@ sensor:
 switch:
   - platform: restart
     name: ${board_name}_Restart
+
+  - platform: template
+    name: "Z19 ABC"
+    optimistic: true
+    on_turn_on:
+      mhz19.abc_enable: my_mhz19_id
+    on_turn_off:
+      mhz19.abc_disable: my_mhz19_id
 
 time:
   - platform: homeassistant
