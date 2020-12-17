@@ -6,7 +6,7 @@
 # Hall Small - Auto Light On
 # ##################################
 - alias: hall_small_auto_night_light
-  initial_state: 'true'
+  initial_state: "true"
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0001ae9f61_motion
@@ -37,17 +37,17 @@
       data:
         brightness_pct: 45
         rgb_color: [255, 180, 107]
-    - delay: '00:00:30'
-    - service: light.turn_off
-      entity_id: light.btf_pixel_strip_top
-      data:
-        transition: 5
+    # - delay: '00:00:30'
+    # - service: light.turn_off
+    #   entity_id: light.btf_pixel_strip_top
+    #   data:
+    #     transition: 5
 
 # ##################################
 # Hall Small-  Main Lamp (Xiaomi Round LED) - On
 # ##################################
 - alias: hall_small_main_lamp_on
-  initial_state: 'true'
+  initial_state: "true"
   mode: restart
   trigger:
     - platform: state
@@ -77,7 +77,7 @@
 # Hall Small-  Main Lamp (Xiaomi Round LED) - Double
 # ##################################
 - alias: hall_small_main_lamp_on
-  initial_state: 'true'
+  initial_state: "true"
   trigger:
     - platform: state
       entity_id: sensor.0x4cf8cdf3c7a9a48_action
@@ -93,7 +93,7 @@
 # Hall Small - Main Lamp Reset 
 # ##################################
 - alias: hall_small_main_lamp_reset
-  initial_state: 'true'
+  initial_state: "true"
   trigger:
     - platform: time_pattern
       minutes: "/1"
@@ -106,3 +106,63 @@
   action:
     - service: script.turn_on
       entity_id: script.round_led_hs_restart
+      
+# # ##################################
+# # Hall small - LED STrip Timer start
+# # ################################## 
+# - alias: hall_small_led_strip_timer_on
+#   initial_state: "true"
+#   trigger:
+#     - platform: state
+#       entity_id: light.btf_pixel_strip_top
+#       to: 'on'
+#       from: 'off'
+#   action:
+#     - service: timer.cancel
+#       entity_id: timer.night_led_strip_hs
+#     - service: timer.start
+#       entity_id: timer.night_led_strip_hs
+
+# ##################################
+# Hall small - Auto LED Strips off
+# ##################################
+- alias: hall_small_led_strip_auto_led_off
+  initial_state: "true"
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.night_led_strip_hs
+  action:
+    - service: light.turn_off
+      entity_id: light.btf_pixel_strip_top
+      data:
+        transition: 5
+        
+# ##################################
+# Hall small - LED Strip Timer restart with movement
+# ################################## 
+- alias: hall_small_led_strip_timer_restart
+  initial_state: "true"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0001e05856_motion
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d0002b482e9_motion
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: light.btf_pixel_strip_top
+      to: 'on'
+      from: 'off'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'off'
+  action:
+    - service: timer.cancel
+      entity_id: timer.night_led_strip_hs
+    - service: timer.start
+      entity_id: timer.night_led_strip_hs
