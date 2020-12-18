@@ -1,4 +1,14 @@
-# My Home Assistant configuration
+![Project Maintenance][maintenance-shield]
+
+[![GitHub Actions][actions-shield]][actions]
+[![GitHub Activity][commits-shield]][commits]
+[![GitHub Last Commit][last-commit-shield]][commits]
+
+![GitHub Stars][stars-shield]
+![GitHub Watchers][watchers-shield]
+![GitHub Forks][forks-shield]
+
+# to4ko's Home Assistant configuration
 
 
 First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [OXOTH1K](https://github.com/OXOTH1K/homeassistant), [Vasilchuk](https://github.com/Anonym-tsk), [S_p_i_r_i_t_u_s](https://github.com/Spirituss), [lapatoc](https://github.com/bastshoes), [Vtel](https://github.com/zvldz) for help and support!
