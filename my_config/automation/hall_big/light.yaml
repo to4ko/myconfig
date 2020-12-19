@@ -485,10 +485,59 @@
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.main_led_strip_hb, timer.night_led_strip_hb
+        entity_id: timer.main_led_strip_hb
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.night_led_strip_hb
   action:
     - service: light.turn_off
       entity_id: light.led_strip_entrance_hb, light.led_strip_hb
+
+# ##################################
+# Hall big - LED Strips Timer restart with movement
+# ################################## 
+- alias: hall_big_led_strips_night_timer_restart
+  initial_state: "true"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0001e05856_motion
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d0002b482e9_motion
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d0001d5995e_motion
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.motion_g3_flex_entrance, binary_sensor.motion_g3_flex_hall
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: light.led_strip_entrance_hb, light.led_strip_hb
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "off"
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: light.led_strip_entrance_hb
+          state: 'on'
+        - condition: state
+          entity_id: light.led_strip_hb
+          state: 'on'
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_night_timer_restart','last_triggered'))|int) > 15 }}"    
+  action:
+    - service: timer.cancel
+      entity_id: timer.night_led_strip_hb
+    - service: timer.start
+      entity_id: timer.night_led_strip_hb
 
 # ##################################
 # Hall big - LED Strips Timer restart with movement
@@ -504,19 +553,33 @@
       entity_id: binary_sensor.0x158d0002b482e9_motion
       from: 'off'
       to: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d0001d5995e_motion
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.motion_g3_flex_entrance, binary_sensor.motion_g3_flex_hall
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: light.led_strip_entrance_hb, light.led_strip_hb
+      to: "on"
   condition:
-    condition: or
-    conditions:
-      - condition: state
-        entity_id: light.led_strip_entrance_hb
-        state: 'on'
-      - condition: state
-        entity_id: light.led_strip_hb
-        state: 'on'
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "on"
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: light.led_strip_entrance_hb
+          state: 'on'
+        - condition: state
+          entity_id: light.led_strip_hb
+          state: 'on'
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart','last_triggered'))|int) > 15 }}"    
   action:
     - service: timer.cancel
-      entity_id: timer.main_led_strip_hb, timer.night_led_strip_hb
+      entity_id: timer.main_led_strip_hb
     - service: timer.start
-      data_template:
-        entity_id: >
-          timer.{% if is_state('binary_sensor.tod_day','on') %}main_led_strip_hb{%else%}night_led_strip_hb{%endif%}
+      entity_id: timer.main_led_strip_hb

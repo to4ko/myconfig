@@ -22,6 +22,7 @@ wifi:
     dns2: 8.8.8.8
 
 logger:
+  baud_rate: 0
 
 api:
   reboot_timeout: 0s
@@ -46,8 +47,8 @@ exposure_notifications:
           ESP_LOGD("main", "  RPI: %s", hexencode(x.rolling_proximity_identifier).c_str());
           ESP_LOGD("main", "  RSSI: %d", x.rssi);
 
-# web_server:
-#   port: 80
+web_server:
+  port: 80
 
 binary_sensor:
   - platform: status
@@ -73,12 +74,12 @@ binary_sensor:
     name: ${board_name}_Green
     device_class: presence
 
-  - platform: ble_presence
-    mac_address: FF:FF:B0:00:95:1F
-    name: ${board_name}_iTag_white
-    device_class: presence
+#   - platform: ble_presence
+#     mac_address: FF:FF:B0:00:95:1F
+#     name: ${board_name}_iTag_white
+#     device_class: presence
 
-# FF:FF:B0:00:95:1F white itag
+# # FF:FF:B0:00:95:1F white itag
 
 # 7E:FE:3E:EC:59:FB white
 # 6B:9C:3E:D1:C5:9A green
@@ -90,7 +91,7 @@ sensor:
     name: ${board_name}_Uptime_s
     id: uptime_sensor
     update_interval: 15s
-    
+
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
@@ -115,18 +116,18 @@ sensor:
     name: ${board_name}_Green_RSSI
     icon: "mdi:wifi"
 
-  - platform: ble_rssi
-    mac_address: FF:FF:B0:00:95:1F
-    name: ${board_name}_iTag_white RSSI
-    icon: "mdi:wifi"
+  # - platform: ble_rssi
+  #   mac_address: FF:FF:B0:00:95:1F
+  #   name: ${board_name}_iTag_white RSSI
+  #   icon: "mdi:wifi"
 
-  - platform: template
-    name: ${board_name}_free_ram
-    lambda: "return ESP.getFreeHeap();"
-    id: heap_size
-    update_interval: 20s
-    unit_of_measurement: bytes
-    accuracy_decimals: 0
+  # - platform: template
+  #   name: ${board_name}_free_ram
+  #   lambda: "return ESP.getFreeHeap();"
+  #   id: heap_size
+  #   update_interval: 20s
+  #   unit_of_measurement: bytes
+  #   accuracy_decimals: 0
 
 text_sensor:
   - platform: template
@@ -154,35 +155,35 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
-  - platform: template
-    name: ${board_name}_last_connect
-    lambda: |-
-      auto esptime = id(esp_time).now();
-      if(esptime.is_valid()) {
-        auto esptime_text = esptime.strftime("%d.%m.%Y %H:%M");
-        return esptime_text;
-      }
-    icon: "mdi:clock-end"   
+  # - platform: template
+  #   name: ${board_name}_last_connect
+  #   lambda: |-
+  #     auto esptime = id(esp_time).now();
+  #     if(esptime.is_valid()) {
+  #       auto esptime_text = esptime.strftime("%d.%m.%Y %H:%M");
+  #       return esptime_text;
+  #     }
+  #   icon: "mdi:clock-end"   
 
-  - platform: template
-    name: ${board_name}_heap_size_text
-    lambda: |-
-      uint32_t heby = id(heap_size).state;
-      int hekb = 0;
-      int hemb = 0;
-      if (heby > 1048576) {
-        hemb = trunc(heby / 1048576);
-        heby = heby - (hemb * 1048576);
-      }
-      if (heby > 1024) {
-        hekb = trunc(heby / 1024);
-        heby = heby - (hekb * 1024);
-      }
-      char buffer[17];
-      sprintf(buffer, "%02umb %02ukb %02ub", hemb, hekb, heby);
-      return {buffer};
-    icon: "mdi:chart-pie"
-    #update_interval: ${interval}    
+  # - platform: template
+  #   name: ${board_name}_heap_size_text
+  #   lambda: |-
+  #     uint32_t heby = id(heap_size).state;
+  #     int hekb = 0;
+  #     int hemb = 0;
+  #     if (heby > 1048576) {
+  #       hemb = trunc(heby / 1048576);
+  #       heby = heby - (hemb * 1048576);
+  #     }
+  #     if (heby > 1024) {
+  #       hekb = trunc(heby / 1024);
+  #       heby = heby - (hekb * 1024);
+  #     }
+  #     char buffer[17];
+  #     sprintf(buffer, "%02umb %02ukb %02ub", hemb, hekb, heby);
+  #     return {buffer};
+  #   icon: "mdi:chart-pie"
+  #   #update_interval: ${interval}    
 
 switch:
   - platform: restart

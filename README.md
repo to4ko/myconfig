@@ -18,6 +18,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 3ea WD Green in HW Raid-0 (Torrent heap) via Adaptec 71605
   - Corsair HX1200i Power supply
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
+  - USR 56k USB Modem
 
 **MQTT\Zigbee2MQTT Server #1:**
   - Gigabyte Brix Celeron j3455

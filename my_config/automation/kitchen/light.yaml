@@ -20,9 +20,20 @@
       entity_id: sensor.0x158d0002a2412d_action
       to: 'tilt'
   condition:
-    - condition: state
-      entity_id: light.round_led_k #switch.wall_switch_right_158d0002a36f7f
-      state: 'on'
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: light.round_led_k
+          state: 'on'
+        - condition: state
+          entity_id: switch.0x158d000366815b_channel_1
+          state: 'on'
+        - condition: state
+          entity_id: switch.0x158d000366815b_channel_2
+          state: 'on'
+        - condition: state
+          entity_id: switch.ss5_hood_light
+          state: 'on'
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_timer_restart','last_triggered'))|int) > 15 }}"
   action:
@@ -82,6 +93,8 @@
       entity_id: light.round_led_k
       data:
         transition: 15
+    - service: switch.turn_off
+      entity_id: switch.0x158d000366815b_channel_1, switch.0x158d000366815b_channel_2, switch.ss5_hood_light
 
 # ##################################
 # Kitchen - Auto Light On
@@ -357,11 +370,15 @@
     - platform: state
       entity_id: light.esp32_node_k_light
       to: 'on'
-      from: 'off'      
   condition:
+    - condition: state
+      entity_id: light.esp32_node_k_light
+      state: "on"
     - condition: state
       entity_id: binary_sensor.tod_day
       state: 'off'
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_led_strip_timer_restart','last_triggered'))|int) > 15 }}"
   action:
     - service: timer.cancel
       entity_id: timer.night_led_strip_k
