@@ -17,6 +17,7 @@ ATTR_EVENT_LENGTH = "event_length"
 ATTR_EVENT_OBJECT = "event_object"
 ATTR_IS_DARK = "is_dark"
 ATTR_MIC_SENSITIVITY = "mic_sensitivity"
+ATTR_PRIVACY_MODE = "privacy_mode"
 
 CONF_THUMB_WIDTH = "image_width"
 CONF_RECORDING_MODE = "recording_mode"
@@ -30,6 +31,8 @@ CONF_HIGH_FPS_ON = "high_fps_on"
 CONF_MESSAGE = "message"
 CONF_DURATION = "duration"
 CONF_LEVEL = "level"
+CONF_MIC_LEVEL = "mic_level"
+CONF_PRIVACY_MODE = "privacy_mode"
 
 DEFAULT_PORT = 443
 DEFAULT_ATTRIBUTION = "Powered by Unifi Protect Server"
@@ -48,10 +51,12 @@ SERVICE_SET_HDR_MODE = "set_hdr_mode"
 SERVICE_SET_HIGHFPS_VIDEO_MODE = "set_highfps_video_mode"
 SERVICE_SET_DOORBELL_LCD_MESSAGE = "set_doorbell_lcd_message"
 SERVICE_SET_MIC_VOLUME = "set_mic_volume"
+SERVICE_SET_PRIVACY_MODE = "set_privacy_mode"
 
 TYPE_RECORD_MOTION = "motion"
-TYPE_RECORD_ALLWAYS = "always"
+TYPE_RECORD_ALWAYS = "always"
 TYPE_RECORD_NEVER = "never"
+TYPE_RECORD_NOTSET = "notset"
 TYPE_RECORD_SMART = "smart"
 TYPE_RECORD_SMARTDETECT = "smartDetect"
 TYPE_IR_AUTO = "auto"
@@ -81,11 +86,12 @@ UNIFI_PROTECT_PLATFORMS = [
 VALID_IR_MODES = [TYPE_IR_ON, TYPE_IR_AUTO, TYPE_IR_OFF, TYPE_IR_LED_OFF]
 VALID_RECORDING_MODES = [
     TYPE_RECORD_MOTION,
-    TYPE_RECORD_ALLWAYS,
+    TYPE_RECORD_ALWAYS,
     TYPE_RECORD_NEVER,
     TYPE_RECORD_SMART,
+    TYPE_RECORD_NOTSET,
 ]
-VALID_LIGHT_MODES = [True, False]
+VALID_BOOLEAN_MODES = [True, False]
 
 SAVE_THUMBNAIL_SCHEMA = vol.Schema(
     {
@@ -114,21 +120,32 @@ SET_IR_MODE_SCHEMA = vol.Schema(
 SET_STATUS_LIGHT_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Optional(CONF_STATUS_LIGHT, default=True): vol.In(VALID_LIGHT_MODES),
+        vol.Optional(CONF_STATUS_LIGHT, default=True): vol.In(VALID_BOOLEAN_MODES),
     }
 )
 
 SET_HDR_MODE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Optional(CONF_HDR_ON, default=True): vol.In(VALID_LIGHT_MODES),
+        vol.Optional(CONF_HDR_ON, default=True): vol.In(VALID_BOOLEAN_MODES),
     }
 )
 
 SET_HIGHFPS_VIDEO_MODE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Optional(CONF_HIGH_FPS_ON, default=True): vol.In(VALID_LIGHT_MODES),
+        vol.Optional(CONF_HIGH_FPS_ON, default=True): vol.In(VALID_BOOLEAN_MODES),
+    }
+)
+
+SET_PRIVACY_MODE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Required(CONF_PRIVACY_MODE, default=False): vol.In(VALID_BOOLEAN_MODES),
+        vol.Required(CONF_MIC_LEVEL, default=-1): int,
+        vol.Optional(CONF_RECORDING_MODE, default=TYPE_RECORD_NOTSET): vol.In(
+            VALID_RECORDING_MODES
+        ),
     }
 )
 

@@ -314,6 +314,7 @@ DEVICES = [{
 }, {
     'lumi.lock.aq1': ["Aqara", "Door Lock S1", "ZNMS11LM"],
     'lumi.lock.acn02': ["Aqara", "Door Lock S2", "ZNMS12LM"],
+    'lumi.lock.acn03': ["Aqara", "Door Lock S2 Pro", "ZNMS12LM"],
     'params': [
         ['13.1.85', None, 'key_id', 'sensor'],
         ['13.20.85', 'lock_state', 'lock', 'binary_sensor'],
@@ -376,6 +377,27 @@ GLOBAL_PROP = {
     '8.0.9001': 'battery_end_of_life'
 }
 
+CLUSTERS = {
+    0x0000: 'Basic',
+    0x0001: 'PowerCfg',
+    0x0003: 'Identify',
+    0x0006: 'OnOff',
+    0x0008: 'LevelCtrl',
+    0x000A: 'Time',
+    0x000C: 'AnalogInput',  # cube, gas sensor
+    0x0012: 'Multistate',
+    0x0019: 'OTA',  # illuminance sensor
+    0x0101: 'DoorLock',
+    0x0400: 'Illuminance',  # motion sensor
+    0x0402: 'Temperature',
+    0x0403: 'Pressure',
+    0x0405: 'Humidity',
+    0x0406: 'Occupancy',  # motion sensor
+    0x0500: 'IasZone',  # gas sensor
+    0x0B04: 'ElectrMeasur',
+    0xFCC0: 'Xiaomi'
+}
+
 
 def get_device(zigbee_model: str) -> Optional[dict]:
     # the model has an extra tail when added
@@ -409,8 +431,7 @@ def fix_xiaomi_props(params) -> dict:
         elif k == 'battery' and v and v > 1000:
             params[k] = round((min(v, 3200) - 2500) / 7)
         elif k == 'run_state':
-            params[k] = ['offing', 'oning', 'stop',
-                         'hinder_stop'].index(v)
+            params[k] = ['offing', 'oning', 'stop', 'hander_stop'].index(v)
 
     return params
 
@@ -469,15 +490,21 @@ def get_buttons(model: str):
     return None
 
 
+def migrate_options(data):
+    data = dict(data)
+    options = {k: data.pop(k) for k in ('ble', 'zha') if k in data}
+    return {'data': data, 'options': options}
+
+
 TITLE = "Xiaomi Gateway 3 Debug"
-NOTIFY_TEXT = '<a href="%s" target="_blank">Open Log<a>'
+NOTIFY_TEXT = '<a href="%s?r=10" target="_blank">Open Log<a>'
 HTML = (f'<!DOCTYPE html><html><head><title>{TITLE}</title>'
         '<meta http-equiv="refresh" content="%s"></head>'
         '<body><pre>%s</pre></body></html>')
 
 
 class XiaomiGateway3Debug(logging.Handler, HomeAssistantView):
-    name = "sonoff_debug"
+    name = "xiaomi_debug"
     requires_auth = False
 
     text = ''

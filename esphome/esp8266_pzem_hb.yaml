@@ -8,12 +8,12 @@ esphome:
   comment: ESP8266 PZEM
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_pass
-  domain: .localdomain
+  # ssid: !secret wifi_ssid
+  # password: !secret wifi_pass
+  # domain: .localdomain
   reboot_timeout: 15min
   output_power: 10dB
-  fast_connect: true
+  #fast_connect: true
   power_save_mode: none
   manual_ip:
     static_ip: 192.168.1.63
@@ -21,6 +21,21 @@ wifi:
     subnet: 255.255.255.0
     dns1: 192.168.1.1
     dns2: 8.8.8.8
+  networks:
+    - ssid: !secret wifi_ssid_hb
+      password: !secret wifi_pass
+      hidden: true
+      bssid: !secret wifi_bssid_hb_iot
+      priority: 2
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      bssid: !secret wifi_bssid_hb_main
+      priority: 1
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      priority: 0
 
 logger:
   #baud_rate: 0
@@ -32,6 +47,12 @@ ota:
 
 web_server:
   port: 80
+
+globals:
+  - id: total_monthly
+    type: float
+    restore_value: yes
+    initial_value: '0'
 
 uart:
   rx_pin: GPIO12
@@ -97,10 +118,18 @@ sensor:
       accuracy_decimals: 1
     energy:
       name: ${board_name}_Energy
-      accuracy_decimals: 0
+      accuracy_decimals: 3
+      unit_of_measurement: 'kWh'
+      filters:
+        - multiply: 0.001      
     power:
       name: ${board_name}_Power
       accuracy_decimals: 0
+      id: power
+      # filters:
+      #   # W to kW
+      #   - multiply: 0.001
+      unit_of_measurement: W
     frequency:
       name: ${board_name}_Frequency
       accuracy_decimals: 0
@@ -109,6 +138,24 @@ sensor:
       accuracy_decimals: 2
     update_interval: 10s
 
+  - platform: total_daily_energy
+    id: total_daily
+    name: ${board_name}_Energy_Daily
+    power_id: power
+    accuracy_decimals: 3
+    unit_of_measurement: 'kWh'
+    filters:
+      - multiply: 0.001
+    icon: mdi:calendar-week-begin
+    
+  - platform: template
+    name: ${board_name}_Energy_Monthly
+    lambda: return id(total_monthly) + id(total_daily).state;
+    update_interval: 10s
+    unit_of_measurement: kWh
+    accuracy_decimals: 3
+    icon: mdi:calendar-month
+    
   - platform: bme680
     temperature:
       name: ${board_name}_Temperature
@@ -129,7 +176,29 @@ sensor:
 switch:
   - platform: restart
     name: ${board_name}_Restart
+    
+  - platform: template
+    name: ${board_name}_Reset_Monthy
+    turn_on_action: 
+      - globals.set:
+          id: total_monthly
+          value: '0'
 
 time:
   - platform: homeassistant
     id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
+    on_time:
+    - seconds: 30
+      minutes: 59
+      hours: 23
+      then:
+        - lambda: id(total_monthly) = id(total_monthly) + id(total_daily).state;
+    - seconds: 30
+      minutes: 0
+      hours: 0
+      days_of_month: 21
+      then:
+        - lambda: id(total_monthly) = 0;

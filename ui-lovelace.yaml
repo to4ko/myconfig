@@ -1458,7 +1458,7 @@ views:
               - sensor.water_cost 
               - type: divider
               - type: divider
-              - sensor.power_consumption_month_cost
+              - sensor.power_cost
           - type: entities
             state_color: true
             entities:
@@ -1479,24 +1479,65 @@ views:
                 name: Water
       - type:  vertical-stack
         cards:
-          - type: custom:mini-graph-card
+          # - type: custom:mini-graph-card
+          #   entities:
+          #     - sensor.water_hour_single
+          #   name: Water usage
+          #   group_by: hour
+          #   aggregate_func: max
+          #   show:
+          #     graph: bar
+          #   line_color: blue
+          #   icon: mdi:water-pump
+          #   hours_to_show: 48
+          #   points_per_hour: 1
+          #   extrema: true
+          #   labels: true
+          #   line_width: 3
+          #   decimals: 2
+          #   hour24: true
+          - type: 'custom:mini-graph-card'
+            color_thresholds:
+              - color: '#039BE5'
+                value: 0
+              - color: '#0da035'
+                value: 0.03
+              - color: '#e0b400'
+                value: 0.09
+              - color: '#e45e65'
+                value: 0.15
+            color_thresholds_transition: hard
             entities:
-              - sensor.water_hour_single
-            name: Water usage
+              - entity: sensor.water_hour_single
+                name: Water
+              - color: 'rgba(0,0,255,1)'
+                entity: binary_sensor.dark_outside
+                show_line: false
+                y_axis: secondary
+            group: false
             group_by: hour
-            aggregate_func: max
-            show:
-              graph: bar
-            line_color: blue
-            icon: mdi:water-pump
-            hours_to_show: 48
-            points_per_hour: 1
-            extrema: true
-            labels: true
-            line_width: 3
-            decimals: 2
             hour24: true
-          
+            hours_to_show: 48
+            line_width: 2
+            points_per_hour: 4
+            show:
+              extrema: true
+              fill: fade
+              icon: true
+              labels: false
+              name: true
+              state: true
+              #graph: bar
+            state_map:
+              - label: Day
+                value: 'off'
+              - label: Night
+                value: 'on'
+            style: |
+              ha-card {
+                border: solid 2px var(--primary-color);
+              }
+                  
           - type: entities
             title: Water
             show_header_toggle: false
@@ -1505,53 +1546,144 @@ views:
               - sensor.hot_water_month
               - sensor.cold_water_month
               - type: divider
-              - sensor.hot_water_meter
-              - sensor.cold_water_meter
+              # - sensor.hot_water_meter
+              # - sensor.cold_water_meter
               - type: divider
               - input_number.hot_water_meter
               - input_number.cold_water_meter
               - type: divider
               - input_number.hot_water_meter_last_month
               - input_number.cold_water_meter_last_month
-              - type: divider
-              - entity: binary_sensor.0x158d000232de79_contact
-                name: Cold water sensor
-              - entity: binary_sensor.0x158d000236fcd5_contact
-                name: Hot water sensor
-          
+              # - type: divider
+              # - entity: binary_sensor.0x158d000232de79_contact
+              #   name: Cold water sensor
+              # - entity: binary_sensor.0x158d000236fcd5_contact
+              #   name: Hot water sensor
+
+
       - type: vertical-stack
         cards:
-          - type: custom:mini-graph-card
-            icon: mdi:flash
-            entities:
-              - sensor.energy_hourly_single
-              #- sensor.energy_xiaomi_hourly_single
-            name: Power Consumption
-            show:
-              graph: bar
-            line_color: red
-            group_by: hour
-            hours_to_show: 48
-            points_per_hour: 1
-            extrema: true
-            labels: true
-            line_width: 3
-            decimals: 2
-            hour24: true
+          - type: vertical-stack
+            cards:
+              # - type: custom:mini-graph-card
+              #   icon: mdi:flash
+              #   entities:
+              #     - sensor.energy_hourly_single
+              #     #- sensor.energy_xiaomi_hourly_single
+              #   name: Power Consumption
+              #   show:
+              #     graph: bar
+              #   line_color: red
+              #   group_by: hour
+              #   hours_to_show: 48
+              #   points_per_hour: 1
+              #   extrema: true
+              #   labels: true
+              #   line_width: 3
+              #   decimals: 2
+              #   hour24: true
+              - type: 'custom:mini-graph-card'
+                color_thresholds:
+                  - color: '#100000'
+                    value: 0
+                  - color: '#400000'
+                    value: 50
+                  - color: '#800000'
+                    value: 500
+                  - color: '#bf0000'
+                    value: 800
+                  - color: '#ff0000'
+                    value: 1500
+                color_thresholds_transition: hard
+                entities:
+                  - entity: sensor.energy_hourly_single #sensor.esp8266_pzem_hb_power
+                    name: Energy
+                  # - color: 'rgba(0,0,255,1)'
+                  #   entity: binary_sensor.dark_outside
+                  #   show_line: false
+                  #   y_axis: secondary
+                  - color: '#FBB124'
+                    entity: sensor.esp8266_pzem_hb_power
+                    name: Power
+                    show_line: true
+                  - color: '#cc261c'
+                    entity: binary_sensor.tariff_t1
+                    show_line: false
+                    y_axis: secondary
+                    name: T1
+                  - color: '#2e934c'
+                    entity: binary_sensor.tariff_t2
+                    show_line: false
+                    y_axis: secondary
+                    name: T2
+                group: false
+                group_by: hour
+                hour24: true
+                hours_to_show: 48
+                line_width: 2
+                points_per_hour: 4
+                show:
+                  extrema: true
+                  fill: fade
+                  icon: true
+                  labels: false
+                  name: true
+                  state: true
+                state_map:
+                  - label: Day
+                    value: 'off'
+                  - label: Night
+                    value: 'on'
+                style: |
+                  ha-card {
+                    border: solid 2px var(--primary-color);
+                  }                  
+          # - type: custom:mini-graph-card
+          #   icon: mdi:flash
+          #   entities:
+          #     - sensor.energy_hourly_single
+          #     #- sensor.energy_xiaomi_hourly_single
+          #   name: Power Consumption
+          #   show:
+          #     graph: bar
+          #   line_color: red
+          #   group_by: hour
+          #   hours_to_show: 48
+          #   points_per_hour: 1
+          #   extrema: true
+          #   labels: true
+          #   line_width: 3
+          #   decimals: 2
+          #   hour24: true
           
           - type: entities
             title: Power
             show_header_toggle: false
             state_color: true
             entities:
-              - sensor.power_consumption_month_t1
-              - sensor.power_consumption_month_t2
+              - entity: sensor.esp8266_pzem_hb_power
+                name: PZEM Power
+              - entity: sensor.esp8266_pzem_hb_energy
+                name: PZEM Energy
+              - entity: sensor.esp8266_pzem_hb_energy_daily
+                name: PZEM Daily
+              - entity: sensor.esp8266_pzem_hb_energy_monthly
+                name: PZEM Monthly
+              - entity: sensor.energy_daily_count_single
+                name: Utility Daily
+              - entity: sensor.energy_monthly_count_single
+                name: Utility Monthly
               - type: divider
-              - sensor.power_t1
-              - sensor.power_t2
+              - entity: sensor.energy_monthly_day
+                name: T1/Month
+              - entity: sensor.energy_monthly_night
+                name: T2/Month
               - type: divider
-              - input_number.power_t1
-              - input_number.power_t2
+              # - sensor.power_t1
+              # - sensor.power_t2
+              - type: divider
+              - input_number.power_meter_t1
+              - input_number.power_meter_t2
               - type: divider
               - input_number.power_meter_last_month_t1
               - input_number.power_meter_last_month_t2
@@ -1762,7 +1894,7 @@ views:
             cards:
               - type: gauge
                 name: Current
-                entity: sensor.total_current
+                entity: sensor.esp8266_pzem_hb_current
                 max: 40
                 severity:
                   green: 1
@@ -1770,7 +1902,7 @@ views:
                   red: 30
               - type: gauge
                 name: Voltage
-                entity: sensor.voltage
+                entity: sensor.esp8266_pzem_hb_voltage
                 min: 200
                 max: 240
                 severity:
@@ -1780,21 +1912,21 @@ views:
           - type: horizontal-stack
             cards:
               - type: gauge
-                name: Power
-                entity: sensor.power_consumption
-                max: 12000
+                name: PZEM
+                entity: sensor.esp8266_pzem_hb_power
+                max: 8800
                 severity:
                   green: 100
                   yellow: 5000
-                  red: 10000
+                  red: 7000
               - type: gauge
                 name: Mercury 200
                 entity: sensor.esp32_domofon_power_meter
-                max: 12000
+                max: 8800
                 severity:
                   green: 100
                   yellow: 5000
-                  red: 10000
+                  red: 7000
           - type: glance
             show_header_toggle: false
             state_color: true
@@ -3963,6 +4095,7 @@ views:
           - binary_sensor.digma_ir_v_status
 
           - type: divider          
+          - binary_sensor.esp8266_pzem_hb_status
           - binary_sensor.shp2_socket_server_status
           - binary_sensor.esp32_ble_tracker_status
           - binary_sensor.esp32_domofon_status
@@ -3972,7 +4105,6 @@ views:
           - binary_sensor.digma_ir_mb_status
           - binary_sensor.sonoff_basic_3_status
           - binary_sensor.shp2_socket_2_status
-
 
           - type: divider          
           - binary_sensor.d1mini_co2_s_status
@@ -4003,6 +4135,7 @@ views:
           - sensor.digma_ir_v_wifi_rssi
           
           - type: divider          
+          - sensor.esp8266_pzem_hb_wifi_rssi
           - sensor.shp2_socket_server_wifi_rssi
           - sensor.esp32_ble_tracker_wifi_rssi
           - sensor.esp32_domofon_wifi_rssi
@@ -4014,8 +4147,6 @@ views:
           - sensor.shp2_socket_2_wifi_rssi
 
           - type: divider          
-
-
           - sensor.d1mini_co2_s_wifi_rssi
           - sensor.digma_ir_s_wifi_rssi
 
@@ -4045,6 +4176,7 @@ views:
           - sensor.digma_ir_v_uptime
 
           - type: divider          
+          - sensor.esp8266_pzem_hb_uptime
           - sensor.shp2_socket_server_uptime
           - sensor.esp32_ble_tracker_uptime
           - sensor.esp32_domofon_uptime
@@ -4860,6 +4992,85 @@ views:
                 name: Calc
               - entity: sensor.esp32_domofon_power_meter
                 name: LED
+
+          - type: 'custom:mini-graph-card'
+            color_thresholds:
+              - color: '#039BE5'
+                value: 0
+              - color: '#0da035'
+                value: 600
+              - color: '#e0b400'
+                value: 1200
+              - color: '#e45e65'
+                value: 2400
+            color_thresholds_transition: hard
+            entities:
+              - entity: sensor.esp8266_pzem_hb_power
+                name: PZEM Power
+              - color: 'rgba(0,0,255,1)'
+                entity: binary_sensor.dark_outside
+                show_line: false
+                y_axis: secondary
+            group: false
+            hour24: true
+            hours_to_show: 16
+            line_width: 4
+            points_per_hour: 4
+            show:
+              extrema: true
+              fill: fade
+              icon: true
+              labels: false
+              name: true
+              state: true
+            state_map:
+              - label: Day
+                value: 'off'
+              - label: Night
+                value: 'on'
+            style: |
+              ha-card {
+                border: solid 2px var(--primary-color);
+              }
+          - type: 'custom:mini-graph-card'
+            color_thresholds:
+              - color: '#039BE5'
+                value: 0
+              - color: '#0da035'
+                value: 600
+              - color: '#e0b400'
+                value: 1200
+              - color: '#e45e65'
+                value: 2400
+            color_thresholds_transition: hard
+            entities:
+              - entity: sensor.esp32_domofon_power_meter
+                name: LED Power
+              - color: 'rgba(0,0,255,1)'
+                entity: binary_sensor.dark_outside
+                show_line: false
+                y_axis: secondary
+            group: false
+            hour24: true
+            hours_to_show: 16
+            line_width: 4
+            points_per_hour: 4
+            show:
+              extrema: true
+              fill: fade
+              icon: true
+              labels: false
+              name: true
+              state: true
+            state_map:
+              - label: Day
+                value: 'off'
+              - label: Night
+                value: 'on'
+            style: |
+              ha-card {
+                border: solid 2px var(--primary-color);
+              }          
                 
   - title: Z MAP
     icon: mdi:zigbee
@@ -4867,11 +5078,13 @@ views:
     cards:  
       - type: 'custom:flex-table-card'
         clickable: true
-        sort_by: last_seen-
-        #max_rows: 20
+        sort_by: state-
         columns:
           - data: friendly_name
             name: Friendly Name
+          - data: ieee
+            name: IEEE
+            modify: x+''
           - data: nwk
             name: NWK
             modify: x+''
@@ -4896,22 +5109,21 @@ views:
           - data: parent
             name: Parent
             modify: x+''
-          - data: last_seen
-            name: Last seen, min ago
-            #modify: x+''
-            modify: Math.round((Date.now()-Date.parse(x))/60000.)
+          - data: last_msg
+            name: Last Msg
+            modify: x+''
+          - data: state
+            name: Last seen
+            modify: Math.round((Date.now()-Date.parse(x))/60000.) #'x.replace("unknown","").replace("unavailable","")'
         entities:
-          include: xiaomi_gateway3.*
-          # exclude: 
-          #   - xiaomi_gateway3.0x588e81fffe72678e
-          #   - xiaomi_gateway3.0x588e81fffedcb38d
-          #   - xiaomi_gateway3.0x588e81fffedd3c41
-          #   - xiaomi_gateway3.0x842e14fffe1508a6
+          include: sensor.*_zigbee
         css:
           table+: 'padding-top: 15px;'
           'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
           td.left: 'padding: 10px 10px 10px 10px'
-          th.left: 'padding: 0px 0px 10px 3px'
+          th.left: 'padding: 0px 0px 10px 3px'    
+
+
   - title: Z MAP
     icon: mdi:zigbee
     panel: true
@@ -4919,10 +5131,12 @@ views:
       - type: 'custom:flex-table-card'
         clickable: true
         sort_by: nwk
-        #max_rows: 20
         columns:
           - data: friendly_name
             name: Friendly Name
+          - data: ieee
+            name: IEEE
+            modify: x+''
           - data: nwk
             name: NWK
             modify: x+''
@@ -4947,19 +5161,16 @@ views:
           - data: parent
             name: Parent
             modify: x+''
-          - data: last_seen
-            name: Last seen, min ago
-            #modify: x+''
-            modify: Math.round((Date.now()-Date.parse(x))/60000.)
+          - data: last_msg
+            name: Last Msg
+            modify: x+''
+          - data: state
+            name: Last seen
+            modify: Math.round((Date.now()-Date.parse(x))/60000.) #'x.replace("unknown","").replace("unavailable","")'
         entities:
-          include: xiaomi_gateway3.*
-          # exclude: 
-          #   - xiaomi_gateway3.0x588e81fffe72678e
-          #   - xiaomi_gateway3.0x588e81fffedcb38d
-          #   - xiaomi_gateway3.0x588e81fffedd3c41
-          #   - xiaomi_gateway3.0x842e14fffe1508a6
+          include: sensor.*_zigbee
         css:
           table+: 'padding-top: 15px;'
           'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
           td.left: 'padding: 10px 10px 10px 10px'
-          th.left: 'padding: 0px 0px 10px 3px'          
+          th.left: 'padding: 0px 0px 10px 3px'    
