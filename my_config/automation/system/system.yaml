@@ -6,7 +6,7 @@
 # System - Errors counter
 # ##################################
 - alias: system_error_counter
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   max_exceeded: silent
   trigger:
@@ -43,7 +43,7 @@
 # System - START message
 # ##################################
 - alias: system_start_message
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: homeassistant
       event: start
@@ -65,7 +65,7 @@
 # System - STOP message
 # ##################################
 - alias: system_stop_message
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: event
       event_type: homeassistant_stop
@@ -78,7 +78,7 @@
 # System - Github star
 # ##################################
 - alias: system_github_star
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.git_stars
@@ -103,7 +103,7 @@
 # System - Hass.io NEW Device
 # ##################################
 - alias: system_new_device_found
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: event
@@ -117,7 +117,7 @@
 # System - Entity Change
 # ##################################
 - alias: system_entity_change
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: event
@@ -131,7 +131,7 @@
 # System - Device Delition
 # ##################################
 - alias: system_entity_change
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: event
@@ -151,7 +151,7 @@
 # System - Hass.io NEW Version
 # ##################################
 - alias: system_hassio_new_version
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: binary_sensor.updater
@@ -170,7 +170,7 @@
 # System - NEW DAY
 # ##################################
 - alias: system_new_day_telegram
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: time
       at: '00:00:01'
@@ -185,7 +185,7 @@
 # System - Weather FCST to Telegram
 # ##################################
 - alias: system_weather_to_telegram
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: time
       at: '07:00:00'
@@ -201,7 +201,7 @@
 # System - login failure message
 # ##################################
 - alias: system_login_failure
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: persistent_notification.http_login
@@ -222,7 +222,7 @@
 # System - Sensors Low Battery Notification
 # ##################################
 - alias: system_low_battery
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: time
       at: "20:30:00"
@@ -252,7 +252,7 @@
 # System - Switches overheating
 # ##################################
 # - alias: system_switch_temperature
-#   initial_state: "true"
+#   initial_state: 'true'
 #   trigger:
 #     - platform: time_pattern
 #       minutes: "/15"
@@ -272,7 +272,7 @@
 # System - Home weather (ya)
 # ##################################
 - alias: system_weather_home
-  initial_state: "false"
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: sensor.ya_weather_home
@@ -289,7 +289,7 @@
 # System - Database Purge
 # ##################################
 - alias: system_database_purge
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: time
       at: '02:00:00'
@@ -306,7 +306,7 @@
 # System - Transmission completed Torrent
 # ##################################
 - alias: system_transmission_completed_torrent
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: event
@@ -321,7 +321,7 @@
 # System - Telegram message on Config error
 # ##################################
 - alias: system_config_error_notification
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: persistent_notification.homeassistant_check_config
@@ -337,7 +337,7 @@
 # System - Pinhole restart
 # ##################################
 - alias: system_pinhole_restart
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state 
       entity_id: binary_sensor.pinhole_camera_status
@@ -362,7 +362,7 @@
 # System - Digma100 restart
 # ##################################
 - alias: system_digma100_restart
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: device_tracker.digma_division_100
@@ -387,7 +387,7 @@
 # System - HACS Update Available
 # ##################################
 - alias: system_hacs_update_available
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.hacs
@@ -407,7 +407,7 @@
 # System - Supervisor Update Available
 # ##################################
 - alias: system_supervisor_update_available
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: binary_sensor.updater_supervisor
@@ -416,14 +416,31 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f6e0 Supervisor - доступна новая версия {{ state_attr('sensor.supervisor_updates', 'newest_version') }} !"
+        message: "\U0001f6e0 Supervisor - доступна новая версия {{ state_attr('sensor.supervisor_updates', 'newest_version') }}!"
+
+# ##################################
+# System - Supervisor Updated
+# ##################################
+- alias: system_supervisor_updated
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: sensor.ha_supervisor_current_version
+  condition:
+    - condition: template
+      value_template: "{{ trigger.from_state.state }} != {{ trigger.to_state.state }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6e0 Supervisor обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}"
+
 
 
 # ##################################
 # System - Addons Update Available
 # ##################################
 - alias: system_addons_update_available
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: binary_sensor.updater_addons
@@ -441,7 +458,7 @@
 # System - System Automation Errors
 # ##################################
 - alias: system_automation_error
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: event
@@ -467,7 +484,7 @@
 # System - System Errors per hour
 # ##################################
 - alias: system_error_per_hour
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: numeric_state
@@ -483,27 +500,15 @@
       data_template:
         message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{states('sensor.error_counter_hourly')|int}}"
 
-  #   - platform: state
-  #     entity_id: sensor.error_counter_stats
-  # condition:
-  #   - condition: template
-  #     value_template: "{{ (state_attr('sensor.error_counter_stats','change')|int % 50) == 0 }}"
-  #   - condition: template
-  #     value_template: "{{ state_attr('sensor.error_counter_stats','change')|int > 200 }}"
-  # action:
-  #   - service: notify.telegram
-  #     data_template:
-  #       message: "\U0001f4a5 Внимание! Количество ошибок в час >{{state_attr('sensor.error_counter_stats','change')|int}}!"
-
 # ##################################
 # System - Servers Plugs turn on
 # ##################################
 - alias: system_servers_plugs_restore
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: 
-        - switch.shp6_socket_1_relay
+        #- switch.shp6_socket_1_relay
         - switch.shp2_socket_2_relay
         - switch.shp2_socket_1_relay
       from: 'on'
@@ -522,7 +527,7 @@
 # System - Mopidy restart
 # ##################################
 - alias: system_mopidy_restart
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: media_player.mpd
@@ -540,7 +545,7 @@
 # System - IP Blocked
 # ##################################
 - alias: system_blocked_ip
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: persistent_notification.ip_ban
@@ -555,34 +560,34 @@
         message: "\U000026d4 Слишком много попыток некорректного входа. Заблокирован IP: http://whatismyipaddress.com/ip/{{ states('input_text.ip_ban') }}."
         
 
-# ##################################
-# System - RPI restart
-# ##################################
-- alias: system_rpi_restart
-  initial_state: "true"
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.rpi_state
-      to: 'off'
-      for: '00:20:00'
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f4a5 Внимание! RPI сервер - запуск перезагрузки!"
-    - service: switch.turn_off
-      entity_id: switch.shp6_socket_1_relay
-    - delay: '00:00:15'
-    - service: switch.turn_on
-      entity_id: switch.shp6_socket_1_relay
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f4a5 Внимание! RPI сервер - перезагрузка выполнена!"
+# # ##################################
+# # System - RPI restart
+# # ##################################
+# - alias: system_rpi_restart
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.rpi_state
+#       to: 'off'
+#       for: '00:20:00'
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f4a5 Внимание! RPI сервер - запуск перезагрузки!"
+#     - service: switch.turn_off
+#       entity_id: switch.shp6_socket_1_relay
+#     - delay: '00:00:15'
+#     - service: switch.turn_on
+#       entity_id: switch.shp6_socket_1_relay
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f4a5 Внимание! RPI сервер - перезагрузка выполнена!"
         
 # ##################################
 # System - Rain sensor
 # ##################################
 - alias: system_rain_sensor
-  initial_state: "false"
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d00035c6905_contact
@@ -613,7 +618,7 @@
 # System - Critical Error notification
 # ##################################
 - alias: system_critical_error_notify
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: event
@@ -633,7 +638,7 @@
 # System - Radiation alert
 # ##################################
 - alias: system_radiation_alart
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.geiger_action
@@ -647,7 +652,7 @@
 # System - Silent Mode Toggle
 # ##################################
 - alias: system_silent_mode_toggle
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: input_boolean.silent_mode
@@ -681,7 +686,7 @@
 # # System - HP 178 Toner Level
 # # ##################################
 # - alias: system_printer_toner_level
-#   initial_state: "true"
+#   initial_state: 'true'
 #   trigger:
 #     - platform: numeric_state
 #       entity_id:
@@ -699,7 +704,7 @@
 # System - GW3 State
 # ##################################
 - alias: system_gw3_state
-  initial_state: "true"
+  initial_state: 'true'
   mode: queued
   trigger:
     - platform: state
@@ -722,7 +727,7 @@
 # System - GW3 Connection lost
 # ##################################
 # - alias: system_gw3_connection
-#   initial_state: "true"
+#   initial_state: 'true'
 #   mode: parallel
 #   trigger:
 #     - platform: state
@@ -742,7 +747,7 @@
 # System - Watchdog
 # ##################################
 - alias: system_watchdog
-  initial_state: "true"
+  initial_state: 'true'
   mode: parallel
   trigger:
     - platform: state
@@ -758,7 +763,7 @@
 # System - Dark Mode dbug
 # ##################################
 - alias: system_dark_mode_debug
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: input_boolean.dark_mode
@@ -776,7 +781,7 @@
 # System - HACS Update Pending
 # ##################################
 - alias: system_hacs_update_pending
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.hacs
@@ -798,7 +803,7 @@
 # System - HACS New Repo
 # ##################################
 - alias: system_hacs_new_repo
-  initial_state: "false"
+  initial_state: 'false'
   trigger:
     - platform: event
       event_type: hacs/repository
@@ -821,7 +826,7 @@
 # System - Hot water pipe warning
 # ##################################
 - alias: system_hot_water_pipe
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id: sensor.esp32_bathroom_node_hot_pipe
@@ -835,7 +840,7 @@
 # System - Cold water pipe warning
 # ##################################
 - alias: system_cold_water_pipe
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id: sensor.esp32_bathroom_node_cold_pipe
@@ -849,7 +854,7 @@
 # System - Heating pipes warning
 # ##################################
 - alias: system_heating_pipes_warning
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id: 
@@ -865,7 +870,7 @@
 # System - No Motion
 # ##################################
 # - alias: system_no_motion
-#   initial_state: "true"
+#   initial_state: 'true'
 #   trigger:
 #     - platform: time_pattern
 #       minutes: "/5"
@@ -884,7 +889,7 @@
 # System - RO Filter Membrane Flow
 # ##################################
 - alias: system_ro_membrane_flow
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: numeric_state
       entity_id: sensor.raw_water_flow_max 
@@ -895,10 +900,10 @@
         message: "\U0001f30a Скорость потока через мембрану фильтра упала ниже {{states('sensor.raw_water_flow_max')}}л/мин!"
 
 # ##################################
-# System - RO Filter Membrane Flow
+# System - ZB Devices Status
 # ##################################
-- alias: system_ro_membrane_flow
-  initial_state: "true"
+- alias: system_zb_devices_status
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: 
@@ -1024,7 +1029,7 @@
 # System - Weather Geomagnetic
 # ##################################
 - alias: system_weather_geomagnetic
-  initial_state: "false"
+  initial_state: 'false'
   trigger:
     - platform: time_pattern
       hours: "/1"
@@ -1045,7 +1050,7 @@
 # System - Caller ID
 # ##################################
 - alias: system_caller_id
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.modem_callerid
@@ -1072,7 +1077,7 @@
 # System - GW3 Error
 # ##################################
 - alias: system_xiaomi_gw3_error
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     - platform: event
       event_type: system_log_event
@@ -1090,7 +1095,7 @@
 # System - NUT Error
 # ##################################
 - alias: system_nut_error
-  initial_state: "false"
+  initial_state: 'false'
   trigger:
     - platform: event
       event_type: system_log_event
@@ -1109,7 +1114,7 @@
 # System - Automation Reload
 # ##################################
 - alias: system_automation_reload
-  initial_state: "true"
+  initial_state: 'true'
   trigger:
     # - platform: event
     #   event_type: call_service

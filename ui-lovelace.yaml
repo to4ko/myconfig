@@ -1598,28 +1598,29 @@ views:
                 entities:
                   - entity: sensor.energy_hourly_single #sensor.esp8266_pzem_hb_power
                     name: Energy
-                  # - color: 'rgba(0,0,255,1)'
-                  #   entity: binary_sensor.dark_outside
+                    color: '#FBB124'
+                  - color: 'rgba(0,0,255,1)'
+                    entity: binary_sensor.dark_outside
+                    show_line: false
+                    y_axis: secondary
+                  # - color: '#FBB124'
+                  #   entity: sensor.esp8266_pzem_hb_power
+                  #   name: Power
+                  #   show_line: true
+                  # - color: '#cc261c'
+                  #   entity: binary_sensor.tariff_t1
                   #   show_line: false
                   #   y_axis: secondary
-                  - color: '#FBB124'
-                    entity: sensor.esp8266_pzem_hb_power
-                    name: Power
-                    show_line: true
-                  - color: '#cc261c'
-                    entity: binary_sensor.tariff_t1
-                    show_line: false
-                    y_axis: secondary
-                    name: T1
-                  - color: '#2e934c'
-                    entity: binary_sensor.tariff_t2
-                    show_line: false
-                    y_axis: secondary
-                    name: T2
+                  #   name: T1
+                  # - color: '#2e934c'
+                  #   entity: binary_sensor.tariff_t2
+                  #   show_line: false
+                  #   y_axis: secondary
+                  #   name: T2
                 group: false
                 group_by: hour
                 hour24: true
-                hours_to_show: 48
+                hours_to_show: 24
                 line_width: 2
                 points_per_hour: 4
                 show:
@@ -1661,7 +1662,7 @@ views:
             show_header_toggle: false
             state_color: true
             entities:
-              - entity: sensor.esp8266_pzem_hb_power
+              - entity: sensor.esp8266_pzem_hb_power_kw
                 name: PZEM Power
               - entity: sensor.esp8266_pzem_hb_energy
                 name: PZEM Energy
@@ -2734,21 +2735,21 @@ views:
                 name: 
 
           - type: glance
-            columns: 6
+            columns: 3
             entities:
               - entity: binary_sensor.google_dns
                 name: G DNS
                 icon: mdi:dns
               - entity: binary_sensor.telegram_api
                 name: TG
-              - entity: binary_sensor.mqtt_state
-                name: MQTT
+              #- entity: binary_sensor.mqtt_state
+              #  name: MQTT
               - entity: binary_sensor.j3455_state
                 name: j3455
-              - entity: binary_sensor.rpi_state
-                name: RPI
-              - entity: binary_sensor.nuc_state
-                name: NUC
+              #- entity: binary_sensor.rpi_state
+              #  name: RPI
+              #- entity: binary_sensor.nuc_state
+              #  name: NUC
           - type: glance
             state_color: true
             entities:
@@ -2835,7 +2836,15 @@ views:
                       service: script.ha_released_update
                   - entity: sensor.ha_latest_beta
                     name: Beta
-                    
+              - type: history-graph
+                hours_to_show: 48
+                refresh_interval: 0
+                entities:
+                  - entity: sensor.date
+                  - entity: sensor.ha_installed_version
+                    name: HA
+                  - entity: sensor.ha_supervisor_current_version
+                    name: Super
               - type: glance
                 state_color: true
                 columns: 7
@@ -2893,19 +2902,19 @@ views:
                     name: Lead
                     
                   
-              - type: glance
-                state_color: true
-                entities:
-                  - entity: binary_sensor.rpi
-                    name: RPI
-                  - entity: binary_sensor.rpi_state
-                    name: HA
-                    icon: mdi:home-assistant
-                  - entity: binary_sensor.rpi_automation
-                    name: Auto
+              # - type: glance
+              #   state_color: true
+              #   entities:
+              #     - entity: binary_sensor.rpi
+              #       name: RPI
+              #     - entity: binary_sensor.rpi_state
+              #       name: HA
+              #       icon: mdi:home-assistant
+              #     - entity: binary_sensor.rpi_automation
+              #       name: Auto
                     
-                  - entity: binary_sensor.rpi_lead
-                    name: Lead
+              #     - entity: binary_sensor.rpi_lead
+              #       name: Lead
               
 
       # ############  
@@ -4048,22 +4057,6 @@ views:
               - sensor.u430p_m2_usage
               - sensor.u430p_sc2_m2_calc_life_left
 
-          - type: entities
-            show_header_toggle: false
-            title: BRIX
-            state_color: true
-            entities:
-              - sensor.brix_telemetry_last_update
-              - sensor.brix_uptime
-              - sensor.brix_cpu_temperature
-              - sensor.brix_cpu_load
-              - sensor.brix_memory_usage
-              - sensor.brix_cpu_fan
-              - sensor.brix_ssd_temperature
-              - sensor.brix_ssd_usage
-              - sensor.brix_860evo_calc_life_left
-              - sensor.brix_aux_temperature
-
 ################################################################
 # ESP States
 ################################################################
@@ -4192,67 +4185,67 @@ views:
           - sensor.digma_ir_s_uptime
 
 
-################################################################
-# Utility SENSORS
-################################################################
-  - title: Utility Sensors
-    icon: mdi:shape
-    cards:
-      - type: vertical-stack
-        cards:
-          - type: entities
-            title: Main
-            show_header_toggle: false
-            state_color: true
-            entities:
-              - entity: sensor.power_t1
-              - entity: sensor.power_t2
-              - entity: sensor.power_consumption_month_t1
-              - entity: sensor.power_consumption_month_t2
-              - entity: sensor.cold_water_meter
-              - entity: sensor.hot_water_meter
-              - entity: sensor.cold_water_month
-              - entity: sensor.hot_water_month
-      - type: vertical-stack
-        cards:
-          - type: glance
-            entities:
-              - entity: script.utility_value_from_j3455
-                name: j3455 -> Main
-                icon: mdi:desktop-tower
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: script.utility_value_from_j3455
-              - entity: script.utility_value_from_rpi
-                name: RPI -> Main
-                icon: mdi:raspberry-pi
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: script.utility_value_from_rpi
-          - type: glance
-            entities:
-              - entity: input_boolean.j3455_set_utility
-                name: Main -> j3455
-                tap_action:
-                  action: call-service
-                  service: input_boolean.toggle
-                  service_data:
-                    entity_id: input_boolean.j3455_set_utility
-              - entity: binary_sensor.j3455_state
-                name: j3455 Server State
-          - type: glance
-            entities:
-              - entity: input_boolean.rpi_set_utility
-                name: Main -> RPI
-                tap_action:
-                  action: call-service
-                  service: input_boolean.toggle
-                  service_data:
-                    entity_id: input_boolean.rpi_set_utility
-              - entity: binary_sensor.rpi_state
-                name: RPI Server State
+# ################################################################
+# # Utility SENSORS
+# ################################################################
+#   - title: Utility Sensors
+#     icon: mdi:shape
+#     cards:
+#       - type: vertical-stack
+#         cards:
+#           - type: entities
+#             title: Main
+#             show_header_toggle: false
+#             state_color: true
+#             entities:
+#               - entity: sensor.power_t1
+#               - entity: sensor.power_t2
+#               - entity: sensor.power_consumption_month_t1
+#               - entity: sensor.power_consumption_month_t2
+#               - entity: sensor.cold_water_meter
+#               - entity: sensor.hot_water_meter
+#               - entity: sensor.cold_water_month
+#               - entity: sensor.hot_water_month
+#       - type: vertical-stack
+#         cards:
+#           - type: glance
+#             entities:
+#               - entity: script.utility_value_from_j3455
+#                 name: j3455 -> Main
+#                 icon: mdi:desktop-tower
+#                 hold_action: none
+#                 tap_action:
+#                   action: call-service
+#                   service: script.utility_value_from_j3455
+#               - entity: script.utility_value_from_rpi
+#                 name: RPI -> Main
+#                 icon: mdi:raspberry-pi
+#                 hold_action: none
+#                 tap_action:
+#                   action: call-service
+#                   service: script.utility_value_from_rpi
+#           - type: glance
+#             entities:
+#               - entity: input_boolean.j3455_set_utility
+#                 name: Main -> j3455
+#                 tap_action:
+#                   action: call-service
+#                   service: input_boolean.toggle
+#                   service_data:
+#                     entity_id: input_boolean.j3455_set_utility
+#               - entity: binary_sensor.j3455_state
+#                 name: j3455 Server State
+#           - type: glance
+#             entities:
+#               - entity: input_boolean.rpi_set_utility
+#                 name: Main -> RPI
+#                 tap_action:
+#                   action: call-service
+#                   service: input_boolean.toggle
+#                   service_data:
+#                     entity_id: input_boolean.rpi_set_utility
+#               - entity: binary_sensor.rpi_state
+#                 name: RPI Server State
                 
 ################################################################
 # Lamps Reset
