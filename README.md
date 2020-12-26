@@ -37,7 +37,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
 
-**Test Server:**
+**Test Server (not in use):**
   - Raspberry Pi 3B+
   - 120Gb SSD Crucial BX500
 
@@ -79,7 +79,8 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - not in use - Xiaomi Smart WiFi Power Strip (2ea)
   - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
-  - not in use - Xiaomi Wifi Plugs v2 (7ea)
+  - Xiaomi Wifi Plugs v2 (4ea)
+  - not in use - Xiaomi Wifi Plugs v2 (3ea)
   - not in use - Xiaomi IR controller
 
 **At the moment, all my Zigbee devices are connected via Xiaomi Gateways, except of DIY Geiger meter (it's sitting on ZZH CC2652R)**
@@ -101,7 +102,8 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Xiaomi Natural Gas Detector (1ea)
   - Aqara Zigbee Relay (1ea)
   - Xiaomi Light Sensor (2ea)
-  - not in use - Aqara Opple Wireless Switch (3ea)
+  - Aqara Opple Wireless Switch (1ea)
+  - not in use - Aqara Opple Wireless Switch (4ea)
 
 **ESPHome devices:**
   - Sonoff Basic (2ea)
@@ -113,15 +115,21 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
   - Blitzwolf LT11 (not use - flickering on low brightness)
   - Blitzwolf SS5 dual gang relay
-  - MH-Z19B CO2 sensors on Wemos D1 mini (4ea)
+  - MH-Z19B CO2 sensors on Wemos D1 mini (1ea)
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
-  - ESP32 - Kitchen Air valve, hood fan\light with IR controller
-  - ESP32 - Reverse Osmos Water Filter resource counter based on cheap flow meters.
+  - ESP32 - Node K - Kitchen MH-Z19B, BME280, BHI1750, Water Filter Counters, IR controller
+  - ESP32 - Node B - Bathroom Relays (Water vales, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
+  - ESP32 - Node MB - Master Bedroom MH-Z19B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
+  - ESP32 - Node V - Vova's Room MH-Z19B, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - BLE Tracker (Nut find 3)
+  - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
+  - ESP8266 PZEM HB - Hall Big Breaker Box PZEM-004T with Dallas sensor (temp in breaker box) and 4 NTC sensors (breakers themperature)
   - Digma IR Remote (3ea)
   - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
   - ESP01 Weight Cell
   - D1 Mini LED Bed light
+  - D1 Mini S - Sasha's Room MH-Z19B, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
+  - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
 
 **Other Devices:**
   - not in use - DIYRuZ_FreePad v1

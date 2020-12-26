@@ -6,6 +6,7 @@ esphome:
   platform: ESP8266
   board: nodemcuv2
   comment: ESP8266 PZEM
+  esp8266_restore_from_flash: true
 
 wifi:
   # ssid: !secret wifi_ssid
@@ -54,6 +55,37 @@ globals:
     restore_value: yes
     initial_value: '0'
 
+  - id: total_daily_globals
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: monthly_day
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: monthly_night
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: daily_day
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: daily_night
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: prev_hour_data
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+
 uart:
   rx_pin: GPIO12
   tx_pin: GPIO14
@@ -65,10 +97,10 @@ i2c:
   scl: GPIO05
   scan: True
 
-dallas:
-  - pin: GPIO13
-    update_interval: 15s
-    id: dallas_node
+# dallas:
+#   - pin: GPIO13
+#     update_interval: 15s
+#     id: dallas_node
 
 binary_sensor:
   - platform: status
@@ -144,7 +176,7 @@ sensor:
     update_interval: 10s
 
   - platform: total_daily_energy
-    id: total_daily
+    id: total_daily_kwh
     name: ${board_name}_Energy_Daily
     power_id: power
     accuracy_decimals: 3
@@ -155,7 +187,7 @@ sensor:
     
   - platform: template
     name: ${board_name}_Energy_Monthly
-    lambda: return id(total_monthly) + id(total_daily).state;
+    lambda: return id(total_monthly) + id(total_daily_kwh).state;
     update_interval: 10s
     unit_of_measurement: kWh
     accuracy_decimals: 3
@@ -168,6 +200,48 @@ sensor:
     update_interval: 10s
     unit_of_measurement: 'kW'
     icon: mdi:lightning-bolt-outline
+
+  - platform: template
+    name: ${board_name}_Daily_Night_kWh
+    lambda: return id(daily_night);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+    
+  - platform: template
+    name: ${board_name}_Daily_Day_kWh
+    lambda: return id(daily_day);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+
+  - platform: template
+    name: ${board_name}_Monthly_Night_kWh
+    lambda: return id(monthly_night);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+    
+  - platform: template
+    name: ${board_name}_Monthly_Day_kWh
+    lambda: return id(monthly_day);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+
+  - platform: template
+    name: ${board_name}_Daily_Globals
+    lambda: return id(total_daily_globals);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+
+  - platform: template
+    name: ${board_name}_prev_hour_data
+    lambda: return id(prev_hour_data);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'      
     
   - platform: bme680
     temperature:
@@ -186,12 +260,12 @@ sensor:
     address: 0x77
     update_interval: 30s    
 
-  - platform: dallas
-    address: 0x613C01D075384328
-    name: ${board_name}_Breaker_Box
-    dallas_id: dallas_node
-    accuracy_decimals: 1
-    resolution: 12
+  # - platform: dallas
+  #   address: 0x613C01D075384328
+  #   name: ${board_name}_Breaker_Box
+  #   dallas_id: dallas_node
+  #   accuracy_decimals: 1
+  #   resolution: 12
     
 switch:
   - platform: restart
@@ -202,6 +276,36 @@ switch:
     turn_on_action: 
       - globals.set:
           id: total_monthly
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Monthly_Day
+    turn_on_action: 
+      - globals.set:
+          id: monthly_day
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Monthly_Night
+    turn_on_action: 
+      - globals.set:
+          id: monthly_night
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Daily_Day
+    turn_on_action: 
+      - globals.set:
+          id: daily_day
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Daily_Night
+    turn_on_action: 
+      - globals.set:
+          id: daily_night
+          value: '0'          
+  - platform: template
+    name: ${board_name}_Reset_Prev_Hour_Data
+    turn_on_action: 
+      - globals.set:
+          id: prev_hour_data
           value: '0'
 
 time:
@@ -215,10 +319,53 @@ time:
       minutes: 59
       hours: 23
       then:
-        - lambda: id(total_monthly) = id(total_monthly) + id(total_daily).state;
+        - logger.log: "-------> Monthly Increase by Daily Total"
+        - lambda: id(total_monthly) = id(total_monthly) + id(total_daily_kwh).state;
     - seconds: 30
       minutes: 0
       hours: 0
       days_of_month: 21
       then:
+        - logger.log: "-------> Monthly Globals Reset on 21st of each month"
         - lambda: id(total_monthly) = 0;
+        - lambda: id(monthly_day) = 0;
+        - lambda: id(monthly_night) = 0;
+    - seconds: 56
+      minutes: 59
+      hours: /1
+      then:
+        - logger.log: "-------> Daily Globals Save"
+        - lambda: id(total_daily_globals) = id(total_daily_kwh).state;
+    - seconds: 58
+      minutes: 59
+      hours: /1
+      #minutes: /1
+      then:
+        - logger.log: "-------> Hourly Routine start"
+        - logger.log:
+            format: "-------> Hourly Routine INPUT: daily_day %f, daily_night %f, monthly_day %f, monthly_night %f, total_daily_globals %f, prev_hour_data %f"
+            args: [ 'id(daily_day)', 'id(daily_night)', 'id(monthly_day)', 'id(monthly_night)', 'id(total_daily_globals)', 'id(prev_hour_data)' ]
+        - if:
+              condition:
+                and:
+                  - lambda: 'return id(sntp_time).now().hour >=7;'
+                  - lambda: 'return id(sntp_time).now().hour <=22;'
+              then: 
+                - logger.log: "-------> Hourly Routine DAY Calculations"
+                - lambda: id(monthly_day) = id(monthly_day) + id(total_daily_globals) - id(prev_hour_data);
+                - lambda: id(daily_day) = id(total_daily_globals) - id(prev_hour_data);
+              else:
+                - logger.log: "-------> Hourly Routine Night Calculations"
+                - lambda: id(monthly_night) = id(monthly_night) + id(total_daily_globals) - id(prev_hour_data);
+                - lambda: id(daily_night) = id(total_daily_globals) - id(prev_hour_data);
+        - logger.log: "-------> Hourly Routine General Calculations"
+        - lambda: id(prev_hour_data) = id(total_daily_globals);
+        - logger.log:
+            format: "-------> Hourly Routine RESULT: daily_day %f, daily_night %f, monthly_day %f, monthly_night %f, total_daily_globals %f, prev_hour_data %f"
+            args: [ 'id(daily_day)', 'id(daily_night)', 'id(monthly_day)', 'id(monthly_night)', 'id(total_daily_globals)', 'id(prev_hour_data)' ]
+    - seconds: 07
+      minutes: 00
+      hours: 00
+      then:
+        - lambda: id(daily_day) = 0;
+        - lambda: id(daily_night) = 0;
