@@ -23,10 +23,10 @@ views:
                 state_color: true
                 columns: 4
                 entities:
-                  - sensor.mi_kettle
+                  - sensor.mi_kettle_temperature
                   - counter.kettle_k
-                  - sensor.mi_kettle_action
-                  - sensor.mi_kettle_mode
+                  - sensor.mi_kettle_state
+                  - sensor.mi_kettle_rssi
               - type: glance
                 show_name: true
                 show_state: true
@@ -2827,12 +2827,24 @@ views:
                 entities:
                   - entity: sensor.ha_supervisor_current_version
                     name: Super
+                    tap_action:
+                      action: call-service
+                      service: script.ha_released_update
                   - entity: sensor.ha_supervisor_latest_version
                     name: Latest
+                    tap_action:
+                      action: call-service
+                      service: script.ha_released_update
                   - entity: sensor.ha_supervisor_latest_beta
                     name: Beta
+                    tap_action:
+                      action: call-service
+                      service: script.ha_released_update
                   - entity: sensor.ha_installed_version
                     name: HA
+                    tap_action:
+                      action: call-service
+                      service: script.ha_released_update
                   - entity: sensor.ha_latest_version
                     name: Latest
                     tap_action:
@@ -2840,6 +2852,9 @@ views:
                       service: script.ha_released_update
                   - entity: sensor.ha_latest_beta
                     name: Beta
+                    tap_action:
+                      action: call-service
+                      service: script.ha_released_update
               - type: history-graph
                 hours_to_show: 24
                 #refresh_interval: 0
@@ -4508,8 +4523,8 @@ views:
         entities:
           - sensor.0x158d0001e8995a_humidity
 
-  - title: Switches
-    icon: mdi:file-settings
+  - title: All GW3 Switches
+    icon: mdi:electric-switch
     cards:
       - type: entities
         show_header_toggle: false
@@ -4628,8 +4643,8 @@ views:
             secondary_info: last-changed
           - entity: switch.0x158d00039bd56d_switch
             secondary_info: last-changed
-  - title: Motion
-    icon: mdi:file-settings-outline
+  - title: All GW3 Sensors
+    icon: mdi:radiobox-marked
     cards:
       - type: entities
         entities:
@@ -4778,7 +4793,7 @@ views:
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0003140824_motion
             secondary_info: last-changed
-          - entity: binary_sensor.0x158d0003262a35_contact
+          - entity: binary_sensor.0x158d0003fa6cf5_contact #binary_sensor.0x158d0003262a35_contact
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0003262ba8_contact
             secondary_info: last-changed
@@ -4791,7 +4806,7 @@ views:
           
 
   - title: Testing
-    icon: mdi:ab-testing
+    icon: mdi:bookmark
     cards:
       - type: entities
         show_header_toggle: false
@@ -4888,19 +4903,60 @@ views:
           - sensor.esp8266_pzem_hb_vcc
           - sensor.esp8266_pzem_hb_wifi_rssi
 
-      - type: entities
-        entities:
-          - entity: sensor.esp32_node_k_humidity
-            name: bme280 H
-          - entity: sensor.esp32_node_k_dht11_humidity
-            name: dht11 H
-          - type: divider
-          - entity: sensor.esp32_node_k_temperature
-            name: bme280 T
-          - entity: sensor.esp32_node_k_dht11_temperature
-            name: dht11 T
       - type: vertical-stack
         cards:
+          - type: entities
+            show_header_toggle: false
+            state_color: true
+            entities:
+              - entity: sensor.esp8266_test_bme280_humidity
+                name: bme280 H
+              - entity: sensor.esp8266_test_bme280_pressure
+                name: bme280 P
+              - entity: sensor.esp8266_test_bme280_temperature
+                name: bme280 T
+              - entity: sensor.esp8266_test_breaker_box
+                name: Dallas T
+
+          - type: history-graph
+            hours_to_show: 24
+            entities:
+              - entity: sensor.esp8266_test_bme280_humidity
+                name: bme280 H
+          - type: history-graph
+            hours_to_show: 24
+            entities:
+              - entity: sensor.esp8266_test_bme280_pressure
+                name: bme280 P
+          - type: history-graph
+            hours_to_show: 24
+            entities:
+              - entity: sensor.esp8266_test_bme280_temperature
+                name: bme280 T
+              - entity: sensor.esp8266_test_breaker_box
+                name: Dallas T
+
+      - type: history-graph
+        hours_to_show: 24
+        entities:
+          - sensor.esp8266_test_ntc0
+          - sensor.esp8266_test_ntc1
+          - sensor.esp8266_test_ntc2
+          - sensor.esp8266_test_ntc3
+
+      - type: vertical-stack
+        cards:
+          - type: entities
+            entities:
+              - entity: sensor.esp32_node_k_humidity
+                name: bme280 H
+              - entity: sensor.esp32_node_k_dht11_humidity
+                name: dht11 H
+              - type: divider
+              - entity: sensor.esp32_node_k_temperature
+                name: bme280 T
+              - entity: sensor.esp32_node_k_dht11_temperature
+                name: dht11 T
           - type: history-graph
             hours_to_show: 48
             entities:
@@ -5141,105 +5197,254 @@ views:
                 border: solid 2px var(--primary-color);
               }          
                 
-  - title: Z MAP
-    icon: mdi:zigbee
-    panel: true
-    cards:  
-      - type: 'custom:flex-table-card'
-        clickable: true
-        sort_by: state-
-        columns:
-          - data: friendly_name
-            name: Friendly Name
-          - data: ieee
-            name: IEEE
-            modify: x+''
-          - data: nwk
-            name: NWK
-            modify: x+''
-          - data: msg_received
-            name: Recv
-            modify: x+''
-          - data: msg_missed
-            name: Miss
-            modify: x+''
-          - data: unresponsive
-            name: Unresp
-            modify: x+''
-          - data: link_quality
-            name: LQI
-            modify: x+''
-          - data: rssi
-            name: RSSI
-            modify: x+''
-          - data: type
-            name: Type
-            modify: x+''
-          - data: parent
-            name: Parent
-            modify: x+''
-          - data: last_msg
-            name: Last Msg
-            modify: x+''
-          - data: state
-            name: Last seen
-            modify: Math.round((Date.now()-Date.parse(x))/60000.) #'x.replace("unknown","").replace("unavailable","")'
-        entities:
-          include: sensor.*_zigbee
-        css:
-          table+: 'padding-top: 15px;'
-          'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
-          td.left: 'padding: 10px 10px 10px 10px'
-          th.left: 'padding: 0px 0px 10px 3px'    
+  # - title: Z MAP
+  #   icon: mdi:zigbee
+  #   panel: true
+  #   cards:  
+  #     - type: 'custom:flex-table-card'
+  #       clickable: true
+  #       sort_by: state-
+  #       columns:
+  #         - data: friendly_name
+  #           name: Friendly Name
+  #         - data: ieee
+  #           name: IEEE
+  #           modify: x+''
+  #         - data: nwk
+  #           name: NWK
+  #           modify: x+''
+  #         - data: msg_received
+  #           name: Recv
+  #           modify: x+''
+  #         - data: msg_missed
+  #           name: Miss
+  #           modify: x+''
+  #         - data: unresponsive
+  #           name: Unresp
+  #           modify: x+''
+  #         - data: link_quality
+  #           name: LQI
+  #           modify: x+''
+  #         - data: rssi
+  #           name: RSSI
+  #           modify: x+''
+  #         - data: type
+  #           name: Type
+  #           modify: x+''
+  #         - data: parent
+  #           name: Parent
+  #           modify: x+''
+  #         - data: last_msg
+  #           name: Last Msg
+  #           modify: x+''
+  #         - data: state
+  #           name: Last seen
+  #           modify: Math.round((Date.now()-Date.parse(x))/60000.) #'x.replace("unknown","").replace("unavailable","")'
+  #       entities:
+  #         include: sensor.*_zigbee
+  #       css:
+  #         table+: 'padding-top: 15px;'
+  #         'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
+  #         td.left: 'padding: 10px 10px 10px 10px'
+  #         th.left: 'padding: 0px 0px 10px 3px'    
 
 
-  - title: Z MAP
-    icon: mdi:zigbee
+  # - title: Z MAP
+  #   icon: mdi:zigbee
+  #   panel: true
+  #   cards:  
+  #     - type: 'custom:flex-table-card'
+  #       clickable: true
+  #       sort_by: nwk
+  #       columns:
+  #         - data: friendly_name
+  #           name: Friendly Name
+  #         - data: ieee
+  #           name: IEEE
+  #           modify: x+''
+  #         - data: nwk
+  #           name: NWK
+  #           modify: x+''
+  #         - data: msg_received
+  #           name: Recv
+  #           modify: x+''
+  #         - data: msg_missed
+  #           name: Miss
+  #           modify: x+''
+  #         - data: unresponsive
+  #           name: Unresp
+  #           modify: x+''
+  #         - data: link_quality
+  #           name: LQI
+  #           modify: x+''
+  #         - data: rssi
+  #           name: RSSI
+  #           modify: x+''
+  #         - data: type
+  #           name: Type
+  #           modify: x+''
+  #         - data: parent
+  #           name: Parent
+  #           modify: x+''
+  #         - data: last_msg
+  #           name: Last Msg
+  #           modify: x+''
+  #         - data: state
+  #           name: Last seen
+  #           modify: Math.round((Date.now()-Date.parse(x))/60000.) #'x.replace("unknown","").replace("unavailable","")'
+  #       entities:
+  #         include: sensor.*_zigbee
+  #       css:
+  #         table+: 'padding-top: 15px;'
+  #         'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
+  #         td.left: 'padding: 10px 10px 10px 10px'
+  #         th.left: 'padding: 0px 0px 10px 3px'    
+
+  - title: Radio Quality [GW 3]
+    icon: mdi:radio-tower
     panel: true
-    cards:  
-      - type: 'custom:flex-table-card'
-        clickable: true
-        sort_by: nwk
-        columns:
-          - data: friendly_name
-            name: Friendly Name
-          - data: ieee
-            name: IEEE
-            modify: x+''
-          - data: nwk
-            name: NWK
-            modify: x+''
-          - data: msg_received
-            name: Recv
-            modify: x+''
-          - data: msg_missed
-            name: Miss
-            modify: x+''
-          - data: unresponsive
-            name: Unresp
-            modify: x+''
-          - data: link_quality
-            name: LQI
-            modify: x+''
-          - data: rssi
-            name: RSSI
-            modify: x+''
-          - data: type
-            name: Type
-            modify: x+''
-          - data: parent
-            name: Parent
-            modify: x+''
-          - data: last_msg
-            name: Last Msg
-            modify: x+''
-          - data: state
-            name: Last seen
-            modify: Math.round((Date.now()-Date.parse(x))/60000.) #'x.replace("unknown","").replace("unavailable","")'
-        entities:
-          include: sensor.*_zigbee
-        css:
-          table+: 'padding-top: 15px;'
-          'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
-          td.left: 'padding: 10px 10px 10px 10px'
-          th.left: 'padding: 0px 0px 10px 3px'    
+    cards:
+      - type: vertical-stack
+        cards:
+          # Gateways
+          - type: markdown
+            #content: '<center> <ha-icon icon="mdi:router-wireless"></ha-icon> </center>'
+            content: '### <center> Gateways </center>'
+          - type: 'custom:flex-table-card'
+            #title: Gateways
+            clickable: false
+            entities:
+              include: 
+                - sensor.*_gateway
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: '(x+"").replace(/ Gateway$/,"")'
+              - data: network_pan_id
+                name: Network PAN ID
+                modify: x+''
+              - data: radio_tx_power
+                name: Radio TX Power
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: radio_channel
+                name: Radio Channel
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: free_mem
+                name: Memory Free (KB)
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: load_avg
+                name: Load Avg (1m, 5m, 15m)
+                modify: '(x+"").split("|").slice(0, 3).join(", ")'
+              - data: rssi
+                name: RSSI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: uptime
+                name: Gateway Uptime
+                modify: x+''
+              - data: state
+                name: Connected Since
+                modify: >
+                  var dt = new Date(x);
+                  var hrs = parseInt((Date.now()-Date.parse(x)) / 3600000);
+                  var min = parseInt(((Date.now()-Date.parse(x)) / 60000) % 60);
+                  var sec = parseInt(((Date.now()-Date.parse(x)) / 1000) % 60);
+                  hrs = (hrs < 10) ? "0" + hrs : hrs;
+                  min = (min < 10) ? "0" + min : min;
+                  sec = (sec < 10) ? "0" + sec : sec;
+                  dt.toLocaleString(['ru-RU', 'en-US']) +
+                  " (Up: " + hrs + ":" + min + ":" + sec + ")"
+            css:
+              table+: 'padding-top: 15px;'
+              'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
+              td.left: 'padding: 10px 10px 10px 10px'
+              th.left: 'padding: 0px 0px 10px 10px'
+          # ZigBee
+          - type: markdown
+            #content: '<center> <ha-icon icon="mdi:zigbee"></ha-icon> </center>'
+            content: '### <center> ZigBee </center>'
+          - type: 'custom:flex-table-card'
+            #title: ZigBee
+            clickable: false
+            entities:
+              include: 
+                - sensor.*_zigbee
+            sort_by: ieee
+            #max_rows: 20
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: 'x.replace(/ Zigbee$/,"")'
+              - data: ieee
+                name: IEEE
+                modify: (x+'').toLowerCase()
+              - data: nwk
+                name: NWK
+                modify: (x+'').replace(/^0x/,"").toLowerCase()
+              - data: parent
+                name: Parent
+                modify: (x+'').replace(/^0x/,"").toLowerCase()
+              - data: type
+                name: Type
+                modify: (x+'').replace(/^-$/, "child device")
+              - data: msg_received
+                name: Received
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: msg_missed
+                name: Missed
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: unresponsive
+                name: Unresponsive
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: link_quality
+                name: LQI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: rssi
+                name: RSSI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: last_msg
+                name: Last Message
+                modify: x+''
+              - data: state
+                name: Last Seen
+                modify: >
+                  var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
+                  isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
+            css:
+        #      thead th: 'align-content: center;'
+              table+: 'padding-top: 15px;'
+              'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
+              td.left: 'padding: 10px 10px 10px 10px'
+              th.left: 'padding: 0px 0px 10px 10px'
+          # Bluetooth
+          - type: markdown
+            #content: '<center> <ha-icon icon="mdi:bluetooth"></ha-icon> </center>'
+            content: '### <center> Bluetooth </center>'
+          - type: 'custom:flex-table-card'
+            #title: Bluetooth
+            clickable: false
+            entities:
+              include: 
+                - sensor.*_ble
+            sort_by: mac
+            #max_rows: 20
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: 'x.replace(/ Ble$/,"")'
+              - data: mac
+                name: MAC
+                modify: (x+'').replace(/(.{2}(?!$))/g,"$1:")
+              - data: msg_received
+                name: Received
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: state
+                name: Last Seen
+                modify: >
+                  var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
+                  isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
+            css:
+        #      thead th: 'align-content: center;'
+              table+: 'padding-top: 15px;'
+              'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
+              td.left: 'padding: 10px 10px 10px 10px'
+              th.left: 'padding: 0px 0px 10px 10px'

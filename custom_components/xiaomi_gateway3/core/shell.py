@@ -13,8 +13,8 @@ RUN_SOCAT = "/data/socat tcp-l:8888,reuseaddr,fork /dev/ttyS2"
 
 CHECK_BUSYBOX = "(md5sum /data/busybox | grep 099137899ece96f311ac5ab554ea6fec)"
 DOWNLOAD_BUSYBOX = "(curl -k -o /data/busybox https://busybox.net/downloads/binaries/1.21.1/busybox-mipsel && chmod +x /data/busybox)"
-LOCK_FIRMWARE = "/data/busybox chattr +i /data/firmware.bin"
-UNLOCK_FIRMWARE = "/data/busybox chattr -i /data/firmware.bin"
+LOCK_FIRMWARE = "/data/busybox chattr +i"
+UNLOCK_FIRMWARE = "/data/busybox chattr -i"
 RUN_FTP = "(/data/busybox tcpsvd -vE 0.0.0.0 21 /data/busybox ftpd -w &)"
 
 # use awk because buffer
@@ -23,6 +23,8 @@ MIIO_MORE = "-l 4"
 MIIO2MQTT = "(miio_client %s -d /data/miio | awk '/%s/{print $0;fflush()}' | mosquitto_pub -t log/miio -l &)"
 
 RE_VERSION = re.compile(r'version=([0-9._]+)')
+
+FIRMWARE_PATHS = ('/data/firmware.bin', '/data/firmware/firmware_ota.bin')
 
 
 class TelnetShell(Telnet):
@@ -58,17 +60,23 @@ class TelnetShell(Telnet):
 
     def check_firmware_lock(self) -> bool:
         """Check if firmware update locked. And create empty file if needed."""
-        raw = self.exec("touch /data/firmware.bin")
-        return "Permission denied" in raw
+        self.exec("mkdir -p /data/firmware")
+        locked = [
+            "Permission denied" in self.exec("touch " + path)
+            for path in FIRMWARE_PATHS
+        ]
+        return all(locked)
 
     def lock_firmware(self, enable: bool):
         command = LOCK_FIRMWARE if enable else UNLOCK_FIRMWARE
-        self.exec(f"{CHECK_BUSYBOX} && {command}")
+        for path in FIRMWARE_PATHS:
+            self.exec(f"{CHECK_BUSYBOX} && {command} " + path)
 
     def run_ftp(self):
         self.exec(f"{CHECK_BUSYBOX} && {RUN_FTP}")
 
     def sniff_bluetooth(self):
+        """Deprecated"""
         self.write(b"killall silabs_ncp_bt; silabs_ncp_bt /dev/ttyS1 1\r\n")
 
     def run_public_mosquitto(self):
@@ -89,18 +97,19 @@ class TelnetShell(Telnet):
         self.exec(MIIO2MQTT % (args, pattern))
         self.exec("daemon_miio.sh &")
 
-    def run_public_zb_console(self):
-        self.exec("killall daemon_app.sh; killall Lumi_Z3GatewayHost_MQTT")
-        # run Gateway with open console port
-        self.exec("Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 -v -p '/dev/ttyS2' "
-                  "-d '/data/silicon_zigbee_host/' > /dev/null &")
+    def run_public_zb_console(self, new_version=False):
+        # `killall tail` will also stop Lumi_Z3GatewayHost_MQTT
+        self.exec("killall daemon_app.sh; killall tail")
 
-        # connect to console to start zigbee chip
-        self.write(b"nc localhost 4901\r\n")
-        time.sleep(2)
-        # exit console (ctrl+c)
-        self.write(b"\x03")
-        self.read_until(b"\r\n# ")
+        # run Gateway with open console port (`-v` param)
+        arg = " -r 'c'" if new_version else ''
+
+        # use `tail` because input for Z3 is required;
+        # add `-l 0` to disable all output, we'll enable it later with
+        # `debugprint on 1` command
+        self.exec("tail -f /dev/null | Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 "
+                  f"-l 0 -p '/dev/ttyS2' -d '/data/silicon_zigbee_host/'{arg} "
+                  "| mosquitto_pub -t log/z3 -l &")
 
         self.exec("daemon_app.sh &")
 

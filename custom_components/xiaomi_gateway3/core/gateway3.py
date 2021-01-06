@@ -3,9 +3,8 @@ import logging
 import re
 import socket
 import time
-from telnetlib import Telnet
 from threading import Thread
-from typing import Optional, Union
+from typing import Optional
 
 from paho.mqtt.client import Client, MQTTMessage
 from . import bluetooth, utils
@@ -39,6 +38,10 @@ class GatewayV:
 
     @property
     def ver_miio(self) -> bool:
+        return self.ver >= '1.4.7_0063'
+
+    @property
+    def ver_z3(self) -> bool:
         return self.ver >= '1.4.7_0063'
 
 
@@ -130,14 +133,19 @@ class GatewayStats:
     stats: dict = None
     host: str = None
     info_ts: float = 0
-    info_loading: bool = False
+
+    mqtt: Client = None
+    gw_topic: str = None
 
     # if mqtt connected
     available: bool = None
 
     # interval for auto parent refresh in minutes, 0 - disabled auto refresh
-    # None - disabled
+    # -1 - disabled
     parent_scan_interval: Optional[int] = None
+
+    # collected data from MQTT topic log/z3 (zigbee console)
+    z3buffer: Optional[dict] = None
 
     def debug(self, message: str):
         raise NotImplemented
@@ -145,7 +153,7 @@ class GatewayStats:
     def add_stats(self, ieee: str, handler):
         self.stats[ieee] = handler
 
-        if self.parent_scan_interval:
+        if self.parent_scan_interval > 0:
             self.info_ts = time.time() + 5
 
     def remove_stats(self, ieee: str, handler):
@@ -167,11 +175,14 @@ class GatewayStats:
                     'radio_channel': payload.get('radioChannel'),
                 }
             elif 'free_mem' in payload:
-                payload.pop('ip')
-                payload.pop('ssid')
-                s = payload.pop('run_time')
+                s = payload['run_time']
                 h, m, s = s // 3600, s % 3600 // 60, s % 60
-                payload['uptime'] = f"{h:02}:{m:02}:{s:02}"
+                payload = {
+                    'free_mem': payload['free_mem'],
+                    'load_avg': payload['load_avg'],
+                    'rssi': -payload['rssi'],
+                    'uptime': f"{h:02}:{m:02}:{s:02}",
+                }
 
         self.stats['lumi.0'](payload)
 
@@ -188,61 +199,85 @@ class GatewayStats:
         if did in self.stats:
             self.stats[did](payload)
 
-    def get_gateway_info(self):
-        if self.info_loading:
-            return
-        self.info_loading = True
-        Thread(target=self._info_loader_run).start()
+    def process_z3(self, payload: str):
+        if payload.startswith("CLI command executed"):
+            cmd = payload[22:-1]
+            if cmd == "debugprint all_on" or self.z3buffer is None:
+                # reset all buffers
+                self.z3buffer = {}
+            else:
+                self.z3buffer[cmd] = self.z3buffer['buffer']
 
-    def _info_loader_run(self):
+            self.z3buffer['buffer'] = ''
+
+            if cmd == "plugin concentrator print-table":
+                self._process_gateway_info()
+
+        elif self.z3buffer:
+            self.z3buffer['buffer'] += payload
+
+    def get_gateway_info(self):
+        self.debug("Update zigbee network info")
+        payload = {'commands': [
+            {'commandcli': "debugprint all_on"},
+            {'commandcli': "plugin device-table print"},
+            {'commandcli': "plugin stack-diagnostics child-table"},
+            {'commandcli': "plugin stack-diagnostics neighbor-table"},
+            {'commandcli': "plugin concentrator print-table"},
+            {'commandcli': "debugprint all_off"},
+        ]}
+        payload = json.dumps(payload, separators=(',', ':'))
+        self.mqtt.publish(self.gw_topic + 'commands', payload)
+
+    def _process_gateway_info(self):
         self.debug("Update parent info table")
 
-        telnet = Telnet(self.host, 4901)
-        telnet.read_until(b'Lumi_Z3GatewayHost')
+        try:
+            raw = self.z3buffer["plugin device-table print"]
+            m1 = re.findall(r'\d+ ([A-F0-9]{4}): {2}([A-F0-9]{16}) 0 {2}\w+ '
+                            r'(\d+)', raw)
 
-        telnet.write(b"option print-rx-msgs disable\r\n")
-        telnet.read_until(b'Lumi_Z3GatewayHost')
+            raw = self.z3buffer["plugin stack-diagnostics child-table"]
+            m2 = re.findall(r'\(>\)([A-F0-9]{16})', raw)
 
-        telnet.write(b"plugin device-table print\r\n")
-        raw = telnet.read_until(b'Lumi_Z3GatewayHost').decode()
-        m1 = re.findall(r'\d+ ([A-F0-9]{4}): {2}([A-F0-9]{16}) 0 {2}\w+ (\d+)',
-                        raw)
+            raw = self.z3buffer["plugin stack-diagnostics neighbor-table"]
+            m3 = re.findall(r'\(>\)([A-F0-9]{16})', raw)
 
-        telnet.write(b"plugin stack-diagnostics child-table\r\n")
-        raw = telnet.read_until(b'Lumi_Z3GatewayHost').decode()
-        m2 = re.findall(r'\(>\)([A-F0-9]{16})', raw)
+            raw = self.z3buffer["plugin concentrator print-table"]
+            m4 = re.findall(r': ([A-F0-9x> -]{16,}) -> 0x0000', raw)
+            m4 = [i.replace('0x', '').split(' -> ') for i in m4]
+            m4 = {i[0]: i[1:] for i in m4}
 
-        telnet.write(b"plugin stack-diagnostics neighbor-table\r\n")
-        raw = telnet.read_until(b'Lumi_Z3GatewayHost').decode()
-        m3 = re.findall(r'\(>\)([A-F0-9]{16})', raw)
+            self.debug(f"Total zigbee devices: {len(m1)}")
 
-        telnet.write(b"plugin concentrator print-table\r\n")
-        raw = telnet.read_until(b'Lumi_Z3GatewayHost').decode()
-        m4 = re.findall(r': (.{16,}) -> 0x0000', raw)
-        m4 = [i.replace('0x', '').split(' -> ') for i in m4]
-        m4 = {i[0]: i[1:] for i in m4}
+            for i in m1:
+                ieee = '0x' + i[1]
 
-        for i in m1:
-            ieee = '0x' + i[1]
-            if ieee not in self.stats:
-                continue
+                nwk = i[0]
+                ago = int(i[2])
+                type_ = 'device' if i[1] in m2 else \
+                    'router' if i[1] in m3 else '-'
+                parent = '0x' + m4[nwk][0] if nwk in m4 else '-'
 
-            nwk = i[0]
-            ago = int(i[2])
-            type_ = 'device' if i[1] in m2 else 'router' if i[1] in m3 else '-'
-            parent = '0x' + m4[nwk][0] if nwk in m4 else '-'
+                payload = {
+                    'nwk': '0x' + nwk,
+                    'ago': ago,
+                    'type': type_,
+                    'parent': parent
+                }
 
-            self.stats[ieee]({
-                'nwk': '0x' + nwk,
-                'ago': ago,
-                'type': type_,
-                'parent': parent
-            })
+                if ieee in self.stats:
+                    self.stats[ieee](payload)
+                else:
+                    self.debug(f"Unknown zigbee device {ieee}: {payload}")
 
-        self.info_loading = False
-        # one hour later
-        if self.parent_scan_interval:
-            self.info_ts = time.time() + self.parent_scan_interval * 60
+            # one hour later
+            if self.parent_scan_interval > 0:
+                self.info_ts = time.time() + self.parent_scan_interval * 60
+
+        except Exception as e:
+            self.debug(f"Can't update parents: {e}")
+            self.info_ts = time.time() + 30
 
 
 # noinspection PyUnusedLocal
@@ -262,12 +297,11 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
         self.mqtt.on_connect = self.on_connect
         self.mqtt.on_disconnect = self.on_disconnect
         self.mqtt.on_message = self.on_message
-        self.mqtt.connect_async(host)
 
         self._ble = options.get('ble')  # for fast access
         self._debug = options.get('debug', '')  # for fast access
-        self.parent_scan_interval = options.get('parent')  # for fast access
-        self.default_devices = config['devices']
+        self.parent_scan_interval = options.get('parent', -1)
+        self.default_devices = config['devices'] if config else None
 
         self.devices = {}
         self.updates = {}
@@ -294,10 +328,14 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
 
     def stop(self):
         self.enabled = False
-        self.mqtt.loop_stop()
+        self.mqtt._thread_terminate = True
 
     def run(self):
         """Main thread loop."""
+        self.debug("Start main thread")
+
+        self.mqtt.connect_async(self.host)
+
         self.enabled = True
         while self.enabled:
             # if not telnet - enable it
@@ -307,6 +345,7 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
 
             devices = self._prepeare_gateway(with_devices=True)
             if devices:
+                self.gw_topic = f"gw/{devices[0]['mac'][2:].upper()}/"
                 self.setup_devices(devices)
                 break
 
@@ -319,11 +358,13 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                 continue
 
             # if not mqtt - enable it (handle Mi Home and ZHA mode)
-            if not self._mqtt_connect() and not self._prepeare_gateway():
+            if not self._prepeare_gateway() or not self._mqtt_connect():
                 time.sleep(60)
                 continue
 
             self.mqtt.loop_forever()
+
+        self.debug("Stop main thread")
 
     def _check_port(self, port: int):
         """Check if gateway port open."""
@@ -348,8 +389,9 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
         try:
             shell = TelnetShell(self.host)
 
-            self.ver = shell.get_version()
-            self.debug(f"Version: {self.ver}")
+            if self.ver is None:
+                self.ver = shell.get_version()
+                self.debug(f"Version: {self.ver}")
 
             ps = shell.get_running_ps()
 
@@ -390,10 +432,10 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                     self.debug("Stop socat")
                     shell.stop_socat()
 
-                if (self.parent_scan_interval is not None and
-                        "Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 -v" not in ps):
+                if (self.parent_scan_interval >= 0 and
+                        "Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 -l" not in ps):
                     self.debug("Run public Zigbee console")
-                    shell.run_public_zb_console()
+                    shell.run_public_zb_console(self.ver_z3)
 
                 elif "Lumi_Z3GatewayHost_MQTT" not in ps:
                     self.debug("Run Lumi Zigbee")
@@ -612,6 +654,9 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                 except:
                     _LOGGER.warning(f"Can't read BT: {msg.payload}")
 
+        elif msg.topic == 'log/z3':
+            self.process_z3(msg.payload.decode())
+
         elif msg.topic.endswith('/heartbeat'):
             payload = json.loads(msg.payload)
             self.process_gw_stats(payload)
@@ -734,8 +779,15 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
             if param.get('error_code', 0) != 0:
                 continue
 
-            prop = param['res_name'] if 'res_name' in param else \
-                f"{param['siid']}.{param['piid']}"
+            if 'res_name' in param:
+                prop = param['res_name']
+            elif 'piid' in param:
+                prop = f"{param['siid']}.{param['piid']}"
+            elif 'eiid' in param:
+                prop = f"{param['siid']}.{param['eiid']}"
+            else:
+                _LOGGER.warning(f"Unsupported param: {data}")
+                return
 
             if prop in GLOBAL_PROP:
                 prop = GLOBAL_PROP[prop]
@@ -745,7 +797,15 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                     if p[0] == prop
                 ), prop)
 
-            if prop in ('temperature', 'humidity', 'pressure'):
+            # https://github.com/Koenkk/zigbee2mqtt/issues/798
+            # https://www.maero.dk/aqara-temperature-humidity-pressure-sensor-teardown/
+            if prop == 'temperature':
+                if -4000 < param['value'] < 12500:
+                    payload[prop] = param['value'] / 100.0
+            elif prop == 'humidity':
+                if 0 <= param['value'] <= 10000:
+                    payload[prop] = param['value'] / 100.0
+            elif prop == 'pressure':
                 payload[prop] = param['value'] / 100.0
             elif prop == 'battery' and param['value'] > 1000:
                 # xiaomi light sensor
@@ -761,8 +821,13 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                 payload[prop] = param['value'] / 1000.0
             elif prop in ('consumption', 'power'):
                 payload[prop] = round(param['value'], 2)
-            else:
+            elif 'value' in param:
                 payload[prop] = param['value']
+            elif 'arguments' in param:
+                if prop == 'motion':
+                    payload[prop] = 1
+                else:
+                    payload[prop] = param['arguments']
 
         self.debug(f"{device['did']} {device['model']} <= {payload}")
 
@@ -892,8 +957,8 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
 
         # send model response "from device"
         elif b'zdo active ' in raw:
-            mac = self.device['mac'][2:].upper()
-            self.mqtt.publish(f"gw/{mac}/MessageReceived", self.pair_payload)
+            self.mqtt.publish(self.gw_topic + 'MessageReceived',
+                              self.pair_payload)
 
     def send(self, device: dict, data: dict):
         payload = {'cmd': 'write', 'did': device['did']}
@@ -940,8 +1005,7 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
 
     def send_mqtt(self, cmd: str):
         if cmd == 'publishstate':
-            mac = self.device['mac'][2:].upper()
-            self.mqtt.publish(f"gw/{mac}/publishstate")
+            self.mqtt.publish(self.gw_topic + 'publishstate')
 
     def get_device(self, mac: str) -> Optional[dict]:
         for device in self.devices.values():

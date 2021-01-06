@@ -16,6 +16,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 7ea WD RED 2Tb (NAS section) in HW Raid-6 via Adaptec 71605
   - 1Tb WD Purple for pinhole camera records
   - 3ea WD Green in HW Raid-0 (Torrent heap) via Adaptec 71605
+  - 2Tb Seagate SV35
   - Corsair HX1200i Power supply
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
   - USR 56k USB Modem

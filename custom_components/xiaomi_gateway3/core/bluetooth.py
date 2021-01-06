@@ -12,11 +12,13 @@ DEVICES = {
     1371: ["Xiaomi", "TH Sensor 2", "LYWSD03MMC"],
     1398: ["Xiaomi", "Alarm Clock", "CGD1"],
     1694: ["Aqara", "Door Lock N100", "ZNMS16LM"],
+    1695: ["Aqara", "Door Lock N200", "ZNMS17LM"],
     1747: ["Xiaomi", "ZenMeasure Clock", "MHO-C303"],
     1983: ["Yeelight", "Button S1", "YLAI003"],
     2038: ["Xiaomi", "Night Light 2", "MJYD02YL-A"],
     2443: ["Xiaomi", "Door Sensor 2", "MCCGQ02HL"],
     2480: ["Xiaomi", "Safe Box", "BGX-5/X1-3001"],
+    2701: ["Xiaomi", "Motion Sensor 2", "RTCGQ02LM"],
     # Mesh
     948: ["Yeelight", "Mesh Downlight", "YLSD01YL"],
     995: ["Yeelight", "Mesh Bulb E14", "YLDP09YL"],
@@ -132,7 +134,9 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
         return {'rssi': data[0]}
 
     elif eid == 0x1004 and length == 2:  # 4100
-        return {'temperature': int.from_bytes(data, 'little', signed=True) / 10.0}
+        return {
+            'temperature': int.from_bytes(data, 'little', signed=True) / 10.0
+        }
 
     elif eid == 0x1006 and length == 2:  # 4102
         # Humidity percentage, ranging from 0-1000
@@ -156,7 +160,8 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
 
     elif eid == 0x100D and length == 4:  # 4109
         return {
-            'temperature': int.from_bytes(data[:2], 'little', signed=True) / 10.0,
+            'temperature': int.from_bytes(data[:2], 'little',
+                                          signed=True) / 10.0,
             'humidity': int.from_bytes(data[2:], 'little') / 10.0
         }
 
@@ -195,7 +200,8 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
         return {'idle_time': int.from_bytes(data, 'little')}
 
     elif eid == 0x1018 and length == 1:  # 4120
-        return {'light': data[0]}  # 1 => on => strong light
+        # Door Sensor 2: 0 - dark, 1 - light
+        return {'light': 1 if data[0] else 0}
 
     elif eid == 0x1019 and length == 1:  # 4121
         # 0x00: open the door, 0x01: close the door,
@@ -260,9 +266,12 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
         }
 
     elif eid == 0x0F:  # 15
-        # 1 - moving no light, 100 - moving with light
-        # TODO: fix me in future
-        return {'action': int.from_bytes(data, 'little')}
+        # Night Light 2: 1 - moving no light, 100 - moving with light
+        # Motion Sensor 2: 0 - moving no light, 256 - moving with light
+        return {
+            'motion': 1,
+            'light': 1 if int.from_bytes(data, 'little') >= 100 else 0
+        }
 
     return None
 
