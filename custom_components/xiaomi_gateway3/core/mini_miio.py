@@ -111,18 +111,27 @@ class SyncmiIO(BasemiIO):
         if not self.device_id and not self.ping():
             return None
 
-        try:
-            raw = self._pack_raw(method, params)
-            self.sock.sendto(raw, self.addr)
-
-            # can receive more than 1024 bytes (1056 approximate maximum)
-            raw = self.sock.recv(10240)
-            data = self._unpack_raw(raw)
-
-            return json.loads(data.rstrip(b'\x00'))['result']
-        except Exception as e:
-            _LOGGER.debug(f"Can't send: {e}")
+        for times in range(1, 4):
+            try:
+                # pack each time for new message id
+                raw_send = self._pack_raw(method, params)
+                t = time.monotonic()
+                self.sock.sendto(raw_send, self.addr)
+                # can receive more than 1024 bytes (1056 approximate maximum)
+                raw_recv = self.sock.recv(10240)
+                t = time.monotonic() - t
+                data = self._unpack_raw(raw_recv)
+                break
+            except:
+                pass
+        else:
+            _LOGGER.debug(f"Can't send {method} {params}")
             return None
+
+        _LOGGER.debug(f"Send {method} {len(raw_send)}B, recv {len(raw_recv)}B "
+                      f"in {t:.1f} sec and {times} try")
+
+        return json.loads(data.rstrip(b'\x00'))['result']
 
     def send_bulk(self, method: str, params: list):
         """Sends a command with a large number of parameters. Splits into

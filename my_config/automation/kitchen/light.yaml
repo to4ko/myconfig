@@ -370,7 +370,7 @@
     - service: light.turn_off
       entity_id: light.esp32_node_k_light
       data:
-        transition: 15
+        transition: 10
         
 # ##################################
 # Kitchen - LED Strip Timer restart with movement
@@ -403,3 +403,41 @@
       entity_id: timer.night_led_strip_k
     - service: timer.start
       entity_id: timer.night_led_strip_k
+      
+# ##################################
+# Kitchen - Main light off - Aux light on
+# ################################## 
+- alias: kitchen_night_aux_light
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.round_led_k
+      to: 'off'
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+    - condition: state
+      entity_id: switch.0x158d000366815b_channel_1
+      state: 'off'
+    - condition: state
+      entity_id: switch.0x158d000366815b_channel_2
+      state: 'off'
+    - condition: state
+      entity_id: switch.ss5_hood_light
+      state: 'off'
+    - condition: numeric_state
+      entity_id: sensor.0x4cf8cdf3c77271d_illuminance
+      below: 250
+    - condition: state
+      entity_id: light.esp32_node_k_light
+      state: 'off'
+    - condition: state
+      entity_id: light.btf_pixel_strip_top
+      state: 'off'
+    - condition: state
+      entity_id: light.round_led_hs
+      state: 'off'      
+  action:
+    - service: light.turn_on
+      entity_id: light.esp32_node_k_light, light.btf_pixel_strip_top

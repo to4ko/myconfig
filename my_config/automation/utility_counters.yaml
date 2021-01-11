@@ -328,3 +328,27 @@
           - utility_meter.socket_tv_v_monthly
           - utility_meter.socket_wadrobe_s_monthly
         tariff: "{%- if is_state('binary_sensor.tariff_t1','on') -%}day{%- else -%}night{%- endif -%}"
+        
+# ##################################
+# System - Utility meter tariff change tripple
+# ##################################
+- alias: system_power_tariff_change_tripple
+  initial_state: 'true'
+  trigger:
+    - platform: homeassistant
+      event: start
+    - platform: time
+      at: '07:00:00'
+    - platform: time
+      at: '10:00:00'
+    - platform: time
+      at: '17:00:00'
+    - platform: time
+      at: '21:00:00'
+    - platform: time
+      at: '23:00:00'
+  action:
+    - service: utility_meter.select_tariff
+      data_template:
+        entity_id: utility_meter.energy_daily_tripple
+        tariff: "{%- if is_state('binary_sensor.tariff_tripple_t1','on') -%}tripple_t1{%- elif is_state('binary_sensor.tariff_tripple_t2','on') -%}tripple_t2{%- else -%}tripple_t3{%- endif -%}"
