@@ -56,9 +56,40 @@
   #   longitude: !secret dacha_longitude
 
   - platform: statistics
+    name: Humidity bathroom stats
+    entity_id: sensor.0x158d00020d7c3a_humidity
+    sampling_size: 86400
+    max_age: 
+      hours: 24
+  
+  - platform: derivative
+    source: sensor.0x158d00020d7c3a_humidity
+    name: Humidity bathroom derivative
+    unit_time: min
+    time_window: "00:10:00"
+
+  - platform: statistics
+    name: Oven Temp Stats
+    entity_id: sensor.esp8266_oven_temp_k
+    sampling_size: 30
+    max_age:
+      minutes: 5
+
+  - platform: template
+    sensors:
+      oven_temp_change:
+        value_template: "{{ state_attr('sensor.oven_temp_stats', 'change') }}"
+        unit_of_measurement: '°C'
+        device_class: temperature
+      oven_temp_change_rate:
+        value_template: "{{ state_attr('sensor.oven_temp_stats', 'change_rate') }}"
+        unit_of_measurement: 'd(°C)'
+
+
+  - platform: statistics
     name: out_temperature_stats
     entity_id: sensor.esp32_node_mb_outside #sensor.0x158d0001e8995a_temperature
-    sampling_size: 100000
+    sampling_size: 6000
     max_age:
       hours: 24
   
@@ -255,8 +286,8 @@
     repositories:
       - path: 'to4ko/myconfig'
         name: myconfig
-      - path: 'AlexxIT/XiaomiGateway3'
-        name: AlexxIT GW3 Repo
+      # - path: 'AlexxIT/XiaomiGateway3'
+      #   name: AlexxIT GW3 Repo
 
   - platform: statistics
     entity_id: sensor.0x158d000233fb72_pressure
@@ -306,53 +337,8 @@
 #    name: External IP
 #    value_template: '{{ value_json.ip }}'
 
-# ############################################################################
-# Moon sensor
-# ############################################################################
   - platform: moon
 
-# ############################################################################
-# MIN\MAX sensor
-# ############################################################################
-#  - platform: min_max
-#    name: temperature_min_max
-#    entity_ids:
-#      - sensor.temperature_158d0002464ec0
-#      - sensor.temperature_158d0001e586af
-#      - sensor.temperature_158d000222c746
-#      - sensor.temperature_158d0001e6d85a
-#      - sensor.temperature_158d0001e58714
-#      - sensor.temperature_158d00020d7c3a
-#      - sensor.temperature_158d0001e58754
-  
-#  - platform: min_max
-#    name: humidity_min_max
-#    entity_ids:
-#      - sensor.humidity_158d0002464ec0
-#      - sensor.humidity_158d0001e586af
-#      - sensor.humidity_158d000222c746
-#      - sensor.humidity_158d0001e6d85a
-#      - sensor.humidity_158d0001e58714
-#      - sensor.humidity_158d00020d7c3a
-#      - sensor.humidity_158d0001e58754
-
-# ############################################################################
-# Unifi USG sensor
-# ############################################################################
-  # - platform: unifigateway
-  #   name: UDMpro
-  #   host: !secret udm_pro_host
-  #   username: !secret udm_pro_username
-  #   password: !secret udm_pro_password
-  #   monitored_conditions:
-  #     - www
-  #     - wlan
-  #     - alerts
-  #     - firmware
-  #     - vpn
-  #     - lan
-  #     - wan
-      
 # ############################################################################
 # Template sensors
 # ############################################################################
@@ -364,19 +350,6 @@
         friendly_name: 'Not smoking'
         unit_of_measurement: 'Days'
         icon_template: mdi:smoking-off
-
-      # door_count:
-      #   entity_id: sensor.hor
-      #   value_template: >-
-      #     {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'door') | list | count }}
-      # window_count:
-      #   entity_id: sensor.time
-      #   value_template: >-
-      #     {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'window') | list | count }}
-      # motion_count:
-      #   entity_id: sensor.time
-      #   value_template: >-
-      #     {{ states.binary_sensor | selectattr('state', 'eq', 'on') | selectattr('attributes.device_class', 'eq', 'motion') | list | count }}
 
       gdrive_last_backup:
         friendly_name: GBackup time
@@ -478,11 +451,7 @@
       - 'time'
       - 'date'
       - 'date_time'
-      - 'date_time_iso'
-      - 'time_date'
-      - 'time_utc'
-      - 'beat'
-      
+
   # - platform: template
   #   sensors:
   #     current_year:
@@ -556,27 +525,6 @@
         icon_template: mdi:radio-tower
         friendly_name: Gateway3 K Radio Channel
         unit_of_measurement: ''
-
-
-# Mi Kettle
-      # mi_kettle_action:
-      #   friendly_name: Mi Kettle Action
-      #   value_template: "{{state_attr('sensor.mi_kettle','action')}}"
-      #   icon_template: >
-      #     {% if states('sensor.mi_kettle_action') == "heating" %}
-      #     mdi:kettle-alert
-      #     {% else %}
-      #     mdi:kettle
-      #     {% endif %}
-      # mi_kettle_mode:
-      #   friendly_name: Mi Kettle Mode
-      #   value_template: "{{state_attr('sensor.mi_kettle','mode')}}"
-      #   icon_template: >
-      #     {% if states('sensor.mi_kettle_action') == "boil" %}
-      #     mdi:kettle-steam
-      #     {% else %}
-      #     mdi:kettle
-      #     {% endif %}
 
   - platform: mqtt
     name: Mi Kettle Temperature
@@ -691,17 +639,71 @@
   #       unit_of_measurement: aqi
   #       icon_template: mdi:chart-scatter-plot
 
-  - platform: sun2
-    monitored_conditions:
-      - dawn
-      - sunrise
-      - solar_noon
-      - sunset
-      - dusk
-      - daylight
-      - civil_daylight
-      - night
-      - civil_night
-      - elevation
-      - min_elevation
-      - max_elevation  
+  # - platform: sun2
+  #   monitored_conditions:
+  #     - dawn
+  #     - sunrise
+  #     - solar_noon
+  #     - sunset
+  #     - dusk
+  #     - daylight
+  #     - civil_daylight
+  #     - night
+  #     - civil_night
+  #     - elevation
+  #     - min_elevation
+  #     - max_elevation  
+      
+  - platform: history_stats
+    name: Quarantine meter Dima
+    entity_id: person.dima
+    state: "home"
+    type: ratio
+    duration:
+      days: 2
+    end: "{{ now() }}"
+  
+  - platform: history_stats
+    name: Quarantine meter Dima times left
+    entity_id: person.dima
+    state: "home"
+    type: count
+    duration:
+      days: 2
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Quarantine meter Sandra
+    entity_id: person.sandra
+    state: "home"
+    type: ratio
+    duration:
+      days: 2
+    end: "{{ now() }}"
+  
+  - platform: history_stats
+    name: Quarantine meter Sandra times left
+    entity_id: person.sandra
+    state: "home"
+    type: count
+    duration:
+      days: 2
+    end: "{{ now() }}"
+
+  - platform: history_stats
+    name: Quarantine meter vova
+    entity_id: person.vova
+    state: "home"
+    type: ratio
+    duration:
+      days: 2
+    end: "{{ now() }}"
+  
+  - platform: history_stats
+    name: Quarantine meter Vova times left
+    entity_id: person.vova
+    state: "home"
+    type: count
+    duration:
+      days: 2
+    end: "{{ now() }}"
