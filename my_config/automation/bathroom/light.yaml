@@ -349,4 +349,38 @@
   action:
     - service: script.turn_on
       entity_id: script.mirror_light_b_restart
-      
+
+
+# ##################################
+# Bathroom - Indicator
+# ##################################
+- alias: bathroom_indicator
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.someone_showering
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.someone_showering
+      from: 'on'
+      to: 'off'
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.someone_showering
+              state: 'off'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.btf_pixel_strip_bathroom
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.someone_showering
+              state: 'on'
+          sequence:
+            - service: light.turn_on
+              data_template:
+                entity_id: light.btf_pixel_strip_bathroom
+                effect: 'Color Wipe'
+                brightness_pct: 40

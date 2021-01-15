@@ -30,22 +30,19 @@
       from: 'off'
       to: 'on'
   condition:
-    condition: and
-    conditions:
-      - condition: time
-        after: '07:20:00'
-        before: '07:30:00'
-      - condition: template
-        value_template: "{{(as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))-as_timestamp(state_attr('automation.kitchen_weather_announcement', 'last_triggered')))|int(0) > 601 }}"
-      - condition: state
-        entity_id: binary_sensor.workday_sensor
-        state: 'on'
+    - condition: time
+      after: '07:20:00'
+      before: '07:30:00'
+    - condition: template
+      value_template: "{{now().day < state_attr('automation.kitchen_weather_announcement', 'last_triggered').day }}"
+    - condition: state
+      entity_id: binary_sensor.workday_sensor
+      state: 'on'
   action:
     - service: script.weather_tts
       data_template:
         entity_id: media_player.home_mini_k
         volume_level: '{{states("input_number.main_volume")|float}}'
-    #- service: script.weather_telegram
 
 # ##################################
 # Kitchen - Smoke Detected
