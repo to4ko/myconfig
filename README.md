@@ -25,9 +25,9 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Gigabyte Brix Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
-  - zzh CC2652R Zigbee Stick
+  - not in use - zzh CC2652R Zigbee Stick
 
-**Zigbee2MQTT Server #2 (not in use):**
+**not in use - Zigbee2MQTT Server #2:**
   - Intel Nuc Celeron N2830
   - 4gb DDR3 RAM
   - 120Gb SSD OCZ Vertex 3 MaxIOps
@@ -38,7 +38,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
 
-**Test Server (not in use):**
+**not in use - Test Server:**
   - Raspberry Pi 3B+
   - 120Gb SSD Crucial BX500
 
@@ -59,8 +59,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - CyberPower UT650EG 
   
 **Surveillance:** 
-  - Unifi Protect
-  - 3Tb WD Purple
+  - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
   - Ubiquiti G3 Flex Cameras (5ea)
   - Digma 100
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
@@ -137,7 +136,8 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - not in use - LifeControl E27 RGB Lamp
   - not in use - LifeControl Plug (2ea)
   - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (2ea)
-  - DIYRuZ_Geiger Sensor
+  - SLS Gateway
+  - DIYRuZ_Geiger Sensor via SLS GW
   - Google Home Mini (6ea)
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
   
