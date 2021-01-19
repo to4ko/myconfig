@@ -21,6 +21,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
   - USR 56k USB Modem
 
+
 **MQTT\Zigbee2MQTT Server #1:**
   - Gigabyte Brix Celeron j3455
   - 16gb DDR3 RAM
