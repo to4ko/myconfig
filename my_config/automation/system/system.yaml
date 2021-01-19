@@ -1036,7 +1036,6 @@
         - binary_sensor.btf_pixel_strip_status
         - binary_sensor.d1mini_bed_leds_status
         - binary_sensor.d1mini_co2_s_status
-        - binary_sensor.digma100_camera_status
         - binary_sensor.digma_ir_mb_status
         - binary_sensor.digma_ir_s_status
         - binary_sensor.digma_ir_v_status
@@ -1188,3 +1187,25 @@
 #     - service: notify.telegram
 #       data_template:
 #         message: "\U000026a0 Внимание! Timer_out_of_sync - {{trigger.origin}}!"
+
+# ##################################
+# System - Printer weekly restart
+# ##################################
+- alias: system_printer_weekly_restart
+  initial_state: 'true'
+  trigger:
+    - platform: time
+      at: '07:00:00'
+  condition:
+    - condition: time
+      weekday:
+        - mon
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.0x158d00028b4fc3_switch
+    - delay: '00:00:15'
+    - service: switch.turn_on
+      entity_id: switch.0x158d00028b4fc3_switch

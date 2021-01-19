@@ -17,23 +17,21 @@
       from: 'off'
       to: 'on'
   condition:
-    condition: and
-    conditions:
-      # - condition: state
-      #   entity_id: binary_sensor.tod_day
-      #   state: 'off'
-      - condition: state
-        entity_id: light.round_led_hs
-        state: 'off'
-      - condition: state
-        entity_id: light.btf_pixel_strip_top
-        state: 'off'
-      - condition: state
-        entity_id: light.round_led_k
-        state: 'off'
-      - condition: numeric_state
-        entity_id: sensor.0x4cf8cdf3c77271d_illuminance
-        below: 200
+    # - condition: state
+    #   entity_id: binary_sensor.tod_day
+    #   state: 'off'
+    - condition: state
+      entity_id: light.round_led_hs
+      state: 'off'
+    - condition: state
+      entity_id: light.btf_pixel_strip_top
+      state: 'off'
+    - condition: state
+      entity_id: light.round_led_k
+      state: 'off'
+    - condition: numeric_state
+      entity_id: sensor.0x4cf8cdf3c77271d_illuminance
+      below: 200
   action:
     - service: light.turn_on
       entity_id: light.btf_pixel_strip_top
@@ -110,21 +108,21 @@
     - service: script.turn_on
       entity_id: script.round_led_hs_restart
       
-# # ##################################
-# # Hall small - LED STrip Timer start
-# # ################################## 
-# - alias: hall_small_led_strip_timer_on
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id: light.btf_pixel_strip_top
-#       to: 'on'
-#       from: 'off'
-#   action:
-#     - service: timer.cancel
-#       entity_id: timer.night_led_strip_hs
-#     - service: timer.start
-#       entity_id: timer.night_led_strip_hs
+# ##################################
+# Hall small - LED STrip Timer start
+# ################################## 
+- alias: hall_small_led_strip_timer_on
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: light.btf_pixel_strip_top
+      to: 'on'
+      from: 'off'
+  action:
+    - service: timer.cancel
+      entity_id: timer.night_led_strip_hs
+    - service: timer.start
+      entity_id: timer.night_led_strip_hs
 
 # ##################################
 # Hall small - Auto LED Strips off
@@ -140,7 +138,7 @@
     - service: light.turn_off
       entity_id: light.btf_pixel_strip_top
       data:
-        transition: 10
+        transition: 5
         
 # ##################################
 # Hall small - LED Strip Timer restart with movement
@@ -156,16 +154,15 @@
       entity_id: binary_sensor.0x158d0002b43ad4_motion
       from: 'off'
       to: 'on'
-    - platform: state
-      entity_id: light.btf_pixel_strip_top
-      to: 'on'
-      from: 'off'
   condition:
     # - condition: state
     #   entity_id: binary_sensor.tod_day
     #   state: 'off'
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(states.automation.hall_small_led_strip_timer_restart.attributes.last_triggered)|int) > 5 }}"
+    - condition: state
+      entity_id: light.btf_pixel_strip_top
+      state: 'on'
   action:
     - service: timer.cancel
       entity_id: timer.night_led_strip_hs

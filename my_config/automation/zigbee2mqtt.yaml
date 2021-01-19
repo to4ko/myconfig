@@ -5,105 +5,105 @@
 # #####################################################################################
 # Z2M - Log Level
 # ##################################
-- alias: zigbee2mqtt_log_level
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: input_select.zigbee2mqtt_log_level
-  action:
-    - service: mqtt.publish
-      data:
-        payload_template: "{{ states('input_select.zigbee2mqtt_log_level') }}"
-        topic: zigbee2mqtt/bridge/config/log_level
+# - alias: zigbee2mqtt_log_level
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: input_select.zigbee2mqtt_log_level
+#   action:
+#     - service: mqtt.publish
+#       data:
+#         payload_template: "{{ states('input_select.zigbee2mqtt_log_level') }}"
+#         topic: zigbee2mqtt/bridge/config/log_level
 
-# ##################################
-# Z2M - Automation to start timer when enable join is turned on
-# ##################################
-- alias: zigbee2mqtt_join_enable
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: switch.zigbee2mqtt_main_join
-      from: 'off'
-      to: 'on'
-  action:
-    - service: timer.cancel
-      entity_id: timer.zigbee2mqtt_permit_join
-    - service: timer.start
-      entity_id: timer.zigbee2mqtt_permit_join
+# # ##################################
+# # Z2M - Automation to start timer when enable join is turned on
+# # ##################################
+# - alias: zigbee2mqtt_join_enable
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: switch.zigbee2mqtt_main_join
+#       from: 'off'
+#       to: 'on'
+#   action:
+#     - service: timer.cancel
+#       entity_id: timer.zigbee2mqtt_permit_join
+#     - service: timer.start
+#       entity_id: timer.zigbee2mqtt_permit_join
 
-# ##################################
-# Z2M - Automation to start timer when enable join is turned on
-# ##################################
-- alias: zigbee2mqtt_join_disable
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: switch.zigbee2mqtt_main_join
-      from: 'on'
-      to: 'off'
-  action:
-    - service: timer.cancel
-      entity_id: timer.zigbee2mqtt_permit_join
+# # ##################################
+# # Z2M - Automation to start timer when enable join is turned on
+# # ##################################
+# - alias: zigbee2mqtt_join_disable
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: switch.zigbee2mqtt_main_join
+#       from: 'on'
+#       to: 'off'
+#   action:
+#     - service: timer.cancel
+#       entity_id: timer.zigbee2mqtt_permit_join
 
 
-# ##################################
-# Z2M - Automation to stop timer when switch turned off and turn off switch when timer finished
-# ##################################
-- alias: zigbee2mqtt_join_disabled
-  initial_state: 'true'
-  trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.zigbee2mqtt_permit_join
-  condition:
-    - condition: state
-      entity_id: switch.zigbee2mqtt_main_join
-      state: 'on'
-  action:
-    - service: switch.turn_off
-      entity_id: switch.zigbee2mqtt_main_join
+# # ##################################
+# # Z2M - Automation to stop timer when switch turned off and turn off switch when timer finished
+# # ##################################
+# - alias: zigbee2mqtt_join_disabled
+#   initial_state: 'true'
+#   trigger:
+#     - platform: event
+#       event_type: timer.finished
+#       event_data:
+#         entity_id: timer.zigbee2mqtt_permit_join
+#   condition:
+#     - condition: state
+#       entity_id: switch.zigbee2mqtt_main_join
+#       state: 'on'
+#   action:
+#     - service: switch.turn_off
+#       entity_id: switch.zigbee2mqtt_main_join
 
 # ##################################
 # Z2M - Successfull Interview
 # ##################################
-- alias: zigbee2mqtt_notify_successfull_interview
-  initial_state: 'true'
-  trigger:
-    - platform: mqtt
-      topic: 'zigbee2mqtt/bridge/log'
-  condition:
-    - condition: template
-      value_template: '{{trigger.payload_json.type == "pairing" and trigger.payload_json.message == "interview_successful"}}'
-  action:
-    - service: persistent_notification.create
-      data_template:
-        title: Device joined the zigbee2mqtt network
-        message: "\U00002714 Name: {{trigger.payload_json.meta.friendly_name}},
-                  Vendor: {{trigger.payload_json.meta.vendor}},
-                  Description: {{trigger.payload_json.meta.description}}"
-    - service: notify.telegram
-      data_template:
-        message: "\U00002705 Z2M - новое устройство - имя: {{trigger.payload_json.meta.friendly_name}}, марка: {{trigger.payload_json.meta.vendor}}, описание: {{trigger.payload_json.meta.description}}"
+# - alias: zigbee2mqtt_notify_successfull_interview
+#   initial_state: 'true'
+#   trigger:
+#     - platform: mqtt
+#       topic: 'zigbee2mqtt/bridge/log'
+#   condition:
+#     - condition: template
+#       value_template: '{{trigger.payload_json.type == "pairing" and trigger.payload_json.message == "interview_successful"}}'
+#   action:
+#     - service: persistent_notification.create
+#       data_template:
+#         title: Device joined the zigbee2mqtt network
+#         message: "\U00002714 Name: {{trigger.payload_json.meta.friendly_name}},
+#                   Vendor: {{trigger.payload_json.meta.vendor}},
+#                   Description: {{trigger.payload_json.meta.description}}"
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U00002705 Z2M - новое устройство - имя: {{trigger.payload_json.meta.friendly_name}}, марка: {{trigger.payload_json.meta.vendor}}, описание: {{trigger.payload_json.meta.description}}"
 
 
 # ##################################
 # Z2M -  Zigbee2Mqtt bridge issue
 # ##################################
-- alias: zigbee2mqtt_z2m_bridge_status
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.zigbee2mqtt_bridge_state
-  action:
-    - service: notify.telegram
-      data_template:
-        message: >
-          {%if is_state('sensor.zigbee2mqtt_bridge_state','online')%}{{"\U00002705"}} Z2M онлайн!
-          {%elif is_state('sensor.zigbee2mqtt_bridge_state','offline') and is_state('sensor.zigbee2mqtt_addon_restart','ON')%}{{"\U0000267b"}} Внимание! Z2M рестарт аддона!
-          {%else%}{{"\U0000274C"}} Внимание! Z2M Отказ!
-          {%endif%}
+# - alias: zigbee2mqtt_z2m_bridge_status
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.zigbee2mqtt_bridge_state
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: >
+#           {%if is_state('sensor.zigbee2mqtt_bridge_state','online')%}{{"\U00002705"}} Z2M онлайн!
+#           {%elif is_state('sensor.zigbee2mqtt_bridge_state','offline') and is_state('sensor.zigbee2mqtt_addon_restart','ON')%}{{"\U0000267b"}} Внимание! Z2M рестарт аддона!
+#           {%else%}{{"\U0000274C"}} Внимание! Z2M Отказ!
+#           {%endif%}
 
 # # ##################################
 # # Z2M -  Zigbee2Mqtt not running
@@ -226,95 +226,95 @@
 # ##################################
 # Z2M - Device Responce
 # ##################################
-- alias: zigbee2mqtt_scan_devices_response
-  initial_state: 'true'
-  trigger:
-    - platform: time
-      at: "07:00:00"
-    - platform: time
-      at: "13:00:00"
-    - platform: time
-      at: "18:00:00"
-    - platform: time
-      at: "22:00:00"
-  condition:
-    - condition: template
-      value_template: >
-        {% set time_limit = as_timestamp(now())-4*60*60 %}
-        {{ states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='attributes.device.friendlyName') | unique | list | count  >= 1 }}
-  action:  
-  - service: script.turn_on
-    entity_id: script.zigbee2mqtt_lastseen_check
+# - alias: zigbee2mqtt_scan_devices_response
+#   initial_state: 'true'
+#   trigger:
+#     - platform: time
+#       at: "07:00:00"
+#     - platform: time
+#       at: "13:00:00"
+#     - platform: time
+#       at: "18:00:00"
+#     - platform: time
+#       at: "22:00:00"
+#   condition:
+#     - condition: template
+#       value_template: >
+#         {% set time_limit = as_timestamp(now())-4*60*60 %}
+#         {{ states | selectattr('attributes.last_seen', 'defined') | selectattr('attributes.linkquality', 'defined')| selectattr('attributes.last_seen','<', time_limit*1000 ) | map(attribute='attributes.device.friendlyName') | unique | list | count  >= 1 }}
+#   action:  
+#   - service: script.turn_on
+#     entity_id: script.zigbee2mqtt_lastseen_check
     
 # ##################################
 # Z2M - Map Update
 # ##################################
-- alias: zigbee2mqtt_map_update
-  initial_state: 'true'
-  trigger:
-    - platform: mqtt
-      topic: 'zigbee2mqtt/bridge/networkmap/raw'
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f5fa Z2M - карта обновлена {{now().strftime('%d.%m.%Y %H:%M:%S')}}"
-    - service: input_text.set_value
-      data_template:
-        entity_id: input_text.zigbee2mqtt_map_rebuild
-        value: "{{now().strftime('%d.%m.%Y %H:%M:%S')}}"
+# - alias: zigbee2mqtt_map_update
+#   initial_state: 'true'
+#   trigger:
+#     - platform: mqtt
+#       topic: 'zigbee2mqtt/bridge/networkmap/raw'
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f5fa Z2M - карта обновлена {{now().strftime('%d.%m.%Y %H:%M:%S')}}"
+#     - service: input_text.set_value
+#       data_template:
+#         entity_id: input_text.zigbee2mqtt_map_rebuild
+#         value: "{{now().strftime('%d.%m.%Y %H:%M:%S')}}"
 
 # ##################################
 # Z2M - Permit Join
 # ##################################
-- alias: zigbee2mqtt_permit_join
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.zigbee2mqtt_permit_join
-  action:
-    - service: notify.telegram
-      data_template:
-        message: >
-          {%if is_state('sensor.zigbee2mqtt_permit_join','true')%}{{"\U00002705"}} Z2M - сопряжение включено!
-          {%elif is_state('sensor.zigbee2mqtt_permit_join','false')%}{{"\U0000274c"}} Z2M - сопряжение выключено!
-          {%else%}{{"\U00002049"}} Z2M - сопряжение - неизвестно!
-          {%endif%}
+# - alias: zigbee2mqtt_permit_join
+#   initial_state: 'true'
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.zigbee2mqtt_permit_join
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: >
+#           {%if is_state('sensor.zigbee2mqtt_permit_join','true')%}{{"\U00002705"}} Z2M - сопряжение включено!
+#           {%elif is_state('sensor.zigbee2mqtt_permit_join','false')%}{{"\U0000274c"}} Z2M - сопряжение выключено!
+#           {%else%}{{"\U00002049"}} Z2M - сопряжение - неизвестно!
+#           {%endif%}
 
 # ##################################
 # Z2M - Log update
 # ##################################
-- alias: zigbee2mqtt_log_update
-  initial_state: 'true'
-  mode: queued
-  trigger:
-    #- platform: mqtt
-    #  topic: 'zigbee2mqtt/bridge/log'
-    - platform: state
-      entity_id: sensor.zigbee2mqtt_last_message
-  # condition:
-  #   - condition: template
-  #     value_template: "{{ trigger.from_state.state|lower != trigger.to_state.state|lower  }}"
-  action:
-    - service: notify.telegram
-      data_template:
-        message: >
-          {% if states('sensor.zigbee2mqtt_last_message')|lower == 'pairing' %} {{"\U00002705"}} Z2M лог - подключение нового устройства {{states('sensor.zigbee2mqtt_last_message_fn')}}
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_connected' %} {{"\U00002705"}} Z2M лог - подключено новое устройство {{states('sensor.zigbee2mqtt_last_message_fn2')}}
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_announced' %} {{"\U00002705"}} Z2M лог - объявление устройства {{states('sensor.zigbee2mqtt_last_message_fn')}}
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_ban' %} {{"\U00002757"}} Z2M лог - запрет подключения нового устройства
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_ban_failed' %} {{"\U0000274c"}} Z2M лог - ошибка при запрете подключения нового устройства
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_removed' %} {{"\U00002757"}} Z2M лог - устройство удалено
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_remove_failed' %} {{"\U0000274c"}} Z2M лог - ошибка удаления устройства
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_force_removed' %} {{"\U00002757"}} Z2M лог - устройство удалено (форс.)
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_force_removed_failed' %} {{"\U0000274c"}} Z2M лог - ошибка удаления устройства (форс.)
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_banned' %} {{"\U00002757"}} Z2M лог - устройство забанено
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_whitelisted' %} {{"\U00002705"}} Z2M лог - устройство добавлено в белый список
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_renamed' %} {{"\U00002757"}} Z2M лог - устройство переименовано
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_added' %} {{"\U00002705"}} Z2M лог - устройство добавлено
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_bind' %} {{"\U00002705"}} Z2M лог - бинд устройсва
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_unbind' %} {{"\U00002757"}} Z2M лог - ан-бинд устройства
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'devices' %} {{"\U00002705"}} Z2M лог - список устройств
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'groups' %} {{"\U00002705"}} Z2M лог - список групп
-          {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'zigbee_publish_error' %} {{"\U0000274c"}} Z2M лог - ошибка отправки команды в {{states('sensor.zigbee2mqtt_last_message_fn') }}
-          {% else %} {{"\U00002049"}} Z2M лог - {{states('sensor.zigbee2mqtt_last_message')}}
-          {%endif%}
+# - alias: zigbee2mqtt_log_update
+#   initial_state: 'true'
+#   mode: queued
+#   trigger:
+#     #- platform: mqtt
+#     #  topic: 'zigbee2mqtt/bridge/log'
+#     - platform: state
+#       entity_id: sensor.zigbee2mqtt_last_message
+#   # condition:
+#   #   - condition: template
+#   #     value_template: "{{ trigger.from_state.state|lower != trigger.to_state.state|lower  }}"
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: >
+#           {% if states('sensor.zigbee2mqtt_last_message')|lower == 'pairing' %} {{"\U00002705"}} Z2M лог - подключение нового устройства {{states('sensor.zigbee2mqtt_last_message_fn')}}
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_connected' %} {{"\U00002705"}} Z2M лог - подключено новое устройство {{states('sensor.zigbee2mqtt_last_message_fn2')}}
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_announced' %} {{"\U00002705"}} Z2M лог - объявление устройства {{states('sensor.zigbee2mqtt_last_message_fn')}}
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_ban' %} {{"\U00002757"}} Z2M лог - запрет подключения нового устройства
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_ban_failed' %} {{"\U0000274c"}} Z2M лог - ошибка при запрете подключения нового устройства
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_removed' %} {{"\U00002757"}} Z2M лог - устройство удалено
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_remove_failed' %} {{"\U0000274c"}} Z2M лог - ошибка удаления устройства
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_force_removed' %} {{"\U00002757"}} Z2M лог - устройство удалено (форс.)
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_force_removed_failed' %} {{"\U0000274c"}} Z2M лог - ошибка удаления устройства (форс.)
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_banned' %} {{"\U00002757"}} Z2M лог - устройство забанено
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_whitelisted' %} {{"\U00002705"}} Z2M лог - устройство добавлено в белый список
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_renamed' %} {{"\U00002757"}} Z2M лог - устройство переименовано
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_added' %} {{"\U00002705"}} Z2M лог - устройство добавлено
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_bind' %} {{"\U00002705"}} Z2M лог - бинд устройсва
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'device_unbind' %} {{"\U00002757"}} Z2M лог - ан-бинд устройства
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'devices' %} {{"\U00002705"}} Z2M лог - список устройств
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'groups' %} {{"\U00002705"}} Z2M лог - список групп
+#           {% elif states('sensor.zigbee2mqtt_last_message')|lower == 'zigbee_publish_error' %} {{"\U0000274c"}} Z2M лог - ошибка отправки команды в {{states('sensor.zigbee2mqtt_last_message_fn') }}
+#           {% else %} {{"\U00002049"}} Z2M лог - {{states('sensor.zigbee2mqtt_last_message')}}
+#           {%endif%}

@@ -377,3 +377,33 @@
       data:
         title: "Внимание!"
         message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp8266_pzem_hb_power')|int}}Вт!"
+        
+# ##################################
+# System - Water Consumption
+# ##################################
+- alias: system_water_consumption_not_home
+  initial_state: 'true'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d000232de79_contact
+      from: 'on'
+      to: 'off'
+      for:
+        seconds: 5
+    - platform: state
+      entity_id: binary_sensor.0x158d000236fcd5_contact
+      from: 'on'
+      to: 'off'
+      for:
+        seconds: 5
+  condition:
+    - condition: template
+      value_template: "{{ is_state('binary_sensor.family_home','off') or is_state('input_boolean.security_mode','on') }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f6a8 Внимание! Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
