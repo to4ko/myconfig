@@ -1,0 +1,276 @@
+substitutions:
+  board_name: esp32_pzem_hb
+
+esphome:
+  name: ${board_name}
+  platform: ESP32
+  board: esp-wrover-kit
+  comment: ESP32 PZEM004\NTC\Dallas node HB
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 15min
+  output_power: 10dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.72
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+  # networks:
+  #   - ssid: !secret wifi_ssid_hb
+  #     password: !secret wifi_pass
+  #     hidden: true
+  #     bssid: !secret wifi_bssid_hb_iot
+  #     priority: 2
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     bssid: !secret wifi_bssid_hb_main
+  #     priority: 1
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     priority: 0
+
+logger:
+  baud_rate: 0
+  
+api:
+  reboot_timeout: 15min
+
+ota:
+
+web_server:
+  port: 80
+
+# i2c:
+#   sda: GPIO21
+#   scl: GPIO22
+#   scan: True
+
+# uart:
+#   rx_pin: GPIO03
+#   tx_pin: GPIO01
+#   baud_rate: 9600
+
+dallas:
+  - pin: GPIO26
+    update_interval: 15s
+    id: dallas_node
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: dallas
+    address: 0x613C01D075384328
+    name: ${board_name}_Breaker_Box
+    dallas_id: dallas_node
+    accuracy_decimals: 1
+    resolution: 12
+
+  # - platform: bme280
+  #   temperature:
+  #     name: ${board_name}_BME280_Temperature
+  #     oversampling: 16x
+  #   pressure:
+  #     name: ${board_name}_BME280_Pressure
+  #   humidity:
+  #     name: ${board_name}_BME280_Humidity
+  #   address: 0x77
+  #   update_interval: 25s
+
+  - platform: ntc
+    sensor: resistance_sensor1
+    calibration:
+      b_constant: 3435
+      reference_temperature: 25°C
+      reference_resistance: 10kOhm
+    name: ${board_name}_NTC1
+
+  - platform: ntc
+    sensor: resistance_sensor2
+    calibration:
+      b_constant: 3435
+      reference_temperature: 25°C
+      reference_resistance: 10kOhm
+    name: ${board_name}_NTC2
+
+  - platform: ntc
+    sensor: resistance_sensor3
+    calibration:
+      b_constant: 3435
+      reference_temperature: 25°C
+      reference_resistance: 10kOhm
+    name: ${board_name}_NTC3
+
+  - platform: ntc
+    sensor: resistance_sensor4
+    calibration:
+      b_constant: 3435
+      reference_temperature: 25°C
+      reference_resistance: 10kOhm
+    name: ${board_name}_NTC4
+
+  - platform: resistance
+    id: resistance_sensor1
+    sensor: source_sensor1
+    configuration: DOWNSTREAM
+    resistor: 9.9kOhm
+    reference_voltage:  3.4V
+    name: ${board_name}_NTC_Resistance1
+
+  - platform: resistance
+    id: resistance_sensor2
+    sensor: source_sensor2
+    configuration: DOWNSTREAM
+    resistor: 9.9kOhm
+    reference_voltage:  3.4V
+    name: ${board_name}_NTC_Resistance2
+
+  - platform: resistance
+    id: resistance_sensor3
+    sensor: source_sensor3
+    configuration: DOWNSTREAM
+    resistor: 9.9kOhm
+    reference_voltage:  3.4V
+    name: ${board_name}_NTC_Resistance3
+
+  - platform: resistance
+    id: resistance_sensor4
+    sensor: source_sensor4
+    configuration: DOWNSTREAM
+    resistor: 9.9kOhm
+    reference_voltage:  3.4V
+    name: ${board_name}_NTC_Resistance4
+
+  - platform: adc
+    pin: GPIO35
+    attenuation: 11db
+    name: ${board_name}_ADC_1
+    id: source_sensor1
+    update_interval: never
+
+  - platform: adc
+    pin: GPIO34
+    attenuation: 11db
+    name: ${board_name}_ADC_2
+    id: source_sensor2
+    update_interval: never
+
+  - platform: adc
+    pin: GPIO39
+    attenuation: 11db
+    name: ${board_name}_ADC_3
+    id: source_sensor3
+    update_interval: never
+
+  - platform: adc
+    pin: GPIO36
+    attenuation: 11db
+    name: ${board_name}_ADC_4
+    id: source_sensor4
+    update_interval: never
+    
+  # - platform: adc
+  #   id: source_sensor
+  #   pin: A0
+  #   name: ${board_name}_NTC_ADC
+  #   update_interval: 2s
+  #   filters:
+  #     - multiply: 3.3
+  #     - offset:  -0.1
+    
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+  - platform: gpio
+    pin: GPIO16
+    id: ntc1_vcc    
+    name: ${board_name}_NTC1_VCC
+
+  - platform: gpio
+    pin: GPIO17
+    id: ntc2_vcc    
+    name: ${board_name}_NTC2_VCC
+
+  - platform: gpio
+    pin: GPIO18
+    id: ntc3_vcc    
+    name: ${board_name}_NTC3_VCC
+
+  - platform: gpio
+    pin: GPIO19
+    id: ntc4_vcc    
+    name: ${board_name}_NTC4_VCC
+
+interval:
+  - interval: 5s
+    then:
+      - switch.turn_on: ntc1_vcc
+      - switch.turn_on: ntc2_vcc
+      - switch.turn_on: ntc3_vcc
+      - switch.turn_on: ntc4_vcc
+      - delay: 2s
+      - component.update: source_sensor1
+      - component.update: source_sensor2
+      - component.update: source_sensor3
+      - component.update: source_sensor4
+      - delay: 2s
+      - component.update: source_sensor1
+      - component.update: source_sensor2
+      - component.update: source_sensor3
+      - component.update: source_sensor4      
+      - switch.turn_off: ntc1_vcc
+      - switch.turn_off: ntc2_vcc
+      - switch.turn_off: ntc3_vcc
+      - switch.turn_off: ntc4_vcc
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
