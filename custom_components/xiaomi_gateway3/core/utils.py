@@ -331,9 +331,9 @@ DEVICES = [{
     # https://github.com/AlexxIT/XiaomiGateway3/issues/101
     'lumi.airrtc.tcpecn02': ["Aqara", "Thermostat S2", "KTWKQ03ES"],
     'params': [
-        ['3.1.85', None, 'power', None],
+        ['3.1.85', 'power_status', 'power', None],
         ['3.2.85', None, 'current_temperature', None],
-        ['14.2.85', None, 'climate', 'climate'],
+        ['14.2.85', 'ac_state', 'climate', 'climate'],
         ['14.8.85', None, 'mode', None],
         ['14.9.85', None, 'target_temperature', None],
         ['14.10.85', None, 'fan_mode', None],
@@ -452,7 +452,13 @@ def fix_xiaomi_props(params) -> dict:
         elif k == 'battery' and v and v > 1000:
             params[k] = round((min(v, 3200) - 2500) / 7)
         elif k == 'run_state':
-            params[k] = ['offing', 'oning', 'stop', 'hander_stop'].index(v)
+            # https://github.com/AlexxIT/XiaomiGateway3/issues/139
+            if v == 'offing':
+                params[k] = 0
+            elif v == 'oning':
+                params[k] = 1
+            else:
+                params[k] = 2
 
     return params
 
@@ -547,6 +553,9 @@ class XiaomiGateway3Debug(logging.Handler, HomeAssistantView):
 
     async def get(self, request: web.Request):
         try:
+            if 'c' in request.query:
+                self.text = ''
+
             if 'q' in request.query or 't' in request.query:
                 lines = self.text.split('\n')
 

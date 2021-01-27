@@ -161,29 +161,35 @@
 
   - platform: template
     sensors:
-       abs_humidity_b:
-         value_template: >-
-           {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float, states('sensor.0x158d00020d7c3a_temperature') %}
-           {% if not h or t == 'unknown' -%}
-             'unknown'
-           {%- else %}
-            {% set t = t | float %}
-            {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
-           {% endif %}
-         unit_of_measurement: 'g/m³'
-         friendly_name: Absolute Humidity B
+      gw3_devices_unavailable:
+        friendly_name: GW3 Devices Unvailable
+        value_template: "{{ expand('group.gw3_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
+        icon_template: mdi:signal-off
+        unit_of_measurement: 'ea'
 
-       abs_humidity_h:
-         value_template: >-
-           {% set h, t = states('sensor.humidity_average') | float, states('sensor.temperature_average') %}
-           {% if not h or t == 'unknown' -%}
-             'unknown'
-           {%- else %}
-            {% set t = t | float %}
-            {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
-           {% endif %}
-         unit_of_measurement: 'g/m³'
-         friendly_name: Absolute Humidity H
+      abs_humidity_b:
+        value_template: >-
+          {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float, states('sensor.0x158d00020d7c3a_temperature') %}
+          {% if not h or t == 'unknown' -%}
+           'unknown'
+          {%- else %}
+          {% set t = t | float %}
+          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
+          {% endif %}
+        unit_of_measurement: 'g/m³'
+        friendly_name: Absolute Humidity B
+
+      abs_humidity_h:
+        value_template: >-
+          {% set h, t = states('sensor.humidity_average') | float, states('sensor.temperature_average') %}
+          {% if not h or t == 'unknown' -%}
+          'unknown'
+          {%- else %}
+          {% set t = t | float %}
+          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
+          {% endif %}
+        unit_of_measurement: 'g/m³'
+        friendly_name: Absolute Humidity H
 
   - platform: command_line
     name: Supervisor updates

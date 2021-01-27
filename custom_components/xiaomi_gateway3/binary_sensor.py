@@ -57,6 +57,7 @@ class Gateway3BinarySensor(Gateway3Device, BinarySensorEntity):
 
 
 class Gateway3MotionSensor(Gateway3BinarySensor):
+    _default_delay = None
     _last_on = 0
     _last_off = 0
     _timeout_pos = 0
@@ -64,10 +65,10 @@ class Gateway3MotionSensor(Gateway3BinarySensor):
 
     async def async_added_to_hass(self):
         # old version
-        delay = self.device.get(CONF_OCCUPANCY_TIMEOUT, 90)
+        self._default_delay = self.device.get(CONF_OCCUPANCY_TIMEOUT, 90)
 
         custom: dict = self.hass.data[DATA_CUSTOMIZE].get(self.entity_id)
-        custom.setdefault(CONF_OCCUPANCY_TIMEOUT, delay)
+        custom.setdefault(CONF_OCCUPANCY_TIMEOUT, self._default_delay)
 
         await super().async_added_to_hass()
 
@@ -87,16 +88,14 @@ class Gateway3MotionSensor(Gateway3BinarySensor):
             return
 
         # https://github.com/AlexxIT/XiaomiGateway3/issues/135
-        if 'illumination' in data and len(data) == 1:
+        if 'illuminance' in data and len(data) == 1:
             data[self._attr] = 1
 
-        if self._attr not in data:
+        # check only motion=1
+        if data.get(self._attr) != 1:
             # handle available change
             self.async_write_ha_state()
             return
-
-        # check only motion=1
-        assert data[self._attr] == 1, data
 
         # don't trigger motion right after illumination
         t = time.time()
@@ -114,7 +113,9 @@ class Gateway3MotionSensor(Gateway3BinarySensor):
             self._unsub_set_no_motion()
 
         custom = self.hass.data[DATA_CUSTOMIZE].get(self.entity_id)
-        timeout = custom.get(CONF_OCCUPANCY_TIMEOUT)
+        # if customize of any entity will be changed from GUI - default value
+        # for all motion sensors will be erased
+        timeout = custom.get(CONF_OCCUPANCY_TIMEOUT, self._default_delay)
         if timeout:
             if isinstance(timeout, list):
                 pos = min(self._timeout_pos, len(timeout) - 1)

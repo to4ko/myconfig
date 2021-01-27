@@ -30,7 +30,7 @@
         state: 'off'
       - condition: state
         entity_id: input_boolean.security_mode
-        state: 'off'        
+        state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.led_strip_entrance_hb
@@ -69,26 +69,8 @@
         entity_id: light.led_strip_hb
         state: 'off'
   action:
-    - service: light.turn_on
-      data_template: 
-        entity_id: >
-          {% if states('sensor.time').split(':').0|int < 10 %}
-            light.led_strip_entrance_hb
-          {% else %}
-            light.led_strip_hb
-          {%endif%}
-        brightness_pct: >
-          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
-            1
-          {% else %}
-            90
-          {%endif%}
-        kelvin: >
-          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
-            3000
-          {% else %}
-            5000
-          {%endif%}
+    - service: script.turn_on
+      entity_id: script.hall_big_led_strip_on  
 
 # ##################################
 # Hall Big - Auto Night Light Off 30s without movements
@@ -166,58 +148,8 @@
       from: 'off'
       to: 'on'
   action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: input_boolean.dark_mode
-              state: 'off'
-          sequence:
-            - service: light.turn_on
-              data_template: 
-                entity_id: >
-                  {% if states('sensor.time').split(':').0|int < 10 %}
-                    light.led_strip_entrance_hb
-                  {% else %}
-                    light.led_strip_hb
-                  {%endif%}
-                brightness_pct: >
-                  {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
-                    1
-                  {% else %}
-                    100
-                  {%endif%}
-                kelvin: >
-                  {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
-                    3000
-                  {% else %}
-                    5000
-                  {%endif%}
-        - conditions:
-            - condition: state
-              entity_id: input_boolean.dark_mode
-              state: 'off'
-          sequence:
-            - service: script.turn_on
-              entity_id: script.noop
-    # - choose:
-    #     - conditions:
-    #         - condition: template
-    #           value_template: "{{is_state('binary_sensor.tod_day','off') and is_state('input_boolean.dark_mode','off')}}"
-    #       sequence:
-    #         - service: light.turn_on
-    #           entity_id: light.led_strip_hb
-    #           data:
-    #             brightness_pct: 2
-    #             kelvin: 3000
-    #     - conditions:
-    #         - condition: template
-    #           value_template: "{{is_state('binary_sensor.tod_day','on') and is_state('input_boolean.dark_mode','off')}}"
-    #       sequence:
-    #         - service: light.turn_on
-    #           entity_id: light.led_strip_hb
-    #           data:
-    #             brightness_pct: 100
-    #             kelvin: 5000
+    - service: script.turn_on
+      entity_id: script.hall_big_led_strip_on
     - service: input_number.set_value
       data_template:
         entity_id: input_number.main_door_open
