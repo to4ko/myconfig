@@ -5,9 +5,9 @@ esphome:
   name: sonoff_basic_2
   platform: ESP8266
   board: esp01_1m
-  on_boot:
-    then:
-      - switch.turn_on: relay
+  # on_boot:
+  #   then:
+  #     - switch.turn_on: relay
   comment: Round LED K Switch
   
 wifi:
@@ -64,6 +64,16 @@ binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
+climate:
+  - platform: thermostat
+    name: ${board_name}_Heater
+    sensor: temperature_sensor
+    default_target_temperature_low: 25 °C
+    heat_action:
+      - switch.turn_on: relay
+    idle_action:
+      - switch.turn_off: relay
+
 switch:
   - platform: gpio
     name: ${board_name}_Relay
@@ -87,6 +97,16 @@ sensor:
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
+
+  - platform: dht
+    pin: GPIO02
+    temperature:
+      name: ${board_name}_Temperature
+      id: temperature_sensor
+    humidity:
+      name: ${board_name}_Humidity
+    update_interval: 5s
+    model: dht11
     
 text_sensor:
   - platform: wifi_info

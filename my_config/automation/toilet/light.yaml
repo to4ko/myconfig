@@ -6,7 +6,7 @@
 # Toilet - Timer restart with movement
 # ################################## 
 - alias: toilet_timer_restart
-  initial_state: 'true'
+  initial_state: 'false'
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0001e54280_motion
@@ -22,10 +22,13 @@
         entity_id: light.esp32_bathroom_node_light
         state: 'on'
   action:
-    - service: timer.cancel
-      entity_id: timer.main_light_t  
-    - service: timer.start
-      entity_id: timer.main_light_t
+    # - service: timer.cancel
+    #   entity_id: timer.main_light_t  
+    # - service: timer.start
+    #   entity_id: timer.main_light_t
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.toilet_occupancy
 
 # ##################################
 # Toilet - Timer start
@@ -50,50 +53,34 @@
       entity_id: timer.main_light_t  
     - service: timer.start
       entity_id: timer.main_light_t
+    # - service: input_boolean.turn_on
+    #   data:
+    #     entity_id: input_boolean.toilet_occupancy
 
 # ##################################
 # Toilet - Timer pause on
 # ################################## 
-# - alias: toilet_timer_pause_on
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id: binary_sensor.0x00158d0001e54280_occupancy
-#       from: 'off'
-#       to: 'on'
-#   condition:
-#     - condition: state
-#       entity_id: binary_sensor.0x158d000232ddd6_contact
-#       state: 'off'
-#     - condition: state
-#       entity_id: switch.0x00158d0002a36f7f_switch_left
-#       state: 'on'
-#   action:
-#     - service: timer.pause
-#       entity_id: timer.main_light_t
-#     - service: automation.turn_off
-#       entity_id: automation.toilet_timer_restart
-    
-# ##################################
-# Bathroom - Timer pause off
-# ################################## 
-# - alias: toilet_timer_pause_off
-#   initial_state: 'true'
-#   trigger:
-#     - platform: state
-#       entity_id: binary_sensor.0x158d000232ddd6_contact
-#       from: 'off'
-#       to: 'on'
-#   condition:
-#     - condition: state
-#       entity_id: switch.0x00158d0002a36f7f_switch_left #switch.wall_switch_left_158d0002a36f7f
-#       state: 'on'
-#   action:
-#     - service: timer.start
-#       entity_id: timer.main_light_t
-#     - service: automation.turn_on
-#       entity_id: automation.toilet_timer_restart
-    
+- alias: toilet_timer_pause_on
+  initial_state: 'false'
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d0001e54280_occupancy
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d000232ddd6_contact
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.0x158d0001ef2ffc_contact
+      state: 'off'
+  action:
+    # - service: timer.pause
+    #   entity_id: timer.main_light_t
+    # - service: input_boolean.turn_on
+    #   data:
+    #     entity_id: input_boolean.toilet_occupancy
+
 # ##################################
 # Toilet - Auto Light On
 # ##################################
@@ -104,9 +91,6 @@
       entity_id: binary_sensor.0x158d0001e54280_motion
       from: 'off'
       to: 'on'
-    - platform: state
-      entity_id: sensor.0x158d0001b97111_action
-      to: 'single'
     - platform: state
       entity_id: binary_sensor.0x158d000232ddd6_contact
       to: 'on'
@@ -128,15 +112,11 @@
 # Toilet - Light On
 # ##################################
 - alias: toilet_light_on
-  initial_state: 'false'
+  initial_state: 'true'
   trigger:
     - platform: state
       entity_id: sensor.0x158d0001b97111_action
       to: 'single'
-    - platform: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      to: 'on'
-      from: 'off'
   condition:
     - condition: state
       entity_id: switch.0x158d0002a36f7f_channel_1
@@ -154,14 +134,14 @@
 - alias: toilet_auto_off
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: timer.finished
-    #   event_data:
-    #     entity_id: timer.main_light_t
-    - platform: state
-      entity_id: timer.main_light_t
-      to: 'idle'
-      for: '00:00:30'
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.main_light_t
+    # - platform: state
+    #   entity_id: timer.main_light_t
+    #   to: 'idle'
+    #   for: '00:00:30'
   condition:
     - condition: or
       conditions:
@@ -178,9 +158,12 @@
       entity_id: light.esp32_bathroom_node_light
       data:
         transition: 5
+    # - service: input_boolean.turn_off
+    #   data:
+    #     entity_id: input_boolean.toilet_occupancy
 
 # ##################################
-# Toilet - Auto Light off - No Motion 2m and Cover Closed
+# Toilet - Auto Light off - No Motion 5m with Closed Cover
 # ##################################
 - alias: toilet_auto_light_off_no_motion_cover_closed
   initial_state: 'true'
@@ -191,19 +174,17 @@
       for:
         minutes: 5
   condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.0x158d000232ddd6_contact
-        state: 'off'
-      - condition: or
-        conditions:
-          - condition: state
-            entity_id: switch.0x158d0002a36f7f_channel_1
-            state: 'on'
-          - condition: state
-            entity_id: light.esp32_bathroom_node_light
-            state: 'on'
+    - condition: state
+      entity_id: binary_sensor.0x158d000232ddd6_contact
+      state: 'off'
+    - condition: or
+      conditions:
+        - condition: state
+          entity_id: switch.0x158d0002a36f7f_channel_1
+          state: 'on'
+        - condition: state
+          entity_id: light.esp32_bathroom_node_light
+          state: 'on'
   action:
     - service: timer.finish
       entity_id: timer.main_light_t
@@ -251,6 +232,9 @@
           sequence:
             - service: light.turn_off
               entity_id: light.btf_pixel_strip_toilet
+            # - service: input_boolean.turn_off
+            #   data:
+            #     entity_id: input_boolean.toilet_occupancy
         - conditions:
             - condition: state
               entity_id: binary_sensor.0x158d000232ddd6_contact
@@ -261,3 +245,6 @@
                 entity_id: light.btf_pixel_strip_toilet
                 effect: 'Color Wipe'
                 brightness_pct: 40
+            # - service: input_boolean.turn_on
+            #   data:
+            #     entity_id: input_boolean.toilet_occupancy

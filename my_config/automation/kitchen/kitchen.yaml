@@ -34,7 +34,7 @@
       after: '07:20:00'
       before: '07:30:00'
     - condition: template
-      value_template: "{{now().day > state_attr('automation.kitchen_weather_announcement', 'last_triggered').day }}"
+      value_template: "{{as_timestamp(now()) - as_timestamp(state_attr('automation.kitchen_weather_announcement', 'last_triggered')) > 10*60 }}"
     - condition: state
       entity_id: binary_sensor.workday_sensor
       state: 'on'
@@ -202,20 +202,21 @@
 # Kitchen - Oven Target Temp
 # ##################################
 - alias: kitchen_oven_notify_target_temp
-  initial_state: 'false'
+  initial_state: 'true'
   trigger:
     - platform: state
-      entity_id: sensor.esp8266_oven_temp_k
+      entity_id: binary_sensor.esp8266_oven_temp_k_oven_status
+      to: 'on'
   condition:
     - condition: template
-      value_template: "{{states('sensor.esp8266_oven_temp_k')|int > 150 }}"
-    - condition: template
       value_template: "{{ not is_state('input_select.oven_target_temperature', 'Off') }}"
-    - condition: template
-      value_template: "{{ states('sensor.esp8266_oven_temp_k')|int > states('input_select.oven_target_temperature')|int }}"
-    - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_oven_notify_target_temp','last_triggered'))|int) > 15 }}"
   action:
+    - wait_for_trigger:
+        - platform: template
+          value_template: "{{ states('sensor.esp8266_oven_temp_k')|int > states('input_select.oven_target_temperature')|int }}"
+      timeout:
+        minutes: 60
+      continue_on_timeout: false
     - service: notify.telegram
       data_template:
         message: "\U0001f321 Духовка нагрелась до ({{states('sensor.esp8266_oven_temp_k')|int}}°C)!"

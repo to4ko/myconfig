@@ -156,16 +156,15 @@
 - alias: system_presence_sandra_left_home
   initial_state: 'true'
   trigger:
-    # - platform: state
-    #   #entity_id: device_tracker.life360_sandra_tsymbal
+    - platform: time_pattern
+      minutes: "/5"
+    # - platform: zone
     #   entity_id: person.sandra
-    #   from: 'home'
-    #   for:
-    #     minutes: 3
-    - platform: zone
-      entity_id: person.sandra
-      zone: zone.home
-      event: "leave"
+    #   zone: zone.home
+    #   event: "leave"
+  condition:
+    - condition: template
+      value_template: "{{ states('binary_sensor.sandra_home') != states('fan.purifier2s') }}"
   action: 
-    - service: fan.turn_off
+    - service: fan.turn_{{states('binary_sensor.sandra_home')}}
       entity_id: fan.purifier2s

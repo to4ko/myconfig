@@ -318,7 +318,7 @@ views:
                   - entity: input_boolean.bathroom_occupancy #binary_sensor.someone_showering
                     name: B
                     icon: mdi:hot-tub
-                  - entity: binary_sensor.toilet_usage
+                  - entity: binary_sensor.0x158d000232ddd6_contact #input_boolean.toilet_occupancy #binary_sensor.toilet_usage
                     name: T
                   - entity: switch.0x158d0002482619_switch
                     name: BFan B
@@ -450,7 +450,7 @@ views:
                   - entity: sensor.0x158d0001e58754_humidity
                     name: T
           - type: glance
-            columns: 6
+            columns: 7
             state_color: true
             entities:
               - entity: sensor.humidity_average
@@ -465,8 +465,8 @@ views:
                 name: Dew T
               - entity: sensor.esp32_bathroom_node_cold_pipe
                 name: cPipe
-              # - entity: sensor.esp8266_oven_temp_k
-              #   name: Oven
+              - entity: sensor.mold_t
+                name: Mold T
           - type: horizontal-stack
             cards:
               - type: glance
@@ -902,6 +902,12 @@ views:
                 name: Microwave
                 tap_action:
                   action: toggle
+              - entity: switch.sonoff_basic_1_relay
+                name: Heater T
+                tap_action:
+                  action: toggle
+          - type: thermostat
+            entity: climate.toilet                  
 
           # - type: glance
           #   show_name: true
@@ -2700,7 +2706,9 @@ views:
               - entity: timer.fan_t
               - entity: timer.general_10m
               - entity: timer.general_5m
+              - entity: timer.heater_t
               - entity: timer.main_door_open_hb
+              - entity: timer.main_led_strip_hb
               - entity: timer.main_light_b
               - entity: timer.main_light_delay_k
               - entity: timer.main_light_delay_st
@@ -2710,16 +2718,12 @@ views:
               - entity: timer.main_light_s
               - entity: timer.main_light_st
               - entity: timer.main_light_t
-              - entity: timer.test_timer
-              - entity: timer.wadrobe_led_strip_hb
-              - entity: timer.washer_b
-              - entity: timer.zigbee2mqtt_permit_join
-              - entity: timer.zigbee_permit_join
-              - entity: timer.main_door_open_hb
-              - entity: timer.main_led_strip_hb
               - entity: timer.night_led_strip_hb
               - entity: timer.night_led_strip_hs
               - entity: timer.night_led_strip_k
+              - entity: timer.test_timer
+              - entity: timer.washer_b
+              - entity: timer.zigbee2mqtt_permit_join
             state_filter:
             - "active"
             - "paused"
@@ -4117,6 +4121,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - binary_sensor.sonoff_basic_1_status
           - binary_sensor.esp32_bathroom_node_status
           - binary_sensor.sonoff_pow_r2_1_status
           - binary_sensor.btf_pixel_strip_status
@@ -4157,6 +4162,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - sensor.sonoff_basic_1_wifi_rssi
           - sensor.esp32_bathroom_node_wifi_rssi
           - sensor.sonoff_pow_r2_1_wifi_rssi
           - sensor.btf_pixel_strip_wifi_rssi
@@ -4198,6 +4204,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
+          - sensor.sonoff_basic_1_uptime
           - sensor.esp32_bathroom_node_uptime
           - sensor.sonoff_pow_r2_1_uptime
           - sensor.btf_pixel_strip_uptime
@@ -4847,6 +4854,22 @@ views:
           - switch.gateway_plug_k
       - type: entities
         show_header_toggle: false
+        state_color: true      
+        entities:
+          - entity: timer.main_light_t
+            secondary_info: last-changed
+          - light.esp32_bathroom_node_light
+          - switch.0x158d0002a36f7f_channel_1
+          - entity: binary_sensor.0x158d0001e54280_motion
+            secondary_info: last-changed
+          - entity: binary_sensor.0x158d000232ddd6_contact
+            secondary_info: last-changed
+          - entity: binary_sensor.0x158d0001ef2ffc_contact
+            secondary_info: last-changed
+          - entity: input_boolean.toilet_occupancy
+            secondary_info: last-changed
+      - type: entities
+        show_header_toggle: false
         state_color: true
         entities:
           - entity: switch.air_freshener_spray
@@ -4936,47 +4959,6 @@ views:
       - type: vertical-stack
         cards:
           - type: entities
-            show_header_toggle: false
-            state_color: true
-            entities:
-              - entity: sensor.esp8266_test_bme280_humidity
-                name: bme280 H
-              - entity: sensor.esp8266_test_bme280_pressure
-                name: bme280 P
-              - entity: sensor.esp8266_test_bme280_temperature
-                name: bme280 T
-              - entity: sensor.esp8266_test_breaker_box
-                name: Dallas T
-
-          - type: history-graph
-            hours_to_show: 24
-            entities:
-              - entity: sensor.esp8266_test_bme280_humidity
-                name: bme280 H
-          - type: history-graph
-            hours_to_show: 24
-            entities:
-              - entity: sensor.esp8266_test_bme280_pressure
-                name: bme280 P
-          - type: history-graph
-            hours_to_show: 24
-            entities:
-              - entity: sensor.esp8266_test_bme280_temperature
-                name: bme280 T
-              - entity: sensor.esp8266_test_breaker_box
-                name: Dallas T
-
-      - type: history-graph
-        hours_to_show: 24
-        entities:
-          - sensor.esp8266_test_ntc0
-          - sensor.esp8266_test_ntc1
-          - sensor.esp8266_test_ntc2
-          - sensor.esp8266_test_ntc3
-
-      - type: vertical-stack
-        cards:
-          - type: entities
             entities:
               - entity: sensor.esp32_node_k_humidity
                 name: bme280 H
@@ -5008,7 +4990,9 @@ views:
         show_empty: false
         card:
           type: entities
-          title: Lights on
+          #title: Lights on
+          show_header_toggle: false
+          state_color: true
         filter:
           include:
             - domain: light
@@ -5065,7 +5049,9 @@ views:
         card:
           show_header_toggle: false
           type: entities
-          title: Unavailables
+          #title: Unavailables
+          show_header_toggle: false
+          state_color: true
         filter:
           include:
             - state: 'unavailable'

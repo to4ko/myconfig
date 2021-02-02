@@ -72,3 +72,20 @@
     - service: timer.start
       entity_id: timer.fan_t
 
+# ##################################
+# Toilet - Fan Autostart
+# ################################## 
+- alias: toilet_fan_auto
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+  condition:
+    - condition: state
+      entity_id: switch.esp32_bathroom_node_relay_4
+      state: 'off'
+    - condition: template
+      value_template: "{{(as_timestamp(now())|int - as_timestamp(states.switch.esp32_bathroom_node_relay_4.last_changed)|int ) > 40*60 }}"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.esp32_bathroom_node_relay_4
