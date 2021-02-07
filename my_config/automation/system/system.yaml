@@ -1191,6 +1191,7 @@
 # ##################################
 - alias: system_xiaomi_gw3_error
   initial_state: 'true'
+  mode: queued
   trigger:
     - platform: event
       event_type: system_log_event
@@ -1203,6 +1204,25 @@
     - service: notify.telegram
       data_template:
         message: "\U000026d4 GW3 Ошибка обнаружена в логе!"
+
+# ##################################
+# System - Already running log
+# ##################################
+- alias: system_already_running_log
+  initial_state: 'true'
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: system_log_event
+      event_data:
+        level: WARNING
+  condition:
+    - condition: template
+      value_template: '{{ "Already running" in trigger.event.data.message[0] }}'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U000026d4 Warning! {{trigger.event.data.message[0]}}"
 
 # ##################################
 # System - NUT Error

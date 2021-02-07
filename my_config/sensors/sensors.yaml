@@ -83,19 +83,19 @@
     unit_time: min
     time_window: "00:10:00"
 
-  - platform: statistics
-    name: Oven Temp Stats
-    entity_id: sensor.esp8266_oven_temp_k
-    sampling_size: 30
-    max_age:
-      minutes: 5
+  # - platform: statistics
+  #   name: Oven Temp Stats
+  #   entity_id: sensor.esp8266_oven_temp_k
+  #   sampling_size: 30
+  #   max_age:
+  #     minutes: 5
 
-  - platform: template
-    sensors:
-      oven_temp_change:
-        value_template: "{{ state_attr('sensor.oven_temp_stats', 'change') }}"
-        unit_of_measurement: '°C'
-        device_class: temperature
+  # - platform: template
+  #   sensors:
+  #     oven_temp_change:
+  #       value_template: "{{ state_attr('sensor.oven_temp_stats', 'change') }}"
+  #       unit_of_measurement: '°C'
+  #       device_class: temperature
 
   - platform: derivative
     source: sensor.oven_temp_stats
@@ -177,7 +177,12 @@
       gw3_devices_unavailable:
         friendly_name: GW3 Devices Unvailable
         value_template: "{{ expand('group.gw3_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
-        icon_template: mdi:signal-off
+        icon_template: >
+          {% if states('binary_sensor.gw3_devices_unavailable') == "on" %}
+          mdi:signal-off
+          {% else %}
+          mdi:signal
+          {% endif %}
         unit_of_measurement: 'ea'
 
       abs_humidity_b:
@@ -190,7 +195,21 @@
           {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
           {% endif %}
         unit_of_measurement: 'g/m³'
+        icon_template: mdi:water-percent
         friendly_name: Absolute Humidity B
+
+      abs_humidity_t:
+        value_template: >-
+          {% set h, t = states('sensor.0x158d0001e58754_humidity') | float, states('sensor.0x158d0001e58754_temperature') %}
+          {% if not h or t == 'unknown' -%}
+           'unknown'
+          {%- else %}
+          {% set t = t | float %}
+          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
+          {% endif %}
+        unit_of_measurement: 'g/m³'
+        icon_template: mdi:water-percent
+        friendly_name: Absolute Humidity T
 
       abs_humidity_h:
         value_template: >-
@@ -202,6 +221,7 @@
           {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
           {% endif %}
         unit_of_measurement: 'g/m³'
+        icon_template: mdi:water-percent
         friendly_name: Absolute Humidity H
 
   - platform: command_line

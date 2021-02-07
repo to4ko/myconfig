@@ -70,26 +70,27 @@ class Gateway3Light(Gateway3Device, LightEntity):
                 kwargs[ATTR_TRANSITION] = custom[CONF_DEFAULT_TRANSITION]
 
         # transition works only with raw zigbee commands
-        if ATTR_TRANSITION in kwargs:
+        # nwk empty for new device, it reloads only after restart integration
+        if ATTR_TRANSITION in kwargs and 'nwk' in self.device:
             # is the amount of time, in tenths of a second
             tr = int(kwargs[ATTR_TRANSITION] * 10.0)
             commands = []
 
-            if ATTR_COLOR_TEMP in kwargs:
-                ct = int(kwargs[ATTR_COLOR_TEMP])
-                commands += [
-                    f"zcl color-control movetocolortemp {ct} {tr} 0 0",
-                    f"send 0x{self.device['nwk']} 1 1"
-                ]
-
             # if only turn_on with transition restore last brightness
-            if ATTR_BRIGHTNESS not in kwargs and not commands:
+            if ATTR_BRIGHTNESS not in kwargs and ATTR_COLOR_TEMP not in kwargs:
                 kwargs[ATTR_BRIGHTNESS] = self.brightness or 255
 
             if ATTR_BRIGHTNESS in kwargs:
                 br = int(kwargs[ATTR_BRIGHTNESS])
                 commands += [
                     f"zcl level-control o-mv-to-level {br} {tr}",
+                    f"send 0x{self.device['nwk']} 1 1"
+                ]
+
+            if ATTR_COLOR_TEMP in kwargs:
+                ct = int(kwargs[ATTR_COLOR_TEMP])
+                commands += [
+                    f"zcl color-control movetocolortemp {ct} {tr} 0 0",
                     f"send 0x{self.device['nwk']} 1 1"
                 ]
 
@@ -117,7 +118,7 @@ class Gateway3Light(Gateway3Device, LightEntity):
                 kwargs[ATTR_TRANSITION] = custom[CONF_DEFAULT_TRANSITION]
 
         # transition works only with raw zigbee commands
-        if ATTR_TRANSITION in kwargs:
+        if ATTR_TRANSITION in kwargs and 'nwk' in self.device:
             # is the amount of time, in tenths of a second
             tr = int(kwargs[ATTR_TRANSITION] * 10.0)
             commands = [
