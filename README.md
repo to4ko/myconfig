@@ -76,6 +76,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
   - Xiaomi Philips Zhirui Downlight (9290012799)
   - Yeelight Xiaomi Led Bulb (Color) (YLDP06YL) (2ea)
+  - Yeelight Xiaomi Led Tunable Bulb (White) (YLDP05YL) (1ea)
   - not in use - Xiaomi Smart WiFi Power Strip (2ea)
   - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
