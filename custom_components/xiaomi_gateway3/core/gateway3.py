@@ -577,6 +577,7 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
             # read Xiaomi devices DB
             raw = shell.read_file('/data/zigbee_gw/' + self.ver_zigbee_db,
                                   as_base64=True)
+            # self.debug(f"Devices RAW: {raw}")
             if raw.startswith(b'unqlite'):
                 db = Unqlite(raw)
                 data = db.read_all()
@@ -718,7 +719,7 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
             topic = msg.topic
 
             if 'mqtt' in self._debug:
-                self.debug(f"[MQ] {topic} {msg.payload.decode()}")
+                _LOGGER.debug(f"{self.host} | MQTT | {topic} {msg.payload}")
 
             if topic == 'zigbee/send':
                 payload = json.loads(msg.payload)
@@ -851,7 +852,7 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
         elif data['cmd'] == 'report':
             pkey = 'params' if 'params' in data else 'mi_spec'
         elif data['cmd'] in ('write_rsp', 'read_rsp'):
-            pkey = 'results'
+            pkey = 'results' if 'results' in data else 'mi_spec'
         elif data['cmd'] == 'write_ack':
             return
         else:
@@ -860,8 +861,8 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
 
         did = data['did']
 
-        # skip without callback
-        if did not in self.updates:
+        # skip without callback and without data
+        if did not in self.updates or pkey not in data:
             return
 
         ts = time.time()
@@ -1041,10 +1042,11 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                 handler(payload)
 
     def process_pair(self, raw: bytes):
+        _LOGGER.debug(f"!!! {raw}")
         # get shortID and eui64 of paired device
         if b'lumi send-nwk-key' in raw:
             # create model response
-            payload = f"0x18010105000042{len(self.pair_model):02x}" \
+            payload = f"0x08020105000042{len(self.pair_model):02x}" \
                       f"{self.pair_model.encode().hex()}"
             m = RE_NWK_KEY.search(raw.decode())
             self.pair_payload = json.dumps({
@@ -1057,9 +1059,21 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                 'APSCounter': '0x01',
                 'APSPlayload': payload
             }, separators=(',', ':'))
+            self.pair_payload2 = json.dumps({
+                'sourceAddress': m[1],
+                'eui64': '0x' + m[2],
+                'profileId': '0x0104',
+                'clusterId': '0x0000',
+                'sourceEndpoint': '0x01',
+                'destinationEndpoint': '0x01',
+                'APSCounter': '0x01',
+                'APSPlayload': '0x0801010100002001'
+            }, separators=(',', ':'))
 
         # send model response "from device"
         elif b'zdo active ' in raw:
+            self.mqtt.publish(self.gw_topic + 'MessageReceived',
+                              self.pair_payload2)
             self.mqtt.publish(self.gw_topic + 'MessageReceived',
                               self.pair_payload)
 
@@ -1073,7 +1087,9 @@ class Gateway3(Thread, GatewayV, GatewayMesh, GatewayStats):
                 if k == 'switch':
                     v = bool(v)
                 k = next(p[0] for p in device['mi_spec'] if p[2] == k)
-                params.append({'siid': k[0], 'piid': k[1], 'value': v})
+                params.append({
+                    'siid': int(k[0]), 'piid': int(k[2]), 'value': v
+                })
 
             payload['mi_spec'] = params
         else:

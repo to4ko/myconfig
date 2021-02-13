@@ -5,32 +5,72 @@
 # #####################################################################################
 # Sasha Table Lamp (Philips E27)
 # ##################################
-- alias: sasha_table_lamp_on_if_lamp_off
+- alias: sasha_table_lamp
   initial_state: 'true'
+  mode: restart
   trigger:
     - platform: state
       entity_id: sensor.0x158d0001f3627d_action
-      to: 'single'
-    # - platform: state
-    #   entity_id: sensor.0x158d0003fa6077_action
-    #   to: 'button_2_single'
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state in ['single', 'double', 'hold'] }}"
   action:
-    - service: light.toggle
-      entity_id: light.philips_e27_s
-      # data_template:
-      #   transition: 1
-      #   brightness_pct: >
-      #     {%- if is_state('binary_sensor.tod_day','off') -%}
-      #     3
-      #     {%- else -%}
-      #     100
-      #     {% endif %}
-      #   kelvin: >
-      #     {%- if is_state('binary_sensor.tod_day','off') -%}
-      #     3000
-      #     {%- else -%}
-      #     5000
-      #     {% endif %}
+    - choose:
+        # - conditions:
+        #     - condition: or
+        #       conditions:
+        #         - condition: state
+        #           entity_id: sensor.0x158d0001f3627d_action
+        #           state: 'single'
+        #   sequence:
+        #     - service: light.toggle
+        #       entity_id: light.philips_e27_s
+        # - conditions:
+        #     - condition: state
+        #       entity_id: sensor.0x158d0001f3627d_action
+        #       state: 'double'
+        #   sequence:
+        #     - service: xiaomi_miio.light_set_scene
+        #       entity_id: light.philips_e27_s
+        #       data:
+        #         scene: 1
+        # - conditions:
+        #     - condition: state
+        #       entity_id: sensor.0x158d0001f3627d_action
+        #       state: 'hold'
+        #   sequence:
+        #     - service: xiaomi_miio.light_set_scene
+        #       entity_id: light.philips_e27_s
+        #       data:
+        #         scene: 4
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001f3627d_action
+              state: 'single'
+          sequence:
+            - service: light.toggle
+              entity_id: light.led_white_s
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001f3627d_action
+              state: 'double'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_white_s
+              data_template:
+                brightness_pct: 100
+                kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001f3627d_action
+              state: 'hold'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_white_s
+              data_template:
+                brightness_pct: 5
+                kelvin: 3000
+
 
 # ##################################
 # Sasha - Main Lamp (Xiaomi Round LED)
@@ -93,48 +133,6 @@
                 kelvin: 3000
 
 # ##################################
-# Sasha Table Lamp (Philips E27) - Switch to Bright
-# ##################################
-- alias: sasha_table_lamp_bright
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0001f3627d_action
-      to: 'double'
-  action:
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.philips_e27_s
-      data:
-        scene: 1
-    # - service: light.turn_on
-    #   entity_id: light.0x00124b000a9e26af_light
-    #   data_template:
-    #     transition: 1
-    #     brightness_pct: 100
-    #     kelvin: 5000
-
-# ##################################
-# Sasha Table Lamp (Philips E27) - Switch to Mid-Night
-# ##################################
-- alias: sasha_table_lamp_night
-  initial_state: 'true'
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0001f3627d_action
-      to: 'hold'
-  action:
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.philips_e27_s
-      data:
-        scene: 4
-    # - service: light.turn_on
-    #   entity_id: light.0x00124b000a9e26af_light
-    #   data_template:
-    #     transition: 1
-    #     brightness_pct: 3
-    #     kelvin: 3000
-
-# ##################################
 # Sasha - Table Lamp Off (scene4) when main turned on
 # ################################## 
 - alias: sasha_table_lamp_off_night_mode_main_on
@@ -144,21 +142,19 @@
       minutes: "/3"
   condition:
     - condition: template
-      value_template: "{{state_attr('light.philips_e27_s','scene')|int == 4}}"
+      value_template: "{{state_attr('light.led_white_s','brightness')|int < 10}}"
     - condition: state
       entity_id: light.square_led_s
       state: 'on'
     - condition: state
-      entity_id: light.philips_e27_s
+      entity_id: light.led_white_s
       state: 'on'
     - condition: state
       entity_id: binary_sensor.tod_day
       state: 'on'
   action:
     - service: light.turn_off
-      entity_id: light.philips_e27_s
-      data:
-        transition: 5
+      entity_id: light.led_white_s
 
 # ##################################
 # Sasha - Auto Night Light
@@ -181,11 +177,10 @@
         state: 'home'
   action:
     - service: light.turn_on
-      entity_id: light.philips_e27_s
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.philips_e27_s
-      data:
-          scene: 4
+      entity_id: light.led_white_s
+      data_template:
+        brightness_pct: 5
+        kelvin: 3000      
 
 # ##################################
 # Sasha - Auto Night Light Off 30m without movements
@@ -205,35 +200,9 @@
       state: 'off'
   action:
     - service: light.turn_off
-      entity_id: light.philips_e27_s
+      entity_id: light.led_white_s
       data:
         transition: 5
-
-# ##################################
-# Sasha - Auto Night Light Off in the morning
-# ##################################
-# - alias: sasha_night_auto_off_morning
-#   initial_state: 'true'
-#   trigger:
-#     - platform: time_pattern
-#       minutes: '/1'
-#   condition:
-#     # - condition: template
-#     #   value_template: "{{state_attr('light.philips_e27_s','scene')|int == 4}}"
-#     # - condition: state
-#     #   entity_id: light.philips_e27_s
-#     #   state: 'on'
-#     - condition: numeric_state
-#       entity_id: sensor.0x04cf8cdf3c77271d_illuminance_lux
-#       above: 500
-#     - condition: template
-#       value_template: "{{ state_attr('light.0x00124b000a9e26af_light','brightness')|int < 10 }}" #"{{state_attr('light.philips_e27_s','scene')|int == 4}}"
-#     - condition: state
-#       entity_id: light.philips_e27_s
-#       state: 'on'
-#   action:
-#     - service: light.turn_off
-#       entity_id: light.philips_e27_s
 
 # ##################################
 # Sasha - Round LED Reset 
