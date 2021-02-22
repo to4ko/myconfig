@@ -39,6 +39,8 @@
     - condition: state
       entity_id: switch.air_freshener_spray
       state: 'off'
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_air_freshener_spray','last_triggered'))|int) > 15*60 }}"
   action:
     - wait_for_trigger:
         - platform: state
@@ -46,6 +48,9 @@
           to: 'off'
           for:
             seconds: 5
+      timeout:
+        minutes: 20
+      continue_on_timeout: false
     - service: switch.turn_on
       entity_id: switch.air_freshener_spray
 

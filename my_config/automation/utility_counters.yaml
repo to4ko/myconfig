@@ -408,3 +408,21 @@
       data:
         title: "Внимание!"
         message: "Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
+        
+# ##################################
+# System - Water sensor outage
+# ##################################
+- alias: system_water_sensor_outage
+  initial_state: 'true'
+  trigger:
+    - platform: time_pattern
+      hours: '/1'
+  condition:
+    - condition: template
+      value_template: >
+        {{ as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000232de79_contact'].last_changed) > 24*60*60 or
+        as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000236fcd5_contact'].last_changed) > 24*60*60 }}
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0000274c Внимание! Нет данных от счетчика {% if as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000232de79_contact'].last_changed) > 24*60*60 %}холодной{%else%}горячей{%endif%} воды!"

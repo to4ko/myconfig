@@ -247,6 +247,7 @@
 # ################################## 
 - alias: sasha_timer_restart
   initial_state: 'true'
+  mode: queued
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000224f89f_motion, binary_sensor.0x158d0003140824_motion
@@ -256,6 +257,8 @@
     - condition: state
       entity_id: light.square_led_s
       state: 'on'
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.sasha_timer_restart','last_triggered'))|int) > 15 }}"
   action:
     - service: timer.cancel
       entity_id: timer.main_light_s
