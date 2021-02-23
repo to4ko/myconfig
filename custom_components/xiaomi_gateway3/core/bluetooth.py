@@ -9,6 +9,8 @@ DEVICES = [{
     426: ["Xiaomi", "TH Sensor", "LYWSDCGQ/01ZM"],
     794: ["Xiaomi", "Door Lock", "MJZNMS02LM"],
     839: ["Xiaomi", "Qingping TH Sensor", "CGG1"],
+    903: ["Xiaomi", "ZenMeasure TH", "MHO-C401"],
+    982: ["Xiaomi", "Qingping Door Sensor", "CGH1"],
     1034: ["Xiaomi", "Mosquito Repellent", "WX08ZM"],
     1115: ["Xiaomi", "TH Clock", "LYWSD02MMC"],
     1249: ["Xiaomi", "Magic Cube", "XMMF01JQD"],
@@ -23,6 +25,7 @@ DEVICES = [{
     2443: ["Xiaomi", "Door Sensor 2", "MCCGQ02HL"],
     2444: ["Xiaomi", "Door Lock", "XMZNMST02YD"],
     2480: ["Xiaomi", "Safe Box", "BGX-5/X1-3001"],
+    2691: ["Xiaomi", "Qingping Motion Sensor", "CGPR1"],
     # logs: https://github.com/AlexxIT/XiaomiGateway3/issues/180
     2701: ["Xiaomi", "Motion Sensor 2", "RTCGQ02LM"],  # 15,4119,4120
 }, {
@@ -191,7 +194,11 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
 
     elif eid == 0x1006 and length == 2:  # 4102
         # Humidity percentage, ranging from 0-1000
-        return {'humidity': int.from_bytes(data, 'little') / 10.0}
+        value = int.from_bytes(data, 'little') / 10.0
+        if pdid in (903, 1371):
+            # two models has bug, they increase humidity on each data by 0.1
+            value = int(value)
+        return {'humidity': value}
 
     elif eid == 0x1007 and length == 3:  # 4103
         value = int.from_bytes(data, 'little')
@@ -325,11 +332,13 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
     elif eid == 0x0F:  # 15
         # Night Light 2: 1 - moving no light, 100 - moving with light
         # Motion Sensor 2: 0 - moving no light, 256 - moving with light
+        # Qingping Motion Sensor - moving with illuminance data
         value = int.from_bytes(data, 'little')
-        return {
-            'motion': 1,
-            'light': int(value >= 100)
-        }
+        return (
+            {'motion': 1, 'illuminance': value}
+            if pdid == 2691 else
+            {'motion': 1, 'light': int(value >= 100)}
+        )
 
     return None
 
