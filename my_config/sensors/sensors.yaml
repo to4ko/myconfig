@@ -72,8 +72,8 @@
 
   - platform: mold_indicator
     name: mold_t
-    indoor_temp_sensor: sensor.0x158d0001e58754_temperature
-    indoor_humidity_sensor: sensor.0x158d0001e58754_humidity
+    indoor_temp_sensor: sensor.sonoff_pow_r2_2_temperature
+    indoor_humidity_sensor: sensor.sonoff_pow_r2_2_humidity
     outdoor_temp_sensor: sensor.esp32_node_mb_outside
     calibration_factor: 2.227848101
     
@@ -126,6 +126,17 @@
   
   - platform: template
     sensors:
+      nextsunrise:
+        friendly_name: 'Next Sunrise'
+        value_template: >
+          {{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%R')  }}
+        icon_template: mdi:weather-sunset-up
+      nextsunset:
+        friendly_name: 'Next Sunset'
+        value_template: >
+          {{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%R') }}
+        icon_template: mdi:weather-sunset-down
+        
       temperature_min_out:
         value_template: "{{ state_attr('sensor.out_temperature_stats', 'min_value') }}"
         unit_of_measurement: '°C'
@@ -188,11 +199,22 @@
 
   - platform: template
     sensors:
-      gw3_devices_unavailable:
-        friendly_name: GW3 Devices Unvailable
-        value_template: "{{ expand('group.gw3_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
+      zigbee_devices_unavailable:
+        friendly_name: Zigbee Devices Unvailable
+        value_template: "{{ expand('group.zigbee_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
         icon_template: >
-          {% if states('binary_sensor.gw3_devices_unavailable') == "on" %}
+          {% if states('binary_sensor.zigbee_devices_unavailable') == "on" %}
+          mdi:signal-off
+          {% else %}
+          mdi:signal
+          {% endif %}
+        unit_of_measurement: 'ea'
+
+      wifi_devices_unavailable:
+        friendly_name: WiFi Devices Unvailable
+        value_template: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
+        icon_template: >
+          {% if states('binary_sensor.wifi_devices_unavailable') == "on" %}
           mdi:signal-off
           {% else %}
           mdi:signal
@@ -528,58 +550,58 @@
 # ############################################################################
 # Xiaomi GW3 Sensors
 # ############################################################################
-  - platform: template
-    sensors:
-      gw3_hb_radio_tx_power:
-        value_template: "{{state_attr('sensor.0x588e81fffedcb38d_gateway','radio_tx_power')|int}}"
-        icon_template: mdi:signal-cellular-2
-        friendly_name: Gateway3 HB Radio TX Power
-        unit_of_measurement: ''
-      gw3_hb_radio_channel:
-        value_template: "{{state_attr('sensor.0x588e81fffedcb38d_gateway','radio_channel')|int}}"
-        icon_template: mdi:radio-tower
-        friendly_name: Gateway3 HB Radio Channel
-        unit_of_measurement: ''
+  # - platform: template
+  #   sensors:
+  #     gw3_hb_radio_tx_power:
+  #       value_template: "{{state_attr('sensor.0x588e81fffedcb38d_gateway','radio_tx_power')|int}}"
+  #       icon_template: mdi:signal-cellular-2
+  #       friendly_name: Gateway3 HB Radio TX Power
+  #       unit_of_measurement: ''
+  #     gw3_hb_radio_channel:
+  #       value_template: "{{state_attr('sensor.0x588e81fffedcb38d_gateway','radio_channel')|int}}"
+  #       icon_template: mdi:radio-tower
+  #       friendly_name: Gateway3 HB Radio Channel
+  #       unit_of_measurement: ''
         
-      gw3_hs_radio_tx_power:
-        value_template: "{{state_attr('sensor.0x842e14fffe1508a6_gateway','radio_tx_power')|int}}"
-        icon_template: mdi:signal-cellular-2
-        friendly_name: Gateway3 HS Radio TX Power
-        unit_of_measurement: ''
-      gw3_hs_radio_channel:
-        value_template: "{{state_attr('sensor.0x842e14fffe1508a6_gateway','radio_channel')|int}}"
-        icon_template: mdi:radio-tower
-        friendly_name: Gateway3 HS Radio Channel
-        unit_of_measurement: ''
+  #     gw3_hs_radio_tx_power:
+  #       value_template: "{{state_attr('sensor.0x842e14fffe1508a6_gateway','radio_tx_power')|int}}"
+  #       icon_template: mdi:signal-cellular-2
+  #       friendly_name: Gateway3 HS Radio TX Power
+  #       unit_of_measurement: ''
+  #     gw3_hs_radio_channel:
+  #       value_template: "{{state_attr('sensor.0x842e14fffe1508a6_gateway','radio_channel')|int}}"
+  #       icon_template: mdi:radio-tower
+  #       friendly_name: Gateway3 HS Radio Channel
+  #       unit_of_measurement: ''
 
-      # gw3_hs_free_mem:
-      #   value_template: "{{state_attr('sensor.0x842e14fffe1508a6_gateway','free_mem')|int}}"
-      #   icon_template: mdi:chip
-      #   friendly_name: Gateway3 HS Free Memory
-      #   unit_of_measurement: 'kB'
+  #     # gw3_hs_free_mem:
+  #     #   value_template: "{{state_attr('sensor.0x842e14fffe1508a6_gateway','free_mem')|int}}"
+  #     #   icon_template: mdi:chip
+  #     #   friendly_name: Gateway3 HS Free Memory
+  #     #   unit_of_measurement: 'kB'
 
 
-      gw3_s_radio_tx_power:
-        value_template: "{{state_attr('sensor.0x588e81fffedd3c41_gateway','radio_tx_power')|int}}"
-        icon_template: mdi:signal-cellular-2
-        friendly_name: Gateway3 S Radio TX Power
-        unit_of_measurement: ''
-      gw3_s_radio_channel:
-        value_template: "{{state_attr('sensor.0x588e81fffedd3c41_gateway','radio_channel')|int}}"
-        icon_template: mdi:radio-tower
-        friendly_name: Gateway3 S Radio Channel
-        unit_of_measurement: ''
+  #     gw3_s_radio_tx_power:
+  #       value_template: "{{state_attr('sensor.0x588e81fffedd3c41_gateway','radio_tx_power')|int}}"
+  #       icon_template: mdi:signal-cellular-2
+  #       friendly_name: Gateway3 S Radio TX Power
+  #       unit_of_measurement: ''
+  #     gw3_s_radio_channel:
+  #       value_template: "{{state_attr('sensor.0x588e81fffedd3c41_gateway','radio_channel')|int}}"
+  #       icon_template: mdi:radio-tower
+  #       friendly_name: Gateway3 S Radio Channel
+  #       unit_of_measurement: ''
         
-      gw3_k_radio_tx_power:
-        value_template: "{{state_attr('sensor.0x588e81fffe72678e_gateway','radio_tx_power')|int}}"
-        icon_template: mdi:signal-cellular-2
-        friendly_name: Gateway3 K Radio TX Power
-        unit_of_measurement: ''
-      gw3_k_radio_channel:
-        value_template: "{{state_attr('sensor.0x588e81fffe72678e_gateway','radio_channel')|int}}"
-        icon_template: mdi:radio-tower
-        friendly_name: Gateway3 K Radio Channel
-        unit_of_measurement: ''
+  #     gw3_k_radio_tx_power:
+  #       value_template: "{{state_attr('sensor.0x588e81fffe72678e_gateway','radio_tx_power')|int}}"
+  #       icon_template: mdi:signal-cellular-2
+  #       friendly_name: Gateway3 K Radio TX Power
+  #       unit_of_measurement: ''
+  #     gw3_k_radio_channel:
+  #       value_template: "{{state_attr('sensor.0x588e81fffe72678e_gateway','radio_channel')|int}}"
+  #       icon_template: mdi:radio-tower
+  #       friendly_name: Gateway3 K Radio Channel
+  #       unit_of_measurement: ''
 
   - platform: mqtt
     name: Mi Kettle Temperature

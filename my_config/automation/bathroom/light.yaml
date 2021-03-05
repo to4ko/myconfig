@@ -12,6 +12,10 @@
       entity_id: binary_sensor.0x158d000236bc6d_motion
       from: 'off'
       to: 'on'
+    - platform: state
+      entity_id: light.mirror_light_b
+      to: 'on'
+      from: 'off'
   condition:
     # - condition: template
     #   value_template: "{{ not is_state('timer.main_light_b','paused') }}"
@@ -43,6 +47,11 @@
       entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
       to: 'off'
       from: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d000236bc6d_motion
+      to: 'off'
+      for:
+        minutes: 5
   action:
     - service: light.turn_off
       entity_id: light.mirror_light_b
@@ -63,14 +72,22 @@
       entity_id: light.mirror_light_b
       to: 'on'
       from: 'off'
-  condition:
-    - condition: state
-      entity_id: timer.main_light_b
-      state: 'idle'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_b
     - service: timer.start
+      entity_id: timer.main_light_b
+
+# ##################################
+# Bathroom - Timer stop at light off
+# ################################## 
+- alias: bathroom_timer_off
+  initial_state: 'true'
+  trigger:
+    - platform: template
+      value_template: "{{not is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') and not is_state('light.mirror_light_b','on') }}"
+  action:
+    - service: timer.cancel
       entity_id: timer.main_light_b
 
 # ##################################

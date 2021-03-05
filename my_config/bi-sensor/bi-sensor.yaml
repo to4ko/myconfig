@@ -4,6 +4,21 @@
   - platform: template
     sensors:
 
+      light_outside_mi:
+        friendly_name: Light Outside Sensor
+        value_template: "{{[states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max > states('input_number.outside_light_level')|int(250)}}"
+        device_class: light
+
+      dark_outside_mi:
+        friendly_name: Dark Outside Sensor
+        value_template: "{{[states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max < states('input_number.outside_light_level')|int(250)}}"
+        icon_template: >
+          {% if is_state('binary_sensor.dark_outside_mi','on') %}
+          mdi:brightness-5
+          {% else %}
+          mdi:brightness-4
+          {% endif %}
+
       updater_supervisor:
         friendly_name: 'Updater - Supervisor'
         device_class: problem
@@ -37,7 +52,7 @@
       #   value_template: "{{as_timestamp(now())|int-as_timestamp(states.sensor.esp32_node_k_postmembrane.last_changed)|int <2 }}"
 
       bed_led_enable:
-        value_template: "{{ states('sensor.0x4cf8cdf3c77271d_illuminance')|int < 250 and is_state('light.square_led_v','off')}}"
+        value_template: "{{ is_state('binary_sensor.light_outside_mi','off') and is_state('light.square_led_v','off')}}"
         icon_template: >
           {% if is_state('binary_sensor.bed_led_enable','on') %}
           mdi:brightness-5
@@ -103,6 +118,8 @@
       #   friendly_name: GW3 Devices Unvailability Flag
       #   value_template: "{{ expand('group.gw3_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count > 0}}"
       #   device_class: problem
+
+  - platform: random
 
   - platform: trend
     sensors:
@@ -311,8 +328,6 @@
         friendly_name: Microwave status
         icon_template: mdi:microwave
         value_template: "{{ states('sensor.0x158d00028a54e4_power')|float > 10 }}"
-
-
 
       ippon_1200_status:
         friendly_name: Ippon 1200 Status HB

@@ -22,18 +22,14 @@
   condition:
     - condition: or
       conditions:
-        - condition: state
-          entity_id: light.round_led_k
-          state: 'on'
-        - condition: state
-          entity_id: switch.0x158d000366815b_channel_1
-          state: 'on'
-        - condition: state
-          entity_id: switch.0x158d000366815b_channel_2
-          state: 'on'
-        - condition: state
-          entity_id: switch.ss5_hood_light
-          state: 'on'
+        - condition: template
+          value_template: "{{ not is_state('light.round_led_k', 'off') }}"
+        - condition: template
+          value_template: "{{ not is_state('switch.0x158d000366815b_channel_1', 'off') }}"
+        - condition: template
+          value_template: "{{ not is_state('switch.0x158d000366815b_channel_2', 'off') }}"
+        - condition: template
+          value_template: "{{ not is_state('switch.ss5_hood_light', 'off') }}"
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_timer_restart','last_triggered'))|int) > 5 }}"
   action:
@@ -110,32 +106,28 @@
       from: 'off'
       to: 'on'
   condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: light.round_led_k
-        state: 'off'
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.security_mode
-        state: 'off'
-      - condition: state
-        entity_id: switch.0x158d000366815b_channel_1
-        state: 'off'
-      - condition: state
-        entity_id: switch.0x158d000366815b_channel_2
-        state: 'off'
-      - condition: state
-        entity_id: switch.ss5_hood_light
-        state: 'off'        
-      - condition: numeric_state
-        entity_id: sensor.0x4cf8cdf3c77271d_illuminance
-        below: 250
-      - condition: state
-        entity_id: timer.main_light_delay_k
-        state: 'idle'
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+    - condition: template
+      value_template: "{{ not is_state('light.round_led_k', 'on') }}"
+    - condition: template
+      value_template: "{{ not is_state('switch.0x158d000366815b_channel_1', 'on') }}"
+    - condition: template
+      value_template: "{{ not is_state('switch.0x158d000366815b_channel_2', 'on') }}"
+    - condition: template
+      value_template: "{{ not is_state('switch.ss5_hood_light', 'on') }}"
+    # - condition: template
+    #   value_template: "{{ not states('sensor.0x4cf8cdf3c77271d_illuminance')|int>250 }}"
+    - condition: state
+      entity_id: binary_sensor.light_outside_mi
+      state: 'off'
+    - condition: state
+      entity_id: timer.main_light_delay_k
+      state: 'idle'
   action:
     - service: light.turn_on
       entity_id: light.round_led_k
@@ -152,31 +144,24 @@
       from: 'off'
       to: 'on'
   condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: light.esp32_node_k_light
-        state: 'off'
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: 'off'
-      - condition: state
-        entity_id: light.round_led_k
-        state: 'off'
-      - condition: state
-        entity_id: switch.0x158d000366815b_channel_1
-        state: 'off'
-      - condition: state
-        entity_id: switch.0x158d000366815b_channel_2
-        state: 'off'
-      - condition: state
-        entity_id: switch.ss5_hood_light
-        state: 'off'
-      - condition: state
-        entity_id: input_boolean.security_mode
-        state: 'off'
-      - condition: template
-        value_template: "{{as_timestamp(now())-as_timestamp(state_attr('automation.hall_small_auto_night_light','last_triggered')) < 600 }}"
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'off'
+    - condition: template
+      value_template: "{{ not is_state('light.esp32_node_k_light', 'on') }}"
+    - condition: template
+      value_template: "{{ not is_state('light.round_led_k', 'on') }}"
+    - condition: template
+      value_template: "{{ not is_state('switch.0x158d000366815b_channel_1', 'on') }}"
+    - condition: template
+      value_template: "{{ not is_state('switch.0x158d000366815b_channel_2', 'on') }}"
+    - condition: template
+      value_template: "{{ not is_state('switch.ss5_hood_light', 'on') }}"
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+    - condition: template
+      value_template: "{{as_timestamp(now())-as_timestamp(state_attr('automation.hall_small_auto_night_light','last_triggered')) < 600 }}"
   action:
     - service: light.turn_on
       entity_id: light.esp32_node_k_light
@@ -430,9 +415,12 @@
     - condition: state
       entity_id: switch.ss5_hood_light
       state: 'off'
-    - condition: numeric_state
-      entity_id: sensor.0x4cf8cdf3c77271d_illuminance
-      below: 250
+    # - condition: numeric_state
+    #   entity_id: sensor.0x4cf8cdf3c77271d_illuminance
+    #   below: 250
+    - condition: state
+      entity_id: binary_sensor.light_outside_mi
+      state: 'off'
     - condition: state
       entity_id: light.esp32_node_k_light
       state: 'off'

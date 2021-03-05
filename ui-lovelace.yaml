@@ -57,14 +57,16 @@ views:
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 4
+                columns: 5
                 entities:
                   # - entity: sensor.temperature_min_out
                   #   name: Tmin
                   # - entity: sensor.temperature_max_out
                   #   name: Tmax
-                  - entity: sensor.gw3_devices_unavailable
+                  - entity: sensor.zigbee_devices_unavailable
                     name: Z Offline
+                  - entity: sensor.wifi_devices_unavailable
+                    name: WF Offline
                   - entity: sensor.0x158d0001e8995a_temperature
                     name: Temp
                   - entity: sensor.esp32_node_mb_outside
@@ -549,29 +551,29 @@ views:
                     tap_action:
                       action: call-service
                       service: script.domofon_ignore_toggle
-          - type: glance
-            entities:
-              - entity: switch.circadian_lighting_all
-                name: All
-                tap_action:
-                  action: call-service
-                  service: script.circadian_lighting_toggle
-              - entity: switch.circadian_lighting_k
-                name: K
-                tap_action:
-                  action: toggle
-              - entity: switch.circadian_lighting_s
-                name: S
-                tap_action:
-                  action: toggle
-              - entity: switch.circadian_lighting_v
-                name: V
-                tap_action:
-                  action: toggle
-              - entity: switch.circadian_lighting_mb
-                name: MB
-                tap_action:
-                  action: toggle
+          # - type: glance
+          #   entities:
+          #     - entity: switch.circadian_lighting_all
+          #       name: All
+          #       tap_action:
+          #         action: call-service
+          #         service: script.circadian_lighting_toggle
+          #     - entity: switch.circadian_lighting_k
+          #       name: K
+          #       tap_action:
+          #         action: toggle
+          #     - entity: switch.circadian_lighting_s
+          #       name: S
+          #       tap_action:
+          #         action: toggle
+          #     - entity: switch.circadian_lighting_v
+          #       name: V
+          #       tap_action:
+          #         action: toggle
+          #     - entity: switch.circadian_lighting_mb
+          #       name: MB
+          #       tap_action:
+          #         action: toggle
               
           - type: glance
             #title: Lights
@@ -706,6 +708,13 @@ views:
                   service: automation.trigger
                   service_data:
                     entity_id: automation.kitchen_main_lamp_on
+                double_tap_action:
+                  action: call-service
+                  service: light.turn_on
+                  service_data:
+                    entity_id: light.round_led_k
+                    brightness_pct: 90
+                    kelvin: 5000
               - entity: light.esp32_node_k_light
                 name: Night K
                 icon: mdi:candle
@@ -2163,13 +2172,15 @@ views:
         entities:
           - device_tracker.life360_dima_tsymbal
           - device_tracker.iphone_8_dima
+          - device_tracker.iphone_8_dtsymbal
           #- device_tracker.iphone8_ping
           - device_tracker.meizu_m2_mini
           - device_tracker.mimax_2
           
           - type: divider
           - device_tracker.life360_sandra_tsymbal
-          - device_tracker.iphone_7_sasha_2
+          - device_tracker.iphone_7_sandra
+          - device_tracker.iphone_7_sasha
           #- device_tracker.iphone7_ping
           - device_tracker.iphone_6
           
@@ -2587,6 +2598,15 @@ views:
           - type: entities
             state_color: true
             entities:
+              - entity: input_number.outside_light_level
+              - entity: binary_sensor.light_outside_mi
+              - entity: binary_sensor.dark_outside_mi
+              - entity: sensor.0x4cf8cdf3c77271d_illuminance
+              - entity: sensor.0x4cf8cdf3c78d26e_illuminance
+
+          - type: entities
+            state_color: true
+            entities:
               - entity: input_number.battery_low_level
               - entity: script.battery_level_check
                 name: Check now
@@ -2755,36 +2775,35 @@ views:
       #############
       - type: vertical-stack
         cards:
-          - type: history-graph
-            entities:
-              - entity: remote.0x588e81fffedcb38d_pair
-                name: HB
-              - entity: remote.0x842e14fffe1508a6_pair
-                name: HS
-              - entity: remote.0x588e81fffedd3c41_pair
-                name: S
-              - entity: remote.0x588e81fffe72678e_pair
-                name: K
-          - type: glance
-            columns: 8
-            entities:
-              - entity: sensor.gw3_hb_radio_channel
-                name: HB
-              - entity: sensor.gw3_hb_radio_tx_power
-                name: 
-              - entity: sensor.gw3_hs_radio_channel
-                name: HS
-              - entity: sensor.gw3_hs_radio_tx_power
-                name: 
-              - entity: sensor.gw3_s_radio_channel
-                name: S
-              - entity: sensor.gw3_s_radio_tx_power
-                name: 
-              - entity: sensor.gw3_k_radio_channel
-                name: K
-              - entity: sensor.gw3_k_radio_tx_power
-                name: 
-
+          # - type: history-graph
+          #   entities:
+          #     - entity: remote.0x588e81fffedcb38d_pair
+          #       name: HB
+          #     - entity: remote.0x842e14fffe1508a6_pair
+          #       name: HS
+          #     - entity: remote.0x588e81fffedd3c41_pair
+          #       name: S
+          #     - entity: remote.0x588e81fffe72678e_pair
+          #       name: K
+          # - type: glance
+          #   columns: 8
+          #   entities:
+          #     - entity: sensor.gw3_hb_radio_channel
+          #       name: HB
+          #     - entity: sensor.gw3_hb_radio_tx_power
+          #       name: 
+          #     - entity: sensor.gw3_hs_radio_channel
+          #       name: HS
+          #     - entity: sensor.gw3_hs_radio_tx_power
+          #       name: 
+          #     - entity: sensor.gw3_s_radio_channel
+          #       name: S
+          #     - entity: sensor.gw3_s_radio_tx_power
+          #       name: 
+          #     - entity: sensor.gw3_k_radio_channel
+          #       name: K
+          #     - entity: sensor.gw3_k_radio_tx_power
+          #       name: 
           - type: glance
             columns: 3
             entities:
@@ -3082,7 +3101,7 @@ views:
                   - entity: sensor.ssd_usage
                     icon: mdi:chip
                     name: "/"
-                  - entity: sensor.nvme_db_usage
+                  - entity: sensor.nvme2_usage
                     icon: mdi:chip
                     name: DB
                   # - entity: sensor.840pro_usage
@@ -4289,13 +4308,13 @@ views:
               - type: divider
               - light.led_strip_entrance_hb
               - type: divider
+              - light.led_color_v
+              - type: divider
               - light.led_white_mb
               - type: divider
               - light.led_white_s
               - type: divider
               - light.led_color_mb
-              - type: divider
-              - light.led_color_v
               - type: divider
               - fan.purifier2s
 
@@ -4326,6 +4345,8 @@ views:
               - switch.0x158d00023e5812_switch
               - type: divider
               - switch.gateway_plug_entrance_hb
+              - type: divider
+              - switch.0x158d00023a657a_switch
       - type: vertical-stack
         cards: 
           - type: entities
@@ -4352,77 +4373,68 @@ views:
               - script.led_strip_hb_restart
               - type: divider
               - script.led_strip_entrance_hb_restart
+              - type: divider
+              - script.led_color_v_restart
 
 ################################################################
 # z2m
 ################################################################
-  - title: z2m
-    icon: mdi:zigbee
-    cards:
-      - type: vertical-stack
-        cards:
-          - type: entities
-            title: Zigbee2mqtt
-            show_header_toggle: false
-            entities:
-              - entity: sensor.zigbee2mqtt_bridge_state
-              - entity: sensor.zigbee2mqtt_permit_join
-              - entity: sensor.zigbee2mqtt_version
-              - entity: sensor.zigbee2mqtt_coordinator_version
-              - entity: sensor.zigbee2mqtt_network_channel
-              - entity: sensor.zigbee2mqtt_network_panid
-              - entity: sensor.zigbee2mqtt_network_extended_panid
-              - type: divider
-              - entity: input_text.zigbee2mqtt_map_rebuild
-              - entity: sensor.zigbee2mqtt_last_message
-              - entity: input_select.zigbee2mqtt_log_level
-              - type: divider
-              - entity: script.zigbee2mqtt_permit_join
-              - entity: switch.zigbee2mqtt_main_join
-              - entity: timer.zigbee2mqtt_permit_join
-              - type: divider
-              - entity: script.zigbee2mqtt_linkuality_check
-              - entity: script.zigbee2mqtt_lastseen_check
-              - entity: script.zigbee2mqtt_map_rebuild
-              - type: divider
-              - sensor.zigbee2mqtt_addon_restart
-              - entity: script.zigbee2mqtt_restart
+  # - title: z2m
+  #   icon: mdi:zigbee
+  #   cards:
+  #     - type: vertical-stack
+  #       cards:
+  #         - type: entities
+  #           title: Zigbee2mqtt
+  #           show_header_toggle: false
+  #           entities:
+  #             - entity: sensor.zigbee2mqtt_bridge_state
+  #             - entity: sensor.zigbee2mqtt_permit_join
+  #             - entity: sensor.zigbee2mqtt_version
+  #             - entity: sensor.zigbee2mqtt_coordinator_version
+  #             - entity: sensor.zigbee2mqtt_network_channel
+  #             - entity: sensor.zigbee2mqtt_network_panid
+  #             - entity: sensor.zigbee2mqtt_network_extended_panid
+  #             - type: divider
+  #             - entity: input_text.zigbee2mqtt_map_rebuild
+  #             - entity: sensor.zigbee2mqtt_last_message
+  #             - entity: input_select.zigbee2mqtt_log_level
+  #             - type: divider
+  #             - entity: script.zigbee2mqtt_permit_join
+  #             - entity: switch.zigbee2mqtt_main_join
+  #             - entity: timer.zigbee2mqtt_permit_join
+  #             - type: divider
+  #             - entity: script.zigbee2mqtt_linkuality_check
+  #             - entity: script.zigbee2mqtt_lastseen_check
+  #             - entity: script.zigbee2mqtt_map_rebuild
+  #             - type: divider
+  #             - sensor.zigbee2mqtt_addon_restart
+  #             - entity: script.zigbee2mqtt_restart
 
 
-      - type: custom:stack-in-card
-        mode: vertical
-        cards:
-          - type: glance
-            entities:
-              - entity: binary_sensor.esp32_ble_tracker_green
-                name: green
-              - entity: binary_sensor.esp32_ble_tracker_pink
-                name: pink
-              - entity: binary_sensor.esp32_ble_tracker_grey
-                name: grey
-              - entity: binary_sensor.esp32_ble_tracker_white
-                name: white
+  #     - type: custom:stack-in-card
+  #       mode: vertical
+  #       cards:
+  #         - type: glance
+  #           entities:
+  #             - entity: binary_sensor.esp32_ble_tracker_green
+  #               name: green
+  #             - entity: binary_sensor.esp32_ble_tracker_pink
+  #               name: pink
+  #             - entity: binary_sensor.esp32_ble_tracker_grey
+  #               name: grey
+  #             - entity: binary_sensor.esp32_ble_tracker_white
+  #               name: white
 
-          - type: glance
-            entities:
-              - entity: sensor.esp32_ble_tracker_green_rssi
-                name: green
-              - entity: sensor.esp32_ble_tracker_pink_rssi
-                name: pink
-              - entity: sensor.esp32_ble_tracker_grey_rssi
-                name: grey
-              - entity: sensor.esp32_ble_tracker_white_rssi
-                name: white
-
-  - title: Kiosk
-    icon: mdi:camera
-    cards:
-      - type: picture-entity
-        camera_view: live
-        aspect_ratio: '16x9'
-        entity: camera.door_hb
-        show_name: false
-        show_state: false
+  # - title: Kiosk
+  #   icon: mdi:camera
+  #   cards:
+  #     - type: picture-entity
+  #       camera_view: live
+  #       aspect_ratio: '16x9'
+  #       entity: camera.door_hb
+  #       show_name: false
+  #       show_state: false
         
 
   - title: Temperature
@@ -4474,7 +4486,7 @@ views:
         entities:
           - sensor.0x158d0001e8995a_temperature
           - sensor.esp32_node_mb_outside
-          
+
   - title: Humidity
     icon: mdi:water-percent
     cards:
@@ -4807,31 +4819,18 @@ views:
           
 
   - title: Testing
-    icon: mdi:bookmark
+    icon: mdi:bullseye
     cards:
-      - type: entities
-        show_header_toggle: false
-        state_color: true
+      - type: glance
         entities:
-          - switch.gateway_plug_hb
-          - switch.gateway_plug_hs
-          - switch.gateway_plug_k
-      - type: entities
-        show_header_toggle: false
-        state_color: true      
-        entities:
-          - entity: timer.main_light_t
-            secondary_info: last-changed
-          - light.esp32_bathroom_node_light
-          - switch.0x158d0002a36f7f_channel_1
-          - entity: binary_sensor.0x158d0001e54280_motion
-            secondary_info: last-changed
-          - entity: binary_sensor.0x158d000232ddd6_contact
-            secondary_info: last-changed
-          - entity: binary_sensor.0x158d0001ef2ffc_contact
-            secondary_info: last-changed
-          - entity: input_boolean.toilet_occupancy
-            secondary_info: last-changed
+          - entity: sensor.esp32_ble_tracker_green_rssi
+            name: green
+          - entity: sensor.esp32_ble_tracker_pink_rssi
+            name: pink
+          - entity: sensor.esp32_ble_tracker_grey_rssi
+            name: grey
+          - entity: sensor.esp32_ble_tracker_white_rssi
+            name: white
       - type: entities
         show_header_toggle: false
         state_color: true
@@ -5255,7 +5254,7 @@ views:
             entities:
               include: 
                 - sensor.*_zigbee
-            sort_by: friendly_name #state- #ieee
+            sort_by: state- #friendly_name #state- #ieee
             #max_rows: 20
             columns:
               - data: friendly_name
@@ -5292,10 +5291,11 @@ views:
                 name: Last Message
                 modify: x+''
               - data: state
-                name: Last Seen
-                modify: >
-                  var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
-                  isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
+                name: Last Seen, min ago
+                modify: Math.round((Date.now()-Date.parse(x))/60000) #(Date.now()-Date.parse(x))/60000
+                # modify: >
+                #   var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
+                #   isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
             css:
         #      thead th: 'align-content: center;'
               table+: 'padding-top: 15px;'
@@ -5335,3 +5335,28 @@ views:
               'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
               td.left: 'padding: 10px 10px 10px 10px'
               th.left: 'padding: 0px 0px 10px 10px'
+              
+              
+  - title: Fridge
+    icon: mdi:fridge-bottom
+    cards:
+      - type: history-graph
+        hours_to_show: 24
+        entities:
+          - sensor.0x158d000239ad5b_temperature
+          - sensor.0x158d000237167c_temperature
+      - type: history-graph
+        hours_to_show: 24
+        entities:
+          - sensor.0x158d0002461e5b_temperature
+      - type: history-graph
+        hours_to_show: 24
+        entities:
+          - sensor.0x158d000239ad5b_humidity
+          - sensor.0x158d000237167c_humidity
+
+      - type: history-graph
+        hours_to_show: 24
+        entities:
+          - sensor.0x158d0003539447_power
+          - sensor.shp6_socket_1_w

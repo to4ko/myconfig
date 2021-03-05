@@ -60,7 +60,13 @@
 - alias: toilet_air_freshener_battery_alert
   initial_state: 'true'
   trigger:
-    - platform: numeric_state
+    - platform: state
+      entity_id: switch.esp01_air_freshener_restart
+      from: 'unavailable'
+      for:
+        seconds: 2
+  condition:
+    - condition: numeric_state
       entity_id: sensor.esp01_air_freshener_vcc
       below: 3
   action:
@@ -97,6 +103,12 @@
   condition:
     - condition: template
       value_template: "{{(as_timestamp(now())|int - states('input_number.air_freshener_last_spray')|int ) > 2*60*60 }}"
+    - condition: state
+      entity_id: binary_sensor.0x158d000232ddd6_contact
+      state: 'off'
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
   action:
     - service: switch.turn_on
       entity_id: switch.air_freshener_spray

@@ -10,9 +10,6 @@
   mode: restart
   trigger:
     - platform: state
-      entity_id: sensor.0x158d00026eb820_action
-      to: 'button_1_single'
-    - platform: state
       entity_id: sensor.0x4cf8cdf3c7947e4_action
       to: 'button_3_single'
   action:
@@ -52,9 +49,6 @@
   initial_state: 'true'
   mode: restart
   trigger:
-    - platform: state
-      entity_id: sensor.0x158d00026eb820_action
-      to: 'button_2_single'
     - platform: state
       entity_id: sensor.0x4cf8cdf3c7947e4_action
       to: 'button_4_single'
@@ -352,11 +346,14 @@
   mode: restart
   trigger:
     - platform: template
-      value_template: "{{ is_state('light.square_led_v','off') and is_state('light.square_led_v_nightlight','off') }}"
+      value_template: "{{ not is_state('light.square_led_v','on') and not is_state('light.square_led_v_nightlight','on') }}"
   condition:
-    - condition: numeric_state
-      entity_id: sensor.0x4cf8cdf3c77271d_illuminance
-      below: 250
+    # - condition: numeric_state
+    #   entity_id: sensor.0x4cf8cdf3c77271d_illuminance
+    #   below: 250
+    - condition: state
+      entity_id: binary_sensor.light_outside_mi
+      state: 'off'
     - condition: template
       value_template: "{{ not is_state('light.bedside_mb', 'on') }}"
   action:
@@ -372,6 +369,7 @@
     - platform: time_pattern
       minutes: "/5"
   action:
-    - service_template: input_boolean.turn_{{'on' if not states('sensor.0x4cf8cdf3c77271d_illuminance')|int > 250 else 'off'}}
+    #- service_template: input_boolean.turn_{{'on' if not states('sensor.0x4cf8cdf3c77271d_illuminance')|int > 250 else 'off'}}
+    - service_template: input_boolean.turn_{{'on' if is_state('binary_sensor.light_outside_mi','off') else 'off'}}
       data:
         entity_id: input_boolean.bed_led_enable

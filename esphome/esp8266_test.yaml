@@ -6,12 +6,6 @@ esphome:
   platform: ESP8266
   board: nodemcuv2
   comment: ESP8266 test
-  on_boot:
-    then:
-      - switch.turn_off: ntc0_vcc
-      - switch.turn_off: ntc1_vcc
-      - switch.turn_off: ntc2_vcc
-      - switch.turn_off: ntc3_vcc  
 
 wifi:
   ssid: !secret wifi_ssid
@@ -54,22 +48,10 @@ ota:
 web_server:
   port: 80
 
-i2c:
-  sda: GPIO04
-  scl: GPIO05
-  scan: True
-
-dallas:
-  - pin: GPIO0
-    update_interval: 15s
-    id: dallas_node
-
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
-ads1115:
-  - address: 0x48
 
 text_sensor:
   - platform: template
@@ -97,6 +79,11 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+spi:
+  miso_pin: D6
+  clk_pin: D5
+  mosi_pin: D7
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -107,183 +94,15 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
-  # - platform: adc
-  #   pin: VCC
-  #   name: ${board_name}_Vcc    
+  - platform: max31855
+    name: ${board_name}_temp
+    cs_pin: D2
+    update_interval: 5s
 
 
-  - platform: dallas
-    address: 0x613C01D075384328
-    name: ${board_name}_Breaker_Box
-    dallas_id: dallas_node
-    accuracy_decimals: 1
-    resolution: 12
-
-  # - platform: sht3xd
-  #   temperature:
-  #     name: "SHT30 Temperature"
-  #   humidity:
-  #     name: "SHT30 Humidity"
-  #   address: 0x44
-  #   update_interval: 15s
-  
-  - platform: bme280
-    temperature:
-      name: ${board_name}_BME280_Temperature
-      oversampling: 16x
-    pressure:
-      name: ${board_name}_BME280_Pressure
-    humidity:
-      name: ${board_name}_BME280_Humidity
-    address: 0x77
-    update_interval: 25s
-
-  - platform: ntc
-    sensor: resistance_sensor0
-    calibration:
-      b_constant: 3435
-      reference_temperature: 25°C
-      reference_resistance: 10kOhm
-    name: ${board_name}_NTC0
-
-  - platform: ntc
-    sensor: resistance_sensor1
-    calibration:
-      b_constant: 3435
-      reference_temperature: 25°C
-      reference_resistance: 10kOhm
-    name: ${board_name}_NTC1
-
-  - platform: ntc
-    sensor: resistance_sensor2
-    calibration:
-      b_constant: 3435
-      reference_temperature: 25°C
-      reference_resistance: 10kOhm
-    name: ${board_name}_NTC2
-
-  - platform: ntc
-    sensor: resistance_sensor3
-    calibration:
-      b_constant: 3435
-      reference_temperature: 25°C
-      reference_resistance: 10kOhm
-    name: ${board_name}_NTC3
-
-  - platform: resistance
-    id: resistance_sensor0
-    sensor: source_sensor0
-    configuration: DOWNSTREAM
-    resistor: 9.9kOhm
-    reference_voltage:  3.289V
-    name: ${board_name}_NTC_Resistance0
-
-  - platform: resistance
-    id: resistance_sensor1
-    sensor: source_sensor1
-    configuration: DOWNSTREAM
-    resistor: 9.9kOhm
-    reference_voltage:  3.289V
-    name: ${board_name}_NTC_Resistance1
-
-  - platform: resistance
-    id: resistance_sensor2
-    sensor: source_sensor2
-    configuration: DOWNSTREAM
-    resistor: 9.9kOhm
-    reference_voltage:  3.289V
-    name: ${board_name}_NTC_Resistance2
-
-  - platform: resistance
-    id: resistance_sensor3
-    sensor: source_sensor3
-    configuration: DOWNSTREAM
-    resistor: 9.9kOhm
-    reference_voltage:  3.289V
-    name: ${board_name}_NTC_Resistance3
-
-  - platform: ads1115
-    multiplexer: 'A0_GND'
-    gain: 4.096
-    name: ${board_name}_NTC_ADS1115_A0-GND
-    id: source_sensor0
-    update_interval: never
-
-  - platform: ads1115
-    multiplexer: 'A1_GND'
-    gain: 4.096
-    name: ${board_name}_NTC_ADS1115_A1-GND
-    id: source_sensor1
-    update_interval: never
-
-  - platform: ads1115
-    multiplexer: 'A2_GND'
-    gain: 4.096
-    name: ${board_name}_NTC_ADS1115_A2-GND
-    id: source_sensor2
-    update_interval: never
-
-  - platform: ads1115
-    multiplexer: 'A3_GND'
-    gain: 4.096
-    name: ${board_name}_NTC_ADS1115_A3-GND
-    id: source_sensor3
-    update_interval: never
-    
-  # - platform: adc
-  #   id: source_sensor
-  #   pin: A0
-  #   name: ${board_name}_NTC_ADC
-  #   update_interval: 2s
-  #   filters:
-  #     - multiply: 3.3
-  #     - offset:  -0.1
-    
 switch:
   - platform: restart
     name: ${board_name}_Restart
-
-  - platform: gpio
-    pin: D0
-    id: ntc0_vcc    
-    name: ${board_name}_NTC0_VCC
-
-  - platform: gpio
-    pin: D7
-    id: ntc1_vcc    
-    name: ${board_name}_NTC1_VCC
-
-  - platform: gpio
-    pin: D8
-    id: ntc2_vcc    
-    name: ${board_name}_NTC2_VCC
-
-  - platform: gpio
-    pin: RX
-    id: ntc3_vcc    
-    name: ${board_name}_NTC3_VCC
-
-interval:
-  - interval: 50s
-    then:
-      - switch.turn_on: ntc0_vcc
-      - switch.turn_on: ntc1_vcc
-      - switch.turn_on: ntc2_vcc
-      - switch.turn_on: ntc3_vcc
-      - delay: 5s
-      - component.update: source_sensor0
-      - component.update: source_sensor1
-      - component.update: source_sensor2
-      - component.update: source_sensor3
-      - delay: 5s
-      - component.update: source_sensor0
-      - component.update: source_sensor1
-      - component.update: source_sensor2
-      - component.update: source_sensor3      
-      - switch.turn_off: ntc0_vcc
-      - switch.turn_off: ntc1_vcc
-      - switch.turn_off: ntc2_vcc
-      - switch.turn_off: ntc3_vcc
 
 time:
   - platform: homeassistant

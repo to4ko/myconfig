@@ -11,7 +11,6 @@
     - platform: numeric_state
       entity_id: sensor.humidifier_water_level
       below: 10
-      above: 8
   condition:
     condition: and
     conditions:
@@ -21,6 +20,8 @@
       - condition: state
         entity_id: person.dima
         state: 'home'
+      - condition: template
+        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.sasha_humidifier_water_low_water_cond','last_triggered'))|int) > 30*60 }}"
   action:
     service: notify.telegram
     data_template:
