@@ -397,11 +397,11 @@
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
         {{ trigger.from_state.state not in ignore and
            trigger.to_state.state not in ignore and
-           trigger.to_state.state != trigger.from_state.state }}  
+           trigger.to_state.state != trigger.from_state.state }}
   action:
     - service: notify.telegram
       data_template:
-        message: "\U00002b55 HACS - доступны обновления {{states('sensor.hacs')}}!"
+        message: "\U00002b55 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }}{%if not loop.last %}, {%endif%}{% endfor %}!"
 
 # ##################################
 # System - Supervisor Update Available
@@ -1059,6 +1059,7 @@
         - alarm_control_panel.0x842e14fffe1508a6_alarm
         - alarm_control_panel.0xbc33acfffe537cf5_alarm
         - sensor.geiger_radiation_dose_per_hour
+        - sensor.0x4cf8cdf3c7754a8_illuminance
       to: 'unavailable'
   action: 
     - service: notify.telegram
@@ -1269,7 +1270,7 @@
   initial_state: 'true'
   trigger:
     - platform: time
-      at: '07:00:00'
+      at: '06:59:00'
   condition:
     - condition: time
       weekday:
@@ -1283,6 +1284,10 @@
     - delay: '00:00:15'
     - service: switch.turn_on
       entity_id: switch.0x158d00028b4fc3_switch
+    - delay: '00:00:45'
+    - service: notify.telegram
+      data_template:
+        message: "\U000026a0 Не забудьте включить принтер!"
 
 # ##################################
 # System - GW3 Devices Group Renewal

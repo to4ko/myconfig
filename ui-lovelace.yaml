@@ -5091,6 +5091,8 @@ views:
               - type: divider
               - entity: sensor.esp8266_pzem_hb_power
                 name: PZEM
+              - entity: sensor.esp8266_pzem_hb_power_factor
+                name: PZEM Pfactor
               - entity: sensor.power_consumption
                 name: Calc
               - entity: sensor.esp32_domofon_power_meter
@@ -5186,7 +5188,7 @@ views:
                 border: solid 2px var(--primary-color);
               }          
                 
-  - title: Radio Quality [GW 3]
+  - title: Radio Quality [GW3]
     icon: mdi:radio-tower
     panel: true
     cards:
@@ -5335,7 +5337,71 @@ views:
               'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
               td.left: 'padding: 10px 10px 10px 10px'
               th.left: 'padding: 0px 0px 10px 10px'
-              
+
+  - title: GW3 Devices List
+    icon: mdi:video-input-antenna
+    panel: true
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            #content: '<center> <ha-icon icon="mdi:zigbee"></ha-icon> </center>'
+            content: '### <center> ZigBee </center>'
+          - type: 'custom:flex-table-card'
+            #title: ZigBee
+            clickable: false
+            entities:
+              include: 
+                - sensor.*_zigbee
+            sort_by: nwk
+            #max_rows: 20
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: 'x.replace(/ Zigbee$/,"")'
+              - data: ieee
+                name: IEEE
+                modify: (x+'').toLowerCase()
+              - data: nwk
+                name: NWK
+                modify: (x+'').replace(/^0x/,"").toLowerCase()
+              - data: parent
+                name: Parent
+                modify: (x+'').replace(/^0x/,"").toLowerCase()
+              - data: type
+                name: Type
+                modify: (x+'').replace(/^-$/, "child device")
+              - data: msg_received
+                name: Received
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: msg_missed
+                name: Missed
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: unresponsive
+                name: Unresponsive
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: link_quality
+                name: LQI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: rssi
+                name: RSSI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: last_msg
+                name: Last Message
+                modify: x+''
+              - data: state
+                name: Last Seen, min ago
+                modify: Math.round((Date.now()-Date.parse(x))/60000) #(Date.now()-Date.parse(x))/60000
+                # modify: >
+                #   var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
+                #   isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
+            css:
+        #      thead th: 'align-content: center;'
+              table+: 'padding-top: 15px;'
+              'tbody tr:nth-child(even)': 'background-color: #a2542f6;'
+              td.left: 'padding: 10px 10px 10px 10px'
+              th.left: 'padding: 0px 0px 10px 10px'
+            
               
   - title: Fridge
     icon: mdi:fridge-bottom

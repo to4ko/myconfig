@@ -5,6 +5,7 @@ from typing import Optional
 # params: [siid, piid, hass attr name, hass domain]
 DEVICES = [{
     # BLE
+    131: ["Xiaomi", "Kettle", "YM-K1501"],
     152: ["Xiaomi", "Flower Care", "HHCCJCY01"],
     426: ["Xiaomi", "TH Sensor", "LYWSDCGQ/01ZM"],
     794: ["Xiaomi", "Door Lock", "MJZNMS02LM"],
@@ -52,7 +53,7 @@ DEVICES = [{
         [3, 1, 'right_switch', 'switch'],
     ]
 }, {
-    2007: ["Unknown", "Mesh Switch Controller", "2007"],
+    2007: ["Unknown", "Mesh Switch Controller"],
     'params': [
         [2, 1, 'switch', 'switch']
     ]
@@ -144,16 +145,16 @@ BLE_LOCK_ERROR = {
 }
 
 ACTIONS = {
-    1249: ['right', 'left'],
-    1983: ['single', 'double', 'hold'],
-    2147: ['single'],
+    1249: {0: 'right', 1: 'left'},
+    1983: {0: 'single', 0x010000: 'double', 0x020000: 'hold'},
+    2147: {0: 'single'},
 }
 
 
 def get_ble_domain(param: str) -> Optional[str]:
     if param in (
             'sleep', 'lock', 'opening', 'water_leak', 'smoke', 'gas', 'light',
-            'contact', 'motion'):
+            'contact', 'motion', 'power'):
         return 'binary_sensor'
 
     elif param in (
@@ -174,10 +175,12 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
     length = len(data)
 
     if eid == 0x1001 and length == 3:  # 4097
-        if pdid in ACTIONS and data[0] < len(ACTIONS[pdid]):
-            return {'action': ACTIONS[pdid][data[0]]}
-        else:
-            return {'action': data[0]}
+        value = int.from_bytes(data, 'little')
+        return {
+            'action': ACTIONS[pdid][value]
+            if pdid in ACTIONS and value in ACTIONS[pdid]
+            else value
+        }
 
     elif eid == 0x1002 and length == 1:  # 4098
         # No sleep (0x00), falling asleep (0x01)
@@ -191,6 +194,10 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
         return {
             'temperature': int.from_bytes(data, 'little', signed=True) / 10.0
         }
+
+    elif eid == 0x1005 and length == 2:  # 4101
+        # Kettle, thanks https://github.com/custom-components/ble_monitor/
+        return {'power': data[0], 'temperature': data[1]}
 
     elif eid == 0x1006 and length == 2:  # 4102
         # Humidity percentage, ranging from 0-1000
