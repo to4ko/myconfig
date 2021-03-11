@@ -9,7 +9,6 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      #entity_id: device_tracker.life360_dima_tsymbal
       entity_id: person.dima
       to: 'home'
       for:
@@ -26,7 +25,6 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      #entity_id: device_tracker.life360_vova_tsymbal
       entity_id: person.vova
       to: 'home'
       for:
@@ -43,7 +41,6 @@
   initial_state: 'true'
   trigger:
     - platform: state
-      #entity_id: device_tracker.life360_sandra_tsymbal
       entity_id: person.sandra
       to: 'home'
       for:
@@ -76,21 +73,13 @@
 - alias: system_sasha_tracker_toggle
   initial_state: 'true'
   trigger:
-    # - platform: event
-    #   event_type: xiaomi_aqara.click
-    #   event_data:
-    #     entity_id: binary_sensor.switch_158d0002fa99a8
-    #     click_type: single
     - platform: state
       entity_id: sensor.0x158d0002fa99a8_action
       to: 'single'
   action:
     - service: input_boolean.toggle
       entity_id: input_boolean.sasha_tracker
-    # - service: notify.telegram
-    #   data_template:
-    #     message: "{{ trigger.to_state.entity_id }} - {{ trigger.to_state.state }}"
-      
+
 
 # ##################################
 # System - Sasha tracker
@@ -101,9 +90,6 @@
     - platform: state
       entity_id: input_boolean.sasha_tracker
   action:
-    # - service: notify.telegram
-    #   data_template:
-    #     message: "\U0001F476 Sasha Tracker {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
     - service: device_tracker.see
       data_template:
         dev_id: sasha
@@ -123,11 +109,10 @@
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'on'
-      # - condition: template
-      #   value_template: "{{(now()|as_timestamp - states.binary_sensor.switch_158d0002fa99a8.last_updated|as_timestamp ) > 15}}"
+      - condition: state
+        entity_id: input_boolean.dark_mode
+        state: 'off'
   action:
-#    - service: script.turn_on
-#      entity_id: script.entrance_snapshot_sasha
     - service: media_player.volume_set
       data_template:
         entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
@@ -146,8 +131,7 @@
         message: "Фотография"
         data:
           photo:
-            #- file: /config/www/cam_captures/entrance-sasha.jpg
-            - url: !secret entrance_snap #http://192.168.1.14:8123{{state_attr('camera.g3_flex_entrance','entity_picture')}}
+            - url: !secret entrance_snap
               caption: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
               
 # ##################################
