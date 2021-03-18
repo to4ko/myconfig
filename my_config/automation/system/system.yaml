@@ -322,17 +322,26 @@
 # ##################################
 - alias: system_config_error_notification
   initial_state: 'true'
+  mode: parallel
   trigger:
     - platform: state
-      entity_id: persistent_notification.homeassistant_check_config
+      entity_id: 
+        - persistent_notification.homeassistant_check_config
+        - persistent_notification.invalid_config
+      to: 'notifying'
   action:
     - service: notify.telegram
       data_template:
-        message: "{{ '\U0000274C' }} Перезапуск отменён. Конфигурация содержит ошибки."
+        message: "{{ '\U0000274C' }} Перезапуск отменён. Конфигурация содержит ошибки {{ trigger.to_state.attributes.message }}"
     - service: persistent_notification.dismiss
       data:
-        notification_id: homeassistant_check_config
-        
+        notification_id: >
+            {% if 'could not be set up' in trigger.to_state.attributes.message | lower %}
+                invalid_config
+            {% else %}
+                homeassistant_check_config
+            {% endif %}        
+
 # ##################################
 # System - Pinhole restart
 # ##################################

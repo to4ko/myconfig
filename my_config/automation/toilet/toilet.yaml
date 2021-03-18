@@ -68,7 +68,7 @@
   condition:
     - condition: numeric_state
       entity_id: sensor.esp01_air_freshener_vcc
-      below: 3
+      below: 2.8
   action:
     - service: notify.telegram
       data_template:
@@ -151,7 +151,7 @@
     - platform: time_pattern
       minutes: '/15'
   action: 
-    - service_template: climate.turn_{% if 6>=now().hour|int >=0 %}off{%else%}on{%endif%}
+    - service_template: climate.turn_{% if not (6>=now().hour|int >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
       entity_id: climate.sonoff_pow_r2_2_heater
   
 # # ##################################
