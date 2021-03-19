@@ -7,18 +7,19 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
 
 
 **Main Server:** 
-  - Xeon E5-2620v3 cooled by Noctua NH-U12DX i4
-  - Supermicro X10SRL-F
-  - 64gb ECC DDR4 RAM
+  - Ryzen 5 3600 cooled by Noctua NH-U12DX i4 with NM-AM4 kit
+  - Asrock Rack x470d4u
+  - 2*16gb MICRON (Crucial) DDR4 3200MHz pc-25600 ECC (MTA9ASF2G72AZ-3G2B1)
   - 128Gb Kingston SSD Boot drive
+  - Asus Hyper M.2 x16 card v2 (all NVME drives are connected via this card)
   - 512Gb * 2ea ADATA 8200Pro in Raid-1 Root drive
   - 256Gb ADATA 8200Pro as DB drive
-  - 7ea WD RED 2Tb (NAS section) in HW Raid-6 via Adaptec 71605
-  - 1Tb WD Purple for pinhole camera records
-  - 3ea WD Green in HW Raid-0 (Torrent heap) via Adaptec 71605
-  - 2Tb Seagate SV35
+  - 256Gb ADATA 8200Pro connected but not used at the moment
+  - 3ea WD RED 2Tb (NAS section) in Software Raid-1 (1 drive is spare)
+  - 2Tb Seagate SV35 for pinhole camera records
+  - 8TB Toshiba MG06ACA800E as media storage (Torrent heap)
   - Corsair HX1200i Power supply
-  - Fractal Design XL R2 with be quite Pure Wings 2 140mm PWM fans (6ea)
+  - Fractal Design Mini C with be quite Pure Wings 2 120mm PWM fans (3ea)
   - USR 56k USB Modem
 
 **MQTT\Zigbee2MQTT Server #1:**
