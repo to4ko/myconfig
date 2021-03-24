@@ -1,5 +1,5 @@
 # ##################################
-# System - Ubuntu server CPU temp >60
+# System - Ubuntu server temp >60
 # ##################################
 - alias: system_health_temp
   initial_state: 'true'
@@ -22,6 +22,27 @@
     - service: notify.telegram
       data:
         message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >60°"
+
+# ##################################
+# System - Ubuntu server CPU temp >80
+# ##################################
+- alias: system_health_cpu_temp
+  initial_state: 'true'
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.ipmi_cpu_temp
+      above: 80
+      for:
+        minutes: 3
+  action:
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "{{ trigger.to_state.attributes.friendly_name }} >80°"
+    - service: notify.telegram
+      data:
+        message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >80°"
 
 # # ##################################
 # # System - server root device

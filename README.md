@@ -48,7 +48,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Unifi Switch 16-150W
   - not in use - Unifi Switch 24
   - Unifi Switch 8-60W (3ea)
-  - not in use - Unifi AC-AP-Lite (5ea)
+  - Unifi AC-AP-Lite (2ea)
   - Unifi AC AP Pro (3ea)
   - Unifi NanoHD (not in use)
   - Unifi AP AC Mesh with UMA-D
@@ -66,7 +66,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (3ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
+  - Xiaomi Gateway v3 (5ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
   - Yeelight LED Ceiling Lamp650 (YLXD02YL) (2ea)
   - Yeelight LED Ceiling Lamp Pro White 960mm (YLXD08YL)
   - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
@@ -77,7 +77,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
   - Xiaomi Philips Zhirui Downlight (9290012799)
   - Yeelight Xiaomi Led Bulb (Color) (YLDP06YL) (2ea)
-  - Yeelight Xiaomi Led Tunable Bulb (White) (YLDP05YL) (1ea)
+  - Yeelight Xiaomi Led Tunable Bulb (White) (YLDP05YL) (2ea)
   - not in use - Xiaomi Smart WiFi Power Strip (2ea)
   - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
@@ -144,7 +144,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
   
 **Software:**
-  - Ubuntu Server 20.04.1 LTS
+  - Ubuntu Server 20.04.2 LTS
   - Home Assistant Core Supervised
   - MotionEye (Pinhole camera motion detection)
   - Mosquitto
