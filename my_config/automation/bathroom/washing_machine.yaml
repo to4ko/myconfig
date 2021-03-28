@@ -31,8 +31,30 @@
     - service: notify.telegram
       data_template: 
         message: "\U000023F3 Стирка начата!"
- 
- 
+
+# ##################################
+# Bathroom - Washing Machine sensors issue
+# ##################################
+- alias: bathroom_washing_machine_sensors_issue
+  initial_state: true
+  trigger:
+    platform: state
+    entity_id: binary_sensor.washer_b
+    to: 'on'
+    from: 'off'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.0x158d0003fa6cf5_contact
+      state: 'on'
+  action:
+    - service: input_select.select_option
+      data:
+        entity_id: input_select.washer_state
+        option: Drying
+    - service: notify.telegram
+      data_template: 
+        message: "\U0000274c Внимание! Обнаружена ошибка сенсора двери стиральной машины!"
+
 # ##################################
 # Bathroom - Washing Machine Drying
 # ##################################
@@ -45,7 +67,7 @@
     from: 'on'
   condition:
     - condition: state
-      entity_id: binary_sensor.0x158d0003fa6cf5_contact #binary_sensor.0x158d0003262a35_contact
+      entity_id: binary_sensor.0x158d0003fa6cf5_contact
       state: 'off'
     - condition: state
       entity_id: input_select.washer_state
@@ -93,22 +115,22 @@
 # ##################################
 # Bathroom - Washing Machine Rinsing
 # ##################################
-- alias: bathroom_washing_machine_rinsing
-  initial_state: false
-  trigger:
-    platform: state
-    entity_id: binary_sensor.0x158d0003fa6cf5_contact #binary_sensor.0x158d0003262a35_contact
-    to: 'on'
-    from: 'off'
-  condition:
-    - condition: state
-      entity_id: input_select.washer_state
-      state: 'Washing'
-  action:
-    - service: input_select.select_option
-      data:
-        entity_id: input_select.washer_state
-        option: Idle
+# - alias: bathroom_washing_machine_rinsing
+#   initial_state: false
+#   trigger:
+#     platform: state
+#     entity_id: binary_sensor.0x158d0003fa6cf5_contact
+#     to: 'on'
+#     from: 'off'
+#   condition:
+#     - condition: state
+#       entity_id: input_select.washer_state
+#       state: 'Washing'
+#   action:
+#     - service: input_select.select_option
+#       data:
+#         entity_id: input_select.washer_state
+#         option: Idle
 
 # ##################################
 # Bathroom - Washing Machine Add Load
@@ -117,7 +139,7 @@
   initial_state: true
   trigger:
     platform: state
-    entity_id: binary_sensor.0x158d0003fa6cf5_contact #binary_sensor.0x158d0003262a35_contact
+    entity_id: binary_sensor.0x158d0003fa6cf5_contact
     to: 'off'
     from: 'on'
   condition:
@@ -133,7 +155,6 @@
         entity_id: input_select.washer_state
         option: Washing 
 
-
 # ##################################
 # Bathroom - Washing Machine Idle
 # ##################################
@@ -141,7 +162,7 @@
   initial_state: true
   trigger:
     platform: state
-    entity_id: binary_sensor.0x158d0003fa6cf5_contact #binary_sensor.0x158d0003262a35_contact
+    entity_id: binary_sensor.0x158d0003fa6cf5_contact
     to: 'on'
     from: 'off'
   condition:

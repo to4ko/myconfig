@@ -44,17 +44,17 @@
 #     - service: switch.turn_off
 #       entity_id: switch.0x158d000290a0bc_switch
 
-# ##################################
-# Vova - Night mode
-# ##################################
-- alias: vova_night_mode
-  initial_state: false
-  trigger:
-    platform: time
-    at: '23:00:00'
-  action:
-    - service: switch.turn_off
-      entity_id: switch.0x158d000246776f_switch
+# # ##################################
+# # Vova - Night mode
+# # ##################################
+# - alias: vova_night_mode
+#   initial_state: false
+#   trigger:
+#     platform: time
+#     at: '23:00:00'
+#   action:
+#     - service: switch.turn_off
+#       entity_id: switch.0x158d000246776f_switch
       
 # # ##################################
 # # Vova - TV Box Plug Off with TV Off
@@ -86,6 +86,9 @@
     - condition: time
       weekday:
         - sun
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
   action:
     - service: switch.turn_off
       entity_id: switch.0x158d000290a0bc_switch
@@ -100,21 +103,18 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.sandra_home
-      from: 'on'
-      to: 'off'
+      entity_id: person.sandra
+      to: 'not_home'
       for:
         minutes: 15
     - platform: state
-      entity_id: binary_sensor.sandra_home
-      from: 'off'
-      to: 'on'
+      entity_id: person.sandra
+      to: 'home'
       for:
         minutes: 2
   condition:
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: 'off'
+    - condition: template
+      value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
   action:
     - service: fan.turn_{{states('binary_sensor.sandra_home')}}
       entity_id: fan.purifier2s

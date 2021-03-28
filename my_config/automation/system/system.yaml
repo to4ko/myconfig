@@ -271,19 +271,19 @@
 # ##################################
 # System - Home weather (ya)
 # ##################################
-- alias: system_weather_home
-  initial_state: false
-  trigger:
-    - platform: state
-      entity_id: sensor.ya_weather_home
-  condition:
-    - condition: state
-      entity_id: binary_sensor.tod_day
-      state: 'on'
-  action:
-    - service: notify.telegram_family
-      data_template:
-        message: "\U00002602 Погода дома: {{states('sensor.ya_weather_home')}}"
+# - alias: system_weather_home
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.ya_weather_home
+#   condition:
+#     - condition: state
+#       entity_id: binary_sensor.tod_day
+#       state: 'on'
+#   action:
+#     - service: notify.telegram_family
+#       data_template:
+#         message: "\U00002602 Погода дома: {{states('sensor.ya_weather_home')}}"
 
 # ##################################
 # System - Database Purge
@@ -595,33 +595,33 @@
 # ##################################
 # System - Rain sensor
 # ##################################
-- alias: system_rain_sensor
-  initial_state: false
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d00035c6905_contact
-      from: 'on'
-      to: 'off'
-      for: '00:05:00'
-    - platform: state
-      entity_id: binary_sensor.0x158d00035c6905_contact
-      from: 'off'
-      to: 'on'
-      for: '00:05:00'
-  condition:
-    - condition: template
-      value_template: >
-        {% set ignore = ['unknown', 'unavailable', 'none'] %}
-        {{ trigger.from_state.state not in ignore and
-           trigger.to_state.state not in ignore and
-           trigger.to_state.state != trigger.from_state.state }}
-  action:
-    - service: notify.telegram
-      data_template:
-        message: >
-          {% if is_state('binary_sensor.0x158d00035c6905_contact','on') %} {{"\U0001f327"}} Кажется дождь собирается!
-          {% else %} {{"\U0001f324"}} Тучки уходят!
-          {% endif %}
+# - alias: system_rain_sensor
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x158d00035c6905_contact
+#       from: 'on'
+#       to: 'off'
+#       for: '00:05:00'
+#     - platform: state
+#       entity_id: binary_sensor.0x158d00035c6905_contact
+#       from: 'off'
+#       to: 'on'
+#       for: '00:05:00'
+#   condition:
+#     - condition: template
+#       value_template: >
+#         {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#         {{ trigger.from_state.state not in ignore and
+#           trigger.to_state.state not in ignore and
+#           trigger.to_state.state != trigger.from_state.state }}
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: >
+#           {% if is_state('binary_sensor.0x158d00035c6905_contact','on') %} {{"\U0001f327"}} Кажется дождь собирается!
+#           {% else %} {{"\U0001f324"}} Тучки уходят!
+#           {% endif %}
 
 # ##################################
 # System - Critical Error notification
@@ -827,25 +827,25 @@
 # ##################################
 # System - HACS New Repo
 # ##################################
-- alias: system_hacs_new_repo
-  initial_state: false
-  trigger:
-    - platform: event
-      event_type: hacs/repository
-      event_data:
-        action: registration
-  condition:
-    - condition: template
-      value_template: "{{ trigger.event.data.repository is defined }}"
-  action:
-    - service: persistent_notification.create
-      data_template:
-        title: New repository in HACS
-        message: >-
-          {% set repo = trigger.event.data.repository %}
-          {% set id = trigger.event.data.repository_id %}
-          [{{ repo }}](/hacs/repository/{{ id }})
-          was just added to HACS.
+# - alias: system_hacs_new_repo
+#   initial_state: false
+#   trigger:
+#     - platform: event
+#       event_type: hacs/repository
+#       event_data:
+#         action: registration
+#   condition:
+#     - condition: template
+#       value_template: "{{ trigger.event.data.repository is defined }}"
+#   action:
+#     - service: persistent_notification.create
+#       data_template:
+#         title: New repository in HACS
+#         message: >-
+#           {% set repo = trigger.event.data.repository %}
+#           {% set id = trigger.event.data.repository_id %}
+#           [{{ repo }}](/hacs/repository/{{ id }})
+#           was just added to HACS.
         
 # ##################################
 # System - Hot water pipe warning
@@ -856,6 +856,8 @@
     - platform: numeric_state
       entity_id: sensor.esp32_bathroom_node_hot_pipe
       below: 40
+      for:
+        minutes: 5
   action:
     - service: notify.telegram
       data_template:
@@ -870,6 +872,8 @@
     - platform: numeric_state
       entity_id: sensor.esp32_bathroom_node_cold_pipe
       above: 25
+      for:
+        minutes: 5
   action:
     - service: notify.telegram
       data_template:
@@ -886,6 +890,8 @@
         - sensor.esp32_node_v_heating_pipe
         - sensor.esp32_node_mb_heating_pipe
       below: 35
+      for:
+        minutes: 5
   action:
     - service: notify.telegram
       data_template:
@@ -1136,23 +1142,23 @@
 # ##################################
 # System - Weather Geomagnetic
 # ##################################
-- alias: system_weather_geomagnetic
-  initial_state: false
-  trigger:
-    - platform: time_pattern
-      hours: "/1"
-  condition:
-    - condition: state
-      entity_id: binary_sensor.tod_day
-      state: "on"
-    - condition: template
-      value_template: "{{(as_timestamp(now())|int - as_timestamp(states.sensor.sensor.gismeteo_geomagnetic_field.last_changed)|int) < 60*60 }}"
-  action:
-    - service: notify.telegram
-      data_template:
-        message: >-
-          {% set magnetic_conditions = ['Норма','Небольшие возмущения','Небольшие возмущения','Небольшие возмущения','Слабая буря','Умеренная буря','Сильная буря','Шторм','Экстремальный шторм'] %}
-          {{ "\U0001f9f2" }} Геомагнитная обстановка -> {{magnetic_conditions[states('sensor.gismeteo_geomagnetic_field')|int]}}
+# - alias: system_weather_geomagnetic
+#   initial_state: false
+#   trigger:
+#     - platform: time_pattern
+#       hours: "/1"
+#   condition:
+#     - condition: state
+#       entity_id: binary_sensor.tod_day
+#       state: "on"
+#     - condition: template
+#       value_template: "{{(as_timestamp(now())|int - as_timestamp(states.sensor.sensor.gismeteo_geomagnetic_field.last_changed)|int) < 60*60 }}"
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: >-
+#           {% set magnetic_conditions = ['Норма','Небольшие возмущения','Небольшие возмущения','Небольшие возмущения','Слабая буря','Умеренная буря','Сильная буря','Шторм','Экстремальный шторм'] %}
+#           {{ "\U0001f9f2" }} Геомагнитная обстановка -> {{magnetic_conditions[states('sensor.gismeteo_geomagnetic_field')|int]}}
 
 # ##################################
 # System - Caller ID
@@ -1225,20 +1231,20 @@
 # ##################################
 # System - NUT Error
 # ##################################
-- alias: system_nut_error
-  initial_state: false
-  trigger:
-    - platform: event
-      event_type: system_log_event
-      event_data:
-        level: ERROR
-  condition:
-    - condition: template
-      value_template: '{{ "NUT" in trigger.event.data.message[0] }}'
-  action:
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f50c NUT Ошибка обнаружена в логе!"
+# - alias: system_nut_error
+#   initial_state: false
+#   trigger:
+#     - platform: event
+#       event_type: system_log_event
+#       event_data:
+#         level: ERROR
+#   condition:
+#     - condition: template
+#       value_template: '{{ "NUT" in trigger.event.data.message[0] }}'
+#   action:
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U0001f50c NUT Ошибка обнаружена в логе!"
         
         
 # ##################################
