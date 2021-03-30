@@ -19,6 +19,8 @@
           script.storage_timer_{% if is_state('switch.0x158d0002a36433_channel_1','on') or is_state('switch.0x158d0002a36433_channel_2','on')%}on{%else%}off{%endif%} 
       - service_template: >
           {% if is_state('binary_sensor.0x158d000232ddd6_contact','off')%}script.toilet_indicator_off{%else%}script.noop{%endif%}
+      - service_template: >
+          script.domofon_timer_{% if is_state('switch.esp32_domofon_auto_open','on') or is_state('switch.esp32_domofon_auto_open','on')%}on{%else%}off{%endif%} 
       - service: light.turn_off
         entity_id: light.led_strip_hb, light.led_strip_entrance_hb, light.btf_pixel_strip_top, light.esp32_node_k_light
         data:
@@ -33,6 +35,20 @@
         data_template:
           dev_id: sasha
           location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
+
+  domofon_timer_on:
+    alias: Domofon Timer On
+    sequence:
+    - service: timer.cancel
+      entity_id: timer.domofon
+    - service: timer.start
+      entity_id: timer.domofon
+
+  domofon_timer_off:
+    alias: Domofon Timer Off
+    sequence:
+    - service: timer.cancel
+      entity_id: timer.domofon
 
   heater_timer_on:
     alias: Heater T timer on

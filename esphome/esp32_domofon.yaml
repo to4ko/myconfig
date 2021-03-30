@@ -16,9 +16,13 @@ esphome:
       - script.execute: led_off
 
 globals:
-   - id: mute_mode
-     type: bool
-     initial_value: 'false'
+  - id: mute_mode
+    type: bool
+    initial_value: 'false'
+  - id: opening
+    type: bool
+    initial_value: 'false'
+  
 
 wifi:
   #ssid: !secret wifi_ssid_hb
@@ -89,31 +93,43 @@ script:
   # Accept incoming call
   - id: call_accept
     then:
+      - globals.set:
+          id: opening
+          value: 'true'      
       - logger.log: "Accept call"
       - script.execute: state_no_call
       - switch.turn_on: relay1
       - switch.turn_on: relay2
-      - delay: 1s
+      - delay: 1.5s
       - switch.turn_on: relay3
-      - delay: 2s
+      - delay: 3s
       - switch.turn_off: relay3
       - switch.turn_off: relay1
       - switch.turn_off: relay2
+      - globals.set:
+          id: opening
+          value: 'false'
 
   - id: call_accept_mute
     then:
+      - globals.set:
+          id: opening
+          value: 'true'      
       - logger.log: "Accept call_mute"
       - script.execute: state_no_call
       - switch.turn_on: relay4
       - switch.turn_on: relay1
       - switch.turn_on: relay2
-      - delay: 1s
+      - delay: 1.5s
       - switch.turn_on: relay3
-      - delay: 2s
+      - delay: 3s
       - switch.turn_off: relay3
       - switch.turn_off: relay1
       - switch.turn_off: relay2
       - switch.turn_off: relay4
+      - globals.set:
+          id: opening
+          value: 'false'      
 
   - id: call_reject
     then:
@@ -253,13 +269,20 @@ binary_sensor:
     id: incoming_call
     filters:
       - delayed_off: 3000ms
-    # automation start on ESP32      
-    # on_press:
-    #   then:
-    #     script.execute: state_call
-    # on_release:
-    #   then:
-    #     script.execute: state_no_call      
+    #automation start on ESP32      
+    on_press:
+      then:
+        script.execute: state_call
+    on_release:
+      then:
+        script.execute: state_no_call      
+
+  - platform: template
+    name: ${board_name}_Auto_Opening
+    lambda: |-
+      if (id(opening)) { return true;
+      }else { return false;
+      }
 
 text_sensor:
   - platform: template
@@ -378,7 +401,7 @@ switch:
       - switch.turn_on: relay4
       - switch.turn_on: relay1
       - switch.turn_on: relay2
-      - delay: 1s
+      - delay: 1.5s
       - switch.turn_on: relay3
       - delay: 2s
       - switch.turn_off: relay3

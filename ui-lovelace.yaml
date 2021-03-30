@@ -480,11 +480,25 @@ views:
                     name: Oven
                   - entity: sensor.esp8266_oven_temp_k
                     name: T
-              - type: entities
-                entities:
-                  - input_select.oven_target_temperature
+                  - entity: input_select.oven_target_temperature
+                    name: Target
           - type: glance
             columns: 4
+            state_color: true
+            entities:
+              - entity: binary_sensor.0x158d0003fa6cf5_contact
+                name: Washer Door
+              - entity: input_select.washer_state
+                name: State
+              - entity: counter.washing_machine_runs
+                name: Runs
+              - entity: script.washing_machine_runs_reset
+                name: Runs Reset
+                tap_action:
+                  action: call-service
+                  service: script.washing_machine_runs_reset
+          - type: glance
+            columns: 6
             state_color: true
             entities:
               - entity: sensor.0x4cf8cdf3c77271d_illuminance
@@ -493,12 +507,6 @@ views:
                 name: MB
               - entity: sensor.0x4cf8cdf3c7754a8_illuminance
                 name: K
-              - entity: input_select.washer_state
-                name: Washer
-          - type: glance
-            columns: 3
-            state_color: true
-            entities:
               - entity: sensor.esp32_node_v_illuminance
                 name: V            
               - entity: sensor.esp32_node_k_illuminance
@@ -519,11 +527,6 @@ views:
                 entities:
                   - entity: binary_sensor.doorbell
                     name: Doorbell
-                  # - entity: binary_sensor.doorbell_mute
-                  #   name: Mute
-                  #   tap_action:
-                  #     action: call-service
-                  #     service: script.doorbell_mute
                   - entity: binary_sensor.esp32_domofon_incomingcall
                     name: Call
                   - entity: script.domofon_open_door
@@ -532,26 +535,26 @@ views:
                     tap_action:
                       action: call-service
                       service: script.domofon_open_door
-                  - entity: input_boolean.domofon_mute
+                  - entity: switch.esp32_domofon_mute #input_boolean.domofon_mute
                     name: Mute
                     tap_action:
-                      action: call-service
-                      service: script.domofon_mute_toggle
-                  - entity: binary_sensor.domofon_auto_open_once
+                      action: toggle #call-service
+                      #service: script.domofon_mute_toggle
+                  - entity: switch.esp32_domofon_auto_open_once #binary_sensor.domofon_auto_open_once
                     name: AOpen 1
                     tap_action:
-                      action: call-service
-                      service: script.domofon_auto_open_once_toggle
-                  - entity: binary_sensor.domofon_auto_open
+                      action: toggle #call-service
+                      #service: script.domofon_auto_open_once_toggle
+                  - entity: switch.esp32_domofon_auto_open #binary_sensor.domofon_auto_open
                     name: AOpen
                     tap_action:
-                      action: call-service
-                      service: script.domofon_auto_open_toggle
-                  - entity: binary_sensor.domofon_ignore
-                    name: Ignore
+                      action: toggle #call-service
+                      #service: script.domofon_auto_open_toggle
+                  - entity: switch.esp32_domofon_reject #binary_sensor.domofon_ignore
+                    name: Reject #Ignore
                     tap_action:
-                      action: call-service
-                      service: script.domofon_ignore_toggle
+                      action: toggle #call-service
+                      #service: script.domofon_ignore_toggle
           # - type: glance
           #   entities:
           #     - entity: switch.circadian_lighting_all
@@ -2668,7 +2671,7 @@ views:
               - entity: sensor.i5_mb
                 name: i5 P
           - type: glance
-            columns: 5
+            columns: 4
             state_color: true
             entities:
               - entity: switch.vovapc
@@ -2745,37 +2748,17 @@ views:
           #           entity_id: switch.esp01_hdd_box_power
           #     - entity: binary_sensor.esp01_hdd_box_status
           #       name: Connection
-
-          - type: entity-filter
-            show_header_toggle: false
-            state_color: true
-            entities:
-              - entity: timer.fan_b
-              - entity: timer.fan_bottom_b
-              - entity: timer.fan_t
-              - entity: timer.general_10m
-              - entity: timer.general_5m
-              - entity: timer.heater_t
-              - entity: timer.main_door_open_hb
-              - entity: timer.main_led_strip_hb
-              - entity: timer.main_light_b
-              - entity: timer.main_light_delay_k
-              - entity: timer.main_light_delay_st
-              - entity: timer.main_light_hb
-              - entity: timer.main_light_k
-              - entity: timer.main_light_mb
-              - entity: timer.main_light_s
-              - entity: timer.main_light_st
-              - entity: timer.main_light_t
-              - entity: timer.night_led_strip_hb
-              - entity: timer.night_led_strip_hs
-              - entity: timer.night_led_strip_k
-              - entity: timer.test_timer
-              - entity: timer.washer_b
-              - entity: timer.zigbee2mqtt_permit_join
-            state_filter:
-            - "active"
-            - "paused"
+          - type: custom:auto-entities
+            show_empty: false
+            card:
+              type: entities
+              show_header_toggle: false
+              state_color: true
+            filter:
+              include:
+                - domain: timer
+              exclude:
+                - state: 'idle'
 
       # Mid column
       #############
@@ -3726,6 +3709,21 @@ views:
                 name: "#1"
               - entity: sensor.main2_temp
                 name: "#2"
+          - type: glance
+            columns: 6
+            entities: 
+              - entity: sensor.toshiba_hdd_load_cycle_count
+                name: Load Cycle
+              - entity: sensor.toshiba_hdd_pending_sectors
+                name: Pending
+              - entity: sensor.toshiba_hdd_power_cycle_count
+                name: PWR Cycle
+              - entity: sensor.toshiba_hdd_power_on_hours
+                name: PWR Hrs
+              - entity: sensor.toshiba_hdd_reallocated_count
+                name: Realloc
+              - entity: sensor.toshiba_hdd_udma_crc
+                name: UDMA CRC
 
 ################################################################
 # radio

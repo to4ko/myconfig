@@ -28,11 +28,11 @@
           push:
             badge: 0
             category: "domofon_call"
-    - service: script.turn_on
-      entity_id: script.domofon_script
-    - delay: '00:15:00'
-    - service: script.turn_on
-      entity_id: script.domofon_check
+    # - service: script.turn_on
+    #   entity_id: script.domofon_script
+    # - delay: '00:15:00'
+    # - service: script.turn_on
+    #   entity_id: script.domofon_check
 
 # ##################################
 # Hall Big - Domofon Auto Open On Arrival
@@ -41,25 +41,17 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: person.dima
-      to: 'home'
-    - platform: state
-      entity_id: person.sandra
-      to: 'home'
-    - platform: state
-      entity_id: person.vova
+      entity_id: person.dima, person.sandra, person.vova
       to: 'home'
   condition:
-    condition: and
-    conditions:
-      - condition: state
-        entity_id: input_boolean.domofon_auto_open_once
-        state: 'off'
-      - condition: state
-        entity_id: input_boolean.domofon_auto_open
-        state: 'off'
-      - condition: template
-        value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
+    # - condition: state
+    #   entity_id: switch.esp32_domofon_auto_open_once #input_boolean.domofon_auto_open_once
+    #   state: 'off'
+    # - condition: state
+    #   entity_id: switch.esp32_domofon_auto_open #input_boolean.domofon_auto_open
+    #   state: 'off'
+    - condition: template
+      value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
   action:
     - service: notify.telegram
       data_template:
@@ -74,18 +66,39 @@
         {%endif%}
       data_template:
         message: "\U0001f513 Домофон: Автооткрытие включено на 15мин! {% if is_state('binary_sensor.bottom_lock','off') or is_state('binary_sensor.upper_lock','off') %}Закрыт{%if is_state('binary_sensor.bottom_lock','off') %} нижний{%endif%}{%if is_state('binary_sensor.upper_lock','off')%} и верхний{%endif%} замок{%endif%}"
-    - service: script.turn_on
-      entity_id: script.domofon_mute_toggle
-    - service: script.turn_on
-      entity_id: script.domofon_auto_open_once_toggle
-    - delay: '00:15:00'
-    - service: script.turn_on
-      entity_id: script.domofon_check
+    - service: switch.turn_on
+      entity_id: switch.esp32_domofon_auto_open_once, switch.esp32_domofon_mute
+    # - service: script.turn_on
+    #   entity_id: script.domofon_mute_toggle
+    # - service: script.turn_on
+    #   entity_id: script.domofon_auto_open_once_toggle
+    - service: timer.cancel
+      entity_id: timer.domofon
+    - service: timer.start
+      entity_id: timer.domofon
+    # - service: script.turn_on
+    #   entity_id: script.domofon_check
+
+# ##################################
+# Hall Big - Domofon auto opening
+# ##################################
+- alias: hall_big_domofon_auto_opening
+  initial_state: true
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.esp32_domofon_auto_opening
+      from: 'off'
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001F4DE Домофон открыт автоматически!"
 
 # ##################################
 # Hall Big - Domofon auto off on door open\close
 # ##################################
-- alias: hall_big_domofon_off_on_door open_close
+- alias: hall_big_domofon_auto_mode_on_door_open_close
   initial_state: true
   mode: restart
   trigger:
@@ -93,75 +106,137 @@
       entity_id: binary_sensor.0x158d0001e5d6be_contact
       from: 'on'
       to: 'off'
-  condition:
-    - condition: state
-      entity_id: input_boolean.domofon_auto_open_once
-      state: 'on'
-    - condition: state
-      entity_id: input_boolean.domofon_mute
-      state: 'on'
+  # condition:
+  #   - condition: state
+  #     entity_id: switch.esp32_domofon_auto_open #input_boolean.domofon_auto_open_once
+  #     state: 'on'
+  #   - condition: state
+  #     entity_id: input_boolean.domofon_mute
+  #     state: 'on'
   action:
-    - delay: '00:10:00'
-    - service: script.turn_on
-      entity_id: script.domofon_check
+    - service: switch.turn_on
+      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_mute
+    - service: timer.cancel
+      entity_id: timer.domofon
+    - service: timer.start
+      entity_id: timer.domofon
+    # - service: script.turn_on
+    #   entity_id: script.domofon_check
+
+# ##################################
+# Hall Big - Domofon auto open turn off
+# ##################################
+- alias: hall_big_domofon_auto_open_turn_off
+  initial_state: true
+  mode: restart
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.domofon
+  action:
+    - service: switch.turn_off
+      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once, switch.esp32_domofon_mute
+
+# ##################################
+# Hall Bid - Domofon Timer stop
+# ################################## 
+- alias: hall_big_domofon_timer_off
+  initial_state: true
+  trigger:
+    - platform: template
+      value_template: "{{not is_state('switch.esp32_domofon_auto_open','on') and not is_state('esp32_domofon_auto_open_once','on') }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.domofon
 
 # ##################################
 # Hall Big - Domofon open door from iphone
 # ##################################
-- alias: hall_big_domofon_open_iphone
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: ios.notification_action_fired
-      event_data:
-        actionName: DOMOFON_OPEN_DOOR
-  action:
-    service: script.turn_on
-    entity_id: script.domofon_open_door
+# - alias: hall_big_domofon_open_iphone
+#   initial_state: true
+#   trigger:
+#     - platform: event
+#       event_type: ios.notification_action_fired
+#       event_data:
+#         actionName: DOMOFON_OPEN_DOOR
+#   action:
+#     service: script.turn_on
+#     entity_id: script.domofon_open_door
 
 # ##################################
-# Hall big - Domofon Open Button
+# Hall big - Domofon Button
 # ##################################
-- alias: hall_big_domofon_button_open
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0002f8dd54_action
-      to: 'single'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.esp32_domofon_open
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f518 Домофон открыт вручную!"
-        data:
-          photo:
-            - url: !secret entrance_snap
-              caption: "\U0001f518 Домофон открыт вручную!"
-
-
-# ##################################
-# Hall big - Domofon Auto Open Once
-# ##################################
-- alias: hall_big_domofon_button_auto_open_once
+- alias: hall_big_domofon_button
   initial_state: true
   trigger:
     - platform: state
       entity_id: sensor.0x158d0002f8dd54_action
-      to: 'double'
+      to:
+        - single
+        - double
+        - hold
   action:
-    - service: script.turn_on
-      entity_id: script.domofon_auto_open_once_toggle
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0002f8dd54_action
+              state: 'single'
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.esp32_domofon_open
+            - service: notify.telegram
+              data_template:
+                message: "\U0001f518 Домофон открыт вручную!"
+                data:
+                  photo:
+                    - url: !secret entrance_snap
+                      caption: "\U0001f518 Домофон открыт вручную!"
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0002f8dd54_action
+              state: 'double'
+          sequence:
+            - service: switch.toggle
+              entity_id: switch.esp32_domofon_auto_open_once
+            - service: switch.turn_{{states('switch.esp32_domofon_auto_open_once')}}
+              entity_id: switch.esp32_domofon_mute
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0002f8dd54_action
+              state: 'hold'
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.esp32_domofon_auto_open_once
+            - service: switch.toggle
+              entity_id: switch.esp32_domofon_auto_open
+            - service: switch.turn_{{states('switch.esp32_domofon_auto_open')}}
+              entity_id: switch.esp32_domofon_mute
+
+# # ##################################
+# # Hall big - Domofon Auto Open Once
+# # ##################################
+# - alias: hall_big_domofon_button_auto_open_once
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x158d0002f8dd54_action
+#       to: 'double'
+#   action:
+#     - service: switch.toggle #script.turn_on
+#       entity_id: switch.esp32_domofon_auto_open_once #script.domofon_auto_open_once_toggle
       
-# ##################################
-# Hall big - Domofon Auto Open 
-# ##################################
-- alias: hall_big_domofon_button_auto_open
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: sensor.0x158d0002f8dd54_action
-      to: 'hold'
-  action:
-    - service: script.turn_on
-      entity_id: script.domofon_auto_open_toggle
+# # ##################################
+# # Hall big - Domofon Auto Open 
+# # ##################################
+# - alias: hall_big_domofon_button_auto_open
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x158d0002f8dd54_action
+#       to: 'hold'
+#   action:
+#     - service: switch.turn_off
+#       entity_id: switch.esp32_domofon_auto_open_once
+#     - service: switch.toggle #script.turn_on
+#       entity_id: switch.esp32_domofon_auto_open #script.domofon_auto_open_toggle
