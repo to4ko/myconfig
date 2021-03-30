@@ -96,6 +96,32 @@
         message: "\U0001F4DE Домофон открыт автоматически!"
 
 # ##################################
+# Hall Big - Domofon auto opening status
+# ##################################
+- alias: hall_big_domofon_auto_opening
+  initial_state: true
+  mode: restart
+  trigger:
+    - platform: state
+      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once
+      to:
+        - 'on'
+        - 'off'
+      from:
+        - 'on'
+        - 'off'
+  condition:
+    - condition: template
+      value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {% if is_state('switch.esp32_domofon_auto_open','on') and 'once' not in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Автооткрытие включено!
+          {% elif is_state('switch.esp32_domofon_auto_open_once','on') and 'once' in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Разовое автооткрытие включено!
+          {% else %}{{'\U0001f512'}} Домофон: Автооткрытие выключено!{% endif %}
+
+# ##################################
 # Hall Big - Domofon auto off on door open\close
 # ##################################
 - alias: hall_big_domofon_auto_mode_on_door_open_close
