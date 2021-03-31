@@ -5,15 +5,15 @@ esphome:
   name: ${board_name}
   platform: ESP32
   board: esp-wrover-kit
-  comment: ESP32 PZEM004\NTC\Dallas node HB
+  comment: ESP32 PZEM004\Dallas node HB
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_pass
-  domain: .localdomain
+  # ssid: !secret wifi_ssid
+  # password: !secret wifi_pass
+  # domain: .localdomain
   reboot_timeout: 15min
   output_power: 10dB
-  fast_connect: true
+  #fast_connect: true
   power_save_mode: none
   manual_ip:
     static_ip: 192.168.1.72
@@ -21,21 +21,22 @@ wifi:
     subnet: 255.255.255.0
     dns1: 192.168.1.1
     dns2: 8.8.8.8
-  # networks:
-  #   - ssid: !secret wifi_ssid_hb
-  #     password: !secret wifi_pass
-  #     hidden: true
-  #     bssid: !secret wifi_bssid_hb_iot
-  #     priority: 2
-  #   - ssid: !secret wifi_ssid
-  #     password: !secret wifi_pass
-  #     hidden: false
-  #     bssid: !secret wifi_bssid_hb_main
-  #     priority: 1
-  #   - ssid: !secret wifi_ssid
-  #     password: !secret wifi_pass
-  #     hidden: false
-  #     priority: 0
+  networks:
+    - ssid: !secret wifi_ssid_hb
+      password: !secret wifi_pass
+      hidden: true
+      bssid: !secret wifi_bssid_hb_iot
+      priority: 2
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      bssid: !secret wifi_bssid_hb_main
+      priority: 1
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      priority: 0
+
 
 logger:
   baud_rate: 0
@@ -48,15 +49,53 @@ ota:
 web_server:
   port: 80
 
-# i2c:
-#   sda: GPIO21
-#   scl: GPIO22
-#   scan: True
+globals:
+  - id: total_monthly
+    type: float
+    restore_value: yes
+    initial_value: '0'
 
-# uart:
-#   rx_pin: GPIO03
-#   tx_pin: GPIO01
-#   baud_rate: 9600
+  - id: total_daily_globals
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: monthly_day
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: monthly_night
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: daily_day
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: daily_night
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+  - id: prev_hour_data
+    type: float
+    restore_value: yes
+    initial_value: '0'    
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: True
+
+uart:
+  rx_pin: GPIO03
+  tx_pin: GPIO01
+  baud_rate: 9600
+  stop_bits: 1
+
 
 dallas:
   - pin: GPIO26
@@ -110,17 +149,6 @@ sensor:
     accuracy_decimals: 1
     resolution: 12
 
-  # - platform: bme280
-  #   temperature:
-  #     name: ${board_name}_BME280_Temperature
-  #     oversampling: 16x
-  #   pressure:
-  #     name: ${board_name}_BME280_Pressure
-  #   humidity:
-  #     name: ${board_name}_BME280_Humidity
-  #   address: 0x77
-  #   update_interval: 25s
-
   - platform: ntc
     sensor: resistance_sensor1
     calibration:
@@ -156,6 +184,7 @@ sensor:
   - platform: resistance
     id: resistance_sensor1
     sensor: source_sensor1
+    internal: true
     configuration: DOWNSTREAM
     resistor: 9.9kOhm
     reference_voltage:  3.4V
@@ -164,6 +193,7 @@ sensor:
   - platform: resistance
     id: resistance_sensor2
     sensor: source_sensor2
+    internal: true
     configuration: DOWNSTREAM
     resistor: 9.9kOhm
     reference_voltage:  3.4V
@@ -172,6 +202,7 @@ sensor:
   - platform: resistance
     id: resistance_sensor3
     sensor: source_sensor3
+    internal: true
     configuration: DOWNSTREAM
     resistor: 9.9kOhm
     reference_voltage:  3.4V
@@ -180,6 +211,7 @@ sensor:
   - platform: resistance
     id: resistance_sensor4
     sensor: source_sensor4
+    internal: true
     configuration: DOWNSTREAM
     resistor: 9.9kOhm
     reference_voltage:  3.4V
@@ -188,6 +220,7 @@ sensor:
   - platform: adc
     pin: GPIO35
     attenuation: 11db
+    internal: true
     name: ${board_name}_ADC_1
     id: source_sensor1
     update_interval: never
@@ -195,6 +228,7 @@ sensor:
   - platform: adc
     pin: GPIO34
     attenuation: 11db
+    internal: true
     name: ${board_name}_ADC_2
     id: source_sensor2
     update_interval: never
@@ -202,6 +236,7 @@ sensor:
   - platform: adc
     pin: GPIO39
     attenuation: 11db
+    internal: true
     name: ${board_name}_ADC_3
     id: source_sensor3
     update_interval: never
@@ -209,18 +244,135 @@ sensor:
   - platform: adc
     pin: GPIO36
     attenuation: 11db
+    internal: true
     name: ${board_name}_ADC_4
     id: source_sensor4
     update_interval: never
     
-  # - platform: adc
-  #   id: source_sensor
-  #   pin: A0
-  #   name: ${board_name}_NTC_ADC
-  #   update_interval: 2s
-  #   filters:
-  #     - multiply: 3.3
-  #     - offset:  -0.1
+  - platform: pzemac
+    current:
+      name: ${board_name}_Current
+      accuracy_decimals: 1
+      # filters:
+      # - calibrate_linear:
+      #     - 7.466 -> 7.36
+      #     - 12.896 -> 12.75      
+    voltage:
+      name: ${board_name}_Voltage
+      accuracy_decimals: 1
+      # filters:
+      # - calibrate_linear:
+      #     - 214.0 -> 214.7
+      #     - 212.5 -> 212.8
+    energy:
+      name: ${board_name}_Energy
+      accuracy_decimals: 3
+      unit_of_measurement: 'kWh'
+      filters:
+        - multiply: 0.001      
+    power:
+      name: ${board_name}_Power
+      accuracy_decimals: 0
+      id: power
+      # filters:
+      # - calibrate_linear:
+      #     - 2998 -> 3000
+      #     - 701 -> 700
+      unit_of_measurement: W
+    frequency:
+      name: ${board_name}_Frequency
+      accuracy_decimals: 0
+    power_factor:
+      name: ${board_name}_Power Factor
+      accuracy_decimals: 2
+      unit_of_measurement: ' '
+      icon: mdi:cosine-wave
+    update_interval: 10s
+
+  - platform: total_daily_energy
+    id: total_daily_kwh
+    name: ${board_name}_Energy_Daily
+    power_id: power
+    accuracy_decimals: 3
+    unit_of_measurement: 'kWh'
+    filters:
+      - multiply: 0.001
+    icon: mdi:calendar-week-begin
+    
+  - platform: template
+    name: ${board_name}_Energy_Monthly
+    lambda: return id(total_monthly) + id(total_daily_kwh).state;
+    update_interval: 10s
+    unit_of_measurement: kWh
+    accuracy_decimals: 3
+    icon: mdi:calendar-month
+
+  - platform: template
+    name: ${board_name}_Power_kW
+    lambda: return (id(power).state)*0.001;
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kW'
+    icon: mdi:lightning-bolt-outline
+
+  - platform: template
+    name: ${board_name}_Daily_Night_kWh
+    lambda: return id(daily_night);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+    
+  - platform: template
+    name: ${board_name}_Daily_Day_kWh
+    lambda: return id(daily_day);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+
+  - platform: template
+    name: ${board_name}_Monthly_Night_kWh
+    lambda: return id(monthly_night);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+    
+  - platform: template
+    name: ${board_name}_Monthly_Day_kWh
+    lambda: return id(monthly_day);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+
+  - platform: template
+    name: ${board_name}_Daily_Globals
+    lambda: return id(total_daily_globals);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'
+
+  - platform: template
+    name: ${board_name}_prev_hour_data
+    lambda: return id(prev_hour_data);
+    accuracy_decimals: 3
+    update_interval: 10s
+    unit_of_measurement: 'kWh'      
+    
+  - platform: bme680
+    temperature:
+      name: ${board_name}_Temperature
+      oversampling: 16x
+      accuracy_decimals: 1
+    pressure:
+      name: ${board_name}_Pressure
+      accuracy_decimals: 0
+    humidity:
+      name: ${board_name}_Humidity
+      accuracy_decimals: 0
+    gas_resistance:
+      name: ${board_name}_Resistance
+      accuracy_decimals: 0
+    address: 0x77
+    update_interval: 30s    
     
 switch:
   - platform: restart
@@ -228,26 +380,67 @@ switch:
 
   - platform: gpio
     pin: GPIO16
+    internal: true
     id: ntc1_vcc    
     name: ${board_name}_NTC1_VCC
 
   - platform: gpio
     pin: GPIO17
+    internal: true
     id: ntc2_vcc    
     name: ${board_name}_NTC2_VCC
 
   - platform: gpio
     pin: GPIO18
+    internal: true
     id: ntc3_vcc    
     name: ${board_name}_NTC3_VCC
 
   - platform: gpio
     pin: GPIO19
+    internal: true
     id: ntc4_vcc    
     name: ${board_name}_NTC4_VCC
 
+  - platform: template
+    name: ${board_name}_Reset_Monthy
+    turn_on_action: 
+      - globals.set:
+          id: total_monthly
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Monthly_Day
+    turn_on_action: 
+      - globals.set:
+          id: monthly_day
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Monthly_Night
+    turn_on_action: 
+      - globals.set:
+          id: monthly_night
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Daily_Day
+    turn_on_action: 
+      - globals.set:
+          id: daily_day
+          value: '0'
+  - platform: template
+    name: ${board_name}_Reset_Daily_Night
+    turn_on_action: 
+      - globals.set:
+          id: daily_night
+          value: '0'          
+  - platform: template
+    name: ${board_name}_Reset_Prev_Hour_Data
+    turn_on_action: 
+      - globals.set:
+          id: prev_hour_data
+          value: '0'
+
 interval:
-  - interval: 5s
+  - interval: 15s
     then:
       - switch.turn_on: ntc1_vcc
       - switch.turn_on: ntc2_vcc
@@ -274,3 +467,59 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow
+    on_time:
+    - seconds: 30
+      minutes: 59
+      hours: 23
+      then:
+        - logger.log: "-------> Monthly Increase by Daily Total"
+        - lambda: id(total_monthly) = id(total_monthly) + id(total_daily_kwh).state;
+    - seconds: 30
+      minutes: 0
+      hours: 0
+      days_of_month: 21
+      then:
+        - logger.log: "-------> Monthly Globals Reset on 21st of each month"
+        - lambda: id(total_monthly) = 0;
+        - lambda: id(monthly_day) = 0;
+        - lambda: id(monthly_night) = 0;
+    - seconds: 56
+      minutes: 59
+      hours: /1
+      then:
+        - logger.log: "-------> Daily Globals Save"
+        - lambda: id(total_daily_globals) = id(total_daily_kwh).state;
+    - seconds: 58
+      minutes: 59
+      hours: /1
+      #minutes: /1
+      then:
+        - logger.log: "-------> Hourly Routine start"
+        - logger.log:
+            format: "-------> Hourly Routine INPUT: daily_day %f, daily_night %f, monthly_day %f, monthly_night %f, total_daily_globals %f, prev_hour_data %f"
+            args: [ 'id(daily_day)', 'id(daily_night)', 'id(monthly_day)', 'id(monthly_night)', 'id(total_daily_globals)', 'id(prev_hour_data)' ]
+        - if:
+              condition:
+                and:
+                  - lambda: 'return id(sntp_time).now().hour >=7;'
+                  - lambda: 'return id(sntp_time).now().hour <=22;'
+              then: 
+                - logger.log: "-------> Hourly Routine DAY Calculations"
+                - lambda: id(monthly_day) = id(monthly_day) + id(total_daily_globals) - id(prev_hour_data);
+                - lambda: id(daily_day) = id(daily_day) + id(total_daily_globals) - id(prev_hour_data);
+              else:
+                - logger.log: "-------> Hourly Routine Night Calculations"
+                - lambda: id(monthly_night) = id(monthly_night) + id(total_daily_globals) - id(prev_hour_data);
+                - lambda: id(daily_night) = id(daily_night) + id(total_daily_globals) - id(prev_hour_data);
+        - logger.log: "-------> Hourly Routine General Calculations"
+        - lambda: id(prev_hour_data) = id(total_daily_globals);
+        - logger.log:
+            format: "-------> Hourly Routine RESULT: daily_day %f, daily_night %f, monthly_day %f, monthly_night %f, total_daily_globals %f, prev_hour_data %f"
+            args: [ 'id(daily_day)', 'id(daily_night)', 'id(monthly_day)', 'id(monthly_night)', 'id(total_daily_globals)', 'id(prev_hour_data)' ]
+    - seconds: 07
+      minutes: 00
+      hours: 00
+      then:
+        - lambda: id(daily_day) = 0;
+        - lambda: id(daily_night) = 0;
+        - lambda: id(prev_hour_data) = 0;

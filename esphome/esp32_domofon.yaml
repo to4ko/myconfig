@@ -100,9 +100,9 @@ script:
       - script.execute: state_no_call
       - switch.turn_on: relay1
       - switch.turn_on: relay2
-      - delay: 1.5s
+      - delay: 1500ms
       - switch.turn_on: relay3
-      - delay: 3s
+      - delay: 3000ms
       - switch.turn_off: relay3
       - switch.turn_off: relay1
       - switch.turn_off: relay2
@@ -120,9 +120,9 @@ script:
       - switch.turn_on: relay4
       - switch.turn_on: relay1
       - switch.turn_on: relay2
-      - delay: 1.5s
+      - delay: 1500ms
       - switch.turn_on: relay3
-      - delay: 3s
+      - delay: 3000ms
       - switch.turn_off: relay3
       - switch.turn_off: relay1
       - switch.turn_off: relay2
@@ -138,7 +138,7 @@ script:
       - switch.turn_on: relay4
       - switch.turn_on: relay1
       - switch.turn_on: relay2
-      - delay: 3s
+      - delay: 3000ms
       - switch.turn_off: relay1
       - switch.turn_off: relay2
       - switch.turn_off: relay4
@@ -163,6 +163,11 @@ script:
             switch.is_on: auto_reject
           then:
             script.execute: led_red_on_soft
+      - if:
+          condition:
+            switch.is_on: mute
+          then:
+            script.execute: led_blue_on_soft
       - if:
           condition:
             and:
@@ -220,19 +225,33 @@ script:
         id: light_red_led
         effect: "Blink"
 
+  # blink blue led
+  - id: led_blue_on_soft
+    then:
+      light.turn_on:
+        id: light_blue_led
+        effect: "Blink"
+
+  # blue led on
+  - id: led_blue_on
+    then:
+      light.turn_on:
+        id: light_blue_led
+        brightness: 75%
+
   # green led on
   - id: led_green_on
     then:
       light.turn_on:
         id: light_green_led
-        brightness: 50%
+        brightness: 75%
 
   # red led on
   - id: led_red_on
     then:
       light.turn_on:
         id: light_red_led
-        brightness: 50%
+        brightness: 75%
 
   # Turn off leds
   - id: led_off
@@ -240,16 +259,14 @@ script:
       - light.turn_off: light_blue_led
       - light.turn_off: light_green_led
       - light.turn_off: light_red_led
-      - light.turn_on:
-          id: light_blue_led
-          brightness: !lambda |-
-            if (id(mute_mode)) {
-            return 0.5;
-            } else {
-            return 0;
-            }
-
-
+      - if:
+          condition:
+            switch.is_on: mute
+          then:
+            light.turn_on: 
+              id: light_blue_led
+              effect: "Blink"
+            
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
@@ -268,7 +285,8 @@ binary_sensor:
     device_class: sound
     id: incoming_call
     filters:
-      - delayed_off: 3000ms
+      - delayed_on: 1000ms
+      - delayed_off: 1000ms
     #automation start on ESP32      
     on_press:
       then:
@@ -401,9 +419,9 @@ switch:
       - switch.turn_on: relay4
       - switch.turn_on: relay1
       - switch.turn_on: relay2
-      - delay: 1.5s
+      - delay: 1500ms
       - switch.turn_on: relay3
-      - delay: 2s
+      - delay: 2000ms
       - switch.turn_off: relay3
       - switch.turn_off: relay1
       - switch.turn_off: relay2
@@ -413,7 +431,7 @@ switch:
   - platform: template
     name: ${board_name}_Auto_Open
     id: auto_open
-    icon: "mdi:door-open"
+    icon: mdi:check-all
     optimistic: true
     restore_state: true
     on_turn_on:
@@ -427,7 +445,7 @@ switch:
   - platform: template
     name: ${board_name}_Auto_Open_Once
     id: auto_open_once
-    icon: "mdi:door-open"
+    icon: mdi:check
     optimistic: true
     restore_state: true
     on_turn_on:
@@ -441,7 +459,7 @@ switch:
   - platform: template
     name: ${board_name}_Reject
     id: auto_reject
-    icon: "mdi:door-closed-lock"
+    icon: mdi:door-closed-lock
     optimistic: true
     restore_state: true
     on_turn_on:
@@ -454,7 +472,7 @@ switch:
   - platform: template
     name: ${board_name}_Mute
     id: mute
-    icon: "mdi:volume-off"
+    icon: mdi:volume-off
     optimistic: true
     restore_state: true
     on_turn_on:
@@ -462,14 +480,16 @@ switch:
           id: mute_mode
           value: 'true'
       - switch.turn_on: relay4
-      - script.execute: led_off
+      - light.turn_on: 
+          id: light_blue_led
+          effect: "Blink"
     on_turn_off:
       - globals.set:
           id: mute_mode
           value: 'false'
       - switch.turn_off: relay4
-      - script.execute: led_off
-
+      - light.turn_off: 
+          id: light_blue_led
 output:
   - platform: ledc
     pin: GPIO25
@@ -896,7 +916,6 @@ light:
                 red: 1
                 green: 1
                 blue: 0
-
 
 time:
   - platform: homeassistant
