@@ -68,16 +68,6 @@
         message: "\U0001f513 Домофон: Автооткрытие включено на 15мин! {% if is_state('binary_sensor.bottom_lock','off') or is_state('binary_sensor.upper_lock','off') %}Закрыт{%if is_state('binary_sensor.bottom_lock','off') %} нижний{%endif%}{%if is_state('binary_sensor.upper_lock','off')%} и верхний{%endif%} замок{%endif%}"
     - service: switch.turn_on
       entity_id: switch.esp32_domofon_auto_open_once, switch.esp32_domofon_mute
-    # - service: script.turn_on
-    #   entity_id: script.domofon_mute_toggle
-    # - service: script.turn_on
-    #   entity_id: script.domofon_auto_open_once_toggle
-    - service: timer.cancel
-      entity_id: timer.domofon
-    - service: timer.start
-      entity_id: timer.domofon
-    # - service: script.turn_on
-    #   entity_id: script.domofon_check
 
 # ##################################
 # Hall Big - Domofon auto message
@@ -132,22 +122,28 @@
       entity_id: binary_sensor.0x158d0001e5d6be_contact
       from: 'on'
       to: 'off'
-  # condition:
-  #   - condition: state
-  #     entity_id: switch.esp32_domofon_auto_open #input_boolean.domofon_auto_open_once
-  #     state: 'on'
-  #   - condition: state
-  #     entity_id: input_boolean.domofon_mute
-  #     state: 'on'
+    - platform: state
+      entity_id: binary_sensor.0x158d0001e5d6be_contact
+      from: 'off'
+      to: 'on'
   action:
     - service: switch.turn_on
       entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_mute
+
+# ##################################
+# Hall Bid - Domofon Timer start
+# ################################## 
+- alias: hall_big_domofon_timer_on
+  initial_state: true
+  mode: restart
+  trigger:
+    - platform: template
+      value_template: "{{is_state('switch.esp32_domofon_auto_open','on') or is_state('switch.esp32_domofon_auto_open_once','on') }}"
+  action:
     - service: timer.cancel
       entity_id: timer.domofon
     - service: timer.start
       entity_id: timer.domofon
-    # - service: script.turn_on
-    #   entity_id: script.domofon_check
 
 # ##################################
 # Hall Big - Domofon auto open turn off
@@ -171,7 +167,7 @@
   initial_state: true
   trigger:
     - platform: template
-      value_template: "{{not is_state('switch.esp32_domofon_auto_open','on') and not is_state('esp32_domofon_auto_open_once','on') }}"
+      value_template: "{{not is_state('switch.esp32_domofon_auto_open','on') and not is_state('switch.esp32_domofon_auto_open_once','on') }}"
   action:
     - service: timer.cancel
       entity_id: timer.domofon

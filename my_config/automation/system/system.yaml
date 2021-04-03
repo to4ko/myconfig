@@ -519,7 +519,7 @@
       entity_id: 
         #- switch.shp6_socket_1_relay
         - switch.shp2_socket_2_relay
-        - switch.shp2_socket_1_relay
+        #- switch.shp2_socket_1_relay
       from: 'on'
       to: 'off'
       for:
@@ -931,6 +931,7 @@
 # ##################################
 - alias: system_zb_devices_status
   initial_state: true
+  mode: queued
   trigger:
     - platform: state
       entity_id:
@@ -954,7 +955,7 @@
         - binary_sensor.0x158d0001e5d6be_contact
         - sensor.0x158d0001e6d85a_temperature
         - switch.0x158d0001e85086_switch
-        - sensor.0x158d0001e8995a_temperature
+        #- sensor.0x158d0001e8995a_temperature
         - binary_sensor.0x158d0001ef2ffc_contact
         - sensor.0x158d0001ef6089_action
         - sensor.0x158d0001ef609b_action
@@ -1082,6 +1083,7 @@
 # ##################################
 - alias: system_zb_devices_status_normal
   initial_state: true
+  mode: queued
   trigger:
     - platform: numeric_state
       entity_id: sensor.zigbee_devices_unavailable
@@ -1096,6 +1098,7 @@
 # ##################################
 - alias: system_esp_devices_status
   initial_state: true
+  mode: queued
   trigger:
     - platform: state
       entity_id: 
@@ -1115,7 +1118,6 @@
         - binary_sensor.esp8266_oven_temp_k_status
         - binary_sensor.esp8266_pzem_hb_status
         - binary_sensor.esp8266_test_status
-        - binary_sensor.ro_pump_status
         - binary_sensor.shp2_socket_1_status
         - binary_sensor.shp2_socket_2_status
         - binary_sensor.shp2_socket_server_status
@@ -1126,9 +1128,9 @@
         - binary_sensor.sonoff_mini_2_status
         - binary_sensor.sonoff_pow_r2_1_status
         - binary_sensor.ss5_hood_status
-      to: 'unavailable'
+      to: 'off'
       for:
-        minutes: 1
+        minutes: 2
   action: 
     - service: notify.telegram
       data_template:
@@ -1301,6 +1303,21 @@
         message: "\U000026a0 Не забудьте включить принтер!"
 
 # ##################################
+# System - Printer offline
+# ##################################
+- alias: system_printer_offline
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: sensor.hp_color_laser_mfp_178nw
+      to: 'unavailable'
+      for: '00:01:00'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U000026a0 Принтер не в сети! Проверьте питание!"
+
+# ##################################
 # System - GW3 Devices Group Renewal
 # ##################################
 # - alias: system_gw3_devices_group_renewal
@@ -1317,3 +1334,31 @@
 #           {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
 #           {%-endfor%}
 
+# ##################################
+# System - Device Stats
+# ##################################
+- alias: system_devices_stats
+  initial_state: true
+  trigger:
+    - platform: time
+      at: '00:00:30'
+  action:
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.breather_v_run_time
+        value: "{{ (states('input_number.breather_v_run_time') | float + states('sensor.breather_v_run_time_yesterday') | float) | round(2) }}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.breather_s_run_time
+        value: "{{ (states('input_number.breather_s_run_time') | float + states('sensor.breather_s_run_time_yesterday') | float) | round(2) }}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.breather_mb_run_time
+        value: "{{ (states('input_number.breather_mb_run_time') | float + states('sensor.breather_mb_run_time_yesterday') | float) | round(2) }}"
+    - service: input_number.set_value
+      data_template:
+        entity_id: input_number.washer_b_run_time
+        value: "{{ (states('input_number.washer_b_run_time') | float + states('sensor.washer_b_run_time_yesterday') | float) | round(2) }}"
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f9ed Статистика использования устройств обновлена!"

@@ -86,6 +86,10 @@
       state: 'off'
     - condition: template
       value_template: "{{(as_timestamp(now())|int - as_timestamp(states.switch.esp32_bathroom_node_relay_4.last_changed)|int ) > 20*60 }}"
+    - condition: template
+      value_template: "{{not (6>=now().hour|int >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60)))}}"
   action:
+    - service: switch.turn_off
+      entity_id: switch.esp32_bathroom_node_relay_3
     - service: switch.turn_on
       entity_id: switch.esp32_bathroom_node_relay_4

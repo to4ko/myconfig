@@ -4,8 +4,10 @@ from homeassistant.components import persistent_notification
 from homeassistant.components.remote import ATTR_DEVICE
 from homeassistant.helpers.entity import ToggleEntity
 
-from . import DOMAIN, Gateway3Device, utils
+from . import DOMAIN
+from .core import utils
 from .core.gateway3 import Gateway3
+from .core.helpers import XiaomiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,11 +20,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     gw.add_setup('remote', setup)
 
 
-async def async_unload_entry(hass, entry):
-    return True
-
-
-class Gateway3Entity(Gateway3Device, ToggleEntity):
+class Gateway3Entity(XiaomiEntity, ToggleEntity):
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
 
@@ -67,7 +65,7 @@ class Gateway3Entity(Gateway3Device, ToggleEntity):
                 self.debug(f"Handle removed_did: {did}")
                 utils.remove_device(self.hass, did)
 
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
     def turn_on(self):
         # work for any device model, dev_type: 0 - zb1, 1 - zb3, don't matter
@@ -95,7 +93,7 @@ class Gateway3Entity(Gateway3Device, ToggleEntity):
                 self.gw.pair_model = (model[:-3] if model.endswith('.v1')
                                       else model)
                 self.turn_on()
-            elif cmd in ('reboot', 'ftp'):
+            elif cmd in ('reboot', 'ftp', 'dump'):
                 self.gw.send_telnet(cmd)
             elif cmd == 'power':
                 self.gw.send(self.device, {'power_tx': int(args[1])})

@@ -8,6 +8,8 @@ DOMAIN = "unifiprotect"
 UNIQUE_ID = "unique_id"
 
 ATTR_CAMERA_ID = "camera_id"
+ATTR_CHIME_ENABLED = "chime_enabled"
+ATTR_CHIME_DURATION = "chime_duration"
 ATTR_DEVICE_MODEL = "device_model"
 ATTR_ENABLED_AT = "enabled_at"
 ATTR_EVENT_SCORE = "event_score"
@@ -24,6 +26,8 @@ ATTR_ZOOM_POSITION = "zoom_position"
 CONF_THUMB_WIDTH = "image_width"
 CONF_RECORDING_MODE = "recording_mode"
 CONF_SNAPSHOT_DIRECT = "snapshot_direct"
+CONF_CHIME_ON = "chime_on"
+CONF_CHIME_DURATION = "chime_duration"
 CONF_ENABLE_AT = "enable_at"
 CONF_IR_MODE = "ir_mode"
 CONF_IR_ON = "ir_on"
@@ -67,6 +71,7 @@ SERVICE_SET_MIC_VOLUME = "set_mic_volume"
 SERVICE_SET_PRIVACY_MODE = "set_privacy_mode"
 SERVICE_SET_ZOOM_POSITION = "set_zoom_position"
 SERVICE_SET_WDR_VALUE = "set_wdr_value"
+SERVICE_SET_DOORBELL_CHIME_DURAION = "set_doorbell_chime_duration"
 
 TYPE_RECORD_MOTION = "motion"
 TYPE_RECORD_ALWAYS = "always"
@@ -116,8 +121,8 @@ LIGHT_SETTINGS_SCHEMA = vol.Schema(
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Required(CONF_MODE): cv.string,
         vol.Optional(CONF_ENABLE_AT): cv.string,
-        vol.Optional(CONF_DURATION): int,
-        vol.Optional(CONF_SENSITIVITY): int,
+        vol.Optional(CONF_DURATION): vol.Coerce(int),
+        vol.Optional(CONF_SENSITIVITY): vol.Coerce(int),
     }
 )
 
@@ -170,7 +175,7 @@ SET_PRIVACY_MODE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
         vol.Required(CONF_PRIVACY_MODE, default=False): vol.In(VALID_BOOLEAN_MODES),
-        vol.Required(CONF_MIC_LEVEL, default=-1): int,
+        vol.Required(CONF_MIC_LEVEL, default=-1): vol.Coerce(int),
         vol.Optional(CONF_RECORDING_MODE, default=TYPE_RECORD_NOTSET): vol.In(
             VALID_RECORDING_MODES
         ),
@@ -188,20 +193,27 @@ SET_DOORBELL_LCD_MESSAGE_SCHEMA = vol.Schema(
 SET_MIC_VOLUME_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(CONF_LEVEL, default=100): int,
+        vol.Required(CONF_LEVEL, default=100): vol.Coerce(int),
     }
 )
 
 SET_ZOOM_POSITION_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(CONF_POSITION, default=0): int,
+        vol.Required(CONF_POSITION, default=0): vol.Coerce(int),
     }
 )
 
 SET_WDR_VALUE_SCHEMA = vol.Schema(
     {
         vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
-        vol.Required(CONF_VALUE, default=1): int,
+        vol.Required(CONF_VALUE, default=1): vol.Coerce(int),
+    }
+)
+
+SET_DOORBELL_CHIME_DURATION_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_ENTITY_ID): cv.entity_ids,
+        vol.Required(CONF_CHIME_DURATION, default=300): vol.Coerce(int),
     }
 )

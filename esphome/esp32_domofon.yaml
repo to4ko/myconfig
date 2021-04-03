@@ -10,7 +10,8 @@ esphome:
   on_boot:
     priority: -10
     then:
-      - switch.turn_off: relay_phone
+      - switch.turn_off: relay1
+      - switch.turn_off: relay2
       - switch.turn_off: relay3
       - switch.turn_off: relay4
       - script.execute: led_off
@@ -129,8 +130,8 @@ script:
       - switch.turn_off: relay4
       - globals.set:
           id: opening
-          value: 'false'      
-
+          value: 'false'
+          
   - id: call_reject
     then:
       - logger.log: "Reject call"
@@ -211,6 +212,22 @@ script:
             - delay: 1s
             - switch.turn_off: auto_open_once
 
+  # Turn off leds
+  - id: led_off
+    then:
+      - light.turn_off: light_blue_led
+      - light.turn_off: light_green_led
+      - light.turn_off: light_red_led
+      - if:
+          condition:
+            switch.is_on: mute
+          then:
+            light.turn_on: 
+              id: light_blue_led
+              effect: "Blink"
+
+
+
   # blink green led
   - id: led_green_soft
     then:
@@ -253,20 +270,6 @@ script:
         id: light_red_led
         brightness: 75%
 
-  # Turn off leds
-  - id: led_off
-    then:
-      - light.turn_off: light_blue_led
-      - light.turn_off: light_green_led
-      - light.turn_off: light_red_led
-      - if:
-          condition:
-            switch.is_on: mute
-          then:
-            light.turn_on: 
-              id: light_blue_led
-              effect: "Blink"
-            
 binary_sensor:
   - platform: status
     name: ${board_name}_Status

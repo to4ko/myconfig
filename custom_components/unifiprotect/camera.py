@@ -9,6 +9,8 @@ from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import (
     ATTR_CAMERA_ID,
+    ATTR_CHIME_DURATION,
+    ATTR_CHIME_ENABLED,
     ATTR_IS_DARK,
     ATTR_MIC_SENSITIVITY,
     ATTR_ONLINE,
@@ -24,6 +26,7 @@ from .const import (
     DOMAIN,
     SAVE_THUMBNAIL_SCHEMA,
     SERVICE_SAVE_THUMBNAIL,
+    SERVICE_SET_DOORBELL_CHIME_DURAION,
     SERVICE_SET_DOORBELL_LCD_MESSAGE,
     SERVICE_SET_HDR_MODE,
     SERVICE_SET_HIGHFPS_VIDEO_MODE,
@@ -34,6 +37,7 @@ from .const import (
     SERVICE_SET_STATUS_LIGHT,
     SERVICE_SET_WDR_VALUE,
     SERVICE_SET_ZOOM_POSITION,
+    SET_DOORBELL_CHIME_DURATION_SCHEMA,
     SET_DOORBELL_LCD_MESSAGE_SCHEMA,
     SET_HDR_MODE_SCHEMA,
     SET_HIGHFPS_VIDEO_MODE_SCHEMA,
@@ -124,6 +128,12 @@ async def async_setup_entry(
         SERVICE_SET_WDR_VALUE, SET_WDR_VALUE_SCHEMA, "async_set_wdr_value"
     )
 
+    platform.async_register_entity_service(
+        SERVICE_SET_DOORBELL_CHIME_DURAION,
+        SET_DOORBELL_CHIME_DURATION_SCHEMA,
+        "async_set_doorbell_chime_duration",
+    )
+
     return True
 
 
@@ -177,8 +187,11 @@ class UnifiProtectCamera(UnifiProtectEntity, Camera):
     @property
     def device_state_attributes(self):
         """Add additional Attributes to Camera."""
+        chime_enabled = "No Chime Attached"
         if self._device_type == DEVICE_TYPE_DOORBELL:
             last_trip_time = self._device_data["last_ring"]
+            if self._device_data["has_chime"]:
+                chime_enabled = self._device_data["chime_enabled"]
         else:
             last_trip_time = self._device_data["last_motion"]
 
@@ -187,6 +200,8 @@ class UnifiProtectCamera(UnifiProtectEntity, Camera):
             ATTR_UP_SINCE: self._device_data["up_since"],
             ATTR_ONLINE: self._device_data["online"],
             ATTR_CAMERA_ID: self._device_id,
+            ATTR_CHIME_ENABLED: chime_enabled,
+            ATTR_CHIME_DURATION: self._device_data["chime_duration"],
             ATTR_LAST_TRIP_TIME: last_trip_time,
             ATTR_IS_DARK: self._device_data["is_dark"],
             ATTR_MIC_SENSITIVITY: self._device_data["mic_volume"],
@@ -229,6 +244,12 @@ class UnifiProtectCamera(UnifiProtectEntity, Camera):
     async def async_set_hdr_mode(self, hdr_on):
         """Set camera HDR mode."""
         await self.upv_object.set_camera_hdr_mode(self._device_id, hdr_on)
+
+    async def async_set_doorbell_chime_duration(self, chime_duration):
+        """Set Doorbell Chime duration"""
+        await self.upv_object.set_doorbell_chime_duration(
+            self._device_id, chime_duration
+        )
 
     async def async_set_highfps_video_mode(self, high_fps_on):
         """Set camera High FPS video mode."""

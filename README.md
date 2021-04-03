@@ -22,7 +22,12 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Fractal Design Mini C with be quite Pure Wings 2 120mm PWM fans (3ea)
   - USR 56k USB Modem
 
-**MQTT\Zigbee2MQTT Server #1:**
+**Backup Server:**
+  - Asrock 3455-ITX with integrated Celeron j3455
+  - 16gb DDR3 RAM
+  - 120Gb SSD Crucial BX500
+
+**not in use - MQTT\Zigbee2MQTT Server #1:**
   - Gigabyte Brix Celeron j3455
   - 16gb DDR3 RAM
   - 120Gb SSD Crucial BX500
@@ -34,11 +39,6 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - 120Gb SSD OCZ Vertex 3 MaxIOps
   - CC2538 Zigbee Stick
 
-**Backup Server:**
-  - Asrock 3455-ITX with integrated Celeron j3455
-  - 16gb DDR3 RAM
-  - 120Gb SSD Crucial BX500
-
 **not in use - Test Server:**
   - Raspberry Pi 3B+
   - 120Gb SSD Crucial BX500
@@ -48,6 +48,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - Unifi Switch 16-150W
   - not in use - Unifi Switch 24
   - Unifi Switch 8-60W (3ea)
+  - Unifi Switch Mini
   - Unifi AC-AP-Lite (2ea)
   - Unifi AC AP Pro (3ea)
   - Unifi NanoHD (not in use)
@@ -61,7 +62,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   
 **Surveillance:** 
   - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
-  - Ubiquiti G3 Flex Cameras (5ea)
+  - Ubiquiti G3 Flex Cameras (6ea)
   - Digma 100
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
@@ -138,7 +139,7 @@ And all the rest from [Home Assistant Channel](https://t.me/homassistant) and [E
   - not in use - LifeControl E27 RGB Lamp
   - not in use - LifeControl Plug (2ea)
   - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (2ea)
-  - SLS Gateway
+  - [SLS Gateway](https://t.me/slsys) by @avenit
   - DIYRuZ_Geiger Sensor via SLS GW
   - Google Home Mini (6ea)
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)

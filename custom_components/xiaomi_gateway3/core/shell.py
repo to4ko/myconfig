@@ -16,12 +16,12 @@ _LOGGER = logging.getLogger(__name__)
 DOWNLOAD = "(wget -O /data/{0} http://master.dl.sourceforge.net/project/mgl03/{1}/{0}?viasf=1 && chmod +x /data/{0})"
 
 CHECK_SOCAT = "(md5sum /data/socat | grep 92b77e1a93c4f4377b4b751a5390d979)"
-RUN_SOCAT = "/data/socat tcp-l:8888,reuseaddr,fork /dev/ttyS2"
+RUN_ZIGBEE_TCP = "/data/socat tcp-l:8888,reuseaddr,fork /dev/ttyS2"
 
 CHECK_BUSYBOX = "(md5sum /data/busybox | grep 099137899ece96f311ac5ab554ea6fec)"
 LOCK_FIRMWARE = "/data/busybox chattr +i"
 UNLOCK_FIRMWARE = "/data/busybox chattr -i"
-RUN_FTP = "(/data/busybox tcpsvd -vE 0.0.0.0 21 /data/busybox ftpd -w &)"
+RUN_FTP = "(/data/busybox tcpsvd -E 0.0.0.0 21 /data/busybox ftpd -w &)"
 
 # use awk because buffer
 MIIO_147 = "miio_client -l 0 -o FILE_STORE -n 128 -d /data/miio"
@@ -31,6 +31,8 @@ MIIO2MQTT = " | awk '/%s/{print $0;fflush()}' | mosquitto_pub -t log/miio -l &"
 RE_VERSION = re.compile(r'version=([0-9._]+)')
 
 FIRMWARE_PATHS = ('/data/firmware.bin', '/data/firmware/firmware_ota.bin')
+
+TAR_DATA = b"tar -czOC /data basic_app basic_gw conf factory miio mijia_automation silicon_zigbee_host zigbee zigbee_gw ble_info miioconfig.db 2>/dev/null | base64\n"
 
 BT_MD5 = {
     '1.4.6_0012': '367bf0045d00c28f6bff8d4132b883de',
@@ -42,15 +44,21 @@ BT_MD5 = {
 
 class TelnetShell(Telnet):
     def __init__(self, host: str):
-        super().__init__(host, timeout=5)
+        super().__init__(host, timeout=3)
+
         self.read_until(b"login: ")
-        self.exec('admin')
+        # some users have problems with \r\n symbols in login
+        self.write(b"admin\n")
+
+        raw = self.read_until(b"\r\n# ", timeout=3)
+        if b'Password:' in raw:
+            raise Exception("Telnet with password don't supported")
 
         self.ver = self.get_version()
 
     def exec(self, command: str, as_bytes=False) -> Union[str, bytes]:
         """Run command and return it result."""
-        self.write(command.encode() + b"\r\n")
+        self.write(command.encode() + b"\n")
         raw = self.read_until(b"\r\n# ")
         return raw if as_bytes else raw.decode()
 
@@ -59,11 +67,11 @@ class TelnetShell(Telnet):
         download = DOWNLOAD.format('socat', 'bin')
         return self.exec(f"{CHECK_SOCAT} || {download}")
 
-    def run_socat(self):
-        self.exec(f"{CHECK_SOCAT} && {RUN_SOCAT} &")
+    def run_zigbee_tcp(self):
+        self.exec(f"{CHECK_SOCAT} && {RUN_ZIGBEE_TCP} &")
 
-    def stop_socat(self):
-        self.exec(f"killall socat")
+    def stop_zigbee_tcp(self):
+        self.exec("pkill -f 'tcp-l:8888'")
 
     def run_lumi_zigbee(self):
         self.exec("daemon_app.sh &")
@@ -113,7 +121,7 @@ class TelnetShell(Telnet):
 
     def sniff_bluetooth(self):
         """Deprecated"""
-        self.write(b"killall silabs_ncp_bt; silabs_ncp_bt /dev/ttyS1 1\r\n")
+        self.write(b"killall silabs_ncp_bt; silabs_ncp_bt /dev/ttyS1 1\n")
 
     def run_public_mosquitto(self):
         self.exec("killall mosquitto")
@@ -157,14 +165,20 @@ class TelnetShell(Telnet):
 
     def read_file(self, filename: str, as_base64=False):
         if as_base64:
-            self.write(f"cat {filename} | base64\r\n".encode())
+            self.write(f"cat {filename} | base64\n".encode())
             self.read_until(b"\r\n")  # skip command
             raw = self.read_until(b"# ")
             return base64.b64decode(raw)
         else:
-            self.write(f"cat {filename}\r\n".encode())
+            self.write(f"cat {filename}\n".encode())
             self.read_until(b"\r\n")  # skip command
             return self.read_until(b"# ")[:-2]
+
+    def tar_data(self):
+        self.write(TAR_DATA)
+        self.read_until(b"base64\r\n")  # skip command
+        raw = self.read_until(b"# ", timeout=30)
+        return base64.b64decode(raw)
 
     def run_buzzer(self):
         self.exec("kill $(ps | grep dummy:basic_gw | awk '{print $1}')")
@@ -179,6 +193,19 @@ class TelnetShell(Telnet):
         raw = self.read_file('/etc/rootfs_fw_info')
         m = RE_VERSION.search(raw.decode())
         return m[1]
+
+    def get_token(self):
+        return self.read_file('/data/miio/device.token').rstrip().hex()
+
+    def get_did(self):
+        raw = self.read_file('/data/miio/device.conf').decode()
+        m = re.search(r'did=(\d+)', raw)
+        return m[1]
+
+    def get_wlan_mac(self) -> str:
+        raw = self.read_file('/sys/class/net/wlan0/address')
+
+        return raw.decode().rstrip().upper()
 
     @property
     def mesh_group_table(self) -> str:

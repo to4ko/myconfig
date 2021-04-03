@@ -67,11 +67,11 @@ views:
                     name: Z Offline
                   - entity: sensor.wifi_devices_unavailable
                     name: WF Offline
-                  - entity: sensor.0x158d0001e8995a_temperature
+                  - entity: sensor.0x158d000239ad5b_temperature
                     name: Temp
                   - entity: sensor.esp32_node_mb_outside
                     name: Dallas
-                  - entity: sensor.0x158d0001e8995a_humidity
+                  - entity: sensor.0x158d000239ad5b_humidity
                     name: Hum
               - type: glance
                 show_name: true
@@ -350,8 +350,8 @@ views:
                       action: call-service
                       service: script.water_off
           - type: glance
-            show_state: false
-            columns: 3
+            show_state: true
+            columns: 6
             state_color: true
             entities:
               - entity: binary_sensor.breather_v
@@ -360,7 +360,9 @@ views:
                   action: call-service
                   service: switch.turn_on
                   service_data:
-                    entity_id: switch.digma_ir_v_breather_pwr #esp32_node_k_tv_pwr
+                    entity_id: switch.digma_ir_v_breather_pwr
+              - entity: input_number.breather_v_run_time
+                name:
               - entity: binary_sensor.breather_s
                 name: Breather S
                 tap_action:
@@ -368,6 +370,8 @@ views:
                   service: switch.turn_on
                   service_data:
                     entity_id: switch.digma_ir_s_breather_pwr
+              - entity: input_number.breather_s_run_time
+                name:
               - entity: binary_sensor.breather_mb
                 name: Breather MB
                 tap_action:
@@ -375,6 +379,8 @@ views:
                   service: switch.turn_on
                   service_data:
                     entity_id: switch.digma_ir_mb_breather_pwr
+              - entity: input_number.breather_mb_run_time
+                name:
 
 
           - type: horizontal-stack
@@ -483,7 +489,7 @@ views:
                   - entity: input_select.oven_target_temperature
                     name: Target
           - type: glance
-            columns: 4
+            columns: 5
             state_color: true
             entities:
               - entity: binary_sensor.0x158d0003fa6cf5_contact
@@ -492,6 +498,8 @@ views:
                 name: State
               - entity: counter.washing_machine_runs
                 name: Runs
+              - entity: input_number.washer_b_run_time
+                name: RunTime
               - entity: script.washing_machine_runs_reset
                 name: Runs Reset
                 tap_action:
@@ -1708,24 +1716,7 @@ views:
                   ha-card {
                     border: solid 2px var(--primary-color);
                   }                  
-          # - type: custom:mini-graph-card
-          #   icon: mdi:flash
-          #   entities:
-          #     - sensor.energy_hourly_single
-          #     #- sensor.energy_xiaomi_hourly_single
-          #   name: Power Consumption
-          #   show:
-          #     graph: bar
-          #   line_color: red
-          #   group_by: hour
-          #   hours_to_show: 48
-          #   points_per_hour: 1
-          #   extrema: true
-          #   labels: true
-          #   line_width: 3
-          #   decimals: 2
-          #   hour24: true
-          
+
           - type: entities
             title: Power
             show_header_toggle: false
@@ -1733,14 +1724,14 @@ views:
             entities:
               - entity: sensor.esp8266_pzem_hb_power_kw
                 name: PZEM Power
-              - entity: sensor.esp8266_pzem_hb_energy
-                name: PZEM Energy
               - entity: sensor.esp8266_pzem_hb_energy_daily
                 name: PZEM Daily
-              - entity: sensor.esp8266_pzem_hb_daily_globals
-                name: PZEM Daily Globals
               - entity: sensor.esp8266_pzem_hb_energy_monthly
                 name: PZEM Monthly
+              - entity: sensor.esp8266_pzem_hb_energy_monthly_day
+                name: PZEM Monthly Day
+              - entity: sensor.esp8266_pzem_hb_energy_monthly_night
+                name: PZEM Monthly Night
               - entity: sensor.energy_daily_count_single
                 name: Utility Daily
               - entity: sensor.energy_monthly_count_single
@@ -2361,6 +2352,13 @@ views:
         entity: camera.g3_flex_window
         show_name: false
         show_state: false
+      - type: picture-entity
+        camera_view: live
+        aspect_ratio: '16x9'
+        entity: camera.g3_flex_yard
+        show_name: false
+        show_state: false
+
 
 ################################################################
 # CLIMATE PAGE
@@ -4344,7 +4342,7 @@ views:
       - type: history-graph
         hours_to_show: 24
         entities:
-          - sensor.0x158d0001e8995a_temperature
+          - sensor.0x158d000239ad5b_temperature
           - sensor.esp32_node_mb_outside
 
   - title: Humidity
@@ -4394,7 +4392,7 @@ views:
       - type: history-graph
         hours_to_show: 48
         entities:
-          - sensor.0x158d0001e8995a_humidity
+          - sensor.0x158d000239ad5b_humidity
 
   - title: All GW3 Switches
     icon: mdi:electric-switch
@@ -4679,18 +4677,18 @@ views:
           
 
   - title: Testing
-    icon: mdi:bullseye
+    icon: mdi:find-replace
     cards:
       - type: glance
         entities:
           - entity: sensor.esp32_ble_tracker_green_rssi
-            name: green
+            name: None(green)
           - entity: sensor.esp32_ble_tracker_pink_rssi
-            name: pink
+            name: Sandra(pink)
           - entity: sensor.esp32_ble_tracker_grey_rssi
-            name: grey
+            name: Vova(grey)
           - entity: sensor.esp32_ble_tracker_white_rssi
-            name: white
+            name: Dima(white)
       - type: entities
         show_header_toggle: false
         state_color: true
@@ -4886,171 +4884,7 @@ views:
           method: false
           numeric: true
           reverse: true
-          
-          
-  - title: Energy Stat
-    icon: mdi:current-ac
-    cards:
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        title: Day
-        entities:
-          - sensor.energy_monthly_day
-          #- sensor.energy_xiaomi_monthly_day
-          - type: divider
-          - sensor.plug_fridge_hb_monthly_day
-          - sensor.plug_server_hb_monthly_day
-          - sensor.plug_utils_hs_monthly_day
-          - sensor.plug_wadrobe_v_monthly_day
-          - sensor.socket_entrance_v_monthly_day
-          - sensor.socket_fridge_hb_monthly_day
-          - sensor.socket_main_hs_monthly_day
-          - sensor.socket_oven_k_monthly_day
-          - sensor.socket_pc_k_monthly_day
-          - sensor.socket_pc_mb_monthly_day
-          - sensor.socket_pc_s_monthly_day
-          - sensor.socket_tv_k_monthly_day
-          - sensor.socket_tv_v_monthly_day
-          - sensor.socket_wadrobe_s_monthly_day
-          - sensor.pow_r2_1_washer_b_monthly_day
-          - sensor.pow_r2_2_heater_t_monthly_day
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        title: Night
-        entities:
-          - sensor.energy_monthly_night
-          #- sensor.energy_xiaomi_monthly_night
-          - type: divider
-          - sensor.plug_fridge_hb_monthly_night
-          - sensor.plug_server_hb_monthly_night
-          - sensor.plug_utils_hs_monthly_night
-          - sensor.plug_wadrobe_v_monthly_night
-          - sensor.socket_entrance_v_monthly_night
-          - sensor.socket_fridge_hb_monthly_night
-          - sensor.socket_main_hs_monthly_night
-          - sensor.socket_oven_k_monthly_night
-          - sensor.socket_pc_k_monthly_night
-          - sensor.socket_pc_mb_monthly_night
-          - sensor.socket_pc_s_monthly_night
-          - sensor.socket_tv_k_monthly_night
-          - sensor.socket_tv_v_monthly_night
-          - sensor.socket_wadrobe_s_monthly_night
-          - sensor.pow_r2_1_washer_b_monthly_night
-          - sensor.pow_r2_2_heater_t_monthly_night
-      - type: vertical-stack
-        cards:
-          - type: entities
-            entities:
-              - sensor.pow_r2_2_heater_t_daily_single
-              - type: divider
-              - sensor.energy_daily_tripple_tripple_t1
-              - sensor.energy_daily_tripple_tripple_t2
-              - sensor.energy_daily_tripple_tripple_t3
-              - type: divider
-              - entity: sensor.plug_kettle_k_daily_single
-                name: Kettle Daily
-              - type: divider
-              - entity: sensor.esp8266_pzem_hb_power
-                name: PZEM
-              - entity: sensor.esp8266_pzem_hb_power_factor
-                name: PZEM Pfactor
-              - entity: sensor.power_consumption
-                name: Calc
-              - entity: sensor.esp32_domofon_power_meter
-                name: LED
-              
-            
-          - type: history-graph
-            hours_to_show: 24
-            entities:
-              - entity: sensor.esp8266_pzem_hb_power
-                name: PZEM
-              - entity: sensor.power_consumption
-                name: Calc
-              - entity: sensor.esp32_domofon_power_meter
-                name: LED
 
-          - type: 'custom:mini-graph-card'
-            color_thresholds:
-              - color: '#039BE5'
-                value: 0
-              - color: '#0da035'
-                value: 600
-              - color: '#e0b400'
-                value: 1200
-              - color: '#e45e65'
-                value: 2400
-            color_thresholds_transition: hard
-            entities:
-              - entity: sensor.esp8266_pzem_hb_power
-                name: PZEM Power
-              - color: 'rgba(0,0,255,1)'
-                entity: binary_sensor.dark_outside
-                show_line: false
-                y_axis: secondary
-            group: false
-            hour24: true
-            hours_to_show: 16
-            line_width: 4
-            points_per_hour: 4
-            show:
-              extrema: true
-              fill: fade
-              icon: true
-              labels: false
-              name: true
-              state: true
-            state_map:
-              - label: Day
-                value: 'off'
-              - label: Night
-                value: 'on'
-            style: |
-              ha-card {
-                border: solid 2px var(--primary-color);
-              }
-          - type: 'custom:mini-graph-card'
-            color_thresholds:
-              - color: '#039BE5'
-                value: 0
-              - color: '#0da035'
-                value: 600
-              - color: '#e0b400'
-                value: 1200
-              - color: '#e45e65'
-                value: 2400
-            color_thresholds_transition: hard
-            entities:
-              - entity: sensor.esp32_domofon_power_meter
-                name: LED Power
-              - color: 'rgba(0,0,255,1)'
-                entity: binary_sensor.dark_outside
-                show_line: false
-                y_axis: secondary
-            group: false
-            hour24: true
-            hours_to_show: 16
-            line_width: 4
-            points_per_hour: 4
-            show:
-              extrema: true
-              fill: fade
-              icon: true
-              labels: false
-              name: true
-              state: true
-            state_map:
-              - label: Day
-                value: 'off'
-              - label: Night
-                value: 'on'
-            style: |
-              ha-card {
-                border: solid 2px var(--primary-color);
-              }          
-                
   - title: Radio Quality [GW3]
     icon: mdi:radio-tower
     panel: true
@@ -5269,17 +5103,6 @@ views:
   - title: Occupancy Rate
     icon: mdi:directions-fork
     cards:
-      # - type: glance
-      #   entities:
-      #     - sensor.motion_b_2d
-      #     - sensor.motion_hb_2d
-      #     - sensor.motion_hs_2d
-      #     - sensor.motion_k_2d
-      #     - sensor.motion_mb_2d
-      #     - sensor.motion_s_2d
-      #     - sensor.motion_st_2d
-      #     - sensor.motion_t_2d
-      #     - sensor.motion_v_2d
       - type: custom:auto-entities
         show_empty: false
         card:
@@ -5293,3 +5116,16 @@ views:
           method: state
           numeric: true
           reverse: true
+      - type: custom:auto-entities
+        show_empty: false
+        card:
+          type: entities
+          show_header_toggle: false
+          state_color: true
+        filter:
+          include:
+            - entity_id: "*1hr"
+        sort:
+          method: state
+          numeric: true
+          reverse: true          

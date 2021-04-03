@@ -4,8 +4,9 @@ from homeassistant.components.cover import CoverEntity, ATTR_POSITION, \
     ATTR_CURRENT_POSITION
 from homeassistant.const import STATE_CLOSING, STATE_OPENING
 
-from . import DOMAIN, Gateway3Device
+from . import DOMAIN
 from .core.gateway3 import Gateway3
+from .core.helpers import XiaomiEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,17 +15,13 @@ RUN_STATES = [STATE_CLOSING, STATE_OPENING, None]
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     def setup(gateway: Gateway3, device: dict, attr: str):
-        async_add_entities([Gateway3Cover(gateway, device, attr)])
+        async_add_entities([XiaomiCover(gateway, device, attr)])
 
     gw: Gateway3 = hass.data[DOMAIN][config_entry.entry_id]
     gw.add_setup('cover', setup)
 
 
-async def async_unload_entry(hass, entry):
-    return True
-
-
-class Gateway3Cover(Gateway3Device, CoverEntity):
+class XiaomiCover(XiaomiEntity, CoverEntity):
     @property
     def current_cover_position(self):
         return self._attrs.get(ATTR_CURRENT_POSITION)
@@ -48,7 +45,7 @@ class Gateway3Cover(Gateway3Device, CoverEntity):
         if 'position' in data:
             self._attrs[ATTR_CURRENT_POSITION] = data['position']
 
-        self.async_write_ha_state()
+        self.schedule_update_ha_state()
 
     def open_cover(self, **kwargs):
         self.gw.send(self.device, {'motor': 1})

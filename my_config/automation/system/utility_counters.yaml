@@ -183,6 +183,9 @@
         entity_id: input_number.power_meter_last_month_t2
         value: "{{ state_attr('input_number.power_meter_t2')|float}}"
 
+    - service: switch.turn_on
+      entity_id: switch.esp8266_pzem_hb_energy_reset_monthly, switch.esp8266_pzem_hb_energy_reset_monthly_day, switch.esp8266_pzem_hb_energy_reset_monthly_night
+
     - service: input_number.set_value
       data_template:
         entity_id: input_number.hot_water_meter_last_month
@@ -311,50 +314,32 @@
           - utility_meter.energy_daily
           - utility_meter.energy_led_monthly
           - utility_meter.energy_monthly
-          - utility_meter.plug_fridge_hb_monthly
-          - utility_meter.plug_server_hb_monthly
-          - utility_meter.plug_utils_hs_monthly
-          - utility_meter.plug_wadrobe_v_monthly
-          - utility_meter.pow_r2_1_washer_b_monthly
-          - utility_meter.socket_entrance_v_monthly
-          - utility_meter.socket_fridge_hb_monthly
-          - utility_meter.socket_main_hs_monthly
-          - utility_meter.socket_oven_k_monthly
-          - utility_meter.socket_pc_k_monthly
-          - utility_meter.socket_pc_mb_monthly
-          - utility_meter.socket_pc_s_monthly
-          - utility_meter.socket_tv_k_monthly
-          - utility_meter.socket_tv_v_monthly
-          - utility_meter.socket_wadrobe_s_monthly
-          - utility_meter.pow_r2_2_heater_t_monthly
-          #- utility_meter.pow_r2_2_heater_t_daily
-        #tariff: "{%- if is_state('binary_sensor.tariff_t1','on') -%}day{%- else -%}night{%- endif -%}"
         tariff: "{%- if (7 <= now().hour < 23) -%}day{%- else -%}night{%- endif -%}"
         
 # ##################################
 # System - Utility meter tariff change tripple
 # ##################################
-- alias: system_power_tariff_change_tripple
-  initial_state: true
-  trigger:
-    - platform: homeassistant
-      event: start
-    - platform: time
-      at: '07:00:00'
-    - platform: time
-      at: '10:00:00'
-    - platform: time
-      at: '17:00:00'
-    - platform: time
-      at: '21:00:00'
-    - platform: time
-      at: '23:00:00'
-  action:
-    - service: utility_meter.select_tariff
-      data_template:
-        entity_id: utility_meter.energy_daily_tripple
-        tariff: "{%- if (7 <= now().hour < 10) or (17 <= now().hour < 21) -%}tripple_t1{%- elif (23 <= now().hour) or (00 <= now().hour < 7) -%}tripple_t2{%- else -%}tripple_t3{%- endif -%}"
-        #tariff: "{%- if is_state('binary_sensor.tariff_tripple_t1','on') -%}tripple_t1{%- elif is_state('binary_sensor.tariff_tripple_t2','on') -%}tripple_t2{%- else -%}tripple_t3{%- endif -%}"
+# - alias: system_power_tariff_change_tripple
+#   initial_state: true
+#   trigger:
+#     - platform: homeassistant
+#       event: start
+#     - platform: time
+#       at: '07:00:00'
+#     - platform: time
+#       at: '10:00:00'
+#     - platform: time
+#       at: '17:00:00'
+#     - platform: time
+#       at: '21:00:00'
+#     - platform: time
+#       at: '23:00:00'
+#   action:
+#     - service: utility_meter.select_tariff
+#       data_template:
+#         entity_id: utility_meter.energy_daily_tripple
+#         tariff: "{%- if (7 <= now().hour < 10) or (17 <= now().hour < 21) -%}tripple_t1{%- elif (23 <= now().hour) or (00 <= now().hour < 7) -%}tripple_t2{%- else -%}tripple_t3{%- endif -%}"
+#         #tariff: "{%- if is_state('binary_sensor.tariff_tripple_t1','on') -%}tripple_t1{%- elif is_state('binary_sensor.tariff_tripple_t2','on') -%}tripple_t2{%- else -%}tripple_t3{%- endif -%}"
 
 # ##################################
 # System - High Power Consumption

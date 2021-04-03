@@ -5,7 +5,7 @@ esphome:
   name: ${board_name}
   platform: ESP8266
   board: nodemcuv2
-  comment: ESP8266 PZEM
+  comment: ESP8266 PZEM/BME680/Dallas Node
   esp8266_restore_from_flash: true
 
 wifi:
@@ -13,7 +13,7 @@ wifi:
   # password: !secret wifi_pass
   # domain: .localdomain
   reboot_timeout: 15min
-  output_power: 10dB
+  output_power: 17dB
   #fast_connect: true
   power_save_mode: none
   manual_ip:
@@ -46,45 +46,8 @@ api:
 
 ota:
 
-# web_server:
-#   port: 80
-
-globals:
-  - id: total_monthly
-    type: float
-    restore_value: yes
-    initial_value: '0'
-
-  - id: total_daily_globals
-    type: float
-    restore_value: yes
-    initial_value: '0'    
-
-  - id: monthly_day
-    type: float
-    restore_value: yes
-    initial_value: '0'    
-
-  - id: monthly_night
-    type: float
-    restore_value: yes
-    initial_value: '0'    
-
-  - id: daily_day
-    type: float
-    restore_value: yes
-    initial_value: '0'    
-
-  - id: daily_night
-    type: float
-    restore_value: yes
-    initial_value: '0'    
-
-  - id: prev_hour_data
-    type: float
-    restore_value: yes
-    initial_value: '0'    
-
+#web_server:
+#  port: 80
 
 uart:
   rx_pin: GPIO12
@@ -105,6 +68,15 @@ dallas:
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
+
+  - platform: template
+    name: ${board_name}_time_isvalid
+    lambda: |- 
+      if (id(sntp_time).now().is_valid()) {
+        return true;
+      } else {
+        return false;
+      }
 
 text_sensor:
   - platform: template
@@ -150,17 +122,9 @@ sensor:
     current:
       name: ${board_name}_Current
       accuracy_decimals: 1
-      # filters:
-      # - calibrate_linear:
-      #     - 7.466 -> 7.36
-      #     - 12.896 -> 12.75      
     voltage:
       name: ${board_name}_Voltage
       accuracy_decimals: 1
-      # filters:
-      # - calibrate_linear:
-      #     - 214.0 -> 214.7
-      #     - 212.5 -> 212.8
     energy:
       name: ${board_name}_Energy
       accuracy_decimals: 3
@@ -170,11 +134,7 @@ sensor:
     power:
       name: ${board_name}_Power
       accuracy_decimals: 0
-      id: power
-      # filters:
-      # - calibrate_linear:
-      #     - 2998 -> 3000
-      #     - 701 -> 700
+      id: id_power
       unit_of_measurement: W
     frequency:
       name: ${board_name}_Frequency
@@ -186,74 +146,115 @@ sensor:
       icon: mdi:cosine-wave
     update_interval: 10s
 
-  - platform: total_daily_energy
-    id: total_daily_kwh
-    name: ${board_name}_Energy_Daily
-    power_id: power
-    accuracy_decimals: 3
-    unit_of_measurement: 'kWh'
-    filters:
-      - multiply: 0.001
-    icon: mdi:calendar-week-begin
-    
-  - platform: template
-    name: ${board_name}_Energy_Monthly
-    lambda: return id(total_monthly) + id(total_daily_kwh).state;
-    update_interval: 10s
-    unit_of_measurement: kWh
-    accuracy_decimals: 3
-    icon: mdi:calendar-month
-
   - platform: template
     name: ${board_name}_Power_kW
-    lambda: return (id(power).state)*0.001;
+    lambda: return (id(id_power).state)*0.001;
     accuracy_decimals: 3
     update_interval: 10s
     unit_of_measurement: 'kW'
     icon: mdi:lightning-bolt-outline
-
-  - platform: template
-    name: ${board_name}_Daily_Night_kWh
-    lambda: return id(daily_night);
-    accuracy_decimals: 3
-    update_interval: 10s
-    unit_of_measurement: 'kWh'
     
-  - platform: template
-    name: ${board_name}_Daily_Day_kWh
-    lambda: return id(daily_day);
-    accuracy_decimals: 3
+  - platform: template # Нагрузка (ночь)
+    name: ${board_name}_Power_Night
+    id: id_power_night
+    icon: mdi:speedometer
+    lambda: |- 
+      auto id_loc_time = id(sntp_time).now();
+      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
+        if ( (id(sntp_time).now().hour >= 23) || (id(sntp_time).now().hour >= 0 && id(sntp_time).now().hour < 7) ) {
+          return id(id_power).state;
+        } else {
+          return 0.0;
+        }
+      } else {
+        return 0.0;
+      } 
+    accuracy_decimals: 1
     update_interval: 10s
-    unit_of_measurement: 'kWh'
-
-  - platform: template
-    name: ${board_name}_Monthly_Night_kWh
-    lambda: return id(monthly_night);
-    accuracy_decimals: 3
-    update_interval: 10s
-    unit_of_measurement: 'kWh'
+    unit_of_measurement: 'W'
     
-  - platform: template
-    name: ${board_name}_Monthly_Day_kWh
-    lambda: return id(monthly_day);
-    accuracy_decimals: 3
+  - platform: template # Нагрузка (день)
+    name: ${board_name}_Power_Day
+    id: id_power_day
+    icon: mdi:speedometer
+    lambda: |-
+      auto id_loc_time = id(sntp_time).now();
+      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
+        if ( (id(sntp_time).now().hour >= 7 && id(sntp_time).now().hour < 23) ) {
+          return id(id_power).state;
+        } else {
+          return 0.0;
+        }
+      } else {
+        return 0.0;
+      }         
+    accuracy_decimals: 1
     update_interval: 10s
-    unit_of_measurement: 'kWh'
+    unit_of_measurement: 'W'
 
-  - platform: template
-    name: ${board_name}_Daily_Globals
-    lambda: return id(total_daily_globals);
-    accuracy_decimals: 3
-    update_interval: 10s
+  - platform: integration # Потребление (всего)
+    name: ${board_name}_Energy_Monthly
+    id: id_energy_monthly
+    sensor: id_power
+    time_unit: h
+    filters:
+      - multiply: 0.001
     unit_of_measurement: 'kWh'
-
-  - platform: template
-    name: ${board_name}_prev_hour_data
-    lambda: return id(prev_hour_data);
     accuracy_decimals: 3
-    update_interval: 10s
-    unit_of_measurement: 'kWh'      
-    
+    restore: true    
+
+  - platform: integration # Потребление (день)
+    name: ${board_name}_Energy_Monthly_Day
+    id: id_energy_monthly_day
+    sensor: id_power_day
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true   
+
+  - platform: integration # Потребление (ночь)
+    name: ${board_name}_Energy_Monthly_Night
+    id: id_energy_monthly_night
+    sensor: id_power_night
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true     
+
+  - platform: total_daily_energy # Потребление сегодня (всего)
+    name: ${board_name}_Energy_Daily
+    icon: mdi:gauge
+    id: id_energy_daily
+    power_id: id_power
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3            
+
+  - platform: total_daily_energy # Потребление сегодня (ночь)
+    name: ${board_name}_Energy_Daily_Night
+    icon: mdi:gauge
+    id: id_energy_daily_night
+    power_id: id_power_night
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+
+  - platform: total_daily_energy # Потребление сегодня (день)
+    name: ${board_name}_Energy_Daily_Day
+    icon: mdi:gauge
+    id: id_energy_daily_day
+    power_id: id_power_day
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+
   - platform: bme680
     temperature:
       name: ${board_name}_Temperature
@@ -273,51 +274,31 @@ sensor:
 
   - platform: dallas
     address: 0x613C01D075384328
-    name: ${board_name}_Breaker_Box
+    name: ${board_name}_Dallas
     dallas_id: dallas_node
     accuracy_decimals: 1
     resolution: 12
-    
+
+
+
 switch:
   - platform: restart
     name: ${board_name}_Restart
-    
-  - platform: template
-    name: ${board_name}_Reset_Monthy
+
+  - platform: template # Сброс потребления (ночь)
+    name: ${board_name}_Energy_Reset_Monthly_Night
     turn_on_action: 
-      - globals.set:
-          id: total_monthly
-          value: '0'
-  - platform: template
-    name: ${board_name}_Reset_Monthly_Day
+      - sensor.integration.reset: id_energy_monthly_night     
+
+  - platform: template # Сброс потребления (день)
+    name: ${board_name}_Energy_Reset_Monthly_Day
     turn_on_action: 
-      - globals.set:
-          id: monthly_day
-          value: '0'
-  - platform: template
-    name: ${board_name}_Reset_Monthly_Night
+      - sensor.integration.reset: id_energy_monthly_day
+
+  - platform: template # Сброс потребления
+    name: ${board_name}_Energy_Reset_Monthly
     turn_on_action: 
-      - globals.set:
-          id: monthly_night
-          value: '0'
-  - platform: template
-    name: ${board_name}_Reset_Daily_Day
-    turn_on_action: 
-      - globals.set:
-          id: daily_day
-          value: '0'
-  - platform: template
-    name: ${board_name}_Reset_Daily_Night
-    turn_on_action: 
-      - globals.set:
-          id: daily_night
-          value: '0'          
-  - platform: template
-    name: ${board_name}_Reset_Prev_Hour_Data
-    turn_on_action: 
-      - globals.set:
-          id: prev_hour_data
-          value: '0'
+      - sensor.integration.reset: id_energy_monthly
 
 time:
   - platform: homeassistant
@@ -325,59 +306,3 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow
-    on_time:
-    - seconds: 30
-      minutes: 59
-      hours: 23
-      then:
-        - logger.log: "-------> Monthly Increase by Daily Total"
-        - lambda: id(total_monthly) = id(total_monthly) + id(total_daily_kwh).state;
-    - seconds: 30
-      minutes: 0
-      hours: 0
-      days_of_month: 21
-      then:
-        - logger.log: "-------> Monthly Globals Reset on 21st of each month"
-        - lambda: id(total_monthly) = 0;
-        - lambda: id(monthly_day) = 0;
-        - lambda: id(monthly_night) = 0;
-    - seconds: 56
-      minutes: 59
-      hours: /1
-      then:
-        - logger.log: "-------> Daily Globals Save"
-        - lambda: id(total_daily_globals) = id(total_daily_kwh).state;
-    - seconds: 58
-      minutes: 59
-      hours: /1
-      #minutes: /1
-      then:
-        - logger.log: "-------> Hourly Routine start"
-        - logger.log:
-            format: "-------> Hourly Routine INPUT: daily_day %f, daily_night %f, monthly_day %f, monthly_night %f, total_daily_globals %f, prev_hour_data %f"
-            args: [ 'id(daily_day)', 'id(daily_night)', 'id(monthly_day)', 'id(monthly_night)', 'id(total_daily_globals)', 'id(prev_hour_data)' ]
-        - if:
-              condition:
-                and:
-                  - lambda: 'return id(sntp_time).now().hour >=7;'
-                  - lambda: 'return id(sntp_time).now().hour <=22;'
-              then: 
-                - logger.log: "-------> Hourly Routine DAY Calculations"
-                - lambda: id(monthly_day) = id(monthly_day) + id(total_daily_globals) - id(prev_hour_data);
-                - lambda: id(daily_day) = id(daily_day) + id(total_daily_globals) - id(prev_hour_data);
-              else:
-                - logger.log: "-------> Hourly Routine Night Calculations"
-                - lambda: id(monthly_night) = id(monthly_night) + id(total_daily_globals) - id(prev_hour_data);
-                - lambda: id(daily_night) = id(daily_night) + id(total_daily_globals) - id(prev_hour_data);
-        - logger.log: "-------> Hourly Routine General Calculations"
-        - lambda: id(prev_hour_data) = id(total_daily_globals);
-        - logger.log:
-            format: "-------> Hourly Routine RESULT: daily_day %f, daily_night %f, monthly_day %f, monthly_night %f, total_daily_globals %f, prev_hour_data %f"
-            args: [ 'id(daily_day)', 'id(daily_night)', 'id(monthly_day)', 'id(monthly_night)', 'id(total_daily_globals)', 'id(prev_hour_data)' ]
-    - seconds: 07
-      minutes: 00
-      hours: 00
-      then:
-        - lambda: id(daily_day) = 0;
-        - lambda: id(daily_night) = 0;
-        - lambda: id(prev_hour_data) = 0;
