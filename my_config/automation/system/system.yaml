@@ -1279,28 +1279,28 @@
 # ##################################
 # System - Printer weekly restart
 # ##################################
-- alias: system_printer_weekly_restart
-  initial_state: true
-  trigger:
-    - platform: time
-      at: '06:59:00'
-  condition:
-    - condition: time
-      weekday:
-        - mon
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: 'off'
-  action:
-    - service: switch.turn_off
-      entity_id: switch.0x158d00028b4fc3_switch
-    - delay: '00:00:15'
-    - service: switch.turn_on
-      entity_id: switch.0x158d00028b4fc3_switch
-    - delay: '00:00:45'
-    - service: notify.telegram
-      data_template:
-        message: "\U000026a0 Не забудьте включить принтер!"
+# - alias: system_printer_weekly_restart
+#   initial_state: true
+#   trigger:
+#     - platform: time
+#       at: '06:59:00'
+#   condition:
+#     - condition: time
+#       weekday:
+#         - mon
+#     - condition: state
+#       entity_id: input_boolean.security_mode
+#       state: 'off'
+#   action:
+#     - service: switch.turn_off
+#       entity_id: switch.0x158d00028b4fc3_switch
+#     - delay: '00:00:15'
+#     - service: switch.turn_on
+#       entity_id: switch.0x158d00028b4fc3_switch
+#     - delay: '00:00:45'
+#     - service: notify.telegram
+#       data_template:
+#         message: "\U000026a0 Не забудьте включить принтер!"
 
 # ##################################
 # System - Printer offline
@@ -1362,3 +1362,25 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f9ed Статистика использования устройств обновлена!"
+
+# ##################################
+# System - AC Power Status
+# ##################################
+- alias: system_ac_power_status
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0003262acc_contact
+      to: 'on'
+      from: 'off'
+    - platform: state
+      entity_id: binary_sensor.0x158d0003262acc_contact
+      to: 'off'
+      from: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {% if is_state('binary_sensor.0x158d0003262acc_contact','on') %}{{'\U00002705'}} Электроснабжение восстановлено!"
+          {% else %}{{'\U0000274c'}} Внимание! Электроснабжение прекращено!
+          {%endif%}

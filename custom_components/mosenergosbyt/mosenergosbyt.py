@@ -607,11 +607,15 @@ class MESAccount(_BaseAccount):
             'dt_en': end.isoformat()
         })
 
-        return [{
-            'date': datetime.fromisoformat(payment['dt_pay']),
-            'amount': payment['sm_pay'],
-            'status': payment['nm_status'],
-        } for payment in response['data']]
+        return [
+            {
+                'date': datetime.fromisoformat(payment['dt_pay']),
+                'amount': payment['sm_pay'],
+                'status': payment['nm_status'],
+            }
+            for payment in response['data']
+            if payment
+        ]
 
     async def get_current_balance(self) -> float:
         response = await self.lk_byt_proxy('CurrentBalance')
@@ -718,11 +722,15 @@ class MESTKOAccount(_BaseAccount):
             'dt_en': end.isoformat()
         })
 
-        return [{
-            'date': datetime.fromisoformat(payment['dt_pay']),
-            'amount': payment['sm_pay'],
-            'status': payment['nm_pay_state'],
-        } for payment in response['data']]
+        return [
+            {
+                'date': datetime.fromisoformat(payment['dt_pay']),
+                'amount': payment['sm_pay'],
+                'status': payment['nm_pay_state'],
+            }
+            for payment in response['data']
+            if payment
+        ]
 
     async def _get_indications(self, start: datetime, end: datetime) -> IndicationsList:
         response = await self.lk_trash_proxy('AbonentChargeDetail', {
@@ -733,7 +741,8 @@ class MESTKOAccount(_BaseAccount):
 
         return [
             self._generate_indications_from_charges(invoice['child'], with_calculations=False)
-            for invoice_group in response['data'] for invoice in invoice_group['child']
+            for invoice_group in response.get('data', [])
+            for invoice in invoice_group.get('child', [])
         ]
 
     async def get_meters(self) -> Dict[str, 'TKOIndicationMeter']:

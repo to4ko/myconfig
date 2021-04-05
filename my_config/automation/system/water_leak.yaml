@@ -30,6 +30,10 @@
           - media_player.home_mini_k
         message: >-
           Вним+ание! Вним+ание! Обнар+ужена ут+ечка вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%endif%}! Обнар+ужена ут+ечка вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%endif%}! Вод+а перекрыв+ается!'
+    - service: notify.telegram
+      data_template:
+        message: >-
+          {{'\U000026d4'}}Внимание! Обнаружена утечка воды {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}на кухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туалете{%else%}в ванне{%endif%}! Вода перекрывается!
     - service: switch.turn_on
       entity_id: switch.esp32_bathroom_node_relay_1
     - delay: '00:00:25'
@@ -41,6 +45,10 @@
           - media_player.{{states('input_select.main_audio_out')|lower}}
           - media_player.home_mini_k
         message: 'Вним+ание! Вод+а перекр+ыта! Устран+ите прот+ечку вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%endif%}!'
+    - service: notify.telegram
+      data_template:
+        message: >
+          {{'\U000026d4'}} Внимание! Вода перекрыта! Устраните протечку воды {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}на кухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туалете{%else%}в ванне{%endif%} для включения воды!
 
 # ##################################
 # System - Water Leak Off
@@ -69,6 +77,10 @@
           - media_player.{{states('input_select.main_audio_out')|lower}}
           - media_player.home_mini_k
         message: 'Прот+ечка вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%endif%} устранен+а! Спас+ибо!'
+    - service: notify.telegram
+      data_template:
+        message: >
+          {{'\U00002705'}} Протечка воды {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}на кухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туалете{%else%}в ванне{%endif%} устранена!
 
 
 # ##################################
@@ -262,3 +274,27 @@
     - service: notify.telegram
       data_template:
         message: 'Внимание! Принудительное открытие воды, протечка НЕ устранена!'
+        
+# ##################################
+# System - Water Valves Action
+# ##################################
+- alias: system_water_valves_action
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: switch.esp32_bathroom_node_relay_1, switch.esp32_bathroom_node_relay_2
+      to: 'on'
+      from: 'off'
+    - platform: state
+      entity_id: switch.esp32_bathroom_node_relay_1, switch.esp32_bathroom_node_relay_2
+      to: 'off'
+      from: 'on'
+  action:
+    - service: notify.telegram
+      data_template:
+        message: >
+          {% if trigger.to_state.state == 'on' and 'relay_1' in trigger.to_state.entity_id %}{{'\U000026d4'}} Внимание! Закрытие кранов!
+          {% elif trigger.to_state.state == 'off' and 'relay_1' in trigger.to_state.entity_id %}{{'\U00002705'}} Краны закрыты!
+          {% elif trigger.to_state.state == 'on' and 'relay_2' in trigger.to_state.entity_id %}{{'\U000026d4'}} Внимание! Открытие кранов!"
+          {% elif trigger.to_state.state == 'off' and 'relay_2' in trigger.to_state.entity_id %}{{'\U00002705'}} Краны открыты!
+          {%endif%}

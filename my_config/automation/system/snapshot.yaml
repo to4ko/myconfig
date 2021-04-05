@@ -9,22 +9,45 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.motion_g3_flex_window # binary_sensor.unifi_motion_window
+      entity_id: binary_sensor.motion_g3_flex_window
       from: 'off'
       to: 'on'
   condition:
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_window','last_triggered'))|int) > 10 }}"
   action:
-    #- delay: '00:00:01'
     - service: notify.telegram_cam
       data:
         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
         message: "{{states('sensor.time')}} {{states('sensor.date')}}"
         data:
           photo:
-          - url: !secret window_snap #http://192.168.1.173/snap.jpeg #http://192.168.1.14:8123{{state_attr('camera.g3_flex_window','entity_picture')}}
+          - url: !secret window_snap
             caption: "Window {{states('sensor.time')}} {{states('sensor.date')}}"
+
+# ##################################
+# System - Yard Cam Snapshot on Motion
+# ##################################
+- alias: system_snapshot_yard
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.motion_g3_flex_yard
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_yard','last_triggered'))|int) > 10 }}"
+  action:
+    - service: notify.telegram_cam
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        data:
+          photo:
+          - url: !secret yard_snap
+            caption: "Yard {{states('sensor.time')}} {{states('sensor.date')}}"
+
 
 # ##################################
 # System - Dixy Cam Snapshot on Motion
@@ -33,21 +56,20 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.motion_g3_flex_dixy #- binary_sensor.unifi_motion_dixy
+      entity_id: binary_sensor.motion_g3_flex_dixy
       from: 'off'
       to: 'on'
   condition:
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_dixy','last_triggered'))|int) > 10 }}"
   action:
-    #- delay: '00:00:01'
     - service: notify.telegram_cam
       data:
         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
         message: "{{states('sensor.time')}} {{states('sensor.date')}}"
         data:
           photo:
-          - url: !secret dixy_snap #http://192.168.1.172/snap.jpeg #http://192.168.1.14:8123{{state_attr('camera.g3_flex_dixy','entity_picture')}}
+          - url: !secret dixy_snap
             caption: "Dixy {{states('sensor.time')}} {{states('sensor.date')}}"
 
 # ##################################
@@ -57,21 +79,20 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.motion_g3_flex_street #- binary_sensor.unifi_motion_dixy
+      entity_id: binary_sensor.motion_g3_flex_street
       from: 'off'
       to: 'on'
   condition:
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_street','last_triggered'))|int) > 10 }}"
   action:
-    #- delay: '00:00:01'
     - service: notify.telegram_cam
       data:
         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
         message: "{{states('sensor.time')}} {{states('sensor.date')}}"
         data:
           photo:
-          - url: !secret street_snap #http://192.168.1.174/snap.jpeg #http://192.168.1.14:8123{{state_attr('camera.g3_flex_street','entity_picture')}}
+          - url: !secret street_snap
             caption: "Street {{states('sensor.time')}} {{states('sensor.date')}}"
 
 
@@ -91,12 +112,11 @@
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_snapshot_outside_esp32','last_triggered'))|int) > 15 }}"
   action:
-    #- delay: '00:00:01'
     - service: notify.telegram_cam
       data:
         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
         message: "{{states('sensor.time')}} {{states('sensor.date')}} "
         data:
           photo:
-          - url: !secret door_snap #http://192.168.1.14:8123{{state_attr('camera.door_hb','entity_picture')}}
+          - url: !secret door_snap
             caption: "Outside! {{states('sensor.time')}} {{states('sensor.date')}} "

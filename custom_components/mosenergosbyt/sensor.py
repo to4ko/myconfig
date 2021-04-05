@@ -48,9 +48,11 @@ ATTR_SUCCESS = "success"
 ATTR_CALL_PARAMS = "call_params"
 
 DEFAULT_MAX_INDICATIONS = 3
+
+INDICATION_VALIDATOR = vol.All(vol.Coerce(float), vol.Range(min=0, min_included=True))
 INDICATIONS_SCHEMA = vol.Any(
-    {vol.All(int, vol.Range(1, DEFAULT_MAX_INDICATIONS)): cv.positive_int},
-    vol.All([cv.positive_int], vol.Length(1, DEFAULT_MAX_INDICATIONS))
+    {vol.All(int, vol.Range(1, DEFAULT_MAX_INDICATIONS)): INDICATION_VALIDATOR},
+    vol.All([INDICATION_VALIDATOR], vol.Length(1, DEFAULT_MAX_INDICATIONS))
 )
 
 METER_IDENTIFIERS = {
@@ -131,6 +133,15 @@ async def _entity_updater(hass: HomeAssistantType, entry_id: str, user_cfg: Conf
     tasks = []
     for account_code, account in accounts.items():
         _LOGGER.debug('Setting up account %s for username %s' % (account_code, username))
+        
+        if use_meter_filter:
+            meter_filter = user_cfg[CONF_ACCOUNTS].get(account_code)
+            
+            if meter_filter is None:
+                _LOGGER.debug('Completely skipping account %s for username %s' % (account_code, username))
+                continue
+        else:
+            meter_filter = True
 
         account_entity = created_entities.get(account_code)
         if account_entity is None:
@@ -145,11 +156,8 @@ async def _entity_updater(hass: HomeAssistantType, entry_id: str, user_cfg: Conf
             # Process meters
             meters = await account.get_meters()
 
-            if use_meter_filter:
-                account_filter = user_cfg[CONF_ACCOUNTS][account_code]
-
-                if account_filter is not True:
-                    meters = {k: v for k, v in meters if k in account_filter}
+            if meter_filter is not True:
+                meters = {k: v for k, v in meters if k in meter_filter}
 
             if account_entity.meter_entities is None:
                 meter_entities = {}
@@ -580,7 +588,7 @@ class MESAccountSensor(MESEntity):
         else:
             try:
                 _LOGGER.debug('Updating account %s' % self)
-                last_payment = await self.account.get_last_payment()
+                last_payment = (await self.account.get_last_payment()) or {}
                 current_balance = await self.account.get_current_balance()
 
                 if self.account.service_type == ServiceType.ELECTRICITY:
@@ -595,9 +603,9 @@ class MESAccountSensor(MESEntity):
                 return False
 
             attributes.update({
-                'last_payment_date': last_payment['date'],
-                'last_payment_amount': last_payment['amount'],
-                'last_payment_status': last_payment['status'],
+                'last_payment_date': last_payment.get('date'),
+                'last_payment_amount': last_payment.get('amount'),
+                'last_payment_status': last_payment.get('status', STATE_UNKNOWN),
                 'service_type': self.account.service_type.name.lower(),
                 'status': STATE_OK,
             })
