@@ -95,6 +95,10 @@
     - platform: state
       entity_id: sensor.mi_kettle_state
       to: 'ON'
+    - platform: state
+      entity_id: binary_sensor.kettle_boil_k
+      from: 'off'
+      to: 'on'
   action:
     - service: counter.increment
       entity_id: counter.kettle_k
@@ -211,6 +215,8 @@
   condition:
     - condition: template
       value_template: "{{ not is_state('input_select.oven_target_temperature', 'Off') }}"
+    - condition: template
+      value_template: "{{as_timestamp(now()) - as_timestamp(state_attr('automation.kitchen_oven_notify_target_temp', 'last_triggered')) > 60*60 }}"
   action:
     - wait_for_trigger:
         - platform: template

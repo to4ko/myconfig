@@ -91,11 +91,11 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.power_meter_t1
-        value: "{{ ((states('input_number.power_meter_t1')) | float + state_attr('sensor.energy_daily_day','last_period')|float/1 )|round(2) }}"
+        value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp8266_pzem_hb_energy_daily_day')|float/1 )|round(2) }}" #state_attr('sensor.energy_daily_day','last_period')|float/1 )|round(2) }}"
     - service: input_number.set_value
       data_template:
         entity_id: input_number.power_meter_t2
-        value: "{{ ((states('input_number.power_meter_t2')) | float + state_attr('sensor.energy_daily_night','last_period')|float/1 )|round(2) }}"
+        value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}" #state_attr('sensor.energy_daily_night','last_period')|float/1 )|round(2) }}
     - service: mqtt.publish 
       data:
         topic: "utility/main/energy/day"
@@ -111,7 +111,7 @@
         message: "\U0001f50c Данные счетчика электричества обновлены!"
 
 # ##################################
-# System - Water\Power - Notification
+# System - Water\Power - New Month Notification
 # ##################################
 - alias: system_new_month_notification
   initial_state: true
@@ -312,7 +312,7 @@
       data_template:
         entity_id:
           - utility_meter.energy_daily
-          - utility_meter.energy_led_monthly
+          #- utility_meter.energy_led_monthly
           - utility_meter.energy_monthly
         tariff: "{%- if (7 <= now().hour < 23) -%}day{%- else -%}night{%- endif -%}"
         

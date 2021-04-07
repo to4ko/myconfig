@@ -66,10 +66,16 @@
 # ##################################
 - alias: system_stop_message
   initial_state: true
+  mode: restart
   trigger:
     - platform: event
       event_type: homeassistant_stop
+    - platform: homeassistant
+      event: shutdown
   action:
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.ha_shutdown
     - service: notify.telegram
       data_template:
         message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
@@ -217,6 +223,23 @@
     - service: persistent_notification.dismiss
       data:
         notification_id: http_login
+
+# ##################################
+# System - Zigbee Group Rebuild
+# ##################################
+- alias: system_zigbee_group_rebuild
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      hours: "/1"
+  action:
+    - service: group.set
+      data_template:
+        object_id: gw3_zigbee_entities
+        entities: >-
+          {%-for state in states.sensor if state.entity_id.endswith("_zigbee")%}
+          {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
+          {%-endfor%}
 
 # ##################################
 # System - Sensors Low Battery Notification
@@ -652,6 +675,9 @@
     - platform: state
       entity_id: sensor.geiger_action
       to: 'on'
+    - platform: numeric_state
+      entity_id: sensor.geiger_radiation_dose_per_hour
+      above: 100
   action:
     - service: notify.telegram
       data_template:
@@ -885,13 +911,13 @@
       entity_id: 
         - sensor.esp32_node_v_heating_pipe
         - sensor.esp32_node_mb_heating_pipe
-      below: 35
+      below: 30
       for:
         minutes: 5
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f321 Внимание! Температура трубы {{trigger.to_state.attributes.friendly_name}} ниже 35°C"
+        message: "\U0001f321 Внимание! Температура трубы {{trigger.to_state.attributes.friendly_name}} ниже 30°C"
         
 # ##################################
 # System - No Motion
@@ -1073,10 +1099,49 @@
         - sensor.geiger_radiation_dose_per_hour
         - sensor.0x4cf8cdf3c7754a8_illuminance
       to: 'unavailable'
+  condition:
+    - condition: state
+      entity_id: input_boolean.ha_shutdown
+      state: 'off'
+  action:
+    - choose:
+        - conditions: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
+          sequence:
+            - service: notify.telegram
+              data_template:
+                message: "\U0001f4a5 ZB: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - ZB Devices Status
+# ##################################
+- alias: system_zb_devices_status
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: state_changed
+  condition:
+    # - condition: template
+    #   value_template: >-
+    #     {{ states('input_boolean.ha_shutdown') == 'off' }}
+    - condition: state
+      entity_id: input_boolean.ha_shutdown
+      state: 'off'
+    - condition: template
+      value_template: >-
+        {{ trigger.event.data.entity_id in ['gw3_zigbee_entities'] }}
+    - condition: template
+      value_template: >-
+        {{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}
+    - condition: template
+      value_template: >-
+        {{ trigger.event.data.new_state.state in ['unknown', 'unavailable'] }}
   action: 
     - service: notify.telegram
       data_template:
-        message: "\U0001f4a5 ZB: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        message: "\U0001f4a5 ZB_group: {{trigger.event.data.attributes.friendly_name.split(' Zigbee')[0]}}: {{trigger.event.data.old_state.state}} -> {{trigger.event.data.new_state.state}}"
+
+
 
 # ##################################
 # System - ZB Devices Status Normal
