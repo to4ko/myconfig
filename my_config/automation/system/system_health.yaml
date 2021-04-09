@@ -2,6 +2,7 @@
 # System - Ubuntu server temp >60
 # ##################################
 - alias: system_health_temp
+  id: system_health_temp
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -27,6 +28,7 @@
 # System - Ubuntu server CPU temp >80
 # ##################################
 - alias: system_health_cpu_temp
+  id: system_health_cpu_temp
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -44,23 +46,11 @@
       data:
         message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >80°"
 
-# # ##################################
-# # System - server root device
-# # ##################################
-# - alias: system_health_rdev
-#   initial_state: false
-#   trigger:
-#     - platform: template
-#       value_template: "{% if states('sensor.root_device') != '/dev/sda2' %}true{% endif %}"
-#   action:
-#     - service: notify.telegram
-#       data_template:
-#         message: "\U0001F621 Внимание! Root устройство изменено!"
-
 # ##################################
 # System - MDADM status change
 # ##################################
 - alias: system_health_mdadm_monitor
+  id: system_health_mdadm_monitor
   initial_state: true
   trigger:
     - platform: state
@@ -75,26 +65,8 @@
 # ##################################
 # System - Server HDD Disks Temp
 # ##################################
-# - alias: system_health_hdd_temp_45
-#   initial_state: false
-#   trigger:
-#     - platform: numeric_state
-#       entity_id:
-#         - sensor.main0_temp
-#         - sensor.main1_temp
-#         - sensor.main2_temp
-#         - sensor.media_temp
-#         - sensor.temp_temp
-#       above: 50
-#   action:
-#     - service: notify.telegram
-#       data_template:
-#         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >45°!"
-
-# ##################################
-# System - Server HDD Disks Temp
-# ##################################
-- alias: system_health_hdd_temp_50
+- alias: system_health_hdd_temp_53
+  id: system_health_hdd_temp_53
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -104,11 +76,11 @@
         - sensor.main2_temp
         - sensor.media_temp
         - sensor.temp_temp
-      above: 55
+      above: 53
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >50°!"
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >53°!"
 
 
 # ##################################
@@ -138,6 +110,7 @@
 # System - Server SSD Disks Temp
 # ##################################
 - alias: system_health_ssd_temp_50
+  id: system_health_ssd_temp_50
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -159,6 +132,7 @@
 # System - Server SSD Disks Temp
 # ##################################
 - alias: system_health_ssd_temp_55
+  id: system_health_ssd_temp_55
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -180,6 +154,7 @@
 # System - Server SSD Disks Temp
 # ##################################
 - alias: system_health_ssd_temp_60
+  id: system_health_ssd_temp_60
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -201,6 +176,7 @@
 # System - Server Fans stats
 # ##################################
 - alias: system_health_fans
+  id: system_health_fans
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -216,128 +192,3 @@
     - service: notify.telegram
       data_template:
         message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} -> {{ trigger.to_state.state|int }}об!"
-
-
-# # ##################################
-# # System - 71605 Temp Alert
-# # ##################################
-# - alias: system_health_71605_temp
-#   initial_state: true
-#   trigger:
-#     - platform: state
-#       entity_id: sensor.71605_cpu_temp
-#   condition:
-#     - condition: template
-#       value_template: "{{ (states('sensor.71605_cpu_temp')|int) >= 90 }}"
-#   action:
-#     - service: notify.telegram
-#       data_template:
-#         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >{{ (states('sensor.71605_cpu_temp')|int) }}°C!"
-
-# # ##################################
-# # System - 71605 LD Status Failed Degraded
-# # ##################################
-# - alias: system_health_71605_ld_failed_degraded
-#   initial_state: true
-#   trigger:
-#     - platform: numeric_state
-#       entity_id:
-#         - sensor.71605_ld_failed
-#         - sensor.71605_ld_degraded
-#       above: 0
-#   action:
-#     - service: notify.telegram
-#       data_template:
-#         message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}!"
-
-# # ##################################
-# # System - 71605 LD Ststus
-# # ##################################
-# - alias: system_health_71605_ld_total
-#   initial_state: true
-#   trigger:
-#     - platform: numeric_state
-#       entity_id:
-#         - sensor.71605_ld_total
-#       below: 2
-#   action:
-#     - service: notify.telegram
-#       data_template:
-#         message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}!"
-
-
-# # ##################################
-# # System - System Monitoring Update
-# # ##################################
-# - alias: system_health_monitoring_update
-#   initial_state: true
-#   trigger:
-#     - platform: time_pattern
-#       minutes: "/30"
-#   action:
-#     - service: homeassistant.update_entity
-#       entity_id: 
-#         - sensor.host_uptime
-#         - sensor.ha_uptime
-#         - sensor.nvme0_calc_life_left
-#         #- sensor.nvme0_gb_per_day
-#         #- sensor.nvme0_gb_per_hour
-#         #- sensor.nvme0_life_left
-#         - sensor.nvme0_power_on_hours
-#         - sensor.nvme0_session_read
-#         - sensor.nvme0_session_write
-#         - sensor.nvme0_statistics
-#         - sensor.nvme0_tb_written
-#         - sensor.nvme0_temp
-#         - sensor.nvme0_usage
-#         - sensor.nvme0_write_change_1h
-        
-#         #- sensor.nvme1_gb_per_day
-#         #- sensor.nvme1_gb_per_hour
-#         #- sensor.nvme1_life_left
-#         - sensor.nvme1_power_on_hours
-#         - sensor.nvme1_session_read
-#         - sensor.nvme1_session_write
-#         - sensor.nvme1_statistics
-#         - sensor.nvme1_tb_written
-#         - sensor.nvme1_temp
-#         - sensor.nvme1_usage
-#         - sensor.nvme1_write_change_1h
-        
-#         - sensor.nvme2_gb_per_day
-#         - sensor.nvme2_gb_per_hour
-#         #- sensor.nvme2_life_left
-#         - sensor.nvme2_power_on_hours
-#         - sensor.nvme2_session_read
-#         - sensor.nvme2_session_write
-#         - sensor.nvme2_statistics
-#         - sensor.nvme2_tb_written
-#         - sensor.nvme2_temp
-#         - sensor.nvme2_usage
-#         - sensor.nvme2_write_change_1h
-
-#         - sensor.boot_calc_life_left
-#         - sensor.boot_power_on_hours
-#         - sensor.boot_session_read
-#         - sensor.boot_session_write
-#         - sensor.boot_statistics
-#         - sensor.boot_tb_written
-#         - sensor.boot_temp
-#         - sensor.boot_write_change_1h
-        
-#         # - sensor.840pro_1_calc_life_left
-#         # - sensor.840pro_1_power_on_hours
-#         # - sensor.840pro_1_tb_written
-#         # - sensor.840pro_1_temp
-
-#         # - sensor.840pro_2_calc_life_left
-#         # - sensor.840pro_2_power_on_hours
-#         # - sensor.840pro_2_tb_written
-#         # - sensor.840pro_2_temp
-        
-#         - binary_sensor.ro_raw_flow_manual
-#         - binary_sensor.ro_mineralized_flow_manual
-#         - binary_sensor.ro_non_mineralized_flow_manual
-#         - binary_sensor.ro_postmembrane_flow_manual
-
-#message: "{{states('input_select.fan_mode')}} {{states('input_number.fan_main')|round(0)}} {{states('input_number.fan_aux')|round(0)}}"

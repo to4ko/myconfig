@@ -6,6 +6,7 @@
 # Cold Water - Increase
 # ##################################
 - alias: system_water_cold_water_increase_counter
+  id: system_water_cold_water_increase_counter
   initial_state: true
   trigger:
     - platform: state
@@ -39,12 +40,12 @@
         topic: "utility/main/cold_water_meter_input"
         payload: "{{states('input_number.cold_water_meter')|float}}"
         retain: true
-        
 
 # ##################################
 # Hot Water - Increase
 # ##################################
 - alias: system_water_hot_water_increase_counter
+  id: system_water_hot_water_increase_counter
   initial_state: true
   trigger:
     - platform: state
@@ -83,6 +84,7 @@
 # System - Power Meter Daily
 # ##################################
 - alias: system_power_meter_daily
+  id: system_power_meter_daily
   initial_state: true
   trigger:
     - platform: time
@@ -114,6 +116,7 @@
 # System - Water\Power - New Month Notification
 # ##################################
 - alias: system_new_month_notification
+  id: system_new_month_notification
   initial_state: true
   trigger:
     - platform: time
@@ -147,7 +150,6 @@
         topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
         payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S')}}"
         retain: true    
-
     - service: notify.telegram
       data_template: 
         message: >
@@ -160,7 +162,6 @@
             ХВС: {{ states('sensor.cold_water_meter')|float }}м3
             ГВС: {{ states('sensor.hot_water_meter')|float }}м3
             Стоимость: {{ ((states('sensor.water_cost'))|float)}}руб.
-
     - service: notify.telegram
       data_template: 
         message: >
@@ -173,7 +174,6 @@
             Т1: {{ ((states('sensor.energy_monthly_day')|float))|round(0)}} кВт*ч
             Т2: {{ ((states('sensor.energy_monthly_night')|float))|round(0)}} кВт*ч
             Стоимость: {{ ((states('sensor.power_cost'))|float) }} руб.
-
     - service: input_number.set_value
       data_template:
         entity_id: input_number.power_meter_last_month_t1
@@ -182,10 +182,8 @@
       data_template:
         entity_id: input_number.power_meter_last_month_t2
         value: "{{ state_attr('input_number.power_meter_t2')|float}}"
-
     - service: switch.turn_on
       entity_id: switch.esp8266_pzem_hb_energy_reset_monthly, switch.esp8266_pzem_hb_energy_reset_monthly_day, switch.esp8266_pzem_hb_energy_reset_monthly_night
-
     - service: input_number.set_value
       data_template:
         entity_id: input_number.hot_water_meter_last_month
@@ -194,7 +192,6 @@
       data_template:
         entity_id: input_number.cold_water_meter_last_month
         value: "{{ states('input_number.cold_water_meter')|float }}"
-
     - service: input_number.set_value
       data_template:
         entity_id:
@@ -202,36 +199,11 @@
           - input_number.cold_water_meter_month
         value: 0
 
-# #####################################################################################
-#
-# Power Counting
-#
-# #####################################################################################
-# System - Power - 30sec update
-# ##################################
-# - alias: system_power_update_30s
-#   initial_state: true
-#   trigger:
-#     - platform: time_pattern
-#       seconds: '/30'
-#   action:
-#     - service: >
-#         {% if is_state('binary_sensor.tariff_t1','on') %}
-#             script.power_t1
-#         {% else %}
-#             script.power_t2
-#         {% endif %}
-#     - service: >
-#         {% if is_state('binary_sensor.tariff_t1','on') %}
-#             script.power_m_t1
-#         {% else %}
-#             script.power_m_t2
-#         {% endif %}
-
 # ##################################
 # System - Power - High current
 # ##################################
 - alias: system_power_15A_current
+  id: system_power_15A_current
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -245,15 +217,12 @@
     - service: notify.telegram
       data:
         message: "\U0001f6a8 Внимание! Общий ток более 15А!"
-    # - service: notify.mobile_app_iphone_8_dtsymbal
-    #   data:
-    #     title: "Внимание!"
-    #     message: "Внимание! Общий ток более 15А"
-  
+
 # ##################################
 # System - Power - High current
 # ##################################
 - alias: system_power_20A_current
+  id: system_power_20A_current
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -267,15 +236,12 @@
     - service: notify.telegram
       data:
         message: "\U0001f6a8 Внимание! Общий ток более 20А!"
-    # - service: notify.mobile_app_iphone_8_dtsymbal
-    #   data:
-    #     title: "Внимание!"
-    #     message: "Внимание! Общий ток более 20А"
- 
+
 # ##################################
 # System - Power - Ultra High current
 # ##################################
 - alias: system_power_30A_current
+  id: system_power_30A_current
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -293,12 +259,12 @@
       data:
         title: "Внимание!"
         message: "Внимание! Общий ток более 30А"
-        
 
 # ##################################
 # System - Utility meter tariff change
 # ##################################
 - alias: system_power_tariff_change
+  id: system_power_tariff_change
   initial_state: true
   trigger:
     - platform: homeassistant
@@ -312,39 +278,14 @@
       data_template:
         entity_id:
           - utility_meter.energy_daily
-          #- utility_meter.energy_led_monthly
           - utility_meter.energy_monthly
         tariff: "{%- if (7 <= now().hour < 23) -%}day{%- else -%}night{%- endif -%}"
         
 # ##################################
-# System - Utility meter tariff change tripple
-# ##################################
-# - alias: system_power_tariff_change_tripple
-#   initial_state: true
-#   trigger:
-#     - platform: homeassistant
-#       event: start
-#     - platform: time
-#       at: '07:00:00'
-#     - platform: time
-#       at: '10:00:00'
-#     - platform: time
-#       at: '17:00:00'
-#     - platform: time
-#       at: '21:00:00'
-#     - platform: time
-#       at: '23:00:00'
-#   action:
-#     - service: utility_meter.select_tariff
-#       data_template:
-#         entity_id: utility_meter.energy_daily_tripple
-#         tariff: "{%- if (7 <= now().hour < 10) or (17 <= now().hour < 21) -%}tripple_t1{%- elif (23 <= now().hour) or (00 <= now().hour < 7) -%}tripple_t2{%- else -%}tripple_t3{%- endif -%}"
-#         #tariff: "{%- if is_state('binary_sensor.tariff_tripple_t1','on') -%}tripple_t1{%- elif is_state('binary_sensor.tariff_tripple_t2','on') -%}tripple_t2{%- else -%}tripple_t3{%- endif -%}"
-
-# ##################################
 # System - High Power Consumption
 # ##################################
 - alias: system_high_power_while_not_home
+  id: system_high_power_while_not_home
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -368,6 +309,7 @@
 # System - Water Consumption
 # ##################################
 - alias: system_water_consumption_not_home
+  id: system_water_consumption_not_home
   initial_state: true
   trigger:
     - platform: state
@@ -398,6 +340,7 @@
 # System - Water sensor outage
 # ##################################
 - alias: system_water_sensor_outage
+  id: system_water_sensor_outage
   initial_state: true
   trigger:
     - platform: time_pattern

@@ -2,6 +2,7 @@
 # Toilet - Air Freshener Counter
 # ##################################
 - alias: toilet_air_freshener_counter
+  id: toilet_air_freshener_counter
   initial_state: true
   trigger:
     - platform: state
@@ -24,6 +25,7 @@
 # Toilet - Air Freshener Spray
 # ##################################
 - alias: toilet_air_freshener_spray
+  id: toilet_air_freshener_spray
   initial_state: true
   mode: restart
   trigger:
@@ -58,6 +60,7 @@
 # Toilet - Air Freshener Battery Alert
 # ##################################
 - alias: toilet_air_freshener_battery_alert
+  id: toilet_air_freshener_battery_alert
   initial_state: true
   trigger:
     - platform: state
@@ -78,6 +81,7 @@
 # Toilet - Air Freshener Last Hearbeat
 # ##################################
 - alias: toilet_air_freshener_last_hearbeat
+  id: toilet_air_freshener_last_hearbeat
   initial_state: true
   trigger:
     - platform: state
@@ -96,6 +100,7 @@
 # Toilet - Air Freshener Hourly
 # ##################################
 - alias: toilet_air_freshener_bi_hourly
+  id: toilet_air_freshener_bi_hourly
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -114,22 +119,10 @@
       entity_id: switch.air_freshener_spray
 
 # ##################################
-# Toilet - cold water condensate
-# ##################################
-# - alias: toilet_cold_water_condensate
-#   initial_state: false
-#   trigger:
-#     - platform: template
-#       value_template: "{{ (states('sensor.dewpoint_t')|float - states('sensor.esp32_bathroom_node_cold_pipe')|float ) > 2 }}"
-#   action:
-#     - service: notify.telegram
-#       data_template:
-#         message: "\U0001f4a6 Внимание! Возможно образование конденсата в туалете!"
-
-# ##################################
 # System - Air freshener offline
 # ##################################
 - alias: system_air_freshener_offline
+  id: system_air_freshener_offline
   initial_state: true
   trigger:
     - platform: state
@@ -146,41 +139,11 @@
 # # Toilet - Heater Control
 # # ##################################
 - alias: toilet_heater_control
+  id: toilet_heater_control
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: '/15'
     - platform: template
       value_template: "{{ not (6>=now().hour|int >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) }}"
   action: 
     - service: climate.turn_{% if not (6>=now().hour|int >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
       entity_id: climate.sonoff_pow_r2_2_heater
-  
-# # ##################################
-# # Toilet - Heater timer
-# # ##################################
-# - alias: toilet_heater_timer_start
-#   initial_state: true
-#   trigger:
-#     - platform: state
-#       entity_id: switch.sonoff_basic_1_relay
-#       to: 'on'
-#   action:
-#     - service: timer.cancel
-#       entity_id: timer.heater_t
-#     - service: timer.start
-#       entity_id: timer.heater_t 
-
-# # ##################################
-# # Toilet - Heater Auto Off
-# # ##################################
-# - alias: toilet_heater_auto_off
-#   initial_state: true
-#   trigger:
-#     - platform: event
-#       event_type: timer.finished
-#       event_data:
-#         entity_id: timer.heater_t
-#   action:
-#     - service: switch.turn_off
-#       entity_id: switch.sonoff_basic_1_relay

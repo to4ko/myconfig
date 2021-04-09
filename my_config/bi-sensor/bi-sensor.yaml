@@ -6,12 +6,12 @@
 
       light_outside_mi:
         friendly_name: Light Outside Sensor
-        value_template: "{{[states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max > states('input_number.outside_light_level')|int(250)}}"
+        value_template: "{{[states('sensor.0x4cf8cdf3c7754a8_illuminance')|int(-1),states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max > states('input_number.outside_light_level')|int(250)}}"
         device_class: light
 
       dark_outside_mi:
         friendly_name: Dark Outside Sensor
-        value_template: "{{[states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max < states('input_number.outside_light_level')|int(250)}}"
+        value_template: "{{[states('sensor.0x4cf8cdf3c7754a8_illuminance')|int(-1),states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max < states('input_number.outside_light_level')|int(250)}}"
         icon_template: >
           {% if is_state('binary_sensor.dark_outside_mi','on') %}
           mdi:brightness-5
@@ -308,8 +308,10 @@
           minutes: 2
         value_template: "{{ states('sensor.sonoff_pow_r2_1_power')|float > 5 }}"
         icon_template: >
-          {% if is_state("binary_sensor.washer_b", "on") %}
+          {% if is_state("binary_sensor.washer_b", "on") and not is_state('input_select.washer_state','Drying')%}
             mdi:washing-machine
+          {% elif is_state("binary_sensor.washer_b", "off") and is_state('input_select.washer_state','Drying')%}
+            mdi:washing-machine-alert
           {% else %}
             mdi:washing-machine-off
           {% endif %}
