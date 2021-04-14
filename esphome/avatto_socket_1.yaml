@@ -7,28 +7,47 @@ esphome:
   name: ${board_name}
   platform: ESP8266
   board: esp01_1m
-  # on_boot:
-  #   priority: -10
-  #   then:
-  #   # on affter boot
-  #   - switch.toggle: switch1
+  on_boot:
+    priority: -10
+    then:
+    # on affter boot
+    - switch.toggle: switch1
     
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_pass
-  output_power: 17dB
-#  domain: .localdomain
-  reboot_timeout: 0s
+  #ssid: !secret wifi_ssid
+  #password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 15min
+  output_power: 17.5dB
+  #fast_connect: true
+  power_save_mode: none
+  networks:
+    - ssid: !secret wifi_ssid_s
+      password: !secret wifi_pass
+      hidden: true
+      bssid: !secret wifi_bssid_s_iot
+      priority: 2
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      bssid: !secret wifi_bssid_s_main
+      priority: 1
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      priority: 0
   manual_ip:
     static_ip: ${ip_address}
     gateway: 192.168.1.1
     subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8    
 
 logger:
   baud_rate: 0
 
 api:
-  reboot_timeout: 0s
+  reboot_timeout: 5s
 
 ota:
 
@@ -65,6 +84,11 @@ uart:
 #     number: GPIO02
 #     inverted: True
 
+light:
+  - platform: binary
+    name: ${board_name}_LED
+    output: led1
+
 switch:
   - platform: template
     id: switch1
@@ -73,10 +97,8 @@ switch:
     name: "${board_name}_Relay"
     turn_on_action:
       - output.turn_on: relay
-      - output.turn_on: led1
     turn_off_action:
       - output.turn_off: relay
-      - output.turn_off: led1
 
   - platform: restart
     name: ${board_name}_Restart
@@ -95,7 +117,7 @@ sensor:
       name: ${board_name}_W
       icon: mdi:flash-outline
       unit_of_measurement: W
-    update_interval: 10s
+    update_interval: 15s
       
   - platform: uptime
     name: ${board_name}_Uptime_s

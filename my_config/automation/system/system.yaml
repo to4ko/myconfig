@@ -434,7 +434,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U00002b55 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo['available_version'] }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+        message: "\U00002b55 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
 
 # ##################################
 # System - Supervisor Update Available
@@ -463,7 +463,12 @@
       entity_id: sensor.ha_supervisor_current_version
   condition:
     - condition: template
-      value_template: "{{ trigger.from_state.state }} != {{ trigger.to_state.state }}"
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state
+        }}
   action:
     - service: notify.telegram
       data_template:
@@ -483,11 +488,17 @@
   condition:
     - condition: template
       value_template: "{{ states('sensor.supervisor_updates')|int >0 }}"
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state
+        }}
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f530 Addons - доступно обновлений {{ states('sensor.supervisor_updates') }}!"
-#{% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo['available_version'] }}){%if not loop.last %}, {%endif%}{% endfor %}
+        message: "\U0001f530 Addons - доступны обновления {% for addons_updates in state_attr('sensor.supervisor_updates', 'addons') %}{{ addons_updates.name }} ({{ addons_updates.version_latest }}){%if not loop.last %}, {%endif%}{% endfor %}!"
 
 # ##################################
 # System - System Automation Errors
@@ -1154,6 +1165,7 @@
         - binary_sensor.sonoff_mini_2_status
         - binary_sensor.sonoff_pow_r2_1_status
         - binary_sensor.ss5_hood_status
+        - binary_sensor.avatto_socket_1_status
       to: 'off'
       for:
         minutes: 2

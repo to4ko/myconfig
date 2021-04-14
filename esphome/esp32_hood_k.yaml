@@ -80,17 +80,29 @@ binary_sensor:
       }
     device_class: heat
 
-  # - platform: gpio
-  #   pin:
-  #     number: GPIO18
-  #     inverted: True
-  #   name: ${board_name}_Light
+  - platform: template
+    name: ${board_name}_Hood_Status
+    lambda: |-
+      if (id(oven_temp).state > 40) {
+        return true;
+      } else {
+        return false;
+      }
+    device_class: heat
 
-  # - platform: gpio
-  #   pin:
-  #     number: GPIO19
-  #     inverted: True
-  #   name: ${board_name}_Fan
+  - platform: gpio
+    pin:
+      number: GPIO18
+      inverted: True
+      mode: INPUT_PULLUP
+    name: ${board_name}_Light_Button
+
+  - platform: gpio
+    pin:
+      number: GPIO19
+      inverted: True
+      mode: INPUT_PULLUP
+    name: ${board_name}_Fan_Button
     
 
 text_sensor:
@@ -137,16 +149,16 @@ sensor:
     resolution: 12
 
   - platform: max6675
-    name: ${board_name}_MAX6675
+    name: ${board_name}_Hood_TCouple
     cs_pin: GPIO15
     update_interval: 15s
-    id: oven_temp
+    id: hood_temp
 
-  - platform: max31855
-    name: ${board_name}_MAX31855
-    cs_pin: GPIO27
+  - platform: max6675
+    name: ${board_name}_Oven_TCouple
+    cs_pin: GPIO13
     update_interval: 15s
-
+    id: oven_temp
 
   - platform: bme280
     temperature:

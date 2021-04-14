@@ -105,19 +105,21 @@
   id: vova_purifier_toggle
   initial_state: true
   trigger:
-    - platform: state
+    - platform: zone
       entity_id: person.sandra
-      from: 'home'
-      for:
-        minutes: 15
-    - platform: state
+      zone: zone.home
+      event: enter
+    - platform: zone
       entity_id: person.sandra
-      to: 'home'
-      for:
-        minutes: 2
-  condition:
-    - condition: template
-      value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
+      zone: zone.home
+      event: leave
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
+  # condition:
+  #   - condition: template
+  #     value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
   action:
     - service: fan.turn_{{'on' if is_state('person.sandra','home') else 'off'}}
       entity_id: fan.purifier2s
