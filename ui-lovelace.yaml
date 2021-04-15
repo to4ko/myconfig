@@ -459,13 +459,15 @@ views:
           - type: horizontal-stack
             cards:
               - type: glance
+                columns: 5
                 entities:
-                  # - sensor.oven_temp_change
-                  # - entity: sensor.oven_temp_stats
-                  #   name: Stat
-                  - entity: binary_sensor.esp8266_oven_temp_k_oven_status
+                  - entity: binary_sensor.esp32_hood_k_hood_status
+                    name: Hood
+                  - entity: sensor.esp32_hood_k_hood_tcouple
+                    name: T
+                  - entity: binary_sensor.esp32_hood_k_oven_status
                     name: Oven
-                  - entity: sensor.esp8266_oven_temp_k
+                  - entity: sensor.esp32_hood_k_oven_tcouple
                     name: T
                   - entity: input_select.oven_target_temperature
                     name: Target
@@ -727,7 +729,7 @@ views:
                 name: R
                 tap_action:
                   action: toggle
-              - entity: switch.ss5_hood_light #switch.esp32_node_k_light
+              - entity: switch.esp32_hood_k_light #switch.esp32_node_k_light
                 name: Hood
                 tap_action:
                   action: toggle
@@ -746,7 +748,7 @@ views:
             columns: 8
             state_color: true
             entities:
-              - entity: switch.ss5_hood_fan #switch.esp32_node_k_fan1
+              - entity: switch.esp32_hood_k_fan #switch.esp32_node_k_fan1
                 name: Hood
                 icon: mdi:fan
                 tap_action:
@@ -1278,11 +1280,11 @@ views:
         entities:
           - light.round_led_k
           - light.esp32_node_k_light
-          - switch.ss5_hood_light
+          - switch.esp32_hood_k_light
           - switch.0x158d000366815b_channel_1
           - switch.0x158d000366815b_channel_2
           - type: divider
-          - switch.ss5_hood_fan
+          - switch.esp32_hood_k_fan
           - type: divider
           - switch.0x158d0002451850_switch
           - switch.0x158d0002476ed1_switch
@@ -4041,8 +4043,8 @@ views:
           - type: divider
           - binary_sensor.esp01_weight_pad_status
           - binary_sensor.esp32_node_k_status
-          - binary_sensor.ss5_hood_status
-          - binary_sensor.esp8266_oven_temp_k_status
+          #- binary_sensor.ss5_hood_status
+          - binary_sensor.esp32_hood_k_status
 
           - type: divider        
           - binary_sensor.d1mini_bed_leds_status
@@ -4084,8 +4086,8 @@ views:
           - type: divider
           - sensor.esp01_weight_pad_wifi_rssi
           - sensor.esp32_node_k_wifi_rssi
-          - sensor.ss5_hood_wifi_rssi
-          - sensor.esp8266_oven_temp_k_wifi_rssi
+          #- sensor.ss5_hood_wifi_rssi
+          - sensor.esp32_hood_k_wifi_rssi
 
           - type: divider          
           - sensor.d1mini_bed_leds_wifi_rssi
@@ -4128,8 +4130,8 @@ views:
           - type: divider
           - sensor.esp01_weight_pad_uptime
           - sensor.esp32_node_k_uptime
-          - sensor.ss5_hood_uptime
-          - sensor.esp8266_oven_temp_k_uptime
+          #- sensor.ss5_hood_uptime
+          - sensor.esp32_hood_k_uptime
 
           - type: divider          
           - sensor.d1mini_bed_leds_uptime
@@ -4368,10 +4370,15 @@ views:
           - sensor.esp32_node_mb_outside
 
       - type: history-graph
-        hours_to_show: 1
+        hours_to_show: 6
         entities:
-          - sensor.esp8266_oven_temp_k
-          - sensor.esp32_hood_k_max6675
+          #- sensor.esp32_hood_k_oven_tcouple
+          - sensor.esp32_hood_k_hood_tcouple
+          - sensor.esp32_hood_k_dallas
+          - sensor.esp32_hood_k_bme280_temperature
+          - sensor.esp32_node_k_temperature
+          - sensor.esp32_node_k_dht11_temperature
+
 
   - title: Humidity
     icon: mdi:water-percent
@@ -4421,7 +4428,13 @@ views:
         hours_to_show: 48
         entities:
           - sensor.0x158d000239ad5b_humidity
-
+      - type: history-graph
+        hours_to_show: 6
+        entities:
+          - sensor.esp32_hood_k_bme280_humidity
+          - sensor.esp32_node_k_humidity
+          - sensor.esp32_node_k_dht11_humidity
+          
   - title: All GW3 Switches
     icon: mdi:electric-switch
     cards:
@@ -4707,15 +4720,27 @@ views:
   - title: Testing
     icon: mdi:find-replace
     cards:
+      - type: entities
+        show_header_toggle: false
+        state_color: true
+        entities:
+          - sensor.esp32_hood_k_bme280_humidity
+          - sensor.esp32_hood_k_bme280_pressure
+          - sensor.esp32_hood_k_bme280_temperature
+          - sensor.esp32_hood_k_dallas
+          - sensor.esp32_hood_k_hood_tcouple
+          - sensor.esp32_hood_k_oven_tcouple
+          - switch.esp32_hood_k_fan
+          - switch.esp32_hood_k_light
       - type: glance
         entities:
-          - entity: sensor.esp32_ble_tracker_green_rssi
+          - entity: binary_sensor.esp32_ble_tracker_green
             name: None(green)
-          - entity: sensor.esp32_ble_tracker_pink_rssi
+          - entity: binary_sensor.esp32_ble_tracker_pink
             name: Sandra(pink)
-          - entity: sensor.esp32_ble_tracker_grey_rssi
+          - entity: binary_sensor.esp32_ble_tracker_grey
             name: Vova(grey)
-          - entity: sensor.esp32_ble_tracker_white_rssi
+          - entity: binary_sensor.esp32_ble_tracker_white
             name: Dima(white)
       - type: entities
         show_header_toggle: false
@@ -4726,12 +4751,12 @@ views:
           - entity: switch.air_freshener_sleep
             name: Sleep
           - entity: counter.air_freshener_toilet
+          - entity: input_text.air_freshener_last_heartbeat
+            name: Last hearbeat
           - entity: input_text.air_freshener_last_spray
             name: Last spray
           - entity: input_text.air_freshener_toilet_tank_replacement
             name: Last tank replace
-          - entity: input_text.air_freshener_last_heartbeat
-            name: Last hearbeat
           - entity: script.toilet_air_freshener_counter_reset
           - type: divider
           - entity: switch.esp01_air_freshener_restart
@@ -4770,43 +4795,37 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - sensor.esp8266_pzem_hb_daily_day_kwh
-          - sensor.esp8266_pzem_hb_daily_night_kwh
-          - sensor.esp8266_pzem_hb_daily_globals
-          - sensor.esp8266_pzem_hb_monthly_day_kwh
-          - sensor.esp8266_pzem_hb_monthly_night_kwh
-          - type: divider
-          - sensor.esp8266_pzem_hb_energy_daily
-          - sensor.esp8266_pzem_hb_energy_monthly
-          - sensor.esp8266_pzem_hb_prev_hour_data
-          - type: divider
-          - sensor.esp8266_pzem_hb_voltage
+          - device_tracker.esp8266_pzem_hb
           - sensor.esp8266_pzem_hb_current
+          - sensor.esp8266_pzem_hb_dallas
           - sensor.esp8266_pzem_hb_energy
+          - sensor.esp8266_pzem_hb_energy_daily
+          - sensor.esp8266_pzem_hb_energy_daily_day
+          - sensor.esp8266_pzem_hb_energy_daily_night
+          - sensor.esp8266_pzem_hb_energy_monthly
+          - sensor.esp8266_pzem_hb_energy_monthly_day
+          - sensor.esp8266_pzem_hb_energy_monthly_night
+          - switch.esp8266_pzem_hb_energy_reset_monthly
+          - switch.esp8266_pzem_hb_energy_reset_monthly_day
+          - switch.esp8266_pzem_hb_energy_reset_monthly_night
           - sensor.esp8266_pzem_hb_frequency
+          - sensor.esp8266_pzem_hb_humidity
           - sensor.esp8266_pzem_hb_power
           - sensor.esp8266_pzem_hb_power_factor
+          - sensor.esp8266_pzem_hb_power_day
+          - sensor.esp8266_pzem_hb_power_night
           - sensor.esp8266_pzem_hb_power_kw
-          - type: divider
-          - switch.esp8266_pzem_hb_reset_daily_day
-          - switch.esp8266_pzem_hb_reset_daily_night
-          - switch.esp8266_pzem_hb_reset_monthly_day
-          - switch.esp8266_pzem_hb_reset_monthly_night
-          - switch.esp8266_pzem_hb_reset_monthy
-          - switch.esp8266_pzem_hb_reset_prev_hour_data
-          - type: divider
-          - sensor.esp8266_pzem_hb_humidity
           - sensor.esp8266_pzem_hb_pressure
-          - sensor.esp8266_pzem_hb_temperature
           - sensor.esp8266_pzem_hb_resistance
-          - type: divider
-          - device_tracker.esp8266_pzem_hb
           - switch.esp8266_pzem_hb_restart
           - binary_sensor.esp8266_pzem_hb_status
+          - sensor.esp8266_pzem_hb_temperature
           - sensor.esp8266_pzem_hb_uptime
           - sensor.esp8266_pzem_hb_uptime_s
           - sensor.esp8266_pzem_hb_vcc
+          - sensor.esp8266_pzem_hb_voltage
           - sensor.esp8266_pzem_hb_wifi_rssi
+          - binary_sensor.esp8266_pzem_hb_time_isvalid
 
       - type: vertical-stack
         cards:

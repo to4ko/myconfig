@@ -89,7 +89,7 @@
       to: 'button_2_single'
   action:
     - service: switch.toggle
-      entity_id: switch.ss5_hood_fan
+      entity_id: switch.esp32_hood_k_fan
 
 # ##################################
 # Kitchen - Kettle counter
@@ -158,7 +158,7 @@
       minutes: "/30"
   condition:
     - condition: numeric_state
-      entity_id: sensor.esp8266_oven_temp_k
+      entity_id: sensor.esp32_hood_k_oven_tcouple
       above: 100
     - condition: state
       entity_id: binary_sensor.motion_k
@@ -167,7 +167,7 @@
   action:
     - service: notify.telegram
       data_template:
-        message: "\U0001f321 Внимание! Духовка включена ({{states('sensor.esp8266_oven_temp_k')|int}}°C)!"
+        message: "\U0001f321 Внимание! Духовка включена ({{states('sensor.esp32_hood_k_oven_tcouple')|int}}°C)!"
 
 # ##################################
 # Kitchen - TV Plug Off
@@ -223,7 +223,7 @@
     - platform: event
       event_type: automation_reloaded  
     - platform: state
-      entity_id: binary_sensor.esp8266_oven_temp_k_oven_status
+      entity_id: binary_sensor.esp32_hood_k_oven_status
       to: 'on'
   condition:
     - condition: template
@@ -233,13 +233,13 @@
   action:
     - wait_for_trigger:
         - platform: template
-          value_template: "{{ states('sensor.esp8266_oven_temp_k')|int >= states('input_select.oven_target_temperature')|int }}"
+          value_template: "{{ states('sensor.esp32_hood_k_oven_tcouple')|int >= states('input_select.oven_target_temperature')|int }}"
       timeout:
         minutes: 60
       continue_on_timeout: false
     - service: notify.telegram
       data_template:
-        message: "\U0001f321 Духовка нагрелась до {{states('sensor.esp8266_oven_temp_k')|int}}°C!"
+        message: "\U0001f321 Духовка нагрелась до {{states('sensor.esp32_hood_k_oven_tcouple')|int}}°C!"
     - condition: state
       entity_id: binary_sensor.tod_day
       state: 'on'
@@ -250,4 +250,4 @@
     - service: tts.yandextts_say
       data_template: 
         entity_id: media_player.home_mini_k
-        message: "Духовка нагрелась до ({{states('sensor.esp8266_oven_temp_k')|int}}°C"
+        message: "Духовка нагрелась до ({{states('sensor.esp32_hood_k_oven_tcouple')|int}}°C"
