@@ -72,6 +72,8 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Yeelight LED Light Strip (YLDD01YL)
   - Yeelight LED Light Strip Plus (YLDD04YL) 
   - Yeelight Jiaoyue 260 (YLXD62YI)
+  - Xiaomi Yeelight Bedside Lap 2
+  - Yeelight Bedside Lamp D2
   - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
   - Xiaomi Philips Zhirui Downlight (9290012799)
   - Yeelight Xiaomi Led Bulb (Color) (YLDP06YL) (2ea)
@@ -107,23 +109,25 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
 
 **ESPHome devices:**
   - Sonoff Basic (2ea)
-  - not in use - Sonoff S26 Plugs (5ea)
-  - Sonoff Pow R2
+  - not in use - Sonoff S26 Plugs (3ea)
+  - Sonoff Pow R2 (2ea)
   - Sonoff L1
   - Sonoff Mini (3ea)
   - Sonoff 4ch
   - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
-  - Blitzwolf LT11 (not use - flickering on low brightness)
-  - Blitzwolf SS5 dual gang relay
+  - Blitzwolf LT11
+  - not in use - Blitzwolf SS5 dual gang relay
   - MH-Z19B CO2 sensors on Wemos D1 mini (1ea)
   - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Node K - Kitchen MH-Z19B, BME280, BHI1750, Water Filter Counters, IR controller
   - ESP32 - Node B - Bathroom Relays (Water vales, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
   - ESP32 - Node MB - Master Bedroom MH-Z19B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova's Room MH-Z19B, BME280, BHI1750, Dallas sensor (Heating pipe)
+  - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and couple of max6675 (one for stove temp control and one for oven) 
   - ESP32 - BLE Tracker (Nut find 3)
-  - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
-  - ESP8266 PZEM HB - Hall Big Breaker Box PZEM-004T with Dallas sensor (temp in breaker box) and 4 NTC sensors (breakers themperature)
+  - ESP32 - BLE Tracker (Xiaomi Scale 2 and Nut find 3)
+  - Migrated to ESP32 - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
+  - ESP8266 PZEM HB - Hall Big Breaker Box PZEM-004T with Dallas sensor (temp in breaker box)
   - Digma IR Remote (3ea)
   - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
   - ESP01 Weight Cell
@@ -137,6 +141,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - not in use - LifeControl Plug (2ea)
   - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (2ea)
   - [SLS Gateway](https://t.me/slsys) by @avenit
+  - [SLS Gateway cc2562] by @egony
   - DIYRuZ_Geiger Sensor via SLS GW
   - Google Home Mini (6ea)
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
