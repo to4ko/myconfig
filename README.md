@@ -141,7 +141,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - not in use - LifeControl Plug (2ea)
   - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (2ea)
   - [SLS Gateway](https://t.me/slsys) by @avenit
-  - [SLS Gateway cc2562] by @egony
+  - SLS Gateway v4 by [egony](https://github.com/egony)
   - DIYRuZ_Geiger Sensor via SLS GW
   - Google Home Mini (6ea)
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
