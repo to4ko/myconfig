@@ -38,9 +38,9 @@
       entity_id: timer.main_light_b
 
 # ##################################
-# Bathroom - Mirror off
+# Bathroom - Mirror off with main
 # ################################## 
-- alias: bathroom_mirror_off
+- alias: bathroom_mirror_off_with_main
   id: bathroom_mirror_off
   initial_state: true
   mode: queued
@@ -49,10 +49,30 @@
       entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
       to: 'off'
       from: 'on'
+  action:
+    - service: light.turn_off
+      entity_id: light.mirror_light_b
+      data:
+        transition: 5
+
+# ##################################
+# Bathroom - Mirror off auto
+# ################################## 
+- alias: bathroom_mirror_off_auto
+  id: bathroom_mirror_off_auto
+  initial_state: true
+  mode: queued
+  trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000236bc6d_motion
-      to: 'off'
-      for: "00:10:00"
+      for: "00:02:00"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.0x158d000236bc6d_motion
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.bathroom_occupancy
+      state: 'off'
   action:
     - service: light.turn_off
       entity_id: light.mirror_light_b
@@ -172,13 +192,12 @@
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.bathroom_occupancy
-      
 
 # ##################################
-# Bathroom - Auto Light On
+# Bathroom - Auto Light On Soft
 # ##################################
-- alias: bathroom_auto_light_on
-  id: bathroom_auto_light_on
+- alias: bathroom_auto_light_on_soft
+  id: bathroom_auto_light_on_soft
   initial_state: true
   trigger:
     - platform: state
@@ -197,6 +216,30 @@
       entity_id: light.mirror_light_b
       data:
         scene: 4
+
+# ##################################
+# Bathroom - Auto Light On Bright
+# ##################################
+- alias: bathroom_auto_light_on_bright
+  id: bathroom_auto_light_on_bright
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d000236bc6d_motion
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+      state: 'on'
+    - condition: state
+      entity_id: light.mirror_light_b
+      state: 'off'
+  action:
+    - service: xiaomi_miio.light_set_scene
+      entity_id: light.mirror_light_b
+      data:
+        scene: 1
 
 # ##################################
 # Bathroom - Auto Light Off
@@ -254,9 +297,42 @@
             - condition: state
               entity_id: sensor.0x158d0001ef6089_action
               state: 'single'
-          sequence:
-            - service: light.toggle
+            - condition: state
               entity_id: light.mirror_light_b
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.mirror_light_b
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001ef6089_action
+              state: 'single'
+            - condition: state
+              entity_id: light.mirror_light_b
+              state: 'off'
+            - condition: state
+              entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+              state: 'off'
+          sequence:
+            - service: xiaomi_miio.light_set_scene
+              entity_id: light.mirror_light_b
+              data:
+                scene: 4
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d0001ef6089_action
+              state: 'single'
+            - condition: state
+              entity_id: light.mirror_light_b
+              state: 'off'
+            - condition: state
+              entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+              state: 'on'
+          sequence:
+            - service: xiaomi_miio.light_set_scene
+              entity_id: light.mirror_light_b
+              data:
+                scene: 1
         - conditions:
             - condition: state
               entity_id: sensor.0x158d0001ef6089_action
