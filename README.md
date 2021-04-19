@@ -123,10 +123,10 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - ESP32 - Node B - Bathroom Relays (Water vales, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
   - ESP32 - Node MB - Master Bedroom MH-Z19B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova's Room MH-Z19B, BME280, BHI1750, Dallas sensor (Heating pipe)
-  - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and couple of max6675 (one for stove temp control and one for oven) 
+  - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
   - ESP32 - BLE Tracker (Nut find 3)
   - ESP32 - BLE Tracker (Xiaomi Scale 2 and Nut find 3)
-  - Migrated to ESP32 - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
+  - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP8266 PZEM HB - Hall Big Breaker Box PZEM-004T with Dallas sensor (temp in breaker box)
   - Digma IR Remote (3ea)
   - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)

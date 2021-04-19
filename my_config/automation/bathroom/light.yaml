@@ -6,7 +6,7 @@
 # Bathroom - Timer restart with movement
 # ################################## 
 - alias: bathroom_timer_restart
-  id: bathroom_timer_restart
+#  id: bathroom_timer_restart
   initial_state: true
   trigger:
     - platform: state
@@ -38,10 +38,10 @@
       entity_id: timer.main_light_b
 
 # ##################################
-# Bathroom - Mirror off with main
+# Bathroom - Mirror off
 # ################################## 
-- alias: bathroom_mirror_off_with_main
-  id: bathroom_mirror_off
+- alias: bathroom_mirror_off
+#  id: bathroom_mirror_off
   initial_state: true
   mode: queued
   trigger:
@@ -49,30 +49,10 @@
       entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
       to: 'off'
       from: 'on'
-  action:
-    - service: light.turn_off
-      entity_id: light.mirror_light_b
-      data:
-        transition: 5
-
-# ##################################
-# Bathroom - Mirror off auto
-# ################################## 
-- alias: bathroom_mirror_off_auto
-  id: bathroom_mirror_off_auto
-  initial_state: true
-  mode: queued
-  trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000236bc6d_motion
-      for: "00:02:00"
-  condition:
-    - condition: state
-      entity_id: binary_sensor.0x158d000236bc6d_motion
-      state: 'off'
-    - condition: state
-      entity_id: input_boolean.bathroom_occupancy
-      state: 'off'
+      to: 'off'
+      for: "00:10:00"
   action:
     - service: light.turn_off
       entity_id: light.mirror_light_b
@@ -83,7 +63,7 @@
 # Bathroom - Timer start on light on
 # ################################## 
 - alias: bathroom_timer_on
-  id: bathroom_timer_on
+#  id: bathroom_timer_on
   initial_state: true
   trigger:
     - platform: state
@@ -104,7 +84,7 @@
 # Bathroom - Timer stop at light off
 # ################################## 
 - alias: bathroom_timer_off
-  id: bathroom_timer_off
+#  id: bathroom_timer_off
   initial_state: true
   trigger:
     - platform: template
@@ -117,7 +97,7 @@
 # Bathroom - Timer pause on
 # ################################## 
 - alias: bathroom_timer_pause_on
-  id: bathroom_timer_pause_on
+#  id: bathroom_timer_pause_on
   initial_state: true
   trigger:
     - platform: state
@@ -147,7 +127,7 @@
 # Bathroom - Timer pause off
 # ################################## 
 - alias: bathroom_timer_pause_off
-  id: bathroom_timer_pause_off
+#  id: bathroom_timer_pause_off
   initial_state: true
   trigger:
     - platform: state
@@ -173,7 +153,7 @@
 # Bathroom - Occupancy off
 # ################################## 
 - alias: bathroom_occupancy_off
-  id: bathroom_occupancy_off
+#  id: bathroom_occupancy_off
   initial_state: true
   trigger:
     - platform: state
@@ -197,7 +177,7 @@
 # Bathroom - Auto Light On Soft
 # ##################################
 - alias: bathroom_auto_light_on_soft
-  id: bathroom_auto_light_on_soft
+#  id: bathroom_auto_light_on_soft
   initial_state: true
   trigger:
     - platform: state
@@ -217,35 +197,35 @@
       data:
         scene: 4
 
-# ##################################
-# Bathroom - Auto Light On Bright
-# ##################################
-- alias: bathroom_auto_light_on_bright
-  id: bathroom_auto_light_on_bright
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d000236bc6d_motion
-      from: 'off'
-      to: 'on'
-  condition:
-    - condition: state
-      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
-      state: 'on'
-    - condition: state
-      entity_id: light.mirror_light_b
-      state: 'off'
-  action:
-    - service: xiaomi_miio.light_set_scene
-      entity_id: light.mirror_light_b
-      data:
-        scene: 1
+# # ##################################
+# # Bathroom - Auto Light On Bright
+# # ##################################
+# - alias: bathroom_auto_light_on_bright
+# #  id: bathroom_auto_light_on_bright
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x158d000236bc6d_motion
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     - condition: state
+#       entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+#       state: 'on'
+#     - condition: state
+#       entity_id: light.mirror_light_b
+#       state: 'off'
+#   action:
+#     - service: xiaomi_miio.light_set_scene
+#       entity_id: light.mirror_light_b
+#       data:
+#         scene: 1
 
 # ##################################
 # Bathroom - Auto Light Off
 # ##################################
 - alias: bathroom_auto_light_off
-  id: bathroom_auto_light_off
+#  id: bathroom_auto_light_off
   initial_state: true
   trigger:
     - platform: event
@@ -264,7 +244,7 @@
 # Bathroom - Light Toggle with Repeater
 # ##################################
 - alias: bathroom_light_toggle_repeater
-  id: bathroom_light_toggle_repeater
+#  id: bathroom_light_toggle_repeater
   initial_state: true
   trigger:
     - platform: state
@@ -275,28 +255,18 @@
       entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
 
 # ##################################
-# Bathroom - Mirror Light
+# Bathroom - Mirror Light Single
 # ##################################
-- alias: bathroom_button_mirror
-  id: bathroom_button_mirror
+- alias: bathroom_button_mirror_single
+#  id: bathroom_button_mirror_single
   initial_state: true
-  mode: restart
   trigger:
     - platform: state
       entity_id: sensor.0x158d0001ef6089_action
-      to:
-        - single
-        - double
-        - hold
-  # condition:
-  #   - condition: template
-  #     value_template: "{{ trigger.to_state.state in ['single', 'double', 'hold'] }}"
+      to: 'single'
   action:
     - choose:
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0001ef6089_action
-              state: 'single'
             - condition: state
               entity_id: light.mirror_light_b
               state: 'on'
@@ -305,9 +275,6 @@
               entity_id: light.mirror_light_b
         - conditions:
             - condition: state
-              entity_id: sensor.0x158d0001ef6089_action
-              state: 'single'
-            - condition: state
               entity_id: light.mirror_light_b
               state: 'off'
             - condition: state
@@ -319,9 +286,6 @@
               data:
                 scene: 4
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0001ef6089_action
-              state: 'single'
             - condition: state
               entity_id: light.mirror_light_b
               state: 'off'
@@ -333,24 +297,39 @@
               entity_id: light.mirror_light_b
               data:
                 scene: 1
-        - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0001ef6089_action
-              state: 'double'
-          sequence:
-            - service: xiaomi_miio.light_set_scene
-              entity_id: light.mirror_light_b
-              data:
-                scene: 1
-        - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0001ef6089_action
-              state: 'hold'
-          sequence:
-            - service: xiaomi_miio.light_set_scene
-              entity_id: light.mirror_light_b
-              data:
-                scene: 4
+
+# ##################################
+# Bathroom - Mirror Light Double
+# ##################################
+- alias: bathroom_button_mirror_double
+#  id: bathroom_button_mirror_double
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d0001ef6089_action
+      to: 'double'
+  action:
+    - service: xiaomi_miio.light_set_scene
+      entity_id: light.mirror_light_b
+      data:
+        scene: 1
+
+# ##################################
+# Bathroom - Mirror Light Hold
+# ##################################
+- alias: bathroom_button_mirror_hold
+#  id: bathroom_button_mirror_hold
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d0001ef6089_action
+      to: 'hold'
+  action:
+    - service: xiaomi_miio.light_set_scene
+      entity_id: light.mirror_light_b
+      data:
+        scene: 4
+
 
 # # ##################################
 # # Bathroom - Mirror Light - single
@@ -402,9 +381,9 @@
 # Bathroom - Mirror Light Manual
 # ##################################
 - alias: bathroom_mirror_light_manual
-  id: bathroom_mirror_light_manual
+#  id: bathroom_mirror_light_manual
   initial_state: true
-  mode: restart
+  mode: queued
   trigger:
     - platform: state
       entity_id: sensor.0x4cf8cdf3c7a9a48_action
@@ -432,7 +411,7 @@
 # Bathroom - Mirror Light Bright
 # ##################################
 - alias: bathroom_mirror_light_bright
-  id: bathroom_mirror_light_bright
+#  id: bathroom_mirror_light_bright
   initial_state: true
   trigger:
     - platform: state
@@ -480,7 +459,7 @@
 # Bathroom - Mirror Light Reset 
 # ##################################
 - alias: bathroom_mirror_light_reset
-  id: bathroom_mirror_light_reset
+#  id: bathroom_mirror_light_reset
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -500,11 +479,11 @@
 # Bathroom - Indicator
 # ##################################
 - alias: bathroom_indicator
-  id: bathroom_indicator
+#  id: bathroom_indicator
   initial_state: true
-  mode: restart
-  # max: 5
-  # max_exceeded: silent
+  mode: queued
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id: input_boolean.bathroom_occupancy #binary_sensor.someone_showering

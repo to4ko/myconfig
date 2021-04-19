@@ -6,7 +6,7 @@
 # Cold Water - Increase
 # ##################################
 - alias: system_water_cold_water_increase_counter
-  id: system_water_cold_water_increase_counter
+#  id: system_water_cold_water_increase_counter
   initial_state: true
   trigger:
     - platform: state
@@ -28,24 +28,19 @@
     - service: mqtt.publish
       data_template:
         topic: "utility/main/cold_water_meter"
-        payload: "{{states('sensor.cold_water_meter')|float}}"
+        payload: "{{states('input_number.cold_water_meter')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/main/cold_water_meter_month"
-        payload: "{{states('sensor.cold_water_meter_month')|float}}"
-        retain: true
-    - service: mqtt.publish
-      data_template:
-        topic: "utility/main/cold_water_meter_input"
-        payload: "{{states('input_number.cold_water_meter')|float}}"
+        payload: "{{states('input_number.cold_water_meter_month')|float}}"
         retain: true
 
 # ##################################
 # Hot Water - Increase
 # ##################################
 - alias: system_water_hot_water_increase_counter
-  id: system_water_hot_water_increase_counter
+#  id: system_water_hot_water_increase_counter
   initial_state: true
   trigger:
     - platform: state
@@ -67,56 +62,96 @@
     - service: mqtt.publish
       data_template:
         topic: "utility/main/hot_water_meter"
-        payload: "{{states('sensor.hot_water_meter')|float}}"
+        payload: "{{states('input_number.hot_water_meter')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/main/hot_water_meter_month"
-        payload: "{{states('sensor.hot_water_meter_month')|float}}"
-        retain: true
-    - service: mqtt.publish
-      data_template:
-        topic: "utility/main/hot_water_meter_input"
-        payload: "{{states('input_number.hot_water_meter')|float}}"
+        payload: "{{states('input_number.hot_water_meter_month')|float}}"
         retain: true
 
 # ##################################
 # System - Power Meter Daily
 # ##################################
 - alias: system_power_meter_daily
-  id: system_power_meter_daily
+#  id: system_power_meter_daily
   initial_state: true
   trigger:
     - platform: time
-      at: '00:00:02'
+      at: '23:59:30'
   action:
-    - service: input_number.set_value
-      data_template:
-        entity_id: input_number.power_meter_t1
-        value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp8266_pzem_hb_energy_daily_day')|float/1 )|round(2) }}" #state_attr('sensor.energy_daily_day','last_period')|float/1 )|round(2) }}"
-    - service: input_number.set_value
-      data_template:
-        entity_id: input_number.power_meter_t2
-        value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}" #state_attr('sensor.energy_daily_night','last_period')|float/1 )|round(2) }}
-    - service: mqtt.publish 
-      data:
-        topic: "utility/main/energy/day"
-        payload: "{{ states('input_number.power_meter_t1') }}"
-        retain: true
-    - service: mqtt.publish 
-      data:
-        topic: "utility/main/energy/night"
-        payload: "{{ states('input_number.power_meter_t2') }}"
-        retain: true
-    - service: notify.telegram
-      data_template:
-        message: "\U0001f50c Данные счетчика электричества обновлены!"
+    - choose:
+        - conditions: 
+            - condition: state
+              entity_id: binary_sensor.esp8266_pzem_hb_status
+              state: 'on'
+          sequence:
+            - service: input_number.set_value
+              data_template:
+                entity_id: input_number.power_meter_t1
+                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp8266_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
+            - service: input_number.set_value
+              data_template:
+                entity_id: input_number.power_meter_t2
+                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
+            - service: mqtt.publish 
+              data:
+                topic: "utility/main/energy/day"
+                payload: "{{ states('input_number.power_meter_t1') }}"
+                retain: true
+            - service: mqtt.publish 
+              data:
+                topic: "utility/main/energy/night"
+                payload: "{{ states('input_number.power_meter_t2') }}"
+                retain: true
+            - service: notify.telegram
+              data_template:
+                message: "\U0001f50c Данные счетчика электричества обновлены!"
+        - conditions: 
+            - condition: state
+              entity_id: binary_sensor.esp8266_pzem_hb_status
+              state: 'off'
+          sequence:
+            - service: notify.telegram
+              data_template:
+                message: "\U0001f50c PZEM недоступен! Ожидаем"
+            - wait_for_trigger:
+                - platform: state
+                  entity_id: binary_sensor.esp8266_pzem_hb_status
+                  to: 'on'
+              timeout:
+                seconds: 28
+              continue_on_timeout: false
+            - service: notify.telegram
+              data_template:
+                message: "\U0001f50c PZEM доступен!"
+            - service: input_number.set_value
+              data_template:
+                entity_id: input_number.power_meter_t1
+                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp8266_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
+            - service: input_number.set_value
+              data_template:
+                entity_id: input_number.power_meter_t2
+                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
+            - service: mqtt.publish 
+              data:
+                topic: "utility/main/energy/day"
+                payload: "{{ states('input_number.power_meter_t1') }}"
+                retain: true
+            - service: mqtt.publish 
+              data:
+                topic: "utility/main/energy/night"
+                payload: "{{ states('input_number.power_meter_t2') }}"
+                retain: true
+            - service: notify.telegram
+              data_template:
+                message: "\U0001f50c Данные счетчика электричества обновлены!"
 
 # ##################################
 # System - Water\Power - New Month Notification
 # ##################################
 - alias: system_new_month_notification
-  id: system_new_month_notification
+#  id: system_new_month_notification
   initial_state: true
   trigger:
     - platform: time
@@ -128,12 +163,12 @@
     - service: mqtt.publish
       data_template:
         topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
-        payload: "{{states('sensor.hot_water_meter')|float}}"
+        payload: "{{states('input_number.hot_water_meter')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
         topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
-        payload: "{{states('sensor.cold_water_meter')|float}}"
+        payload: "{{states('input_number.cold_water_meter')|float}}"
         retain: true
     - service: mqtt.publish
       data_template:
@@ -155,12 +190,12 @@
         message: >
             {{ "\U0001f4a6" }}
             Показания счетчиков:
-            ХВС: {{ states('sensor.cold_water_meter')|float }}м3
-            ГВС: {{ states('sensor.hot_water_meter')|float }}м3
+            ХВС: {{ states('input_number.cold_water_meter')|float }}м3
+            ГВС: {{ states('input_number.hot_water_meter')|float }}м3
 
             За месяц:
-            ХВС: {{ states('sensor.cold_water_meter')|float }}м3
-            ГВС: {{ states('sensor.hot_water_meter')|float }}м3
+            ХВС: {{ states('input_number.cold_water_meter_month')|float }}м3
+            ГВС: {{ states('input_number.hot_water_meter_month')|float }}м3
             Стоимость: {{ ((states('sensor.water_cost'))|float)}}руб.
     - service: notify.telegram
       data_template: 
@@ -171,8 +206,8 @@
             Т2: {{ ((states('input_number.power_meter_t2'))|float)}} кВт*ч
 
             За месяц:
-            Т1: {{ ((states('sensor.energy_monthly_day')|float))|round(0)}} кВт*ч
-            Т2: {{ ((states('sensor.energy_monthly_night')|float))|round(0)}} кВт*ч
+            Т1: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_day')|float))|round(0)}} кВт*ч
+            Т2: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_night')|float))|round(0)}} кВт*ч
             Стоимость: {{ ((states('sensor.power_cost'))|float) }} руб.
     - service: input_number.set_value
       data_template:
@@ -203,7 +238,7 @@
 # System - Power - High current
 # ##################################
 - alias: system_power_15A_current
-  id: system_power_15A_current
+#  id: system_power_15A_current
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -222,7 +257,7 @@
 # System - Power - High current
 # ##################################
 - alias: system_power_20A_current
-  id: system_power_20A_current
+#  id: system_power_20A_current
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -241,7 +276,7 @@
 # System - Power - Ultra High current
 # ##################################
 - alias: system_power_30A_current
-  id: system_power_30A_current
+#  id: system_power_30A_current
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -264,7 +299,7 @@
 # System - Utility meter tariff change
 # ##################################
 - alias: system_power_tariff_change
-  id: system_power_tariff_change
+#  id: system_power_tariff_change
   initial_state: true
   trigger:
     - platform: homeassistant
@@ -285,7 +320,7 @@
 # System - High Power Consumption
 # ##################################
 - alias: system_high_power_while_not_home
-  id: system_high_power_while_not_home
+#  id: system_high_power_while_not_home
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -309,7 +344,7 @@
 # System - Water Consumption
 # ##################################
 - alias: system_water_consumption_not_home
-  id: system_water_consumption_not_home
+#  id: system_water_consumption_not_home
   initial_state: true
   trigger:
     - platform: state
@@ -340,7 +375,7 @@
 # System - Water sensor outage
 # ##################################
 - alias: system_water_sensor_outage
-  id: system_water_sensor_outage
+#  id: system_water_sensor_outage
   initial_state: true
   trigger:
     - platform: time_pattern

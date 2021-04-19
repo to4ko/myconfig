@@ -13,7 +13,7 @@ wifi:
   # password: !secret wifi_pass
   # domain: .localdomain
   reboot_timeout: 15min
-  output_power: 10dB
+  output_power: 17dB
   #fast_connect: true
   power_save_mode: none
   manual_ip:
@@ -60,13 +60,6 @@ i2c:
   scl: GPIO05
   scan: True
 
-# bme680_bsec:
-#   address: 0x77
-#   temperature_offset: 0
-#   iaq_mode: static
-#   sample_rate: lp
-#   state_save_interval: 6h
-
 dallas:
   - pin: GPIO13
     update_interval: 30s
@@ -109,18 +102,13 @@ text_sensor:
       sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
       return {buffer};
     icon: mdi:clock-start
-    update_interval: 15s
-
-  # - platform: bme680_bsec
-  #   iaq_accuracy:
-  #     # IAQ accuracy as a text value of Stabilizing, Uncertain, Calibrating, Calibrated
-  #     name: ${board_name}_BME680 IAQ Accuracy
+    update_interval: 60s
 
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
-    update_interval: 15s
+    update_interval: 60s
 
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
@@ -166,7 +154,7 @@ sensor:
     unit_of_measurement: 'kW'
     icon: mdi:lightning-bolt-outline
     
-  - platform: template # Нагрузка (ночь)
+  - platform: template
     name: ${board_name}_Power_Night
     id: id_power_night
     icon: mdi:speedometer
@@ -185,7 +173,7 @@ sensor:
     update_interval: 10s
     unit_of_measurement: 'W'
     
-  - platform: template # Нагрузка (день)
+  - platform: template
     name: ${board_name}_Power_Day
     id: id_power_day
     icon: mdi:speedometer
@@ -204,7 +192,7 @@ sensor:
     update_interval: 10s
     unit_of_measurement: 'W'
 
-  - platform: integration # Потребление (всего)
+  - platform: integration
     name: ${board_name}_Energy_Monthly
     id: id_energy_monthly
     sensor: id_power
@@ -215,7 +203,7 @@ sensor:
     accuracy_decimals: 3
     restore: true    
 
-  - platform: integration # Потребление (день)
+  - platform: integration
     name: ${board_name}_Energy_Monthly_Day
     id: id_energy_monthly_day
     sensor: id_power_day
@@ -226,7 +214,7 @@ sensor:
     accuracy_decimals: 3
     restore: true   
 
-  - platform: integration # Потребление (ночь)
+  - platform: integration
     name: ${board_name}_Energy_Monthly_Night
     id: id_energy_monthly_night
     sensor: id_power_night
@@ -237,7 +225,7 @@ sensor:
     accuracy_decimals: 3
     restore: true     
 
-  - platform: total_daily_energy # Потребление сегодня (всего)
+  - platform: total_daily_energy
     name: ${board_name}_Energy_Daily
     icon: mdi:gauge
     id: id_energy_daily
@@ -247,7 +235,7 @@ sensor:
     unit_of_measurement: 'kWh'
     accuracy_decimals: 3            
 
-  - platform: total_daily_energy # Потребление сегодня (ночь)
+  - platform: total_daily_energy
     name: ${board_name}_Energy_Daily_Night
     icon: mdi:gauge
     id: id_energy_daily_night
@@ -257,7 +245,7 @@ sensor:
     unit_of_measurement: 'kWh'
     accuracy_decimals: 3
 
-  - platform: total_daily_energy # Потребление сегодня (день)
+  - platform: total_daily_energy
     name: ${board_name}_Energy_Daily_Day
     icon: mdi:gauge
     id: id_energy_daily_day
@@ -284,49 +272,6 @@ sensor:
     address: 0x77
     update_interval: 30s    
 
-  # - platform: bme680_bsec
-  #   temperature:
-  #     # Temperature in °C
-  #     name: ${board_name}_BME680 Temperature
-  #     filters:
-  #       - median
-  #   pressure:
-  #     # Pressure in hPa
-  #     name: ${board_name}_BME680 Pressure
-  #     filters:
-  #       - median
-  #   humidity:
-  #     # Relative humidity %
-  #     name: ${board_name}_BME680 Humidity
-  #     filters:
-  #       - median
-  #   gas_resistance:
-  #     # Gas resistance in Ω
-  #     name: ${board_name}_BME680 Gas Resistance
-  #     filters:
-  #       - median
-  #   iaq:
-  #     # Indoor air quality value
-  #     name: ${board_name}_BME680 IAQ
-  #     filters:
-  #       - median
-  #   iaq_accuracy:
-  #     # IAQ accuracy as a numeric value of 0, 1, 2, 3
-  #     name: ${board_name}_BME680 Numeric IAQ Accuracy
-  #   co2_equivalent:
-  #     # CO2 equivalent estimate in ppm
-  #     name: ${board_name}_BME680 CO2 Equivalent
-  #     filters:
-  #       - median
-  #   breath_voc_equivalent:
-  #     # Volatile organic compounds equivalent estimate in ppm
-  #     name: ${board_name}_BME680 Breath VOC Equivalent
-  #     filters:
-  #       - median
-
-
-
-
   - platform: dallas
     address: 0x613C01D075384328
     name: ${board_name}_Dallas
@@ -334,23 +279,21 @@ sensor:
     accuracy_decimals: 1
     resolution: 12
 
-
-
 switch:
   - platform: restart
     name: ${board_name}_Restart
 
-  - platform: template # Сброс потребления (ночь)
+  - platform: template
     name: ${board_name}_Energy_Reset_Monthly_Night
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly_night     
 
-  - platform: template # Сброс потребления (день)
+  - platform: template
     name: ${board_name}_Energy_Reset_Monthly_Day
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly_day
 
-  - platform: template # Сброс потребления
+  - platform: template #
     name: ${board_name}_Energy_Reset_Monthly
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly
