@@ -7,7 +7,9 @@ esphome:
   board: nodemcuv2
   comment: ESP8266 PZEM/BME680/Dallas Node
   esp8266_restore_from_flash: true
-
+  on_loop:
+    then:
+      - lambda: delay(5);
 wifi:
   # ssid: !secret wifi_ssid
   # password: !secret wifi_pass
@@ -39,7 +41,7 @@ wifi:
       priority: 0
 
 logger:
-  #baud_rate: 0
+  baud_rate: 0
   
 api:
   reboot_timeout: 5min
@@ -114,9 +116,9 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
-  - platform: adc
-    pin: VCC
-    name: ${board_name}_Vcc    
+  # - platform: adc
+  #   pin: VCC
+  #   name: ${board_name}_Vcc    
 
   - platform: pzemac
     current:
@@ -144,13 +146,13 @@ sensor:
       accuracy_decimals: 2
       unit_of_measurement: ' '
       icon: mdi:cosine-wave
-    update_interval: 10s
+    update_interval: 15s
 
   - platform: template
     name: ${board_name}_Power_kW
     lambda: return (id(id_power).state)*0.001;
     accuracy_decimals: 3
-    update_interval: 10s
+    update_interval: 15s
     unit_of_measurement: 'kW'
     icon: mdi:lightning-bolt-outline
     
@@ -170,7 +172,7 @@ sensor:
         return 0.0;
       } 
     accuracy_decimals: 1
-    update_interval: 10s
+    update_interval: 15s
     unit_of_measurement: 'W'
     
   - platform: template
@@ -189,7 +191,7 @@ sensor:
         return 0.0;
       }         
     accuracy_decimals: 1
-    update_interval: 10s
+    update_interval: 15s
     unit_of_measurement: 'W'
 
   - platform: integration
@@ -303,4 +305,4 @@ time:
     id: homeassistant_time
   - platform: sntp
     id: sntp_time
-    timezone: Europe/Moscow
+    timezone: UTC-3

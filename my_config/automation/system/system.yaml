@@ -431,6 +431,8 @@
         {{ trigger.from_state.state not in ignore and
            trigger.to_state.state not in ignore and
            trigger.to_state.state != trigger.from_state.state }}
+    - condition: template
+      value_template: "{{ trigger.from_state.state > trigger.to_state.state }}"
   action:
     - service: notify.telegram
       data_template:
@@ -514,7 +516,11 @@
         level: ERROR
   condition:
     - condition: template
-      value_template: "{{ 'Error while executing automation' in trigger.event.data.message or 'Error executing script' in trigger.event.data.message }}"
+      value_template: >-
+        {{ 
+          trigger.event.data.message | regex_search('Error while executing automation') or
+          trigger.event.data.message | regex_search('Error executing script')
+        }}
     - condition: template
       value_template: "{{ not 'automation.system_automation_error' in trigger.event.data.message }}"
   action:

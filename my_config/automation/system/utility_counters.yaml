@@ -212,13 +212,16 @@
     - service: input_number.set_value
       data_template:
         entity_id: input_number.power_meter_last_month_t1
-        value: "{{ state_attr('input_number.power_meter_t1')|float}}"
+        value: "{{ states('input_number.power_meter_t1')|float}}"
     - service: input_number.set_value
       data_template:
         entity_id: input_number.power_meter_last_month_t2
-        value: "{{ state_attr('input_number.power_meter_t2')|float}}"
+        value: "{{ states('input_number.power_meter_t2')|float}}"
     - service: switch.turn_on
-      entity_id: switch.esp8266_pzem_hb_energy_reset_monthly, switch.esp8266_pzem_hb_energy_reset_monthly_day, switch.esp8266_pzem_hb_energy_reset_monthly_night
+      entity_id: 
+        - switch.esp8266_pzem_hb_energy_reset_monthly
+        - switch.esp8266_pzem_hb_energy_reset_monthly_day
+        - switch.esp8266_pzem_hb_energy_reset_monthly_night
     - service: input_number.set_value
       data_template:
         entity_id: input_number.hot_water_meter_last_month
@@ -389,3 +392,25 @@
     - service: notify.telegram
       data_template:
         message: "\U0000274c Внимание! Нет данных от счетчика {% if as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000232de79_contact'].last_changed) > 24*60*60 %}холодной{%else%}горячей{%endif%} воды!"
+
+# ##################################
+# System - PZEMr sensor outage
+# ##################################
+- alias: system_pzem_sensor_outage
+#  id: system_pzem_sensor_outage
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      minutes: '/15'
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(states.sensor.esp8266_pzem_hb_power_kw.last_changed)) > 15*60}}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0000274c Внимание! Нет данных от PZEM! Выполняем перузапуск PZEM!"
+    - service: switch.turn_on
+      entity_id: switch.esp8266_pzem_hb_restart
+
+
+

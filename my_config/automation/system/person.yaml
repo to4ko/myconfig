@@ -138,3 +138,30 @@
           photo:
             - url: !secret entrance_snap
               caption: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+              
+# ##################################
+# System - People Counter
+# ##################################
+- alias: system_people_counter
+  mode: single
+  initial_state: true
+  trigger:
+    - platform: mqtt
+      topic: people_counter/d1mini_counter_hb/counter
+  action:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: '{{ trigger.payload == "1" }}'
+          sequence:
+            - service: input_number.increment
+              entity_id: input_number.people_counter
+        - conditions:
+            - condition: template
+              value_template: '{{ trigger.payload == "2" }}'
+          sequence:
+            - service: input_number.decrement
+              entity_id: input_number.people_counter
+    # - service: notify.telegram
+    #   data_template:
+    #     message: "\U0001F467 People counter {{states('input_number.people_counter')|round(0)}}"
