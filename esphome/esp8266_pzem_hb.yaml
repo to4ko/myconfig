@@ -57,10 +57,10 @@ uart:
   baud_rate: 9600
   stop_bits: 1
 
-i2c:
-  sda: GPIO04
-  scl: GPIO05
-  scan: True
+# i2c:
+#   sda: GPIO04
+#   scl: GPIO05
+#   scan: True
 
 dallas:
   - pin: GPIO13
@@ -146,6 +146,7 @@ sensor:
       accuracy_decimals: 2
       unit_of_measurement: ' '
       icon: mdi:cosine-wave
+      id: id_power_factor
     update_interval: 15s
 
   - platform: template
@@ -154,6 +155,14 @@ sensor:
     accuracy_decimals: 3
     update_interval: 15s
     unit_of_measurement: 'kW'
+    icon: mdi:lightning-bolt-outline
+
+  - platform: template
+    name: ${board_name}_Power_Corrected
+    lambda: return (id(id_power).state)/(id(id_power_factor).state);
+    accuracy_decimals: 0
+    update_interval: 15s
+    unit_of_measurement: 'W'
     icon: mdi:lightning-bolt-outline
     
   - platform: template
@@ -257,22 +266,22 @@ sensor:
     unit_of_measurement: 'kWh'
     accuracy_decimals: 3
 
-  - platform: bme680
-    temperature:
-      name: ${board_name}_Temperature
-      oversampling: 16x
-      accuracy_decimals: 1
-    pressure:
-      name: ${board_name}_Pressure
-      accuracy_decimals: 0
-    humidity:
-      name: ${board_name}_Humidity
-      accuracy_decimals: 0
-    gas_resistance:
-      name: ${board_name}_Resistance
-      accuracy_decimals: 0
-    address: 0x77
-    update_interval: 30s    
+  # - platform: bme680
+  #   temperature:
+  #     name: ${board_name}_Temperature
+  #     oversampling: 16x
+  #     accuracy_decimals: 1
+  #   pressure:
+  #     name: ${board_name}_Pressure
+  #     accuracy_decimals: 0
+  #   humidity:
+  #     name: ${board_name}_Humidity
+  #     accuracy_decimals: 0
+  #   gas_resistance:
+  #     name: ${board_name}_Resistance
+  #     accuracy_decimals: 0
+  #   address: 0x77
+  #   update_interval: 30s    
 
   - platform: dallas
     address: 0x613C01D075384328

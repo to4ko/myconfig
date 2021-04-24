@@ -432,7 +432,7 @@
            trigger.to_state.state not in ignore and
            trigger.to_state.state != trigger.from_state.state }}
     - condition: template
-      value_template: "{{ trigger.from_state.state > trigger.to_state.state }}"
+      value_template: "{{ trigger.to_state.state > trigger.from_state.state }}"
   action:
     - service: notify.telegram
       data_template:
@@ -1405,3 +1405,53 @@
           {% if is_state('binary_sensor.0x158d0003262acc_contact','on') %}{{'\U00002705'}} Электроснабжение восстановлено!"
           {% else %}{{'\U0000274c'}} Внимание! Электроснабжение прекращено!
           {%endif%}
+          
+# ##################################
+# System - ESP reboot
+# ##################################
+- alias: system_esp_reboot
+#  id: system_esp_reboot
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: 
+        - sensor.avatto_socket_1_uptime_s
+        - sensor.btf_pixel_strip_uptime_s
+        - sensor.d1mini_bed_leds_uptime_s
+        - sensor.d1mini_co2_s_uptime_s
+        - sensor.digma_ir_mb_uptime_s
+        - sensor.digma_ir_s_uptime_s
+        - sensor.digma_ir_v_uptime_s
+        #- sensor.esp01_air_freshener_uptime_s
+        - sensor.esp01_weight_pad_uptime_s
+        - sensor.esp32_bathroom_node_uptime_s
+        - sensor.esp32_ble_tracker_2_uptime_s
+        - sensor.esp32_ble_tracker_uptime_s
+        - sensor.esp32_domofon_uptime_s
+        - sensor.esp32_hood_k_uptime_s
+        - sensor.esp32_node_k_uptime_s
+        - sensor.esp32_node_mb_uptime_s
+        - sensor.esp32_node_v_uptime_s
+        - sensor.esp8266_oven_temp_k_uptime_s
+        - sensor.esp8266_pzem_hb_uptime_s
+        - sensor.lt11_1_uptime_s
+        - sensor.shp2_socket_1_uptime_s
+        - sensor.shp2_socket_2_uptime_s
+        - sensor.shp2_socket_server_uptime_s
+        - sensor.shp6_socket_1_uptime_s
+        - sensor.shp6_socket_2_uptime_s
+        - sensor.sonoff_basic_3_uptime_s
+        - sensor.sonoff_basic_4_uptime_s
+        - sensor.sonoff_mini_2_uptime_s
+        - sensor.sonoff_pow_r2_1_uptime_s
+        - sensor.sonoff_pow_r2_2_uptime_s
+      from: 'unavailable'
+      for: 
+        seconds: 5
+  condition:
+    - condition: template
+      value_template: "{{ 0 <= states(trigger.entity_id)|int(-9999) < 30 }}"
+  action:
+    - service: notify.telegram
+      data_template:
+        message: "\U0001f4cd {{state_attr(trigger.entity_id,'friendly_name').split('_Uptime_s')[0]}} перезапустился, аптайм {{states(trigger.entity_id)}}с!"

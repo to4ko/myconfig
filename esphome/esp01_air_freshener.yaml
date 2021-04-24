@@ -5,6 +5,7 @@ esphome:
   name: ${board_name}
   platform: ESP8266
   board: esp01_1m
+  comment: ESP01 Air Spray based on Xiaomi Deerma
 
 wifi:
   ssid: !secret wifi_ssid_k
@@ -75,6 +76,11 @@ script:
                       strftime(str, sizeof(str), "%d-%m-%Y %H:%M:%S", localtime(&currTime));
                       return  { str };
       - switch.turn_on: spray
+      - mqtt.publish:
+          topic: esp01_air_freshener/sprays_count
+          payload: !lambda |-
+            return to_string(id(sprays_count).state + 1);          
+          retain: true
       - delay: 1s
       - deep_sleep.enter: deep_sleep_1
  
@@ -107,6 +113,11 @@ script:
           payload: 0
           retain: true
       - switch.turn_on: spray
+      - mqtt.publish:
+          topic: esp01_air_freshener/sprays_count
+          payload: !lambda |-
+            return to_string(id(sprays_count).state + 1);          
+          retain: true      
       
 binary_sensor:
   - platform: status
@@ -122,11 +133,19 @@ sensor:
     name: ${board_name}_on_flag
     id: on_flag
     topic: esp01_air_freshener/air_fresh
+    accuracy_decimals: 0
 
   - platform: mqtt_subscribe
     name: ${board_name}_sleep_avail
     id: sleep_avail
     topic: esp01_air_freshener/sleep_avail
+    accuracy_decimals: 0
+
+  - platform: mqtt_subscribe
+    name: ${board_name}_sprays_count
+    id: sprays_count
+    topic: esp01_air_freshener/sprays_count
+    accuracy_decimals: 0
 
   - platform: adc
     pin: VCC

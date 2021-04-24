@@ -889,6 +889,7 @@ class MESAccount(BaseAccount):
                     data=meter_data
                 )
                 for meter_data in response['data']
+                if meter_data
             ]
             return self._meter_objects
 
@@ -900,6 +901,8 @@ class MESAccount(BaseAccount):
         })
 
         for meter_data in response['data']:
+            if not meter_data:
+                continue
             meter_code = meter_data['nm_meter_num']
             meter_index = existing_meter_objects.get(meter_code)
 
@@ -1011,6 +1014,7 @@ class MOEAccount(MESAccount):
                     data=meter_data
                 )
                 for meter_data in response['data']
+                if meter_data
             ]
             return self._meter_objects
 
@@ -1022,6 +1026,8 @@ class MOEAccount(MESAccount):
         })
 
         for meter_data in response['data']:
+            if not meter_data:
+                continue
             meter_code = meter_data['nm_counter']
             meter_index = existing_meter_objects.get(meter_code)
 

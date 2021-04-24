@@ -82,6 +82,12 @@
     - condition: state
       entity_id: binary_sensor.main_light_hb
       state: 'off'
+    - condition: state
+      entity_id: switch.0x158d000223921b_channel_1
+      state: 'off'
+    - condition: state
+      entity_id: switch.0x158d000253f04a_channel_2
+      state: 'off'
     # - condition: state
     #   entity_id: switch.0x158d000223921b_channel_1
     #   state: 'off'
@@ -181,20 +187,38 @@
       entity_id: timer.main_light_hb
     
 # ##################################
-# Hall big - Led Strip On when Main Light Off
+# Hall big - Led Strip with Main Light On\Off
 # ################################## 
-- alias: hall_big_led_strip_on_main_off
-#  id: hall_big_led_strip_on_main_off
+- alias: hall_big_led_strip_with_main_off
+#  id: hall_big_led_strip_with_main_off
   initial_state: true
   trigger:
     - platform: state
       entity_id: binary_sensor.main_light_hb
       to: 'off'
       from: 'on'
-      #value_template: "{{is_state('switch.0x158d000223921b_channel_1','off') and is_state('switch.0x158d000253f04a_channel_2','off')}}"
+    - platform: state
+      entity_id: binary_sensor.main_light_hb
+      to: 'on'
+      from: 'off'
   action:
-    - service: script.turn_on
-      entity_id: script.hall_big_led_strip_on
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.main_light_hb
+              state: 'off'
+          sequence:
+            - service: script.turn_on
+              entity_id: script.hall_big_led_strip_on
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.main_light_hb
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.led_strip_entrance_hb, light.led_strip_hb
+              data:
+                transition: 5
 
 # ##################################
 # Hall big - Auto Light Off 10m without movements
