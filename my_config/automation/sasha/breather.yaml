@@ -1,12 +1,12 @@
 # #####################################################################################
 #
-# SASHA - Breazer
+# SASHA - breather
 #
 # #####################################################################################
-# Sasha- Breazer On
+# Sasha- breather On
 # ################################## 
-- alias: sasha_breazer_on
-#  id: sasha_breazer_on
+- alias: sasha_breather_on
+#  id: sasha_breather_on
   initial_state: false
   trigger:
     - platform: time_pattern
@@ -29,10 +29,10 @@
       entity_id: switch.digma_ir_s_breather_pwr
 
 # ##################################
-# Sasha - Breazer Off
+# Sasha - breather Off
 # ################################## 
-- alias: sasha_breazer_off
-#  id: sasha_breazer_off
+- alias: sasha_breather_off
+#  id: sasha_breather_off
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -59,3 +59,22 @@
   action:
     - service: switch.turn_on
       entity_id: switch.digma_ir_s_breather_pwr
+      
+# ##################################
+# Sasha - breather Aurtomation Status Publish
+# ################################## 
+- alias: sasha_breather_automation_status_publish
+#  id: sasha_breather_automation_status_publish
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id:
+        - automation.sasha_breather_off
+        - automation.sasha_breather_on
+  action:
+    - service: mqtt.publish
+      data:
+        topic: servers/main_states/automation/breather_s
+        payload: "{{('1' if is_state('automation.sasha_breather_on','on') else '0')|int}}{{('1' if is_state('automation.sasha_breather_off','on') else '0')|int}}"
+        retain: true      

@@ -14,11 +14,13 @@ from homeassistant.const import (
     CONF_PORT,
     CONF_SCAN_INTERVAL,
     CONF_USERNAME,
+    EVENT_HOMEASSISTANT_STOP,
 )
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 import homeassistant.helpers.device_registry as dr
-from homeassistant.helpers.typing import ConfigType, HomeAssistantType
+from homeassistant.helpers.typing import ConfigType
 from pyunifiprotect import NotAuthorized, NvrError, UpvServer
 from pyunifiprotect.const import SERVER_ID
 
@@ -36,13 +38,13 @@ SCAN_INTERVAL = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup(hass: HomeAssistantType, config: ConfigType) -> bool:
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Unifi Protect components."""
 
     return True
 
 
-async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the Unifi Protect config entries."""
 
     if not entry.options:
@@ -82,7 +84,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
         _LOGGER.error(
             "Could not Authorize against Unifi Protect. Please reinstall the Integration."
         )
-        return
+        return False
     except (NvrError, ServerDisconnectedError) as notreadyerror:
         raise ConfigEntryNotReady from notreadyerror
 
@@ -95,13 +97,21 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
 
     update_listener = entry.add_update_listener(_async_options_updated)
 
-    hass.data[DOMAIN][entry.entry_id] = {
+    data = hass.data[DOMAIN][entry.entry_id] = {
         "protect_data": protect_data,
         "upv": protectserver,
         "snapshot_direct": entry.options.get(CONF_SNAPSHOT_DIRECT, False),
         "server_info": nvr_info,
         "update_listener": update_listener,
     }
+
+    async def _async_stop_protect_data(event):
+        """Stop updates."""
+        await protect_data.async_stop()
+
+    data["stop_event_listener"] = hass.bus.async_listen_once(
+        EVENT_HOMEASSISTANT_STOP, _async_stop_protect_data
+    )
 
     await _async_get_or_create_nvr_device_in_registry(hass, entry, nvr_info)
 
@@ -114,7 +124,7 @@ async def async_setup_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool
 
 
 async def _async_get_or_create_nvr_device_in_registry(
-    hass: HomeAssistantType, entry: ConfigEntry, nvr
+    hass: HomeAssistant, entry: ConfigEntry, nvr
 ) -> None:
     device_registry = await dr.async_get_registry(hass)
     device_registry.async_get_or_create(
@@ -128,12 +138,12 @@ async def _async_get_or_create_nvr_device_in_registry(
     )
 
 
-async def _async_options_updated(hass: HomeAssistantType, entry: ConfigEntry):
+async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry):
     """Update options."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistantType, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload Unifi Protect config entry."""
     unload_ok = all(
         await asyncio.gather(
@@ -145,9 +155,10 @@ async def async_unload_entry(hass: HomeAssistantType, entry: ConfigEntry) -> boo
     )
 
     if unload_ok:
-        entry_data = hass.data[DOMAIN][entry.entry_id]
-        entry_data["update_listener"]()
-        await entry_data["protect_data"].async_stop()
+        data = hass.data[DOMAIN][entry.entry_id]
+        data["update_listener"]()
+        data["stop_event_listener"]()
+        await data["protect_data"].async_stop()
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok

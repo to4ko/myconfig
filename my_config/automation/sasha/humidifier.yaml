@@ -25,7 +25,7 @@
         value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.sasha_humidifier_water_low_water_cond','last_triggered'))|int) > 30*60 }}"
   action:
     service: notify.telegram
-    data_template:
+    data:
       message: "\U0001f4a7 Увлажнитель - осталось менее 10% воды!"
       
 # ##################################
@@ -43,3 +43,35 @@
   action:
     - service: script.turn_on
       entity_id: script.humidifier2_restart
+      
+# ##################################
+# Sasha - Humidifier2  Set Target Humidity
+# ##################################
+- alias: sasha_humidifier_set_target_humidity
+#  id: sasha_humidifier_set_target_humidity
+  initial_state: true
+  trigger:
+    platform: state
+    entity_id: input_select.humidifier2_target_humidity
+  action:
+    service: xiaomi_miio.fan_set_target_humidity
+    data:
+      entity_id: fan.humidifier2
+      humidity: >
+        {{ states('input_select.humidifier2_target_humidity') }}
+
+
+# ##################################
+# Sasha - Humidifier2  Reset
+# ##################################
+- alias: sasha_humidifier_get_target_humidity
+#- id: sasha_humidifier_get_target_humidity  
+  trigger:
+    platform: template
+    value_template: '{{ states.fan.humidifier2.attributes.target_humidity }}'
+  action:
+    service: input_select.select_option
+    entity_id: input_select.humidifier2_target_humidity
+    data:
+      option: >
+        {{ state_attr('fan.humidifier2','target_humidity') }}

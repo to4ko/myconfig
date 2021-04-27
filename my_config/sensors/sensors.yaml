@@ -43,6 +43,33 @@
   #       unit_of_measurement: '°C'
   #   scan_interval: 60
 
+  - platform: mqtt
+    state_topic: esp01_air_freshener/sprays_count
+    name: Air Freshener Counter
+    unit_of_measurement: "ea"
+    value_template: "{{ value | int }}"
+    icon: mdi:counter
+
+  - platform: mqtt
+    state_topic: esp01_air_freshener/last_hearbeat
+    name: Air Freshener Last Heartbeat
+    value_template: "{{ value }}"
+    icon: mdi:clock
+
+  - platform: mqtt
+    state_topic: esp01_air_freshener/last_spray
+    name: Air Freshener Last Spray
+    value_template: "{{ value }}"
+    icon: mdi:clock
+    
+  - platform: mqtt
+    state_topic: esp01_air_freshener/tank_replace
+    name: Air Freshener Tank Replace
+    value_template: "{{ value }}"
+    icon: mdi:clock
+
+# | timestamp_custom('%d.%m.%Y %H:%M:%S')
+    
   - platform: modem_callerid
     device: /dev/serial/by-id/usb-U.S.Robotics_USB_Modem_0000003-if00
   
@@ -363,8 +390,6 @@
     repositories:
       - path: 'to4ko/myconfig'
         name: myconfig
-      # - path: 'AlexxIT/XiaomiGateway3'
-      #   name: AlexxIT GW3 Repo
 
   - platform: statistics
     entity_id: sensor.0x158d000233fb72_pressure
@@ -421,6 +446,12 @@
 # ############################################################################
   - platform: template
     sensors:
+
+      oven_target_temperature:
+        friendly_name: Oven Target Temperature
+        value_template: "{{ states('input_select.oven_target_temperature')|int}}"
+        device_class: temperature
+        unit_of_measurement: "°C"
 
       nonsmoker:
         value_template: "{{ states('sensor.date') and (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"

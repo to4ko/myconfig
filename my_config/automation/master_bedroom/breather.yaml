@@ -1,12 +1,12 @@
 # #####################################################################################
 #
-# MASTER BEDROOM - Breazer
+# MASTER BEDROOM - breather
 #
 # #####################################################################################
-# Master Bedroom- Breazer On
+# Master Bedroom- breather On
 # ################################## 
-- alias: master_bedroom_breazer_on
-#  id: master_bedroom_breazer_on
+- alias: master_bedroom_breather_on
+#  id: master_bedroom_breather_on
   initial_state: false
   trigger:
     - platform: time_pattern
@@ -29,10 +29,10 @@
       entity_id: switch.digma_ir_mb_breather_pwr
 
 # ##################################
-# Master Bedroom- Breazer Off
+# Master Bedroom- breather Off
 # ################################## 
-- alias: master_bedroom_breazer_off
-#  id: master_bedroom_breazer_off
+- alias: master_bedroom_breather_off
+#  id: master_bedroom_breather_off
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -59,3 +59,23 @@
   action:
     - service: switch.turn_on
       entity_id: switch.digma_ir_mb_breather_pwr
+      
+# ##################################
+# Master Bedroom- breather Aurtomation Status Publish
+# ################################## 
+- alias: master_bedroom_breather_automation_status_publish
+#  id: master_bedroom_breather_automation_status_publish
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id:
+        - automation.master_bedroom_breather_off
+        - automation.master_bedroom_breather_on
+  action:
+    - service: mqtt.publish
+      data:
+        topic: servers/main_states/automation/breather_mb
+        payload: "{{('1' if is_state('automation.master_bedroom_breather_on','on') else '0')|int}}{{('1' if is_state('automation.master_bedroom_breather_off','on') else '0')|int}}"
+        retain: true
+      

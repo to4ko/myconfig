@@ -3,10 +3,10 @@
 # VOVA - Lights
 #
 # #####################################################################################
-# Vova- Breazer On
+# Vova- breather On
 # ################################## 
-- alias: vova_breazer_on
-#  id: vova_breazer_on
+- alias: vova_breather_on
+#  id: vova_breather_on
   initial_state: false
   trigger:
     - platform: time_pattern
@@ -29,10 +29,10 @@
       entity_id: switch.digma_ir_v_breather_pwr
       
 # ##################################
-# Vova - Breazer Off
+# Vova - breather Off
 # ################################## 
-- alias: vova_breazer_off
-#  id: vova_breazer_off
+- alias: vova_breather_off
+#  id: vova_breather_off
   initial_state: false
   trigger:
     - platform: time_pattern
@@ -59,3 +59,22 @@
   action:
     - service: switch.turn_on
       entity_id: switch.digma_ir_v_breather_pwr
+
+# ##################################
+# Vova - breather Aurtomation Status Publish
+# ################################## 
+- alias: vova_breather_automation_status_publish
+#  id: vova_breather_automation_status_publish
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id:
+        - automation.vova_breather_off
+        - automation.vova_breather_on
+  action:
+    - service: mqtt.publish
+      data:
+        topic: servers/main_states/automation/breather_v
+        payload: "{{('1' if is_state('automation.vova_breather_on','on') else '0')|int}}{{('1' if is_state('automation.vova_breather_off','on') else '0')|int}}"
+        retain: true      
