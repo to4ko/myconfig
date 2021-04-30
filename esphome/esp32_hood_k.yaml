@@ -69,17 +69,23 @@ spi:
 
 dallas:
   - pin: GPIO26
-    update_interval: 15s
+    update_interval: 30s
     id: dallas_node
 
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
+    id: id_status
 
   - platform: template
     name: ${board_name}_Hood_Status
     lambda: |-
-      if ( (id(hood_temp).state > 30) or (id(dallas_temp).state > 30) or (id(bme280_temp).state > 30)) {
+      if ( 
+      (id(hood_temp).state > id(median_temp).state) 
+      or 
+      (id(dallas_temp).state > id(median_temp).state) 
+      or 
+      (id(bme280_temp).state > id(median_temp).state) ) {
         return true;
       } else {
         return false;
@@ -146,6 +152,20 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
+  - platform: homeassistant
+    name: ${board_name}_median_ha
+    entity_id: sensor.stove_temperature_median
+    id: median_temp
+    filters:
+      - lambda: |-
+          if (id(id_status).state) {
+            return x+5;
+          } else {
+            return 32;
+          }
+    unit_of_measurement: '°C'
+    device_class: temperature          
+          
   - platform: dallas
     address: 0x993C01D607966B28
     name: ${board_name}_Dallas
@@ -157,7 +177,7 @@ sensor:
   - platform: max6675
     name: ${board_name}_Hood_TCouple
     cs_pin: GPIO05
-    update_interval: 15s
+    update_interval: 30s
     id: hood_temp
     spi_id: spi_hood
     filters:
@@ -178,7 +198,7 @@ sensor:
       name: ${board_name}_BME280_Humidity
       accuracy_decimals: 0
     address: 0x76
-    update_interval: 15s    
+    update_interval: 30s    
     
 switch:
   - platform: restart

@@ -7,7 +7,6 @@
   trigger:
     - platform: numeric_state
       entity_id:
-        - sensor.ipmi_cpu_temp
         - sensor.ipmi_dimma1_temp
         - sensor.ipmi_dimmb1_temp
         - sensor.ipmi_pch_temp
@@ -25,10 +24,32 @@
         message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >60°"
 
 # ##################################
+# System - Ubuntu server temp >70
+# ##################################
+- alias: system_health_cpu_temp_70
+#  id: system_health_cpu_temp_70
+  initial_state: true
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.ipmi_cpu_temp
+      above: 70
+      for:
+        minutes: 3
+  action:
+    - service: notify.mobile_app_iphone_8_dtsymbal
+      data:
+        title: "Внимание!"
+        message: "{{ trigger.to_state.attributes.friendly_name }} >70°"
+    - service: notify.telegram
+      data:
+        message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >70°"
+
+# ##################################
 # System - Ubuntu server CPU temp >80
 # ##################################
-- alias: system_health_cpu_temp
-#  id: system_health_cpu_temp
+- alias: system_health_cpu_temp_80
+#  id: system_health_cpu_temp_80
   initial_state: true
   trigger:
     - platform: numeric_state

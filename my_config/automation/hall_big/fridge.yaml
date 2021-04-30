@@ -69,7 +69,7 @@
   initial_state: true
   trigger:
     - platform: time_pattern
-      minutes: "/10"
+      minutes: "/15"
   condition:
     - condition: numeric_state
       entity_id: sensor.0x158d0002461e5b_temperature
@@ -78,7 +78,8 @@
   - service: notify.telegram
     data:
       message: "\U0001f321 Внимание! Температура в холодильнике {{states('sensor.0x158d0002461e5b_temperature')|int}}°C!"
-      
+
+
 # ##################################
 # Hall big - Freezer temp alarm
 # ##################################
@@ -87,7 +88,7 @@
   initial_state: true
   trigger:
     - platform: time_pattern
-      minutes: "/10"
+      minutes: "/15"
   condition:
     - condition: numeric_state
       entity_id: sensor.0x158d000237167c_temperature
@@ -96,3 +97,34 @@
   - service: notify.telegram
     data:
       message: "\U0001f321 Внимание! Температура в морозилке {{states('sensor.0x158d000237167c_temperature')|int}}°C!"
+      
+      
+# ##################################
+# System - Fridge sensors outage
+# ##################################
+- alias: hall_big_fridge_sensors_outage
+#  id: system_water_sensor_outage
+  mode: queued
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      minutes: '/30'
+  condition:
+    - condition: template
+      value_template: >
+        {{
+        as_timestamp(now())- as_timestamp(states.sensor['0x158d0002461e5b_zigbee'].last_updated) > 2*60*60 or
+        as_timestamp(now())- as_timestamp(states.sensor['0x158d000237167c_zigbee'].last_updated) > 2*60*60 or
+        as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000253722b_zigbee'].last_updated) > 2*60*60 or
+        as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000252acba_zigbee'].last_updated) > 2*60*60 }}
+  action:
+    - service: notify.telegram
+      data:
+        message: >-
+          {{'\U0000274c'}} Внимание! Нет данных от датчика 
+          {%- if as_timestamp(now())- as_timestamp(states.sensor['0x158d0002461e5b_zigbee'].last_updated) > 2*60*60 %}температуры холодильника
+          {%- elif as_timestamp(now())- as_timestamp(states.sensor['0x158d000237167c_zigbee'].last_updated) > 2*60*60 %}температуры морозилки
+          {%- elif as_timestamp(now())- as_timestamp(states.sensor['0x158d000253722b_zigbee'].last_updated) > 2*60*60 %}двери холодильника
+          {%- elif as_timestamp(now())- as_timestamp(states.sensor['0x158d000252acba_zigbee'].last_updated) > 2*60*60 %}двери морозилки
+          {%-else%}ххх
+          {%endif%}!

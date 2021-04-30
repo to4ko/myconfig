@@ -346,6 +346,7 @@ sensor:
   - platform: pulse_counter
     pin: GPIO12 # TO GPIO13
     unit_of_measurement: 'W'
+    id: id_power
     update_interval: 10s
     name: ${board_name}_Power_Meter
     filters:
@@ -353,6 +354,108 @@ sensor:
     internal_filter: 10us
     accuracy_decimals: 0
 #    internal_filter: 10000us
+
+  - platform: template
+    name: ${board_name}_Power_Night
+    id: id_power_night
+    icon: mdi:speedometer
+    lambda: |- 
+      auto id_loc_time = id(sntp_time).now();
+      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
+        if ( (id(sntp_time).now().hour >= 23) || (id(sntp_time).now().hour >= 0 && id(sntp_time).now().hour < 7) ) {
+          return id(id_power).state;
+        } else {
+          return 0.0;
+        }
+      } else {
+        return 0.0;
+      } 
+    accuracy_decimals: 1
+    update_interval: 15s
+    unit_of_measurement: 'W'
+    
+  - platform: template
+    name: ${board_name}_Power_Day
+    id: id_power_day
+    icon: mdi:speedometer
+    lambda: |-
+      auto id_loc_time = id(sntp_time).now();
+      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
+        if ( (id(sntp_time).now().hour >= 7 && id(sntp_time).now().hour < 23) ) {
+          return id(id_power).state;
+        } else {
+          return 0.0;
+        }
+      } else {
+        return 0.0;
+      }         
+    accuracy_decimals: 1
+    update_interval: 15s
+    unit_of_measurement: 'W'
+
+  - platform: integration
+    name: ${board_name}_Energy_Monthly
+    id: id_energy_monthly
+    sensor: id_power
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true    
+
+  - platform: integration
+    name: ${board_name}_Energy_Monthly_Day
+    id: id_energy_monthly_day
+    sensor: id_power_day
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true   
+
+  - platform: integration
+    name: ${board_name}_Energy_Monthly_Night
+    id: id_energy_monthly_night
+    sensor: id_power_night
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true     
+
+  - platform: total_daily_energy
+    name: ${board_name}_Energy_Daily
+    icon: mdi:gauge
+    id: id_energy_daily
+    power_id: id_power
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3            
+
+  - platform: total_daily_energy
+    name: ${board_name}_Energy_Daily_Night
+    icon: mdi:gauge
+    id: id_energy_daily_night
+    power_id: id_power_night
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+
+  - platform: total_daily_energy
+    name: ${board_name}_Energy_Daily_Day
+    icon: mdi:gauge
+    id: id_energy_daily_day
+    power_id: id_power_day
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+
 
 switch:
   - platform: restart
@@ -495,6 +598,22 @@ switch:
       - switch.turn_off: relay4
       - light.turn_off: 
           id: light_blue_led
+
+  - platform: template
+    name: ${board_name}_Energy_Reset_Monthly_Night
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly_night     
+
+  - platform: template
+    name: ${board_name}_Energy_Reset_Monthly_Day
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly_day
+
+  - platform: template #
+    name: ${board_name}_Energy_Reset_Monthly
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly
+          
 output:
   - platform: ledc
     pin: GPIO25
@@ -674,196 +793,9 @@ light:
                 brightness: 50%
                 transition_length: 50ms
 
-  - platform: fastled_clockless
-    chipset: WS2812B
-    pin: GPIO33
-    num_leds: 3
-    rgb_order: GRB
-    name: ${board_name}_Light
-    id: light_full
-    effects:
-      - random:
-      - strobe:
-      - flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-      - addressable_scan:
-      - addressable_twinkle:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:
-
-  - platform: partition
-    name: ${board_name}_Light3
-    id: light_3
-    segments:
-      - id: light_full
-        from: 2
-        to: 2
-    effects:
-      - automation:
-          name: "Blink"
-          sequence:
-            - light.turn_on:
-                id: light_3
-                brightness: 50%
-                transition_length: 500ms
-                red: 0
-                green: 0
-                blue: 1
-            - delay: 1000ms
-            - light.turn_on:
-                id: light_3
-                brightness: 1%
-                transition_length: 300ms
-                red: 0
-                green: 0
-                blue: 1
-            - delay: 500ms
-      - automation:
-          name: "Blink Fast"
-          sequence:
-            - light.turn_on:
-                id: light_3
-                brightness: 50%
-                transition_length: 50ms
-                red: 0
-                green: 0
-                blue: 1
-            - delay: 450ms
-            - light.turn_on:
-                id: light_3
-                brightness: 1%
-                transition_length: 50ms
-                red: 0
-                green: 0
-                blue: 1
-            - delay: 450ms
-      - automation:
-          name: "Half"
-          sequence:
-            - light.turn_on:
-                id: light_3
-                brightness: 50%
-                transition_length: 50ms      
-                red: 0
-                green: 0
-                blue: 1
-
-  - platform: partition
-    name: ${board_name}_Light2
-    id: light_2
-    segments:
-      - id: light_full
-        from: 1
-        to: 1
-    effects:
-      - automation:
-          name: "Blink"
-          sequence:
-            - light.turn_on:
-                id: light_2
-                brightness: 50%
-                transition_length: 500ms
-                red: 0
-                green: 1
-                blue: 0
-            - delay: 1000ms
-            - light.turn_on:
-                id: light_2
-                brightness: 1%
-                transition_length: 300ms
-                red: 0
-                green: 1
-                blue: 0
-            - delay: 500ms
-      - automation:
-          name: "Blink Fast"
-          sequence:
-            - light.turn_on:
-                id: light_2
-                brightness: 50%
-                transition_length: 50ms
-                red: 0
-                green: 1
-                blue: 0
-            - delay: 450ms
-            - light.turn_on:
-                id: light_2
-                brightness: 1%
-                transition_length: 50ms
-                red: 0
-                green: 1
-                blue: 0
-            - delay: 450ms
-      - automation:
-          name: "Half"
-          sequence:
-            - light.turn_on:
-                id: light_2
-                brightness: 50%
-                transition_length: 50ms      
-                red: 0
-                green: 1
-                blue: 0
-
-  - platform: partition
-    name: ${board_name}_Light1
-    id: light_1
-    segments:
-      - id: light_full
-        from: 0
-        to: 0
-    effects:
-      - automation:
-          name: "Blink"
-          sequence:
-            - light.turn_on:
-                id: light_1
-                brightness: 50%
-                transition_length: 500ms
-                red: 1
-                green: 1
-                blue: 0
-            - delay: 1000ms
-            - light.turn_on:
-                id: light_1
-                brightness: 1%
-                transition_length: 300ms
-                red: 1
-                green: 1
-                blue: 0
-            - delay: 500ms
-      - automation:
-          name: "Blink Fast"
-          sequence:
-            - light.turn_on:
-                id: light_1
-                brightness: 50%
-                transition_length: 50ms
-                red: 1
-                green: 1
-                blue: 0
-            - delay: 450ms
-            - light.turn_on:
-                id: light_1
-                brightness: 1%
-                transition_length: 50ms
-                red: 1
-                green: 1
-                blue: 0
-            - delay: 450ms
-      - automation:
-          name: "Half"
-          sequence:
-            - light.turn_on:
-                id: light_1
-                brightness: 50%
-                transition_length: 50ms      
-                red: 1
-                green: 1
-                blue: 0
-
 time:
   - platform: homeassistant
     id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: UTC-3

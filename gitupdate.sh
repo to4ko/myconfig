@@ -12,7 +12,7 @@ VAL=`date '+%d.%m.%Y_%H:%M:%S'`
 git commit -m "${VAL}"
 echo "-----> git commit done"
 git push origin master
-echo "-----> git push dene"
+echo "-----> git push done"
 echo "-----> all done"
 
 exit

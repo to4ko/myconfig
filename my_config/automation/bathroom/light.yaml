@@ -49,10 +49,29 @@
       entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
       to: 'off'
       from: 'on'
+  action:
+    - service: light.turn_off
+      entity_id: light.mirror_light_b
+      data:
+        transition: 5
+        
+# ##################################
+# Bathroom - Mirror off auto
+# ################################## 
+- alias: bathroom_mirror_off_auto
+#  id: bathroom_mirror_off_auto
+  initial_state: true
+  mode: queued
+  trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000236bc6d_motion
       to: 'off'
-      for: "00:10:00"
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: input_boolean.bathroom_occupancy
+      state: 'off'
   action:
     - service: light.turn_off
       entity_id: light.mirror_light_b
@@ -462,14 +481,23 @@
 #  id: bathroom_mirror_light_reset
   initial_state: true
   trigger:
-    - platform: time_pattern
-      minutes: "/1"
+    # - platform: time_pattern
+    #   minutes: "/1"
+    - platform: state
+      entity_id: light.mirror_light_b
+      to: 'unavailable'
+      for:
+        minutes: 2
+    - platform: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 0
+      below: 2
   condition:
     - condition: state
       entity_id: light.mirror_light_b
       state: 'unavailable'
-      for:
-        minutes: 2
+      # for:
+      #   minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.mirror_light_b_restart

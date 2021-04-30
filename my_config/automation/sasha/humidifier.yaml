@@ -12,6 +12,8 @@
     - platform: numeric_state
       entity_id: sensor.humidifier_water_level
       below: 10
+      for:
+        minutes: 3
   condition:
     condition: and
     conditions:
@@ -51,14 +53,13 @@
 #  id: sasha_humidifier_set_target_humidity
   initial_state: true
   trigger:
-    platform: state
-    entity_id: input_select.humidifier2_target_humidity
+    - platform: state
+      entity_id: input_select.humidifier2_target_humidity
   action:
-    service: xiaomi_miio.fan_set_target_humidity
-    data:
-      entity_id: fan.humidifier2
-      humidity: >
-        {{ states('input_select.humidifier2_target_humidity') }}
+    - service: xiaomi_miio.fan_set_target_humidity
+      data:
+        entity_id: fan.humidifier2
+        humidity: "{{ states('input_select.humidifier2_target_humidity') }}"
 
 
 # ##################################
@@ -66,12 +67,13 @@
 # ##################################
 - alias: sasha_humidifier_get_target_humidity
 #- id: sasha_humidifier_get_target_humidity  
+  initial_state: true
   trigger:
-    platform: template
-    value_template: '{{ states.fan.humidifier2.attributes.target_humidity }}'
+    - platform: template
+      value_template: '{{ states.fan.humidifier2.attributes.target_humidity }}'
   action:
-    service: input_select.select_option
-    entity_id: input_select.humidifier2_target_humidity
-    data:
-      option: >
-        {{ state_attr('fan.humidifier2','target_humidity') }}
+    - service: input_select.select_option
+      entity_id: input_select.humidifier2_target_humidity
+      data:
+        option: >
+          {{ state_attr('fan.humidifier2','target_humidity') }}

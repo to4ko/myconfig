@@ -4,32 +4,44 @@ substitutions:
 esphome:
   name: ${board_name}
   platform: ESP8266
-  comment: Mirror Light B Switch
+  comment: Doorbell HB
   board: esp01_1m
   on_boot:
     then:    
-      - switch.turn_on: relay
-      - light.turn_on: wifi_led
-
-
+      - switch.turn_off: relay
+      - light.turn_off: wifi_led
 
 wifi:
-  ssid: !secret wifi_ssid_k
-  password: !secret wifi_pass
-  domain: .localdomain
   reboot_timeout: 15min
   output_power: 17.5dB
-  fast_connect: true
+  #fast_connect: true
   power_save_mode: none
+  networks:
+    - ssid: !secret wifi_ssid_hb
+      password: !secret wifi_pass
+      hidden: true
+      bssid: !secret wifi_bssid_hb_iot
+      priority: 2
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      bssid: !secret wifi_bssid_hb_main
+      priority: 1
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      priority: 0  
   manual_ip:
     static_ip: 192.168.1.52
     gateway: 192.168.1.1
     subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
 
 logger:
 
 api:
-  reboot_timeout: 0s
+  reboot_timeout: 10min
 
 ota:
 
@@ -75,29 +87,41 @@ binary_sensor:
           - switch.turn_on: id_restart
 
   - platform: gpio
-    name: ${board_name}_sw
+    name: ${board_name}_Switch
     pin: 
       number: GPIO04
       inverted: True
     id: switch_1
-    # on_press:
-    #   then:
-    #     - switch.toggle:
-    #         id: relay
-    # on_release:
-    #   then:
-    #     - switch.toggle:
-    #         id: relay
-
+    on_press:
+      then:
+        - if:
+            condition:
+              - not:
+                  binary_sensor.is_on: id_silent
+            then:
+              - light.turn_on: wifi_led
+              - switch.turn_on:
+                  id: relay
+              - delay: 00:00:05
+              - switch.turn_off:
+                  id: relay
+              - light.turn_off: wifi_led
+              
   - platform: status
     name: ${board_name}_Status
+
+  - platform: homeassistant
+    name: ${board_name}_silent_ha
+    id: id_silent
+    entity_id: input_boolean.silent_mode
+
 
 switch:
   - platform: gpio
     name: ${board_name}_Relay
     pin: GPIO12
     id: relay
-    restore_mode: ALWAYS_ON
+    restore_mode: RESTORE_DEFAULT_OFF
 
   - platform: restart
     name: ${board_name}_Restart
