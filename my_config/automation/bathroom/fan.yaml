@@ -97,12 +97,22 @@
 #  id: bathroom_fan_auto_off
   initial_state: true
   trigger:
-    - platform: template
-      value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int < 60) and is_state('switch.esp32_bathroom_node_relay_3','on') or (is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on'))}}"
+    - platform: state
+      entity_id: sensor.high_humidity_b
+      to: 'off'
+    - platform: state
+      entity_id: light.mirror_light_b, switch.0x4cf8cdf3c7a9a48_channel_2
+      to: 'on'
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
   condition:
     - condition: state
       entity_id: timer.fan_b
       state: 'idle'
+    - condition: template
+      value_template: "{{ is_state('switch.esp32_bathroom_node_relay_3','on') or is_state('switch.0x158d0002482619_switch','on') }}"
   action:
     - service: switch.turn_off
       entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch
@@ -114,29 +124,23 @@
 #  id: bathroom_fan_auto_on
   initial_state: true
   trigger:
-    - platform: template
-      value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int > 75 and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') and is_state('light.mirror_light_b','off')) and is_state('switch.esp32_bathroom_node_relay_3','off') and is_state('switch.esp32_bathroom_node_relay_4','off')}}"
+    - platform: state
+      entity_id: sensor.high_humidity_b
+      to: 'on'
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
   condition:
     - condition: state
       entity_id: timer.fan_b
       state: 'idle'
+    - condition: state
+      entity_id: binary_sensor.light_b
+      state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch
-
-    # - choose:
-    #     - conditions:
-    #         - condition: template
-    #           value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int < 55) and is_state('switch.esp32_bathroom_node_relay_3','on') or (is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on'))}}"
-    #       sequence:
-    #         - service: switch.turn_off
-    #           entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch
-    #     - conditions:
-    #         - condition: template
-    #           value_template: "{{ (states('sensor.0x158d00020d7c3a_humidity')|int > 60 and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') and is_state('light.mirror_light_b','off')) and is_state('switch.esp32_bathroom_node_relay_3','off') and is_state('switch.esp32_bathroom_node_relay_4','off')}}"
-    #       sequence:
-    #         - service: switch.turn_on
-    #           entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch
 
 # ##################################
 # Bathroom - Bottom Fan On
