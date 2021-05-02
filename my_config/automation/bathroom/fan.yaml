@@ -18,8 +18,8 @@
               value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
           sequence:
             - service: xiaomi_miio.light_set_scene
-              entity_id: light.mirror_light_b
               data:
+                entity_id: light.mirror_light_b
                 scene: 4
         - conditions:
             - condition: state
@@ -63,8 +63,8 @@
               value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
           sequence:
             - service: xiaomi_miio.light_set_scene
-              entity_id: light.mirror_light_b
               data:
+                entity_id: light.mirror_light_b
                 scene: 1
         - conditions:
             - condition: template
@@ -98,7 +98,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: sensor.high_humidity_b
+      entity_id: binary_sensor.high_humidity_b
       to: 'off'
     - platform: state
       entity_id: light.mirror_light_b, switch.0x4cf8cdf3c7a9a48_channel_2
@@ -111,8 +111,9 @@
     - condition: state
       entity_id: timer.fan_b
       state: 'idle'
-    - condition: template
-      value_template: "{{ is_state('switch.esp32_bathroom_node_relay_3','on') or is_state('switch.0x158d0002482619_switch','on') }}"
+    - condition: state
+      entity_id: binary_sensor.high_humidity_b
+      state: 'off'
   action:
     - service: switch.turn_off
       entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch
@@ -125,7 +126,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: sensor.high_humidity_b
+      entity_id: binary_sensor.high_humidity_b
       to: 'on'
     - platform: homeassistant
       event: start
@@ -138,6 +139,9 @@
     - condition: state
       entity_id: binary_sensor.light_b
       state: 'off'
+    - condition: state
+      entity_id: binary_sensor.high_humidity_b
+      state: 'on'
   action:
     - service: switch.turn_on
       entity_id: switch.esp32_bathroom_node_relay_3, switch.0x158d0002482619_switch
