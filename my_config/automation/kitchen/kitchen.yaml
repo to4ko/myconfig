@@ -154,7 +154,7 @@
 #  id: kitchen_ro_filter_usage
   initial_state: true
   trigger:
-    - platform: numeric_state
+    - platform: state
       entity_id: 
         - sensor.ro_filter1_wearing
         - sensor.ro_filter2_wearing
@@ -162,7 +162,11 @@
         - sensor.ro_membrane_wearing
         - sensor.ro_mineralizer_wearing
         - sensor.ro_postfilter_wearing
-      above: 90
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state|int % 2 == 0 }}"
+    - condition: template
+      value_template: "{{ trigger.to_state.state|int > 90 }}"
   action:
     - service: notify.telegram
       data:
@@ -174,7 +178,7 @@
           {%- elif 'membrane' in trigger.entity_id %} мембраны
           {%- elif 'mineralizer' in trigger.entity_id %} минерализатора
           {%- elif 'postfilter' in trigger.entity_id %} постфильтра
-          {%-else%}ХХХ{%-endif%} больше 90%. Требуется замена!
+          {%-else%}ХХХ{%-endif%} больше 95%. Требуется замена!
 
 # ##################################
 # Kitchen - Oven notify

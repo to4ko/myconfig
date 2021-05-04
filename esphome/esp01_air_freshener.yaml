@@ -41,7 +41,7 @@ ota:
 deep_sleep:
   id: deep_sleep_1
   run_duration: 20s
-  sleep_duration: 5min
+  #sleep_duration: 5min
 
 # web_server:
 #   port: 80
@@ -59,31 +59,21 @@ interval:
                       return  { str };    
       - lambda: |-
             if ((id(on_flag).state) == 1 and (id(sleep_avail).state) == 1){
-              id(script1).execute();}
+              id(spray_sleep).execute();}
             if ((id(on_flag).state) == 0 and (id(sleep_avail).state) == 1){
-              id(script2).execute();}
+              id(sleep_only).execute();}
             if ((id(on_flag).state) == 0 and (id(sleep_avail).state) == 0){
-              id(script3).execute();}
+              id(ota_mode).execute();}
             if ((id(on_flag).state) == 1 and (id(sleep_avail).state) == 0){
-              id(script4).execute();}
- 
+              id(spray_only).execute();}
  
 script:
-  - id: script1
+  - id: spray_sleep
     then:
-      #- deep_sleep.prevent: deep_sleep_1
       - mqtt.publish:
           topic: esp01_air_freshener/air_fresh
           payload: 0
           retain: true
-      # - mqtt.publish:
-      #     topic: esp01_air_freshener/last_hearbeat
-      #     retain: true
-      #     payload: !lambda |-
-      #                 char str[30];
-      #                 time_t currTime = id(sntp_time).now().timestamp;
-      #                 strftime(str, sizeof(str), "%d-%m-%Y %H:%M:%S", localtime(&currTime));
-      #                 return  { str };
       - switch.turn_on: spray
       - mqtt.publish:
           topic: esp01_air_freshener/last_spray
@@ -99,42 +89,32 @@ script:
             return to_string(id(sprays_count).state + 1);          
           retain: true
       - delay: 1s
-      - deep_sleep.enter: deep_sleep_1
- 
-  - id: script2
+      #- deep_sleep.enter: deep_sleep_1
+      - script.execute: sleep_only
+      
+  - id: sleep_only
     then:
-      # - mqtt.publish:
-      #     topic: esp01_air_freshener/last_hearbeat
-      #     retain: true
-      #     payload: !lambda |-
-      #                 char str[30];
-      #                 time_t currTime = id(sntp_time).now().timestamp;
-      #                 strftime(str, sizeof(str), "%d-%m-%Y %H:%M:%S", localtime(&currTime));
-      #                 return  { str };
-      - deep_sleep.enter: deep_sleep_1
- 
-  - id: script3
+      - if:
+          condition: 
+            lambda: 'return (id(sntp_time).now().hour) < 7;'
+          then:
+            - logger.log: "Deep sleep 20min"
+            - deep_sleep.enter: 
+                id: deep_sleep_1
+                sleep_duration: 20min
+          else:
+            - logger.log: "Deep sleep 5min"
+            - deep_sleep.enter: 
+                id: deep_sleep_1
+                sleep_duration: 5min
+
+
+  - id: ota_mode
     then:
-      # - mqtt.publish:
-      #     topic: esp01_air_freshener/last_hearbeat
-      #     retain: true
-      #     payload: !lambda |-
-      #                 char str[30];
-      #                 time_t currTime = id(sntp_time).now().timestamp;
-      #                 strftime(str, sizeof(str), "%d-%m-%Y %H:%M:%S", localtime(&currTime));
-      #                 return  { str };
       - deep_sleep.prevent: deep_sleep_1
  
-  - id: script4
+  - id: spray_only
     then:
-      # - mqtt.publish:
-      #     topic: esp01_air_freshener/last_hearbeat
-      #     retain: true
-      #     payload: !lambda |-
-      #                 char str[30];
-      #                 time_t currTime = id(sntp_time).now().timestamp;
-      #                 strftime(str, sizeof(str), "%d-%m-%Y %H:%M:%S", localtime(&currTime));
-      #                 return  { str };
       - mqtt.publish:
           topic: esp01_air_freshener/air_fresh
           payload: 0
