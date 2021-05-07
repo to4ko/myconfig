@@ -1455,3 +1455,39 @@
     - service: notify.telegram
       data:
         message: "\U0001f4cd {{state_attr(trigger.entity_id,'friendly_name').split('_Uptime_s')[0]}} перезапустился, аптайм {{states(trigger.entity_id)}}с!"
+        
+# ##################################
+# System - Air Quality pm25
+# ##################################
+- alias: system_air_quality_pm25
+#  id: system_air_quality_pm25
+  initial_state: true
+  trigger:
+    - platform: numeric_state
+      entity_id: air_quality.opensense_map
+      above: 10
+      for:
+        minutes: 5
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f32a Внимание! Уровень PM2.5 высокий! {{states('air_quality.opensense_map')}}мкг/м3!"
+  
+# ##################################
+# System - Air Quality pm10
+# ##################################
+- alias: system_air_quality_pm10
+#  id: system_air_quality_pm10
+  initial_state: true
+  trigger:
+    - platform: numeric_state
+      entity_id: air_quality.opensense_map
+      attribute: particulate_matter_10
+      above: 80
+      for:
+        minutes: 5
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f32a Внимание! Уровень PM10 высокий! {{state_attr('air_quality.opensense_map','particulate_matter_10')}}мкг/м3!"
+  
