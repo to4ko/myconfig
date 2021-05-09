@@ -1,0 +1,26 @@
+  - sensor:
+      - name: Pressure Gradient
+        state: "{{(state_attr('binary_sensor.pressure_falling_fast','gradient')|float * 3600*100)|int(0)}}"
+        icon: mdi:chart-line-variant
+        unit_of_measurement: 'Pah'
+
+      - name: Pressure Gradient Air Valve
+        state: "{{(state_attr('binary_sensor.pressure_rising_fast_air_valve','gradient')|float * 3600*100)|int(0)}}"
+        icon: mdi:chart-line-variant
+        unit_of_measurement: 'Pah'
+      
+      - name: Pressure Indicator
+        state: >
+          {% if is_state('binary_sensor.pressure_falling_fast','on')%} Falling Fast
+          {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off')%} Falling Slow
+          {% elif is_state('binary_sensor.pressure_rising_fast','on')%} Raising Fast
+          {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} Raising Slow
+          {% else %} Stable
+          {% endif %}
+        icon: >
+          {% if is_state('binary_sensor.pressure_falling_fast','on')%} mdi:chevron-triple-down
+          {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off') %} mdi:chevron-down
+          {% elif is_state('binary_sensor.pressure_rising_fast','on')%} mdi:chevron-triple-up
+          {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} mdi:chevron-up
+          {% else %} mdi:checkbox-blank-circle-outline
+          {% endif %}

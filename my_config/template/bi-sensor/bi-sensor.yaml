@@ -1,0 +1,320 @@
+  - binary_sensor:
+
+      - name: Light Outside Mi
+        state: "{{[states('sensor.0x4cf8cdf3c7754a8_illuminance')|int(-1),states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max > states('input_number.outside_light_level')|int(250)}}"
+        icon: >
+          {% if is_state('binary_sensor.light_outside_mi','on') %}
+          mdi:brightness-5
+          {% else %}
+          mdi:brightness-4
+          {% endif %}
+
+      - name: Dark Outside Mi
+        state: "{{[states('sensor.0x4cf8cdf3c7754a8_illuminance')|int(-1),states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max < states('input_number.outside_light_level')|int(250)}}"
+        icon: >
+          {% if is_state('binary_sensor.dark_outside_mi','on') %}
+          mdi:brightness-4
+          {% else %}
+          mdi:brightness-5
+          {% endif %}
+
+      - name: Updater Supervisor
+        device_class: problem
+        state: "{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}"
+        availability: "{{ (states('sensor.supervisor_updates') | int(-1)) > -1 }}"
+  
+      - name: Updater Addons
+        device_class: problem
+        state: "{{ states('sensor.supervisor_updates') | int > 0 }}"
+
+      - name: RO Pump Status
+        icon: mdi:water-pump
+        state: "{{ is_state('binary_sensor.0x158d000423f316_contact','off') }}"
+
+      - name: Bed Led Enable
+        state: "{{ is_state('binary_sensor.light_outside_mi','off') and is_state('light.square_led_v','off')}}"
+        icon: >
+          {% if is_state('binary_sensor.bed_led_enable','on') %}
+          mdi:brightness-5
+          {% else %}
+          mdi:brightness-4
+          {% endif %}
+
+      - name: Motion 1h
+        state: "{{ is_state('group.motioninternal', 'on') }}"
+        delay_off: "01:00:00"
+        device_class: motion
+  
+      - name: Someone Home 1h
+        state: "{{ is_state('binary_sensor.motion_1h', 'on') or is_state('group.persons', 'home') }}"
+        device_class: occupancy
+
+      - name: Update Available
+        device_class: occupancy
+        state: "{{(states('sensor.ha_latest_version') > states('sensor.ha_installed_version')) and (states('sensor.ha_latest_version') not in ['unavailable', 'unknown', 'none'])}}"
+
+      - name: Toilet Usage
+        icon: mdi:toilet
+        state: "{{ is_state('binary_sensor.0x158d000232ddd6_contact','on') }}"
+        device_class: occupancy
+
+      - name: High Humidity B
+        device_class: moisture
+        state: "{{ states('sensor.0x158d00020d7c3a_humidity') | float > 65 }}"
+        delay_off: '00:05:00'
+
+      - name: Monitor Dell
+        icon: mdi:monitor
+        state: "{{ states('sensor.0x158d0003600ea4_power')|float > 5 }}"
+
+      - name: TV V
+        icon: mdi:television
+        state: "{{ is_state('binary_sensor.0x158d000236fdc9_contact','on') }}"
+
+      - name: Mi Box V
+        icon: mdi:play-network
+        state: "{{ is_state_attr('device_tracker.mi_box_v','vlan',0)}}"
+
+      - name: TV K
+        icon: mdi:television-box
+        state: "{{ is_state('binary_sensor.0x158d0002a1a47a_contact','on') }}"
+
+      - name: Mi Stick K
+        icon: mdi:youtube-tv
+        state: "{{ is_state_attr('device_tracker.mi_stick_k','vlan',0)}}"
+
+      - name: Breather V
+        icon: mdi:power
+        state: "{{ states('sensor.0x158d000344998e_power')|float > 5 }}"
+
+      - name: Breather S
+        icon: mdi:power
+        state: "{{ states('sensor.0x158d00036148b9_power')|float > 5 }}"
+
+      - name: Breather MB
+        icon: mdi:power
+        state: "{{ states('sensor.0x158d000345119e_power')|float > 5 }}"
+
+      - name: Washer B
+        delay_off:
+          minutes: 2
+        state: "{{ states('sensor.sonoff_pow_r2_1_power')|float > 5 }}"
+        icon: >
+          {% if is_state("binary_sensor.washer_b", "on") and not is_state('input_select.washer_state','Drying')%}
+            mdi:washing-machine
+          {% elif is_state("binary_sensor.washer_b", "off") and is_state('input_select.washer_state','Drying')%}
+            mdi:washing-machine-alert
+          {% else %}
+            mdi:washing-machine
+          {% endif %}
+
+      - name: Main Light HB
+        state: "{{ is_state('switch.0x158d000223921b_channel_1','on') or is_state('switch.0x158d000253f04a_channel_2','on') }}"
+        icon: mdi:lightbulb-group
+
+      - name: Light HB
+        state: "{{ is_state('switch.0x158d000223921b_channel_1','on') or is_state('switch.0x158d000253f04a_channel_2','on') or is_state('light.led_strip_hb','on') or is_state('light.led_strip_entrance_hb','on') }}"
+        icon: mdi:lightbulb-group
+
+      - name: Light B
+        state: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
+        icon: mdi:lightbulb-group
+
+      - name: Light K
+        state: "{{ is_state('light.round_led_k','on') or is_state('switch.0x158d000366815b_channel_1','on') or is_state('switch.0x158d000366815b_channel_2','on') or is_state('switch.esp32_hood_k_light','on') or is_state('light.esp32_node_k_light','on') }}"
+        icon: mdi:lightbulb-group
+
+      - name: Fridge HB
+        icon: mdi:fridge
+        state: "{{ states('sensor.0x158d0003539447_power')|float > 5 }}"
+      
+      - name: Kettle K
+        state: "{{ states('sensor.0x158d00028c9875_power')|float > 50 }}"
+        icon: >
+          {% if states('sensor.0x158d00028c9875_power')|float > 500 %}
+          mdi:kettle-steam
+          {% else %}
+          mdi:kettle-outline
+          {% endif %}
+
+      - name: Kettle Boil K
+        icon: mdi:kettle-steam
+        state: "{{ states('sensor.0x158d00028c9875_power')|float > 500 }}"
+        delay_off:
+          minutes: 1
+
+      - name: Microwave K
+        icon: mdi:microwave
+        state: "{{ states('sensor.0x158d00028a54e4_power')|float > 10 }}"
+
+      - name: Ippon 1200 Status
+        state: "{{ states('sensor.ippon_1200_status_data') not in ['none','unknown','unavailable'] }}"
+        icon: mdi:battery
+        device_class: power
+      
+      - name: Ippon 1050 Status
+        state: "{{ states('sensor.ippon_1050_status_data') not in ['none','unknown','unavailable'] }}"
+        icon: mdi:battery
+        device_class: power
+
+      - name: Cyber650 K Status
+        state: "{{ states('sensor.cyber650_k_status_data') not in ['none','unknown','unavailable'] }}"
+        icon: mdi:battery
+        device_class: power
+
+      - name: Ippon 650 Status
+        state: "{{ states('sensor.ippon_650_status_data') not in ['none','unknown','unavailable'] }}"
+        icon: mdi:battery
+        device_class: power
+
+      - name: Family Home
+        device_class: presence
+        state: "{{ is_state('person.dima','home') or is_state('person.sandra','home') or is_state('person.vova','home') or is_state('person.sasha','home') }}"
+
+      - name: Motion HB
+        device_class: motion
+        state: "{{ is_state('binary_sensor.0x158d0002b482e9_motion', 'on') or is_state('binary_sensor.0x158d0001e05856_motion', 'on') }}"
+        icon: >
+          {% if is_state('binary_sensor.motion_hb','on') %}
+          mdi:run
+          {% else %}
+          mdi:walk
+          {% endif %}
+
+      - name: Motion K
+        device_class: motion
+        state: "{{ is_state('binary_sensor.0x158d0002b4729d_motion', 'on') or is_state('binary_sensor.0x158d0002b48381_motion', 'on') or is_state('binary_sensor.50ec50cd0062_motion','on') }}"
+        icon: >
+          {% if is_state('binary_sensor.motion_k','on') %}
+          mdi:run
+          {% else %}
+          mdi:walk
+          {% endif %}
+
+      - name: Motion S
+        device_class: motion
+        state: "{{ is_state('binary_sensor.0x158d000224f89f_motion', 'on') or is_state('binary_sensor.0x158d0003140824_motion', 'on') }}"
+        icon: >
+          {% if is_state('binary_sensor.motion_s','on') %}
+          mdi:run
+          {% else %}
+          mdi:walk
+          {% endif %}
+
+      - name: Motion V
+        device_class: motion
+        state: "{{ is_state('binary_sensor.0x158d000236bb94_motion', 'on') or is_state('binary_sensor.d1mini_bed_leds_motion_dima', 'on')  or is_state('binary_sensor.d1mini_bed_leds_motion_sandra', 'on')}}"
+        icon: >
+          {% if is_state('binary_sensor.motion_v','on') %}
+          mdi:run
+          {% else %}
+          mdi:walk
+          {% endif %}
+
+      - name: Motion HS
+        device_class: motion
+        state: "{{ is_state('binary_sensor.0x158d0001ae9f61_motion', 'on') or is_state('binary_sensor.0x158d0002b43ad4_motion', 'on') }}"
+        icon: >
+          {% if is_state('binary_sensor.motion_hs','on') %}
+          mdi:run
+          {% else %}
+          mdi:walk
+          {% endif %}
+
+      - name: Bottom Lock
+        device_class: lock
+        state: "{{is_state('binary_sensor.0x158d0002a1a4b2_contact','on')}}"
+        delay_off:
+          seconds: 2
+        delay_on:
+          seconds: 2
+        icon: >
+          {% if is_state('binary_sensor.bottom_lock','on') %}
+          mdi:lock-open-variant
+          {% else %}
+          mdi:lock
+          {% endif %}
+      
+      - name: Top Lock
+        device_class: lock
+        state: "{{is_state('binary_sensor.0x158d0002b7c2c8_contact','on')}}"
+        delay_off:
+          seconds: 2
+        delay_on:
+          seconds: 2
+        icon: >
+          {% if is_state('binary_sensor.top_lock','on') %}
+          mdi:lock-open-variant-outline
+          {% else %}
+          mdi:lock-outline
+          {% endif %}
+          
+      - name: Ice Alarm Current
+        device_class: cold
+        state: "{{ 1 > states('sensor.esp32_node_mb_outside')|float > -3}}"
+
+      - name: Ice Alarm 0d
+        device_class: cold
+        state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_0d')|float > -3}}"
+
+      - name: Ice Alarm 1d
+        device_class: cold
+        state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_1d')|float > -3}}"
+
+
+
+  - trigger:
+      - platform: time_pattern
+        hours: "/1"
+    binary_sensor:
+      - name: Bright Light Allowed
+        state: "{{ (is_state('binary_sensor.workday_sensor','on') and is_state('binary_sensor.tod_day','on')) or (is_state('binary_sensor.workday_sensor','off') and is_state('binary_sensor.tod_day_non_working','on')) }}"
+        icon: >
+          {% if is_state('binary_sensor.bright_light_allowed','on') %}
+          mdi:brightness-5
+          {% else %}
+          mdi:brightness-4
+          {% endif %}
+
+      - name: Noise Allowed
+        state: "{{ states('binary_sensor.workday_sensor') == 'on' and ( ( hour >= 9 and hour < 13 ) or ( hour >= 15 and hour < 19) ) }}"
+        icon: >
+          {% if is_state('binary_sensor.noise_allowed','on') %}
+          mdi:volume-high
+          {% else %}
+          mdi:volume-off
+          {% endif %}
+          
+          
+      # someone_showering:
+      #   friendly_name: Someone is showering
+      #   value_template: >
+      #     {% set humidity = states('sensor.0x158d00020d7c3a_humidity') | float(0) %}
+      #     {% set treshold = 1.05 * state_attr('sensor.humidity_bathroom_stats', "median") | float(0) %}
+      #     {% set derivative = states('sensor.humidity_bathroom_derivative') | float(0) %}
+      #     {{ humidity > treshold and derivative > 0.25 and is_state('binary_sensor.0x158d0002a14c5e_contact','off') }}
+      #   device_class: occupancy
+
+      # hot_water_24h:
+      #   friendly_name: No Hot Water Sensor Update 24h
+      #   value_template: "{{ states('sensor.time') and as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000232de79_contact'].last_changed) > 24*60*60 }}"
+      #   device_class: moving
+
+      # cold_water_24h:
+      #   friendly_name: No Cold Water Sensor Update 24h
+      #   value_template: "{{ states('sensor.time') and as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000236fcd5_contact'].last_changed) > 24*60*60 }}"
+      #   device_class: moving
+
+      # gw3_devices_unavailability:
+      #   friendly_name: GW3 Devices Unvailability Flag
+      #   value_template: "{{ expand('group.gw3_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count > 0}}"
+      #   device_class: problem          
+
+  # - platform: template
+  #   sensors:
+
+      # sandra_home:
+      #   friendly_name: Sandra home
+      #   value_template: "{{is_state('person.sandra','home')}}"
+      #   delay_off: 120
+

@@ -5,8 +5,8 @@
 # #####################################################################################
 # Sasha Table Lamp (Philips E27)
 # ##################################
-- alias: sasha_table_lamp
-#  id: sasha_table_lamp
+- alias: sasha_led_white_control
+#  id: sasha_led_white_control
   initial_state: true
   mode: queued
   trigger:
@@ -356,16 +356,16 @@
                 transition: 5
 
 # ##################################
-# Sasha - LED Color V
+# Sasha - LED Color S Restart
 # ##################################
-- alias: sasha_led_color_v_reset
-#  id: sasha_led_color_v_reset
+- alias: sasha_led_color_s_reset
+#  id: sasha_led_color_s_reset
   initial_state: true
   trigger:
     # - platform: time_pattern
     #   minutes: "/1"
     - platform: state
-      entity_id: light.led_color_v
+      entity_id: light.led_color_s
       to: 'unavailable'
       for:
         minutes: 2
@@ -375,10 +375,54 @@
       below: 2
   condition:
     - condition: state
-      entity_id: light.led_color_v
+      entity_id: light.led_color_s
       state: 'unavailable'
       # for:
       #   minutes: 2
   action:
     - service: script.turn_on
-      entity_id: script.led_color_v_restart
+      entity_id: script.led_color_s_restart
+
+# ##################################
+# Sasha - LED Color S control
+# ##################################
+- alias: sasha_led_color_control
+#  id: sasha_led_color_control
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id: sensor.0x158d00016bdb4a_action
+      to:
+        - single
+        - double
+        - hold
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00016bdb4a_action
+              state: 'single'
+          sequence:
+            - service: light.toggle
+              entity_id: light.led_color_s
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00016bdb4a_action
+              state: 'double'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_color_s
+              data:
+                brightness_pct: 90
+                kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: sensor.0x158d00016bdb4a_action
+              state: 'hold'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_color_s
+              data:
+                brightness_pct: 5
+                kelvin: 3000      

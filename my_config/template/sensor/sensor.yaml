@@ -1,0 +1,143 @@
+  - sensor:
+
+      - name: Stove Temperature Median
+        state: "{{ state_attr('sensor.stove_temperature_stats', 'median') }}"
+        unit_of_measurement: '°C'
+        device_class: temperature
+    
+      - name: Next Sunrise
+        state: "{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%R')  }}"
+        icon: mdi:weather-sunset-up
+
+      - name: Next Sunset
+        state: "{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%R') }}"
+        icon: mdi:weather-sunset-down
+        
+      - name: Temperature Min Out
+        state: "{{ state_attr('sensor.out_temperature_stats', 'min_value') }}"
+        unit_of_measurement: '°C'
+        device_class: temperature
+
+      - name: Temperature Max Out
+        state: "{{ state_attr('sensor.out_temperature_stats', 'max_value') }}"
+        unit_of_measurement: '°C'
+        device_class: temperature
+
+      - name: Dewpoint B
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: >
+          {% set b = 17.368 %}
+          {% set c = 238.88 %}
+          {% set a = 6.1121 %}
+          {% set rh = states('sensor.0x158d00020d7c3a_humidity') | float %}
+          {% set t = states('sensor.0x158d00020d7c3a_temperature') | float %}
+          {% set gamma = log(rh / 100) + b * t / (c + t) %}
+          {{ (c * gamma / (b - gamma)) | round(1) }}
+
+      - name: Dewpoint T
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state: >
+          {% set b = 17.368 %}
+          {% set c = 238.88 %}
+          {% set a = 6.1121 %}
+          {% set rh = states('sensor.0x158d0001e58754_humidity') | float %}
+          {% set t = states('sensor.0x158d0001e58754_temperature') | float %}
+          {% set gamma = log(rh / 100) + b * t / (c + t) %}
+          {{ (c * gamma / (b - gamma)) | round(1) }}
+
+      - name: Zigbee Devices Unavailable
+        state: "{{ expand('group.zigbee_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
+        icon: >
+          {% if states('sensor.zigbee_devices_unavailable') == "on" %}
+          mdi:signal-off
+          {% else %}
+          mdi:signal
+          {% endif %}
+        unit_of_measurement: 'ea'
+
+      - name: WiFi Devices Unavailable
+        state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
+        icon: >
+          {% if states('sensor.wifi_devices_unavailable')|int >  0 %}
+          mdi:signal-off
+          {% else %}
+          mdi:signal
+          {% endif %}
+        unit_of_measurement: 'ea'
+
+      - name: Abs Humidity B
+        state: >-
+          {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float, states('sensor.0x158d00020d7c3a_temperature') %}
+          {% if not h or t == 'unknown' -%}
+           'unknown'
+          {%- else %}
+          {% set t = t | float %}
+          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
+          {% endif %}
+        unit_of_measurement: 'g/m³'
+        icon: mdi:water-percent
+
+      - name: Abs Humidity T
+        state: >-
+          {% set h, t = states('sensor.0x158d0001e58754_humidity') | float, states('sensor.0x158d0001e58754_temperature') %}
+          {% if not h or t == 'unknown' -%}
+           'unknown'
+          {%- else %}
+          {% set t = t | float %}
+          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
+          {% endif %}
+        unit_of_measurement: 'g/m³'
+        icon: mdi:water-percent
+
+      - name: Abs Humidity H
+        state: >-
+          {% set h, t = states('sensor.humidity_average') | float, states('sensor.temperature_average') %}
+          {% if not h or t == 'unknown' -%}
+          'unknown'
+          {%- else %}
+          {% set t = t | float %}
+          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
+          {% endif %}
+        unit_of_measurement: 'g/m³'
+        icon: mdi:water-percent
+
+      - name: Vova GPS Last Update
+        state: "{{as_timestamp(states.device_tracker.life360_vova_tsymbal.attributes.last_seen)|timestamp_local}}"
+        icon: mdi:crosshairs-question
+        attributes:
+          delta: "{{states('input_number.vova_gps_delta')}}"
+          
+      - name: Vova GPS Delta
+        state: "{{states('input_number.vova_gps_delta')}}"
+        icon: mdi:crosshairs-question
+        unit_of_measurement: 'm'
+
+      # restarts_per_day:
+      # - name: Qty Of Restart
+      #   state: "{{states('counter.restart_counter')|int}}"
+      #   unit_of_measurement: 'ea'
+
+      - name: Config Line Count Ratio
+        state: "{{ (states('sensor.config_line_count_code')|int / states('sensor.config_line_count')|int * 100) | round(0) }}"
+        unit_of_measurement: '%'
+        icon: mdi:brightness-percent
+          
+        
+      - name: Oven Target Temperature
+        state: "{{ states('input_select.oven_target_temperature')|int}}"
+        device_class: temperature
+        unit_of_measurement: "°C"
+
+      - name: GDrive Last Backup
+        icon: mdi:clock
+        state: "{{(as_timestamp(state_attr('sensor.snapshot_backup','last_snapshot')) )|timestamp_custom('%H:%M %d.%m.%Y ')}}"
+        
+      - name: GDrive Backup State
+        icon: mdi:backup-restore
+        state: "{{states('sensor.snapshot_backup')|capitalize|replace('_',' ')}}"
+        
+      - name: Git Stars
+        state: "{{state_attr('sensor.myconfig','stargazers')|int}}"
+        icon: mdi:star

@@ -162,61 +162,6 @@
     max_age:
       hours: 6
   
-  - platform: template
-    sensors:
-      stove_temperature_median:
-        friendly_name: Stove Temperature Median
-        value_template: "{{ state_attr('sensor.stove_temperature_stats', 'median') }}"
-        unit_of_measurement: '°C'
-        device_class: temperature
-    
-      nextsunrise:
-        friendly_name: 'Next Sunrise'
-        value_template: >
-          {{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%R')  }}
-        icon_template: mdi:weather-sunset-up
-      nextsunset:
-        friendly_name: 'Next Sunset'
-        value_template: >
-          {{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%R') }}
-        icon_template: mdi:weather-sunset-down
-        
-      temperature_min_out:
-        value_template: "{{ state_attr('sensor.out_temperature_stats', 'min_value') }}"
-        unit_of_measurement: '°C'
-        device_class: temperature
-
-      temperature_max_out:
-        value_template: "{{ state_attr('sensor.out_temperature_stats', 'max_value') }}"
-        unit_of_measurement: '°C'
-        device_class: temperature
-
-      dewpoint_b:
-        friendly_name: Dew Point B
-        unit_of_measurement: "°C"
-        device_class: temperature
-        value_template: >
-          {% set b = 17.368 %}
-          {% set c = 238.88 %}
-          {% set a = 6.1121 %}
-          {% set rh = states('sensor.0x158d00020d7c3a_humidity') | float %}
-          {% set t = states('sensor.0x158d00020d7c3a_temperature') | float %}
-          {% set gamma = log(rh / 100) + b * t / (c + t) %}
-          {{ (c * gamma / (b - gamma)) | round(1) }}
-
-      dewpoint_t:
-        friendly_name: Dew Point T
-        unit_of_measurement: "°C"
-        device_class: temperature
-        value_template: >
-          {% set b = 17.368 %}
-          {% set c = 238.88 %}
-          {% set a = 6.1121 %}
-          {% set rh = states('sensor.0x158d0001e58754_humidity') | float %}
-          {% set t = states('sensor.0x158d0001e58754_temperature') | float %}
-          {% set gamma = log(rh / 100) + b * t / (c + t) %}
-          {{ (c * gamma / (b - gamma)) | round(1) }}
-
   - platform: min_max
     type: mean
     name: Humidity Average
@@ -241,69 +186,6 @@
       - sensor.0x158d000233fb72_temperature
       - sensor.0x158d0002464ec0_temperature
 
-  - platform: template
-    sensors:
-      zigbee_devices_unavailable:
-        friendly_name: Zigbee Devices Unvailable
-        value_template: "{{ expand('group.zigbee_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
-        icon_template: >
-          {% if states('sensor.zigbee_devices_unavailable') == "on" %}
-          mdi:signal-off
-          {% else %}
-          mdi:signal
-          {% endif %}
-        unit_of_measurement: 'ea'
-
-      wifi_devices_unavailable:
-        friendly_name: WiFi Devices Unvailable
-        value_template: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
-        icon_template: >
-          {% if states('sensor.wifi_devices_unavailable')|int >  0 %}
-          mdi:signal-off
-          {% else %}
-          mdi:signal
-          {% endif %}
-        unit_of_measurement: 'ea'
-
-      abs_humidity_b:
-        value_template: >-
-          {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float, states('sensor.0x158d00020d7c3a_temperature') %}
-          {% if not h or t == 'unknown' -%}
-           'unknown'
-          {%- else %}
-          {% set t = t | float %}
-          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
-          {% endif %}
-        unit_of_measurement: 'g/m³'
-        icon_template: mdi:water-percent
-        friendly_name: Absolute Humidity B
-
-      abs_humidity_t:
-        value_template: >-
-          {% set h, t = states('sensor.0x158d0001e58754_humidity') | float, states('sensor.0x158d0001e58754_temperature') %}
-          {% if not h or t == 'unknown' -%}
-           'unknown'
-          {%- else %}
-          {% set t = t | float %}
-          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
-          {% endif %}
-        unit_of_measurement: 'g/m³'
-        icon_template: mdi:water-percent
-        friendly_name: Absolute Humidity T
-
-      abs_humidity_h:
-        value_template: >-
-          {% set h, t = states('sensor.humidity_average') | float, states('sensor.temperature_average') %}
-          {% if not h or t == 'unknown' -%}
-          'unknown'
-          {%- else %}
-          {% set t = t | float %}
-          {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
-          {% endif %}
-        unit_of_measurement: 'g/m³'
-        icon_template: mdi:water-percent
-        friendly_name: Absolute Humidity H
-
   - platform: command_line
     name: Supervisor updates
     command: 'curl -s http://supervisor/supervisor/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"addons":[.data.addons[] | select(.version != .version_latest)]}'''
@@ -327,25 +209,6 @@
     unit_of_measurement: 'RUR'
     scan_interval: 1200
 
-  - platform: template
-    sensors:
-      vova_gps_last_update:
-        value_template: "{{as_timestamp(states.device_tracker.life360_vova_tsymbal.attributes.last_seen)|timestamp_local}}"
-        friendly_name: Vova GPS Last Update
-        icon_template: mdi:crosshairs-question
-        attribute_templates:
-          delta: "{{states('input_number.vova_gps_delta')}}"
-      vova_gps_delta:
-        value_template: "{{states('input_number.vova_gps_delta')}}"
-        friendly_name: Vova GPS Delta
-        icon_template: mdi:crosshairs-question
-        unit_of_measurement: 'm'
-
-      # restarts_per_day:
-      #   friendly_name: Qty Of Restart
-      #   value_template: "{{states('counter.restart_counter')|int}}"
-      #   unit_of_measurement: 'ea'
-        
 
   # - platform: command_line
   #   name: config_line_count_sh
@@ -358,14 +221,6 @@
   #   unit_of_measurement: 'lines'
   #   command: 'bash /config/line_count_code.sh'
   #   scan_interval: 1800
-
-  - platform: template
-    sensors:
-      config_line_count_ratio:
-        friendly_name: Config Line Count Usage
-        value_template: "{{ (states('sensor.config_line_count_code')|int / states('sensor.config_line_count')|int * 100) | round(0) }}"
-        unit_of_measurement: '%'
-        icon_template: mdi:brightness-percent
 
   - platform: mqtt
     name: Config Line Count
@@ -414,37 +269,6 @@
     max_age:
       minutes: 10
       
-  - platform: template
-    sensors:
-      pressure_gradient:
-        friendly_name: Pressure Gradient
-        value_template: "{{(state_attr('binary_sensor.pressure_falling_fast','gradient')|float * 3600*100)|int(0)}}"
-        icon_template: mdi:chart-line-variant
-        unit_of_measurement: 'Pah'
-
-      pressure_gradient_air_valve:
-        friendly_name: Pressure Gradient (Air Valve)
-        value_template: "{{(state_attr('binary_sensor.pressure_rising_fast_air_valve','gradient')|float * 3600*100)|int(0)}}"
-        icon_template: mdi:chart-line-variant
-        unit_of_measurement: 'Pah'
-      
-      pressure_indicator:
-        friendly_name: Pressure Indicator
-        value_template: >
-          {% if is_state('binary_sensor.pressure_falling_fast','on')%} Falling Fast
-          {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off')%} Falling Slow
-          {% elif is_state('binary_sensor.pressure_rising_fast','on')%} Raising Fast
-          {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} Raising Slow
-          {% else %} Stable
-          {% endif %}
-        icon_template: >
-          {% if is_state('binary_sensor.pressure_falling_fast','on')%} mdi:chevron-triple-down
-          {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off') %} mdi:chevron-down
-          {% elif is_state('binary_sensor.pressure_rising_fast','on')%} mdi:chevron-triple-up
-          {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} mdi:chevron-up
-          {% else %} mdi:checkbox-blank-circle-outline
-          {% endif %}
-
   - platform: season
     type: astronomical
 
@@ -457,128 +281,6 @@
 #    value_template: '{{ value_json.ip }}'
 
   - platform: moon
-
-# ############################################################################
-# Template sensors
-# ############################################################################
-  - platform: template
-    sensors:
-
-      oven_target_temperature:
-        friendly_name: Oven Target Temperature
-        value_template: "{{ states('input_select.oven_target_temperature')|int}}"
-        device_class: temperature
-        unit_of_measurement: "°C"
-
-      nonsmoker:
-        value_template: "{{ states('sensor.date') and (( as_timestamp(now()) - as_timestamp(strptime('18.07.2018', '%d.%m.%Y')) ) / 86400 ) | round(2) }}"
-        friendly_name: 'Not smoking'
-        unit_of_measurement: 'Days'
-        icon_template: mdi:smoking-off
-
-      gdrive_last_backup:
-        friendly_name: GBackup time
-        icon_template: mdi:clock
-        value_template: "{{(as_timestamp(state_attr('sensor.snapshot_backup','last_snapshot')) )|timestamp_custom('%H:%M %d.%m.%Y ')}}"
-        
-      gdrive_backup_state:
-        friendly_name: GBackup status
-        icon_template: mdi:backup-restore
-        value_template: "{{states('sensor.snapshot_backup')|capitalize|replace('_',' ')}}"
-        
-      git_stars:
-        friendly_name: GitHub Stars
-        value_template: "{{state_attr('sensor.myconfig','stargazers')|int}}"
-        icon_template: mdi:star
-
-      home_status:
-        friendly_name: Home Occupation
-        #device_class: presence
-        value_template: >
-          {% if states('binary_sensor.family_home') == "on" %}
-          Occupied
-          {% else %}
-          Empty
-          {% endif %}
-        icon_template: >
-          {% if states('binary_sensor.family_home') == "on" %}
-          mdi:home-account
-          {% else %}
-          mdi:home-outline
-          {% endif %}
-        
-# ############################################################################
-# Last motion sensors
-# ############################################################################
-      last_motion:
-        friendly_name: 'Last Motion'
-        value_template: >
-          {%- set sensors = expand('group.motioninternal') %}
-          {% for sensor in sensors %}
-            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-              {{ sensor.name }}
-            {% endif %}
-          {% endfor %}
-      last_motion_time:
-        friendly_name: 'Last Motion Time'
-        value_template: '{{ as_timestamp(states.group.motioninternal.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
-
-      security_devices_last_triggered:
-        friendly_name: 'Last Triggered SecurityDevices'
-        value_template: >
-          {%- set sensors = expand('group.securitydevices') %}
-          {% for sensor in sensors %}
-            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-              {{ sensor.name }}
-            {% endif %}
-          {% endfor %}
-      security_devices_last_triggered_time:
-        friendly_name: 'Last Triggered SecurityDevices Time'
-        value_template: '{{ as_timestamp(states.group.securitydevices.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'
-
-      door_last_change:
-        friendly_name: 'Last change door sensor'
-        value_template: >
-          {%- set sensors = expand('group.doors') %}
-          {% for sensor in sensors %}
-            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-              {{ sensor.name }}
-            {% endif %}
-          {% endfor %}
-      door_last_change_time:
-        friendly_name: 'Last change door sensor time'
-        value_template: '{{ (now()-states.sensor.door_last_change.last_changed) | timestamp_custom("%H:%M:%S") }}'
-
-      window_last_change:
-        friendly_name: 'Last change window sensor'
-        value_template: >
-          {%- set sensors = expand('group.windows') %}
-          {% for sensor in sensors %}
-            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-              {{ sensor.name }}
-            {% endif %}
-          {% endfor %}
-      window_last_change_time:
-        friendly_name: 'Last change window sensor time'
-        value_template: '{{ (now()-states.sensor.window_last_change.last_changed) | timestamp_custom("%H:%M:%S") }}'
-
-      people_home:
-        friendly_name: Persons At Home
-        value_template: "{{ expand('group.persons') | map(attribute='state') | select('eq','home')| list | length }}"
-        unit_of_measurement: 'ea'
-        icon_template: mdi:account-group
-
-      # people_counter_top:
-      #   friendly_name: People Counter (top)
-      #   value_template: "{{ states('input_number.people_counter_top')|int }}"
-      #   unit_of_measurement: 'ea'
-      #   icon_template: mdi:account-group
-
-      # people_counter_side:
-      #   friendly_name: People Counter (side)
-      #   value_template: "{{ states('input_number.people_counter_side')|int }}"
-      #   unit_of_measurement: 'ea'
-      #   icon_template: mdi:account-group
 
 # ############################################################################
 # Time\date sensor
@@ -690,6 +392,13 @@
       #     if  state.entity_id.endswith("_battery")%}
       #     {{ state.name}}: {{state.state}}%%{%- if not loop.last %};{%endif%}
       #     {%-endfor%}
+
+# {%for state in states.sensor
+# if state.entity_id.endswith("_zigbee") and (as_timestamp(now())-as_timestamp(state.state) > 60*60) %}
+# {{ state.name}}: {{((as_timestamp(now())-as_timestamp(state.state))/60)|int}}min{%- if not loop.last %};{%endif%}
+# {%-endfor%}
+
+
           
       # battery_levels:
       #   friendly_name: Battery Levels
