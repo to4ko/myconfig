@@ -1,26 +1,6 @@
   system_start:
     alias: System start script
     sequence:
-      # - service: >
-      #     script.toilet_timer_{% if is_state('switch.0x158d0002a36f7f_channel_1','on') or is_state('light.esp32_bathroom_node_light','on') %}on{%else%}off{%endif%}
-      # - service: >
-      #     script.toilet_fan_timer_{{ states('switch.esp32_bathroom_node_relay_4')|lower }}
-      # - service: >
-      #     script.kitchen_timer_{{ states('light.round_led_k')|lower }}
-      # - service: >
-      #     script.bathroom_timer_{% if is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') or is_state('light.mirror_light_b','on')%}on{%else%}off{%endif%}
-      # - service: >
-      #     script.bathroom_fan_timer_{{ states('switch.esp32_bathroom_node_relay_3')|lower }}
-      # - service: >
-      #     script.bathroom_bottom_fan_timer_{{ states('switch.0x158d0002482619_switch')|lower }}
-      # - service: >
-      #     script.hallbig_timer_{{ states('group.light_hb')|lower }}
-      # - service: >
-      #     script.storage_timer_{% if is_state('switch.0x158d0002a36433_channel_1','on') or is_state('switch.0x158d0002a36433_channel_2','on')%}on{%else%}off{%endif%} 
-      # - service: >
-      #     {% if is_state('binary_sensor.0x158d000232ddd6_contact','off')%}script.toilet_indicator_off{%else%}script.noop{%endif%}
-      # - service: >
-      #     script.domofon_timer_{% if is_state('switch.esp32_domofon_auto_open','on') or is_state('switch.esp32_domofon_auto_open','on')%}on{%else%}off{%endif%} 
       - service: timer.{{'start' if (is_state('switch.0x158d0002a36f7f_channel_1','on') or is_state('light.esp32_bathroom_node_light','on')) else 'cancel'}}
         entity_id: timer.main_light_t
       - service: timer.{{'start' if is_state('switch.esp32_bathroom_node_relay_4','on') else 'cancel'}}
@@ -51,7 +31,7 @@
         entity_id: input_boolean.security_mode
         state: 'on'
       - service: script.turn_on
-        entity_id: script.lights_off      
+        entity_id: script.away_mode_on
 
 
   sasha_presence:
@@ -61,34 +41,6 @@
         data:
           dev_id: sasha
           location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
-
-  # domofon_timer_on:
-  #   alias: Domofon Timer On
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.domofon
-  #   - service: timer.start
-  #     entity_id: timer.domofon
-
-  # domofon_timer_off:
-  #   alias: Domofon Timer Off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.domofon
-
-  # heater_timer_on:
-  #   alias: Heater T timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.heater_t
-  #   - service: timer.start
-  #     entity_id: timer.heater_t
-
-  # heater_timer_off:
-  #   alias: Heater T timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.heater_t
 
   toilet_indicator_off:
     alias: Toilet Indicator Off
@@ -101,116 +53,3 @@
     sequence:
       - service: homeassistant.turn_on
         entity_id: group.all_automations
-
-  # hallbig_timer_off:
-  #   alias: Hall big timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_k
-  
-  # hallbig_timer_on:
-  #   alias: Hall big timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_hb
-  #   - service: timer.start
-  #     entity_id: timer.main_light_hb
-  
-  # toilet_fan_timer_off:
-  #   alias: Toilet fan timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.fan_t
-  
-  # toilet_fan_timer_on:
-  #   alias: Toilet fan timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.fan_t
-  #   - service: timer.start
-  #     entity_id: timer.fan_t
-
-  # bathroom_fan_timer_off:
-  #   alias: Bathroom fan timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.fan_b
-  
-  # bathroom_fan_timer_on:
-  #   alias: Bathroom fan timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.fan_b
-  #   - service: timer.start
-  #     entity_id: timer.fan_b
-
-  # bathroom_bottom_fan_timer_off:
-  #   alias: Bathroom bottom fan timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.fan_bottom_b
-  
-  # bathroom_bottom_fan_timer_on:
-  #   alias: Bathroom bottom fan timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.fan_bottom_b
-  #   - service: timer.start
-  #     entity_id: timer.fan_bottom_b
-
-
-  # kitchen_timer_off:
-  #   alias: Kitchen timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_k
-  
-  # kitchen_timer_on:
-  #   alias: Kitchen timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_k
-  #   - service: timer.start
-  #     entity_id: timer.main_light_k
-  
-  # toilet_timer_off:
-  #   alias: Toilet timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_t
-  
-  # toilet_timer_on:
-  #   alias: Toilet timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_t
-  #   - service: timer.start
-  #     entity_id: timer.main_light_t
-  
-  # bathroom_timer_off:
-  #   alias: Toilet timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_b
-  
-  # bathroom_timer_on:
-  #   alias: Toilet timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_b
-  #   - service: timer.start
-  #     entity_id: timer.main_light_b
-  
-  # storage_timer_off:
-  #   alias: Storage timer off
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_st
-  
-  # storage_timer_on:
-  #   alias: Storage timer on
-  #   sequence:
-  #   - service: timer.cancel
-  #     entity_id: timer.main_light_st
-  #   - service: timer.start
-  #     entity_id: timer.main_light_st

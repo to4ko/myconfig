@@ -10,12 +10,13 @@ esphome:
   on_loop:
     then:
       - lambda: delay(5);
+
 wifi:
   # ssid: !secret wifi_ssid
   # password: !secret wifi_pass
   # domain: .localdomain
   reboot_timeout: 15min
-  output_power: 17dB
+  output_power: 15dB
   #fast_connect: true
   power_save_mode: none
   manual_ip:
@@ -52,20 +53,20 @@ ota:
 #  port: 80
 
 uart:
-  rx_pin: GPIO12
-  tx_pin: GPIO14
+  tx_pin: GPIO12
+  rx_pin: GPIO14
   baud_rate: 9600
-  stop_bits: 1
+  id: pzem_uart
 
 # i2c:
 #   sda: GPIO04
 #   scl: GPIO05
 #   scan: True
 
-dallas:
-  - pin: GPIO13
-    update_interval: 30s
-    id: dallas_node
+# dallas:
+#   - pin: GPIO13
+#     update_interval: 30s
+#     id: dallas_node
 
 binary_sensor:
   - platform: status
@@ -116,9 +117,10 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
-  # - platform: adc
-  #   pin: VCC
-  #   name: ${board_name}_Vcc    
+  - platform: adc
+    pin: VCC
+    name: ${board_name}_Vcc
+    update_interval: 15s
 
   - platform: pzemac
     current:
@@ -144,7 +146,7 @@ sensor:
     power_factor:
       name: ${board_name}_Power Factor
       accuracy_decimals: 2
-      unit_of_measurement: ' '
+      unit_of_measurement: ''
       icon: mdi:cosine-wave
       id: id_power_factor
     update_interval: 15s
@@ -283,12 +285,12 @@ sensor:
   #   address: 0x77
   #   update_interval: 30s    
 
-  - platform: dallas
-    address: 0x613C01D075384328
-    name: ${board_name}_Dallas
-    dallas_id: dallas_node
-    accuracy_decimals: 1
-    resolution: 12
+  # - platform: dallas
+  #   address: 0x613C01D075384328
+  #   name: ${board_name}_Dallas
+  #   dallas_id: dallas_node
+  #   accuracy_decimals: 1
+  #   resolution: 12
 
 switch:
   - platform: restart
@@ -309,6 +311,24 @@ switch:
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly
 
+  - platform: uart
+    name: ${board_name}_Energy_Reset_UART
+    data: [0x01, 0x42, 0x80, 0x11]
+    uart_id: pzem_uart
+
+  - platform: template
+    name: ${board_name}_Energy_Reset_All
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly
+      - delay: 1s
+      - sensor.integration.reset: id_energy_monthly_day
+      - delay: 1s
+      - sensor.integration.reset: id_energy_monthly_night
+      - homeassistant.service:
+          service: notify.telegram
+          data:
+            message: "ESP32 Domofon - Energy Data Reset Done!"
+    
 time:
   - platform: homeassistant
     id: homeassistant_time

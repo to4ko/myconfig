@@ -99,13 +99,13 @@ script:
           value: 'true'      
       - logger.log: "Accept call"
       - script.execute: state_no_call
-      - delay: 400ms
       - switch.turn_on: relay1
       - switch.turn_on: relay2
       - delay: 1000ms
       - switch.turn_on: relay3
+      - delay: 1000ms
+      - switch.turn_off: relay3      
       - delay: 2000ms
-      - switch.turn_off: relay3
       - switch.turn_off: relay1
       - switch.turn_off: relay2
       - globals.set:
@@ -119,14 +119,14 @@ script:
           value: 'true'      
       - logger.log: "Accept call_mute"
       - script.execute: state_no_call
-      - delay: 400ms
       - switch.turn_on: relay4
       - switch.turn_on: relay1
       - switch.turn_on: relay2
       - delay: 1000ms
       - switch.turn_on: relay3
+      - delay: 1000ms
+      - switch.turn_off: relay3      
       - delay: 2000ms
-      - switch.turn_off: relay3
       - switch.turn_off: relay1
       - switch.turn_off: relay2
       - switch.turn_off: relay4
@@ -293,7 +293,7 @@ binary_sensor:
     device_class: sound
     id: incoming_call
     filters:
-      - delayed_on: 100ms
+      - delayed_on: 500ms
       - delayed_off: 3000ms
     on_press:
       then:
@@ -615,7 +615,21 @@ switch:
     name: ${board_name}_Energy_Reset_Monthly
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly
-          
+
+  - platform: template
+    name: ${board_name}_Energy_Reset_All
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly
+      - delay: 1s
+      - sensor.integration.reset: id_energy_monthly_day
+      - delay: 1s
+      - sensor.integration.reset: id_energy_monthly_night
+      - homeassistant.service:
+          service: notify.telegram
+          data:
+            message: "ESP32 Domofon - Energy Data Reset Done!"      
+      
+      
 output:
   - platform: ledc
     pin: GPIO25

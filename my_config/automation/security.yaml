@@ -17,16 +17,13 @@
       data:
         message: "\U0001F3e2 Никого нет дома, выключаем освещение!"
     - service: script.turn_on
-      entity_id: script.lights_off
+      entity_id: script.away_mode_on
     - service: notify.telegram
       data:
         message: "\U0001f514 Освещение выключено!"
     - service: input_boolean.turn_on
       data:
         entity_id: input_boolean.security_mode
-    - service: input_boolean.turn_off
-      data:
-        entity_id: input_boolean.bed_led_enable
 
 # ##################################
 # Security - Sensors State change
@@ -98,9 +95,8 @@
     - service: input_boolean.turn_off
       data:
         entity_id: input_boolean.security_mode
-    - service: input_boolean.turn_on
-      data:
-        entity_id: input_boolean.bed_led_enable
+    - service: script.turn_on
+      entity_id: script.away_mode_off
 
 # ##################################
 # Security - Notification
@@ -195,6 +191,9 @@
   condition:
     - condition: state
       entity_id: binary_sensor.tod_day
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.security_mode
       state: 'off'
   action:
     - service: notify.telegram

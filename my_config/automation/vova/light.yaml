@@ -329,6 +329,9 @@
       state: 'off'
     - condition: template
       value_template: "{{ not is_state('light.bedside_mb', 'on') }}"
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.d1mini_bed_leds_strip_sandra,light.d1mini_bed_leds_strip_dima
@@ -340,16 +343,19 @@
 #  id: vova_bed_strips_mode
   initial_state: true
   trigger:
-    - platform: time_pattern
-      minutes: "/10"
+    - platform: state
+      entity_id: binary_sensor.bed_led_enable
+      from: 'on'
+      to: 'off'
+    - platform: state
+      entity_id: binary_sensor.bed_led_enable
+      from: 'off'
+      to: 'on'
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded 
   action:
-    - service: >
-        {%if states('input_boolean.bed_led_enable') == states('binary_sensor.d1mini_bed_leds_ha_bed_led_enabled')%}
-        script.noop
-        {%else%}
-        script.bed_led_toggle_v
-        {%endif%}
-    - service: input_boolean.turn_{{'on' if (is_state('binary_sensor.light_outside_mi','off') and (now().hour >=7 and now().hour <=23)) else 'off'}}
+    - service: input_boolean.turn_{{states('binary_sensor.bed_led_enable')}}
       data:
         entity_id: input_boolean.bed_led_enable
-        

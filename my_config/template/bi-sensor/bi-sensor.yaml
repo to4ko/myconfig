@@ -18,6 +18,9 @@
           mdi:brightness-5
           {% endif %}
 
+      - name: Bed Led Enable
+        state: "{{(is_state('binary_sensor.light_outside_mi','off') and is_state('input_boolean.security_mode','off') and (now().hour >=7 and now().hour <=23))}}"
+
       - name: Updater Supervisor
         device_class: problem
         state: "{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}"
@@ -277,7 +280,9 @@
           {% endif %}
 
       - name: Noise Allowed
-        state: "{{ states('binary_sensor.workday_sensor') == 'on' and ( ( hour >= 9 and hour < 13 ) or ( hour >= 15 and hour < 19) ) }}"
+        state: >
+          {% set hour = now().hour %}
+          {{ states('binary_sensor.workday_sensor') == 'on' and ( ( hour >= 9 and hour < 13 ) or ( hour >= 15 and hour < 19) ) }}
         icon: >
           {% if is_state('binary_sensor.noise_allowed','on') %}
           mdi:volume-high

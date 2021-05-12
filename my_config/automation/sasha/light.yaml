@@ -115,8 +115,12 @@
 #  id: sasha_table_lamp_off_night_mode_main_on
   initial_state: true
   trigger:
-    - platform: time_pattern
-      minutes: "/3"
+    - platform: state
+      entity_id: light.led_white_s
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
   condition:
     - condition: template
       value_template: "{{state_attr('light.led_white_s','brightness')|int < 10}}"
@@ -249,6 +253,9 @@
       state: 'on'
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.sasha_timer_restart','last_triggered'))|int) > 15 }}"
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'      
   action:
     - service: timer.cancel
       entity_id: timer.main_light_s
@@ -285,6 +292,10 @@
       entity_id: light.square_led_s
       to: 'on'
       from: 'off'
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'  
   action:
     - service: timer.cancel
       entity_id: timer.main_light_s

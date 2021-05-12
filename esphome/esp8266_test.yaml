@@ -15,12 +15,12 @@ wifi:
   output_power: 10dB
   fast_connect: true
   power_save_mode: none
-  manual_ip:
-    static_ip: 192.168.1.244
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
-    dns1: 192.168.1.1
-    dns2: 8.8.8.8
+  # manual_ip:
+  #   static_ip: 192.168.1.248
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
   # networks:
   #   - ssid: !secret wifi_ssid_hb
   #     password: !secret wifi_pass
@@ -38,7 +38,7 @@ wifi:
   #     priority: 0
 
 logger:
-  #baud_rate: 0
+  baud_rate: 0
   
 api:
   reboot_timeout: 15min
@@ -52,38 +52,6 @@ binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
-
-text_sensor:
-  - platform: template
-    name: ${board_name}_Uptime
-    lambda: |-
-      uint32_t dur = id(uptime_sensor).state;
-      int dys = 0;
-      int hrs = 0;
-      int mnts = 0;
-      if (dur > 86399) {
-        dys = trunc(dur / 86400);
-        dur = dur - (dys * 86400);
-      }
-      if (dur > 3599) {
-        hrs = trunc(dur / 3600);
-        dur = dur - (hrs * 3600);
-      }
-      if (dur > 59) {
-        mnts = trunc(dur / 60);
-        dur = dur - (mnts * 60);
-      }
-      char buffer[17];
-      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
-      return {buffer};
-    icon: mdi:clock-start
-    update_interval: 15s
-
-spi:
-  miso_pin: D6
-  clk_pin: D5
-  mosi_pin: D7
-
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -94,19 +62,11 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
-  - platform: max31855
-    name: ${board_name}_temp
-    cs_pin: D2
-    update_interval: 5s
-
+  - platform: adc
+    pin: VCC
+    name: ${board_name}_Vcc
+    update_interval: 15s
 
 switch:
   - platform: restart
     name: ${board_name}_Restart
-
-time:
-  - platform: homeassistant
-    id: homeassistant_time
-  - platform: sntp
-    id: sntp_time
-    timezone: Europe/Moscow
