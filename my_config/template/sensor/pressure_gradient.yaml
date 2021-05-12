@@ -1,4 +1,10 @@
   - sensor:
+      - name: Pressure Change 3h Stats
+        state: "{{state_attr('sensor.pressure_stats','change')|float}}"
+        unit_of_measurement: 'hPa'
+        device_class: pressure
+        
+
       - name: Pressure Gradient
         state: "{{(state_attr('binary_sensor.pressure_falling_fast','gradient')|float * 3600*100)|int(0)}}"
         icon: mdi:chart-line-variant
@@ -24,3 +30,102 @@
           {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} mdi:chevron-up
           {% else %} mdi:checkbox-blank-circle-outline
           {% endif %}
+
+  # 0 Rising Very Rapidly = 3 hPa change or more per hour.
+  # 1 Rising Rapidly = 1.4 hPa change or more per hour.
+  # 2 Rising Slowly = 0.7 to less than 1.4 hPa change per hour.
+  # 3 Normal (Steady) = Between 0.7 and -0.7 hPa change per hour.
+  # 4 Falling Slowly = -0.7 up to -1.4 hPa change per hour.
+  # 5 Falling Rapidly = -1.4 hPa change or more per hour.
+  # 6 Falling Very Rapidly = -3 hPa change or more per hour.
+      - name: Pressure Weather Forecast
+        state: >-
+          {% set diff = states('sensor.pressure_change_in_3_hours') | float %}
+          {% set press = states('sensor.0x158d000233fb72_pressure') | float %}
+          {% set tempr = states('sensor.sensor.esp32_node_mb_outside') | int %}
+          {% if press > 1022.689 %}
+            {% if diff <= -1.4 %}
+              Пасмурно
+            {% else %}
+              Ясно
+            {% endif %}
+          {% elif press < 1009.144 %}
+            {% if diff <= -5 %}
+              Шторм
+            {% elif diff <= -0.7 %}
+              {% if tempr | int < -5 %}
+                Снег
+              {% else %}
+                Осадки
+              {% endif %}
+            {% else %}
+              {% if tempr | int < -10 %}
+                Ясно, очень холодно
+              {% elif tempr | int < 0 %}
+                Ясно, холодно
+              {% elif tempr | int < 20 %}
+                Ясно, прохладно
+              {% else %}
+                Ясно
+              {% endif %}
+            {% endif %}
+          {% else %}
+            {% if diff <= -1.4 %}
+              {% if tempr | int < -5 %}
+                Снег
+              {% else %}
+                Осадки
+              {% endif %}
+            {% elif diff <= -0.7 %}
+              Пасмурно
+            {% else %}
+              Без перемен
+            {% endif %}
+          {% endif %}
+        icon: >-
+          {%- set diff = states('sensor.pressure_change_in_3_hours') | float -%}
+          {% set press = states('sensor.sensor.0x158d000233fb72_pressure') | float %}
+          {% set tempr = states('sensor.sensor.esp32_node_mb_outside') | int %}
+          {%- if press > 1022.689 -%}
+            {%- if diff <= -1.4 -%}
+              mdi:weather-partly-cloudy
+            {%- else -%}
+              mdi:weather-sunny
+            {%- endif -%}
+          {%- elif press < 1009.144 -%}
+            {%- if diff <= -5 -%}
+              mdi:weather-tornado
+            {%- elif diff <= -0.7 -%}
+              {% if tempr | int < -5 %}
+                mdi:weather-snowy
+              {% elif tempr | int < 0 %}
+                mdi:weather-snowy-rainy
+              {% else %}
+                mdi:weather-pouring
+              {% endif %}
+            {%- else -%}
+              {% if tempr | int < -10 %}
+                mdi:thermometer-alert
+              {% elif tempr | int < 0 %}
+                mdi:thermometer-low
+              {% elif tempr | int < 20 %}
+                mdi:weather-sunny
+              {% else %}
+                mdi:weather-sunny
+              {% endif %}
+            {%- endif -%}
+          {%- else -%}
+            {%- if diff <= -1.4 -%}
+              {% if tempr | int < -5 %}
+                mdi:weather-snowy
+              {% elif tempr | int < 0 %}
+                mdi:weather-snowy-rainy
+              {% else %}
+                mdi:weather-pouring
+              {% endif %}
+            {%- elif diff <= -0.7 -%}
+              mdi:weather-partly-cloudy
+            {%- else -%}
+              mdi:ship-wheel
+            {%- endif -%}
+          {%- endif -%}

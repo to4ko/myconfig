@@ -186,6 +186,20 @@
       - sensor.0x158d000233fb72_temperature
       - sensor.0x158d0002464ec0_temperature
 
+  - platform: min_max
+    type: mean
+    name: Pressure Average
+    round_digits: 0
+    entity_ids:
+      - sensor.0x158d000233fb72_pressure
+      - sensor.sonoff_basic_1_bme280_pressure
+      - sensor.0x158d000237167c_pressure
+      - sensor.esp32_hood_k_bme280_pressure
+      - sensor.esp32_node_k_pressure
+      - sensor.esp32_node_mb_pressure
+      - sensor.esp32_node_v_pressure
+      - sensor.sonoff_pow_r2_2_pressure    
+
   - platform: command_line
     name: Supervisor updates
     command: 'curl -s http://supervisor/supervisor/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"addons":[.data.addons[] | select(.version != .version_latest)]}'''
@@ -268,6 +282,25 @@
     name: pressure
     max_age:
       minutes: 10
+      
+  - platform: statistics
+    entity_id: sensor.0x158d000233fb72_pressure
+    name: pressure_stats
+    max_age:
+      hours: 3
+    sampling_size: 10800
+
+  # Barometric forecast
+  # Pressure Changes 3 Hour
+  # mmHg  * 1.33322 = hPa = mbar
+  - platform: rest
+    resource: !secret influx_pressure_changes
+    name: pressure_change_in_3_hours
+    device_class: pressure
+    unit_of_measurement: "hPa"
+    value_template: '{{ value_json["results"][0]["series"][0]["values"][0][1] }}'
+    headers:
+      User-Agent: Home Assistant
       
   - platform: season
     type: astronomical
@@ -438,118 +471,17 @@
       #       {%- endif -%}
       #       {%- endfor %}
             
-  # - name: magnetic_situation
-  #   platform: scrape 
-  #   resource: https://tesis.lebedev.ru/magnetic_storms.html
-  #   select: table.main td p:nth-of-type(4) > b
-  #   unit_of_measurement: ' '
-  #   value_template: "{{ value.split('(')[0] | int }}"
-  #   scan_interval: 300
+  - name: magnetic_storm
+    platform: scrape 
+    resource: https://tesis.lebedev.ru/magnetic_storms.html
+    select: table.main td p:nth-of-type(4) > b
+    unit_of_measurement: ' '
+    value_template: "{{ value.split('(')[0] | int }}"
+    scan_interval: 300
 
-  # - platform: waqi
-  #   token: !secret aqicn_api_key
-  #   scan_interval: 900
-  #   locations:
-  #     - moscow
-      
-  # - platform: template 
-  #   sensors: 
-  #     waqi_co_level: 
-  #       value_template: "{{ state_attr('sensor.waqi_koptevo_moscow_moscow_russia_koptevo_moscow_moscow_russia_koptevskii_moskva', 'co') | float }}"
-  #       friendly_name: CO Level
-  #       unit_of_measurement: aqi
-  #       icon_template: mdi:molecule-co2
-  #     waqi_o3_level: 
-  #       value_template: "{{ state_attr('sensor.waqi_koptevo_moscow_moscow_russia_koptevo_moscow_moscow_russia_koptevskii_moskva', 'ozone') | float }}"
-  #       friendly_name: Hexagon
-  #       unit_of_measurement: aqi
-  #       icon_template: mdi:hexagon-multiple-outline
-  #     waqi_no2_level:
-  #       value_template: "{{ state_attr('sensor.waqi_koptevo_moscow_moscow_russia_koptevo_moscow_moscow_russia_koptevskii_moskva', 'nitrogen_dioxide') | float }}"
-  #       friendly_name: Nirogen
-  #       unit_of_measurement: aqi
-  #       icon_template: mdi:dump-truck
-  #     waqi_so2_level: 
-  #       value_template: "{{ state_attr('sensor.waqi_koptevo_moscow_moscow_russia_koptevo_moscow_moscow_russia_koptevskii_moskva', 'sulfur_dioxide') | float }}"
-  #       friendly_name: Silfur
-  #       unit_of_measurement: aqi
-  #       icon_template: mdi:smog
-  #     waqi_pm10: 
-  #       value_template: "{{ state_attr('sensor.waqi_koptevo_moscow_moscow_russia_koptevo_moscow_moscow_russia_koptevskii_moskva', 'pm_10') }}"
-  #       friendly_name: PM10
-  #       unit_of_measurement: aqi
-  #       icon_template: mdi:chart-scatter-plot-hexbin
-  #     waqi_pm25: 
-  #       value_template: "{{ state_attr('sensor.waqi_koptevo_moscow_moscow_russia_koptevo_moscow_moscow_russia_koptevskii_moskva', 'pm_2_5') }}"
-  #       friendly_name: PM25
-  #       unit_of_measurement: aqi
-  #       icon_template: mdi:chart-scatter-plot
 
-  # - platform: sun2
-  #   monitored_conditions:
-  #     - dawn
-  #     - sunrise
-  #     - solar_noon
-  #     - sunset
-  #     - dusk
-  #     - daylight
-  #     - civil_daylight
-  #     - night
-  #     - civil_night
-  #     - elevation
-  #     - min_elevation
-  #     - max_elevation  
-      
-  # - platform: history_stats
-  #   name: Quarantine meter Dima
-  #   entity_id: person.dima
-  #   state: "home"
-  #   type: ratio
-  #   duration:
-  #     days: 2
-  #   end: "{{ now() }}"
-  
-  # - platform: history_stats
-  #   name: Quarantine meter Dima times left
-  #   entity_id: person.dima
-  #   state: "home"
-  #   type: count
-  #   duration:
-  #     days: 2
-  #   end: "{{ now() }}"
-
-  # - platform: history_stats
-  #   name: Quarantine meter Sandra
-  #   entity_id: person.sandra
-  #   state: "home"
-  #   type: ratio
-  #   duration:
-  #     days: 2
-  #   end: "{{ now() }}"
-  
-  # - platform: history_stats
-  #   name: Quarantine meter Sandra times left
-  #   entity_id: person.sandra
-  #   state: "home"
-  #   type: count
-  #   duration:
-  #     days: 2
-  #   end: "{{ now() }}"
-
-  # - platform: history_stats
-  #   name: Quarantine meter vova
-  #   entity_id: person.vova
-  #   state: "home"
-  #   type: ratio
-  #   duration:
-  #     days: 2
-  #   end: "{{ now() }}"
-  
-  # - platform: history_stats
-  #   name: Quarantine meter Vova times left
-  #   entity_id: person.vova
-  #   state: "home"
-  #   type: count
-  #   duration:
-  #     days: 2
-  #   end: "{{ now() }}"
+  - platform: waqi
+    token: !secret aqicn_api_key
+    scan_interval: 900
+    locations:
+      - Ostankino, Moscow

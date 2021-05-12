@@ -25,15 +25,33 @@
     - service: notify.mobile_app_iphone_8_dtsymbal
       data:
         message: "Звонок в домофон!"
+        title: my title
         data:
-          push:
-            badge: 0
-            category: "domofon_call"
-    # - service: script.turn_on
-    #   entity_id: script.domofon_script
-    # - delay: '00:15:00'
-    # - service: script.turn_on
-    #   entity_id: script.domofon_check
+          actions:
+            - action: Domofon_Open
+              title: Open
+              authenticationRequired: false
+              activationMode: background
+          image: !secret window_snap
+
+# ##################################
+# Hall Big - Domofon Incoming Call
+# ##################################
+- alias: hall_big_domofon_open_from_iphone
+#  id: hall_big_domofon_open_from_iphone
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: "Domofon_Open"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.esp32_domofon_open
+    - service: notify.telegram
+      data:
+        message: "\U0001f518 Домофон открыт с телефона!"
 
 # ##################################
 # Hall Big - Domofon Auto Open On Arrival
