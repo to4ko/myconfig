@@ -57,12 +57,14 @@ views:
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 5
+                columns: 6
                 entities:
                   # - entity: sensor.temperature_min_out
                   #   name: Tmin
                   # - entity: sensor.temperature_max_out
                   #   name: Tmax
+                  - entity: sensor.gw3_nonresposing_devices
+                    name: GW3
                   - entity: sensor.zigbee_devices_unavailable
                     name: Z Offline
                   - entity: sensor.wifi_devices_unavailable
@@ -263,7 +265,7 @@ views:
                 name: B
               - entity: binary_sensor.0x158d0001e54280_motion
                 name: T
-              - entity: binary_sensor.0x158d0001aea602_motion
+              - entity: binary_sensor.motion_st #binary_sensor.0x158d0001aea602_motion
                 name: St
 
           - type: horizontal-stack
@@ -677,7 +679,7 @@ views:
                 tap_action:
                   action: toggle
 
-              - entity: light.round_led_hs #switch.0x4cf8cdf3c7a9a48_channel_1
+              - entity: light.round_led_hs
                 name: Main HS
                 tap_action:
                   action: toggle
@@ -686,7 +688,7 @@ views:
                 tap_action:
                   action: toggle
 
-              - entity: switch.0x4cf8cdf3c7a9a48_channel_2
+              - entity: switch.0x158d0002a36433_channel_2
                 name: Bath
                 tap_action:
                   action: toggle
@@ -740,19 +742,20 @@ views:
                 tap_action:
                   action: toggle
 
-              - entity: switch.0x158d0002a36433_channel_2
+              - entity: switch.0x158d000248bf53_switch
                 name: Main St
                 tap_action:
                   action: toggle
-              - entity: switch.0x158d0002a36433_channel_1
-                name: Sec St
+              
+              - entity: light.led_strip_1s #light.bedside_d2
+                name: 1S #D2
                 tap_action:
                   action: toggle
-              
+                  
               - entity: light.bedside_d2
                 name: D2
                 tap_action:
-                  action: toggle
+                  action: toggle                  
           
           - type: glance
             show_state: false
@@ -1178,6 +1181,8 @@ views:
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0001aea602_motion
             secondary_info: last-changed
+          - entity: binary_sensor.0x158d0003f27ce2_motion
+            secondary_info: last-changed            
           - entity: binary_sensor.motion_g3_flex_entrance
             secondary_info: last-changed
           - entity: binary_sensor.motion_g3_flex_hall
@@ -1322,7 +1327,7 @@ views:
           - light.btf_pixel_strip_bathroom
           - light.btf_pixel_strip_toilet
           - type: divider
-          - switch.0x4cf8cdf3c7a9a48_channel_1
+          - switch.0x158d0002a36433_channel_1
           - switch.0x158d000249b26b_switch
           - switch.0x158d0002924790_switch
 
@@ -1331,7 +1336,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - switch.0x4cf8cdf3c7a9a48_channel_2
+          - switch.0x158d0002a36433_channel_2
           - light.mirror_light_b
           - type: divider
           - switch.sonoff_pow_r2_1_relay #switch.0x00158d0002c3d86e_switch #switch.plug_158d0002c3d86e
@@ -1356,8 +1361,7 @@ views:
         show_header_toggle: false
         state_color: true
         entities:
-          - switch.0x158d0002a36433_channel_2
-          - switch.0x158d0002a36433_channel_1
+          - switch.0x158d000248bf53_switch
 
 ################################################################
 # SENSORS BY ROOM PAGE
@@ -1473,6 +1477,7 @@ views:
         state_color: true
         entities:
           - binary_sensor.0x158d0001aea602_motion
+          - binary_sensor.0x158d0003f27ce2_motion
           - sensor.0x158d00023d0b86_action
           - sensor.0x158d000233fb72_temperature
           - sensor.0x158d000233fb72_humidity
@@ -1822,16 +1827,29 @@ views:
               
       - type: vertical-stack
         cards:
+          - type: history-graph
+            hours_to_show: 12
+            entities:
+              - sensor.ro_rate
           - type: glance
             state_color: true
-            title: Raw Water Data
+            title: Info
+            show_header_toggle: false
+            columns: 5
             entities:
               - entity: sensor.mosvodokanal_ph
                 name: Ph
               - entity: sensor.mosvodokanal_dh
                 name: DH
+              - entity: sensor.ro_rate
+                name: k
+              - entity: sensor.ro_drain
+                name: Drain
+              - entity: sensor.ro_drain_percentage
+                name: Drain %
+              
           - type: glance
-            columns: 6
+            columns: 4
             state_color: true
             title: Total
             show_header_toggle: false
@@ -1848,11 +1866,6 @@ views:
               - entity: sensor.water_non_mineralized_single
                 name: NM
                 icon: mdi:cup-off
-              - entity: sensor.ro_drain
-                name: Drain
-              - entity: sensor.ro_drain_percentage
-                name: Drain %
-
           # - type: glance
           #   columns: 4
           #   state_color: true
@@ -1886,6 +1899,7 @@ views:
               - entity: sensor.water_non_mineralized_daily_single
                 name: NM
                 icon: mdi:cup-off
+
           - type: glance
             columns: 4
             state_color: true
@@ -3792,10 +3806,10 @@ views:
                 name: MPD
 
 ################################################################
-# pressure monitoring
+# Weather monitoring
 ################################################################
-  - title: Pressure monitoring
-    icon: mdi:thermostat
+  - title: Weather
+    icon: mdi:weather-cloudy
     cards:
       - type: vertical-stack
         cards:
@@ -3821,16 +3835,16 @@ views:
               - entity: binary_sensor.temp_rising
                 name: T Up
               - entity: binary_sensor.temp_falling
-                name: T Down              
+                name: T Down
           - type: history-graph
             hours_to_show: 24
             entities:
-              - entity: sensor.pressure_change_3h_stats
-                name: Stats
-              - entity: sensor.pressure_change_in_3_hours
-                name: BD
+              - entity: sensor.pressure_change_3h
+                name: 3h
+              - entity: sensor.pressure_change_6h
+                name: 6h
           - type: history-graph
-            hours_to_show: 72
+            hours_to_show: 24
             entities:
               - entity: sensor.0x158d000233fb72_pressure
                 name: St
@@ -3848,11 +3862,13 @@ views:
                 name: V
               - entity: sensor.sonoff_pow_r2_2_pressure
                 name: T
+              - entity: sensor.pressure_average
+                name: Avg
 
       - type: vertical-stack
         cards:
           - type: history-graph
-            hours_to_show: 24
+            hours_to_show: 48
             entities:
               - sensor.sunlight_pct
               - sensor.dark_sky_cloud_coverage
@@ -3860,16 +3876,16 @@ views:
           - type: gauge
             name: Gradient
             entity: sensor.pressure_gradient
-            max: 250
-            min: -250
+            max: 500
+            min: -500
             severity:
-              blue: -250
+              blue: -500
               green: 0
-              yellow: 250
+              yellow: 500
           - type: custom:mini-graph-card
             entities:
               - sensor.pressure_gradient
-            hours_to_show: 48
+            hours_to_show: 24
             points_per_hour: 10
             decimals: 0
             hour24: true
@@ -3877,40 +3893,29 @@ views:
             labels: true
             line_width: 1
             line_color: blue
-            upper_bound: 250
-            lower_bound: -250
+            upper_bound: 500
+            lower_bound: -500
+
+          - type: history-graph
+            hours_to_show: 24
+            entities:
+              - sensor.pressure_gradient
+
       - type: vertical-stack
         cards:
           - type: history-graph
-            hours_to_show: 72
+            hours_to_show: 24
             entities:
-              - sensor.pressure_gradient
-              - sensor.pressure_gradient_air_valve
-
-          - type: gauge
-            name: Gradient
-            entity: sensor.pressure_gradient_air_valve
-            max: 250
-            min: -250
-            severity:
-              blue: -100
-              green: 0
-              yellow: 100
+              - entity: sensor.waqi_pm25
+                name: WAQI
+              - entity: sensor.luftdaten_33495_p2
+                name: Luftdaten
           
-          - type: custom:mini-graph-card
-            entities:
-              - sensor.pressure_gradient_air_valve
-            hours_to_show: 48
-            points_per_hour: 10
-            decimals: 0
-            hour24: true
-            extrema: true
-            labels: true
-            line_width: 1
-            line_color: black
-            upper_bound: 250
-            lower_bound: -250
-
+          - type: custom:sun-card
+            showAzimuth: true
+            showElevation: true
+            timeFormat: '24h'
+            
 ################################################################
 # MQTT Cross Servers Sensors PAGE
 ################################################################
@@ -4110,6 +4115,7 @@ views:
           - binary_sensor.esp32_ble_tracker_status
           - binary_sensor.esp32_domofon_status
           - binary_sensor.sonoff_mini_1_status
+          - binary_sensor.sonoff_basic_1_status
 
           - type: divider          
           - binary_sensor.esp32_node_mb_status
@@ -4154,6 +4160,7 @@ views:
           - sensor.esp32_ble_tracker_wifi_rssi
           - sensor.esp32_domofon_wifi_rssi
           - sensor.sonoff_mini_1_wifi_rssi
+          - sensor.sonoff_basic_1_wifi_rssi
 
           - type: divider          
           - sensor.esp32_node_mb_wifi_rssi
@@ -4198,6 +4205,7 @@ views:
           - sensor.esp32_ble_tracker_uptime
           - sensor.esp32_domofon_uptime
           - sensor.sonoff_mini_1_uptime
+          - sensor.sonoff_basic_1_uptime
 
           - type: divider          
           - sensor.esp32_node_mb_uptime
@@ -4267,7 +4275,7 @@ views:
               - type: divider
               - switch.0x158d0002a36f7f_channel_2
               - type: divider
-              - switch.0x4cf8cdf3c7a9a48_channel_1
+              - switch.0x158d0002a36433_channel_1
               - type: divider
               - switch.sonoff_basic_4_relay #switch.plug_158d00020b4971
               - type: divider
@@ -4588,15 +4596,11 @@ views:
             secondary_info: last-changed
           - entity: switch.0x158d0002a36433_channel_2
             secondary_info: last-changed
+          - entity: switch.0x158d000248bf53_switch
+            secondary_info: last-changed
           - entity: switch.0x158d000366815b_channel_1
             secondary_info: last-changed
           - entity: switch.0x158d000366815b_channel_2
-            secondary_info: last-changed
-          - entity: switch.0x4cf8cdf3c7a9a48_channel_1
-            secondary_info: last-changed
-          - entity: switch.0x4cf8cdf3c7a9a48_channel_2
-            secondary_info: last-changed
-          - entity: switch.0x4cf8cdf3c7a9a48_channel_3
             secondary_info: last-changed
 
       - type: entities
@@ -4681,7 +4685,10 @@ views:
             name: HS - Far
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0001aea602_motion
-            name: St
+            name: St - Top
+            secondary_info: last-changed
+          - entity: binary_sensor.0x158d0003f27ce2_motion
+            name: St - Side
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0001e53cda_motion
             name: MB
@@ -4708,6 +4715,8 @@ views:
           - entity: binary_sensor.0x158d0001ae9f61_motion
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0001aea602_motion
+            secondary_info: last-changed
+          - entity: binary_sensor.0x158d0003f27ce2_motion
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0001d5995e_motion
             secondary_info: last-changed
@@ -4802,6 +4811,11 @@ views:
   - title: Testing
     icon: mdi:find-replace
     cards:
+      - type: entities
+        entities:
+          - binary_sensor.0x158d0003262ba8_contact
+          - sensor.0x158d0003262ba8_zigbee
+          - sensor.0x158d0003262ba8_battery
       - type: entities
         entities: 
           - sensor.iphone_8_dtsymbal_ssid
@@ -4945,12 +4959,6 @@ views:
                 name: Seat
               - entity: binary_sensor.0x158d0003262a35_contact
                 name: Canister
-          
-          - type: history-graph
-            hours_to_show: 24
-            entities:
-              - sensor.luftdaten_33495_p2
-              - air_quality.opensense_map
           
           - type: entities
             entities:

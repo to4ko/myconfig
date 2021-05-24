@@ -10,7 +10,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.0x158d0001aea602_motion
+      entity_id: binary_sensor.motion_st #.0x158d0001aea602_motion
       from: 'off'
       to: 'on'
   condition:
@@ -25,7 +25,11 @@
       state: 'off'
   action:
     - service: switch.turn_on
-      entity_id: switch.0x158d0002a36433_channel_2, switch.sonoff_basic_1_relay
+      data:
+        entity_id: >-
+          {%if is_state('binary_sensor.bright_light_allowed','on') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+          {%elif is_state('binary_sensor.bright_light_allowed','off') %}switch.sonoff_basic_1_relay
+          {%endif%}
 
 # ##################################
 # Storage - Main Light On
@@ -40,11 +44,31 @@
       to: 'button_2_single'
   condition:
     - condition: state
-      entity_id: switch.0x158d0002a36433_channel_2
+      entity_id: group.lights_st
       state: 'off'
   action:
     - service: switch.turn_on
-      entity_id: switch.0x158d0002a36433_channel_2, switch.sonoff_basic_1_relay
+      data:
+        entity_id: >-
+          {%if is_state('binary_sensor.bright_light_allowed','on') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+          {%elif is_state('binary_sensor.bright_light_allowed','off') %}switch.sonoff_basic_1_relay
+          {%endif%}
+
+# ##################################
+# Storage - Main Light Full On
+# ##################################
+- alias: storage_main_light_full_on
+#  id: storage_main_light_full_on
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id: sensor.0x4cf8cdf3c79546c_action
+      to: 'button_2_double'
+  action:
+    - service: switch.turn_on
+      data:
+        entity_id: switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
 
 # ##################################
 # Storage - Auto Light Off
@@ -61,17 +85,12 @@
       entity_id: sensor.0x4cf8cdf3c79546c_action
       to: 'button_2_single'
   condition:
-    condition: or
-    conditions:
-      - condition: state
-        entity_id: switch.0x158d0002a36433_channel_1
-        state: 'on'
-      - condition: state
-        entity_id: switch.0x158d0002a36433_channel_2
-        state: 'on'
+    - condition: state
+      entity_id: group.lights_st
+      state: 'on'
   action:
     - service: switch.turn_off
-      entity_id: switch.0x158d0002a36433_channel_1, switch.0x158d0002a36433_channel_2, switch.sonoff_basic_1_relay
+      entity_id: switch.0x158d000248bf53_switch, switch.sonoff_basic_1_relay
     - service: timer.cancel
       entity_id: timer.main_light_st
 
@@ -82,10 +101,8 @@
 #  id: storage_timer_start
   initial_state: true
   trigger:
-    - platform: state
-      entity_id: switch.0x158d0002a36433_channel_1, switch.0x158d0002a36433_channel_2
-      to: 'on'
-      from: 'off'
+    - platform: template
+      value_template: "{{ is_state('switch.0x158d000248bf53_switch','on') or is_state('switch.sonoff_basic_1_relay','on')}}"
   action:
     - service: timer.cancel
       entity_id: timer.main_light_st
@@ -100,18 +117,13 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.0x158d0001aea602_motion
+      entity_id: binary_sensor.motion_st #binary_sensor.0x158d0001aea602_motion
       to: 'on'
       from: 'off'
   condition:
-    condition: or
-    conditions:
-      - condition: state
-        entity_id: switch.0x158d0002a36433_channel_1
-        state: 'on'
-      - condition: state
-        entity_id: switch.0x158d0002a36433_channel_2
-        state: 'on'
+    - condition: state
+      entity_id: switch.0x158d000248bf53_switch
+      state: 'on'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_st
@@ -126,7 +138,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: switch.0x158d0002a36433_channel_2
+      entity_id: switch.0x158d000248bf53_switch
       to: 'off'
       from: 'on'
   action:
@@ -136,6 +148,8 @@
       entity_id: timer.main_light_delay_st
     - service: timer.start
       entity_id: timer.main_light_delay_st
+    - service: switch.turn_off
+      entity_id: switch.sonoff_basic_1_relay
 
 
 # ##################################
@@ -156,8 +170,7 @@
       entity_id: 
         - light.esp32_node_k_light
         - light.btf_pixel_strip_top
-        - switch.0x158d0002a36433_channel_1
-        - switch.0x158d0002a36433_channel_2
+        - switch.0x158d000248bf53_switch
         - light.led_strip_hb
         - light.led_strip_entrance_hb
         - light.mirror_light_b
@@ -187,8 +200,7 @@
       entity_id: 
         - light.esp32_node_k_light
         - light.btf_pixel_strip_top
-        - switch.0x158d0002a36433_channel_1
-        - switch.0x158d0002a36433_channel_2
+        - switch.0x158d000248bf53_switch
         - light.led_strip_hb
         - light.led_strip_entrance_hb
 

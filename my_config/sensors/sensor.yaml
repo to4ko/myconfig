@@ -165,7 +165,7 @@
   - platform: min_max
     type: mean
     name: Humidity Average
-    round_digits: 0
+    round_digits: 2
     entity_ids:
       - sensor.0x158d0001e586af_humidity
       - sensor.0x158d0001e58714_humidity
@@ -177,7 +177,7 @@
   - platform: min_max
     type: mean
     name: Temperature Average
-    round_digits: 0
+    round_digits: 2
     entity_ids:
       - sensor.0x158d0001e586af_temperature
       - sensor.0x158d0001e58714_temperature
@@ -189,7 +189,7 @@
   - platform: min_max
     type: mean
     name: Pressure Average
-    round_digits: 0
+    round_digits: 2
     entity_ids:
       - sensor.0x158d000233fb72_pressure
       - sensor.sonoff_basic_1_bme280_pressure
@@ -278,29 +278,36 @@
         name: myconfig
 
   - platform: statistics
-    entity_id: sensor.0x158d000233fb72_pressure
+    entity_id: sensor.pressure_average
     name: pressure
     max_age:
       minutes: 10
       
   - platform: statistics
-    entity_id: sensor.0x158d000233fb72_pressure
-    name: pressure_stats
+    entity_id: sensor.pressure_average
+    name: pressure_stats_3h
     max_age:
       hours: 3
     sampling_size: 10800
 
+  - platform: statistics
+    entity_id: sensor.pressure_average
+    name: pressure_stats_6h
+    max_age:
+      hours: 6
+    sampling_size: 21600
+
   # Barometric forecast
   # Pressure Changes 3 Hour
   # mmHg  * 1.33322 = hPa = mbar
-  - platform: rest
-    resource: !secret influx_pressure_changes
-    name: pressure_change_in_3_hours
-    device_class: pressure
-    unit_of_measurement: "hPa"
-    value_template: '{{ value_json["results"][0]["series"][0]["values"][0][1] }}'
-    headers:
-      User-Agent: Home Assistant
+  # - platform: rest
+  #   resource: !secret influx_pressure_changes
+  #   name: pressure_change_in_3_hours
+  #   device_class: pressure
+  #   unit_of_measurement: "hPa"
+  #   value_template: '{{ value_json["results"][0]["series"][0]["values"][0][1] }}'
+  #   headers:
+  #     User-Agent: Home Assistant
       
   - platform: season
     type: astronomical
@@ -426,13 +433,8 @@
       #     {{ state.name}}: {{state.state}}%%{%- if not loop.last %};{%endif%}
       #     {%-endfor%}
 
-# {%for state in states.sensor
-# if state.entity_id.endswith("_zigbee") and (as_timestamp(now())-as_timestamp(state.state) > 60*60) %}
-# {{ state.name}}: {{((as_timestamp(now())-as_timestamp(state.state))/60)|int}}min{%- if not loop.last %};{%endif%}
-# {%-endfor%}
 
 
-          
       # battery_levels:
       #   friendly_name: Battery Levels
       #   value_template: >
@@ -471,14 +473,13 @@
       #       {%- endif -%}
       #       {%- endfor %}
             
-  - name: magnetic_storm
-    platform: scrape 
+  - platform: scrape
+    name: Magnetic Storm
     resource: https://tesis.lebedev.ru/magnetic_storms.html
     select: table.main td p:nth-of-type(4) > b
     unit_of_measurement: ' '
     value_template: "{{ value.split('(')[0] | int }}"
     scan_interval: 300
-
 
   - platform: waqi
     token: !secret aqicn_api_key

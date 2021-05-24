@@ -15,7 +15,7 @@
     - choose:
         - conditions:
             - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
+              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x158d0002a36433_channel_2','off') }}"
           sequence:
             - service: xiaomi_miio.light_set_scene
               data:
@@ -26,7 +26,7 @@
               entity_id: switch.esp32_bathroom_node_relay_3
               state: 'off'
             - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
+              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x158d0002a36433_channel_2','on') }}"
           sequence:
             - service: switch.turn_on
               entity_id: switch.esp32_bathroom_node_relay_3
@@ -39,7 +39,7 @@
               entity_id: switch.esp32_bathroom_node_relay_3
               state: 'on'
             - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
+              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x158d0002a36433_channel_2','on') }}"
           sequence:
             - service: switch.turn_off
               entity_id: switch.esp32_bathroom_node_relay_3
@@ -60,7 +60,7 @@
     - choose:
         - conditions:
             - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
+              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x158d0002a36433_channel_2','off') }}"
           sequence:
             - service: xiaomi_miio.light_set_scene
               data:
@@ -68,7 +68,7 @@
                 scene: 1
         - conditions:
             - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
+              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x158d0002a36433_channel_2','on') }}"
           sequence:
             - service: switch.turn_{%if is_state('switch.0x158d0002482619_switch','on')%}off{%else%}on{%endif%} #service: switch.toggle
               entity_id: switch.0x158d0002482619_switch
@@ -85,10 +85,10 @@
       to: 'hold'
   condition:
     - condition: template
-      value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x4cf8cdf3c7a9a48_channel_2','off') }}"
+      value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x158d0002a36433_channel_2','off') }}"
   action:
     - service: switch.turn_on
-      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+      entity_id: switch.0x158d0002a36433_channel_2
               
 # ##################################
 # Bathroom Fan - Auto Off
@@ -179,9 +179,8 @@
       entity_id: input_boolean.security_mode
       state: 'off'
   action:
-    - service: "switch.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}"
-      data:
-        entity_id: switch.0x158d0002482619_switch
+    - service: switch.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}
+      entity_id: switch.0x158d0002482619_switch
 
 # ##################################
 # Bathroom - Bottom Fan Toggle
@@ -193,15 +192,15 @@
     - platform: time_pattern
       minutes: "/30"
   condition:
-    condition: and
-    conditions: 
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: 'off'
-      - condition: state
-        entity_id: input_boolean.security_mode
-        state: 'off'
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
   action:
+    - condition: template
+      value_template: "{{ is_state('group.lights_b','off') or is_state('switch.0x158d0002482619_switch','on') }}"
     - service: switch.turn_{%if is_state('switch.0x158d0002482619_switch','on')%}off{%else%}on{%endif%} #service: switch.toggle
       entity_id: switch.0x158d0002482619_switch
 

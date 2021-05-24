@@ -209,7 +209,8 @@ async def _common_discover_entities(
         log_prefix = _make_log_prefix(
             config_entry,
             current_entity_platform,
-            'discvr', sensor_type_name
+            'discvr',
+            sensor_type_name
         )
 
     if entity_code_getter is None:
@@ -235,12 +236,20 @@ async def _common_discover_entities(
 
     for iter_object in source_objects:
         identifier = object_code_getter(iter_object)
+        
+        if not identifier:
+            _LOGGER.warning('No identifier on: %s: %s', iter_object, iter_object.data)
+            continue
+
+        log_sensor_type_name = sensor_type_name.ljust(7),
+        log_identifier = '*' + identifier[-5:]
+            
         granular_log_prefix = _make_log_prefix(
             config_entry,
             current_entity_platform,
             'discvr',
-            sensor_type_name.ljust(7),
-            '*' + identifier[-5:]
+            log_sensor_type_name,
+            log_identifier
         )
 
         if not entity_filter[identifier]:
@@ -258,8 +267,8 @@ async def _common_discover_entities(
             config_entry,
             current_entity_platform,
             'entity',
-            sensor_type_name.ljust(7),
-            '*' + identifier[-5:]
+            log_sensor_type_name,
+            log_identifier
         )
 
         if obj_entity is None:
@@ -583,13 +592,15 @@ class MESEntity(Entity):
 
     async def async_added_to_hass(self) -> None:
         _LOGGER.info(self.log_prefix + 'Adding to HomeAssistant')
-        entities = self.hass.data\
-            .setdefault(DATA_ENTITIES, {})\
-            .setdefault(self.registry_entry.config_entry_id, {})\
-            .setdefault(self.config_key, [])
 
-        if self not in entities:
-            entities.append(self)
+        if self.registry_entry:
+            entities = self.hass.data\
+                .setdefault(DATA_ENTITIES, {})\
+                .setdefault(self.registry_entry.config_entry_id, {})\
+                .setdefault(self.config_key, [])
+
+            if self not in entities:
+                entities.append(self)
 
         self.restart_updater()
 
@@ -597,13 +608,14 @@ class MESEntity(Entity):
         _LOGGER.info(self.log_prefix + 'Removing from HomeAssistant')
         self.stop_updater()
 
-        entities = self.hass.data\
-            .get(DATA_ENTITIES, {})\
-            .get(self.registry_entry.config_entry_id, {})\
-            .get(self.config_key, [])
+        if self.registry_entry:
+            entities = self.hass.data\
+                .get(DATA_ENTITIES, {})\
+                .get(self.registry_entry.config_entry_id, {})\
+                .get(self.config_key, [])
 
-        if self in entities:
-            entities.remove(self)
+            if self in entities:
+                entities.remove(self)
 
     def stop_updater(self) -> None:
         if self.entity_updater is not None:

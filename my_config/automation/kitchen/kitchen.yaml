@@ -159,7 +159,8 @@
           {%- elif 'membrane' in trigger.entity_id %} мембраны
           {%- elif 'mineralizer' in trigger.entity_id %} минерализатора
           {%- elif 'postfilter' in trigger.entity_id %} постфильтра
-          {%-else%}ХХХ{%-endif%} больше 95%. Требуется замена!
+          {%-else%} ХХХ
+          {%-endif%} больше 95%. Требуется замена!
 
 # ##################################
 # Kitchen - Oven notify
@@ -190,16 +191,15 @@
 #  id: kitchen_tv_plug_off
   initial_state: true
   trigger:
-    - platform: time_pattern
-      minutes: "/30"
+    - platform: state
+      entity_id: binary_sensor.motion_k
+      to: 'off'
+      for:
+        minutes: 30
   condition:
     - condition: time
       after: '02:00:00'
       before: '07:00:00'
-    - condition: state
-      entity_id: binary_sensor.motion_k
-      state: 'off'
-      for: '00:15:00'
     - condition: state
       entity_id: switch.0x158d0001e85086_switch
       state: 'on'
@@ -219,9 +219,12 @@
       to: 'on'
   condition:
     - condition: time
-      after: '07:00:00'
+      after: '06:00:00'
     - condition: state
       entity_id: switch.0x158d0001e85086_switch
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.security_mode
       state: 'off'
   action:
     - service: switch.turn_on

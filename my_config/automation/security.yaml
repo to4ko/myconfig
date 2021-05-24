@@ -50,6 +50,7 @@
       entity_id:
         - binary_sensor.0x158d0001ae9f61_motion
         - binary_sensor.0x158d0001aea602_motion
+        - binary_sensor.0x158d0003f27ce2_motion
         - binary_sensor.0x158d0001e05856_motion
         - binary_sensor.0x158d0001e53cda_motion
         - binary_sensor.0x158d0001e54280_motion
@@ -71,11 +72,37 @@
     - condition: state
       entity_id: input_boolean.security_mode
       state: 'on'
+    - condition: state
+      entity_id: timer.security_delay
+      state: 'idle'
   action:
     - service: notify.telegram
       data:
         #title: "Внимание!"
         message: "\U0001f46e Сработал датчик {{trigger.to_state.attributes.friendly_name}}!"
+
+
+# ##################################
+# Security - Alarm delay
+# ##################################
+- alias: security_alarm_delay
+#  id: security_alarm_delay
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0001e5d6be_contact
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'on'
+  action:
+    - service: timer.cancel
+      entity_id: timer.security_delay
+    - service: timer.start
+      entity_id: timer.security_delay
 
 # ##################################
 # Security - Turn Off

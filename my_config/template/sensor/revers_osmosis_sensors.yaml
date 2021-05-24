@@ -9,6 +9,11 @@
         icon: mdi:filter-remove-outline
         state: "{{(states('sensor.water_raw_single')|float-states('sensor.water_mineralized_single')|float-states('sensor.water_non_mineralized_single')|float)|round(2)}}"
 
+      - name: RO Rate
+        unit_of_measurement: 'pt'
+        icon: mdi:scale-balance
+        state: "{{(states('sensor.water_raw_single')|float/(states('sensor.water_mineralized_single')|float+states('sensor.water_non_mineralized_single')|float))|round(1)}}"
+
       - name: RO Drain Percentage
         unit_of_measurement: '%'
         icon: mdi:filter-remove-outline
@@ -21,10 +26,11 @@
 
   - trigger:
       - platform: time_pattern
-        hours: 0
-        minutes: 30
+        hours: "/1"
       - platform: homeassistant
         event: start
+      - platform: event
+        event_type: automation_reloaded
         
     sensor: 
       - name: Water RAW Yesterday
@@ -81,3 +87,5 @@
         icon: mdi:calendar
         unit_of_measurement: 'days'
         state: "{{((as_timestamp(strptime(states('sensor.date_time'),'%Y-%m-%d, %H:%M'))|int-state_attr('input_datetime.ro_replace_date','timestamp')|int)/86400)|round(1)}}"
+        
+        

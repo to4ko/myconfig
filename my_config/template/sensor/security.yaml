@@ -22,10 +22,20 @@
         state: >
           {%- set sensors = expand('group.motioninternal') %}
           {% for sensor in sensors %}
-            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max ) %}
               {{ sensor.name }}
             {% endif %}
           {% endfor %}
+
+
+      # - name: Last Motion
+      #   state: >
+      #     {%- set sensors = expand('group.motioninternal') %}
+      #     {% for sensor in sensors %}
+      #       {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max ) and is_state(sensor.entity_id,'on')%}
+      #         {{ sensor.name }}
+      #       {% endif %}
+      #     {% endfor %}
 
       - name: Last Motion Time
         state: '{{ as_timestamp(states.group.motioninternal.last_changed) | timestamp_custom("%a %d %b %H:%M") }}'

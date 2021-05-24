@@ -131,9 +131,22 @@
     - platform: event
       event_type: entity_registry_updated
   action:
+    # - choose:
+    #     - conditions:
+    #         - condition: template
+    #           value_template: "{{ trigger.event.data.action == 'create' and not ['device_tracker.unifi_','default'] in trigger.event.data.entity_id }}"
+    #         - condition: template
+    #           value_template: "{{ trigger.event.data.entity_id.attributes.ip is defined }}"
+    #       sequence:
+    #         - service: notify.telegram
+    #           data: 
+    #             message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
+      # default:
     - service: notify.telegram
       data: 
         message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
+        
+                
 
 # ##################################
 # System - Device Deletion
@@ -952,6 +965,7 @@
         - sensor.0x158d00019c8afd_action
         - binary_sensor.0x158d0001ae9f61_motion
         - binary_sensor.0x158d0001aea602_motion
+        - binary_sensor.0x158d0003f27ce2_motion
         - sensor.0x158d0001b94abe_action
         - sensor.0x158d0001b97111_action
         - binary_sensor.0x158d0001d5995e_motion
@@ -1075,7 +1089,6 @@
         - sensor.0x4cf8cdf3c78d26e_illuminance
         - sensor.0x4cf8cdf3c7947e4_action
         - sensor.0x4cf8cdf3c79546c_action
-        - sensor.0x4cf8cdf3c7a9a48_action
         - alarm_control_panel.0x588e81fffe72678e_alarm
         - alarm_control_panel.0x588e81fffedcb38d_alarm
         - alarm_control_panel.0x588e81fffedd3c41_alarm
@@ -1466,14 +1479,14 @@
   initial_state: true
   trigger:
     - platform: numeric_state
-      entity_id: air_quality.opensense_map
-      above: 10
+      entity_id: sensor.waqi_pm25
+      above: 50
       for:
-        minutes: 5
+        hours: 3
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f32a Внимание! Уровень PM2.5 высокий! {{states('air_quality.opensense_map')}}мкг/м3!"
+        message: "\U0001f32a Внимание! Уровень PM2.5 высокий! {{states('sensor.waqi_pm25')}}aqi!"
   
 # ##################################
 # System - Air Quality pm10
@@ -1483,13 +1496,12 @@
   initial_state: true
   trigger:
     - platform: numeric_state
-      entity_id: air_quality.opensense_map
-      attribute: particulate_matter_10
+      entity_id: sensor.waqi_pm10
       above: 80
       for:
-        minutes: 5
+        hours: 3
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f32a Внимание! Уровень PM10 высокий! {{state_attr('air_quality.opensense_map','particulate_matter_10')}}мкг/м3!"
+        message: "\U0001f32a Внимание! Уровень PM10 высокий! {{state_attr('sensor.waqi_pm10')}}aqi!"
   

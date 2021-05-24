@@ -120,7 +120,7 @@
         icon: mdi:lightbulb-group
 
       - name: Light B
-        state: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') }}"
+        state: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x158d0002a36433_channel_2','on') }}"
         icon: mdi:lightbulb-group
 
       - name: Light K
@@ -224,6 +224,29 @@
           mdi:walk
           {% endif %}
 
+      - name: Motion St
+        device_class: motion
+        state: "{{ is_state('binary_sensor.0x158d0001aea602_motion', 'on') or is_state('binary_sensor.0x158d0003f27ce2_motion', 'on') }}"
+        icon: >
+          {% if is_state('binary_sensor.motion_st','on') %}
+          mdi:run
+          {% else %}
+          mdi:walk
+          {% endif %}
+
+      - name: Motion B 5m
+        device_class: motion
+        state: "{{ is_state('binary_sensor.0x158d000236bc6d_motion', 'on') }}"
+        delay_off:
+          minutes: 5
+        icon: >
+          {% if is_state('binary_sensor.motion_b_5m','on') %}
+          mdi:run
+          {% else %}
+          mdi:walk
+          {% endif %}
+
+          
       - name: Bottom Lock
         device_class: lock
         state: "{{is_state('binary_sensor.0x158d0002a1a4b2_contact','on')}}"
@@ -264,12 +287,6 @@
         device_class: cold
         state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_1d')|float > -3}}"
 
-
-
-  - trigger:
-      - platform: time_pattern
-        hours: "/1"
-    binary_sensor:
       - name: Bright Light Allowed
         state: "{{ (is_state('binary_sensor.workday_sensor','on') and is_state('binary_sensor.tod_day','on')) or (is_state('binary_sensor.workday_sensor','off') and is_state('binary_sensor.tod_day_non_working','on')) }}"
         icon: >

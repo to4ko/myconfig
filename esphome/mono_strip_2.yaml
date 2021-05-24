@@ -1,11 +1,11 @@
 substitutions:
-  board_name: esp01_weight_pad
-  ip_address: 192.168.1.69
+  board_name: mono_strip_2
+  ip_address: 192.168.1.88
 
 esphome:
   name: ${board_name}
   platform: ESP8266
-  board: esp01_1m
+  board: esp8285
 
 wifi:
   # ssid: !secret wifi_ssid_k
@@ -38,15 +38,28 @@ wifi:
     dns2: 8.8.8.8
 
 logger:
-  baud_rate: 0
 
 api:
-  reboot_timeout: 10min
+  reboot_timeout: 0s
 
 ota:
 
 web_server:
   port: 80
+
+light:
+  - platform: monochromatic
+    name: ${board_name}_light
+    output: pwm1
+    effects:
+      - flicker:
+      - strobe:
+
+output:
+  - platform: esp8266_pwm
+    id: pwm1
+    pin: GPIO12
+    frequency: 1000 Hz
 
 binary_sensor:
   - platform: status
@@ -65,23 +78,6 @@ sensor:
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
-
-  - platform: hx711
-    name: ${board_name}_load
-    dout_pin: GPIO02
-    clk_pin: GPIO03
-    gain: 128
-    update_interval: 15s
-    filters:
-      - calibrate_linear:
-          - 140537 -> 0
-          - 76180 -> 2800
-    unit_of_measurement: g
-
-  - platform: adc
-    pin: VCC
-    name: ${board_name}_Vcc
-    update_interval: 15s
 
 text_sensor:
   - platform: template
@@ -109,6 +105,7 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+    
 time:
   - platform: homeassistant
     id: homeassistant_time

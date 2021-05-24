@@ -26,7 +26,7 @@
     - condition: or
       conditions:
         - condition: state
-          entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+          entity_id: switch.0x158d0002a36433_channel_2
           state: 'on'
         - condition: state
           entity_id: light.mirror_light_b
@@ -45,7 +45,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+      entity_id: switch.0x158d0002a36433_channel_2
       to: 'off'
       from: 'on'
   action:
@@ -62,17 +62,21 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.0x158d000236bc6d_motion
+      entity_id: binary_sensor.motion_b_5m
       to: 'off'
-      for:
-        minutes: 5
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
   condition:
     - condition: state
       entity_id: input_boolean.bathroom_occupancy
       state: 'off'
     - condition: state
-      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+      entity_id: switch.0x158d0002a36433_channel_2
       state: 'off'
+    - condition: template
+      value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d000236bc6d_motion'].last_changed))/60)|int >= 5}}"
   action:
     - service: light.turn_off
       entity_id: light.mirror_light_b
@@ -87,7 +91,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+      entity_id: switch.0x158d0002a36433_channel_2
       to: 'on'
       from: 'off'
     - platform: state
@@ -108,7 +112,7 @@
   initial_state: true
   trigger:
     - platform: template
-      value_template: "{{not is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on') and not is_state('light.mirror_light_b','on') }}"
+      value_template: "{{not is_state('switch.0x158d0002a36433_channel_2','on') and not is_state('light.mirror_light_b','on') }}"
   action:
     - service: timer.cancel
       entity_id: timer.main_light_b
@@ -131,7 +135,7 @@
     - condition: or
       conditions:
         - condition: state
-          entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+          entity_id: switch.0x158d0002a36433_channel_2
           state: 'on'
         - condition: state
           entity_id: light.mirror_light_b
@@ -161,7 +165,7 @@
     condition: or
     conditions:
       - condition: state
-        entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+        entity_id: switch.0x158d0002a36433_channel_2
         state: 'on'
       - condition: state
         entity_id: light.mirror_light_b
@@ -233,7 +237,7 @@
         entity_id: timer.main_light_b
   action:
     - service: switch.turn_off
-      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+      entity_id: switch.0x158d0002a36433_channel_2
     - service: light.turn_off
       entity_id: light.mirror_light_b
       data:
@@ -250,8 +254,8 @@
       entity_id: sensor.0x158d0001e0a622_action
       to: 'button_1_single'
   action:
-    - service: switch.turn_{%if is_state('switch.0x4cf8cdf3c7a9a48_channel_2','on')%}off{%else%}on{%endif%} #service: switch.toggle
-      entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+    - service: switch.turn_{%if is_state('switch.0x158d0002a36433_channel_2','on')%}off{%else%}on{%endif%} #service: switch.toggle
+      entity_id: switch.0x158d0002a36433_channel_2
 
 # ##################################
 # Bathroom - Mirror Light Single
@@ -277,7 +281,7 @@
               entity_id: light.mirror_light_b
               state: 'off'
             - condition: state
-              entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+              entity_id: switch.0x158d0002a36433_channel_2
               state: 'off'
           sequence:
             - service: xiaomi_miio.light_set_scene
@@ -289,7 +293,7 @@
               entity_id: light.mirror_light_b
               state: 'off'
             - condition: state
-              entity_id: switch.0x4cf8cdf3c7a9a48_channel_2
+              entity_id: switch.0x158d0002a36433_channel_2
               state: 'on'
           sequence:
             - service: xiaomi_miio.light_set_scene
@@ -332,48 +336,48 @@
 # ##################################
 # Bathroom - Mirror Light Manual
 # ##################################
-- alias: bathroom_mirror_light_manual
-#  id: bathroom_mirror_light_manual
-  initial_state: true
-  mode: queued
-  trigger:
-    - platform: state
-      entity_id: sensor.0x4cf8cdf3c7a9a48_action
-      to: 'button_3_single'
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: light.mirror_light_b
-              state: 'on'
-          sequence:
-            - service: light.turn_off
-              entity_id: light.mirror_light_b
-        - conditions:
-            - condition: state
-              entity_id: light.mirror_light_b
-              state: 'off'
-          sequence:
-            - service: xiaomi_miio.light_set_scene
-              data:
-                entity_id: light.mirror_light_b
-                scene: 4
+# - alias: bathroom_mirror_light_manual
+# #  id: bathroom_mirror_light_manual
+#   initial_state: true
+#   mode: queued
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x4cf8cdf3c7a9a48_action
+#       to: 'button_3_single'
+#   action:
+#     - choose:
+#         - conditions:
+#             - condition: state
+#               entity_id: light.mirror_light_b
+#               state: 'on'
+#           sequence:
+#             - service: light.turn_off
+#               entity_id: light.mirror_light_b
+#         - conditions:
+#             - condition: state
+#               entity_id: light.mirror_light_b
+#               state: 'off'
+#           sequence:
+#             - service: xiaomi_miio.light_set_scene
+#               data:
+#                 entity_id: light.mirror_light_b
+#                 scene: 4
 
 # ##################################
 # Bathroom - Mirror Light Bright
 # ##################################
-- alias: bathroom_mirror_light_bright
-#  id: bathroom_mirror_light_bright
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: sensor.0x4cf8cdf3c7a9a48_action
-      to: 'button_3_double'
-  action:
-    - service: xiaomi_miio.light_set_scene
-      data:
-        entity_id: light.mirror_light_b
-        scene: 1
+# - alias: bathroom_mirror_light_bright
+# #  id: bathroom_mirror_light_bright
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x4cf8cdf3c7a9a48_action
+#       to: 'button_3_double'
+#   action:
+#     - service: xiaomi_miio.light_set_scene
+#       data:
+#         entity_id: light.mirror_light_b
+#         scene: 1
 
 # ##################################
 # Bathroom - Mirror Light Reset 

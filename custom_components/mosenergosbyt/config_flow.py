@@ -139,15 +139,24 @@ class MosenergosbytOptionsFlow(OptionsFlow):
             suppress_unsupported_logging=True
         )
 
-        account_codes = set([account.account_code for account in accounts])
+        account_codes = set([
+            account.account_code
+            for account in accounts
+            if account.account_code is not None
+        ])
 
         meter_lists = await asyncio.gather(*[
             account.get_meters()
             for account in accounts
+            # if account.account_code is not None  # @TODO: is this required?
         ])
         meter_codes = set()
         for meter_list in meter_lists:
-            meter_codes.update(map(lambda x: x.meter_code, meter_list))
+            meter_codes.update([
+                meter.meter_code
+                for meter in meter_list
+                if meter.meter_code is not None
+            ])
 
         return {
             CONF_ACCOUNTS: sorted(account_codes),

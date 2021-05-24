@@ -349,6 +349,9 @@ class BaseAccount(ABC):
         self._meter_objects: Optional[List[BaseMeter]] = None
         self.api: API = api
 
+    def __str__(self):
+        return self.__class__.__name__ + '[' + self.account_code + ']'
+
     async def update_info(self) -> Union[None, type(NotImplemented)]:
         """
         Update additional account information
@@ -1240,7 +1243,7 @@ class BaseMeter(ABC):
         # Out-of-period today submission
         today_indications = self.today_indications
 
-        if any(today_indications):
+        if today_indications is not None and any(today_indications):
             return today_indications
 
         return self._empty_indications_list
@@ -1571,7 +1574,7 @@ class MOEGenericMeter(SubmittableMeter):
 
     @property
     def meter_code(self) -> str:
-        return self._data['nm_counter']
+        return self._data.get('nm_counter') or self._data.get('nm_factory')
 
     @property
     def tariff_ids(self) -> List[str]:
@@ -1641,7 +1644,7 @@ class MOEGenericMeter(SubmittableMeter):
     def last_indications_date(self) -> Optional[date]:
         last_indications_date = self._data.get('dt_last_indication')
         if last_indications_date:
-            last_indications_date = str(last_indications_date).replace(' ', 'T', 1).rstrip('0').rstrip('.')
+            last_indications_date = str(last_indications_date).replace(' ', 'T', 1)
             return datetime.fromisoformat(last_indications_date).date()
 
     @property
@@ -1712,15 +1715,18 @@ class KSGElectricityMeter(SubmittableMeter):
 
     @property
     def last_indications_date(self) -> Optional[date]:
-        indications_date = self.data.get('date')
+        if self.data is not None:
+            indications_date = self.data.get('date')
 
-        if indications_date:
-            return indications_date.date()
+            if indications_date:
+                return indications_date.date()
 
     @property
     def today_indications(self) -> List[Optional[float]]:
-        if self.last_indications_date == DateUtil.moscow_today():
-            return self.last_indications
+        last_indications_date = self.last_indications_date
+        if last_indications_date is not None:
+            if self.last_indications_date == DateUtil.moscow_today():
+                return self.last_indications
 
         return self._empty_indications_list
 
@@ -1728,8 +1734,10 @@ class KSGElectricityMeter(SubmittableMeter):
     def last_indications(self) -> List[Optional[float]]:
         indications = []
 
+        meters_data = (self.data or {}).get('meters', {})
+
         for tariff_id in self.tariff_ids:
-            value = self.data.get('meters', {}).get(tariff_id)
+            value = meters_data.get(tariff_id)
             indications.append(None if value is None else float(value))
 
         return indications

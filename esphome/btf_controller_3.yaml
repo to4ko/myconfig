@@ -1,12 +1,12 @@
 substitutions:
-  board_name: esp01_weight_pad
-  ip_address: 192.168.1.69
-
+  board_name: btf_controller_3
+ 
 esphome:
   name: ${board_name}
   platform: ESP8266
-  board: esp01_1m
-
+  board: esp8285
+  comment: BTF Led Pixel Controller 3
+  
 wifi:
   # ssid: !secret wifi_ssid_k
   # password: !secret wifi_pass
@@ -16,72 +16,62 @@ wifi:
   # fast_connect: true
   power_save_mode: none
   networks:
-    - ssid: !secret wifi_ssid_k
-      password: !secret wifi_pass
-      hidden: true
-      bssid: !secret wifi_bssid_hs_iot
-      priority: 2
-    - ssid: !secret wifi_ssid
-      password: !secret wifi_pass
-      hidden: false
-      bssid: !secret wifi_bssid_hs_main
-      priority: 1
+    # - ssid: !secret wifi_ssid_k
+    #   password: !secret wifi_pass
+    #   hidden: true
+    #   bssid: !secret wifi_bssid_hs_iot
+    #   priority: 2
+    # - ssid: !secret wifi_ssid
+    #   password: !secret wifi_pass
+    #   hidden: false
+    #   bssid: !secret wifi_bssid_hs_main
+    #   priority: 1
     - ssid: !secret wifi_ssid
       password: !secret wifi_pass
       hidden: false
       priority: 0
   manual_ip:
-    static_ip: ${ip_address}
+    static_ip: 192.168.1.85
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
     dns2: 8.8.8.8
 
+
+
+# Enable logging
 logger:
   baud_rate: 0
 
+# Enable Home Assistant API
 api:
-  reboot_timeout: 10min
+  reboot_timeout: 0s
 
 ota:
 
-web_server:
-  port: 80
-
+# web_server:
+#   port: 80
+  
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
     
-switch:
-  - platform: restart
-    name: ${board_name}_Restart
-
-sensor:
-  - platform: uptime
-    name: ${board_name}_Uptime_s
-    icon: mdi:clock-outline
-    id: uptime_sensor
-
-  - platform: wifi_signal
-    name: ${board_name}_WiFi_RSSI
-    update_interval: 60s
-
-  - platform: hx711
-    name: ${board_name}_load
-    dout_pin: GPIO02
-    clk_pin: GPIO03
-    gain: 128
-    update_interval: 15s
-    filters:
-      - calibrate_linear:
-          - 140537 -> 0
-          - 76180 -> 2800
-    unit_of_measurement: g
-
-  - platform: adc
-    pin: VCC
-    name: ${board_name}_Vcc
-    update_interval: 15s
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B
+    pin: GPIO3
+    num_leds: 10
+    rgb_order: GRB
+    name: ${board_name}_LED
+    id: light1
+    effects:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
 
 text_sensor:
   - platform: template
@@ -108,6 +98,20 @@ text_sensor:
       return {buffer};
     icon: mdi:clock-start
     update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s    
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
 
 time:
   - platform: homeassistant
