@@ -368,7 +368,7 @@
   action:
     - service: notify.telegram
       data:
-        message: "{{ '\U0000274C' }} Перезапуск отменён. Конфигурация содержит ошибки {{ trigger.to_state.attributes.message }}"
+        message: "\U0000274C Перезапуск отменён. Конфигурация содержит ошибки {{ trigger.to_state.attributes.message }}"
     - service: persistent_notification.dismiss
       data:
         notification_id: >
@@ -376,7 +376,7 @@
                 invalid_config
             {% else %}
                 homeassistant_check_config
-            {% endif %}        
+            {% endif %}
 
 # ##################################
 # System - Pinhole restart
@@ -398,9 +398,12 @@
       for:
         minutes: 3
   action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f504 Перезапуск Pinhole"
     - service: switch.turn_off
       entity_id: switch.0x158d000322e1d9_switch
-    - delay: '00:00:05'
+    - delay: '00:00:15'
     - service: switch.turn_on
       entity_id: switch.0x158d000322e1d9_switch
 
@@ -424,6 +427,9 @@
       for:
         minutes: 3
   action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f504 Перезапуск Digma100"
     - service: switch.turn_off
       entity_id: switch.0x158d000358c773_switch
     - delay: '00:00:15'
@@ -700,7 +706,53 @@
     - service: notify.telegram
       data:
         message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.geiger_radiation_dose_per_hour')|int}}мкР/ч!"
-        
+
+# ##################################
+# System - Radiation sensor restart
+# ##################################
+- alias: system_radiation_sensor_restart
+#  id: system_radiation_sensor_restart
+  initial_state: true
+  trigger:
+    - platform: template
+      value_template: "{{(as_timestamp(now())|int-states('sensor.geiger_last_seen')|int) > 2*60*60 }}"
+    - platform: homeassistant
+      event: start
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())|int-states('sensor.geiger_last_seen')|int) > 2*60*60 }}"
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f525 Перезапук датчика радиации"
+    - service: switch.turn_off
+      entity_id: switch.lifecontrol_hs_switch
+    - delay: "00:00:10"
+    - service: switch.turn_on
+      entity_id: switch.lifecontrol_hs_switch
+
+# ##################################
+# System - LC Plug State restart
+# ##################################
+- alias: system_lc_plug_state
+#  id: system_lc_plug_state
+  initial_state: true
+  mode: queued
+  max: 25
+  trigger:
+    - platform: state
+      entity_id: switch.lifecontrol_hs_switch
+      from: 'off'
+      to: 'on'
+    - platform: state
+      entity_id: switch.lifecontrol_hs_switch
+      from: 'on'
+      to: 'off'
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f525 LC Plug {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
 # ##################################
 # System - Silent Mode Toggle
 # ##################################
@@ -908,6 +960,10 @@
       below: 40
       for:
         minutes: 5
+  condition:
+    - condition: state
+      entity_id: input_boolean.hot_water
+      state: 'on'
   action:
     - service: notify.telegram
       data:
@@ -944,6 +1000,10 @@
       below: 30
       for:
         minutes: 5
+  condition:
+    - condition: state
+      entity_id: input_boolean.heating
+      state: 'on'
   action:
     - service: notify.telegram
       data:
@@ -1094,7 +1154,6 @@
         - alarm_control_panel.0x588e81fffedd3c41_alarm
         - alarm_control_panel.0x842e14fffe1508a6_alarm
         - alarm_control_panel.0xbc33acfffe537cf5_alarm
-        - sensor.geiger_radiation_dose_per_hour
         - sensor.0x4cf8cdf3c7754a8_illuminance
       to: 'unavailable'
   condition:
@@ -1480,7 +1539,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.waqi_pm25
-      above: 50
+      above: 100
       for:
         hours: 3
   action:
@@ -1497,7 +1556,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.waqi_pm10
-      above: 80
+      above: 100
       for:
         hours: 3
   action:

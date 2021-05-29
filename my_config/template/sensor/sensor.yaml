@@ -104,7 +104,7 @@
         icon: mdi:water-percent
 
       - name: Vova GPS Last Update
-        state: "{{as_timestamp(states.device_tracker.life360_vova_tsymbal.attributes.last_seen)|timestamp_local}}"
+        state: "{{as_timestamp(state_attr('device_tracker.life360_vova_tsymbal','last_seen'))|timestamp_local}}"
         icon: mdi:crosshairs-question
         attributes:
           delta: "{{states('input_number.vova_gps_delta')}}"
@@ -146,7 +146,7 @@
         state: >-
           {%- macro dev_list() -%}
           {%- for state in states.sensor -%}
-          {%- if state.entity_id.endswith("_zigbee") and (as_timestamp(now())|int-as_timestamp(state.state)|int(0) > 3*60*60) -%}
+          {%- if states('sensor.ha_uptime')|int > 0 and state.entity_id.endswith("_zigbee") and (as_timestamp(now())|int-as_timestamp(state.state)|int(0) > 3*60*60) -%}
           X
           {%-endif-%}
           {%-endfor-%}
@@ -159,8 +159,8 @@
         attributes: 
           list: >-
             {%for state in states.sensor
-            if state.entity_id.endswith("_zigbee") and (as_timestamp(now())-as_timestamp(state.state)|int(0) > 3*60*60) %}
-            {{ state.name}}: {{((as_timestamp(now())|int-as_timestamp(state.state))|int(0)/60)|int}}min{%- if not loop.last %};{%endif%}
+            if states('sensor.ha_uptime')|int > 0 and state.entity_id.endswith("_zigbee") and (as_timestamp(now())-as_timestamp(state.state)|int(0) > 3*60*60) %}
+            {{state.name}}: {% if state.state =="unknown"%}NAN{%else%}((as_timestamp(now())|int-as_timestamp(state.state))|int(0)/60)|int}}min{%endif%}{%- if not loop.last %};{%endif%}
             {%-endfor%}
         icon: mdi:zigbee
         unit_of_measurement: 'ea'
