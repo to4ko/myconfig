@@ -148,6 +148,12 @@
       value_template: "{{ trigger.to_state.state|int % 2 == 0 }}"
     - condition: template
       value_template: "{{ trigger.to_state.state|int > 90 }}"
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}
   action:
     - service: notify.telegram
       data:

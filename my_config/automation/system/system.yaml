@@ -987,6 +987,30 @@
         message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_bathroom_node_cold_pipe')|int}}°C"
 
 # ##################################
+# System - Central Heating
+# ##################################
+- alias: system_central_heating
+#  id: system_central_heating
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.central_heating
+      to: 'off'
+      for:
+        minutes: 30
+    - platform: state
+      entity_id: binary_sensor.central_heating
+      to: 'on'
+      for:
+        minutes: 30
+  action:
+    - service: input_boolean.turn_{{states('binary_sensor.central_heating')}}
+      entity_id: input_boolean.heating
+    - service: notify.telegram
+      data:
+        message: "\U0001f321 Внимание! Отопление {% if is_state('binary_sensor.central_heating','on') %}включено{%else%}выключено{%endif%}"
+
+# ##################################
 # System - Heating pipes warning
 # ##################################
 - alias: system_heating_pipes_warning
@@ -1118,7 +1142,7 @@
         - sensor.0x158d0002b5fbc1_action
         - binary_sensor.0x158d0002b7c2c8_contact
         - binary_sensor.0x158d0002c92f31_smoke
-        - light.0x158d0002d3f7c9_light
+        #- light.0x158d0002d3f7c9_light
         - sensor.0x158d0002f8dd54_action
         - sensor.0x158d0002fa99a8_action
         - binary_sensor.0x158d0003140824_motion
@@ -1563,4 +1587,27 @@
     - service: notify.telegram
       data:
         message: "\U0001f32a Внимание! Уровень PM10 высокий! {{state_attr('sensor.waqi_pm10')}}aqi!"
-  
+
+# ##################################
+# System - State to Unavailable
+# ##################################
+# - alias: system_state_to_unavailable
+# #  id: system_state_to_unavailable
+#   mode: queued
+#   max: 50
+#   max_exceeded: silent
+#   initial_state: true
+#   trigger:
+#     - platform: event
+#       event_type: state_changed
+#   condition:
+#     - condition: template
+#       value_template: "{{ trigger.event.data.new_state.state in ['unavailable'] }}"
+#     - condition: template
+#       value_template: "{{ 'esp01_air_freshener' not in trigger.event.data.entity_id }}"
+#     - condition: template
+#       value_template: "{{ 'i5_' not in trigger.event.data.entity_id }}"      
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "{{trigger.event.data.entity_id}}: {{trigger.event.data.old_state.state}} -> {{trigger.event.data.new_state.state}}"
