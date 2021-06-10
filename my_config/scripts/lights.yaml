@@ -4,38 +4,71 @@
     max: 5
     max_exceeded: silent
     sequence:
+      - condition: state
+        entity_id: input_boolean.dark_mode
+        state: 'off'
+      - condition: state
+        entity_id: light.led_strip_entrance_hb, light.led_strip_hb
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.main_light_hb
+        state: 'off'
       - choose:
           - conditions:
               - condition: state
-                entity_id: input_boolean.dark_mode
-                state: 'off'
-              - condition: state
-                entity_id: light.led_strip_entrance_hb, light.led_strip_hb
-                state: 'off'
-              - condition: state
-                entity_id: binary_sensor.main_light_hb
+                entity_id: binary_sensor.tod_day
                 state: 'off'
             sequence:
               - service: light.turn_on
                 data: 
-                  entity_id: >
-                    {% if is_state('binary_sensor.tod_day_non_working','off') %}
-                      light.led_strip_entrance_hb
-                    {% else %}
-                      light.led_strip_hb
-                    {%endif%}
-                  brightness_pct: >
-                    {% if is_state('binary_sensor.bright_light_allowed','off') %}
-                      1
-                    {% else %}
-                      100
-                    {%endif%}
-                  kelvin: >
-                    {% if is_state('binary_sensor.bright_light_allowed','off') %}
-                      3000
-                    {% else %}
-                      5000
-                    {%endif%}
+                  entity_id: light.led_strip_entrance_hb
+                  brightness_pct: 1
+                  kelvin: 3000
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.tod_day
+                state: 'on'
+            sequence:
+              - service: light.turn_on
+                data: 
+                  entity_id: light.led_strip_hb
+                  brightness_pct: 100
+                  kelvin: 5000
+        
+    
+      # - choose:
+      #     - conditions:
+      #         - condition: state
+      #           entity_id: input_boolean.dark_mode
+      #           state: 'off'
+      #         - condition: state
+      #           entity_id: light.led_strip_entrance_hb, light.led_strip_hb
+      #           state: 'off'
+      #         - condition: state
+      #           entity_id: binary_sensor.main_light_hb
+      #           state: 'off'
+      #       sequence:
+              # - service: light.turn_on
+              #   data: 
+              #     entity_id: >
+              #       {% if is_state('binary_sensor.tod_day_non_working','off') %}
+              #         light.led_strip_entrance_hb
+              #       {% else %}
+              #         light.led_strip_hb
+              #       {%endif%}
+              #     brightness_pct: >
+              #       {% if is_state('binary_sensor.bright_light_allowed','off') %}
+              #         1
+              #       {% else %}
+              #         100
+              #       {%endif%}
+              #     kelvin: >
+              #       {% if is_state('binary_sensor.bright_light_allowed','off') %}
+              #         3000
+              #       {% else %}
+              #         5000
+              #       {%endif%}
+
           # - conditions:
           #     - condition: state
           #       entity_id: input_boolean.dark_mode

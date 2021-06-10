@@ -5,7 +5,7 @@ esphome:
   name: ${board_name}
   platform: ESP32
   board: lolin32
-  comment: ESP32 2812 Motion TPH Node HS
+  comment: ESP32 TPH Node HS
 
 wifi:
   ssid: !secret wifi_ssid_k
@@ -37,13 +37,6 @@ binary_sensor:
   - platform: status
     name: ${board_name}_Status
     
-  - platform: gpio
-    pin:
-      number: GPIO27
-      inverted: false
-    name: ${board_name}_Motion
-    device_class: motion    
-    
 i2c:
   sda: GPIO21
   scl: GPIO22
@@ -58,14 +51,137 @@ light:
     name: ${board_name}_LED
     id: light1
     effects:
-      - random:
-      - strobe:
       - addressable_rainbow:
       - addressable_color_wipe:
       - addressable_scan:
       - addressable_twinkle:
       - addressable_random_twinkle:
       - addressable_fireworks:
+
+  - platform: partition
+    name: ${board_name}_wadrobe
+    segments:
+      - id: light1
+        from: 0
+        to: 174
+    effects:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+
+  - platform: partition
+    name: ${board_name}_toilet
+    id: light1_toilet
+    segments:
+      - id: light1
+        from: 157
+        to: 174
+    effects:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+      - automation:
+          name: "Occupied"
+          sequence:
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 50%
+                transition_length: 3s
+                red: 0%
+                green: 100%
+                blue: 0%
+            - delay: 2s
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 20%
+                transition_length: 2s
+                red: 0%
+                green: 100%
+                blue: 0%
+            - delay: 2s
+      - automation:
+          name: "Red_Alarm"
+          sequence:
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 100%
+                transition_length: 2s
+                red: 100%
+                green: 0%
+                blue: 0%
+            - delay: 1s
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 10%
+                transition_length: 1s
+                red: 100%
+                green: 0%
+                blue: 0%
+            - delay: 1s
+            
+  - platform: partition
+    name: ${board_name}_bathroom
+    id: light1_bathroom
+    segments:
+      - id: light1
+        from: 99
+        to: 117
+    effects:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:      
+      - automation:
+          name: "Occupied"
+          sequence:
+            - light.turn_on:
+                id: light1_bathroom
+                brightness: 50%
+                transition_length: 3s
+                red: 0%
+                green: 0%
+                blue: 100%
+            - delay: 2s
+            - light.turn_on:
+                id: light1_bathroom
+                brightness: 20%
+                transition_length: 2s
+                red: 0%
+                green: 0%
+                blue: 100%
+            - delay: 2s
+      - automation:
+          name: "Red_Alarm"
+          sequence:
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 100%
+                transition_length: 2s
+                red: 100%
+                green: 0%
+                blue: 0%
+            - delay: 1s
+            - light.turn_on:
+                id: light1_toilet
+                brightness: 10%
+                transition_length: 1s
+                red: 100%
+                green: 0%
+                blue: 0%
+            - delay: 1s
+
+
 
 text_sensor:
   - platform: template
@@ -116,7 +232,7 @@ sensor:
   - platform: bh1750
     name: ${board_name}_Illuminance
     address: 0x23
-    measurement_time: 254
+    measurement_duration: 254
     update_interval: 15s
     accuracy_decimals: 0
     

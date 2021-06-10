@@ -8,17 +8,23 @@
   - binary_sensor:
       - name: Tod Day
         # state: "{{ ((now().hour | int) >= 7 and (now().hour | int) < 20 ) }}"
-        state: "{{ '07:30' <= states('sensor.time') < '20:00' }}"
+        state: >-
+          {%- if is_state('binary_sensor.workday_sensor','on')%}{{'07:30' <= states('sensor.time') < '20:00' }}
+          {%- else %}{{'10:00' <= states('sensor.time') < '20:00' }}
+          {%- endif%}
+        icon: >
+          {% if is_state('binary_sensor.tod_day','on') %}
+          mdi:brightness-5
+          {% else %}
+          mdi:weather-night
+          {% endif %}
 
-      - name: Tod Day Not Working
-        #state: "{{ ((now().hour | int) >= 10 and (now().hour | int) < 20 ) }}"
-        state: "{{ '10:00' <= states('sensor.time') < '20:00' }}"
+#       - name: Tod Day Not Working
+#         #state: "{{ ((now().hour | int) >= 10 and (now().hour | int) < 20 ) }}"
+#         state: "{{ '10:00' <= states('sensor.time') < '20:00' }}"
 
-      - name: Tariff T1
-        #state: "{{ ((now().hour | int) >= 7 and (now().hour | int) < 23 ) }}"
-        state: "{{ '07:00' <= states('sensor.time') < '23:00' }}"
+#       - name: Tariff T1
+#         state: "{{ '07:00' <= states('sensor.time') < '23:00' }}"
 
-      - name: Tariff T2
-        #state: "{{ ((now().hour | int) >= 23 or (now().hour | int) < 7 ) }}"
-        #state: "{{ states('sensor.time') >= "23:00" and states('sensor.time') < "07:00" }}"
-        state: "{{ '23:00' <= states('sensor.time') < '07:00' }}"
+#       - name: Tariff T2
+#         state: "{{ '23:00' <= states('sensor.time') < '07:00' }}"

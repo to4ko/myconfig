@@ -18,6 +18,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Corsair HX1200i Power supply
   - Fractal Design Mini C with be quite Pure Wings 2 120mm PWM fans (3ea)
   - USR 56k USB Modem
+  - Google Coral M.2 Accelerator
 
 **Backup Server:**
   - Asrock 3455-ITX with integrated Celeron j3455
