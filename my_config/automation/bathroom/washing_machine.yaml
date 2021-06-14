@@ -92,6 +92,9 @@
     - condition: state
       entity_id: binary_sensor.tod_day
       state: 'on'
+    - condition: state
+      entity_id: input_number.dark_mode
+      state: 'off'
     - service: media_player.volume_set
       data:
         entity_id: media_player.home_mini_k
@@ -100,7 +103,10 @@
       data: 
         entity_id: media_player.home_mini_k
         message: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
-
+    - service: timer.cancel
+      entity_id: timer.washing_machine_ready
+    - service: timer.start
+      entity_id: timer.washing_machine_ready
 
 # ##################################
 # Bathroom - Washing Machine Extract
@@ -223,6 +229,60 @@
       entity_id: timer.washing_machine_door
 
 ##################################
+# Bathroom - Washing Machine Readyr Notification
+##################################
+- alias: bathroom_washing_machine_ready_notification
+#  id: bathroom_washing_machine_ready_notification
+  initial_state: true
+  trigger:
+    # - platform: time_pattern
+    #   minutes: "/15"
+    - platform: state
+      entity_id: 
+        - binary_sensor.0x158d0002b43ad4_motion
+        - binary_sensor.0x158d0001ae9f61_motion
+        - binary_sensor.0x158d0002b48381_motion
+        - binary_sensor.0x158d0002b4729d_motion
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 5
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
+    - condition: state
+      entity_id: input_number.dark_mode
+      state: 'off'
+    - condition: state
+      entity_id: input_select.washer_state
+      state: 'Drying'
+    - condition: state
+      entity_id: binary_sensor.0x158d0003fa6cf5_contact
+      state: 'off'
+    - condition: state
+      entity_id: timer.washing_machine_ready
+      state: 'idle'
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.bathroom_washing_machine_ready_notification','last_triggered'))|int) > 60 }}"
+    - condition: template
+      value_template: "{{ is_state_attr('automation.bathroom_washing_machine_ready_notification','current',0) }}"
+  action:
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.home_mini_k
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data: 
+        entity_id: media_player.home_mini_k
+        message: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
+    - service: timer.cancel
+      entity_id: timer.washing_machine_ready
+    - service: timer.start
+      entity_id: timer.washing_machine_ready
+
+##################################
 # Bathroom - Washing Machine Open Door Notification Stop
 ##################################
 - alias: bathroom_washing_machine_open_door_after_washing_stop
@@ -245,4 +305,4 @@
       data: 
         message: "{{'\U00002705'}} Дверца стиральной машинки открыта!"
     - service: timer.cancel
-      entity_id: timer.washing_machine_door
+      entity_id: timer.washing_machine_door, timer.washing_machine_door

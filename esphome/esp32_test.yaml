@@ -1,20 +1,215 @@
+substitutions:
+  board_name: esp32_test
+
 esphome:
-  name: esp32_test
+  name: ${board_name}
   platform: ESP32
   board: esp-wrover-kit
+  comment: ESP32 test
 
 wifi:
-  ssid: !secret wifi_ssid_k
-  password: !secret wifi_pass
-  domain: .localdomain
   reboot_timeout: 15min
-  output_power: 17.5dB
-  fast_connect: true
+  output_power: 17dB
   power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.240
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+  networks:
+    - ssid: !secret wifi_ssid_k
+      password: !secret wifi_pass
+      hidden: true
+      bssid: !secret wifi_bssid_hs_iot
+      priority: 2
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      bssid: !secret wifi_bssid_hs_main
+      priority: 1
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_pass
+      hidden: false
+      priority: 0
+
 
 logger:
-
-# Enable Home Assistant API
+  baud_rate: 0
+  
 api:
+  reboot_timeout: 10min
 
 ota:
+
+web_server:
+  port: 80
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: True
+
+bme680_bsec:
+  address: 0x77
+
+# uart:
+#   rx_pin: GPIO03
+#   tx_pin: GPIO01
+#   baud_rate: 9600
+#   stop_bits: 1
+
+# spi:
+#   # - id: spi_oven
+#   #   clk_pin: GPIO14
+#   #   #mosi_pin: GPIO13
+#   #   miso_pin: GPIO12
+
+#   - id: spi_hood
+#     clk_pin: GPIO18
+#     #mosi_pin: GPIO23
+#     miso_pin: GPIO19
+
+# dallas:
+#   - pin: GPIO26
+#     update_interval: 30s
+#     id: dallas_node
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    id: id_status
+
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+
+  - platform: bme680_bsec
+    iaq_accuracy:
+      name: SENSOR_BME680_IAQ_Accuracy
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: sgp30
+    eco2:
+      name: SENSOR_SGP30_eCO2
+      accuracy_decimals: 0
+    tvoc:
+      name: SENSOR_SGP30_TVOC
+      accuracy_decimals: 0
+      filters:
+        - multiply: 1000
+      unit_of_measurement: ppm
+    address: 0x58
+    update_interval: 15s
+
+  # - platform: bme680
+  #   temperature:
+  #     name: "BME680 Temperature"
+  #     oversampling: 16x
+  #   pressure:
+  #     name: "BME680 Pressure"
+  #   humidity:
+  #     name: "BME680 Humidity"
+  #   gas_resistance:
+  #     name: "BME680 Gas Resistance"
+  #   address: 0x77
+  #   update_interval: 60s
+
+
+  - platform: bme280
+    temperature:
+      name: SENSOR_BME280_Temperature
+      oversampling: 16x
+      accuracy_decimals: 1
+      id: bme280_temp
+    pressure:
+      name: SENSOR_BME280_Pressure
+      accuracy_decimals: 0
+    humidity:
+      name: SENSOR_BME280_Humidity
+      accuracy_decimals: 0
+    address: 0x76
+    update_interval: 5s    
+
+  # - platform: bmp280
+  #   temperature:
+  #     name: "Outside Temperature"
+  #     oversampling: 16x
+  #   pressure:
+  #     name: "Outside Pressure"
+  #   address: 0x76
+  #   update_interval: 60s
+
+  - platform: bme680_bsec
+    temperature:
+      name: SENSOR_BME680_Temperature
+      accuracy_decimals: 1
+    pressure:
+      name: SENSOR_BME680_Pressure
+      accuracy_decimals: 0
+    humidity:
+      name: SENSOR_BME680_Humidity
+      accuracy_decimals: 0
+    iaq:
+      name: SENSOR_BME680_IAQ
+      accuracy_decimals: 0
+    co2_equivalent:
+      name: SENSOR_BME680_CO2_Equivalent
+      accuracy_decimals: 0
+    breath_voc_equivalent:
+      name: SENSOR_BME680_Breath_VOC_Equivalent
+      accuracy_decimals: 0
+    
+    
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
