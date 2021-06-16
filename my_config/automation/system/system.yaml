@@ -842,6 +842,8 @@
   condition:
     - condition: template
       value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
+    - condition: template
+      value_template: "{{states('sensor.ha_uptime')|float > 0}}"
   action:
     - service: notify.telegram
       data:
@@ -1181,11 +1183,14 @@
         - alarm_control_panel.0x842e14fffe1508a6_alarm
         - alarm_control_panel.0xbc33acfffe537cf5_alarm
         - sensor.0x4cf8cdf3c7754a8_illuminance
+        - switch.0x158d000224e3e4_switch
       to: 'unavailable'
   condition:
     - condition: state
       entity_id: input_boolean.ha_shutdown
       state: 'off'
+    - condition: template
+      value_template: "{{states('sensor.ha_uptime')|float > 0}}"
   action:
     - choose:
         - conditions: "{{ states('input_boolean.ha_shutdown') == 'off' }}"

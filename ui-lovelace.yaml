@@ -880,8 +880,12 @@ views:
                 icon: mdi:power-socket-au
                 tap_action:
                   action: toggle
-              - entity: switch.0x158d000205a835_switch
-                name: BPlug MB
+              - entity: switch.0x158d000224e3e4_switch
+                name: Entr MB
+                tap_action:
+                  action: toggle                
+              - entity: switch.0x158d000322e30c_switch
+                name: Wadr MB
                 icon: mdi:power-socket
                 tap_action:
                   action: toggle
@@ -939,10 +943,10 @@ views:
                 name: Microwave
                 tap_action:
                   action: toggle
-              - entity: switch.sonoff_pow_r2_2_relay
-                name: Heater T
-                tap_action:
-                  action: toggle
+              # - entity: switch.sonoff_pow_r2_2_relay
+              #   name: Heater T
+              #   tap_action:
+              #     action: toggle
           - type: thermostat
             entity: climate.sonoff_pow_r2_2_heater
           - type: glance
@@ -1275,6 +1279,7 @@ views:
           - type: divider
           - fan.purifier2s
           - type: divider
+          - switch.0x158d000224e3e4_switch
           - switch.0x158d0002467773_switch
           - switch.0x158d000205a835_switch
           - switch.0x158d000322e30c_switch
@@ -2097,6 +2102,7 @@ views:
             show_header_toggle: false
             state_color: true
             entities:
+              - sensor.entrance_mb
               - sensor.pc_mb
               - sensor.bed_plug_mb
               - sensor.wadrobe_mb
@@ -2797,6 +2803,35 @@ views:
                 - domain: timer
               exclude:
                 - state: "idle"
+          # - type: custom:timer-bar-card
+          #   entities:
+          #     - timer.domofon
+          #     - timer.fan_b
+          #     - timer.fan_bottom_b
+          #     - timer.fan_t
+          #     - timer.general_10m
+          #     - timer.general_5m
+          #     - timer.heater_t
+          #     - timer.main_door_open_hb
+          #     - timer.main_led_strip_hb
+          #     - timer.main_light_b
+          #     - timer.main_light_delay_k
+          #     - timer.main_light_delay_st
+          #     - timer.main_light_hb
+          #     - timer.main_light_k
+          #     - timer.main_light_mb
+          #     - timer.main_light_s
+          #     - timer.main_light_st
+          #     - timer.main_light_t
+          #     - timer.night_led_strip_hb
+          #     - timer.night_led_strip_hs
+          #     - timer.night_led_strip_k
+          #     - timer.security_delay
+          #     - timer.test_timer
+          #     - timer.washer_b
+          #     - timer.washing_machine_door
+          #     - timer.washing_machine_ready
+            
 
       # Mid column
       #############
@@ -2948,15 +2983,6 @@ views:
                     tap_action:
                       action: call-service
                       service: script.ha_released_update
-              - type: history-graph
-                hours_to_show: 24
-                #refresh_interval: 0
-                entities:
-                  - entity: sensor.date
-                  - entity: sensor.ha_installed_version
-                    name: HA
-                  - entity: sensor.ha_supervisor_current_version
-                    name: Super
               - type: glance
                 state_color: true
                 columns: 7
@@ -4268,11 +4294,11 @@ views:
               - type: divider
               - light.led_color_s
               - type: divider
+              - light.led_color_mb
+              - type: divider
               - light.led_white_mb
               - type: divider
               - light.led_white_s
-              - type: divider
-              - light.led_color_mb
               - type: divider
               - fan.purifier2s
 
@@ -4304,6 +4330,8 @@ views:
               - switch.gateway_plug_entrance_hb
               - type: divider
               - switch.0x158d00023a657a_switch
+              - type: divider
+              - switch.0x158d000205a835_switch
       - type: vertical-stack
         cards:
           - type: entities
@@ -4331,6 +4359,9 @@ views:
               - type: divider
               - script.led_strip_entrance_hb_restart
               - type: divider
+              - script.led_color_s_restart
+              - type: divider
+              - script.led_color_mb_restart
 
   ################################################################
   # z2m
@@ -4651,6 +4682,8 @@ views:
             secondary_info: last-changed
           - entity: switch.0x158d00039bd56d_switch
             secondary_info: last-changed
+          - entity: switch.0x158d000224e3e4_switch
+            secondary_info: last-changed
   - title: All GW3 Sensors
     icon: mdi:radiobox-marked
     cards:
@@ -4821,7 +4854,7 @@ views:
       - type: vertical-stack
         cards:
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             entities:
               - entity: sensor.sensor_bme280_temperature
                 name: bme280
@@ -4829,8 +4862,10 @@ views:
                 name: bme680
               - entity: sensor.0x158d0001e8995a_temperature
                 name: mi
+              - entity: sensor.0x158d0001e586af_temperature
+                name: K
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             entities:
               - entity: sensor.sensor_bme280_humidity
                 name: bme280
@@ -4838,27 +4873,42 @@ views:
                 name: bme680
               - entity: sensor.0x158d0001e8995a_humidity
                 name: mi
+              - entity: sensor.0x158d0001e586af_humidity
+                name: K
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             entities:
               - entity: sensor.sensor_bme280_pressure
                 name: bme280
               - entity: sensor.sensor_bme680_pressure
                 name: bme680
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             entities:
             - sensor.sensor_bme680_breath_voc_equivalent
             - sensor.sensor_sgp30_tvoc
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             entities:
             - sensor.sensor_bme680_co2_equivalent
             - sensor.sensor_sgp30_eco2
+
+      - type: vertical-stack
+        cards:
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             entities:
-            - sensor.sensor_bme680_iaq
+              - entity: sensor.shelly_em_channel_1_power
+                name: EM Power
+              - entity: sensor.esp8266_pzem_hb_power
+                name: PZEM Power
+          - type: history-graph
+            hours_to_show: 24
+            entities:
+              - entity: sensor.shelly_em_channel_1_voltage
+                name: EM Voltage
+              - entity: sensor.esp8266_pzem_hb_voltage
+                name: PZEM Voltage
     
       - type: entities
         entities:
@@ -4868,22 +4918,22 @@ views:
       # - type: entities
       #   entities:
       #     - light.0x158d0002d3f7c9_light
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - sensor.esp32_hood_k_bme280_humidity
-          - sensor.esp32_hood_k_bme280_pressure
-          - sensor.esp32_hood_k_bme280_temperature
-          - sensor.esp32_hood_k_dallas
-          - sensor.esp32_hood_k_hood_tcouple
-          - switch.esp32_hood_k_fan
-          - switch.esp32_hood_k_light
-          - binary_sensor.esp32_hood_k_hood_status
-          - sensor.esp8266_oven_temp_k
-          - binary_sensor.esp8266_oven_temp_k_oven_status
-          - sensor.esp32_hood_k_median_ha
-          - sensor.stove_temperature_median
+      # - type: entities
+      #   show_header_toggle: false
+      #   state_color: true
+      #   entities:
+      #     - sensor.esp32_hood_k_bme280_humidity
+      #     - sensor.esp32_hood_k_bme280_pressure
+      #     - sensor.esp32_hood_k_bme280_temperature
+      #     - sensor.esp32_hood_k_dallas
+      #     - sensor.esp32_hood_k_hood_tcouple
+      #     - switch.esp32_hood_k_fan
+      #     - switch.esp32_hood_k_light
+      #     - binary_sensor.esp32_hood_k_hood_status
+      #     - sensor.esp8266_oven_temp_k
+      #     - binary_sensor.esp8266_oven_temp_k_oven_status
+      #     - sensor.esp32_hood_k_median_ha
+      #     - sensor.stove_temperature_median
 
       - type: glance
         entities:
@@ -4925,29 +4975,29 @@ views:
           - sensor.esp01_air_freshener_sleep_avail
           - switch.esp01_air_freshener_valve
 
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - input_boolean.bed_led_enable
-          - binary_sensor.light_outside_mi
-          - type: divider
-          - binary_sensor.d1mini_bed_leds_ha_bed_led_enabled
-          - binary_sensor.d1mini_bed_leds_ha_light_outside
-          - type: divider
-          - device_tracker.d1_mini_bed_led
-          - sensor.d1mini_bed_leds_light
-          - binary_sensor.d1mini_bed_leds_motion_dima
-          - binary_sensor.d1mini_bed_leds_motion_sandra
-          - switch.d1mini_bed_leds_restart
-          - binary_sensor.d1mini_bed_leds_status
-          - sensor.d1mini_bed_leds_sun_azimuth
-          - sensor.d1mini_bed_leds_sun_elevation
-          - sensor.d1mini_bed_leds_uptime
-          - sensor.d1mini_bed_leds_uptime_s
-          - sensor.d1mini_bed_leds_wifi_rssi
-          - light.d1mini_bed_leds_strip_dima
-          - light.d1mini_bed_leds_strip_sandra
+      # - type: entities
+      #   show_header_toggle: false
+      #   state_color: true
+      #   entities:
+      #     - input_boolean.bed_led_enable
+      #     - binary_sensor.light_outside_mi
+      #     - type: divider
+      #     - binary_sensor.d1mini_bed_leds_ha_bed_led_enabled
+      #     - binary_sensor.d1mini_bed_leds_ha_light_outside
+      #     - type: divider
+      #     - device_tracker.d1_mini_bed_led
+      #     - sensor.d1mini_bed_leds_light
+      #     - binary_sensor.d1mini_bed_leds_motion_dima
+      #     - binary_sensor.d1mini_bed_leds_motion_sandra
+      #     - switch.d1mini_bed_leds_restart
+      #     - binary_sensor.d1mini_bed_leds_status
+      #     - sensor.d1mini_bed_leds_sun_azimuth
+      #     - sensor.d1mini_bed_leds_sun_elevation
+      #     - sensor.d1mini_bed_leds_uptime
+      #     - sensor.d1mini_bed_leds_uptime_s
+      #     - sensor.d1mini_bed_leds_wifi_rssi
+      #     - light.d1mini_bed_leds_strip_dima
+      #     - light.d1mini_bed_leds_strip_sandra
       - type: entities
         show_header_toggle: false
         state_color: true

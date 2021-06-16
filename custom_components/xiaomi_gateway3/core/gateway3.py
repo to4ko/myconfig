@@ -7,6 +7,7 @@ from pathlib import Path
 from threading import Thread
 from typing import Optional
 
+import yaml
 from paho.mqtt.client import Client, MQTTMessage
 
 from . import bluetooth, utils, zigbee
@@ -140,6 +141,10 @@ class GatewayMesh(GatewayBase):
             if device['model'] == 3083 and prop == 'power':
                 param['value'] /= 100.0
 
+            # https://github.com/AlexxIT/XiaomiGateway3/issues/312
+            if prop in ('temperature', 'humidity') and param['value']:
+                param['value'] = round(param['value'], 2)
+
             bulk[did][prop] = param['value']
 
         for did, payload in bulk.items():
@@ -213,12 +218,14 @@ class GatewayStats(GatewayMesh):
                 }
             elif 'free_mem' in payload:
                 s = payload['run_time']
-                h, m, s = s // 3600, s % 3600 // 60, s % 60
+                d, h, m, s = (s // (3600 * 24), s % (3600 * 24) // 3600,
+                              s % 3600 // 60, s % 60)
+
                 payload = {
                     'free_mem': payload['free_mem'],
                     'load_avg': payload['load_avg'],
                     'rssi': -payload['rssi'],
-                    'uptime': f"{h:02}:{m:02}:{s:02}",
+                    'uptime': f"{d} days, {h:02}:{m:02}:{s:02}",
                 }
 
         self.stats[self.did](payload)
@@ -492,6 +499,8 @@ class GatewayEntry(Thread, GatewayStats):
                     self.debug("Stop Lumi Zigbee")
                     shell.stop_lumi_zigbee()
 
+                if "tcp-l:8889" in ps:
+                    shell.stop_zigbee_tcp()
                 if "tcp-l:8888" not in ps:
                     if "Received" in shell.check_or_download_socat():
                         self.debug("Download socat")
@@ -499,7 +508,8 @@ class GatewayEntry(Thread, GatewayStats):
                     shell.run_zigbee_tcp()
 
             else:
-                if "tcp-l:8888" in ps:
+                # check both 8888 and 8889
+                if "tcp-l:888" in ps:
                     self.debug("Stop Zigbee TCP")
                     shell.stop_zigbee_tcp()
 
@@ -920,8 +930,9 @@ class GatewayEntry(Thread, GatewayStats):
             elif 'value' in param:
                 payload[prop] = param['value']
             elif 'arguments' in param:
-                if prop == 'motion':
-                    payload[prop] = 1
+                d = yaml.safe_load(prop)
+                if isinstance(d, dict):
+                    payload.update(d)
                 else:
                     payload[prop] = param['arguments']
 

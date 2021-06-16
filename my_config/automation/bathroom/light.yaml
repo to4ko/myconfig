@@ -62,7 +62,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.motion_b_5m
+      entity_id: binary_sensor.motion_b_delay
       to: 'off'
     - platform: homeassistant
       event: start
@@ -76,7 +76,7 @@
       entity_id: switch.0x158d0002a36433_channel_2
       state: 'off'
     - condition: template
-      value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d000236bc6d_motion'].last_changed))/60)|int >= 5}}"
+      value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d000236bc6d_motion'].last_changed))/60)|int >= 3}}"
   action:
     - service: light.turn_off
       entity_id: light.mirror_light_b
@@ -222,7 +222,8 @@
     - service: xiaomi_miio.light_set_scene
       data:
         entity_id: light.mirror_light_b
-        scene: 4
+        scene: >-
+          {{4 if (is_state('binary_sensor.tod_day','off') or is_state('input_boolean.dark_mode','on')) else 1}}
 
 # ##################################
 # Bathroom - Auto Light Off
