@@ -44,7 +44,7 @@ from miio import (
     Yeelight,
     DeviceException,
 )
-from miio.miot_device import MiotDevice
+from miio.miot_device import MiotDevice as MiotDeviceBase
 from miio.utils import (
     rgb_to_int,
     int_to_rgb,
@@ -57,6 +57,8 @@ SCAN_INTERVAL = timedelta(seconds=60)
 DEFAULT_NAME = 'Xiaomi Yeelink'
 CONF_MODEL = 'model'
 SPEED_FIERCE = 'fierce'
+
+SUPPORTED_DOMAINS = ['light', 'fan']
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -123,7 +125,6 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry: config_entri
     entry_id = config_entry.entry_id
     unique_id = config_entry.unique_id
     info = config_entry.data.get('miio_info') or {}
-    platforms = ['light', 'fan']
     plats = []
     config = {}
     for k in [CONF_HOST, CONF_TOKEN, CONF_NAME, CONF_MODE, CONF_MODE]:
@@ -132,12 +133,12 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry: config_entri
     config[CONF_MODEL] = model
     mode = config.get(CONF_MODE) or ''
     for m in mode.split(','):
-        if m in platforms:
+        if m in SUPPORTED_DOMAINS:
             plats.append(m)
             config[CONF_MODE] = ''
     if not plats:
         if model.find('bhf_light') > 0 or model.find('fancl') > 0:
-            plats = platforms
+            plats = SUPPORTED_DOMAINS
         elif model.find('ceiling') > 0 or model.find('panel') > 0:
             plats = ['light']
         elif model.find('ven_fan') > 0:
@@ -145,7 +146,7 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry: config_entri
         elif model.find('yeelink.light.') >= 0:
             plats = ['light']
         else:
-            plats = platforms
+            plats = SUPPORTED_DOMAINS
     hass.data[DOMAIN]['configs'][unique_id] = config
     _LOGGER.debug('Yeelink async_setup_entry %s', {
         'entry_id': entry_id,
@@ -157,6 +158,25 @@ async def async_setup_entry(hass: core.HomeAssistant, config_entry: config_entri
     for plat in plats:
         hass.async_create_task(hass.config_entries.async_forward_entry_setup(config_entry, plat))
     return True
+
+
+async def async_update_options(hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry):
+    entry = {**config_entry.data, **config_entry.options}
+    entry.pop(CONF_TOKEN, None)
+    _LOGGER.debug('Yeelink update options: %s', entry)
+    await hass.config_entries.async_reload(config_entry.entry_id)
+
+
+async def async_unload_entry(hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry):
+    unload_ok = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(config_entry, sd)
+                for sd in SUPPORTED_DOMAINS
+            ]
+        )
+    )
+    return unload_ok
 
 
 def bind_services_to_entries(hass, services):
@@ -196,7 +216,19 @@ def bind_services_to_entries(hass, services):
         hass.services.async_register(DOMAIN, srv, async_service_handler, schema=schema)
 
 
+class MiotDevice(MiotDeviceBase):
+    def __init__(self, *args, mapping=None, **kwargs):
+        try:
+            super().__init__(*args, **kwargs)
+            if mapping is not None:
+                self.mapping = mapping
+        except TypeError:
+            super().__init__(mapping, *args, **kwargs)
+
+
 class MiioEntity(ToggleEntity):
+    _parent = None
+
     def __init__(self, name, device):
         self._device = device
         try:
@@ -302,12 +334,15 @@ class MiioEntity(ToggleEntity):
     async def async_turn_off(self, **kwargs):
         await self._try_command('Turning off failed.', self.turn_off)
 
-    def custom_config(self, key=None, default=None):
+    def custom_config(self, key=None, default=None, with_parent=False):
         if not self.hass:
             return default
         if not self.entity_id:
             return default
-        cfg = self.hass.data[DATA_CUSTOMIZE].get(self.entity_id)
+        cfg = {}
+        if with_parent and self._parent and self._parent.entity_id:
+            cfg = self.hass.data[DATA_CUSTOMIZE].get(self._parent.entity_id) or {}
+        cfg.update(self.hass.data[DATA_CUSTOMIZE].get(self.entity_id) or {})
         return cfg if key is None else cfg.get(key, default)
 
 
@@ -378,7 +413,7 @@ class YeelightEntity(MiioEntity, LightEntity):
         token = config[CONF_TOKEN]
         _LOGGER.info('Initializing with host %s (token %s...)', host, token[:5])
 
-        self._device = Yeelight(host, token)
+        self._device = Yeelight(ip=host, token=token)
         super().__init__(name, self._device)
         self._unique_id = f'{self._miio_info.model}-{self._miio_info.mac_address}-light'
 
@@ -459,6 +494,11 @@ class YeelightEntity(MiioEntity, LightEntity):
                 self._delay_off = int(attrs.get('delayoff', 0))
 
     async def async_turn_on(self, **kwargs):
+        if not self._state:
+            result = await self._try_command('Turning the light on failed.', self._device.on)
+            if result:
+                self._state = True
+
         if self.supported_features & SUPPORT_COLOR_TEMP and ATTR_COLOR_TEMP in kwargs:
             mired = kwargs[ATTR_COLOR_TEMP]
             color_temp = self.translate_mired(mired)
@@ -493,9 +533,6 @@ class YeelightEntity(MiioEntity, LightEntity):
             )
             if result:
                 self._state_attrs['rgb'] = rgb_to_int(rgb)
-
-        if not self._state:
-            await self._try_command('Turning the light on failed.', self._device.on)
 
     async def async_set_scene(self, scene=0, params=None):
         _LOGGER.debug('Setting scene: %s params: %s', scene, params)
@@ -532,7 +569,7 @@ class BathHeaterEntity(MiioEntity, FanEntity):
         model = config.get(CONF_MODEL)
         _LOGGER.info('Initializing with host %s (token %s...)', host, token[:5])
 
-        self._device = Device(host, token)
+        self._device = Device(ip=host, token=token)
         super().__init__(name, self._device)
         self._unique_id = f'{self._miio_info.model}-{self._miio_info.mac_address}-{mode}'
         self._mode = mode
@@ -543,14 +580,24 @@ class BathHeaterEntity(MiioEntity, FanEntity):
             'bh_mode', 'bh_delayoff', 'light_mode', 'fan_speed_idx',
         ]
         if model in ['yeelink.bhf_light.v1']:
-            self._props.append('temperature')
-            self._props.append('humidity')
-            self._props.append('aim_temp')
+            self._props.extend(['temperature', 'humidity', 'aim_temp'])
         self._state_attrs.update({
             'mode': mode,
+            'parent_entity': parent.mode if parent else mode,
             'entity_class': self.__class__.__name__,
         })
         self._mode_speeds = {}
+
+    async def async_added_to_hass(self):
+        cfg = self.custom_config(with_parent=True) or {}
+        if cfg.get('support_oscillate'):
+            self._supported_features |= SUPPORT_OSCILLATE
+            if 'swing_action' not in self._props:
+                self._props.append('swing_action')
+        if cfg.get('support_direction'):
+            self._supported_features |= SUPPORT_DIRECTION
+            if 'swing_angle' not in self._props:
+                self._props.append('swing_angle')
 
     @property
     def mode(self):
@@ -659,16 +706,45 @@ class BathHeaterEntity(MiioEntity, FanEntity):
                     'fan_speed_idx': ''.join(lst).lstrip('0') or '0',
                 })
 
-    def set_direction(self, direction):
-        pass
+    @property
+    def oscillating(self):
+        return self._state_attrs.get('swing_action') == 'swing'
 
-    def oscillate(self, oscillating):
-        pass
+    async def async_oscillate(self, oscillating: bool):
+        act = 'swing' if oscillating else 'stop'
+        _LOGGER.debug('Setting oscillating for %s: %s(%s)', self._name, act, oscillating)
+        result = await self.async_command('set_swing', [act, 0])
+        if result:
+            self.update_attrs({
+                'swing_action': act,
+            })
+
+    @property
+    def current_direction(self):
+        if int(self._state_attrs.get('swing_angle', 0)) > 90:
+            return DIRECTION_REVERSE
+        return DIRECTION_FORWARD
+
+    async def async_set_direction(self, direction: str):
+        act = 'angle'
+        try:
+            num = int(direction)
+        except (TypeError, ValueError):
+            num = 0
+        if num < 1:
+            num = 120 if direction == DIRECTION_REVERSE else 90
+        _LOGGER.debug('Setting direction for %s: %s(%s)', self._name, direction, num)
+        result = await self.async_command('set_swing', [act, num])
+        if result:
+            self.update_attrs({
+                'swing_action': act,
+                'swing_angle': num,
+            })
 
     def update_attrs(self, attrs, update_parent=True):
         self._state_attrs.update(attrs or {})
         if update_parent and self._parent and hasattr(self._parent, 'update_attrs'):
-            self._parent.update_attrs(attrs or {}, False)
+            getattr(self._parent, 'update_attrs')(attrs or {}, False)
         return self._state_attrs
 
 
@@ -751,40 +827,6 @@ class BathHeaterEntityV5(BathHeaterEntity):
     async def async_set_speed(self, speed):
         await self.async_turn_on(speed)
 
-    @property
-    def oscillating(self):
-        return self._state_attrs.get('swing_action') == 'swing'
-
-    async def async_oscillate(self, oscillating: bool):
-        act = 'swing' if oscillating else 'stop'
-        _LOGGER.debug('Setting oscillating for %s: %s(%s)', self._name, act, oscillating)
-        result = await self.async_command('set_swing', [act, 0])
-        if result:
-            self.update_attrs({
-                'swing_action': act,
-            })
-
-    @property
-    def current_direction(self):
-        if int(self._state_attrs.get('swing_angle', 0)) > 90:
-            return DIRECTION_REVERSE
-        return DIRECTION_FORWARD
-
-    async def async_set_direction(self, direction: str):
-        act = 'angle'
-        num = 0
-        if f'{direction}'.isnumeric():
-            num = int(direction)
-        if num < 1:
-            num = 120 if direction == DIRECTION_REVERSE else 90
-        _LOGGER.debug('Setting direction for %s: %s(%s)', self._name, direction, num)
-        result = await self.async_command('set_swing', [act, num])
-        if result:
-            self.update_attrs({
-                'swing_action': act,
-                'swing_angle': num,
-            })
-
 
 class VenFanEntity(BathHeaterEntity):
     def __init__(self, config, mode='coolwind'):
@@ -816,41 +858,6 @@ class VenFanEntity(BathHeaterEntity):
             spd = 1
         return spd
 
-    @property
-    def oscillating(self):
-        return self._state_attrs.get('swing_action') == 'swing'
-
-    async def async_oscillate(self, oscillating: bool):
-        act = 'swing' if oscillating else 'stop'
-        _LOGGER.debug('Setting oscillating for %s: %s(%s)', self._name, act, oscillating)
-        result = await self.async_command('set_swing', [act, 0])
-        if result:
-            self._state_attrs.update({
-                'swing_action': act,
-            })
-
-    @property
-    def current_direction(self):
-        if int(self._state_attrs.get('swing_angle', 0)) > 90:
-            return DIRECTION_REVERSE
-        return DIRECTION_FORWARD
-
-    async def async_set_direction(self, direction: str):
-        act = 'angle'
-        try:
-            num = int(direction)
-        except:
-            num = 0
-        if num < 1:
-            num = 120 if direction == DIRECTION_REVERSE else 90
-        _LOGGER.debug('Setting direction for %s: %s(%s)', self._name, direction, num)
-        result = await self.async_command('set_swing', [act, num])
-        if result:
-            self._state_attrs.update({
-                'swing_action': act,
-                'swing_angle': num,
-            })
-
 
 class MiotLightEntity(MiotEntity, LightEntity):
     mapping = {
@@ -877,7 +884,7 @@ class MiotLightEntity(MiotEntity, LightEntity):
                 'scenes': {'siid': 4, 'piid': 3},
             })
 
-        self._device = MiotDevice(self.mapping, host, token)
+        self._device = MiotDevice(ip=host, token=token, mapping=self.mapping)
         super().__init__(name, self._device)
 
         self._supported_features = SUPPORT_BRIGHTNESS | SUPPORT_COLOR_TEMP
@@ -994,7 +1001,8 @@ class MiotFanEntity(MiotEntity, FanEntity):
                 'dalayoff': {'siid': 3, 'piid': 11},
             })
 
-        self._device = MiotDevice(self.mapping, host, token)
+        self._device = MiotDevice(ip=host, token=token)
+        self._device.mapping = self.mapping
         super().__init__(name, self._device)
         self._unique_id = f'{self._miio_info.model}-{self._miio_info.mac_address}-fan'
         self._supported_features = SUPPORT_SET_SPEED
