@@ -695,8 +695,7 @@ class MoscowPGUElectricCounterSensor(MoscowPGUSubmittableEntity, MoscowPGUSensor
                 electric_account.device in filter_entities
                 or electric_account.number in filter_entities
             ) ^ is_blacklist:
-                continue
-            electric_accounts.append(electric_account)
+                electric_accounts.append(electric_account)
 
         return iter_and_add_or_update(
             ent_cls=cls,
