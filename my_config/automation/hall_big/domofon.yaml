@@ -41,15 +41,6 @@
           photo:
           - url: !secret window_snap
             caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-    - service: notify.telegram
-      data:
-        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-        message: "{{states('sensor.time')}} {{states('sensor.date')}}"
-        data:
-          photo:
-          - url: !secret window_snap
-            caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-
 
 # ##################################
 # Hall Big - Domofon Incoming Call
@@ -232,38 +223,47 @@
         - double
         - hold
   action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0002f8dd54_action
-              state: 'single'
-          sequence:
-            - service: switch.turn_on
-              entity_id: switch.esp32_domofon_open
-            - service: notify.telegram
-              data:
-                message: "\U0001f518 Домофон открыт вручную!"
-                data:
-                  photo:
-                    - url: !secret entrance_snap
-                      caption: "\U0001f518 Домофон открыт вручную!"
-        - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0002f8dd54_action
-              state: 'double'
-          sequence:
-            - service: switch.toggle
-              entity_id: switch.esp32_domofon_auto_open_once
-            - service: switch.turn_{{states('switch.esp32_domofon_auto_open_once')}}
-              entity_id: switch.esp32_domofon_mute
-        - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0002f8dd54_action
-              state: 'hold'
-          sequence:
-            - service: switch.turn_off
-              entity_id: switch.esp32_domofon_auto_open_once
-            - service: switch.toggle
-              entity_id: switch.esp32_domofon_auto_open
-            - service: switch.turn_{{states('switch.esp32_domofon_auto_open')}}
-              entity_id: switch.esp32_domofon_mute
+    - service: switch.turn_on
+      entity_id: switch.esp32_domofon_open
+    - service: notify.telegram
+      data:
+        message: "\U0001f518 Домофон открыт вручную!"
+        data:
+          photo:
+            - url: !secret entrance_snap
+              caption: "\U0001f518 Домофон открыт вручную!"  
+    # - choose:
+    #     - conditions:
+    #         - condition: state
+    #           entity_id: sensor.0x158d0002f8dd54_action
+    #           state: 'single'
+    #       sequence:
+    #         - service: switch.turn_on
+    #           entity_id: switch.esp32_domofon_open
+    #         - service: notify.telegram
+    #           data:
+    #             message: "\U0001f518 Домофон открыт вручную!"
+    #             data:
+    #               photo:
+    #                 - url: !secret entrance_snap
+    #                   caption: "\U0001f518 Домофон открыт вручную!"
+    #     - conditions:
+    #         - condition: state
+    #           entity_id: sensor.0x158d0002f8dd54_action
+    #           state: 'double'
+    #       sequence:
+    #         - service: switch.toggle
+    #           entity_id: switch.esp32_domofon_auto_open_once
+    #         - service: switch.turn_{{states('switch.esp32_domofon_auto_open_once')}}
+    #           entity_id: switch.esp32_domofon_mute
+    #     - conditions:
+    #         - condition: state
+    #           entity_id: sensor.0x158d0002f8dd54_action
+    #           state: 'hold'
+    #       sequence:
+    #         - service: switch.turn_off
+    #           entity_id: switch.esp32_domofon_auto_open_once
+    #         - service: switch.toggle
+    #           entity_id: switch.esp32_domofon_auto_open
+    #         - service: switch.turn_{{states('switch.esp32_domofon_auto_open')}}
+    #           entity_id: switch.esp32_domofon_mute

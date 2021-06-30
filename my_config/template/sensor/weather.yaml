@@ -1,4 +1,59 @@
   - sensor:
+      - name: Dewpoint
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+            {%- set Tc = states('sensor.esp32_node_mb_outside')|float %}
+            {%- set RH = states('sensor.0x158d00020d7c3a_humidity') | float %}
+            {%- set T = (( Tc * 9 / 5)+ 32) %}
+            {%- set b = 17.368 if T >0 else 17.966 %}
+            {%- set c = 238.88 if T >0 else 247.15 %}
+            {%- set pa = RH / 100 * e**(b * T / (c + T)) %}
+            {{((c * log(pa) / (b - log(pa)) -32 ) * 5/9)|round(1)}}
+            
+      - name: Heatindex
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+            {%- set Tc = states('sensor.esp32_node_mb_outside')|float %}
+            {%- set RH = states('sensor.0x158d00020d7c3a_humidity') | float %}
+            {%- set T = (( Tc * 9 / 5)+ 32) %}
+            {%- set c1 = -42.379 %}
+            {%- set c2 = 2.04901523 %}
+            {%- set c3 = 10.14333127 %}
+            {%- set c4 = -0.22475541 %}
+            {%- set c5 = -6.83783e-3 %}
+            {%- set c6 = -5.481717e-2 %}
+            {%- set c7 = 1.22874e-3 %}
+            {%- set c8 = 8.5282e-4 %}
+            {%- set c9 = -1.99e-6 %}
+            {%- set HI = 0.5 * (T + 61 + (T - 68) * 1.2 + RH * 0.094) %}
+            {%- set HI_result = HI if HI <80 else c1 + c2*T + c3*RH + c4*T*RH + c5*T**2 + c6*RH**2 + c7*T**2*RH + c8*T*RH**2 + c9*T**2*RH**2 %}
+            {{ ((HI_result -32 ) * 5/9)|round(1)}}
+            
+      - name: Windchill
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+            {%- set Tc = states('sensor.esp32_node_mb_outside')|float %}
+            {%- set Vc = states('sensor.dark_sky_wind_speed')|float %}
+            {%- set V = Vc * 2.23694 %}
+            {%- set T = (( Tc * 9 / 5)+ 32) %}
+            {{((35.74 + (0.6215 * T) - 35.75 * V**0.16 + 0.4275 * T * V**0.16 -32 ) * 5/9)|round(1)}}
+            
+      - name: Feelslike
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+            {%- set Tc = states('sensor.esp32_node_mb_outside')|float %}
+            {%- set Vc = states('sensor.dark_sky_wind_speed')|float %}
+            {%- set V = Vc * 2.23694 %}
+            {%- set T = (( Tc * 9 / 5)+ 32) %}
+            {%- if T <= 50 and Vc > 3 %}{{states('sensor.windchill')|float|round(2)}}
+            {%- elif T >= 80 %}{{states('sensor.heatindex')|float|round(2)}}
+            {%- else %}{{Tc|round(2)}}
+            {%- endif %}
+
       - name: Pressure Change 3h
         state: "{{state_attr('sensor.pressure_stats_3h','change')|float}}"
         unit_of_measurement: 'hPa'

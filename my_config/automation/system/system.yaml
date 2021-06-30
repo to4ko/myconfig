@@ -170,7 +170,6 @@
           if device and device.name_by_user == 'delete':
               registry.async_remove_device(data['device_id'])
 
-
 # ##################################
 # System - Hass.io NEW Version
 # ##################################
@@ -400,9 +399,9 @@
       for:
         minutes: 3
   action:
-    - service: notify.telegram
-      data:
-        message: "\U0001f504 Перезапуск Pinhole"
+    # - service: notify.telegram
+    #   data:
+    #     message: "\U0001f504 Перезапуск Pinhole"
     - service: switch.turn_off
       entity_id: switch.0x158d000322e1d9_switch
     - delay: '00:00:15'
@@ -429,9 +428,9 @@
       for:
         minutes: 3
   action:
-    - service: notify.telegram
-      data:
-        message: "\U0001f504 Перезапуск Digma100"
+    # - service: notify.telegram
+    #   data:
+    #     message: "\U0001f504 Перезапуск Digma100"
     - service: switch.turn_off
       entity_id: switch.0x158d000358c773_switch
     - delay: '00:00:15'
@@ -1153,7 +1152,6 @@
         - switch.0x158d000322e30c_switch
         - binary_sensor.0x158d000323c87c_contact
         - binary_sensor.0x158d0003262a35_contact
-        - binary_sensor.0x158d0003262ba8_contact
         - switch.0x158d000344998e_switch
         - switch.0x158d000345119e_switch
         - switch.0x158d0003535ee5_switch
@@ -1525,7 +1523,7 @@
     - service: notify.telegram
       data:
         message: >
-          {% if is_state('binary_sensor.0x158d0003262acc_contact','on') %}{{'\U00002705'}} Электроснабжение восстановлено!"
+          {% if is_state('binary_sensor.0x158d0003262acc_contact','on') %}{{'\U00002705'}} Электроснабжение восстановлено!
           {% else %}{{'\U0000274c'}} Внимание! Электроснабжение прекращено!
           {%endif%}
           
@@ -1637,3 +1635,36 @@
 #     - service: notify.telegram
 #       data:
 #         message: "{{trigger.event.data.entity_id}}: {{trigger.event.data.old_state.state}} -> {{trigger.event.data.new_state.state}}"
+
+# ##################################
+# System - Weather Sensors Update
+# ##################################
+- alias: system_weather_update
+#  id: system_weather_update
+  initial_state: true
+  trigger:
+    - platform: time
+      at: "06:55:00"
+    - platform: time
+      at: "20:55:00"
+  condition:
+    - condition: template
+      value_template: >-
+        {%- set sensors = expand('group.weather_fcst_entities') %}
+        {%- set act_time = as_timestamp(now()) %} 
+        {%- for sensor in sensors %}
+          {%- if as_timestamp(sensor.last_updated) == as_timestamp(sensors | map(attribute='last_updated') | min ) %}
+          {{ (act_time|int-as_timestamp(sensor.last_updated)|int)>30*60 }}
+          {%- endif %}
+        {%- endfor %}
+  action:
+    - service: homeassistant.update_entity
+      entity_id:
+        - sensor.dark_sky_summary_0d
+        - sensor.dark_sky_daytime_high_temperature_0d
+        - sensor.dark_sky_precip_probability_0d
+        - sensor.dark_sky_precip_0d
+        - sensor.dark_sky_summary_1d
+        - sensor.dark_sky_daytime_high_temperature_1d
+        - sensor.dark_sky_precip_probability_1d
+        - sensor.dark_sky_precip_1d
