@@ -10,25 +10,34 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: sensor.0x158d0001f3627d_action
-      to:
-        - single
-        - double
-        - hold      
+    # - platform: state
+    #   entity_id: sensor.0x158d0001f3627d_action
+    #   to:
+    #     - single
+    #     - double
+    #     - hold
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0001f3627d_action
+        #click_type: button_2_single                
   action:
     - choose:
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0001f3627d_action
-              state: 'single'
+            # - condition: state
+            #   entity_id: sensor.0x158d0001f3627d_action
+            #   state: 'single'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'single' }}"
           sequence:
             - service: light.toggle
               entity_id: light.led_white_s
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0001f3627d_action
-              state: 'double'
+            # - condition: state
+            #   entity_id: sensor.0x158d0001f3627d_action
+            #   state: 'double'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'double' }}"
           sequence:
             - service: light.turn_on
               entity_id: light.led_white_s
@@ -36,9 +45,11 @@
                 brightness_pct: 100
                 kelvin: 5000
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d0001f3627d_action
-              state: 'hold'
+            # - condition: state
+            #   entity_id: sensor.0x158d0001f3627d_action
+            #   state: 'hold'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'hold' }}"
           sequence:
             - service: light.turn_on
               entity_id: light.led_white_s
@@ -54,9 +65,14 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: sensor.0x158d00026eb820_action
-      to: 'button_1_single'
+    # - platform: state
+    #   entity_id: sensor.0x158d00026eb820_action
+    #   to: 'button_1_single'
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d00026eb820_action
+        click_type: button_1_single
   action:
     - choose:
         - conditions:
@@ -85,9 +101,14 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: sensor.0x158d00026eb820_action
-      to: 'button_2_single'
+    # - platform: state
+    #   entity_id: sensor.0x158d00026eb820_action
+    #   to: 'button_2_single'
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d00026eb820_action
+        click_type: button_2_single
   action:
     - choose:
         - conditions:
@@ -221,12 +242,17 @@
 #  id: sasha_main_lamp_switch_on_if_off
   initial_state: true
   trigger:
-    - platform: state
-      entity_id: sensor.0x158d00026eb820_action
-      to: 'button_1_single'
-    - platform: state
-      entity_id: sensor.0x158d00026eb820_action
-      to: 'button_2_single'
+    # - platform: state
+    #   entity_id: sensor.0x158d00026eb820_action
+    #   to: 'button_1_single'
+    # - platform: state
+    #   entity_id: sensor.0x158d00026eb820_action
+    #   to: 'button_2_single'
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d00026eb820_action
+        # click_type: button_  _single
   condition:
     condition: state
     entity_id: switch.sonoff_mini_2_relay
@@ -330,36 +356,48 @@
 #  id: sasha_led_strip_control
   initial_state: true
   trigger:
-    - platform: state
-      entity_id: sensor.0x158d00019c8afd_action
-      to: 
-        - single
-        - double
-        - hold
+    # - platform: state
+    #   entity_id: sensor.0x158d00019c8afd_action
+    #   to: 
+    #     - single
+    #     - double
+    #     - hold
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d00019c8afd_action
+        #click_type: button_  _single
+        
   action:
     - choose:
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d00019c8afd_action
-              state: 'single'
+            # - condition: state
+            #   entity_id: sensor.0x158d00019c8afd_action
+            #   state: 'single'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'single' }}"
           sequence:
             - service: light.turn_on
               data:
                 entity_id: light.d1mini_co2_s_led
                 effect: '{{ (["Random", "Rainbow", "Color Wipe", "Scan", "Twinkle", "Random Twinkle"] | random) }}'
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d00019c8afd_action
-              state: 'double'
+            # - condition: state
+            #   entity_id: sensor.0x158d00019c8afd_action
+            #   state: 'double'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'double' }}"
           sequence:
             - service: light.turn_on
               data:
                 entity_id: light.d1mini_co2_s_led
                 effect: 'Color Wipe'
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d00019c8afd_action
-              state: 'hold'
+            # - condition: state
+            #   entity_id: sensor.0x158d00019c8afd_action
+            #   state: 'hold'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'hold' }}"
           sequence:
             - service: light.turn_off
               entity_id: light.d1mini_co2_s_led
@@ -402,25 +440,34 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: sensor.0x158d00016bdb4a_action
-      to:
-        - single
-        - double
-        - hold
+    # - platform: state
+    #   entity_id: sensor.0x158d00016bdb4a_action
+    #   to:
+    #     - single
+    #     - double
+    #     - hold
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d00016bdb4a_action
+        #click_type: button_  _single        
   action:
     - choose:
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d00016bdb4a_action
-              state: 'single'
+            # - condition: state
+            #   entity_id: sensor.0x158d00016bdb4a_action
+            #   state: 'single'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'single' }}"
           sequence:
             - service: light.toggle
               entity_id: light.led_color_s
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d00016bdb4a_action
-              state: 'double'
+            # - condition: state
+            #   entity_id: sensor.0x158d00016bdb4a_action
+            #   state: 'double'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'double' }}"
           sequence:
             - service: light.turn_on
               entity_id: light.led_color_s
@@ -428,12 +475,14 @@
                 brightness_pct: 90
                 kelvin: 5000
         - conditions:
-            - condition: state
-              entity_id: sensor.0x158d00016bdb4a_action
-              state: 'hold'
+            # - condition: state
+            #   entity_id: sensor.0x158d00016bdb4a_action
+            #   state: 'hold'
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'hold' }}"
           sequence:
             - service: light.turn_on
               entity_id: light.led_color_s
               data:
                 brightness_pct: 5
-                kelvin: 3000      
+                kelvin: 3000
