@@ -22,6 +22,7 @@ UNITS = {
     'conductivity': "µS/cm",
     'consumption': ENERGY_WATT_HOUR,
     'gas density': '% LEL',
+    'supply': '%',
     'smoke density': '% obs/ft',
     'moisture': '%',
     'tvoc': CONCENTRATION_PARTS_PER_BILLION,
@@ -142,6 +143,7 @@ class ZigbeeStats(XiaomiSensor):
                 'unresponsive': 0,
                 'last_missed': 0,
             }
+            self.render_attributes_template()
 
         self.gw.add_stats(self._attrs['ieee'], self.update)
 
@@ -214,6 +216,7 @@ class BLEStats(XiaomiSensor):
                 'mac': self.device['mac'],
                 'msg_received': 0,
             }
+            self.render_attributes_template()
 
         self.gw.add_stats(self.device['did'], self.update)
 
@@ -256,6 +259,7 @@ VIBRATION = {
 
 class XiaomiAction(XiaomiEntity):
     _state = ''
+    _action_attrs = None
 
     @property
     def state(self):
@@ -264,6 +268,10 @@ class XiaomiAction(XiaomiEntity):
     @property
     def icon(self):
         return 'mdi:bell'
+
+    @property
+    def device_state_attributes(self):
+        return self._action_attrs or self._attrs
 
     def update(self, data: dict = None):
         for k, v in data.items():
@@ -287,8 +295,7 @@ class XiaomiAction(XiaomiEntity):
                 break
 
         if self.attr in data:
-            # TODO: fix me
-            self._attrs = data
+            self._action_attrs = {**self._attrs, **data}
             self._state = data[self.attr]
             self.schedule_update_ha_state()
 
@@ -297,7 +304,7 @@ class XiaomiAction(XiaomiEntity):
                 'entity_id': self.entity_id, 'click_type': self._state
             })
 
-            time.sleep(.1)
+            time.sleep(.3)
 
             self._state = ''
 

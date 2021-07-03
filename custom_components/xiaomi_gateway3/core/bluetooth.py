@@ -14,6 +14,7 @@ DEVICES = [{
     982: ["Xiaomi", "Qingping Door Sensor", "CGH1"],
     1034: ["Xiaomi", "Mosquito Repellent", "WX08ZM"],
     1115: ["Xiaomi", "TH Clock", "LYWSD02MMC"],
+    1161: ["Xiaomi", "Toothbrush T500", "MES601"],
     1249: ["Xiaomi", "Magic Cube", "XMMF01JQD"],
     1371: ["Xiaomi", "TH Sensor 2", "LYWSD03MMC"],
     1398: ["Xiaomi", "Alarm Clock", "CGD1"],
@@ -189,7 +190,7 @@ def get_ble_domain(param: str) -> Optional[str]:
     elif param in (
             'action', 'rssi', 'temperature', 'humidity', 'illuminance',
             'moisture', 'conductivity', 'battery', 'formaldehyde',
-            'mosquitto', 'idle_time'):
+            'supply', 'idle_time'):
         return 'sensor'
 
     return None
@@ -283,7 +284,7 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
 
     elif eid == 0x1013 and length == 1:  # 4115
         # Remaining percentage, range 0~100
-        return {'mosquitto': data[0]}
+        return {'supply': data[0]}
 
     elif eid == 0x1014 and length == 1:  # 4116
         return {'water_leak': data[0]}  # 1 => on => wet
@@ -375,6 +376,13 @@ def parse_xiaomi_ble(event: dict, pdid: int) -> Optional[dict]:
             if pdid == 2691 else
             {'motion': 1, 'light': int(value >= 100)}
         )
+
+    elif eid == 0x10 and len(data) == 2:  # 16
+        # Toothbrush Т500
+        if data[0] == 0:
+            return {'action': 'start', 'counter': data[1]}
+        else:
+            return {'action': 'finish', 'score': data[1]}
 
     return None
 
