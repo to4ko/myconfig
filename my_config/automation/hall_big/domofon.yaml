@@ -11,7 +11,7 @@
   mode: queued
   trigger:
     - platform: state
-      entity_id: binary_sensor.esp32_domofon_incomingcall
+      entity_id: binary_sensor.d1mini_domofon_incomingcall
       to: 'on'
   action:
     - service: notify.telegram
@@ -56,7 +56,7 @@
         action: "Domofon_Open"
   action:
     - service: switch.turn_on
-      entity_id: switch.esp32_domofon_open
+      entity_id: switch.d1mini_domofon_open
     - service: notify.telegram
       data:
         message: "\U0001f518 Домофон открыт с телефона!"
@@ -94,7 +94,7 @@
     - service: timer.start
       entity_id: timer.domofon
     - service: switch.turn_on
-      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_mute
+      entity_id: switch.d1mini_domofon_auto_open, switch.d1mini_domofon_mute
 
 # ##################################
 # Hall Big - Domofon auto message
@@ -105,7 +105,7 @@
   mode: queued
   trigger:
     - platform: state
-      entity_id: binary_sensor.esp32_domofon_auto_opening
+      entity_id: binary_sensor.d1mini_domofon_auto_opening
       from: 'off'
       to: 'on'
   action:
@@ -122,7 +122,7 @@
   mode: queued
   trigger:
     - platform: state
-      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once
+      entity_id: switch.d1mini_domofon_auto_open, switch.d1mini_domofon_auto_open_once
       to:
         - 'on'
         - 'off'
@@ -136,8 +136,8 @@
     - service: notify.telegram
       data:
         message: >
-          {% if is_state('switch.esp32_domofon_auto_open','on') and 'once' not in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Автооткрытие включено!
-          {% elif is_state('switch.esp32_domofon_auto_open_once','on') and 'once' in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Разовое автооткрытие включено!
+          {% if is_state('switch.d1mini_domofon_auto_open','on') and 'once' not in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Автооткрытие включено!
+          {% elif is_state('switch.d1mini_domofon_auto_open_once','on') and 'once' in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Разовое автооткрытие включено!
           {% else %}{{'\U0001f512'}} Домофон: Автооткрытие выключено!{% endif %}
 
 # ##################################
@@ -158,7 +158,7 @@
       to: 'on'
   action:
     - service: switch.turn_on
-      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_mute
+      entity_id: switch.d1mini_domofon_auto_open, switch.d1mini_domofon_mute
     - service: timer.cancel
       entity_id: timer.domofon
     - service: timer.start
@@ -174,7 +174,7 @@
   mode: queued
   trigger:
     - platform: template
-      value_template: "{{is_state('switch.esp32_domofon_auto_open','on') or is_state('switch.esp32_domofon_auto_open_once','on') }}"
+      value_template: "{{is_state('switch.d1mini_domofon_auto_open','on') or is_state('switch.d1mini_domofon_auto_open_once','on') }}"
   action:
     - service: timer.cancel
       entity_id: timer.domofon
@@ -194,7 +194,7 @@
         entity_id: timer.domofon
   action:
     - service: switch.turn_off
-      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once, switch.esp32_domofon_mute
+      entity_id: switch.d1mini_domofon_auto_open, switch.d1mini_domofon_auto_open_once, switch.d1mini_domofon_mute
 
 # ##################################
 # Hall Bid - Domofon Timer stop
@@ -204,7 +204,7 @@
   initial_state: true
   trigger:
     - platform: template
-      value_template: "{{not is_state('switch.esp32_domofon_auto_open','on') and not is_state('switch.esp32_domofon_auto_open_once','on') }}"
+      value_template: "{{not is_state('switch.d1mini_domofon_auto_open','on') and not is_state('switch.d1mini_domofon_auto_open_once','on') }}"
   action:
     - service: timer.cancel
       entity_id: timer.domofon
@@ -239,7 +239,7 @@
         click_type: hold
   action:
     - service: switch.turn_on
-      entity_id: switch.esp32_domofon_open
+      entity_id: switch.d1mini_domofon_open
     - service: notify.telegram
       data:
         message: "\U0001f518 Домофон открыт вручную!"
@@ -254,7 +254,7 @@
     #           state: 'single'
     #       sequence:
     #         - service: switch.turn_on
-    #           entity_id: switch.esp32_domofon_open
+    #           entity_id: switch.d1mini_domofon_open
     #         - service: notify.telegram
     #           data:
     #             message: "\U0001f518 Домофон открыт вручную!"
@@ -268,17 +268,17 @@
     #           state: 'double'
     #       sequence:
     #         - service: switch.toggle
-    #           entity_id: switch.esp32_domofon_auto_open_once
-    #         - service: switch.turn_{{states('switch.esp32_domofon_auto_open_once')}}
-    #           entity_id: switch.esp32_domofon_mute
+    #           entity_id: switch.d1mini_domofon_auto_open_once
+    #         - service: switch.turn_{{states('switch.d1mini_domofon_auto_open_once')}}
+    #           entity_id: switch.d1mini_domofon_mute
     #     - conditions:
     #         - condition: state
     #           entity_id: sensor.0x158d0002f8dd54_action
     #           state: 'hold'
     #       sequence:
     #         - service: switch.turn_off
-    #           entity_id: switch.esp32_domofon_auto_open_once
+    #           entity_id: switch.d1mini_domofon_auto_open_once
     #         - service: switch.toggle
-    #           entity_id: switch.esp32_domofon_auto_open
-    #         - service: switch.turn_{{states('switch.esp32_domofon_auto_open')}}
-    #           entity_id: switch.esp32_domofon_mute
+    #           entity_id: switch.d1mini_domofon_auto_open
+    #         - service: switch.turn_{{states('switch.d1mini_domofon_auto_open')}}
+    #           entity_id: switch.d1mini_domofon_mute
