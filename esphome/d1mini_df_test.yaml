@@ -1,0 +1,187 @@
+substitutions:
+  board_name: d1mini_df_test
+ 
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: d1_mini
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 15min
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.246
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+    
+logger:
+  baud_rate: 0
+
+uart:
+  tx_pin: GPIO1
+  rx_pin: GPIO3
+  baud_rate: 9600
+
+dfplayer:
+  on_finished_playback:
+    then:
+      logger.log: 'Somebody press play!'
+
+
+api:
+  reboot_timeout: 5min
+  services:
+  - service: dfplayer_next
+    then:
+      - dfplayer.play_next:
+  - service: dfplayer_previous
+    then:
+      - dfplayer.play_previous:
+  - service: dfplayer_play
+    variables:
+      file: int
+    then:
+      - dfplayer.play: !lambda 'return file;'
+  - service: dfplayer_play_loop
+    variables:
+      file: int
+      loop_: bool
+    then:
+      - dfplayer.play:
+          file: !lambda 'return file;'
+          loop: !lambda 'return loop_;'
+  - service: dfplayer_play_folder
+    variables:
+      folder: int
+      file: int
+    then:
+      - dfplayer.play_folder:
+          folder: !lambda 'return folder;'
+          file: !lambda 'return file;'
+
+  - service: dfplayer_play_loop_folder
+    variables:
+      folder: int
+    then:
+      - dfplayer.play_folder:
+          folder: !lambda 'return folder;'
+          loop: True
+
+  - service: dfplayer_set_device_tf
+    then:
+      - dfplayer.set_device: TF_CARD
+
+  - service: dfplayer_set_device_usb
+    then:
+      - dfplayer.set_device: USB
+
+  - service: dfplayer_set_volume
+    variables:
+      volume: int
+    then:
+      - dfplayer.set_volume: !lambda 'return volume;'
+  - service: dfplayer_set_eq
+    variables:
+      preset: int
+    then:
+      - dfplayer.set_eq: !lambda 'return static_cast<dfplayer::EqPreset>(preset);'
+
+  - service: dfplayer_sleep
+    then:
+      - dfplayer.sleep
+
+  - service: dfplayer_reset
+    then:
+      - dfplayer.reset
+
+  - service: dfplayer_start
+    then:
+      - dfplayer.start
+
+  - service: dfplayer_pause
+    then:
+      - dfplayer.pause
+
+  - service: dfplayer_stop
+    then:
+      - dfplayer.stop
+
+  - service: dfplayer_random
+    then:
+      - dfplayer.random
+
+  - service: dfplayer_volume_up
+    then:
+      - dfplayer.volume_up
+
+  - service: dfplayer_volume_down
+    then:
+      - dfplayer.volume_down  
+
+ota:
+
+web_server:
+  port: 80
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+  
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s    
+
+  - platform: adc
+    pin: VCC
+    name: ${board_name}_VCC
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: UTC-3

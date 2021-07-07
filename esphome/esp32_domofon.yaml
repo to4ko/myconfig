@@ -6,23 +6,23 @@ esphome:
   name: ${board_name}
   platform: ESP32
   board: lolin32
-  comment: ESP32 Domofon\Power Meter\Motion Node
+  comment: ESP32 Power Meter\Motion Node
   on_boot:
     priority: -10
     then:
-      - switch.turn_off: relay1
-      - switch.turn_off: relay2
-      - switch.turn_off: relay3
-      - switch.turn_off: relay4
+      # - switch.turn_off: relay1
+      # - switch.turn_off: relay2
+      # - switch.turn_off: relay3
+      # - switch.turn_off: relay4
       - script.execute: led_off
 
-globals:
-  - id: mute_mode
-    type: bool
-    initial_value: 'false'
-  - id: opening
-    type: bool
-    initial_value: 'false'
+# globals:
+#   - id: mute_mode
+#     type: bool
+#     initial_value: 'false'
+#   - id: opening
+#     type: bool
+#     initial_value: 'false'
   
 
 wifi:
@@ -59,31 +59,31 @@ logger:
 
 api:
   reboot_timeout: 5min
-  services:
-    - service: accept_call
-      then:
-        - logger.log: "Call service 'Accept Call'"
-        - if:
-            condition:
-              binary_sensor.is_on: incoming_call
-            then: 
-              lambda: |-
-                if (id(mute_mode)) { id(call_accept_mute).execute(); 
-                }else { id(call_accept).execute();
-                }
-            else:
-              logger.log: "No incoming call"
+  # services:
+  #   - service: accept_call
+  #     then:
+  #       - logger.log: "Call service 'Accept Call'"
+  #       - if:
+  #           condition:
+  #             binary_sensor.is_on: incoming_call
+  #           then: 
+  #             lambda: |-
+  #               if (id(mute_mode)) { id(call_accept_mute).execute(); 
+  #               }else { id(call_accept).execute();
+  #               }
+  #           else:
+  #             logger.log: "No incoming call"
 
-    - service: reject_call
-      then:
-        - logger.log: "Call service 'Reject Call'"
-        - if:
-            condition:
-              binary_sensor.is_on: incoming_call
-            then:
-              script.execute: call_reject
-            else:
-              logger.log: "No incoming call"  
+  #   - service: reject_call
+  #     then:
+  #       - logger.log: "Call service 'Reject Call'"
+  #       - if:
+  #           condition:
+  #             binary_sensor.is_on: incoming_call
+  #           then:
+  #             script.execute: call_reject
+  #           else:
+  #             logger.log: "No incoming call"  
 
 ota:
 
@@ -91,131 +91,131 @@ web_server:
   port: 80
 
 script:
-  # Accept incoming call
-  - id: call_accept
-    then:
-      - globals.set:
-          id: opening
-          value: 'true'      
-      - logger.log: "Accept call"
-      - script.execute: state_no_call
-      - switch.turn_on: relay1
-      - switch.turn_on: relay2
-      - delay: 1000ms
-      - switch.turn_on: relay3
-      - delay: 1000ms
-      - switch.turn_off: relay3      
-      - delay: 2000ms
-      - switch.turn_off: relay1
-      - switch.turn_off: relay2
-      - globals.set:
-          id: opening
-          value: 'false'
+  # # Accept incoming call
+  # - id: call_accept
+  #   then:
+  #     - globals.set:
+  #         id: opening
+  #         value: 'true'      
+  #     - logger.log: "Accept call"
+  #     - script.execute: state_no_call
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 1000ms
+  #     - switch.turn_on: relay3
+  #     - delay: 1000ms
+  #     - switch.turn_off: relay3      
+  #     - delay: 2000ms
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - globals.set:
+  #         id: opening
+  #         value: 'false'
 
-  - id: call_accept_mute
-    then:
-      - globals.set:
-          id: opening
-          value: 'true'      
-      - logger.log: "Accept call_mute"
-      - script.execute: state_no_call
-      - switch.turn_on: relay4
-      - switch.turn_on: relay1
-      - switch.turn_on: relay2
-      - delay: 1000ms
-      - switch.turn_on: relay3
-      - delay: 1000ms
-      - switch.turn_off: relay3      
-      - delay: 2000ms
-      - switch.turn_off: relay1
-      - switch.turn_off: relay2
-      - switch.turn_off: relay4
-      - globals.set:
-          id: opening
-          value: 'false'
+  # - id: call_accept_mute
+  #   then:
+  #     - globals.set:
+  #         id: opening
+  #         value: 'true'      
+  #     - logger.log: "Accept call_mute"
+  #     - script.execute: state_no_call
+  #     - switch.turn_on: relay4
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 1000ms
+  #     - switch.turn_on: relay3
+  #     - delay: 1000ms
+  #     - switch.turn_off: relay3      
+  #     - delay: 2000ms
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - switch.turn_off: relay4
+  #     - globals.set:
+  #         id: opening
+  #         value: 'false'
           
-  - id: call_reject
-    then:
-      - logger.log: "Reject call"
-      - script.execute: state_no_call
-      - delay: 400ms
-      - switch.turn_on: relay4
-      - switch.turn_on: relay1
-      - switch.turn_on: relay2
-      - delay: 3000ms
-      - switch.turn_off: relay1
-      - switch.turn_off: relay2
-      - switch.turn_off: relay4
+  # - id: call_reject
+  #   then:
+  #     - logger.log: "Reject call"
+  #     - script.execute: state_no_call
+  #     - delay: 400ms
+  #     - switch.turn_on: relay4
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 3000ms
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - switch.turn_off: relay4
 
-  # No call state
-  - id: state_no_call
-    then:
-      - logger.log: "Set state 'No call'"
-      - script.execute: led_off
-      - if:
-          condition:
-            switch.is_on: auto_open_once
-          then:
-            script.execute: led_green_soft
-      - if:
-          condition:
-            switch.is_on: auto_open
-          then:
-            script.execute: led_green_on
-      - if:
-          condition:
-            switch.is_on: auto_reject
-          then:
-            script.execute: led_red_on_soft
-      - if:
-          condition:
-            switch.is_on: mute
-          then:
-            script.execute: led_blue_on_soft
-      - if:
-          condition:
-            and:
-              - switch.is_off: auto_open_once
-              - switch.is_off: auto_open
-              - switch.is_off: auto_reject
-          then:
-            script.execute: led_off
+  # # No call state
+  # - id: state_no_call
+  #   then:
+  #     - logger.log: "Set state 'No call'"
+  #     - script.execute: led_off
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open_once
+  #         then:
+  #           script.execute: led_green_soft
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open
+  #         then:
+  #           script.execute: led_green_on
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_reject
+  #         then:
+  #           script.execute: led_red_on_soft
+  #     - if:
+  #         condition:
+  #           switch.is_on: mute
+  #         then:
+  #           script.execute: led_blue_on_soft
+  #     - if:
+  #         condition:
+  #           and:
+  #             - switch.is_off: auto_open_once
+  #             - switch.is_off: auto_open
+  #             - switch.is_off: auto_reject
+  #         then:
+  #           script.execute: led_off
 
-  # Call state
-  - id: state_call
-    then:
-      - logger.log: "Set state 'Incoming call'"
-      - script.execute: led_off
-      - if:
-          condition:
-            and:
-              - switch.is_off: auto_open
-              - switch.is_off: auto_open_once
-              - switch.is_off: auto_reject
-              - switch.is_on: mute
-          then:
-            script.execute: led_red_on
-      - if:
-          condition:
-            switch.is_on: auto_reject
-          then:
-            script.execute: call_reject
-      - if:
-          condition:
-            switch.is_on: auto_open
-          then:
-            script.execute: call_accept
-      - if:
-          condition:
-            switch.is_on: auto_open_once
-          then:
-            - script.execute: call_accept
-            # - lambda: |-
-            #     if (id(mute_mode)) { id(call_accept_mute).execute(); 
-            #     }else { id(call_accept).execute();
-            #     }          
-            - delay: 1s
-            - switch.turn_off: auto_open_once
+  # # Call state
+  # - id: state_call
+  #   then:
+  #     - logger.log: "Set state 'Incoming call'"
+  #     - script.execute: led_off
+  #     - if:
+  #         condition:
+  #           and:
+  #             - switch.is_off: auto_open
+  #             - switch.is_off: auto_open_once
+  #             - switch.is_off: auto_reject
+  #             - switch.is_on: mute
+  #         then:
+  #           script.execute: led_red_on
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_reject
+  #         then:
+  #           script.execute: call_reject
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open
+  #         then:
+  #           script.execute: call_accept
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open_once
+  #         then:
+  #           - script.execute: call_accept
+  #           # - lambda: |-
+  #           #     if (id(mute_mode)) { id(call_accept_mute).execute(); 
+  #           #     }else { id(call_accept).execute();
+  #           #     }          
+  #           - delay: 1s
+  #           - switch.turn_off: auto_open_once
 
   # Turn off leds
   - id: led_off
@@ -223,13 +223,13 @@ script:
       - light.turn_off: light_blue_led
       - light.turn_off: light_green_led
       - light.turn_off: light_red_led
-      - if:
-          condition:
-            switch.is_on: mute
-          then:
-            light.turn_on: 
-              id: light_blue_led
-              effect: "Blink"
+      # - if:
+      #     condition:
+      #       switch.is_on: mute
+      #     then:
+      #       light.turn_on: 
+      #         id: light_blue_led
+      #         effect: "Blink"
 
 
 
@@ -286,28 +286,28 @@ binary_sensor:
     name: ${board_name}_Motion
     device_class: motion
 
-  - platform: gpio
-    pin: 
-      number: GPIO21
-    name: ${board_name}_IncomingCall
-    device_class: sound
-    id: incoming_call
-    filters:
-      - delayed_on: 500ms
-      - delayed_off: 3000ms
-    on_press:
-      then:
-        script.execute: state_call
-    on_release:
-      then:
-        script.execute: state_no_call      
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO21
+  #   name: ${board_name}_IncomingCall
+  #   device_class: sound
+  #   id: incoming_call
+  #   filters:
+  #     - delayed_on: 500ms
+  #     - delayed_off: 3000ms
+  #   on_press:
+  #     then:
+  #       script.execute: state_call
+  #   on_release:
+  #     then:
+  #       script.execute: state_no_call      
 
-  - platform: template
-    name: ${board_name}_Auto_Opening
-    lambda: |-
-      if (id(opening)) { return true;
-      }else { return false;
-      }
+  # - platform: template
+  #   name: ${board_name}_Auto_Opening
+  #   lambda: |-
+  #     if (id(opening)) { return true;
+  #     }else { return false;
+  #     }
 
 text_sensor:
   - platform: template
@@ -463,143 +463,143 @@ switch:
   - platform: restart
     name: ${board_name}_Restart
   
-  - platform: gpio
-    pin: 
-      number: GPIO19
-      inverted: yes
-    name: ${board_name}_Relay1
-    id: relay1
-    internal: true
-    icon: mdi:phone
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO19
+  #     inverted: yes
+  #   name: ${board_name}_Relay1
+  #   id: relay1
+  #   internal: true
+  #   icon: mdi:phone
     
-  - platform: gpio
-    pin: 
-      number: GPIO18
-      inverted: yes
-    name: ${board_name}_Relay2
-    id: relay2
-    internal: true
-    icon: mdi:phone
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO18
+  #     inverted: yes
+  #   name: ${board_name}_Relay2
+  #   id: relay2
+  #   internal: true
+  #   icon: mdi:phone
     
-  - platform: gpio
-    pin: 
-      number: GPIO17
-      inverted: yes
-    name: ${board_name}_Relay3
-    id: relay3
-    icon: mdi:door-open
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO17
+  #     inverted: yes
+  #   name: ${board_name}_Relay3
+  #   id: relay3
+  #   icon: mdi:door-open
 
-  - platform: gpio
-    pin: 
-      number: GPIO16
-      inverted: yes
-    name: ${board_name}_Relay4
-    id: relay4
-    icon: mdi:volume-off
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO16
+  #     inverted: yes
+  #   name: ${board_name}_Relay4
+  #   id: relay4
+  #   icon: mdi:volume-off
 
-  - platform: template
-    name: ${board_name}_Open_Button
-    icon: mdi:gesture-tap-button
-    turn_on_action:
-    - switch.turn_on: relay3
-    - delay: 2s
-    - switch.turn_off: relay3
+  # - platform: template
+  #   name: ${board_name}_Open_Button
+  #   icon: mdi:gesture-tap-button
+  #   turn_on_action:
+  #   - switch.turn_on: relay3
+  #   - delay: 2s
+  #   - switch.turn_off: relay3
   
-  - platform: template
-    name: ${board_name}_Phone
-    id: relay_phone
-    icon: mdi:phone
-    lambda: |-
-      if (id(relay1).state) {
-        return true;
-      } else {
-        return false;
-      }
-    turn_on_action:
-      - switch.turn_on: relay1
-      - switch.turn_on: relay2
-    turn_off_action:
-      - switch.turn_off: relay1
-      - switch.turn_off: relay2
+  # - platform: template
+  #   name: ${board_name}_Phone
+  #   id: relay_phone
+  #   icon: mdi:phone
+  #   lambda: |-
+  #     if (id(relay1).state) {
+  #       return true;
+  #     } else {
+  #       return false;
+  #     }
+  #   turn_on_action:
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #   turn_off_action:
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
 
-  - platform: template
-    name: ${board_name}_Open
-    icon: mdi:door
-    turn_on_action:
-      - switch.turn_on: relay4
-      - switch.turn_on: relay1
-      - switch.turn_on: relay2
-      - delay: 1500ms
-      - switch.turn_on: relay3
-      - delay: 2000ms
-      - switch.turn_off: relay3
-      - switch.turn_off: relay1
-      - switch.turn_off: relay2
-      - switch.turn_off: relay4
+  # - platform: template
+  #   name: ${board_name}_Open
+  #   icon: mdi:door
+  #   turn_on_action:
+  #     - switch.turn_on: relay4
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 1500ms
+  #     - switch.turn_on: relay3
+  #     - delay: 2000ms
+  #     - switch.turn_off: relay3
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - switch.turn_off: relay4
 
-  # Automatically open door switch
-  - platform: template
-    name: ${board_name}_Auto_Open
-    id: auto_open
-    icon: mdi:check-all
-    optimistic: true
-    restore_state: true
-    on_turn_on:
-      - switch.turn_off: auto_open_once
-      - switch.turn_off: auto_reject
-      - script.execute: state_no_call
-    on_turn_off:
-      script.execute: state_no_call
+  # # Automatically open door switch
+  # - platform: template
+  #   name: ${board_name}_Auto_Open
+  #   id: auto_open
+  #   icon: mdi:check-all
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - switch.turn_off: auto_open_once
+  #     - switch.turn_off: auto_reject
+  #     - script.execute: state_no_call
+  #   on_turn_off:
+  #     script.execute: state_no_call
 
-  # Automatically open door once switch
-  - platform: template
-    name: ${board_name}_Auto_Open_Once
-    id: auto_open_once
-    icon: mdi:check
-    optimistic: true
-    restore_state: true
-    on_turn_on:
-      - switch.turn_off: auto_open
-      - switch.turn_off: auto_reject
-      - script.execute: state_no_call
-    on_turn_off:
-      script.execute: state_no_call
+  # # Automatically open door once switch
+  # - platform: template
+  #   name: ${board_name}_Auto_Open_Once
+  #   id: auto_open_once
+  #   icon: mdi:check
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - switch.turn_off: auto_open
+  #     - switch.turn_off: auto_reject
+  #     - script.execute: state_no_call
+  #   on_turn_off:
+  #     script.execute: state_no_call
 
-  # Automatically reject call switch
-  - platform: template
-    name: ${board_name}_Reject
-    id: auto_reject
-    icon: mdi:door-closed-lock
-    optimistic: true
-    restore_state: true
-    on_turn_on:
-      - switch.turn_off: auto_open
-      - switch.turn_off: auto_open_once
-      - script.execute: state_no_call
-    on_turn_off:
-      script.execute: state_no_call
+  # # Automatically reject call switch
+  # - platform: template
+  #   name: ${board_name}_Reject
+  #   id: auto_reject
+  #   icon: mdi:door-closed-lock
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - switch.turn_off: auto_open
+  #     - switch.turn_off: auto_open_once
+  #     - script.execute: state_no_call
+  #   on_turn_off:
+  #     script.execute: state_no_call
       
-  - platform: template
-    name: ${board_name}_Mute
-    id: mute
-    icon: mdi:volume-off
-    optimistic: true
-    restore_state: true
-    on_turn_on:
-      - globals.set:
-          id: mute_mode
-          value: 'true'
-      - switch.turn_on: relay4
-      - light.turn_on: 
-          id: light_blue_led
-          effect: "Blink"
-    on_turn_off:
-      - globals.set:
-          id: mute_mode
-          value: 'false'
-      - switch.turn_off: relay4
-      - light.turn_off: 
-          id: light_blue_led
+  # - platform: template
+  #   name: ${board_name}_Mute
+  #   id: mute
+  #   icon: mdi:volume-off
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - globals.set:
+  #         id: mute_mode
+  #         value: 'true'
+  #     - switch.turn_on: relay4
+  #     - light.turn_on: 
+  #         id: light_blue_led
+  #         effect: "Blink"
+  #   on_turn_off:
+  #     - globals.set:
+  #         id: mute_mode
+  #         value: 'false'
+  #     - switch.turn_off: relay4
+  #     - light.turn_off: 
+  #         id: light_blue_led
 
   - platform: template
     name: ${board_name}_Energy_Reset_Monthly_Night
