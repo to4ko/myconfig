@@ -134,10 +134,10 @@ sensor:
   - platform: sht3xd
     temperature:
       name: SENSOR_SHT3XD_Temperature
-      accuracy_decimals: 1
+      accuracy_decimals: 2
     humidity:
       name: SENSOR_SHT3XD_Humidity
-      accuracy_decimals: 0
+      accuracy_decimals: 2
     address: 0x44
     update_interval: 15s
     
@@ -145,28 +145,55 @@ sensor:
   - platform: htu21d
     temperature:
       name: SENSOR_HTU21D_Temperature
-      accuracy_decimals: 1
+      accuracy_decimals: 2
     humidity:
       name: SENSOR_HTU21D_Humidity
-      accuracy_decimals: 0
+      accuracy_decimals: 2
+      filters:
+        - offset: 3.0      
     update_interval: 15s    
 
   - platform: sgp30
     eco2:
       name: SENSOR_SGP30_eCO2
+      filters:
+        - lambda: |-
+            if (x >= 50000) return 1;
+            else return x;      
       accuracy_decimals: 0
     tvoc:
       name: SENSOR_SGP30_TVOC
       accuracy_decimals: 0
       # filters:
       #   - multiply: 1000
+      filters:
+        - lambda: |-
+            if (x >= 50000) return 1;
+            else return x;      
       unit_of_measurement: ppm
     compensation:
       temperature_source: bme280_temp
       humidity_source: bme280_humidity
     address: 0x58
     update_interval: 15s
+    baseline:
+      eco2_baseline: 0x8FB2
+      tvoc_baseline: 0x9870    
 
+  - platform: template
+    name: SENSOR_SGP30_Stabilization_Time
+    lambda: |-
+      if ((43200 - id(uptime_sensor).state) > 0) {
+        return (43200 - id(uptime_sensor).state);
+      } else {
+        return 0;
+      }
+    accuracy_decimals: 0
+    update_interval: 15s
+    unit_of_measurement: s
+
+    
+    
   # - platform: bme680
   #   temperature:
   #     name: "BME680 Temperature"
@@ -185,16 +212,16 @@ sensor:
     temperature:
       name: SENSOR_BME280_Temperature
       oversampling: 16x
-      accuracy_decimals: 1
+      accuracy_decimals: 2
       id: bme280_temp
       filters:
         - offset: 1.0
     pressure:
       name: SENSOR_BME280_Pressure
-      accuracy_decimals: 0
+      accuracy_decimals: 2
     humidity:
       name: SENSOR_BME280_Humidity
-      accuracy_decimals: 0
+      accuracy_decimals: 2
       id: bme280_humidity
       filters:
         - offset: 5      
@@ -213,24 +240,61 @@ sensor:
   - platform: bme680_bsec
     temperature:
       name: SENSOR_BME680_Temperature
-      accuracy_decimals: 1
+      accuracy_decimals: 2
       filters:
         - offset: -1.0      
     pressure:
       name: SENSOR_BME680_Pressure
-      accuracy_decimals: 0
+      accuracy_decimals: 2
     humidity:
       name: SENSOR_BME680_Humidity
-      accuracy_decimals: 0
+      accuracy_decimals: 2
     iaq:
       name: SENSOR_BME680_IAQ
       accuracy_decimals: 0
+      filters:
+        - lambda: |-
+            if (x >= 50000) return 1;
+            else return x;
     co2_equivalent:
       name: SENSOR_BME680_CO2_Equivalent
       accuracy_decimals: 0
+      filters:
+        - lambda: |-
+            if (x >= 50000) return 1;
+            else return x;
     breath_voc_equivalent:
       name: SENSOR_BME680_Breath_VOC_Equivalent
       accuracy_decimals: 0
+      filters:
+        - lambda: |-
+            if (x >= 50000) return 1;
+            else return x;
+
+  - platform: ccs811
+    eco2:
+      name: SENSOR_CCS811_eCO2_Value
+      accuracy_decimals: 0
+      unit_of_measurement: ppm
+      filters:
+        - lambda: |-
+            if (x >= 50000) return 1;
+            else return x;
+    tvoc:
+      name: SENSOR_CCS811_TVOC
+      accuracy_decimals: 0
+      filters:
+        - lambda: |-
+            if (x >= 50000) return 1;
+            else return x;
+      # filters:
+      #   - multiply: 1000
+      unit_of_measurement: ppm
+    address: 0x5B
+    update_interval: 15s
+    temperature: bme280_temp
+    humidity: bme280_humidity
+    baseline: 0xFC76
     
     
 switch:

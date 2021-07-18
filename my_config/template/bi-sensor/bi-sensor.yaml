@@ -38,12 +38,20 @@
 
       - name: Updater Supervisor
         device_class: problem
-        state: "{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}"
+        #state: "{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}"
+        state: >-
+          {{state_attr('sensor.supervisor_updates', 'newest_version').split('.')[0]|int >= state_attr('sensor.supervisor_updates', 'current_version').split('.')[0]|int and
+          state_attr('sensor.supervisor_updates', 'newest_version').split('.')[1]|int >= state_attr('sensor.supervisor_updates', 'current_version').split('.')[1]|int and
+          state_attr('sensor.supervisor_updates', 'newest_version').split('.')[0]|int > state_attr('sensor.supervisor_updates', 'current_version').split('.')[2]|int }}
         availability: "{{ (states('sensor.supervisor_updates') | int(-1)) > -1 }}"
   
       - name: Updater Addons
         device_class: problem
         state: "{{ states('sensor.supervisor_updates') | int > 0 }}"
+
+      - name: Updater Core
+        device_class: problem
+        state: "{{(states('sensor.ha_latest_version') > states('sensor.ha_installed_version')) and (states('sensor.ha_latest_version') not in ['unavailable', 'unknown', 'none'])}}"
 
       - name: RO Pump Status
         icon: mdi:water-pump
@@ -67,10 +75,6 @@
         state: "{{ is_state('binary_sensor.motion_1h', 'on') or is_state('group.persons', 'home') }}"
         device_class: occupancy
 
-      - name: Update Available
-        device_class: occupancy
-        state: "{{(states('sensor.ha_latest_version') > states('sensor.ha_installed_version')) and (states('sensor.ha_latest_version') not in ['unavailable', 'unknown', 'none'])}}"
-
       - name: Toilet Usage
         icon: mdi:toilet
         state: "{{ is_state('binary_sensor.0x158d000232ddd6_contact','on') }}"
@@ -79,7 +83,7 @@
       - name: High Humidity B
         device_class: moisture
         # state: "{{ states('sensor.0x158d00020d7c3a_humidity') | float > 65 }}"
-        state: "{{ states('sensor.0x158d00020d7c3a_humidity')|float > states('sensor.humidity_average')|float + 10 }}"
+        state: "{{ states('sensor.0x158d00020d7c3a_humidity')|float > states('sensor.humidity_average')|float + 20 }}"
         delay_off:
           minutes: 5
 
@@ -141,7 +145,7 @@
         icon: mdi:lightbulb-group
 
       - name: Light K
-        state: "{{ is_state('light.round_led_k','on') or is_state('switch.0x158d000366815b_channel_1','on') or is_state('switch.0x158d000366815b_channel_2','on') or is_state('switch.esp32_hood_k_light','on') or is_state('light.esp32_node_k_light','on') }}"
+        state: "{{ is_state('light.round_led_k','on') or is_state('switch.0x158d000366815b_channel_1','on') or is_state('switch.0x158d000366815b_channel_2','on') or is_state('switch.esp8266_hood_k_light','on') or is_state('light.esp32_node_k_light','on') }}"
         icon: mdi:lightbulb-group
 
       - name: Fridge HB

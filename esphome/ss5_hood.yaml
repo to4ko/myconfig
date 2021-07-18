@@ -38,6 +38,7 @@ wifi:
     dns2: 8.8.8.8
     
 logger:
+  baud_rate: 0
 
 api:
   reboot_timeout: 5min
@@ -68,23 +69,28 @@ rtttl:
 #     output: blue_led
 #     id: main_led
 
+spi:
+  - id: spi_hood
+    clk_pin: GPIO05
+    miso_pin: GPIO03
+
 binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
   - platform: gpio
     pin:
       number: GPIO13
       mode: INPUT_PULLUP
       inverted: True
-    name: "${board_name}_counter1"
+    name: "${board_name}_SW1"
 
   - platform: gpio
     pin:
       number: GPIO12
       mode: INPUT_PULLUP
       inverted: True
-    name: "${board_name}_counter2"
-
-  - platform: status
-    name: ${board_name}_Status
+    name: "${board_name}_SW2"
 
 switch:
   - platform: gpio
@@ -125,8 +131,6 @@ switch:
     turn_off_action:
       - rtttl.stop      
       
-      
-      
 # "The Simpsons:d=4,o=5,b=160:c.6,e6,f#6,8a6,g.6,e6,c6,8a,8f#,8f#,8f#,2g,8p,8p,8f#,8f#,8f#,8g,a#.,8c6,8c6,8c6,c6";
 # "Indiana:d=4,o=5,b=250:e,8p,8f,8g,8p,1c6,8p.,d,8p,8e,1f,p.,g,8p,8a,8b,8p,1f6,p,a,8p,8b,2c6,2d6,2e6,e,8p,8f,8g,8p,1c6,p,d6,8p,8e6,1f.6,g,8p,8g,e.6,8p,d6,8p,8g,e.6,8p,d6,8p,8g,f.6,8p,e6,8p,8d6,2c6";
 # "TakeOnMe:d=4,o=4,b=160:8f#5,8f#5,8f#5,8d5,8p,8b,8p,8e5,8p,8e5,8p,8e5,8g#5,8g#5,8a5,8b5,8a5,8a5,8a5,8e5,8p,8d5,8p,8f#5,8p,8f#5,8p,8f#5,8e5,8e5,8f#5,8e5,8f#5,8f#5,8f#5,8d5,8p,8b,8p,8e5,8p,8e5,8p,8e5,8g#5,8g#5,8a5,8b5,8a5,8a5,8a5,8e5,8p,8d5,8p,8f#5,8p,8f#5,8p,8f#5,8e5,8e5";
@@ -164,6 +168,18 @@ sensor:
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
+
+  - platform: max6675
+    name: ${board_name}_TCouple
+    cs_pin: GPIO16
+    update_interval: 5s
+    id: hood_temp
+    spi_id: spi_hood
+    filters:
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1
+
 
   
 text_sensor:

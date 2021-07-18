@@ -73,7 +73,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Yeelight LED Light Strip (YLDD01YL)
   - Yeelight LED Light Strip Plus (YLDD04YL) 
   - Yeelight Jiaoyue 260 (YLXD62YI)
-  - Xiaomi Yeelight Bedside Lap 2
+  - Xiaomi Yeelight Bedside Lamp 2
   - Yeelight Bedside Lamp D2
   - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
   - Xiaomi Philips Zhirui Downlight (9290012799)
