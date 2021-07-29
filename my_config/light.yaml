@@ -29,6 +29,21 @@
   #   model: philips.light.downlight
 
   - platform: mqtt
+    schema: template
+    name: Digma8027 Screen
+    state_topic: 'wallpanel/digma8027/state'
+    state_template: '{% if value_json.screenOn == true %}on{% else %}off{% endif %}'
+    brightness_template: '{{ value_json.brightness }}'
+    command_topic: 'wallpanel/digma8027/command'
+    command_on_template: >
+      { "wake": true
+      {%- if brightness is defined -%}
+      ,"brightness": {{ brightness }}
+      {%- endif -%}}
+    command_off_template: '{ "wake": false }'
+    json_attributes_topic: 'wallpanel/digma8027/state'
+
+  - platform: mqtt
     name: SLS Gateway LED
     availability_topic: "sls_gateway/bridge/state" 
     command_topic: "sls_gateway/led" 

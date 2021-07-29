@@ -1279,6 +1279,7 @@
         - binary_sensor.sonoff_pow_r2_1_status
         #- binary_sensor.ss5_hood_status
         - binary_sensor.sonoff_mini_1_status
+        - binary_sensor.sonoff_mini_4_status
       to: 'off'
       for:
         minutes: 2
@@ -1569,6 +1570,7 @@
         - sensor.sonoff_pow_r2_1_uptime_s
         - sensor.sonoff_pow_r2_2_uptime_s
         - sensor.sonoff_mini_1_uptime_s
+        - sensor.sonoff_mini_4_uptime_s
       from: 'unavailable'
       for: 
         seconds: 5
@@ -1730,3 +1732,32 @@
   action:
     - service: input_boolean.turn_{{states('binary_sensor.central_heating')}}
       entity_id: input_boolean.central_heating
+      
+
+# ##################################
+# System - Doorcam panel relauch
+# ##################################
+- alias: system_doorcam_panel_relaunch
+#  id: system_doorcam_panel_relaunch
+  initial_state: true
+  mode: queued
+  max: 5
+  max_exceeded: silent  
+  trigger:
+    - platform: time_pattern
+      minutes: "/30"
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
+    - platform: state
+      entity_id: binary_sensor.wp_digma8027_screen, binary_sensor.wp_digma8027_motion
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_doorcam_panel_relaunch','last_triggered'))|int) > 5 }}"
+  action:
+    - service: mqtt.publish
+      data:
+        topic: 'wallpanel/digma8027/command'
+        payload: '{"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'

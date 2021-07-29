@@ -50,6 +50,10 @@ interval:
   - interval: 10s
     then:
       - mqtt.publish:
+          topic: esp01_air_freshener/auto_shudown
+          payload: "OFF"
+          retain: true    
+      - mqtt.publish:
           topic: esp01_air_freshener/last_hearbeat
           retain: true
           payload: !lambda |-
@@ -194,11 +198,27 @@ sensor:
   - platform: adc
     pin: VCC
     name: ${board_name}_Vcc
-    update_interval: 5s
+    update_interval: 2s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1  
+    on_value_range:
+      below: 2.75
+      then:
+        - mqtt.publish:
+            topic: esp01_air_freshener/auto_shudown
+            payload: "ON"
+            retain: true           
+        - switch.turn_on: esp_shutdown        
 
 switch:
   - platform: restart
     name: ${board_name}_Restart
+
+  - platform: shutdown
+    id: esp_shutdown
+    name: ${board_name}_Shutdown
 
   - platform: gpio
     pin: GPIO03

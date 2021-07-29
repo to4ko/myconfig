@@ -203,6 +203,28 @@
         icon: mdi:zigbee
         unit_of_measurement: "ea"
 
+      - name: Addons Update Available
+        state: >-
+          {%- macro dev_list() -%}
+          {%- for state in states.binary_sensor -%}
+          {%- if state.entity_id.endswith("_update_available") and ( state.state == 'on') -%}
+          X
+          {%-endif-%}
+          {%-endfor-%}
+          {%-endmacro-%}
+          {%- if dev_list()[0] == "X" -%}
+          {{dev_list()|list|length }}
+          {%- else -%}
+          0
+          {%- endif -%}
+        attributes:
+          list: >-
+            {%-for state in states.binary_sensor
+            if state.entity_id.endswith("_update_available") and ( state.state == 'on') %}
+            {{state.name}}{%- if not loop.last -%}, {%-endif%}
+            {%-endfor-%}
+        unit_of_measurement: "ea"
+
   - trigger:
       - platform: time_pattern
         minutes: '/30'

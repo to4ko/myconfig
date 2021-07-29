@@ -27,6 +27,19 @@ views:
               #     - sensor.mi_kettle_state
               #     - sensor.mi_kettle_rssi
               - type: glance
+                entities:
+                  - entity: binary_sensor.wp_digma8027_motion
+                    name: Motion
+                  - entity: binary_sensor.wp_digma8027_screen
+                    name: Screen
+                  - entity: binary_sensor.wp_digma8027_ac_connected
+                    name: AC
+                  - entity: binary_sensor.wp_digma8027_charging
+                    name: Charge
+                  - entity: sensor.wp_digma8027_battery_level
+                    name: Level
+
+              - type: glance
                 show_name: true
                 show_state: true
                 state_color: true
@@ -754,7 +767,7 @@ views:
                 name: L
                 tap_action:
                   action: toggle
-              - entity: switch.0x158d000366815b_channel_2
+              - entity: switch.sonoff_mini_4_relay
                 name: R
                 tap_action:
                   action: toggle
@@ -1322,7 +1335,7 @@ views:
           - light.esp32_node_k_light
           - switch.esp8266_hood_k_light
           - switch.0x158d000366815b_channel_1
-          - switch.0x158d000366815b_channel_2
+          - switch.sonoff_mini_4_relay
           - type: divider
           - switch.esp8266_hood_k_fan
           - type: divider
@@ -2034,14 +2047,14 @@ views:
                   green: 100
                   yellow: 5000
                   red: 7000
-              - type: gauge
-                name: Mercury 200
-                entity: sensor.esp32_domofon_power_meter
-                max: 8800
-                severity:
-                  green: 100
-                  yellow: 5000
-                  red: 7000
+              # - type: gauge
+              #   name: Mercury 200
+              #   entity: sensor.esp32_domofon_power_meter
+              #   max: 8800
+              #   severity:
+              #     green: 100
+              #     yellow: 5000
+              #     red: 7000
           - type: glance
             show_header_toggle: false
             state_color: true
@@ -2656,6 +2669,17 @@ views:
           - type: custom:stack-in-card
             mode: vertical
             cards:
+              - type: glance
+                state_color: true
+                entities:
+                  - entity: binary_sensor.tod_day
+                    name: TOD
+                  - entity: input_datetime.day_start_workday
+                    name: Work Day
+                  - entity: input_datetime.day_start_holiday
+                    name: Holiday
+                  - entity: input_datetime.day_end
+                    name: End
               - type: entities
                 state_color: true
                 entities:
@@ -2804,46 +2828,7 @@ views:
           #           entity_id: switch.esp01_hdd_box_power
           #     - entity: binary_sensor.esp01_hdd_box_status
           #       name: Connection
-          - type: custom:auto-entities
-            show_empty: false
-            card:
-              type: entities
-              show_header_toggle: false
-              state_color: true
-            filter:
-              include:
-                - domain: timer
-              exclude:
-                - state: "idle"
-          # - type: custom:timer-bar-card
-          #   entities:
-          #     - timer.domofon
-          #     - timer.fan_b
-          #     - timer.fan_bottom_b
-          #     - timer.fan_t
-          #     - timer.general_10m
-          #     - timer.general_5m
-          #     - timer.heater_t
-          #     - timer.main_door_open_hb
-          #     - timer.main_led_strip_hb
-          #     - timer.main_light_b
-          #     - timer.main_light_delay_k
-          #     - timer.main_light_delay_st
-          #     - timer.main_light_hb
-          #     - timer.main_light_k
-          #     - timer.main_light_mb
-          #     - timer.main_light_s
-          #     - timer.main_light_st
-          #     - timer.main_light_t
-          #     - timer.night_led_strip_hb
-          #     - timer.night_led_strip_hs
-          #     - timer.night_led_strip_k
-          #     - timer.security_delay
-          #     - timer.test_timer
-          #     - timer.washer_b
-          #     - timer.washing_machine_door
-          #     - timer.washing_machine_ready
-            
+
 
       # Mid column
       #############
@@ -3070,6 +3055,17 @@ views:
 
                   - entity: binary_sensor.j3455_lead
                     name: Lead
+          - type: custom:auto-entities
+            show_empty: false
+            card:
+              type: entities
+              show_header_toggle: false
+              state_color: true
+            filter:
+              include:
+                - domain: timer
+              exclude:
+                - state: "idle"
 
               # - type: glance
               #   state_color: true
@@ -4177,6 +4173,7 @@ views:
           #- binary_sensor.ss5_hood_status
           - binary_sensor.esp8266_hood_k_status
           - binary_sensor.esp8266_oven_temp_k_status
+          - binary_sensor.sonoff_mini_4_status
 
           - type: divider
           - binary_sensor.d1mini_bed_leds_status
@@ -4224,6 +4221,7 @@ views:
           #- sensor.ss5_hood_wifi_rssi
           - sensor.esp8266_hood_k_wifi_rssi
           - sensor.esp8266_oven_temp_k_wifi_rssi
+          - sensor.sonoff_mini_4_wifi_rssi
 
           - type: divider
           - sensor.d1mini_bed_leds_wifi_rssi
@@ -4271,6 +4269,7 @@ views:
           #- sensor.ss5_hood_uptime
           - sensor.esp8266_hood_k_uptime
           - sensor.esp8266_oven_temp_k_uptime
+          - sensor.sonoff_mini_4_uptime
 
           - type: divider
           - sensor.d1mini_bed_leds_uptime
@@ -4670,7 +4669,7 @@ views:
             secondary_info: last-changed
           - entity: switch.0x158d000366815b_channel_1
             secondary_info: last-changed
-          - entity: switch.0x158d000366815b_channel_2
+          - entity: switch.sonoff_mini_4_relay
             secondary_info: last-changed
 
       - type: entities
@@ -5061,13 +5060,13 @@ views:
           - sensor.esp8266_pzem_hb_voltage
           - sensor.esp8266_pzem_hb_wifi_rssi
           - binary_sensor.esp8266_pzem_hb_time_isvalid
-          - type: divider
-          - sensor.esp32_domofon_energy_daily
-          - sensor.esp8266_pzem_hb_energy_daily
-          - sensor.esp32_domofon_energy_daily_day
-          - sensor.esp8266_pzem_hb_energy_daily_day
-          - sensor.esp32_domofon_energy_daily_night
-          - sensor.esp8266_pzem_hb_energy_daily_night
+          # - type: divider
+          # - sensor.esp32_domofon_energy_daily
+          # - sensor.esp8266_pzem_hb_energy_daily
+          # - sensor.esp32_domofon_energy_daily_day
+          # - sensor.esp8266_pzem_hb_energy_daily_day
+          # - sensor.esp32_domofon_energy_daily_night
+          # - sensor.esp8266_pzem_hb_energy_daily_night
 
       - type: vertical-stack
         cards:

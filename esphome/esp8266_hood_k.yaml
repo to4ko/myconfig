@@ -82,19 +82,16 @@ binary_sensor:
       }
     device_class: heat
     filters:
-      - delayed_off: 10min
+      - delayed_off: 5min
+      - delayed_on: 2min
     on_press:
       then:
-        #- if:
-         #   condition:
-        #      and:
-                #- binary_sensor.is_on: id_status
-                #- time.has_time:
-        #       - sensor.in_range:
-         #           id: uptime_sensor
-        #            above: 15.0
-      #then:
-        - switch.turn_on: relay2
+        - if:
+            condition:
+              and:
+                - binary_sensor.is_on: id_status
+            then:
+              - switch.turn_on: relay2
 
     on_release:
       then:
@@ -110,11 +107,14 @@ binary_sensor:
     filters:
       - delayed_on: 10ms
       - delayed_off: 10ms
-    on_click:
-      min_length: 50ms
-      max_length: 350ms
+    on_press:
       then:
-        - switch.toggle: relay2
+        - switch.toggle: relay2      
+    # on_click:
+    #   min_length: 50ms
+    #   max_length: 350ms
+    #   then:
+    #     - switch.toggle: relay2
     
   - platform: gpio
     name: "${board_name}_Light_Button"
@@ -126,11 +126,14 @@ binary_sensor:
     filters:
       - delayed_on: 10ms
       - delayed_off: 10ms
-    on_click:
-      min_length: 50ms
-      max_length: 350ms
+    on_press:
       then:
-        - switch.toggle: relay1      
+        - switch.toggle: relay1
+    # on_click:
+    #   min_length: 50ms
+    #   max_length: 350ms
+    #   then:
+    #     - switch.toggle: relay1      
 
 switch:
   - platform: gpio
@@ -183,7 +186,7 @@ sensor:
     id: median_temp
     filters:
       - lambda: |-
-          if (id(id_status).state) {
+          if (id(id_status).state && x > 20 && x < 40) {
             return x+5;
           } else {
             return 32;
