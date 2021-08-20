@@ -2,15 +2,11 @@
 # Toilet - Air Freshener Counter
 # ##################################
 - alias: toilet_air_freshener_counter
-  #  id: toilet_air_freshener_counter
+  id: toilet_air_freshener_counter
   initial_state: true
   trigger:
-    # - platform: state
-    #   entity_id: switch.air_freshener_spray
-    #   from: 'on'
-    #   to: 'off'
     - platform: state
-      entity_id: sensor.air_freshener_counter
+      entity_id: number.d1mini_air_freshener_counter
   condition:
     - condition: template
       value_template: "{{ trigger.to_state.state|int > trigger.from_state.state|int }}"
@@ -22,88 +18,81 @@
            trigger.to_state.state != trigger.from_state.state
         }}
   action:
-    # - service: counter.increment
-    #   entity_id: counter.air_freshener_toilet
-    # - service: input_text.set_value
-    #   data:
-    #     entity_id: input_text.air_freshener_last_spray
-    #     value: "{{now().strftime('%d.%m.%Y %H:%M')}}"
-    # - service: input_number.set_value
-    #   data:
-    #     entity_id: input_number.air_freshener_last_spray
-    #     value: "{{ as_timestamp(now())|int }}"
     - condition: template
-      value_template: "{{ (states('sensor.air_freshener_counter')|int >500) and (states('sensor.air_freshener_counter')|int % 25) == 0 }}"
+      value_template: "{{ (states('number.d1mini_air_freshener_counter')|int >500) and (states('number.d1mini_air_freshener_counter')|int % 25) == 0 }}"
     - service: notify.telegram
       data:
-        message: "\U0001f50b Необходимо заменить баллон в освежителе {{states('sensor.air_freshener_counter')}}!"
+        message: "\U0001f50b Необходимо заменить баллон в освежителе {{states('number.d1mini_air_freshener_counter')}}!"
 
 # ##################################
 # Toilet - Air Freshener Spray
 # ##################################
 - alias: toilet_air_freshener_spray
-  #  id: toilet_air_freshener_spray
+  id: toilet_air_freshener_spray
   initial_state: true
   mode: queued
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0001b97111_action
-    #   to: "double"
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0001b97111_action
-        click_type: double
     - platform: state
       entity_id: binary_sensor.0x158d000232ddd6_contact
       to: "on"
       for:
         minutes: 3
-  condition:
-    - condition: state
-      entity_id: switch.air_freshener_spray
-      state: "off"
-    - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_air_freshener_spray','last_triggered'))|int) > 15*60 }}"
   action:
     - wait_for_trigger:
         - platform: state
           entity_id: binary_sensor.0x158d000232ddd6_contact
           to: "off"
           for:
-            seconds: 5
+            seconds: 10
       timeout:
         minutes: 20
       continue_on_timeout: false
     - service: switch.turn_on
-      entity_id: switch.air_freshener_spray
+      entity_id: switch.d1mini_air_freshener_spray #switch.air_freshener_spray
 
 # ##################################
-# Toilet - Air Freshener Battery Alert
+# Toilet - Air Freshener Spray Manual
 # ##################################
-- alias: toilet_air_freshener_battery_alert
-  #  id: toilet_air_freshener_battery_alert
+- alias: toilet_air_freshener_spray_manual
+  id: toilet_air_freshener_spray_manual
   initial_state: true
+  mode: queued
   trigger:
-    - platform: state
-      entity_id: switch.esp01_air_freshener_restart
-      from: "unavailable"
-      for:
-        seconds: 2
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.esp01_air_freshener_vcc
-      below: 2.8
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0001b97111_action
+        click_type: double
   action:
-    - service: notify.telegram
-      data:
-        message: "\U0001f50b Низкий заряд батареи освежителя {{states('sensor.esp01_air_freshener_vcc')}}в!"
+    - service: switch.turn_on
+      entity_id: switch.d1mini_air_freshener_spray #switch.air_freshener_spray
+
+# # ##################################
+# # Toilet - Air Freshener Battery Alert
+# # ##################################
+# - alias: toilet_air_freshener_battery_alert
+#   id: toilet_air_freshener_battery_alert
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: switch.esp01_air_freshener_restart
+#       from: "unavailable"
+#       for:
+#         seconds: 2
+#   condition:
+#     - condition: numeric_state
+#       entity_id: sensor.esp01_air_freshener_vcc
+#       below: 2.8
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f50b Низкий заряд батареи освежителя {{states('sensor.esp01_air_freshener_vcc')}}в!"
 
 # ##################################
 # Toilet - Air Freshener Last Hearbeat
 # ##################################
 # - alias: toilet_air_freshener_last_hearbeat
-# #  id: toilet_air_freshener_last_hearbeat
+#   id: toilet_air_freshener_last_hearbeat
 #   initial_state: true
 #   trigger:
 #     - platform: state
@@ -122,7 +111,7 @@
 # Toilet - Air Freshener Hourly
 # ##################################
 # - alias: toilet_air_freshener_bi_hourly
-#   #  id: toilet_air_freshener_bi_hourly
+#   id: toilet_air_freshener_bi_hourly
 #   initial_state: true
 #   trigger:
 #     - platform: time_pattern
@@ -140,28 +129,28 @@
 #     - service: switch.turn_on
 #       entity_id: switch.air_freshener_spray
 
-# ##################################
-# System - Air freshener offline
-# ##################################
-- alias: system_air_freshener_offline
-  #  id: system_air_freshener_offline
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.esp01_air_freshener_status
-      to: "unavailable"
-      for:
-        minutes: 25
-  action:
-    - service: notify.telegram
-      data:
-        message: "\U0001f32c Освежитель воздуха не выходит на связь!"
+# # ##################################
+# # System - Air freshener offline
+# # ##################################
+# - alias: system_air_freshener_offline
+#   id: system_air_freshener_offline
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.esp01_air_freshener_status
+#       to: "unavailable"
+#       for:
+#         minutes: 25
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f32c Освежитель воздуха не выходит на связь!"
 
 # # ##################################
 # # Toilet - Heater Control
 # # ##################################
 - alias: toilet_heater_control
-  #  id: toilet_heater_control
+  id: toilet_heater_control
   initial_state: true
   trigger:
     - platform: template
@@ -174,7 +163,7 @@
 # # Toilet - Close Seat notify
 # # ##################################
 - alias: toilet_close_seat_notify
-  #  id: toilet_close_seat_notify
+  id: toilet_close_seat_notify
   initial_state: true
   trigger:
     - platform: state
@@ -189,7 +178,7 @@
       entity_id: input_boolean.dark_mode
       state: "off"
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_close_seat_notify','last_triggered'))|int) > 15 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_close_seat_notify', 'last_triggered'))|int) > 15 }}"
     - condition: template
       value_template: "{{ is_state_attr('automation.toilet_close_seat_notify','current',0) }}"
   action:
@@ -239,7 +228,7 @@
 #   mode: single
 
 - alias: toilet_occupancy_turn_on
-  # id: toilet_occupancy_turn_on
+  id: toilet_occupancy_turn_on
   initial_state: true
   trigger:
     - platform: state
@@ -261,7 +250,7 @@
       entity_id: input_boolean.toilet_occupancy
 
 - alias: toilet_occupancy_turn_on_with_button_and_seat
-  # id: toilet_occupancy_turn_on_with_button_and_seat
+  id: toilet_occupancy_turn_on_with_button_and_seat
   initial_state: true
   trigger:
     # - platform: state
@@ -288,7 +277,7 @@
       entity_id: input_boolean.toilet_occupancy
 
 - alias: toilet_occupancy_turn_off
-  # id: toilet_occypancy_turn_off
+  id: toilet_occypancy_turn_off
   initial_state: true
   trigger:
     - platform: state

@@ -1,86 +1,165 @@
 """Adds config flow for Frigate."""
-from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_PORT
-from homeassistant.core import callback
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from homeassistant.helpers.typing import DiscoveryInfoType
-import voluptuous as vol
-import logging
+from __future__ import annotations
 
-from .api import FrigateApiClient
+import logging
+from typing import Any, Dict, cast
+
+import voluptuous as vol
+from yarl import URL
+
+from homeassistant import config_entries
+from homeassistant.const import CONF_URL
+from homeassistant.core import callback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
+
+from .api import FrigateApiClient, FrigateApiClientError
 from .const import (
+    CONF_CAMERA_STATIC_IMAGE_HEIGHT,
+    CONF_NOTIFICATION_PROXY_ENABLE,
+    CONF_RTMP_URL_TEMPLATE,
+    DEFAULT_CAMERA_STATIC_IMAGE_HEIGHT,
+    DEFAULT_HOST,
     DOMAIN,
-    PLATFORMS
 )
 
-_LOGGER: logging.Logger = logging.getLogger(__package__)
+_LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
-class FrigateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+def get_config_entry_title(url_str: str) -> str:
+    """Get the title of a config entry from the URL."""
+
+    # Strip the scheme from the URL as it's not that interesting in the title
+    # and space is limited on the integrations page.
+    url = URL(url_str)
+    return str(url)[len(url.scheme + "://") :]
+
+
+class FrigateFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore[call-arg,misc]
     """Config flow for Frigate."""
 
-    VERSION = 1
+    VERSION = 2
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
-    def __init__(self):
-        """Initialize."""
-        self._errors = {}
-
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Handle a flow initialized by the user."""
-        self._errors = {}
-        # Ensure mqtt
-        if not 'mqtt' in self.hass.config.components:
-            return self.async_abort(reason="mqtt_required")
-        # Check if already configured
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
 
-        if user_input is not None:
-            valid = await self._valid(user_input)
-            if valid:
-                return self.async_create_entry(
-                    title="Frigate", data=user_input
-                )
+        if user_input is None:
+            return self._show_config_form()
 
-            return await self._show_config_form(user_input)
+        try:
+            # Cannot use cv.url validation in the schema itself, so
+            # apply extra validation here.
+            cv.url(user_input[CONF_URL])
+        except vol.Invalid:
+            return self._show_config_form(user_input, errors={"base": "invalid_url"})
 
-        return await self._show_config_form(user_input)
-
-    async def _show_config_form(self, user_input):  # pylint: disable=unused-argument
-        """Show the configuration form to edit location data."""
-        default_host = "http://ccab4aaf-frigate:5000"
-        if not user_input is None:
-            default_host = user_input.get("host", "http://ccab4aaf-frigate:5000")
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {vol.Required("host", default=default_host): str}
-            ),
-            errors=self._errors,
-        )
-
-    async def _valid(self, input_data):
-        valid = await self._test_credentials(
-            input_data["host"]
-        )
-        if not 'mqtt' in self.hass.config.components:
-            self._errors["base"] = "mqtt"
-        elif valid:
-            return True
-        else:
-            self._errors["base"] = "auth"
-
-        return False
-
-    async def _test_credentials(self, url):
-        """Return true if credentials is valid."""
         try:
             session = async_create_clientsession(self.hass)
-            client = FrigateApiClient(url, session)
+            client = FrigateApiClient(user_input[CONF_URL], session)
             await client.async_get_stats()
-            return True
-        except Exception as e:  # pylint: disable=broad-except
-            _LOGGER.error(e)
-            pass
-        return False
+        except FrigateApiClientError:
+            return self._show_config_form(user_input, errors={"base": "cannot_connect"})
+
+        # Search for duplicates with the same Frigate CONF_HOST value.
+        for existing_entry in self._async_current_entries(include_ignore=False):
+            if existing_entry.data.get(CONF_URL) == user_input[CONF_URL]:
+                return cast(
+                    Dict[str, Any], self.async_abort(reason="already_configured")
+                )
+
+        return cast(
+            Dict[str, Any],
+            self.async_create_entry(
+                title=get_config_entry_title(user_input[CONF_URL]), data=user_input
+            ),
+        )
+
+    def _show_config_form(
+        self,
+        user_input: dict[str, Any] | None = None,
+        errors: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:  # pylint: disable=unused-argument
+        """Show the configuration form."""
+        if user_input is None:
+            user_input = {}
+
+        return cast(
+            Dict[str, Any],
+            self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_URL, default=user_input.get(CONF_URL, DEFAULT_HOST)
+                        ): str
+                    }
+                ),
+                errors=errors,
+            ),
+        )
+
+    @staticmethod
+    @callback  # type: ignore[misc]
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> FrigateOptionsFlowHandler:
+        """Get the Hyperion Options flow."""
+        return FrigateOptionsFlowHandler(config_entry)
+
+
+class FrigateOptionsFlowHandler(config_entries.OptionsFlow):  # type: ignore[misc]
+    """Frigate options flow."""
+
+    def __init__(self, config_entry: config_entries.ConfigEntry):
+        """Initialize a Frigate options flow."""
+        self._config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Manage the options."""
+        if user_input is not None:
+            return cast(
+                Dict[str, Any], self.async_create_entry(title="", data=user_input)
+            )
+
+        schema: dict[Any, Any] = {
+            vol.Optional(
+                CONF_CAMERA_STATIC_IMAGE_HEIGHT,
+                default=self._config_entry.options.get(
+                    CONF_CAMERA_STATIC_IMAGE_HEIGHT,
+                    DEFAULT_CAMERA_STATIC_IMAGE_HEIGHT,
+                ),
+            ): vol.All(vol.Coerce(int), vol.Range(min=0)),
+        }
+
+        if self.show_advanced_options:
+            schema.update(
+                {
+                    # The input URL is not validated as being a URL to allow for the
+                    # possibility the template input won't be a valid URL until after
+                    # it's rendered.
+                    vol.Optional(
+                        CONF_RTMP_URL_TEMPLATE,
+                        default=self._config_entry.options.get(
+                            CONF_RTMP_URL_TEMPLATE,
+                            "",
+                        ),
+                    ): str,
+                    vol.Optional(
+                        CONF_NOTIFICATION_PROXY_ENABLE,
+                        default=self._config_entry.options.get(
+                            CONF_NOTIFICATION_PROXY_ENABLE,
+                            True,
+                        ),
+                    ): bool,
+                }
+            )
+
+        return cast(
+            Dict[str, Any],
+            self.async_show_form(step_id="init", data_schema=vol.Schema(schema)),
+        )

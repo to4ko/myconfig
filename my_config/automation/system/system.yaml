@@ -6,7 +6,7 @@
 # System - Errors counter
 # ##################################
 - alias: system_error_counter
-#  id: system_error_counter
+  id: system_error_counter
   initial_state: true
   mode: queued
   max_exceeded: silent
@@ -26,7 +26,7 @@
 # System - Warning counter
 # ##################################
 - alias: system_warning_counter
-#  id: system_warning_counter
+  id: system_warning_counter
   mode: queued
   max_exceeded: silent
   trigger:
@@ -45,7 +45,7 @@
 # System - START message
 # ##################################
 - alias: system_start_message
-#  id: system_start_message
+  id: system_start_message
   initial_state: true
   trigger:
     - platform: homeassistant
@@ -56,9 +56,12 @@
         - sensor.host_uptime
         - sensor.ha_uptime
         - sensor.start_time
+        - sensor.errors_during_boot
+        - sensor.warnings_during_boot
+        
     - service: notify.telegram
       data:
-        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int}}сек!"
+        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int}}сек! Ошибок {{states('sensor.errors_during_boot')|int}}, предупреждений {{states('sensor.warnings_during_boot')|int}}"
     - service: script.turn_on
       entity_id: script.system_start
     - service: counter.increment
@@ -68,18 +71,34 @@
 # System - STOP message
 # ##################################
 - alias: system_stop_message
-#  id: system_stop_message
+  id: system_stop_message
   initial_state: true
   mode: queued
   trigger:
     # - platform: event
     #   event_type: homeassistant_stop
-    - platform: homeassistant
-      event: shutdown
+    # - platform: homeassistant
+    #   event: shutdown
+    - platform: event
+      event_type: call_service
+      event_data:
+        domain: homeassistant
+        service: restart
+    - platform: event
+      event_type: call_service
+      event_data:
+        domain: homeassistant
+        service: stop
   action:
     - service: input_boolean.turn_on
       data:
         entity_id: input_boolean.ha_shutdown
+    - service: automation.turn_off
+      entity_id: 
+        - automation.system_gw3_state
+        - automation.system_zb_devices_status
+        - automation.system_esp_devices_status
+        - automation.system_xiaomi_gw3_error
     - service: notify.telegram
       data:
         message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
@@ -88,7 +107,7 @@
 # System - Github star
 # ##################################
 - alias: system_github_star
-#  id: system_github_star
+  id: system_github_star
   initial_state: true
   trigger:
     - platform: state
@@ -109,7 +128,7 @@
 # System - Hass.io NEW Device
 # ##################################
 - alias: system_new_device_found
-#  id: system_new_device_found
+  id: system_new_device_found
   initial_state: true
   mode: queued
   trigger:
@@ -124,7 +143,7 @@
 # System - Entity Change
 # ##################################
 - alias: system_entity_change
-#  id: system_entity_change
+  id: system_entity_change
   initial_state: true
   mode: queued
   max: 999
@@ -154,7 +173,7 @@
 # System - Device Deletion
 # ##################################
 - alias: system_device_entity_deletion
-#  id: system_device_entity_deletion
+  id: system_device_entity_deletion
   initial_state: true
   mode: queued
   trigger:
@@ -174,7 +193,7 @@
 # System - Hass.io NEW Version
 # ##################################
 - alias: system_hassio_new_version
-#  id: system_hassio_new_version
+  id: system_hassio_new_version
   initial_state: true
   trigger:
     - platform: state
@@ -194,7 +213,7 @@
 # System - NEW DAY
 # ##################################
 - alias: system_new_day_telegram
-#  id: system_new_day_telegram
+  id: system_new_day_telegram
   initial_state: true
   trigger:
     - platform: time
@@ -212,7 +231,7 @@
 # System - Weather FCST to Telegram
 # ##################################
 - alias: system_weather_to_telegram
-#  id: system_weather_to_telegram
+  id: system_weather_to_telegram
   initial_state: true
   trigger:
     - platform: time
@@ -227,7 +246,7 @@
 # System - login failure message
 # ##################################
 - alias: system_login_failure
-#  id: system_login_failure
+  id: system_login_failure
   initial_state: true
   trigger:
     - platform: state
@@ -249,7 +268,7 @@
 # System - Zigbee Group Rebuild
 # ##################################
 - alias: system_zigbee_group_rebuild
-#  id: system_zigbee_group_rebuild
+  id: system_zigbee_group_rebuild
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -267,7 +286,7 @@
 # System - Sensors Low Battery Notification
 # ##################################
 - alias: system_low_battery
-#  id: system_low_battery
+  id: system_low_battery
   initial_state: true
   trigger:
     - platform: time
@@ -324,7 +343,7 @@
 # System - Database Purge
 # ##################################
 - alias: system_database_purge
-#  id: system_database_purge
+  id: system_database_purge
   initial_state: true
   trigger:
     - platform: time
@@ -342,7 +361,7 @@
 # System - Transmission completed Torrent
 # ##################################
 - alias: system_transmission_completed_torrent
-#  id: system_transmission_completed_torrent
+  id: system_transmission_completed_torrent
   initial_state: true
   mode: queued
   trigger:
@@ -357,7 +376,7 @@
 # System - Telegram message on Config error
 # ##################################
 - alias: system_config_error_notification
-#  id: system_config_error_notification
+  id: system_config_error_notification
   initial_state: true
   mode: queued
   trigger:
@@ -383,7 +402,7 @@
 # System - Pinhole restart
 # ##################################
 - alias: system_pinhole_restart
-#  id: system_pinhole_restart
+  id: system_pinhole_restart
   initial_state: true
   trigger:
     - platform: state 
@@ -412,7 +431,7 @@
 # System - Digma100 restart
 # ##################################
 - alias: system_digma100_restart
-#  id: system_digma100_restart
+  id: system_digma100_restart
   initial_state: true
   trigger:
     - platform: state
@@ -441,7 +460,7 @@
 # System - HACS Update Available
 # ##################################
 - alias: system_hacs_update_available
-#  id: system_hacs_update_available
+  id: system_hacs_update_available
   initial_state: true
   trigger:
     - platform: state
@@ -464,7 +483,7 @@
 # System - Supervisor Update Available
 # ##################################
 - alias: system_supervisor_update_available
-#  id: system_supervisor_update_available
+  id: system_supervisor_update_available
   initial_state: true
   trigger:
     - platform: state
@@ -480,7 +499,7 @@
 # System - Supervisor Updated
 # ##################################
 - alias: system_supervisor_updated
-#  id: system_supervisor_updated
+  id: system_supervisor_updated
   initial_state: true
   trigger:
     - platform: state
@@ -502,7 +521,7 @@
 # System - Addons Update Available
 # ##################################
 - alias: system_addons_update_available
-#  id: system_addons_update_available
+  id: system_addons_update_available
   initial_state: true
   trigger:
     - platform: state
@@ -528,7 +547,7 @@
 # System - System Automation Errors
 # ##################################
 - alias: system_automation_error
-#  id: system_automation_error
+  id: system_automation_error
   initial_state: true
   mode: queued
   trigger:
@@ -559,7 +578,7 @@
 # System - System Errors per hour
 # ##################################
 - alias: system_error_per_hour
-#  id: system_error_per_hour
+  id: system_error_per_hour
   initial_state: true
   mode: queued
   trigger:
@@ -568,7 +587,7 @@
       above: 100
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour','last_triggered'))|int) > 15 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'))|int) > 15 }}"
     - condition: template
       value_template: "{{ (states('sensor.error_counter_hourly')|int % 50) == 0 }}"      
   action:
@@ -580,7 +599,7 @@
 # System - Servers Plugs turn on
 # ##################################
 - alias: system_servers_plugs_restore
-#  id: system_servers_plugs_restore
+  id: system_servers_plugs_restore
   initial_state: true
   trigger:
     - platform: state
@@ -604,7 +623,7 @@
 # System - Mopidy restart
 # ##################################
 - alias: system_mopidy_restart
-#  id: system_mopidy_restart
+  id: system_mopidy_restart
   initial_state: true
   trigger:
     - platform: state
@@ -623,7 +642,7 @@
 # System - IP Blocked
 # ##################################
 - alias: system_blocked_ip
-#  id: system_blocked_ip
+  id: system_blocked_ip
   initial_state: true
   trigger:
     - platform: state
@@ -673,7 +692,7 @@
 # System - Critical Error notification
 # ##################################
 - alias: system_critical_error_notify
-#  id: system_critical_error_notify
+  id: system_critical_error_notify
   initial_state: true
   mode: queued
   trigger:
@@ -694,7 +713,7 @@
 # System - Radiation alert
 # ##################################
 - alias: system_radiation_alert
-#  id: system_radiation_alert
+  id: system_radiation_alert
   initial_state: true
   trigger:
     - platform: state
@@ -712,7 +731,7 @@
 # System - Radiation sensor restart
 # ##################################
 # - alias: system_radiation_sensor_restart
-# #  id: system_radiation_sensor_restart
+#   id: system_radiation_sensor_restart
 #   initial_state: true
 #   trigger:
 #     - platform: template
@@ -736,7 +755,7 @@
 # # System - LC Plug State restart
 # # ##################################
 # - alias: system_lc_plug_state
-# #  id: system_lc_plug_state
+#   id: system_lc_plug_state
 #   initial_state: true
 #   mode: queued
 #   max: 25
@@ -758,7 +777,7 @@
 # System - Silent Mode Toggle
 # ##################################
 - alias: system_silent_mode_toggle
-#  id: system_silent_mode_toggle
+  id: system_silent_mode_toggle
   initial_state: true
   trigger:
     - platform: state
@@ -789,7 +808,7 @@
 # System - HP 178 Toner Level
 # ##################################
 - alias: system_printer_toner_level
-#  id: system_printer_toner_level
+  id: system_printer_toner_level
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -808,7 +827,7 @@
 # System - GW3 State
 # ##################################
 - alias: system_gw3_state
-#  id: system_gw3_state
+  id: system_gw3_state
   initial_state: true
   mode: queued
   trigger:
@@ -873,7 +892,7 @@
 # System - Watchdog
 # ##################################
 - alias: system_watchdog
-#  id: system_watchdog
+  id: system_watchdog
   initial_state: true
   mode: queued
   trigger:
@@ -890,7 +909,7 @@
 # System - Dark Mode
 # ##################################
 - alias: system_dark_mode
-#  id: system_dark_mode
+  id: system_dark_mode
   initial_state: true
   trigger:
     - platform: state
@@ -909,7 +928,7 @@
 # System - HACS Update Pending
 # ##################################
 - alias: system_hacs_update_pending
-#  id: system_hacs_update_pending
+  id: system_hacs_update_pending
   initial_state: true
   trigger:
     - platform: state
@@ -955,7 +974,7 @@
 # System - Hot water pipe warning
 # ##################################
 - alias: system_hot_water_pipe
-#  id: system_hot_water_pipe
+  id: system_hot_water_pipe
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -976,7 +995,7 @@
 # System - Cold water pipe warning
 # ##################################
 - alias: system_cold_water_pipe
-#  id: system_cold_water_pipe
+  id: system_cold_water_pipe
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -993,7 +1012,7 @@
 # System - Central Heating
 # ##################################
 - alias: system_central_heating
-#  id: system_central_heating
+  id: system_central_heating
   initial_state: true
   trigger:
     - platform: state
@@ -1017,7 +1036,7 @@
 # System - Heating pipes warning
 # ##################################
 - alias: system_heating_pipes_warning
-#  id: system_heating_pipes_warning
+  id: system_heating_pipes_warning
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1040,7 +1059,7 @@
 # System - ZB Devices Status
 # ##################################
 - alias: system_zb_devices_status
-#  id: system_zb_devices_status
+  id: system_zb_devices_status
   initial_state: true
   mode: queued
   trigger:
@@ -1070,7 +1089,7 @@
         #- sensor.0x158d0001e8995a_temperature
         - binary_sensor.0x158d0001ef2ffc_contact
         - sensor.0x158d0001ef6089_action
-        - sensor.0x158d0001ef609b_action
+        #- sensor.0x158d0001ef609b_action
         - sensor.0x158d0001ef61be_action
         - switch.0x158d0001f2630e_switch
         - sensor.0x158d0001f3627d_action
@@ -1098,11 +1117,11 @@
         - switch.0x158d0002395dc9_switch
         - sensor.0x158d000239ad5b_temperature
         - switch.0x158d00023a657a_switch
-        - sensor.0x158d00023d0b86_action
+        #- sensor.0x158d00023d0b86_action
         - sensor.0x158d00023d3116_action
         - sensor.0x158d00023d3206_action
         - switch.0x158d00023e5812_switch
-        - sensor.0x158d00023e5f2a_action
+        #- sensor.0x158d00023e5f2a_action
         - switch.0x158d00024517fe_switch
         - switch.0x158d0002451850_switch
         - sensor.0x158d0002461e5b_temperature
@@ -1145,7 +1164,7 @@
         - binary_sensor.0x158d0002b7c2c8_contact
         - binary_sensor.0x158d0002c92f31_smoke
         #- light.0x158d0002d3f7c9_light
-        - sensor.0x158d0002f8dd54_action
+        #- sensor.0x158d0002f8dd54_action
         - sensor.0x158d0002fa99a8_action
         - binary_sensor.0x158d0003140824_motion
         - switch.0x158d000322e1d9_switch
@@ -1163,7 +1182,7 @@
         - switch.0x158d00035f44a7_switch
         - switch.0x158d0003600ea4_switch
         - switch.0x158d00036148b9_switch
-        - sensor.0x158d000366815b_action
+        #- sensor.0x158d000366815b_action
         - switch.0x158d00039258de_switch
         - switch.0x158d000392623d_switch
         - sensor.0x158d0003991051_action
@@ -1200,7 +1219,7 @@
 # System - ZB Devices Status
 # ##################################
 # - alias: system_zb_devices_status_2
-# #  id: system_zb_devices_status_2
+#   id: system_zb_devices_status_2
 #   initial_state: true
 #   mode: queued
 #   trigger:
@@ -1228,7 +1247,7 @@
 # System - ZB Devices Status Normal
 # ##################################
 - alias: system_zb_devices_status_normal
-#  id: system_zb_devices_status_normal
+  id: system_zb_devices_status_normal
   initial_state: true
   mode: queued
   trigger:
@@ -1244,7 +1263,7 @@
 # System - ESP Devices Status
 # ##################################
 - alias: system_esp_devices_status
-#  id: system_esp_devices_status
+  id: system_esp_devices_status
   initial_state: true
   mode: queued
   trigger:
@@ -1280,6 +1299,8 @@
         #- binary_sensor.ss5_hood_status
         - binary_sensor.sonoff_mini_1_status
         - binary_sensor.sonoff_mini_4_status
+        - binary_sensor.d1mini_light_l_status
+        - binary_sensor.d1mini_air_freshener_status
       to: 'off'
       for:
         minutes: 2
@@ -1313,7 +1334,7 @@
 # System - Caller ID
 # ##################################
 - alias: system_caller_id
-#  id: system_caller_id
+  id: system_caller_id
   initial_state: true
   trigger:
     - platform: state
@@ -1344,7 +1365,7 @@
 # System - GW3 Error
 # ##################################
 - alias: system_xiaomi_gw3_error
-#  id: system_xiaomi_gw3_error
+  id: system_xiaomi_gw3_error
   initial_state: true
   mode: queued
   trigger:
@@ -1364,7 +1385,7 @@
 # System - Already running log
 # ##################################
 - alias: system_already_running_log
-#  id: system_already_running_log
+  id: system_already_running_log
   initial_state: true
   mode: queued
   trigger:
@@ -1384,7 +1405,7 @@
 # System - Automation Reload
 # ##################################
 - alias: system_automation_reload
-#  id: system_automation_reload
+  id: system_automation_reload
   initial_state: true
   trigger:
     # - platform: event
@@ -1403,7 +1424,7 @@
 # System - Scripts Reload
 # ##################################
 - alias: system_scripts_reload
-#  id: system_scripts_reload
+  id: system_scripts_reload
   initial_state: true
   trigger:
     - platform: event
@@ -1447,7 +1468,7 @@
 # System - Printer offline
 # ##################################
 - alias: system_printer_offline
-#  id: system_printer_offline
+  id: system_printer_offline
   initial_state: true
   trigger:
     - platform: state
@@ -1480,7 +1501,7 @@
 # System - Device Stats
 # ##################################
 - alias: system_devices_stats
-#  id: system_devices_stats
+  id: system_devices_stats
   initial_state: true
   trigger:
     - platform: time
@@ -1510,7 +1531,7 @@
 # System - AC Power Status
 # ##################################
 - alias: system_ac_power_status
-#  id: system_ac_power_status
+  id: system_ac_power_status
   initial_state: true
   trigger:
     - platform: state
@@ -1528,12 +1549,12 @@
           {% if is_state('binary_sensor.0x158d0003262acc_contact','on') %}{{'\U00002705'}} Электроснабжение восстановлено!
           {% else %}{{'\U0000274c'}} Внимание! Электроснабжение прекращено!
           {%endif%}
-          
+
 # ##################################
 # System - ESP reboot
 # ##################################
 - alias: system_esp_reboot
-#  id: system_esp_reboot
+  id: system_esp_reboot
   initial_state: true
   trigger:
     - platform: state
@@ -1571,6 +1592,7 @@
         - sensor.sonoff_pow_r2_2_uptime_s
         - sensor.sonoff_mini_1_uptime_s
         - sensor.sonoff_mini_4_uptime_s
+        - sensor.d1mini_light_l_uptime_s
       from: 'unavailable'
       for: 
         seconds: 5
@@ -1586,7 +1608,7 @@
 # System - Air Quality pm25
 # ##################################
 - alias: system_air_quality_pm25
-#  id: system_air_quality_pm25
+  id: system_air_quality_pm25
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1603,7 +1625,7 @@
 # System - Air Quality pm10
 # ##################################
 - alias: system_air_quality_pm10
-#  id: system_air_quality_pm10
+  id: system_air_quality_pm10
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1620,7 +1642,7 @@
 # System - State to Unavailable
 # ##################################
 # - alias: system_state_to_unavailable
-# #  id: system_state_to_unavailable
+#   id: system_state_to_unavailable
 #   mode: queued
 #   max: 50
 #   max_exceeded: silent
@@ -1644,7 +1666,7 @@
 # System - Weather Sensors Update
 # ##################################
 - alias: system_weather_update
-#  id: system_weather_update
+  id: system_weather_update
   initial_state: true
   trigger:
     - platform: time
@@ -1677,7 +1699,7 @@
 # System - Hot Water Boolean Change
 # ##################################
 - alias: system_hot_water_boolean_change
-#  id: system_hot_water_boolean_change
+  id: system_hot_water_boolean_change
   initial_state: true
   trigger:
     - platform: state
@@ -1697,7 +1719,7 @@
 # System - Cold Water Boolean Change
 # ##################################
 - alias: system_cold_water_boolean_change
-#  id: system_cold_water_boolean_change
+  id: system_cold_water_boolean_change
   initial_state: true
   trigger:
     - platform: state
@@ -1717,7 +1739,7 @@
 # System - Central Heating
 # ##################################
 - alias: system_central_heating_boolean_change
-#  id: system_central_heating_boolean_change
+  id: system_central_heating_boolean_change
   initial_state: true
   trigger:
     - platform: state
@@ -1738,7 +1760,7 @@
 # System - Doorcam panel relauch
 # ##################################
 - alias: system_doorcam_panel_relaunch
-#  id: system_doorcam_panel_relaunch
+  id: system_doorcam_panel_relaunch
   initial_state: true
   mode: queued
   max: 5
@@ -1755,9 +1777,120 @@
       to: 'on'
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_doorcam_panel_relaunch','last_triggered'))|int) > 5 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_doorcam_panel_relaunch', 'last_triggered'))|int) > 5 }}"
   action:
     - service: mqtt.publish
       data:
         topic: 'wallpanel/digma8027/command'
         payload: '{"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+        
+# ##################################
+# System - Dark Mode ON action
+# ##################################
+- alias: system_light_dark_mode_on_action
+  id: system_light_dark_mode_on_action
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: input_boolean.dark_mode
+      from: 'off'
+      to: 'on'
+  action:
+    - service: homeassistant.turn_off
+      entity_id: 
+        - light.esp32_node_k_light
+        - light.mono_strip_1_light
+        - switch.0x158d000248bf53_switch
+        - light.led_strip_hb
+        - light.led_strip_entrance_hb
+        - switch.sonoff_basic_1_relay
+
+# ##################################
+# System - Wallpanel charge
+# ##################################
+- alias: system_wallpanel_charge
+  id: system_wallpanel_charge
+  initial_state: true
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  trigger:
+    - platform: state
+      entity_id: sensor.wp_digma8027_battery_level
+    - platform: state
+      entity_id: switch.sonoff_1000d03987
+  condition:      
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}
+  action:
+    - choose:
+        - conditions:
+            - condition: numeric_state
+              entity_id: sensor.wp_digma8027_battery_level
+              below: 21
+            - condition: state
+              entity_id: switch.sonoff_1000d03987
+              state: 'off'
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.sonoff_1000d03987
+            - condition: state
+              entity_id: binary_sensor.wp_digma8027_motion
+              state: 'off'
+            - service: mqtt.publish
+              data:
+                topic: 'wallpanel/digma8027/command'
+                payload: '{"wake": false,"clearCache": true,"relaunch": true,"reload": true,"brightness": 1}'
+            - delay: 
+                seconds: 40
+            - service: mqtt.publish
+              data:
+                topic: 'wallpanel/digma8027/command'
+                payload: '{clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+                
+        - conditions:
+            - condition: numeric_state
+              entity_id: sensor.wp_digma8027_battery_level
+              above: 79
+            - condition: state
+              entity_id: switch.sonoff_1000d03987
+              state: 'on'
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.sonoff_1000d03987
+            - condition: state
+              entity_id: binary_sensor.wp_digma8027_motion
+              state: 'off'
+            - service: mqtt.publish
+              data:
+                topic: 'wallpanel/digma8027/command'
+                payload: '{"wake": false,"clearCache": true,"relaunch": true,"reload": true,"brightness": 1}'
+            - delay: 
+                seconds: 40
+            - service: mqtt.publish
+              data:
+                topic: 'wallpanel/digma8027/command'
+                payload: '{clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+                
+                
+# # ##################################
+# # System - Breathers control
+# # ##################################
+# - alias: system_breathers_control
+#   id: system_breathers_control
+#   initial_state: true
+#   mode: queued
+#   max: 10
+#   max_exceeded: silent
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.someone_home_1h
+
+#     - platform: numeric_state
+#       entity_id:
+#         - proximity.dima_home
+#         - proximity

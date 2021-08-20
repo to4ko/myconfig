@@ -10,7 +10,7 @@ wifi:
   ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .localdomain
-  reboot_timeout: 30min
+  reboot_timeout: 15min
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
@@ -21,17 +21,11 @@ wifi:
     dns1: 192.168.1.1
     dns2: 8.8.8.8
 
-
 logger:
-
+  baud_rate: 0
+  
 api:
-  reboot_timeout: 0s
-
-i2c:
-  scl: GPIO05
-  sda: GPIO04
-  scan: True
-  id: i2c_bus
+  reboot_timeout: 10min
 
 ota:
 
@@ -43,18 +37,43 @@ binary_sensor:
     name: ${board_name}_Status
 
   - platform: gpio
-    pin: GPIO14
-    name: ${board_name}_Motion
-    device_class: motion
-    id: sr602_motion
-
-  - platform: gpio
     pin:
       number: GPIO13
-      #mode: INPUT_PULLUP
+      #mode: INPUT_PULLDOWN_16
+      mode: INPUT_PULLUP
+      inverted: true
     name: ${board_name}_Button
     id: button
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms    
+    on_press:
+      then:
+        - switch.turn_on: spray
     
+  - platform: gpio
+    pin:
+      number: GPIO12
+      #mode: INPUT_PULLDOWN_16
+      mode: INPUT_PULLUP
+      inverted: true
+    name: ${board_name}_Canister
+    id: can_presence
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+
+number:
+  - platform: template
+    name: ${board_name}_Counter
+    icon: mdi:counter
+    id: id_counter
+    restore_value: true
+    update_interval: 30s
+    min_value: 0
+    max_value: 1000
+    step: 1
+    optimistic: true
 
 text_sensor:
   - platform: template
@@ -82,7 +101,6 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
-
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -99,81 +117,76 @@ sensor:
     id: adc_value
     filters:
       - multiply: 3.3
-    update_interval: 2s
+    update_interval: 15s
+
+  # - platform: template
+  #   name: ${board_name}_AirQ
+  #   lambda: return ((id(adc_value).state)*(-30.303)+100);
+  #   unit_of_measurement: "%"
+  #   update_interval: 15s
+  #   icon: mdi:air-filter
 
   - platform: template
     name: ${board_name}_AirQ
-    lambda: return ((id(adc_value).state)*(-30.303)+100);
-    unit_of_measurement: "%"
-    update_interval: 2s
-    icon: mdi:air-filter
-  
-  - platform: vl53l0x
-    name: ${board_name}_Distance
-    address: 0x29
-    update_interval: 15s
-    long_range: True
-    id: vlx_distance
-
-  - platform: bme680
-    temperature:
-      name: ${board_name}_Temperature
-      oversampling: 4x
-      id: bme680_temperature
-    pressure:
-      name: ${board_name}_Pressure
-      oversampling: 4x
-      id: bme680_pressure
-    humidity:
-      name: ${board_name}_Humidity
-      oversampling: 4x
-      id: bme680_humidity
-    gas_resistance:
-      name: ${board_name}_Gas_Resistance
-      id: bme680_gas_resistance
-    address: 0x76
-    update_interval: 5s
-
-  - platform: template
-    name: ${board_name}_Air_Quality
-    id: IAQ
+    icon: mdi:gas-cylinder
     unit_of_measurement: '%'
-    lambda: 'return id(bme680_gas_resistance).state / 125000 * 100;'
-    icon: mdi:air-purifier
-    update_interval: 5s
-
-  - platform: template
-    name: ${board_name}_Absolute_Humidity
-    lambda: |-
-      const float mw = 18.01534;    // molar mass of water g/mol
-      const float r = 8.31447215;   // Universal gas constant J/mol/K
-      return (6.112 * powf(2.718281828, (17.67 * id(bme680_temperature).state) /
-        (id(bme680_temperature).state + 243.5)) * id(bme680_humidity).state * mw) /
-        ((273.15 + id(bme680_temperature).state) * r); // in grams/m^3
     accuracy_decimals: 1
+    lambda: |-
+      float raw_value = id(adc_value).state;
+      return raw_value;    
+    filters:    
+      - calibrate_linear:
+          - 0.3 -> 100.0
+          - 3.3 -> 0.0        
     update_interval: 15s
-    icon: 'mdi:water'
-    unit_of_measurement: 'g/m³'
-
+  
 switch:
   - platform: restart
     name: ${board_name}_Restart
 
   - platform: gpio
-    pin: GPIO12
-    name: ${board_name}_Switch
-    internal: true
-    id: valve
-  
-  - platform: template
-    name: ${board_name}_Valve
-    icon: mdi:spray
+    pin:
+      number: GPIO15
+      #mode: INPUT_PULLDOWN_16
+    name: ${board_name}_Spray
     id: spray
-    turn_on_action:
-    - switch.turn_on: valve
-    - delay: 100ms
-    - switch.turn_off: valve
+    icon: mdi:sprinkler
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:  
+        - delay: 50ms
+        - switch.turn_off: spray
+        - number.set:
+            id: id_counter
+            value: !lambda |-
+              return ((id(id_counter).state)+1);
+        - component.update: id_counter              
+
+light:
+  - platform: binary #monochromatic
+    name: ${board_name}_LED_Green
+    output: output_led1
+
+  - platform: binary #monochromatic
+    name: ${board_name}_LED_Red
+    output: output_led2
+
+output:
+  - platform: esp8266_pwm
+    id: output_led1
+    pin: 
+      number: GPIO00
+      inverted: true
+
+  - platform: esp8266_pwm
+    id: output_led2
+    pin: 
+      number: GPIO02
+      inverted: true
 
 time:
   - platform: homeassistant
-    id: homeassistant_time    
+    id: homeassistant_time 
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

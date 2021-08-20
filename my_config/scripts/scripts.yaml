@@ -151,20 +151,18 @@
             {%endif%}
 
   toilet_air_freshener_counter_reset:
-    alias: Toilet Air Freshsner Counter Reset
+    alias: Toilet Air Freshener Counter Reset
     sequence:
     # - service: counter.reset
     #   entity_id: counter.air_freshener_toilet
-    - service: mqtt.publish
+    - service: number.set_value
+      entity_id: number.d1mini_air_freshener_counter
       data:
-        topic: esp01_air_freshener/sprays_count
-        payload: 0
-        retain: true
-    - service: mqtt.publish
+        value: 0
+    - service: input_datetime.set_datetime
+      entity_id: input_datetime.toilet_freshener_canister_replace_date
       data:
-        topic: esp01_air_freshener/tank_replace
-        payload: "{{now().strftime('%d-%m-%Y %H:%M:%S')}}"
-        retain: true
+        date: "{{ now().strftime('%Y-%m-%d') }}"
 
   bathroom_fan_10m:
     alias: Bathroom fan 10m
@@ -174,3 +172,60 @@
     - delay: '00:10:00'
     - service: switch.turn_off
       entity_id: switch.esp32_bathroom_node_relay_3
+      
+  breathers_full_blown:
+    alias: Breathers Full Blown
+    sequence:
+      - service: homeassistant.turn_off
+        entity_id:
+          - automation.vova_breather_off
+          - automation.sasha_breather_off
+          - automation.master_bedroom_breather_off
+      - choose:
+          - conditions: 
+              condition: state
+              entity_id: binary_sensor.breather_v
+              state: 'off'
+            sequence:
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_v_breather_pwr
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_v_breather_up
+              - delay: 00:00:02
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_v_breather_up
+              - delay: 00:00:02
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_v_breather_up
+      - choose:
+          - conditions: 
+              condition: state
+              entity_id: binary_sensor.breather_mb
+              state: 'off'
+            sequence:
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_mb_breather_pwr
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_mb_breather_up
+              - delay: 00:00:02
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_mb_breather_up
+              - delay: 00:00:02
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_mb_breather_up
+      - choose:
+          - conditions: 
+              condition: state
+              entity_id: binary_sensor.breather_s
+              state: 'off'
+            sequence:
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_s_breather_pwr
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_s_breather_up
+              - delay: 00:00:02
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_s_breather_up
+              - delay: 00:00:02
+              - service: switch.turn_on
+                entity_id: switch.digma_ir_s_breather_up

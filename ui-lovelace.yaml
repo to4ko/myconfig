@@ -27,6 +27,7 @@ views:
               #     - sensor.mi_kettle_state
               #     - sensor.mi_kettle_rssi
               - type: glance
+                columns: 6
                 entities:
                   - entity: binary_sensor.wp_digma8027_motion
                     name: Motion
@@ -38,14 +39,22 @@ views:
                     name: Charge
                   - entity: sensor.wp_digma8027_battery_level
                     name: Level
+                  - entity: switch.sonoff_1000d03987
+                    name: 5V
+                    tap_action:
+                      action: toggle
 
               - type: glance
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 6
+                columns: 8
                 entities:
-                  - entity: switch.air_freshener_spray
+                  - entity: sensor.d1mini_air_freshener_airq
+                    name: AirQ
+                  - entity: sensor.d1mini_air_freshener_adc
+                    name: V
+                  - entity: switch.d1mini_air_freshener_spray
                     name: Spray
                     tap_action:
                       action: toggle
@@ -73,12 +82,14 @@ views:
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 6
+                columns: 7
                 entities:
                   # - entity: sensor.temperature_min_out
                   #   name: Tmin
                   # - entity: sensor.temperature_max_out
                   #   name: Tmax
+                  - entity: sensor.gw3_msgmissed
+                    name: MsgMissed
                   - entity: sensor.gw3_nonresposing_devices
                     name: GW3
                   - entity: sensor.zigbee_devices_unavailable
@@ -763,7 +774,7 @@ views:
                 icon: mdi:candle
                 tap_action:
                   action: toggle
-              - entity: switch.0x158d000366815b_channel_1
+              - entity: switch.d1mini_light_l_relay
                 name: L
                 tap_action:
                   action: toggle
@@ -1109,9 +1120,9 @@ views:
               - entity: sensor.last_motion
                 secondary_info: last-changed
               - type: divider
-              - entity: binary_sensor.motion_unifi
-                secondary_info: last-changed
-              - type: divider
+              # - entity: binary_sensor.motion_unifi
+              #   secondary_info: last-changed
+              # - type: divider
               - entity: binary_sensor.doors
                 secondary_info: last-changed
               - entity: sensor.door_last_change
@@ -1334,7 +1345,7 @@ views:
           - light.round_led_k
           - light.esp32_node_k_light
           - switch.esp8266_hood_k_light
-          - switch.0x158d000366815b_channel_1
+          - switch.d1mini_light_l_relay
           - switch.sonoff_mini_4_relay
           - type: divider
           - switch.esp8266_hood_k_fan
@@ -1515,7 +1526,7 @@ views:
         entities:
           - binary_sensor.0x158d0001aea602_motion
           - binary_sensor.0x158d0003f27ce2_motion
-          - sensor.0x158d00023d0b86_action
+          #- sensor.0x158d00023d0b86_action
           - sensor.0x158d000233fb72_temperature
           - sensor.0x158d000233fb72_humidity
           - sensor.0x158d000233fb72_pressure
@@ -1864,10 +1875,10 @@ views:
 
       - type: vertical-stack
         cards:
-          - type: history-graph
-            hours_to_show: 12
-            entities:
-              - sensor.ro_rate
+          # - type: history-graph
+          #   hours_to_show: 12
+          #   entities:
+          #     - sensor.ro_rate
           - type: glance
             state_color: true
             title: Info
@@ -4166,6 +4177,7 @@ views:
           - binary_sensor.shp2_socket_1_status
           - binary_sensor.shp6_socket_1_status
           - binary_sensor.shp6_socket_2_status
+          - binary_sensor.d1mini_air_freshener_status
 
           - type: divider
           - binary_sensor.esp01_weight_pad_status
@@ -4174,6 +4186,7 @@ views:
           - binary_sensor.esp8266_hood_k_status
           - binary_sensor.esp8266_oven_temp_k_status
           - binary_sensor.sonoff_mini_4_status
+          - binary_sensor.d1mini_light_l_status
 
           - type: divider
           - binary_sensor.d1mini_bed_leds_status
@@ -4214,6 +4227,7 @@ views:
           - sensor.shp2_socket_1_wifi_rssi
           - sensor.shp6_socket_1_wifi_rssi
           - sensor.shp6_socket_2_wifi_rssi
+          - sensor.d1mini_air_freshener_wifi_rssi
 
           - type: divider
           - sensor.esp01_weight_pad_wifi_rssi
@@ -4222,6 +4236,7 @@ views:
           - sensor.esp8266_hood_k_wifi_rssi
           - sensor.esp8266_oven_temp_k_wifi_rssi
           - sensor.sonoff_mini_4_wifi_rssi
+          - sensor.d1mini_light_l_wifi_rssi
 
           - type: divider
           - sensor.d1mini_bed_leds_wifi_rssi
@@ -4262,6 +4277,7 @@ views:
           - sensor.shp2_socket_1_uptime
           - sensor.shp6_socket_1_uptime
           - sensor.shp6_socket_2_uptime
+          - sensor.d1mini_air_freshener_uptime
 
           - type: divider
           - sensor.esp01_weight_pad_uptime
@@ -4270,6 +4286,7 @@ views:
           - sensor.esp8266_hood_k_uptime
           - sensor.esp8266_oven_temp_k_uptime
           - sensor.sonoff_mini_4_uptime
+          - sensor.d1mini_light_l_uptime
 
           - type: divider
           - sensor.d1mini_bed_leds_uptime
@@ -4667,10 +4684,10 @@ views:
             secondary_info: last-changed
           - entity: switch.0x158d000248bf53_switch
             secondary_info: last-changed
-          - entity: switch.0x158d000366815b_channel_1
-            secondary_info: last-changed
-          - entity: switch.sonoff_mini_4_relay
-            secondary_info: last-changed
+          # - entity: switch.0x158d000366815b_channel_1
+          #   secondary_info: last-changed
+          # - entity: switch.0x158d000366815d_channel_2
+          #   secondary_info: last-changed
 
       - type: entities
         show_header_toggle: false
@@ -4944,6 +4961,14 @@ views:
           - type: history-graph
             hours_to_show: 24
             entities:
+              - sensor.d1mini_air_freshener_adc
+          - type: history-graph
+            hours_to_show: 24
+            entities:
+              - sensor.d1mini_air_freshener_airq            
+          - type: history-graph
+            hours_to_show: 24
+            entities:
               - entity: sensor.shelly_em_channel_1_power
                 name: EM Power
               - entity: sensor.esp8266_pzem_hb_power
@@ -4972,35 +4997,35 @@ views:
             name: Vova(grey)
           - entity: binary_sensor.esp32_ble_tracker_white
             name: Dima(white)
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - entity: switch.air_freshener_spray
-            name: Spray
-          - entity: switch.air_freshener_sleep
-            name: Sleep
-          #- entity: counter.air_freshener_toilet
-          - sensor.air_freshener_counter
-          - entity: sensor.air_freshener_last_heartbeat #input_text.air_freshener_last_heartbeat
-            name: Last hearbeat
-            format: datetime
-          - entity: sensor.air_freshener_last_spray #input_text.air_freshener_last_spray
-            name: Last spray
-            format: datetime
-          - entity: sensor.air_freshener_tank_replace #input_text.air_freshener_toilet_tank_replacement
-            name: Last tank replace
-            format: datetime
-          - entity: script.toilet_air_freshener_counter_reset
-          - type: divider
-          - entity: switch.esp01_air_freshener_restart
-            secondary_info: last-changed
-          - binary_sensor.esp01_air_freshener_status
-          - sensor.esp01_air_freshener_uptime_s
-          - sensor.esp01_air_freshener_vcc
-          - sensor.esp01_air_freshener_on_flag
-          - sensor.esp01_air_freshener_sleep_avail
-          - switch.esp01_air_freshener_valve
+      # - type: entities
+      #   show_header_toggle: false
+      #   state_color: true
+      #   entities:
+      #     - entity: switch.air_freshener_spray
+      #       name: Spray
+      #     - entity: switch.air_freshener_sleep
+      #       name: Sleep
+      #     #- entity: counter.air_freshener_toilet
+      #     - sensor.air_freshener_counter
+      #     - entity: sensor.air_freshener_last_heartbeat #input_text.air_freshener_last_heartbeat
+      #       name: Last hearbeat
+      #       format: datetime
+      #     - entity: sensor.air_freshener_last_spray #input_text.air_freshener_last_spray
+      #       name: Last spray
+      #       format: datetime
+      #     - entity: sensor.air_freshener_tank_replace #input_text.air_freshener_toilet_tank_replacement
+      #       name: Last tank replace
+      #       format: datetime
+      #     - entity: script.toilet_air_freshener_counter_reset
+      #     - type: divider
+      #     - entity: switch.esp01_air_freshener_restart
+      #       secondary_info: last-changed
+      #     - binary_sensor.esp01_air_freshener_status
+      #     - sensor.esp01_air_freshener_uptime_s
+      #     - sensor.esp01_air_freshener_vcc
+      #     - sensor.esp01_air_freshener_on_flag
+      #     - sensor.esp01_air_freshener_sleep_avail
+      #     - switch.esp01_air_freshener_valve
 
       # - type: entities
       #   show_header_toggle: false

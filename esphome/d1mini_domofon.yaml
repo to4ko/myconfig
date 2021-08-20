@@ -95,7 +95,7 @@ script:
       - script.execute: state_no_call
       - switch.turn_on: id_mute
       - switch.turn_on: id_phone
-      - delay: 1000ms
+      - delay: 500ms
       - switch.turn_on: id_open
       - delay: 1000ms
       - switch.turn_off: id_open      
@@ -111,11 +111,11 @@ script:
       - logger.log: "Accept call_manual"
       - switch.turn_on: id_mute
       - switch.turn_on: id_phone
-      - delay: 1000ms
+      - delay: 500ms
       - switch.turn_on: id_open
-      - delay: 1000ms
+      - delay: 300ms
       - switch.turn_off: id_open      
-      - delay: 2000ms
+      - delay: 1000ms
       - switch.turn_off: id_phone
       - switch.turn_off: id_mute
 
@@ -312,7 +312,19 @@ binary_sensor:
       }else { return false;
       }
 
-    
+  - platform: gpio
+    name: ${board_name}_Button
+    pin: 
+      number: GPIO15
+      #inverted: true
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms         
+    on_press:
+      then:
+        #- switch.turn_on: manual_open
+        - script.execute: call_accept_manual
+
 light:
   - platform: fastled_clockless
     chipset: WS2812B
@@ -550,6 +562,7 @@ switch:
   - platform: template
     name: ${board_name}_Open_Manual
     icon: mdi:hand
+    id: manual_open
     turn_on_action:
       - script.execute: call_accept_manual
       
