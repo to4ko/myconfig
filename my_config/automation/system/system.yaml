@@ -1894,3 +1894,25 @@
 #       entity_id:
 #         - proximity.dima_home
 #         - proximity
+
+
+# ##################################
+# System - SLS state change
+# ##################################
+- alias: system_sls_state_change
+  id: system_sls_state_change
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.sls_gateway_state
+  condition:
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state }}
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f32a Внимание! SLS {{trigger.from_state.state}} -> {{trigger.to_state.state}}"

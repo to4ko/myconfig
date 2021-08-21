@@ -46,10 +46,26 @@ binary_sensor:
     id: button
     filters:
       - delayed_on: 10ms
-      - delayed_off: 10ms    
+      - delayed_off: 10ms
     on_press:
+      then: 
+        - light.turn_on: id_green_led
+    on_click:
       then:
         - switch.turn_on: spray
+        - light.turn_off: id_green_led
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for 0.5s to 1s
+        - OFF for at least 0.2s
+      then:
+        - homeassistant.service:
+            service: script.toilet_air_freshener_counter_rese
+        - light.turn_off: id_green_led
     
   - platform: gpio
     pin:
@@ -131,14 +147,31 @@ sensor:
     icon: mdi:gas-cylinder
     unit_of_measurement: '%'
     accuracy_decimals: 1
+    id: id_airq
     lambda: |-
       float raw_value = id(adc_value).state;
       return raw_value;    
     filters:    
       - calibrate_linear:
-          - 0.3 -> 100.0
-          - 3.3 -> 0.0        
+          - 1 -> 100.0
+          - 2.7 -> 0.0        
     update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_AirQ_filtered
+    icon: mdi:gas-cylinder
+    unit_of_measurement: '%'
+    accuracy_decimals: 1
+    lambda: |-
+      float raw_value = id(id_airq).state;
+      return raw_value;    
+    filters:    
+      - median:
+          window_size: 3
+          send_every: 3
+          send_first_at: 1
+    update_interval: 15s
+
   
 switch:
   - platform: restart
@@ -163,14 +196,70 @@ switch:
         - component.update: id_counter              
 
 light:
-  - platform: binary #monochromatic
+  - platform: monochromatic #binary #monochromatic
     name: ${board_name}_LED_Green
     output: output_led1
+    id: id_green_led
+    effects:
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: id_green_led
+                brightness: 50%
+                transition_length: 500ms
+            - delay: 1000ms
+            - light.turn_on:
+                id: id_green_led
+                brightness: 1%
+                transition_length: 300ms
+            - delay: 500ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: id_green_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: id_green_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms    
 
-  - platform: binary #monochromatic
+  - platform: monochromatic #binary #monochromatic
     name: ${board_name}_LED_Red
     output: output_led2
-
+    id: id_red_led
+    effects:
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: id_red_led
+                brightness: 50%
+                transition_length: 500ms
+            - delay: 1000ms
+            - light.turn_on:
+                id: id_red_led
+                brightness: 1%
+                transition_length: 300ms
+            - delay: 500ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: id_red_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: id_red_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms
+            
 output:
   - platform: esp8266_pwm
     id: output_led1
