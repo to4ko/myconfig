@@ -78,6 +78,14 @@ binary_sensor:
     filters:
       - delayed_on: 10ms
       - delayed_off: 10ms
+    on_press:
+      then: 
+        - light.turn_on:
+              id: id_red_led
+              effect: "Blink"
+    on_release:
+      then: 
+        - light.turn_off: id_red_led
 
 number:
   - platform: template
@@ -88,6 +96,17 @@ number:
     update_interval: 30s
     min_value: 0
     max_value: 1000
+    step: 1
+    optimistic: true
+
+  - platform: template
+    name: ${board_name}_Canister_Resource
+    icon: mdi:counter
+    id: id_canister_resource
+    restore_value: true
+    update_interval: 60s
+    min_value: 0
+    max_value: 3000
     step: 1
     optimistic: true
 
@@ -158,20 +177,14 @@ sensor:
     update_interval: 15s
 
   - platform: template
-    name: ${board_name}_AirQ_filtered
-    icon: mdi:gas-cylinder
-    unit_of_measurement: '%'
-    accuracy_decimals: 1
+    name: ${board_name}_Canister_Left
+    device_class: battery
     lambda: |-
-      float raw_value = id(id_airq).state;
-      return raw_value;    
-    filters:    
-      - median:
-          window_size: 3
-          send_every: 3
-          send_first_at: 1
-    update_interval: 15s
-
+      float raw_value = id(id_counter).state;
+      float max_value = id(id_canister_resource).state;
+      return ( 100 * (1 - raw_value/max_value));
+    update_interval: 30s
+    unit_of_measurement: '%'
   
 switch:
   - platform: restart
@@ -193,7 +206,8 @@ switch:
             id: id_counter
             value: !lambda |-
               return ((id(id_counter).state)+1);
-        - component.update: id_counter              
+        - component.update: id_counter
+        - light.turn_off: id_green_led
 
 light:
   - platform: monochromatic #binary #monochromatic

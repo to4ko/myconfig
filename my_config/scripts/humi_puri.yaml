@@ -13,43 +13,30 @@
               Silent
             {% endif %}
               
-              
   set_humidifier_buzzer:
     alias: Set On/Off Humidifier Buzzer
     sequence:
-      - data:
-          entity_id: fan.humidifier2
-        service: >
-          {% if state_attr('fan.humidifier2','buzzer') == True %}
-            xiaomi_miio.fan_set_buzzer_off
-          {% else %}
-            xiaomi_miio.fan_set_buzzer_on
-          {% endif %}
+      - service: switch.toggle
+        entity_id: switch.humidifier2_buzzer
    
   set_humidifier_dry_mode:
     alias: Set On/Off Humidifier Dry Mode
     sequence:
-      - data:
-          entity_id: fan.humidifier2
-        service: >
-          {% if state_attr('fan.humidifier2','dry') == True %}
-            xiaomi_miio.fan_set_dry_off
-          {% else %}
-            xiaomi_miio.fan_set_dry_on
-          {% endif %}
+      - service: switch.toggle
+        entity_id: switch.humidifier2_dry_mode
    
   cycle_humidifier_mode:
     alias: Cycle Humidifier Mode
     sequence:
-      - service: fan.set_preset_mode
+      - service: humidifier.set_mode
         data:
-          entity_id: fan.humidifier2
+          entity_id: humidifier.humidifier2
           preset_mode: >
-            {% if state_attr('fan.humidifier2','mode') == "silent" %}
+            {% if state_attr('humidifier.humidifier2','mode') == "Silent" %}
               Medium
-            {% elif state_attr('fan.humidifier2','mode') == "medium" %}
+            {% elif state_attr('humidifier.humidifier2','mode') == "Medium" %}
               High
-            {% elif state_attr('fan.humidifier2','mode') == "high" %}
+            {% elif state_attr('humidifier.humidifier2','mode') == "High" %}
               Auto
             {% else %}
               Silent
@@ -58,14 +45,14 @@
   cycle_humidifier_led:
     alias: Cycle Humidifier LED Brightness
     sequence:
-      - service: xiaomi_miio.fan_set_led_brightness
+      - service: select.select_option
         data:
-          entity_id: fan.humidifier2
-          brightness: >
-            {% if state_attr('fan.humidifier2','led_brightness')  == 2 %}
-              1
-            {% elif state_attr('fan.humidifier2','led_brightness') == 1 %}
-              0
+          entity_id: select.humidifier2_led_brightness
+          option: >
+            {% if states('select.humidifier2_led_brightness')  == 'off' %}
+              dim
+            {% elif states('select.humidifier2_led_brightness') == 'dim' %}
+              bright
             {% else %}
-              2
+              off
             {% endif %}

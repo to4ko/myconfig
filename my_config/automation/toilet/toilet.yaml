@@ -36,8 +36,22 @@
       entity_id: binary_sensor.0x158d000232ddd6_contact
       to: "on"
       for:
-        minutes: 3
+        minutes: 1
+    - platform: numeric_state
+      entity_id: sensor.toilet_airq_derivative
+      below: -1
+    - platform: state
+      entity_id: binary_sensor.bad_airq_toilet
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{ not is_state_attr('automation.toilet_air_freshener_spray','current','1') }}"
   action:
+    - service: light.turn_on
+      data:
+        entity_id: light.d1mini_air_freshener_led_green
+        effect: 'Blink'
     - wait_for_trigger:
         - platform: state
           entity_id: binary_sensor.0x158d000232ddd6_contact
@@ -49,6 +63,10 @@
       continue_on_timeout: false
     - service: switch.turn_on
       entity_id: switch.d1mini_air_freshener_spray #switch.air_freshener_spray
+    - delay:
+        seconds: 3
+    - service: light.turn_off
+      entity_id: light.d1mini_air_freshener_led_green
 
 # ##################################
 # Toilet - Air Freshener Spray Manual

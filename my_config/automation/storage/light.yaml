@@ -10,7 +10,9 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.motion_st #.0x158d0001aea602_motion
+      entity_id: 
+        - binary_sensor.0x158d0001aea602_motion
+        - binary_sensor.0x158d0003f27ce2_motion #binary_sensor.motion_st
       from: 'off'
       to: 'on'
   condition:
@@ -32,16 +34,16 @@
           {%endif%}
 
 # ##################################
-# Storage - Main Light On
+# Storage - Light On
 # ##################################
-- alias: storage_main_light_on
-  id: storage_main_light_on
+- alias: storage_light_on
+  id: storage_light_on
   initial_state: true
-  mode: queued
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x4cf8cdf3c79546c_action
-    #   to: 'button_2_single'
+    - platform: state
+      entity_id: binary_sensor.0x158d0002a1b0c8_contact
+      from: 'off'
+      to: 'on'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
@@ -49,15 +51,41 @@
         click_type: button_2_single
   condition:
     - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+    - condition: state
       entity_id: group.lights_st
       state: 'off'
   action:
     - service: switch.turn_on
       data:
         entity_id: >-
-          {%if is_state('binary_sensor.tod_day','on') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
-          {%elif is_state('binary_sensor.tod_day','off') %}switch.sonoff_basic_1_relay
+          {%if is_state('binary_sensor.tod_day','on') and is_state('input_boolean.dark_mode','off') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+          {%elif is_state('binary_sensor.tod_day','off') or is_state('input_boolean.dark_mode','on') %}switch.sonoff_basic_1_relay
           {%endif%}
+
+# # ##################################
+# # Storage - Main Light On
+# # ##################################
+# - alias: storage_main_light_on
+#   id: storage_main_light_on
+#   initial_state: true
+#   mode: queued
+#   trigger:
+#     # - platform: state
+#     #   entity_id: sensor.0x4cf8cdf3c79546c_action
+#     #   to: 'button_2_single'
+#   condition:
+#     - condition: state
+#       entity_id: group.lights_st
+#       state: 'off'
+#   action:
+#     - service: switch.turn_on
+#       data:
+#         entity_id: >-
+#           {%if is_state('binary_sensor.tod_day','on') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+#           {%elif is_state('binary_sensor.tod_day','off') %}switch.sonoff_basic_1_relay
+#           {%endif%}
 
 # ##################################
 # Storage - Main Light Full On
@@ -67,9 +95,6 @@
   initial_state: true
   mode: queued
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x4cf8cdf3c79546c_action
-    #   to: 'button_2_double'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
@@ -91,14 +116,17 @@
       event_type: timer.finished
       event_data:
         entity_id: timer.main_light_st
-    # - platform: state
-    #   entity_id: sensor.0x4cf8cdf3c79546c_action
-    #   to: 'button_2_single'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
         entity_id: sensor.0x4cf8cdf3c79546c_action
         click_type: button_2_single 
+    - platform: state
+      entity_id: binary_sensor.0x158d0002a1b0c8_contact
+      from: 'on'
+      to: 'off'
+      for:
+        seconds: 1
   condition:
     - condition: state
       entity_id: group.lights_st
@@ -165,7 +193,6 @@
       entity_id: timer.main_light_delay_st
     - service: switch.turn_off
       entity_id: switch.sonoff_basic_1_relay
-
 
 # ##################################
 # Storage - Night Off

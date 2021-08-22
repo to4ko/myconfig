@@ -73,7 +73,7 @@ binary_sensor:
   - platform: template
     name: ${board_name}_time_isvalid
     lambda: |- 
-      if (id(sntp_time).now().is_valid()) {
+      if (id(id_time).now().is_valid()) {
         return true;
       } else {
         return false;
@@ -175,9 +175,8 @@ sensor:
     id: id_power_night
     icon: mdi:speedometer
     lambda: |- 
-      auto id_loc_time = id(sntp_time).now();
-      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
-        if ( (id(sntp_time).now().hour >= 23) || (id(sntp_time).now().hour >= 0 && id(sntp_time).now().hour < 7) ) {
+      if ((id(id_power).state >= 0))  {
+        if ( (id(id_time).now().hour >= 23) || (id(id_time).now().hour >= 0 && id(id_time).now().hour < 7) ) {
           return id(id_power).state;
         } else {
           return 0.0;
@@ -194,9 +193,8 @@ sensor:
     id: id_power_day
     icon: mdi:speedometer
     lambda: |-
-      auto id_loc_time = id(sntp_time).now();
-      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
-        if ( (id(sntp_time).now().hour >= 7 && id(sntp_time).now().hour < 23) ) {
+      if ((id(id_power).state >= 0)) {
+        if ( (id(id_time).now().hour >= 7 && id(id_time).now().hour < 23) ) {
           return id(id_power).state;
         } else {
           return 0.0;
@@ -309,8 +307,8 @@ switch:
             message: "ESP8266 Pzem - Energy Data Reset Done!"
     
 time:
-  - platform: homeassistant
-    id: homeassistant_time
+#  - platform: homeassistant
+#    id: homeassistant_time
   - platform: sntp
-    id: sntp_time
+    id: id_time
     timezone: UTC-3
