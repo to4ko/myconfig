@@ -11,8 +11,8 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000232de79_contact
-      from: 'on'
-      to: 'off'
+      from: "on"
+      to: "off"
       for:
         seconds: 5
   action:
@@ -45,8 +45,8 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000236fcd5_contact
-      from: 'on'
-      to: 'off'
+      from: "on"
+      to: "off"
       for:
         seconds: 5
   action:
@@ -78,13 +78,13 @@
   initial_state: true
   trigger:
     - platform: time
-      at: '23:59:30'
+      at: "23:59:30"
   action:
     - choose:
-        - conditions: 
+        - conditions:
             - condition: state
               entity_id: binary_sensor.esp8266_pzem_hb_status
-              state: 'on'
+              state: "on"
           sequence:
             - service: input_number.set_value
               data:
@@ -94,23 +94,23 @@
               data:
                 entity_id: input_number.power_meter_t2
                 value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
-            - service: mqtt.publish 
+            - service: mqtt.publish
               data:
                 topic: "utility/main/energy/day"
                 payload: "{{ states('input_number.power_meter_t1') }}"
                 retain: true
-            - service: mqtt.publish 
+            - service: mqtt.publish
               data:
                 topic: "utility/main/energy/night"
                 payload: "{{ states('input_number.power_meter_t2') }}"
                 retain: true
             - service: notify.telegram
               data:
-                message: "\U0001f50c Данные счетчика электричества обновлены!"
-        - conditions: 
+                message: "\U0001f50c Данные счетчика электричества обновлены! D {{states('sensor.esp8266_pzem_hb_energy_daily_day')}}, N {{states('sensor.esp8266_pzem_hb_energy_daily_night')}}"
+        - conditions:
             - condition: state
               entity_id: binary_sensor.esp8266_pzem_hb_status
-              state: 'off'
+              state: "off"
           sequence:
             - service: notify.telegram
               data:
@@ -118,7 +118,7 @@
             - wait_for_trigger:
                 - platform: state
                   entity_id: binary_sensor.esp8266_pzem_hb_status
-                  to: 'on'
+                  to: "on"
               timeout:
                 seconds: 28
               continue_on_timeout: false
@@ -133,12 +133,12 @@
               data:
                 entity_id: input_number.power_meter_t2
                 value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
-            - service: mqtt.publish 
+            - service: mqtt.publish
               data:
                 topic: "utility/main/energy/day"
                 payload: "{{ states('input_number.power_meter_t1') }}"
                 retain: true
-            - service: mqtt.publish 
+            - service: mqtt.publish
               data:
                 topic: "utility/main/energy/night"
                 payload: "{{ states('input_number.power_meter_t2') }}"
@@ -155,7 +155,7 @@
   initial_state: true
   trigger:
     - platform: time
-      at: '00:00:10'
+      at: "00:00:10"
   condition:
     - condition: template
       value_template: "{{ strptime(states('sensor.date'), '%Y-%m-%d').day|int == 21 }}"
@@ -184,31 +184,31 @@
       data:
         topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
         payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S')}}"
-        retain: true    
+        retain: true
     - service: notify.telegram
-      data: 
+      data:
         message: >
-            {{ "\U0001f4a6" }}
-            Показания счетчиков:
-            ХВС: {{ states('input_number.cold_water_meter')|float }}м3
-            ГВС: {{ states('input_number.hot_water_meter')|float }}м3
+          {{ "\U0001f4a6" }}
+          Показания счетчиков:
+          ХВС: {{ states('input_number.cold_water_meter')|float }}м3
+          ГВС: {{ states('input_number.hot_water_meter')|float }}м3
 
-            За месяц:
-            ХВС: {{ states('input_number.cold_water_meter_month')|float }}м3
-            ГВС: {{ states('input_number.hot_water_meter_month')|float }}м3
-            Стоимость: {{ ((states('sensor.water_cost'))|float)}}руб.
+          За месяц:
+          ХВС: {{ states('input_number.cold_water_meter_month')|float }}м3
+          ГВС: {{ states('input_number.hot_water_meter_month')|float }}м3
+          Стоимость: {{ ((states('sensor.water_cost'))|float)}}руб.
     - service: notify.telegram
-      data: 
+      data:
         message: >
-            {{ "\U0001f50c" }}
-            Показания счетчика:
-            Т1: {{ ((states('input_number.power_meter_t1'))|float)}} кВт*ч
-            Т2: {{ ((states('input_number.power_meter_t2'))|float)}} кВт*ч
+          {{ "\U0001f50c" }}
+          Показания счетчика:
+          Т1: {{ ((states('input_number.power_meter_t1'))|float)}} кВт*ч
+          Т2: {{ ((states('input_number.power_meter_t2'))|float)}} кВт*ч
 
-            За месяц:
-            Т1: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_day')|float))|round(0)}} кВт*ч
-            Т2: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_night')|float))|round(0)}} кВт*ч
-            Стоимость: {{ ((states('sensor.power_cost'))|float) }} руб.
+          За месяц:
+          Т1: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_day')|float))|round(0)}} кВт*ч
+          Т2: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_night')|float))|round(0)}} кВт*ч
+          Стоимость: {{ ((states('sensor.power_cost'))|float) }} руб.
     - service: input_number.set_value
       data:
         entity_id: input_number.power_meter_last_month_t1
@@ -220,19 +220,21 @@
 
     - service: switch.turn_on
       entity_id: switch.esp8266_pzem_hb_energy_reset_all
-    
+    - delay:
+        seconds: 10
+        
     - service: switch.turn_on
       entity_id: switch.esp8266_pzem_hb_energy_reset_uart
-    
+
     # - service: switch.turn_on
     #   entity_id: switch.esp32_domofon_energy_reset_all
-      
-        # - switch.esp8266_pzem_hb_energy_reset_monthly
-        # - switch.esp8266_pzem_hb_energy_reset_monthly_day
-        # - switch.esp8266_pzem_hb_energy_reset_monthly_night
-        # - switch.esp32_domofon_energy_reset_monthly
-        # - switch.esp32_domofon_energy_reset_monthly_day
-        # - switch.esp32_domofon_energy_reset_monthly_night
+
+    # - switch.esp8266_pzem_hb_energy_reset_monthly
+    # - switch.esp8266_pzem_hb_energy_reset_monthly_day
+    # - switch.esp8266_pzem_hb_energy_reset_monthly_night
+    # - switch.esp32_domofon_energy_reset_monthly
+    # - switch.esp32_domofon_energy_reset_monthly_day
+    # - switch.esp32_domofon_energy_reset_monthly_night
 
     - service: input_number.set_value
       data:
@@ -281,7 +283,7 @@
       below: 30
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.system_power_20A_current', 'last_triggered'))|int) > 10*60 }}"      
+      value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.system_power_20A_current', 'last_triggered'))|int) > 10*60 }}"
   action:
     - service: notify.telegram
       data:
@@ -300,7 +302,7 @@
       below: 40
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'))|int) > 10*60 }}"      
+      value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'))|int) > 10*60 }}"
   action:
     - service: notify.telegram
       data:
@@ -310,8 +312,8 @@
             sound:
               name: "default"
               critical: 1
-              volume: 1.0        
-        
+              volume: 1.0
+
     - service: notify.mobile_app_iphone_12_dtsymbal
       data:
         title: "Внимание!"
@@ -327,9 +329,9 @@
     - platform: homeassistant
       event: start
     - platform: time
-      at: '07:00:00'
+      at: "07:00:00"
     - platform: time
-      at: '23:00:00'
+      at: "23:00:00"
   action:
     - service: utility_meter.select_tariff
       data:
@@ -339,7 +341,7 @@
           - utility_meter.energy_monthly_shelly_em
           - utility_meter.energy_monthly_pzem_energy
         tariff: "{%- if (7 <= now().hour < 23) -%}day{%- else -%}night{%- endif -%}"
-        
+
 # ##################################
 # System - High Power Consumption
 # ##################################
@@ -368,9 +370,8 @@
             sound:
               name: "default"
               critical: 1
-              volume: 1.0        
-        
-        
+              volume: 1.0
+
 # ##################################
 # System - Water Consumption
 # ##################################
@@ -380,14 +381,14 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000232de79_contact
-      from: 'on'
-      to: 'off'
+      from: "on"
+      to: "off"
       for:
         seconds: 5
     - platform: state
       entity_id: binary_sensor.0x158d000236fcd5_contact
-      from: 'on'
-      to: 'off'
+      from: "on"
+      to: "off"
       for:
         seconds: 5
   condition:
@@ -407,8 +408,7 @@
               name: "default"
               critical: 1
               volume: 1.0
-        
-        
+
 # ##################################
 # System - Water sensor outage
 # ##################################
@@ -417,7 +417,7 @@
   initial_state: true
   trigger:
     - platform: time_pattern
-      minutes: '/30'
+      minutes: "/30"
   condition:
     - condition: template
       value_template: >
@@ -436,7 +436,7 @@
   initial_state: true
   trigger:
     - platform: time_pattern
-      minutes: '/15'
+      minutes: "/15"
   condition:
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(states.sensor.esp8266_pzem_hb_power_kw.last_changed)) > 15*60}}"
@@ -446,6 +446,3 @@
         message: "\U0000274c Внимание! Нет данных от PZEM! Выполняем перузапуск PZEM!"
     - service: switch.turn_on
       entity_id: switch.esp8266_pzem_hb_restart
-
-
-

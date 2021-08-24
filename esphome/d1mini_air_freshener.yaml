@@ -32,6 +32,16 @@ ota:
 web_server:
   port: 80
 
+i2c:
+  sda: D5
+  scl: D2
+  scan: True
+
+bme680_bsec:
+  address: 0x77
+  sample_rate: lp
+  iaq_mode: static
+
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
@@ -80,12 +90,12 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then: 
+        - light.turn_off: id_red_led
+    on_release:
+      then: 
         - light.turn_on:
               id: id_red_led
               effect: "Blink"
-    on_release:
-      then: 
-        - light.turn_off: id_red_led
 
 number:
   - platform: template
@@ -104,7 +114,7 @@ number:
     icon: mdi:counter
     id: id_canister_resource
     restore_value: true
-    update_interval: 60s
+    update_interval: 30s
     min_value: 0
     max_value: 3000
     step: 1
@@ -136,6 +146,20 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+
+  - platform: bme680_bsec
+    iaq_accuracy:
+      name: ${board_name}_IAQ_Accuracy
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -150,6 +174,7 @@ sensor:
     pin: A0
     name: ${board_name}_ADC
     id: adc_value
+    unit_of_measurement: 'V'
     filters:
       - multiply: 3.3
     update_interval: 15s
@@ -185,7 +210,36 @@ sensor:
       return ( 100 * (1 - raw_value/max_value));
     update_interval: 30s
     unit_of_measurement: '%'
+
+  - platform: bme680_bsec
+    temperature:
+      name: ${board_name}_Temperature
+      accuracy_decimals: 2
+
+    pressure:
+      name: ${board_name}_Pressure
+      accuracy_decimals: 2
   
+    humidity:
+      name: ${board_name}_Humidity
+      accuracy_decimals: 2
+
+    gas_resistance:
+      name: ${board_name}_Gas_Resistance
+      accuracy_decimals: 2
+      
+    iaq:
+      name: ${board_name}_IAQ
+      accuracy_decimals: 2
+
+    co2_equivalent:
+      name: ${board_name}_CO2_Equivalent
+      accuracy_decimals: 2
+
+    breath_voc_equivalent:
+      name: ${board_name}_Breath_VOC_Equivalent
+      accuracy_decimals: 2
+      
 switch:
   - platform: restart
     name: ${board_name}_Restart

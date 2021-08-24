@@ -1,61 +1,47 @@
 substitutions:
-  board_name: esp8266_pzem_hb
+  board_name: esp32_pzem_hb
 
 esphome:
   name: ${board_name}
-  platform: ESP8266
-  board: nodemcuv2
-  comment: ESP8266 PZEM Node
-  esp8266_restore_from_flash: true
-  # on_loop:
-  #   then:
-  #     - lambda: delay(5);
+  platform: ESP32
+  board: esp-wrover-kit
+  comment: ESP32 PZEM
 
 wifi:
-  ssid: !secret wifi_ssid_hb
+  ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .localdomain
   reboot_timeout: 15min
-  #output_power: 17.5dB
+  output_power: 10dB
   fast_connect: true
-  #power_save_mode: none
+  power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.63
+    static_ip: 192.168.1.143
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
     dns2: 8.8.8.8
-  # networks:
-  #   - ssid: !secret wifi_ssid_hb
-  #     password: !secret wifi_pass
-  #     hidden: true
-  #     bssid: !secret wifi_bssid_hb_iot
-  #     priority: 2
-  #   - ssid: !secret wifi_ssid
-  #     password: !secret wifi_pass
-  #     hidden: false
-  #     bssid: !secret wifi_bssid_hb_main
-  #     priority: 1
-  #   - ssid: !secret wifi_ssid
-  #     password: !secret wifi_pass
-  #     hidden: false
-  #     priority: 0
+
 
 logger:
   baud_rate: 0
-  hardware_uart: UART0
   
 api:
-  reboot_timeout: 5min
+  reboot_timeout: 10min
 
 ota:
 
-#web_server:
-#  port: 80
+web_server:
+  port: 80
+
+# i2c:
+#   sda: GPIO21
+#   scl: GPIO22
+#   scan: True
 
 uart:
-  tx_pin: GPIO12
-  rx_pin: GPIO14
+  rx_pin: RX
+  tx_pin: TX
   baud_rate: 9600
   #stop_bits: 2
   id: pzem_uart
@@ -63,20 +49,13 @@ uart:
 modbus:
   id: pzem_modbus
   uart_id: pzem_uart
-
+  
 
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
+    id: id_status
 
-  - platform: template
-    name: ${board_name}_time_isvalid
-    lambda: |- 
-      if (id(id_time).now().is_valid()) {
-        return true;
-      } else {
-        return false;
-      }
 
 text_sensor:
   - platform: template
@@ -102,22 +81,27 @@ text_sensor:
       sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
       return {buffer};
     icon: mdi:clock-start
-    update_interval: 60s
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
 
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
-    update_interval: 60s
+    update_interval: 15s
 
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
-
-  - platform: adc
-    pin: VCC
-    name: ${board_name}_Vcc
-    update_interval: 15s
 
   - platform: pzemac
     current:
@@ -151,14 +135,14 @@ sensor:
       icon: mdi:cosine-wave
       id: id_power_factor
       device_class: power_factor
-    update_interval: 15s
+    update_interval: 3s
     modbus_id: pzem_modbus
 
   - platform: template
     name: ${board_name}_Power_kW
     lambda: return (id(id_power).state)*0.001;
     accuracy_decimals: 3
-    update_interval: 15s
+    update_interval: 3s
     unit_of_measurement: 'kW'
     icon: mdi:lightning-bolt-outline
     
@@ -178,7 +162,7 @@ sensor:
         return 0.0;
       } 
     accuracy_decimals: 1
-    update_interval: 15s
+    update_interval: 3s
     unit_of_measurement: 'W'
     
   - platform: template
@@ -197,7 +181,7 @@ sensor:
         return 0.0;
       }         
     accuracy_decimals: 1
-    update_interval: 15s
+    update_interval: 3s
     unit_of_measurement: 'W'
 
   - platform: integration
@@ -298,7 +282,7 @@ switch:
       - homeassistant.service:
           service: notify.telegram
           data:
-            message: "ESP8266 Pzem - Energy Data Reset Done!"
+            message: "ESP32 Pzem - Energy Data Reset Done!"
     
 time:
 #  - platform: homeassistant
