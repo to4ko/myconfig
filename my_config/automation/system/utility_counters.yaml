@@ -83,17 +83,17 @@
     - choose:
         - conditions:
             - condition: state
-              entity_id: binary_sensor.esp8266_pzem_hb_status
+              entity_id: binary_sensor.esp32_pzem_hb_status
               state: "on"
           sequence:
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t1
-                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp8266_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp32_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t2
-                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp32_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
             - service: mqtt.publish
               data:
                 topic: "utility/main/energy/day"
@@ -106,10 +106,10 @@
                 retain: true
             - service: notify.telegram
               data:
-                message: "\U0001f50c Данные счетчика электричества обновлены! D {{states('sensor.esp8266_pzem_hb_energy_daily_day')}}, N {{states('sensor.esp8266_pzem_hb_energy_daily_night')}}"
+                message: "\U0001f50c Данные счетчика электричества обновлены! D {{states('sensor.esp32_pzem_hb_energy_daily_day')}}, N {{states('sensor.esp32_pzem_hb_energy_daily_night')}}"
         - conditions:
             - condition: state
-              entity_id: binary_sensor.esp8266_pzem_hb_status
+              entity_id: binary_sensor.esp32_pzem_hb_status
               state: "off"
           sequence:
             - service: notify.telegram
@@ -117,7 +117,7 @@
                 message: "\U0001f50c PZEM недоступен! Ожидаем"
             - wait_for_trigger:
                 - platform: state
-                  entity_id: binary_sensor.esp8266_pzem_hb_status
+                  entity_id: binary_sensor.esp32_pzem_hb_status
                   to: "on"
               timeout:
                 seconds: 28
@@ -128,11 +128,11 @@
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t1
-                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp8266_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp32_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t2
-                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp8266_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp32_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
             - service: mqtt.publish
               data:
                 topic: "utility/main/energy/day"
@@ -206,8 +206,8 @@
           Т2: {{ ((states('input_number.power_meter_t2'))|float)}} кВт*ч
 
           За месяц:
-          Т1: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_day')|float))|round(0)}} кВт*ч
-          Т2: {{ ((states('sensor.esp8266_pzem_hb_energy_monthly_night')|float))|round(0)}} кВт*ч
+          Т1: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_day')|float))|round(0)}} кВт*ч
+          Т2: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_night')|float))|round(0)}} кВт*ч
           Стоимость: {{ ((states('sensor.power_cost'))|float) }} руб.
     - service: input_number.set_value
       data:
@@ -219,19 +219,19 @@
         value: "{{ states('input_number.power_meter_t2')|float}}"
 
     - service: switch.turn_on
-      entity_id: switch.esp8266_pzem_hb_energy_reset_all
+      entity_id: switch.esp32_pzem_hb_energy_reset_all
     - delay:
         seconds: 10
         
     - service: switch.turn_on
-      entity_id: switch.esp8266_pzem_hb_energy_reset_uart
+      entity_id: switch.esp32_pzem_hb_energy_reset_uart
 
     # - service: switch.turn_on
     #   entity_id: switch.esp32_domofon_energy_reset_all
 
-    # - switch.esp8266_pzem_hb_energy_reset_monthly
-    # - switch.esp8266_pzem_hb_energy_reset_monthly_day
-    # - switch.esp8266_pzem_hb_energy_reset_monthly_night
+    # - switch.esp32_pzem_hb_energy_reset_monthly
+    # - switch.esp32_pzem_hb_energy_reset_monthly_day
+    # - switch.esp32_pzem_hb_energy_reset_monthly_night
     # - switch.esp32_domofon_energy_reset_monthly
     # - switch.esp32_domofon_energy_reset_monthly_day
     # - switch.esp32_domofon_energy_reset_monthly_night
@@ -259,7 +259,7 @@
   initial_state: true
   trigger:
     - platform: numeric_state
-      entity_id: sensor.esp8266_pzem_hb_current
+      entity_id: sensor.esp32_pzem_hb_current
       above: 15
       below: 20
   condition:
@@ -278,7 +278,7 @@
   initial_state: true
   trigger:
     - platform: numeric_state
-      entity_id: sensor.esp8266_pzem_hb_current
+      entity_id: sensor.esp32_pzem_hb_current
       above: 20
       below: 30
   condition:
@@ -297,7 +297,7 @@
   initial_state: true
   trigger:
     - platform: numeric_state
-      entity_id: sensor.esp8266_pzem_hb_current
+      entity_id: sensor.esp32_pzem_hb_current
       above: 30
       below: 40
   condition:
@@ -355,16 +355,16 @@
     - condition: template
       value_template: "{{ is_state('binary_sensor.family_home','off') or is_state('input_boolean.security_mode','on') }}"
     - condition: numeric_state
-      entity_id: sensor.esp8266_pzem_hb_power
+      entity_id: sensor.esp32_pzem_hb_power
       above: 1200
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp8266_pzem_hb_power')|int}}Вт!"
+        message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int}}Вт!"
     - service: notify.mobile_app_iphone_12_dtsymbal
       data:
         title: "Внимание!"
-        message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp8266_pzem_hb_power')|int}}Вт!"
+        message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int}}Вт!"
         data:
           push:
             sound:
@@ -439,10 +439,10 @@
       minutes: "/15"
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(states.sensor.esp8266_pzem_hb_power_kw.last_changed)) > 15*60}}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(states.sensor.esp32_pzem_hb_power_kw.last_changed)) > 15*60}}"
   action:
     - service: notify.telegram
       data:
         message: "\U0000274c Внимание! Нет данных от PZEM! Выполняем перузапуск PZEM!"
     - service: switch.turn_on
-      entity_id: switch.esp8266_pzem_hb_restart
+      entity_id: switch.esp32_pzem_hb_restart

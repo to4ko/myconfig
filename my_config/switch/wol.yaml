@@ -10,16 +10,6 @@
       data:
         addon: core_rpc_shutdown
         input: vova_pc
-        
-  # - platform: wake_on_lan
-  #   name: R418
-  #   mac: "44-6d-57-6d-9f-0f"
-  #   host: 192.168.1.16
-  #   turn_off:
-  #     service: hassio.addon_stdin
-  #     data:
-  #       addon: core_rpc_shutdown
-  #       input: r418
 
   - platform: wake_on_lan
     name: u430p
@@ -41,31 +31,16 @@
         addon: core_rpc_shutdown
         input: hp15s
 
-  # - platform: wake_on_lan
-  #   name: brix3160_lan
-  #   mac: "E0-D5-5E-5F-79-C5"
-  #   host: 192.168.1.32
-  #   turn_off:
-  #     service: hassio.addon_stdin
-  #     data:
-  #       addon: core_rpc_shutdown
-  #       input: brix3160_lan
-
-  # - platform: wake_on_lan
-  #   name: HP 178nw
-  #   mac: "04-0E-3C-6F-AD-41"
-  #   host: 192.168.1.50
-  
   - platform: wake_on_lan
     name: SashaPC
     mac: "60-A4-4C-3F-AF-BB"
-    host: 192.168.1.18
+    host: "192.168.1.18"
 
   
   - platform: template
     switches:
       pc_s:
-        value_template: "{{ is_state('device_tracker.i5_s', 'home') }}"
+        value_template: "{{ states('sensor.0x158d00035c194f_power')|int > 5 }}"
         icon_template: mdi:desktop-tower-monitor
         turn_on:
           service: switch.turn_on
@@ -76,3 +51,15 @@
           data:
             addon: core_rpc_shutdown
             input: sasha_pc
+      pc_v:
+        value_template: "{{ states('switch.0x158d0003535ee5_switch')|int > 5 }}"
+        icon_template: mdi:desktop-tower-monitor
+        turn_on:
+          service: switch.turn_on
+          target:
+            entity_id: switch.vovapc
+        turn_off:
+          service: hassio.addon_stdin
+          data:
+            addon: core_rpc_shutdown
+            input: vova_pc

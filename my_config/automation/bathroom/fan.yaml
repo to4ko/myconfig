@@ -40,6 +40,8 @@
               entity_id: timer.fan_b
             - service: timer.start
               entity_id: timer.fan_b
+            - service: input_boolean.turn_on
+              entity_id: input_boolean.fan_manual_b
         - conditions:
             - condition: state
               entity_id: switch.esp32_bathroom_node_relay_3
@@ -127,6 +129,9 @@
     - condition: state
       entity_id: binary_sensor.high_humidity_b
       state: 'off'
+    - condition: state
+      entity_id: input_boolean.fan_manual_b
+      state: 'off'
   action:
     - service: switch.turn_off
       entity_id: switch.esp32_bathroom_node_relay_3, switch.sonoff_pow_r2_1_bottom_fan
@@ -147,6 +152,9 @@
       state: 'idle'
     - condition: template
       value_template: "{{ is_state('switch.esp32_bathroom_node_relay_3','on') or is_state('switch.sonoff_pow_r2_1_bottom_fan','on') }}"
+    - condition: state
+      entity_id: input_boolean.fan_manual_b
+      state: 'off'
   action:
     - service: switch.turn_off
       entity_id: switch.esp32_bathroom_node_relay_3, switch.sonoff_pow_r2_1_bottom_fan
@@ -239,6 +247,11 @@
       event_type: timer.finished
       event_data:
         entity_id: timer.fan_b
+    - platform: state
+      entity_id: switch.esp32_bathroom_node_relay_3
+      to: 'off'
   action:
     - service: switch.turn_off
       entity_id: switch.esp32_bathroom_node_relay_3
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.fan_manual_b

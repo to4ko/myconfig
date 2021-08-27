@@ -920,6 +920,11 @@
           {%else%}
             {{'\U00002600'}} Режим темноты выключен
           {%endif%}
+    - condition: state
+      entity_id: input_boolean.dark_mode
+      state: 'off'
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.silent_mode
 
 # ##################################
 # System - HACS Update Pending
@@ -1282,7 +1287,7 @@
         - binary_sensor.esp32_node_mb_status
         - binary_sensor.esp32_node_v_status
         - binary_sensor.esp8266_hood_k_status
-        - binary_sensor.esp8266_pzem_hb_status
+        - binary_sensor.esp32_pzem_hb_status
         - binary_sensor.esp8266_oven_temp_k_status
         - binary_sensor.shp2_socket_1_status
         - binary_sensor.shp2_socket_2_status
@@ -1578,7 +1583,7 @@
         - sensor.esp32_node_mb_uptime_s
         - sensor.esp32_node_v_uptime_s
         - sensor.esp8266_oven_temp_k_uptime_s
-        - sensor.esp8266_pzem_hb_uptime_s
+        - sensor.esp32_pzem_hb_uptime_s
         - sensor.lt11_1_uptime_s
         - sensor.shp2_socket_1_uptime_s
         - sensor.shp2_socket_2_uptime_s
@@ -1935,3 +1940,20 @@
     - service: notify.telegram
       data:
         message: "\U000026a0 Внимание! WallPanel {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - New Feeds
+# ##################################
+- alias: system_new_feeds
+  id: system_new_feeds
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: feedreader
+  action:
+    - service: telegram_bot.send_message
+      data:
+        target: !secret tel_chat_id
+        disable_notification: true
+        title: "{{ '\U0001F4F0' }} RSS новости"
+        message: "Новости в ленте RSS: [{{- trigger.event.data.title -}}]({{- trigger.event.data.link -}})"

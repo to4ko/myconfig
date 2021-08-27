@@ -16,6 +16,9 @@
       entity_id: binary_sensor.sonoff_mini_1_switch
       from: 'off'
       to: 'on'
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_doorbell', 'last_triggered'))|int) > 10 }}"
   action:
     - service: mqtt.publish
       data:
@@ -29,6 +32,18 @@
           photo:
           - url: !secret door_snap
             caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+    - condition: state
+      entity_id: input_boolean.silent_mode
+      state: 'on'
+    - service: light.turn_on
+      data:
+        entity_id: light.esp32_node_k_led
+        effect: 'Green_Alarm'
+        brightness_pct: 100
+    - delay: "00:00:20"
+    - service: light.turn_off
+      entity_id: light.esp32_node_k_led
+      
     # - condition: state
     #   entity_id: light.digma_8592_screen
     #   state: 'off'
