@@ -1128,10 +1128,8 @@ async def command_line_main():
                 import json
 
                 def converter(x):
-                    if isinstance(x, timedelta):
-                        if x.microseconds == 0:
-                            return int(x.total_seconds())
-                        return x.total_seconds()
+                    if isinstance(x, (time, date, datetime)):
+                        return x.isoformat()
                     return str(x)
 
                 json.dump(
@@ -1607,7 +1605,7 @@ class ElectricIndication(ResponseDataClass):
     tariff: Optional[str] = None
     zone_name: Optional[str] = None
     indication: Optional[float] = None
-    periods: Optional[List[Tuple[timedelta, timedelta]]] = None
+    periods: Tuple[Tuple[time, time]] = ()
 
     @classmethod
     def from_response_dict(
@@ -1623,8 +1621,8 @@ class ElectricIndication(ResponseDataClass):
             periods=get_none(
                 response_dict,
                 "time_period",
-                lambda x: explode_periods(x, ", ", " - ", "-"),
-                default=[],
+                lambda x: tuple(explode_periods(x, ", ", " - ", "-")),
+                default=(),
             ),
         )
 
@@ -1703,32 +1701,31 @@ class ElectricBalance(ResponseDataClass):
 @attr.s(slots=True, kw_only=True, auto_attribs=True)
 class ElectricCounterZone(ResponseDataClass):
     name: Optional[str] = None
-    periods: Optional[Tuple[Tuple[timedelta, timedelta]]] = None
+    periods: Tuple[Tuple[time, time]] = ()
     cost: Optional[float] = None
 
     @classmethod
     def from_response_dict(
         cls, response_dict: Mapping[str, Any], api: Optional["API"] = None, **kwargs
     ) -> "ElectricCounterZone":
-        periods = get_none(response_dict, "time_period", converter_if_value=str)
-        if periods:
-            periods = explode_periods(periods, sep_segments="; ", sep_ranges="-", sep_numbers=".")
-
         return cls(
             api=api,
             name=get_none(response_dict, "name", str),
-            periods=periods,
-            cost=get_none(response_dict, "tarif", float_russian),
+            cost=get_none(response_dict, "tarif", lambda x: float_russian(x) / 100),
+            periods=get_none(
+                response_dict,
+                "time_period",
+                converter_if_value=lambda x: tuple(explode_periods(x, "; ", "-", ".")),
+                default=(),
+            ),
         )
 
-    def is_timestamp_in_zone(self, ts: Union[int, datetime, timedelta]) -> bool:
+    def is_timestamp_in_zone(self, ts: Union[int, datetime, time]) -> bool:
         assert self.periods is not None, "periods are not set on init"
         if isinstance(ts, int):
-            ts = datetime.fromtimestamp(ts)
+            ts = datetime.fromtimestamp(ts).time()
         if isinstance(ts, datetime):
-            ts = timedelta(
-                minutes=ts.minute, hours=ts.hour, seconds=ts.second, microseconds=ts.microsecond
-            )
+            ts = ts.time()
 
         for period_start, period_end in self.periods:
             if period_start <= ts < period_end:
@@ -1741,7 +1738,7 @@ class ElectricCounterZone(ResponseDataClass):
 class ElectricCounterInfo(ResponseDataClass):
     flat_id: Optional[int] = None
     type: Optional[str] = None
-    zones: Optional[Tuple[ElectricCounterZone]] = None
+    zones: Tuple[ElectricCounterZone, ...] = ()
 
     @classmethod
     def from_response_dict(
@@ -1751,39 +1748,32 @@ class ElectricCounterInfo(ResponseDataClass):
         flat_id: Optional[int] = None,
         **kwargs,
     ) -> "ElectricCounterInfo":
-        zones = get_none(response_dict, "zone_info", list)
-        if zones:
-            zones = [
-                ElectricCounterZone.from_response_dict(
-                    zone_info, api=api, flat_id=flat_id, **kwargs
-                )
-                for zone_info in zones
-            ]
 
         return cls(
             api=api,
             flat_id=flat_id,
             type=get_none(response_dict, "registration_type", str),
-            zones=None if zones is None else tuple(zones),
+            zones=tuple(
+                ElectricCounterZone.from_response_dict(
+                    zone_info, api=api, flat_id=flat_id, **kwargs
+                )
+                for zone_info in get_none(response_dict, "zone_info", list, ())
+            ),
         )
 
-    def get_period_zone(self, ts: Union[int, datetime, timedelta]) -> Optional[ElectricCounterZone]:
-        assert self.zones is not None, "zones are not set on init"
-
+    def get_period_zone(self, ts: Union[int, datetime, time]) -> Optional[ElectricCounterZone]:
         if isinstance(ts, int):
             ts = datetime.fromtimestamp(ts)
         if isinstance(ts, datetime):
-            ts = timedelta(
-                minutes=ts.minute, hours=ts.hour, seconds=ts.second, microseconds=ts.microsecond
-            )
+            ts = ts.time()
 
         for zone in self.zones:
             if zone.is_timestamp_in_zone(ts):
                 return zone
 
     @property
-    def zones_count(self) -> Optional[int]:
-        return None if self.zones is None else len(self.zones)
+    def zones_count(self) -> int:
+        return len(self.zones)
 
 
 @attr.s(slots=True, kw_only=True, auto_attribs=True)
@@ -2142,16 +2132,17 @@ def float_russian(float_str: str):
     return float(float_str)
 
 
-_GetNoneRT = TypeVar("_GetNoneRT")
+_RT = TypeVar("_RT")
+_RT_default = TypeVar("_RT_default")
 
 
 def get_none(
     m: Mapping[str, Any],
     k: str,
-    converter_if_value: Callable[[Any], _GetNoneRT],
-    default: Any = None,
+    converter_if_value: Callable[[Any], _RT],
+    default: _RT_default = None,
     strict_none: bool = False,
-) -> Optional[_GetNoneRT]:
+) -> Union[_RT, _RT_default]:
     v = m.get(k)
 
     if strict_none:
@@ -2174,7 +2165,7 @@ def last_day_of_month(date_obj: date):
 
 def explode_periods(
     periods: str, sep_segments: str, sep_ranges: str, sep_numbers: str
-) -> Set[Tuple[timedelta, timedelta]]:
+) -> Set[Tuple[time, time]]:
     """
     Explode periods string.
     :param periods: Periods string
@@ -2183,23 +2174,31 @@ def explode_periods(
     :param sep_numbers: Separator of numbers (minutes from hours)
     :return: Set of period tuples
     """
-    period_parts = periods.split(sep_segments)
+    period_parts = str(periods).lower().strip().split(sep_segments)
     periods = []
 
     for period_part in period_parts:
         if period_part.startswith("кругло"):
-            first_period = timedelta(hours=0, minutes=0)
-            last_period = timedelta(hours=23, minutes=59)
+            first_period = time(hour=0, minute=0, second=0)
+            last_period = time(hour=23, minute=59, second=59)
         else:
             first_period, last_period = map(
                 lambda x: tuple(map(int, x.split(sep_numbers))), period_part.split(sep_ranges)
             )
-            first_period = timedelta(hours=first_period[0], minutes=first_period[1])
-            last_period = timedelta(hours=last_period[0], minutes=last_period[1])
+            first_period = time(
+                hour=first_period[0] % 24,
+                minute=first_period[1],
+                second=0,
+            )
+            last_period = time(
+                hour=(last_period[0] - 1) % 24,
+                minute=(last_period[1] - 1) % 60,
+                second=59,
+            )
 
         if last_period < first_period:
-            periods.append((first_period, timedelta(days=1)))
-            periods.append((timedelta(), last_period))
+            periods.append((first_period, time(hour=23, minute=59, second=59)))
+            periods.append((time(hour=0, minute=0, second=0), last_period))
         else:
             periods.append((first_period, last_period))
 

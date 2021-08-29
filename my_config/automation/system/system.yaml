@@ -75,20 +75,20 @@
   initial_state: true
   mode: queued
   trigger:
+    - platform: event
+      event_type: homeassistant_stop
+    - platform: homeassistant
+      event: shutdown
     # - platform: event
-    #   event_type: homeassistant_stop
-    # - platform: homeassistant
-    #   event: shutdown
-    - platform: event
-      event_type: call_service
-      event_data:
-        domain: homeassistant
-        service: restart
-    - platform: event
-      event_type: call_service
-      event_data:
-        domain: homeassistant
-        service: stop
+    #   event_type: call_service
+    #   event_data:
+    #     domain: homeassistant
+    #     service: restart
+    # - platform: event
+    #   event_type: call_service
+    #   event_data:
+    #     domain: homeassistant
+    #     service: stop
   action:
     - service: input_boolean.turn_on
       data:
@@ -1281,7 +1281,7 @@
         - binary_sensor.esp01_weight_pad_status
         - binary_sensor.esp32_bathroom_node_status
         - binary_sensor.esp32_ble_tracker_status
-        - binary_sensor.esp32_domofon_status
+        #- binary_sensor.esp32_domofon_status
         - binary_sensor.d1mini_domofon_status
         - binary_sensor.esp32_node_k_status
         - binary_sensor.esp32_node_mb_status
@@ -1576,7 +1576,7 @@
         - sensor.esp32_bathroom_node_uptime_s
         - sensor.esp32_ble_tracker_2_uptime_s
         - sensor.esp32_ble_tracker_uptime_s
-        - sensor.esp32_domofon_uptime_s
+        #- sensor.esp32_domofon_uptime_s
         - sensor.d1mini_domofon_uptime_s
         - sensor.esp8266_hood_k_uptime_s
         - sensor.esp32_node_k_uptime_s
@@ -1957,3 +1957,65 @@
         disable_notification: true
         title: "{{ '\U0001F4F0' }} RSS новости"
         message: "Новости в ленте RSS: [{{- trigger.event.data.title -}}]({{- trigger.event.data.link -}})"
+
+# ##################################
+# System - Automation Reload
+# ##################################
+- alias: system_automations_reloads
+  id: system_automations_reloads
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: call_service
+      event_data:
+        domain: automation
+        service: reload
+    - platform: event
+      event_type: automation_reloaded
+  condition:
+    - condition: template
+      value_template: >-
+        {{ trigger.event.event_type == 'call_service' and
+           states.automation | selectattr('state', 'eq', 'on') | selectattr('entity_id', 'ne', this.entity_id) | map(attribute = 'entity_id') | list | count > 0
+           or
+           trigger.event.event_type == 'automation_reloaded' and
+           expand('group.dynamic_group_automation_for_reload') | count > 0
+        }}
+  action:
+    - choose:
+        - conditions: "{{ trigger.event.event_type == 'call_service' }}"
+          sequence:  
+            - service: group.set
+              data:
+                name: dynamic group automation for reload
+                object_id: dynamic_group_automation_for_reload
+                icon: mdi:script-text
+                entities: >-
+                  {{ states.automation | selectattr('state', 'eq', 'on') | selectattr('entity_id', 'ne', this.entity_id) | map(attribute = 'entity_id') | list | join(', ') }}
+            - service: group.set
+              data:
+                name: dynamic group all automation before reload
+                object_id: dynamic_group_all_automation_before_reload
+                icon: mdi:script-text
+                entities: >-
+                  {{ states.automation | selectattr('state', 'ne', 'unavailable') | selectattr('entity_id', 'ne', this.entity_id) | map(attribute = 'entity_id') | list | join(', ') }}
+    - service: >- 
+        {% if trigger.event.event_type == 'call_service' -%}
+            automation.turn_off
+        {% else -%}
+            automation.turn_on
+        {% endif -%}
+      data:
+        entity_id: >-
+          {{ expand('group.dynamic_group_automation_for_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id')  | join(', ') }}
+    - choose:
+        - conditions: > 
+                {{ 
+                  trigger.event.event_type == 'automation_reloaded' and 
+                  expand('group.dynamic_group_all_automation_before_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id') | reject('in', expand('group.dynamic_group_automation_for_reload') | map(attribute = 'entity_id') | list) | list | count > 0 
+                }}
+          sequence:  
+            - service: automation.turn_off 
+              data:
+                entity_id: >-
+                  {{ expand('group.dynamic_group_all_automation_before_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id') | reject('in', expand('group.dynamic_group_automation_for_reload') | map(attribute = 'entity_id') | list) | list | join(', ') }}

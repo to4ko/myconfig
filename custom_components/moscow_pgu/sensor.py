@@ -17,7 +17,7 @@ import asyncio
 import hashlib
 import logging
 from abc import ABC
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 from typing import (
     Any,
     Callable,
@@ -27,6 +27,7 @@ from typing import (
     List,
     Mapping,
     Optional,
+    Sequence,
     SupportsFloat,
     Tuple,
     TypeVar,
@@ -655,6 +656,9 @@ class MoscowPGUDrivingLicenseSensor(MoscowPGUSensor):
         return f"sensor_driving_license_{self.driving_license.series}"
 
 
+ATTR_ZONE_ID = "zone_id"
+
+
 class MoscowPGUElectricCounterSensor(MoscowPGUSubmittableEntity, MoscowPGUSensor):
     CONFIG_KEY: ClassVar[str] = "electric_counters"
     DEFAULT_NAME_FORMAT: ClassVar[str] = "Electric Counter {identifier}"
@@ -732,29 +736,6 @@ class MoscowPGUElectricCounterSensor(MoscowPGUSubmittableEntity, MoscowPGUSensor
     def sensor_related_attributes(self) -> Dict[str, Any]:
         attributes = {ATTR_FLAT_ID: self.electric_account.flat_id}
 
-        if self.counter_info:
-            info = self.counter_info
-
-            zones = {}
-            if info.zones:
-                for zone in info.zones:
-                    if not zone.name:
-                        continue
-
-                    periods = []
-                    if zone.periods:
-                        for period in periods:
-                            periods.append(tuple(map(str, period)))
-
-                    zones[zone.name.lower()] = {ATTR_PERIODS: periods, ATTR_TARIFF: periods}
-
-            attributes.update(
-                {
-                    ATTR_TYPE: info.type,
-                    ATTR_ZONES: zones,
-                }
-            )
-
         if self.indications_status:
             status = self.indications_status
 
@@ -769,26 +750,26 @@ class MoscowPGUElectricCounterSensor(MoscowPGUSubmittableEntity, MoscowPGUSensor
                 }
             )
 
+        zones_data: List[Sequence[Dict[str, Any], Sequence[Sequence[time, time]]]] = []
+
         if self.balance:
             balance = self.balance
 
-            indications = {}
             if balance.indications:
                 for indication in balance.indications:
                     if not indication.zone_name:
                         continue
 
-                    periods = []
-                    if indication.periods:
-                        for period in indication.periods:
-                            periods.append(tuple(map(str, period)))
-
-                    indications[indication.zone_name.lower()] = {
-                        ATTR_ZONE_NAME: indication.zone_name,
-                        ATTR_INDICATION: indication.indication,
-                        ATTR_TARIFF: indication.tariff,
-                        ATTR_PERIODS: periods,
-                    }
+                    zones_data.append(
+                        (
+                            {
+                                ATTR_NAME: indication.zone_name,
+                                ATTR_INDICATION: indication.indication,
+                                ATTR_ZONE_ID: indication.tariff,
+                            },
+                            indication.periods,
+                        )
+                    )
 
             attributes.update(
                 {
@@ -801,12 +782,11 @@ class MoscowPGUElectricCounterSensor(MoscowPGUSubmittableEntity, MoscowPGUSensor
                     ATTR_CHARGES_AMOUNT: balance.charges_amount,
                     ATTR_RETURNS_AMOUNT: balance.returns_amount,
                     ATTR_BALANCE_MESSAGE: balance.balance_message,
-                    ATTR_INDICATIONS: indications,
                 }
             )
 
             if (
-                ATTR_SUBMIT_AVAILABLE not in attributes
+                attributes.get(ATTR_SUBMIT_AVAILABLE, True) is True
                 and balance.submit_begin_date
                 and balance.submit_end_date
             ):
@@ -814,18 +794,77 @@ class MoscowPGUElectricCounterSensor(MoscowPGUSubmittableEntity, MoscowPGUSensor
                     balance.submit_begin_date <= date.today() <= balance.submit_end_date
                 )
 
+        if self.counter_info:
+            info = self.counter_info
+
+            attributes[ATTR_TYPE] = info.type
+
+            for zone in info.zones:
+                if not zone.name:
+                    continue
+
+                zones_data.append(
+                    (
+                        {
+                            ATTR_NAME: zone.name,
+                            ATTR_TARIFF: zone.cost,
+                        },
+                        zone.periods,
+                    )
+                )
+
         if self.last_payments:
-            attributes[ATTR_PAYMENTS] = {
+            payments = {
                 payment.payment_date.isoformat(): payment.amount
                 for payment in sorted(
                     self.last_payments, key=lambda x: x.payment_date, reverse=True
                 )
             }
+            last_payment = next(iter(payments.items())) if payments else (None, None)
+            attributes[ATTR_LAST_PAYMENT_DATE], attributes[ATTR_LAST_PAYMENT_AMOUNT] = last_payment
+            attributes[ATTR_PAYMENTS] = payments
 
-            attributes[ATTR_LAST_PAYMENT] = next(iter(attributes.values())) if attributes else None
+        attributes.setdefault(ATTR_SUBMIT_AVAILABLE, False)
 
-        if ATTR_SUBMIT_AVAILABLE not in attributes:
-            attributes[ATTR_SUBMIT_AVAILABLE] = False
+        zones_dict = {}
+
+        zone_expected_attrs = (ATTR_NAME, ATTR_INDICATION, ATTR_ZONE_ID, ATTR_TARIFF)
+        period_to_zones: Dict[time, int] = {}
+        for zone_data, periods in zones_data:
+            lower_name = zone_data[ATTR_NAME].lower()
+
+            if "полупик" in lower_name or "3" in lower_name:
+                zone_id = 3
+            elif "ноч" in lower_name or "2" in lower_name:
+                zone_id = 2
+            elif (
+                "одно" in lower_name
+                or "кругло" in lower_name
+                or "пик" in lower_name
+                or "1" in lower_name
+            ):
+                zone_id = 1
+            else:
+                _LOGGER.warning(f"Unknown zone data: {zone_data}")
+                continue
+            if zone_id in zones_data:
+                for key, value in zone_data:
+                    if not zones_dict[zone_id].get(key):
+                        zones_dict[zone_id][key] = value
+            else:
+                zones_dict[zone_id] = zone_data
+
+            for start, _ in periods:
+                period_to_zones[start] = zone_id
+
+        for zone_id in sorted(zones_dict.keys()):
+            zone_dict = zones_dict[zone_id]
+            for key in sorted(set(zone_expected_attrs).union(zone_dict.keys())):
+                attributes[f"zone_{zone_id}_{key}"] = zone_dict.get(key)
+
+        attributes[ATTR_PERIODS] = {
+            key.isoformat(): period_to_zones[key] for key in sorted(period_to_zones.keys())
+        }
 
         return attributes
 
@@ -887,16 +926,40 @@ class MoscowPGUElectricCounterSensor(MoscowPGUSubmittableEntity, MoscowPGUSensor
 
     async def async_update(self) -> None:
         electric_account = self.electric_account
+
         if electric_account.number:
-            self.balance, self.last_payments = await asyncio.gather(
+            balance, last_payments = await asyncio.gather(
                 electric_account.get_electric_balance(),
                 electric_account.get_electric_payments(),
+                return_exceptions=True,
             )
+
+            if isinstance(last_payments, BaseException):
+                _LOGGER.error(f"Error on last payments update: {last_payments}")
+            else:
+                self.last_payments = last_payments
+
+            if isinstance(balance, BaseException):
+                _LOGGER.error(f"Error on balance update: {balance}")
+            else:
+                self.balance = balance
+
         if electric_account.device:
-            self.counter_info, self.indications_status = await asyncio.gather(
+            counter_info, indications_status = await asyncio.gather(
                 electric_account.get_electric_counter_info(),
                 electric_account.get_electric_indications_status(),
+                return_exceptions=True,
             )
+
+            if isinstance(counter_info, BaseException):
+                _LOGGER.error(f"Error on counter info update: {counter_info}")
+            else:
+                self.counter_info = counter_info
+
+            if isinstance(indications_status, BaseException):
+                _LOGGER.error(f"Error on indications status update: {indications_status}")
+            else:
+                self.indications_status = indications_status
 
     @property
     def icon(self) -> str:

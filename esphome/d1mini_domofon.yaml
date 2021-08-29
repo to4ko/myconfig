@@ -94,6 +94,7 @@ script:
       - logger.log: "Accept call_mute"
       - script.execute: state_no_call
       - switch.turn_on: id_mute
+      - switch.turn_on: id_headset_mute
       - switch.turn_on: id_phone
       - delay: 500ms
       - switch.turn_on: id_open
@@ -102,6 +103,7 @@ script:
       - delay: 2000ms
       - switch.turn_off: id_phone
       - switch.turn_off: id_mute
+      - switch.turn_off: id_headset_mute
       - globals.set:
           id: opening
           value: 'false'
@@ -110,6 +112,7 @@ script:
     then:
       - logger.log: "Accept call_manual"
       - switch.turn_on: id_mute
+      - switch.turn_on: id_headset_mute
       - switch.turn_on: id_phone
       - delay: 500ms
       - switch.turn_on: id_open
@@ -118,6 +121,7 @@ script:
       - delay: 1000ms
       - switch.turn_off: id_phone
       - switch.turn_off: id_mute
+      - switch.turn_on: id_headset_mute
 
   - id: call_reject
     then:
@@ -125,10 +129,12 @@ script:
       - script.execute: state_no_call
       - delay: 400ms
       - switch.turn_on: id_mute
+      - switch.turn_on: id_headset_mute
       - switch.turn_on: id_phone
       - delay: 3000ms
       - switch.turn_off: id_phone
       - switch.turn_off: id_mute
+      - switch.turn_on: id_headset_mute
 
   # No call state
   - id: state_no_call
@@ -528,31 +534,25 @@ switch:
     name: ${board_name}_Mute_Pin
     icon: mdi:volume-off
     id: id_mute
-    restore_mode: RESTORE_DEFAULT_ON
-
 
   - platform: gpio
     pin: GPIO05
     name: ${board_name}_Phone_Pin
     icon: mdi:phone
     id: id_phone
-    
 
   - platform: gpio
     pin: GPIO04
     name: ${board_name}_Open_Pin
     icon: mdi:door-open
     id: id_open
-    
 
-  # - platform: template
-  #   name: ${board_name}_Open_Button
-  #   icon: mdi:gesture-tap-button
-  #   turn_on_action:
-  #   - switch.turn_on: id_open
-  #   - delay: 2s
-  #   - switch.turn_off: id_open
-  
+  - platform: gpio
+    pin: GPIO00
+    name: ${board_name}_Headset_Mute_Pin
+    icon: mdi:headset-off
+    id: id_headset_mute
+
   - platform: template
     name: ${board_name}_Open
     icon: mdi:door
@@ -566,7 +566,6 @@ switch:
     turn_on_action:
       - script.execute: call_accept_manual
       
-  # Automatically open door switch
   - platform: template
     name: ${board_name}_Auto_Open
     id: auto_open

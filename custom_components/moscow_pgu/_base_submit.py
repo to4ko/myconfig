@@ -3,9 +3,10 @@ from typing import Any, ClassVar, Dict, List, Optional, SupportsFloat, Tuple, Un
 
 import voluptuous as vol
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_TIME
-from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.helpers import config_validation as cv
 from homeassistant.util.dt import now as dt_now
 
+from custom_components.moscow_pgu._base import MoscowPGUEntity
 from custom_components.moscow_pgu.const import (
     ATTR_DRY_RUN,
     ATTR_FORCE,
@@ -19,7 +20,6 @@ from custom_components.moscow_pgu.const import (
     TYPE_ELECTRIC,
     TYPE_WATER,
 )
-from custom_components.moscow_pgu._base import MoscowPGUEntity
 
 INDICATIONS_VALIDATOR = vol.Any(
     vol.All(cv.positive_float, lambda x: [x]),
@@ -52,10 +52,8 @@ class MoscowPGUSubmittableEntity(MoscowPGUEntity, ABC):
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
 
-        platform = entity_platform.current_platform.get()
-
         # Register indication pushing service
-        platform.async_register_entity_service(
+        self.platform.async_register_entity_service(
             SERVICE_PUSH_INDICATIONS,
             SERVICE_PUSH_INDICATIONS_SCHEMA,
             "async_push_indications",
