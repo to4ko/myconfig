@@ -17,7 +17,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - 8TB Toshiba MG06ACA800E as media storage (Torrent heap)
   - Corsair HX1200i Power supply
   - Fractal Design Mini C with be quite Pure Wings 2 120mm PWM fans (3ea)
-  - USR 56k USB Modem
+  - not in use - USR 56k USB Modem
   - Google Coral M.2 Accelerator
 
 **Backup Server:**
@@ -31,11 +31,10 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - 120Gb SSD Crucial BX500
   - not in use - zzh CC2652R Zigbee Stick
 
-**not in use - Zigbee2MQTT Server #2:**
+**Test server \ possible next Backup server:**
   - Intel Nuc Celeron N2830
   - 4gb DDR3 RAM
-  - 120Gb SSD OCZ Vertex 3 MaxIOps
-  - CC2538 Zigbee Stick
+  - 120Gb SSD Crucial BX500
 
 **not in use - Test Server:**
   - Raspberry Pi 3B+
@@ -65,7 +64,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
 
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (5ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
+  - Xiaomi Gateway v3 (6ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
   - Yeelight LED Ceiling Lamp650 (YLXD02YL) (2ea)
   - Yeelight LED Ceiling Lamp Pro White 960mm (YLXD08YL)
   - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
@@ -128,7 +127,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - ESP32 - BLE Tracker (Nut find 3)
   - ESP32 - BLE Tracker (Xiaomi Scale 2 and Nut find 3)
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
-  - ESP8266 PZEM HB - Hall Big Breaker Box PZEM-004T with Dallas sensor (temp in breaker box)
+  - ESP32 PZEM HB - Hall Big Breaker Box PZEM-004T
   - Digma IR Remote (3ea)
   - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
   - ESP01 Weight Cell
@@ -146,6 +145,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - DIYRuZ_Geiger Sensor via SLS GW
   - Google Home Mini (6ea)
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
+  - Shelly EM - energy monitoring (comparing to PZEM...not shure which one os better)
   
 **Software:**
   - Ubuntu Server 20.04.2 LTS

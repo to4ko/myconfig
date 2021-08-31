@@ -4,77 +4,90 @@
 #
 # #####################################################################################
 # Sasha- breather On
-# ################################## 
-- alias: sasha_breather_on
-  id: sasha_breather_on
-  initial_state: false
+# ##################################
+- alias: sasha_breather_auto
+  id: sasha_breather_auto
+  initial_state: true
   trigger:
     - platform: time_pattern
       minutes: "/5"
   condition:
     - condition: state
-      entity_id: binary_sensor.family_home
-      state: 'on'
-    - condition: numeric_state
-      entity_id: sensor.z19_co2_s
-      above: 1000
-    - condition: state
-      entity_id: binary_sensor.breather_s
-      state: 'off'
-    - condition: state
-      entity_id: binary_sensor.0x158d00025370d1_contact
-      state: 'off'
+      entity_id: input_boolean.breather_auto_mb
+      state: "on"
+    - condition: or
+      conditions:
+        - condition: and
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.family_home
+              state: "on"
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_s
+              above: 1000
+            - condition: state
+              entity_id: binary_sensor.breather_s
+              state: "off"
+            # - condition: state
+            #   entity_id: binary_sensor.0x158d00025370d1_contact
+            #   state: "off"
+        - condition: and
+          conditions:
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_s
+              below: 600
+            - condition: state
+              entity_id: binary_sensor.breather_s
+              state: "on"
   action:
     - service: switch.turn_on
       entity_id: switch.digma_ir_s_breather_pwr
 
 # ##################################
 # Sasha - breather Off
-# ################################## 
-- alias: sasha_breather_off
-  id: sasha_breather_off
-  initial_state: true
-  trigger:
-    - platform: time_pattern
-      minutes: "/5"
-  condition:
-    condition: or
-    conditions:
-      - condition: and
-        conditions:
-        - condition: numeric_state
-          entity_id: sensor.z19_co2_s
-          below: 800
-        - condition: state
-          entity_id: binary_sensor.breather_s
-          state: 'on'
-      - condition: and
-        conditions:
-        - condition: state
-          entity_id: binary_sensor.0x158d00025370d1_contact
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.breather_s
-          state: 'on'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.digma_ir_s_breather_pwr
-      
+# ##################################
+# - alias: sasha_breather_off
+#   id: sasha_breather_off
+#   initial_state: true
+#   trigger:
+#     - platform: time_pattern
+#       minutes: "/5"
+#   condition:
+#     condition: or
+#     conditions:
+#       - condition: and
+#         conditions:
+#           - condition: numeric_state
+#             entity_id: sensor.z19_co2_s
+#             below: 800
+#           - condition: state
+#             entity_id: binary_sensor.breather_s
+#             state: "on"
+#       - condition: and
+#         conditions:
+#           - condition: state
+#             entity_id: binary_sensor.0x158d00025370d1_contact
+#             state: "on"
+#           - condition: state
+#             entity_id: binary_sensor.breather_s
+#             state: "on"
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.digma_ir_s_breather_pwr
+
 # ##################################
 # Sasha - breather Aurtomation Status Publish
-# ################################## 
+# ##################################
 - alias: sasha_breather_automation_status_publish
   id: sasha_breather_automation_status_publish
   initial_state: true
   mode: queued
   trigger:
     - platform: state
-      entity_id:
-        - automation.sasha_breather_off
-        - automation.sasha_breather_on
+      entity_id: input_boolean.breather_auto_mb
   action:
     - service: mqtt.publish
       data:
         topic: servers/main_states/automation/breather_s
-        payload: "{{('1' if is_state('automation.sasha_breather_on','on') else '0')|int}}{{('1' if is_state('automation.sasha_breather_off','on') else '0')|int}}"
-        retain: true      
+        payload: "{{('1' if is_state('input_boolean.breather_auto_mb','on') else '0')|int}}"
+        retain: true

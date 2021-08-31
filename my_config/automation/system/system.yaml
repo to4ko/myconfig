@@ -77,8 +77,8 @@
   trigger:
     - platform: event
       event_type: homeassistant_stop
-    - platform: homeassistant
-      event: shutdown
+    # - platform: homeassistant
+    #   event: shutdown
     # - platform: event
     #   event_type: call_service
     #   event_data:
@@ -828,14 +828,14 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id:
-        - remote.0x588e81fffedcb38d_pair
-        - remote.0x842e14fffe1508a6_pair
-        - remote.0x588e81fffedd3c41_pair
-        - remote.0x588e81fffe72678e_pair
-        - remote.0xbc33acfffe537cf5_pair
-        - remote.0x680ae2fffed2ac53_pair
+    # - platform: state
+    #   entity_id:
+    #     - remote.0x588e81fffedcb38d_pair
+    #     - remote.0x842e14fffe1508a6_pair
+    #     - remote.0x588e81fffedd3c41_pair
+    #     - remote.0x588e81fffe72678e_pair
+    #     - remote.0xbc33acfffe537cf5_pair
+    #     - remote.0x680ae2fffed2ac53_pair
     - platform: state
       entity_id:
         - sensor.0x588e81fffe72678e_gateway
@@ -922,7 +922,7 @@
           {%endif%}
     - condition: state
       entity_id: input_boolean.dark_mode
-      state: 'off'
+      state: "off"
     - service: input_boolean.turn_off
       entity_id: input_boolean.silent_mode
 
@@ -1029,7 +1029,7 @@
         minutes: 30
   action:
     - service: input_boolean.turn_{{states('binary_sensor.central_heating')}}
-      entity_id: input_boolean.heating
+      entity_id: input_boolean.central_heating
     - service: notify.telegram
       data:
         message: "\U0001f321 Внимание! Отопление {% if is_state('binary_sensor.central_heating','on') %}включено{%else%}выключено{%endif%}"
@@ -1060,162 +1060,197 @@
 # ##################################
 # System - ZB Devices Status
 # ##################################
+# - alias: system_zb_devices_status
+#   id: system_zb_devices_status
+#   initial_state: true
+#   mode: queued
+#   trigger:
+#     - platform: state
+#       entity_id:
+#         - sensor.0x158d00013e6aa5_action
+#         - sensor.0x158d00016bdb4a_action
+#         - sensor.0x158d0001712d55_action
+#         - sensor.0x158d00019c8afd_action
+#         - binary_sensor.0x158d0001ae9f61_motion
+#         - binary_sensor.0x158d0001aea602_motion
+#         - binary_sensor.0x158d0003f27ce2_motion
+#         - sensor.0x158d0001b94abe_action
+#         - sensor.0x158d0001b97111_action
+#         - binary_sensor.0x158d0001d5995e_motion
+#         - binary_sensor.0x158d0001e05856_motion
+#         #- sensor.0x158d0001e0784e_action
+#         - sensor.0x158d0001e0a622_action
+#         - binary_sensor.0x158d0001e53cda_motion
+#         - binary_sensor.0x158d0001e54280_motion
+#         - sensor.0x158d0001e586af_temperature
+#         - sensor.0x158d0001e58714_temperature
+#         - sensor.0x158d0001e58754_temperature
+#         - binary_sensor.0x158d0001e5d6be_contact
+#         - sensor.0x158d0001e6d85a_temperature
+#         - switch.0x158d0001e85086_switch
+#         #- sensor.0x158d0001e8995a_temperature
+#         - binary_sensor.0x158d0001ef2ffc_contact
+#         - sensor.0x158d0001ef6089_action
+#         #- sensor.0x158d0001ef609b_action
+#         - sensor.0x158d0001ef61be_action
+#         - switch.0x158d0001f2630e_switch
+#         - sensor.0x158d0001f3627d_action
+#         - binary_sensor.0x158d000200ad58_contact
+#         - switch.0x158d000205a835_switch
+#         - sensor.0x158d00020d7c3a_temperature
+#         - sensor.0x158d000222c746_temperature
+#         - sensor.0x158d000223921b_action
+#         - binary_sensor.0x158d000224f89f_motion
+#         - binary_sensor.0x158d00022ccffe_contact
+#         - switch.0x158d000230fc52_switch
+#         - binary_sensor.0x158d00023297e7_moisture
+#         - binary_sensor.0x158d000232ddd6_contact
+#         - binary_sensor.0x158d000232de79_contact
+#         - sensor.0x158d000233fb72_temperature
+#         - binary_sensor.0x158d00023684c2_moisture
+#         - binary_sensor.0x158d000236bb94_motion
+#         - binary_sensor.0x158d000236bc6d_motion
+#         - binary_sensor.0x158d000236fcd5_contact
+#         - binary_sensor.0x158d000236fdc9_contact
+#         - sensor.0x158d000237167c_temperature
+#         - binary_sensor.0x158d0002373a67_moisture
+#         - switch.0x158d000239097a_switch
+#         - switch.0x158d0002395d58_switch
+#         - switch.0x158d0002395dc9_switch
+#         - sensor.0x158d000239ad5b_temperature
+#         - switch.0x158d00023a657a_switch
+#         #- sensor.0x158d00023d0b86_action
+#         - sensor.0x158d00023d3116_action
+#         - sensor.0x158d00023d3206_action
+#         - switch.0x158d00023e5812_switch
+#         #- sensor.0x158d00023e5f2a_action
+#         - switch.0x158d00024517fe_switch
+#         - switch.0x158d0002451850_switch
+#         - sensor.0x158d0002461e5b_temperature
+#         - sensor.0x158d0002464ec0_temperature
+#         - switch.0x158d000246776f_switch
+#         - switch.0x158d0002467773_switch
+#         - switch.0x158d0002468fbd_switch
+#         - switch.0x158d0002476ed1_switch
+#         - switch.0x158d000249b25b_switch
+#         - switch.0x158d000249b26b_switch
+#         - binary_sensor.0x158d00024bcf85_gas
+#         - binary_sensor.0x158d0002529b9c_contact
+#         - binary_sensor.0x158d000252acba_contact
+#         - binary_sensor.0x158d00025315e9_contact
+#         - binary_sensor.0x158d0002531749_contact
+#         - binary_sensor.0x158d00025370d1_contact
+#         - binary_sensor.0x158d00025371f6_contact
+#         - binary_sensor.0x158d000253722b_contact
+#         - sensor.0x158d000253f04a_action
+#         - sensor.0x158d00026ea94e_action
+#         - sensor.0x158d00026eb820_action
+#         - binary_sensor.0x158d00027129ae_contact
+#         - switch.0x158d00028a54e4_switch
+#         - switch.0x158d00028b4fc3_switch
+#         - switch.0x158d00028c9875_switch
+#         - switch.0x158d000290a093_switch
+#         - switch.0x158d000290a0bc_switch
+#         - switch.0x158d0002924790_switch
+#         - binary_sensor.0x158d0002a14c5e_contact
+#         - binary_sensor.0x158d0002a1a47a_contact
+#         - binary_sensor.0x158d0002a1a4b2_contact
+#         - sensor.0x158d0002a2412d_action
+#         - sensor.0x158d0002a36433_action
+#         - sensor.0x158d0002a36f7f_action
+#         - binary_sensor.0x158d0002b43ad4_motion
+#         - binary_sensor.0x158d0002b4729d_motion
+#         - binary_sensor.0x158d0002b482e9_motion
+#         - binary_sensor.0x158d0002b48381_motion
+#         - sensor.0x158d0002b5fbc1_action
+#         - binary_sensor.0x158d0002b7c2c8_contact
+#         - binary_sensor.0x158d0002c92f31_smoke
+#         #- light.0x158d0002d3f7c9_light
+#         #- sensor.0x158d0002f8dd54_action
+#         - sensor.0x158d0002fa99a8_action
+#         - binary_sensor.0x158d0003140824_motion
+#         - switch.0x158d000322e1d9_switch
+#         - switch.0x158d000322e30c_switch
+#         - binary_sensor.0x158d000323c87c_contact
+#         - binary_sensor.0x158d0003262a35_contact
+#         - switch.0x158d000344998e_switch
+#         - switch.0x158d000345119e_switch
+#         - switch.0x158d0003535ee5_switch
+#         - switch.0x158d0003539447_switch
+#         - switch.0x158d000353a2e3_switch
+#         - switch.0x158d000358c773_switch
+#         - switch.0x158d00035c194f_switch
+#         #- binary_sensor.0x158d00035c6905_contact
+#         - switch.0x158d00035f44a7_switch
+#         - switch.0x158d0003600ea4_switch
+#         - switch.0x158d00036148b9_switch
+#         #- sensor.0x158d000366815b_action
+#         - switch.0x158d00039258de_switch
+#         - switch.0x158d000392623d_switch
+#         - sensor.0x158d0003991051_action
+#         - switch.0x158d00039bd56d_switch
+#         - binary_sensor.0x158d0003fa6cf5_contact
+#         - binary_sensor.0x158d000423f316_contact
+#         - sensor.0x4cf8cdf3c77271d_illuminance
+#         - sensor.0x4cf8cdf3c78d26e_illuminance
+#         - sensor.0x4cf8cdf3c7947e4_action
+#         - sensor.0x4cf8cdf3c79546c_action
+#         - alarm_control_panel.0x588e81fffe72678e_alarm
+#         - alarm_control_panel.0x588e81fffedcb38d_alarm
+#         - alarm_control_panel.0x588e81fffedd3c41_alarm
+#         - alarm_control_panel.0x842e14fffe1508a6_alarm
+#         - alarm_control_panel.0xbc33acfffe537cf5_alarm
+#         - sensor.0x4cf8cdf3c7754a8_illuminance
+#         - switch.0x158d000224e3e4_switch
+#       to: "unavailable"
+#   condition:
+#     - condition: state
+#       entity_id: input_boolean.ha_shutdown
+#       state: "off"
+#     - condition: template
+#       value_template: "{{states('sensor.ha_uptime')|float > 0}}"
+#   action:
+#     - choose:
+#         - conditions: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
+#           sequence:
+#             - service: notify.telegram
+#               data:
+#                 message: "\U0001f4a5 ZB: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - ZB Devices Status
+# ##################################
 - alias: system_zb_devices_status
   id: system_zb_devices_status
   initial_state: true
   mode: queued
+  max: 255
   trigger:
-    - platform: state
-      entity_id:
-        - sensor.0x158d00013e6aa5_action
-        - sensor.0x158d00016bdb4a_action
-        - sensor.0x158d0001712d55_action
-        - sensor.0x158d00019c8afd_action
-        - binary_sensor.0x158d0001ae9f61_motion
-        - binary_sensor.0x158d0001aea602_motion
-        - binary_sensor.0x158d0003f27ce2_motion
-        - sensor.0x158d0001b94abe_action
-        - sensor.0x158d0001b97111_action
-        - binary_sensor.0x158d0001d5995e_motion
-        - binary_sensor.0x158d0001e05856_motion
-        #- sensor.0x158d0001e0784e_action
-        - sensor.0x158d0001e0a622_action
-        - binary_sensor.0x158d0001e53cda_motion
-        - binary_sensor.0x158d0001e54280_motion
-        - sensor.0x158d0001e586af_temperature
-        - sensor.0x158d0001e58714_temperature
-        - sensor.0x158d0001e58754_temperature
-        - binary_sensor.0x158d0001e5d6be_contact
-        - sensor.0x158d0001e6d85a_temperature
-        - switch.0x158d0001e85086_switch
-        #- sensor.0x158d0001e8995a_temperature
-        - binary_sensor.0x158d0001ef2ffc_contact
-        - sensor.0x158d0001ef6089_action
-        #- sensor.0x158d0001ef609b_action
-        - sensor.0x158d0001ef61be_action
-        - switch.0x158d0001f2630e_switch
-        - sensor.0x158d0001f3627d_action
-        - binary_sensor.0x158d000200ad58_contact
-        - switch.0x158d000205a835_switch
-        - sensor.0x158d00020d7c3a_temperature
-        - sensor.0x158d000222c746_temperature
-        - sensor.0x158d000223921b_action
-        - binary_sensor.0x158d000224f89f_motion
-        - binary_sensor.0x158d00022ccffe_contact
-        - switch.0x158d000230fc52_switch
-        - binary_sensor.0x158d00023297e7_moisture
-        - binary_sensor.0x158d000232ddd6_contact
-        - binary_sensor.0x158d000232de79_contact
-        - sensor.0x158d000233fb72_temperature
-        - binary_sensor.0x158d00023684c2_moisture
-        - binary_sensor.0x158d000236bb94_motion
-        - binary_sensor.0x158d000236bc6d_motion
-        - binary_sensor.0x158d000236fcd5_contact
-        - binary_sensor.0x158d000236fdc9_contact
-        - sensor.0x158d000237167c_temperature
-        - binary_sensor.0x158d0002373a67_moisture
-        - switch.0x158d000239097a_switch
-        - switch.0x158d0002395d58_switch
-        - switch.0x158d0002395dc9_switch
-        - sensor.0x158d000239ad5b_temperature
-        - switch.0x158d00023a657a_switch
-        #- sensor.0x158d00023d0b86_action
-        - sensor.0x158d00023d3116_action
-        - sensor.0x158d00023d3206_action
-        - switch.0x158d00023e5812_switch
-        #- sensor.0x158d00023e5f2a_action
-        - switch.0x158d00024517fe_switch
-        - switch.0x158d0002451850_switch
-        - sensor.0x158d0002461e5b_temperature
-        - sensor.0x158d0002464ec0_temperature
-        - switch.0x158d000246776f_switch
-        - switch.0x158d0002467773_switch
-        - switch.0x158d0002468fbd_switch
-        - switch.0x158d0002476ed1_switch
-        - switch.0x158d000249b25b_switch
-        - switch.0x158d000249b26b_switch
-        - binary_sensor.0x158d00024bcf85_gas
-        - binary_sensor.0x158d0002529b9c_contact
-        - binary_sensor.0x158d000252acba_contact
-        - binary_sensor.0x158d00025315e9_contact
-        - binary_sensor.0x158d0002531749_contact
-        - binary_sensor.0x158d00025370d1_contact
-        - binary_sensor.0x158d00025371f6_contact
-        - binary_sensor.0x158d000253722b_contact
-        - sensor.0x158d000253f04a_action
-        - sensor.0x158d00026ea94e_action
-        - sensor.0x158d00026eb820_action
-        - binary_sensor.0x158d00027129ae_contact
-        - switch.0x158d00028a54e4_switch
-        - switch.0x158d00028b4fc3_switch
-        - switch.0x158d00028c9875_switch
-        - switch.0x158d000290a093_switch
-        - switch.0x158d000290a0bc_switch
-        - switch.0x158d0002924790_switch
-        - binary_sensor.0x158d0002a14c5e_contact
-        - binary_sensor.0x158d0002a1a47a_contact
-        - binary_sensor.0x158d0002a1a4b2_contact
-        - sensor.0x158d0002a2412d_action
-        - sensor.0x158d0002a36433_action
-        - sensor.0x158d0002a36f7f_action
-        - binary_sensor.0x158d0002b43ad4_motion
-        - binary_sensor.0x158d0002b4729d_motion
-        - binary_sensor.0x158d0002b482e9_motion
-        - binary_sensor.0x158d0002b48381_motion
-        - sensor.0x158d0002b5fbc1_action
-        - binary_sensor.0x158d0002b7c2c8_contact
-        - binary_sensor.0x158d0002c92f31_smoke
-        #- light.0x158d0002d3f7c9_light
-        #- sensor.0x158d0002f8dd54_action
-        - sensor.0x158d0002fa99a8_action
-        - binary_sensor.0x158d0003140824_motion
-        - switch.0x158d000322e1d9_switch
-        - switch.0x158d000322e30c_switch
-        - binary_sensor.0x158d000323c87c_contact
-        - binary_sensor.0x158d0003262a35_contact
-        - switch.0x158d000344998e_switch
-        - switch.0x158d000345119e_switch
-        - switch.0x158d0003535ee5_switch
-        - switch.0x158d0003539447_switch
-        - switch.0x158d000353a2e3_switch
-        - switch.0x158d000358c773_switch
-        - switch.0x158d00035c194f_switch
-        #- binary_sensor.0x158d00035c6905_contact
-        - switch.0x158d00035f44a7_switch
-        - switch.0x158d0003600ea4_switch
-        - switch.0x158d00036148b9_switch
-        #- sensor.0x158d000366815b_action
-        - switch.0x158d00039258de_switch
-        - switch.0x158d000392623d_switch
-        - sensor.0x158d0003991051_action
-        - switch.0x158d00039bd56d_switch
-        - binary_sensor.0x158d0003fa6cf5_contact
-        - binary_sensor.0x158d000423f316_contact
-        - sensor.0x4cf8cdf3c77271d_illuminance
-        - sensor.0x4cf8cdf3c78d26e_illuminance
-        - sensor.0x4cf8cdf3c7947e4_action
-        - sensor.0x4cf8cdf3c79546c_action
-        - alarm_control_panel.0x588e81fffe72678e_alarm
-        - alarm_control_panel.0x588e81fffedcb38d_alarm
-        - alarm_control_panel.0x588e81fffedd3c41_alarm
-        - alarm_control_panel.0x842e14fffe1508a6_alarm
-        - alarm_control_panel.0xbc33acfffe537cf5_alarm
-        - sensor.0x4cf8cdf3c7754a8_illuminance
-        - switch.0x158d000224e3e4_switch
-      to: "unavailable"
+    - platform: event
+      event_type: state_changed
   condition:
     - condition: state
       entity_id: input_boolean.ha_shutdown
       state: "off"
     - condition: template
+      value_template: "{{ trigger.event.data.entity_id in expand('group.zigbee_devices') | map(attribute='entity_id') | list }}"
+    - condition: template
+      value_template: "{{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}"
+    - condition: template
       value_template: "{{states('sensor.ha_uptime')|float > 0}}"
+    - condition: or
+      conditions:
+        - condition: template
+          value_template: "{{ trigger.event.data.new_state.state in ['unknown', 'unavailable'] }}"
+        - condition: template
+          value_template: "{{ trigger.event.data.old_state.state in ['unknown', 'unavailable'] }}"
   action:
     - choose:
         - conditions: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
           sequence:
             - service: notify.telegram
               data:
-                message: "\U0001f4a5 ZB: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+                message: "\U0001f4a5 ZB: {{ state_attr(trigger.event.data.entity_id, 'friendly_name') }}: {{ trigger.event.data.old_state.state }} -> {{ trigger.event.data.new_state.state }}"
 
 # ##################################
 # System - ZB Devices Status
@@ -1281,7 +1316,7 @@
         - binary_sensor.esp01_weight_pad_status
         - binary_sensor.esp32_bathroom_node_status
         - binary_sensor.esp32_ble_tracker_status
-        #- binary_sensor.esp32_domofon_status
+        - binary_sensor.esp32_domofon_status
         - binary_sensor.d1mini_domofon_status
         - binary_sensor.esp32_node_k_status
         - binary_sensor.esp32_node_mb_status
@@ -1298,12 +1333,13 @@
         - binary_sensor.sonoff_basic_4_status
         - binary_sensor.sonoff_mini_2_status
         - binary_sensor.sonoff_pow_r2_1_status
-        #- binary_sensor.ss5_hood_status
+        - binary_sensor.ss5_hood_status
         - binary_sensor.sonoff_mini_1_status
         - binary_sensor.sonoff_mini_4_status
         - binary_sensor.d1mini_light_l_status
         - binary_sensor.d1mini_air_freshener_status
       to: "off"
+      from: "on"
       for:
         minutes: 2
   action:
@@ -1571,12 +1607,12 @@
         - sensor.digma_ir_mb_uptime_s
         - sensor.digma_ir_s_uptime_s
         - sensor.digma_ir_v_uptime_s
-        #- sensor.esp01_air_freshener_uptime_s
+        - sensor.esp01_air_freshener_uptime_s
         - sensor.esp01_weight_pad_uptime_s
         - sensor.esp32_bathroom_node_uptime_s
         - sensor.esp32_ble_tracker_2_uptime_s
         - sensor.esp32_ble_tracker_uptime_s
-        #- sensor.esp32_domofon_uptime_s
+        - sensor.esp32_domofon_uptime_s
         - sensor.d1mini_domofon_uptime_s
         - sensor.esp8266_hood_k_uptime_s
         - sensor.esp32_node_k_uptime_s
@@ -1813,73 +1849,73 @@
 # ##################################
 # System - Wallpanel charge
 # ##################################
-- alias: system_wallpanel_charge
-  id: system_wallpanel_charge
-  initial_state: false
-  mode: queued
-  max: 10
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: sensor.wp_digma8027_battery_level
-    - platform: state
-      entity_id: switch.sonoff_1000d03987
-  condition:
-    - condition: template
-      value_template: >
-        {% set ignore = ['unknown', 'unavailable', 'none'] %}
-        {{ trigger.from_state.state not in ignore and
-           trigger.to_state.state not in ignore and
-           trigger.to_state.state != trigger.from_state.state }}
-  action:
-    - choose:
-        - conditions:
-            - condition: numeric_state
-              entity_id: sensor.wp_digma8027_battery_level
-              below: 21
-            - condition: state
-              entity_id: switch.sonoff_1000d03987
-              state: "off"
-          sequence:
-            - service: switch.turn_on
-              entity_id: switch.sonoff_1000d03987
-            - condition: state
-              entity_id: binary_sensor.wp_digma8027_motion
-              state: "off"
-            - service: mqtt.publish
-              data:
-                topic: "wallpanel/digma8027/command"
-                payload: '{"wake": false,"clearCache": true,"relaunch": true,"reload": true,"brightness": 1}'
-            - delay:
-                seconds: 40
-            - service: mqtt.publish
-              data:
-                topic: "wallpanel/digma8027/command"
-                payload: '{clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+# - alias: system_wallpanel_charge
+#   id: system_wallpanel_charge
+#   initial_state: false
+#   mode: queued
+#   max: 10
+#   max_exceeded: silent
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.wp_digma8027_battery_level
+#     - platform: state
+#       entity_id: switch.sonoff_1000d03987
+#   condition:
+#     - condition: template
+#       value_template: >
+#         {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#         {{ trigger.from_state.state not in ignore and
+#           trigger.to_state.state not in ignore and
+#           trigger.to_state.state != trigger.from_state.state }}
+#   action:
+#     - choose:
+#         - conditions:
+#             - condition: numeric_state
+#               entity_id: sensor.wp_digma8027_battery_level
+#               below: 21
+#             - condition: state
+#               entity_id: switch.sonoff_1000d03987
+#               state: "off"
+#           sequence:
+#             - service: switch.turn_on
+#               entity_id: switch.sonoff_1000d03987
+#             - condition: state
+#               entity_id: binary_sensor.wp_digma8027_motion
+#               state: "off"
+#             - service: mqtt.publish
+#               data:
+#                 topic: "wallpanel/digma8027/command"
+#                 payload: '{"wake": false,"clearCache": true,"relaunch": true,"reload": true,"brightness": 1}'
+#             - delay:
+#                 seconds: 40
+#             - service: mqtt.publish
+#               data:
+#                 topic: "wallpanel/digma8027/command"
+#                 payload: '{clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
 
-        - conditions:
-            - condition: numeric_state
-              entity_id: sensor.wp_digma8027_battery_level
-              above: 79
-            - condition: state
-              entity_id: switch.sonoff_1000d03987
-              state: "on"
-          sequence:
-            - service: switch.turn_off
-              entity_id: switch.sonoff_1000d03987
-            - condition: state
-              entity_id: binary_sensor.wp_digma8027_motion
-              state: "off"
-            - service: mqtt.publish
-              data:
-                topic: "wallpanel/digma8027/command"
-                payload: '{"wake": false,"clearCache": true,"relaunch": true,"reload": true,"brightness": 1}'
-            - delay:
-                seconds: 40
-            - service: mqtt.publish
-              data:
-                topic: "wallpanel/digma8027/command"
-                payload: '{clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+#         - conditions:
+#             - condition: numeric_state
+#               entity_id: sensor.wp_digma8027_battery_level
+#               above: 79
+#             - condition: state
+#               entity_id: switch.sonoff_1000d03987
+#               state: "on"
+#           sequence:
+#             - service: switch.turn_off
+#               entity_id: switch.sonoff_1000d03987
+#             - condition: state
+#               entity_id: binary_sensor.wp_digma8027_motion
+#               state: "off"
+#             - service: mqtt.publish
+#               data:
+#                 topic: "wallpanel/digma8027/command"
+#                 payload: '{"wake": false,"clearCache": true,"relaunch": true,"reload": true,"brightness": 1}'
+#             - delay:
+#                 seconds: 40
+#             - service: mqtt.publish
+#               data:
+#                 topic: "wallpanel/digma8027/command"
+#                 payload: '{clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
 
 # # ##################################
 # # System - Breathers control
@@ -1984,7 +2020,7 @@
   action:
     - choose:
         - conditions: "{{ trigger.event.event_type == 'call_service' }}"
-          sequence:  
+          sequence:
             - service: group.set
               data:
                 name: dynamic group automation for reload
@@ -1999,7 +2035,7 @@
                 icon: mdi:script-text
                 entities: >-
                   {{ states.automation | selectattr('state', 'ne', 'unavailable') | selectattr('entity_id', 'ne', this.entity_id) | map(attribute = 'entity_id') | list | join(', ') }}
-    - service: >- 
+    - service: >-
         {% if trigger.event.event_type == 'call_service' -%}
             automation.turn_off
         {% else -%}
@@ -2009,13 +2045,32 @@
         entity_id: >-
           {{ expand('group.dynamic_group_automation_for_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id')  | join(', ') }}
     - choose:
-        - conditions: > 
-                {{ 
-                  trigger.event.event_type == 'automation_reloaded' and 
-                  expand('group.dynamic_group_all_automation_before_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id') | reject('in', expand('group.dynamic_group_automation_for_reload') | map(attribute = 'entity_id') | list) | list | count > 0 
-                }}
-          sequence:  
-            - service: automation.turn_off 
+        - conditions: >
+            {{ 
+              trigger.event.event_type == 'automation_reloaded' and 
+              expand('group.dynamic_group_all_automation_before_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id') | reject('in', expand('group.dynamic_group_automation_for_reload') | map(attribute = 'entity_id') | list) | list | count > 0 
+            }}
+          sequence:
+            - service: automation.turn_off
               data:
                 entity_id: >-
                   {{ expand('group.dynamic_group_all_automation_before_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id') | reject('in', expand('group.dynamic_group_automation_for_reload') | map(attribute = 'entity_id') | list) | list | join(', ') }}
+
+# ##################################
+# System - Automation Reload
+# ##################################
+- alias: system_config_entry_discovery
+  id: system_config_entry_discovery
+  mode: queued
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: persistent_notification.config_entry_discovery
+      to: "notifying"
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001F4DF Найдено новое устройство в сети!"
+    # - service: persistent_notification.dismiss
+    #   data:
+    #     notification_id: 'config_entry_discovery'

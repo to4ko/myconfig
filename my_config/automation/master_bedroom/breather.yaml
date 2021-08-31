@@ -5,25 +5,40 @@
 # #####################################################################################
 # Master Bedroom- breather On
 # ################################## 
-- alias: master_bedroom_breather_on
-  id: master_bedroom_breather_on
-  initial_state: false
+- alias: master_bedroom_breather_auto
+  id: master_bedroom_breather_auto
+  initial_state: true
   trigger:
     - platform: time_pattern
       minutes: "/5"
   condition:
     - condition: state
-      entity_id: binary_sensor.family_home
-      state: 'on'
-    - condition: numeric_state
-      entity_id: sensor.z19_co2_mb
-      above: 1000
-    - condition: state
-      entity_id: binary_sensor.breather_mb
-      state: 'off'
-    - condition: state
-      entity_id: binary_sensor.0x158d000200ad58_contact
-      state: 'off'
+      entity_id: input_boolean.breather_auto_mb
+      state: "on"
+    - condition: or
+      conditions:
+        - condition: and
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.family_home
+              state: "on"
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_mb
+              above: 1000
+            - condition: state
+              entity_id: binary_sensor.breather_mb
+              state: "off"
+            # - condition: state
+            #   entity_id: binary_sensor.0x158d000200ad58_contact
+            #   state: "off"
+        - condition: and
+          conditions:
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_mb
+              below: 600
+            - condition: state
+              entity_id: binary_sensor.breather_mb
+              state: "on"
   action:
     - service: switch.turn_on
       entity_id: switch.digma_ir_mb_breather_pwr
@@ -31,34 +46,34 @@
 # ##################################
 # Master Bedroom- breather Off
 # ################################## 
-- alias: master_bedroom_breather_off
-  id: master_bedroom_breather_off
-  initial_state: true
-  trigger:
-    - platform: time_pattern
-      minutes: "/5"
-  condition:
-    condition: or
-    conditions:
-      - condition: and
-        conditions:
-        - condition: numeric_state
-          entity_id: sensor.z19_co2_mb
-          below: 800
-        - condition: state
-          entity_id: binary_sensor.breather_mb
-          state: 'on'
-      - condition: and
-        conditions:
-        - condition: state
-          entity_id: binary_sensor.0x158d000200ad58_contact
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.breather_mb
-          state: 'on'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.digma_ir_mb_breather_pwr
+# - alias: master_bedroom_breather_off
+#   id: master_bedroom_breather_off
+#   initial_state: true
+#   trigger:
+#     - platform: time_pattern
+#       minutes: "/5"
+#   condition:
+#     condition: or
+#     conditions:
+#       - condition: and
+#         conditions:
+#         - condition: numeric_state
+#           entity_id: sensor.z19_co2_mb
+#           below: 800
+#         - condition: state
+#           entity_id: binary_sensor.breather_mb
+#           state: 'on'
+#       - condition: and
+#         conditions:
+#         - condition: state
+#           entity_id: binary_sensor.0x158d000200ad58_contact
+#           state: 'on'
+#         - condition: state
+#           entity_id: binary_sensor.breather_mb
+#           state: 'on'
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.digma_ir_mb_breather_pwr
       
 # ##################################
 # Master Bedroom- breather Aurtomation Status Publish
@@ -69,13 +84,11 @@
   mode: queued
   trigger:
     - platform: state
-      entity_id:
-        - automation.master_bedroom_breather_off
-        - automation.master_bedroom_breather_on
+      entity_id: input_boolean.breather_auto_mb
   action:
     - service: mqtt.publish
       data:
         topic: servers/main_states/automation/breather_mb
-        payload: "{{('1' if is_state('automation.master_bedroom_breather_on','on') else '0')|int}}{{('1' if is_state('automation.master_bedroom_breather_off','on') else '0')|int}}"
+        payload: "{{('1' if is_state('input_boolean.breather_auto_mb','on') else '0')|int}}"
         retain: true
       

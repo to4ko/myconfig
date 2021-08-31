@@ -3,28 +3,13 @@
 # ############################################################################
   - sensor:
       - name: Purifier Mode
-        state: >-
-          {% if state_attr('fan.purifier2s','speed') == "Silent" %}
-          Silent
-          {% elif state_attr('fan.purifier2s','speed') == "idle" %}
-          Idle
-          {% elif state_attr('fan.purifier2s','speed') == "Favorite" %}
-          Favorite
-          {% elif state_attr('fan.purifier2s','speed') == "Auto" %}
-          Auto
-          {% else %}
-          NA
-          {% endif %}
+        state: "{{ 'NA' if not is_state('fan.purifier2s','on') else state_attr('fan.purifier2s','preset_mode') }}"
         icon: mdi:debug-step-over
 
       - name: Purifier PM25
         state: "{{ state_attr('fan.purifier2s','aqi') | int }}"
         unit_of_measurement: "mcg/m3"
         icon: mdi:meteor
-
-      - name: Purifier Fan Speed
-        state: "{{ state_attr('fan.purifier2s','motor_speed') }}"
-        icon: mdi:fan
 
       - name: Purifier Filter Left
         state: "{{ state_attr('fan.purifier2s','filter_life_remaining') | int }}"
@@ -35,12 +20,8 @@
 # Humidifier sensors
 # ############################################################################
       - name: Humidifier Mode
-        state: "{{ state_attr('humidifier.humidifier2','mode') }}"
+        state: "{{ 'NA' if not is_state('humidifier.humidifier2','on') else state_attr('humidifier.humidifier2','mode') }}"
         icon: mdi:debug-step-over
-
-      # - name: Humidifier Fan Speed
-      #   state: "{{ state_attr('fan.humidifier2','motor_speed') }}"
-      #   icon: mdi:fan
 
       - name: Humidifier Water Level
         unit_of_measurement: '%'

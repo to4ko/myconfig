@@ -180,13 +180,6 @@ sensor:
       - multiply: 3.3
     update_interval: 15s
 
-  # - platform: template
-  #   name: ${board_name}_AirQ
-  #   lambda: return ((id(adc_value).state)*(-30.303)+100);
-  #   unit_of_measurement: "%"
-  #   update_interval: 15s
-  #   icon: mdi:air-filter
-
   - platform: template
     name: ${board_name}_AirQ
     icon: mdi:gas-cylinder
@@ -198,9 +191,41 @@ sensor:
       return raw_value;    
     filters:    
       - calibrate_linear:
-          - 3.3 -> 100.0
-          - 0.55 -> 0.0      
+          - 3.2 -> 100.0
+          - 1.1 -> 0.0      
     update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_AirQ_Median
+    icon: mdi:gas-cylinder
+    unit_of_measurement: '%'
+    accuracy_decimals: 1
+    id: id_airq_median
+    lambda: |-
+      float raw_value = id(id_airq).state;
+      return raw_value;    
+    filters:    
+      - median:
+          window_size: 12
+          send_every: 1
+          send_first_at: 1
+    update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_AirQ_Sliding
+    icon: mdi:gas-cylinder
+    unit_of_measurement: '%'
+    accuracy_decimals: 1
+    id: id_airq_Sliding
+    lambda: |-
+      float raw_value = id(id_airq).state;
+      return raw_value;    
+    filters:    
+      - sliding_window_moving_average:
+          window_size: 12
+          send_every: 1
+    update_interval: 15s
+
 
   - platform: template
     name: ${board_name}_Canister_Left
@@ -212,35 +237,6 @@ sensor:
     update_interval: 30s
     unit_of_measurement: '%'
 
-  # - platform: bme680_bsec
-  #   temperature:
-  #     name: ${board_name}_Temperature
-  #     accuracy_decimals: 2
-
-  #   pressure:
-  #     name: ${board_name}_Pressure
-  #     accuracy_decimals: 2
-  
-  #   humidity:
-  #     name: ${board_name}_Humidity
-  #     accuracy_decimals: 2
-
-  #   gas_resistance:
-  #     name: ${board_name}_Gas_Resistance
-  #     accuracy_decimals: 2
-      
-  #   iaq:
-  #     name: ${board_name}_IAQ
-  #     accuracy_decimals: 2
-
-  #   co2_equivalent:
-  #     name: ${board_name}_CO2_Equivalent
-  #     accuracy_decimals: 2
-
-  #   breath_voc_equivalent:
-  #     name: ${board_name}_Breath_VOC_Equivalent
-  #     accuracy_decimals: 2
-      
 switch:
   - platform: restart
     name: ${board_name}_Restart

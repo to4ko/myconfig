@@ -7,23 +7,38 @@
 # ################################## 
 - alias: vova_breather_on
   id: vova_breather_on
-  initial_state: false
+  initial_state: true
   trigger:
     - platform: time_pattern
       minutes: "/5"
   condition:
     - condition: state
-      entity_id: binary_sensor.family_home
-      state: 'on'
-    - condition: numeric_state
-      entity_id: sensor.z19_co2_v
-      above: 1000
-    - condition: state
-      entity_id: binary_sensor.breather_v
-      state: 'off'
-    - condition: state
-      entity_id: binary_sensor.0x158d00022ccffe_contact
-      state: 'off'
+      entity_id: input_boolean.breather_auto_v
+      state: "on"
+    - condition: or
+      conditions:
+        - condition: and
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.family_home
+              state: "on"
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_v
+              above: 600
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "off"
+            # - condition: state
+            #   entity_id: binary_sensor.0x158d00022ccffe_contact
+            #   state: "off"
+        - condition: and
+          conditions:
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_v
+              below: 450
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "on"
   action:
     - service: switch.turn_on
       entity_id: switch.digma_ir_v_breather_pwr
@@ -31,34 +46,34 @@
 # ##################################
 # Vova - breather Off
 # ################################## 
-- alias: vova_breather_off
-  id: vova_breather_off
-  initial_state: false
-  trigger:
-    - platform: time_pattern
-      minutes: "/5"
-  condition:
-    condition: or
-    conditions:
-      - condition: and
-        conditions:
-        - condition: numeric_state
-          entity_id: sensor.z19_co2_v
-          below: 800
-        - condition: state
-          entity_id: binary_sensor.breather_v
-          state: 'on'
-      - condition: and
-        conditions:
-        - condition: state
-          entity_id: binary_sensor.0x158d00022ccffe_contact
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.breather_v
-          state: 'on'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.digma_ir_v_breather_pwr
+# - alias: vova_breather_off
+#   id: vova_breather_off
+#   initial_state: false
+#   trigger:
+#     - platform: time_pattern
+#       minutes: "/5"
+#   condition:
+#     condition: or
+#     conditions:
+#       - condition: and
+#         conditions:
+#         - condition: numeric_state
+#           entity_id: sensor.z19_co2_v
+#           below: 800
+#         - condition: state
+#           entity_id: binary_sensor.breather_v
+#           state: 'on'
+#       - condition: and
+#         conditions:
+#         - condition: state
+#           entity_id: binary_sensor.0x158d00022ccffe_contact
+#           state: 'on'
+#         - condition: state
+#           entity_id: binary_sensor.breather_v
+#           state: 'on'
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.digma_ir_v_breather_pwr
 
 # ##################################
 # Vova - breather Aurtomation Status Publish
@@ -69,12 +84,10 @@
   mode: queued
   trigger:
     - platform: state
-      entity_id:
-        - automation.vova_breather_off
-        - automation.vova_breather_on
+      entity_id: input_boolean.breather_auto_v
   action:
     - service: mqtt.publish
       data:
         topic: servers/main_states/automation/breather_v
-        payload: "{{('1' if is_state('automation.vova_breather_on','on') else '0')|int}}{{('1' if is_state('automation.vova_breather_off','on') else '0')|int}}"
+        payload: "{{('1' if is_state('input_boolean.breather_auto_v','on') else '0')|int}}"
         retain: true
