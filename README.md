@@ -12,7 +12,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - 512Gb * 2ea ADATA 8200Pro in Raid-1 Root drive
   - 256Gb ADATA 8200Pro as DB drive
   - 256Gb ADATA 8200Pro connected but not used at the moment
-  - 3ea WD RED 2Tb (NAS section) in Software Raid-1 (1 drive is spare)
+  - 3ea WD RED 2Tb (Storage section for critital files) in Software Raid-1 (1 drive is spare)
   - 2Tb Seagate SV35 for pinhole camera records
   - 8TB Toshiba MG06ACA800E as media storage (Torrent heap)
   - Corsair HX1200i Power supply
