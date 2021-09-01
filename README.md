@@ -172,8 +172,10 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
 **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
   - **ha_log_parser.sh**  Backing up HA log to my home directory and splitting it to Error, Warning, Info message type as well as keeping full log. Logs rotated every 5 days.
-  - **ya_weather.sh** Yandex weather fcst ( thanks to [Ivan](https://t.me/configit)  )
-  - **root_dev.sh** Host root device name for monitoring.
+  - **ya_weather.sh**  Yandex weather fcst ( thanks to [Ivan](https://t.me/configit)  )
+  - **root_dev.sh**  Host root device name for monitoring.
+  - **gitignore.sh**  bash script to be used after gitigrone file updated
+  - **gitupdate.sh**  git upload
 
 
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.

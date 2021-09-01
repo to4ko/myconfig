@@ -318,6 +318,43 @@
 #    command: 'bash /config/ya_weather_home.sh'
 #    scan_interval: 120
 
+  - platform: command_line
+    name: Dima Yandex Rain
+    command: >
+      wget -q --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36' "https://yandex.ru/pogoda/maps/nowcast?lat={{state_attr('device_tracker.life360_dima_tsymbal','latitude')}}&lon={{state_attr('device_tracker.life360_dima_tsymbal','longitude')}}" -O /dev/stdout | sed 's/>/>\n/g' | grep "weather-maps-fact__nowcast-alert" -A1 | tail -1 | sed 's/<\/div>//g' | sed 's|.*\. ||'
+    scan_interval: 120
+    value_template: >
+      {% if value == "unknown" or value == "" -%}
+        unavailable
+      {%- else -%}
+        {{value}}
+      {%- endif %}
+
+  - platform: command_line
+    name: Sandra Yandex Rain
+    command: >
+      wget -q --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36' "https://yandex.ru/pogoda/maps/nowcast?lat={{state_attr('device_tracker.life360_sandra_tsymbal','latitude')}}&lon={{state_attr('device_tracker.life360_sandra_tsymbal','longitude')}}" -O /dev/stdout | sed 's/>/>\n/g' | grep "weather-maps-fact__nowcast-alert" -A1 | tail -1 | sed 's/<\/div>//g' | sed 's|.*\. ||'
+    scan_interval: 120
+    value_template: >
+      {% if value == "unknown" or value == "" -%}
+        unavailable
+      {%- else -%}
+        {{value}}
+      {%- endif %}
+
+  - platform: command_line
+    name: Vova Yandex Rain
+    command: >
+      wget -q --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36' "https://yandex.ru/pogoda/maps/nowcast?lat={{state_attr('device_tracker.life360_vova_tsymbal','latitude')}}&lon={{state_attr('device_tracker.life360_vova_tsymbal','longitude')}}" -O /dev/stdout | sed 's/>/>\n/g' | grep "weather-maps-fact__nowcast-alert" -A1 | tail -1 | sed 's/<\/div>//g' | sed 's|.*\. ||'
+    scan_interval: 120
+    value_template: >
+      {% if value == "unknown" or value == "" -%}
+        unavailable
+      {%- else -%}
+        {{value}}
+      {%- endif %}
+
+
   - platform: github
     access_token: !secret github_access_token
     repositories:
@@ -344,18 +381,6 @@
       hours: 6
     sampling_size: 21600
 
-  # Barometric forecast
-  # Pressure Changes 3 Hour
-  # mmHg  * 1.33322 = hPa = mbar
-  # - platform: rest
-  #   resource: !secret influx_pressure_changes
-  #   name: pressure_change_in_3_hours
-  #   device_class: pressure
-  #   unit_of_measurement: "hPa"
-  #   value_template: '{{ value_json["results"][0]["series"][0]["values"][0][1] }}'
-  #   headers:
-  #     User-Agent: Home Assistant
-      
   - platform: season
     type: astronomical
 
