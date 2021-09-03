@@ -1,0 +1,51 @@
+substitutions:
+  board_name: esp8266_philips
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp_wroom_02
+  board_flash_mode: dout
+  includes: 
+    - xiaomi_light.h
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 15min
+  output_power: 17dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.144
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+logger:
+  esp8266_store_log_strings_in_flash: False
+
+api:
+
+ota:
+
+output:
+  - platform: esp8266_pwm
+    pin: GPIO12
+    id: out_cw
+  - platform: esp8266_pwm
+    pin: GPIO15
+    id: out_b
+
+
+light:
+  - platform: custom 
+    lambda: |- 
+      auto light_out = new XiaomiLight(id(out_cw),id(out_b)); 
+      App.register_component(light_out); 
+      return {light_out}; 
+    lights: 
+      - name: ${board_name}_Light
+        gamma_correct: 0

@@ -5,12 +5,13 @@ esphome:
   name: ${board_name}
   platform: ESP8266
   board: esp01_1m
+  comment: Sonoff SV Thermal Pad
 
 wifi:
-  ssid: !secret wifi_ssid
+  ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .localdomain
-  reboot_timeout: 30min
+  reboot_timeout: 15min
   output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
@@ -18,9 +19,11 @@ wifi:
     static_ip: 192.168.1.129
     gateway: 192.168.1.1
     subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
 
 api:
-  reboot_timeout: 0s
+  reboot_timeout: 10min
 
 logger:
 
@@ -29,23 +32,32 @@ ota:
 web_server:
   port: 80
 
+dallas:
+  - pin: GPIO05
+    update_interval: 3s
+    id: dallas_node_long
+
+  - pin: GPIO04
+    update_interval: 3s
+    id: dallas_node_short
+
 # status_led:
 #   pin:
 #     number: GPIO13
 #     inverted: yes
 
 output:
-  - platform: esp8266_pwm
+  - platform: gpio
     id: green_led
     pin: GPIO13
     inverted: True
 
 light:
   - platform: binary
-    name: ${board_name}_StatusLED
-    internal: true
+    name: ${board_name}_Green_LED
     output: green_led
-    id: main_led
+    id: id_green_led
+    internal: true
 
 binary_sensor:
   - platform: gpio
@@ -65,12 +77,15 @@ switch:
     name: ${board_name}_Relay
     pin: GPIO12
     id: relay
-    on_turn_on:
-      then:
-        - light.turn_on: main_led
-    on_turn_off:
-      then:
-        - light.turn_off: main_led
+
+  - platform: template
+    name: ${board_name}_Pad
+    optimistic: true
+    id: id_pad
+    turn_on_action:
+      - light.turn_on: id_green_led
+    turn_off_action:
+      - light.turn_off: id_green_led
 
 sensor:
   - platform: uptime
@@ -81,6 +96,36 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
+  - platform: dallas
+    address: 0x2A01203768D6D728
+    dallas_id: dallas_node_long
+    name: ${board_name}_Pad_Temp
+    id: id_temp_pad
+    accuracy_decimals: 2
+    resolution: 12
+
+  - platform: dallas
+    address: 0x613C01D075384328
+    dallas_id: dallas_node_short
+    name: ${board_name}_Ambient_Temp
+    id: id_temp_out
+    accuracy_decimals: 2
+    resolution: 12
+
+
+climate:
+  - platform: bang_bang
+    name: ${board_name}_Pad
+    sensor: id_temp_pad
+    default_target_temperature_low: 25 °C
+    default_target_temperature_high: 30 °C
+    heat_action:
+      - switch.turn_on: relay
+    idle_action:
+      - switch.turn_off: relay    
+    
+    
+        
 text_sensor:
   - platform: template
     name: ${board_name}_Uptime
