@@ -190,3 +190,82 @@
       entity_id: timer.night_led_strip_hs
     - service: timer.start
       entity_id: timer.night_led_strip_hs
+
+# ##################################
+# Hall Small - Timer restart with movement
+# ################################## 
+- alias: hall_small_timer_restart
+  id: hall_small_timer_restart
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0002b43ad4_motion, binary_sensor.0x158d0001ae9f61_motion
+      from: 'off'
+      to: 'on'
+  condition:
+    - condition: or
+      conditions:
+        - condition: template
+          value_template: "{{ not is_state('light.round_led_hs', 'off') }}"
+    - condition: template
+      value_template: "{{(as_timestamp(now()) - as_timestamp(state_attr('automation.hall_small_timer_restart', 'last_triggered'))|int) > 5 }}"
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_hs
+    - service: timer.start
+      entity_id: timer.main_light_hs
+
+# ##################################
+# Hall Small - Timer off
+# ################################## 
+- alias: hall_small_timer_off
+  id: hall_small_timer_off
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: light.round_led_hs
+      to: 'off'
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_hs
+
+# ##################################
+# Hall Small - Timer start on light on
+# ################################## 
+- alias: hall_small_timer_on
+  id: hall_small_timer_on
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: light.round_led_hs
+      to: 'on'
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_hs
+    - service: timer.start
+      entity_id: timer.main_light_hs
+
+# ##################################
+# Hall Small - Auto Light Off
+# ##################################
+- alias: hall_small_auto_light_off
+  id: hall_small_auto_light_off
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.main_light_hs
+  condition:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
+  action:
+    - service: light.turn_off
+      entity_id: light.round_led_hs
+      data:
+        transition: 15

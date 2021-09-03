@@ -222,8 +222,8 @@
         message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а). Чайник включали - {{states('counter.kettle_k')|int}}раз(а)."
     - service: counter.reset
       entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb, counter.automation_error_counter, counter.kettle_k
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.dark_mode
+    - service: switch.turn_off
+      entity_id: switch.dark_mode
 
 # ##################################
 # System - Weather FCST to Telegram
@@ -778,24 +778,24 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: input_boolean.silent_mode
+      entity_id: switch.silent_mode
       from: "on"
       to: "off"
     - platform: state
-      entity_id: input_boolean.silent_mode
+      entity_id: switch.silent_mode
       from: "off"
       to: "on"
   action:
-    - service: switch.turn_{{states('input_boolean.silent_mode')}}
+    - service: switch.turn_{{states('switch.silent_mode')}}
       entity_id: switch.d1mini_domofon_mute
     - service: input_number.set_value
       data:
         entity_id: input_number.main_volume
-        value: "{% if is_state('input_boolean.silent_mode','on') %}0{%else%}0.3{%endif%}"
+        value: "{% if is_state('switch.silent_mode','on') %}0{%else%}0.3{%endif%}"
     - service: notify.telegram
       data:
         message: >
-          {% if is_state('input_boolean.silent_mode','on') %}
+          {% if is_state('switch.silent_mode','on') %}
             {{'\U0001f515'}} Звуки выключены
           {%else%}
             {{'\U0001f514'}} Звуки включены
@@ -910,21 +910,21 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: input_boolean.dark_mode
+      entity_id: switch.dark_mode
   action:
     - service: notify.telegram
       data:
         message: >
-          {% if is_state('input_boolean.dark_mode','on') %}
+          {% if is_state('switch.dark_mode','on') %}
             {{'\U0001f318'}} Режим темноты включен
           {%else%}
             {{'\U00002600'}} Режим темноты выключен
           {%endif%}
     - condition: state
-      entity_id: input_boolean.dark_mode
+      entity_id: switch.dark_mode
       state: "off"
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.silent_mode
+    - service: switch.turn_off
+      entity_id: switch.silent_mode
 
 # ##################################
 # System - HACS Update Pending
@@ -1833,7 +1833,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: input_boolean.dark_mode
+      entity_id: switch.dark_mode
       from: "off"
       to: "on"
   action:

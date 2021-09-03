@@ -34,7 +34,7 @@
 #   action:
 #     - service: switch.turn_off
 #       entity_id: switch.0x158d000246776f_switch
-      
+
 # # ##################################
 # # Vova - TV Box Plug Off with TV Off
 # # ##################################
@@ -61,18 +61,18 @@
   initial_state: true
   trigger:
     - platform: time
-      at: '09:00:00'
+      at: "09:00:00"
   condition:
     - condition: time
       weekday:
         - sun
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'off'
+      state: "off"
   action:
     - service: switch.turn_off
       entity_id: switch.0x158d000290a0bc_switch
-    - delay: '00:00:05'
+    - delay: "00:00:05"
     - service: switch.turn_on
       entity_id: switch.0x158d000290a0bc_switch
 
@@ -86,7 +86,6 @@
   trigger:
     - platform: state
       entity_id: person.sandra
-      #value_template: "{{not is_state('person.sandra','home')}}"
     - platform: homeassistant
       event: start
     - platform: event
@@ -94,8 +93,9 @@
   action:
     - service: fan.turn_{{'on' if is_state('person.sandra','home') else 'off'}}
       entity_id: fan.purifier2s
-    - condition: state
-      entity_id: binary_sensor.breather_v
-      state: 'on'
+    - condition: template
+      value_template: >-
+        {{ (is_state('person.sandra','home') and is_state('binary_sensor.breather_v','off'))
+        or (not is_state('person.sandra','home') and is_state('binary_sensor.breather_v','on')) }}
     - service: switch.turn_on
       entity_id: switch.digma_ir_v_breather_pwr
