@@ -2169,6 +2169,10 @@ views:
               - type: divider
               - entity: sensor.sonoff_pow_r2_1_power
                 name: Plug Washer B
+              - entity: sensor.shp6_socket_2_w
+                name: Plug D-Link NAS
+              - entity: sensor.shp2_socket_1_w
+                name: Plug MQTT Brix
 
           - type: entities
             title: Master bedroom
@@ -2822,7 +2826,8 @@ views:
               - entity: switch.0x158d0003535ee5_switch
                 name: PCv Plug
                 tap_action: none
-              - entity: sensor.2620_s
+              - entity: sensor.0x158d0003535ee5_power
+                name: PCv P
               - entity: binary_sensor.monitor_dell
                 name: Dell LCD
               - entity: switch.pc_s
@@ -2830,7 +2835,7 @@ views:
               - entity: switch.0x158d00035c194f_switch
                 name: i5 Plug
                 tap_action: none
-              - entity: sensor.i5_mb
+              - entity: sensor.0x158d00035c194f_power
                 name: i5 P
           # - type: glance
           #   columns: 3
@@ -3118,7 +3123,7 @@ views:
                   - entity: sensor.gdrive_backup_state
                     icon: mdi:google-drive
                     name: G-BU Status
-                  - entity: binary_sensor.snapshots_stale
+                  - entity: binary_sensor.backups_stale
                     name: G-BU Stale
                   - entity: sensor.gdrive_last_backup
                     icon: mdi:clock-digital
@@ -3400,16 +3405,16 @@ views:
             cards:
               - type: horizontal-stack
                 cards:
-                  - type: glance
-                    show_state: false
-                    show_name: false
-                    entities:
-                      - entity: script.speedtest_manual
-                        name: Test
-                        icon: mdi:recycle
-                        tap_action:
-                          action: call-service
-                          service: script.speedtest_manual
+                  # - type: glance
+                  #   show_state: false
+                  #   show_name: false
+                  #   entities:
+                  #     - entity: script.speedtest_manual
+                  #       name: Test
+                  #       icon: mdi:recycle
+                  #       tap_action:
+                  #         action: call-service
+                  #         service: script.speedtest_manual
                   - type: "custom:mini-graph-card"
                     entities:
                       - entity: sensor.speedtest_download
@@ -3424,15 +3429,18 @@ views:
                     name: Speedtest
                     points_per_hour: 1
                     unit: Mbit/s
+                    tap_action:
+                      action: call-service
+                      service: script.speedtest_manual
 
-              - type: history-graph
-                hours_to_show: 48
-                entities:
-                  - entity: sensor.speedtest_download
-                    name: Download
-                    show_state: true
-                  - entity: sensor.speedtest_upload
-                    name: Upload
+              # - type: history-graph
+              #   hours_to_show: 48
+              #   entities:
+              #     - entity: sensor.speedtest_download
+              #       name: Download
+              #       show_state: true
+              #     - entity: sensor.speedtest_upload
+              #       name: Upload
 
   ################################################################
   # System Health
@@ -4961,54 +4969,23 @@ views:
           - entity: binary_sensor.esp32_ble_tracker_white
             name: Dima(white)
 
-      - type: entities
-        show_header_toggle: false
-        state_color: true
-        entities:
-          - device_tracker.esp8266_pzem_hb
-          - sensor.esp32_pzem_hb_current
-          - sensor.esp32_pzem_hb_energy
-          - sensor.esp32_pzem_hb_energy_daily
-          - sensor.esp32_pzem_hb_energy_daily_day
-          - sensor.esp32_pzem_hb_energy_daily_night
-          - sensor.esp32_pzem_hb_energy_monthly
-          - sensor.esp32_pzem_hb_energy_monthly_day
-          - sensor.esp32_pzem_hb_energy_monthly_night
-          - switch.esp32_pzem_hb_energy_reset_monthly
-          - switch.esp32_pzem_hb_energy_reset_monthly_day
-          - switch.esp32_pzem_hb_energy_reset_monthly_night
-          - sensor.esp32_pzem_hb_frequency
-          - sensor.esp32_pzem_hb_power
-          - sensor.esp32_pzem_hb_power_factor
-          - sensor.esp32_pzem_hb_power_day
-          - sensor.esp32_pzem_hb_power_night
-          - sensor.esp32_pzem_hb_power_kw
-          - switch.esp32_pzem_hb_restart
-          - binary_sensor.esp32_pzem_hb_status
-          - sensor.esp32_pzem_hb_uptime
-          - sensor.esp32_pzem_hb_uptime_s
-          - sensor.esp32_pzem_hb_voltage
-          - sensor.esp32_pzem_hb_wifi_rssi
-
       - type: thermostat
         entity: climate.sonoff_sv_pad
 
-      - type: custom:auto-entities
-        show_empty: false
-        card:
-          type: entities
-          #title: Lights on
-          show_header_toggle: false
-          state_color: true
-        filter:
-          include:
-            - domain: light
-              state: "on"
-              options:
-                tap_action:
-                  action: toggle
-          exclude:
-            - entity_id: "*esp32_domofon*"
+      # - type: custom:auto-entities
+      #   show_empty: false
+      #   card:
+      #     type: entities
+      #     #title: Lights on
+      #     show_header_toggle: false
+      #     state_color: true
+      #   filter:
+      #     include:
+      #       - domain: light
+      #         state: "on"
+      #         options:
+      #           tap_action:
+      #             action: toggle
 
       - type: history-graph
         hours_to_show: 48
