@@ -1,3 +1,4 @@
+import json
 import logging
 
 from homeassistant.components import persistent_notification
@@ -5,7 +6,7 @@ from homeassistant.components.remote import ATTR_DEVICE
 from homeassistant.helpers.entity import ToggleEntity
 
 from . import DOMAIN
-from .core import utils
+from .core import utils, zigbee
 from .core.gateway3 import Gateway3
 from .core.helpers import XiaomiEntity
 
@@ -38,6 +39,11 @@ class Gateway3Entity(XiaomiEntity, ToggleEntity):
             self.gw.pair_model = None
 
         elif 'added_device' in data:
+            # skip already added device, this maybe bug
+            did = data['added_device']['did']
+            if did in self.gw.devices:
+                return
+
             text = "New device:\n" + '\n'.join(
                 f"{k}: {v}" for k, v in data['added_device'].items()
             )
@@ -69,7 +75,7 @@ class Gateway3Entity(XiaomiEntity, ToggleEntity):
 
     async def async_send_command(self, command, **kwargs):
         for cmd in command:
-            args = cmd.split(' ')
+            args = cmd.split(' ', 1)
             cmd = args[0]
 
             # for testing purposes
@@ -91,3 +97,29 @@ class Gateway3Entity(XiaomiEntity, ToggleEntity):
                 self.gw.send_mqtt('publishstate')
             elif cmd == 'info':
                 self.gw.get_gateway_info()
+            elif cmd == 'ota':
+                did: str = 'lumi.' + kwargs[ATTR_DEVICE]
+                if did not in self.gw.devices:
+                    _LOGGER.error(f"Wrong device ID: " + did)
+                    return
+
+                device = self.gw.devices[did]
+
+                url = await zigbee.get_ota_link(self.hass, device)
+                if url:
+                    self.debug(f"Update {did} with {url}")
+                    resp = self.gw.miio.send('miIO.subdev_ota', {
+                        'did': did,
+                        'subdev_url': url
+                    })
+                    if resp != ['ok']:
+                        _LOGGER.error("Can't run update process")
+                else:
+                    _LOGGER.error("No firmware for model " + device['model'])
+
+            elif cmd == 'miio':
+                raw = json.loads(args[1])
+                resp = self.gw.miio.send(raw['method'], raw.get('params'))
+                persistent_notification.async_create(
+                    self.hass, str(resp), "Xiaomi Gateway 3"
+                )

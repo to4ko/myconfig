@@ -3,28 +3,36 @@ import time
 from datetime import timedelta
 
 from homeassistant.const import *
-from homeassistant.util.dt import now
+from homeassistant.util.dt import now, utc_from_timestamp
 
 from . import DOMAIN
 from .core import zigbee
 from .core.gateway3 import Gateway3
 from .core.helpers import XiaomiEntity
 
+try:  # support old Home Assistant version
+    from homeassistant.components.sensor import SensorEntity
+except:
+    from homeassistant.helpers.entity import Entity as SensorEntity
+
 _LOGGER = logging.getLogger(__name__)
 
 UNITS = {
-    DEVICE_CLASS_BATTERY: '%',
-    DEVICE_CLASS_HUMIDITY: '%',
-    DEVICE_CLASS_ILLUMINANCE: 'lx',  # zb light and motion and ble flower - lux
+    DEVICE_CLASS_BATTERY: PERCENTAGE,
+    DEVICE_CLASS_HUMIDITY: PERCENTAGE,
+    # zb light and motion and ble flower - lux
+    DEVICE_CLASS_ILLUMINANCE: LIGHT_LUX,
     DEVICE_CLASS_POWER: POWER_WATT,
-    DEVICE_CLASS_PRESSURE: 'hPa',
+    DEVICE_CLASS_VOLTAGE: ELECTRIC_POTENTIAL_VOLT,
+    DEVICE_CLASS_CURRENT: ELECTRIC_CURRENT_AMPERE,
+    DEVICE_CLASS_PRESSURE: PRESSURE_HPA,
     DEVICE_CLASS_TEMPERATURE: TEMP_CELSIUS,
-    'conductivity': "µS/cm",
-    'consumption': ENERGY_WATT_HOUR,
+    DEVICE_CLASS_ENERGY: ENERGY_KILO_WATT_HOUR,
+    'conductivity': CONDUCTIVITY,
     'gas density': '% LEL',
-    'supply': '%',
     'smoke density': '% obs/ft',
-    'moisture': '%',
+    'moisture': PERCENTAGE,
+    'supply': PERCENTAGE,
     'tvoc': CONCENTRATION_PARTS_PER_BILLION,
     # 'link_quality': 'lqi',
     # 'rssi': 'dBm',
@@ -35,13 +43,10 @@ UNITS = {
 
 ICONS = {
     'conductivity': 'mdi:flower',
-    'consumption': 'mdi:flash',
     'gas density': 'mdi:google-circles-communities',
-    'moisture': 'mdi:water-percent',
     'smoke density': 'mdi:google-circles-communities',
-    'gateway': 'mdi:router-wireless',
-    'zigbee': 'mdi:zigbee',
-    'ble': 'mdi:bluetooth',
+    'moisture': 'mdi:water-percent',
+    # 'supply': '?',
     'tvoc': 'mdi:cloud',
 }
 
@@ -66,7 +71,10 @@ async def async_setup_entry(hass, entry, add_entities):
     gw.add_setup('sensor', setup)
 
 
-class XiaomiSensor(XiaomiEntity):
+class XiaomiSensor(XiaomiEntity, SensorEntity):
+    # https://developers.home-assistant.io/docs/core/entity/sensor/#long-term-statistics
+    _attr_state_class = "measurement"
+
     @property
     def state(self):
         return self._state
@@ -91,22 +99,29 @@ class XiaomiSensor(XiaomiEntity):
 
 class GatewayStats(XiaomiSensor):
     @property
+    def state(self):
+        return self._state
+
+    @property
     def device_class(self):
         # don't use const to support older Hass version
         return 'timestamp'
+
+    @property
+    def icon(self):
+        return 'mdi:router-wireless'
 
     @property
     def available(self):
         return True
 
     async def async_added_to_hass(self):
-        self.gw.add_stats(self.device['did'], self.update)
+        self.gw.set_stats(self.device['did'], self)
         # update available when added to Hass
         self.update()
 
     async def async_will_remove_from_hass(self) -> None:
-        await super().async_will_remove_from_hass()
-        self.gw.remove_stats(self.device['did'], self.update)
+        self.gw.remove_stats(self.device['did'], self)
 
     def update(self, data: dict = None):
         # empty data - update state to available time
@@ -124,9 +139,17 @@ class ZigbeeStats(XiaomiSensor):
     last_seq2 = None
 
     @property
+    def state(self):
+        return self._state
+
+    @property
     def device_class(self):
         # don't use const to support older Hass version
         return 'timestamp'
+
+    @property
+    def icon(self):
+        return 'mdi:zigbee'
 
     @property
     def available(self):
@@ -145,11 +168,10 @@ class ZigbeeStats(XiaomiSensor):
             }
             self.render_attributes_template()
 
-        self.gw.add_stats(self._attrs['ieee'], self.update)
+        self.gw.set_stats(self._attrs['ieee'], self)
 
     async def async_will_remove_from_hass(self) -> None:
-        await super().async_will_remove_from_hass()
-        self.gw.remove_stats(self._attrs['ieee'], self.update)
+        self.gw.remove_stats(self._attrs['ieee'], self)
 
     def update(self, data: dict = None):
         if 'sourceAddress' in data:
@@ -202,9 +224,17 @@ class ZigbeeStats(XiaomiSensor):
 
 class BLEStats(XiaomiSensor):
     @property
+    def state(self):
+        return self._state
+
+    @property
     def device_class(self):
         # don't use const to support older Hass version
         return 'timestamp'
+
+    @property
+    def icon(self):
+        return 'mdi:bluetooth'
 
     @property
     def available(self):
@@ -218,11 +248,10 @@ class BLEStats(XiaomiSensor):
             }
             self.render_attributes_template()
 
-        self.gw.add_stats(self.device['did'], self.update)
+        self.gw.set_stats(self.device['mac'], self)
 
     async def async_will_remove_from_hass(self) -> None:
-        await super().async_will_remove_from_hass()
-        self.gw.remove_stats(self.device['did'], self.update)
+        self.gw.remove_stats(self.device['mac'], self)
 
     def update(self, data: dict = None):
         self._attrs['msg_received'] += 1
@@ -236,6 +265,7 @@ BUTTON = {
     2: 'double',
     3: 'triple',
     4: 'quadruple',
+    5: 'quintuple',  # only Yeelight Dimmer
     16: 'hold',
     17: 'release',
     18: 'shake',

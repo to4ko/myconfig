@@ -88,6 +88,32 @@
       entity_id: timer.fan_t
 
 # ##################################
+# Toilet - Fan Timer restart
+# ################################## 
+- alias: toilet_fan_timer_restart
+  id: toilet_fan_timer_restart
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0001e54280_motion
+      to: 'on'
+      from: 'off'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.0x158d000232ddd6_contact
+      state: 'on'
+    - condition: state
+      entity_id: switch.esp32_bathroom_node_relay_4
+      state: 'on'
+    - condition: template
+      value_template: "{{(as_timestamp(now()) - as_timestamp(state_attr('automation.toilet_fan_timer_restart', 'last_triggered'))|int) > 10 }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.fan_t
+    - service: timer.start
+      entity_id: timer.fan_t
+
+# ##################################
 # Toilet - Fan Autostart
 # ################################## 
 - alias: toilet_fan_auto

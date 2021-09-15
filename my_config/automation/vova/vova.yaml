@@ -91,11 +91,31 @@
     - platform: event
       event_type: automation_reloaded
   action:
-    - service: fan.turn_{{'on' if is_state('person.sandra','home') else 'off'}}
-      entity_id: fan.purifier2s
-    - condition: template
-      value_template: >-
-        {{ (is_state('person.sandra','home') and is_state('binary_sensor.breather_v','off'))
-        or (not is_state('person.sandra','home') and is_state('binary_sensor.breather_v','on')) }}
-    - service: switch.turn_on
-      entity_id: switch.digma_ir_v_breather_pwr
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: person.sandra
+              state: 'home'
+          sequence:
+            - service: fan.turn_on
+              entity_id: fan.purifier2s
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: 'off'
+            - service: switch.turn_on
+              entity_id: switch.digma_ir_v_breather_pwr
+        - conditions:
+            - condition: not
+              conditions:
+                - condition: state
+                  entity_id: person.sandra
+                  state: 'home'
+          sequence:
+            - service: fan.turn_off
+              entity_id: fan.purifier2s
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: 'on'
+            - service: switch.turn_on
+              entity_id: switch.digma_ir_v_breather_pwr
+

@@ -126,13 +126,16 @@ views:
                     name: Serg
                   - entity: device_tracker.iphone_elena
                     name: Lena
+
               - type: glance
                 entities:
                   #- sensor.schlumberger
+                  - sensor.pc_s_usage
                   - entity: sensor.usd_rur
                     name: USD
                   - entity: sensor.eur_rur
                     name: EUR
+                
           - type: map
             aspect_ratio: "16x9"
             default_zoom: 16
@@ -433,7 +436,7 @@ views:
                     name: Humi
                     tap_action:
                       action: toggle
-                  - entity: sensor.humidifier_mode
+                  - entity: sensor.humidifier2_mode
                     name: Speed
                     tap_action:
                       action: call-service
@@ -452,7 +455,7 @@ views:
                     tap_action:
                       action: call-service
                       service: script.cycle_purifier_mode
-                  - entity: sensor.purifier_pm25
+                  - entity: sensor.purifier2s_pm2_5
                     name: PM2.5
           - type: custom:stack-in-card
             mode: vertical
@@ -626,11 +629,32 @@ views:
           #       name: MB
           #       tap_action:
           #         action: toggle
-          - type: entities
+          - type: glance
             state_color: true
             entities:
               - entity: binary_sensor.0x158d0003262acc_contact
                 name: 220V State
+              - entity: script.iclound_call_ipad_sandra
+                name: Call iPad
+                tap_action:
+                  action: call-service
+                  service: script.iclound_call_ipad_sandra
+              - entity: script.iclound_call_iphone_12_mini
+                name: Call 12
+                tap_action:
+                  action: call-service
+                  service: script.iclound_call_iphone_12_mini
+              - entity: script.iclound_call_iphone_7_sandra
+                name: Call 7
+                tap_action:
+                  action: call-service
+                  service: script.iclound_call_iphone_7_sandra
+              - entity: script.iclound_call_iphone_se_sandra
+                name: Call SE
+                tap_action:
+                  action: call-service
+                  service: script.iclound_call_iphone_se_sandra
+              
           - type: glance
             #title: Lights
             show_name: true
@@ -824,11 +848,10 @@ views:
                 name: Main St
                 tap_action:
                   action: toggle
-
-              # - entity: light.led_strip_1s
-              #   name: 1S
-              #   tap_action:
-              #     action: toggle
+              - entity: switch.sonoff_basic_1_relay
+                name: Night St
+                tap_action:
+                  action: toggle
 
               - entity: light.bedside_d2
                 name: D2
@@ -2535,9 +2558,9 @@ views:
             entities:
               - entity: humidifier.humidifier2
               - type: divider
-              - entity: sensor.humidifier_led
+              - entity: select.humidifier2_led_brightness
                 name: LED
-              - entity: sensor.humidifier_mode
+              - entity: sensor.humidifier2_mode
                 name: Mode
               # - entity: sensor.humidifier_fan_speed
               #   name: Fan speed
@@ -2550,7 +2573,7 @@ views:
           - type: horizontal-stack
             cards:
               - type: button
-                name: mode
+                name: Speed
                 icon: mdi:fan
                 entity: humidifier.humidifier2
                 hold_action: none
@@ -2573,17 +2596,19 @@ views:
                 entity: humidifier.humidifier2
                 hold_action: none
                 tap_action:
-                  action: call-service
-                  service: script.set_humidifier_buzzer
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.humidifier2_buzzer
 
               - type: button
-                name: DRY MODE
+                name: Dry Mode
                 icon: mdi:cup-water
                 entity: humidifier.humidifier2
                 hold_action: none
                 tap_action:
-                  action: call-service
-                  service: script.set_humidifier_dry_mode
+                  service: switch.toggle
+                  service_data:
+                    entity_id: switch.humidifier2_dry_mode
 
           - type: entities
             show_header_toggle: false
@@ -2591,50 +2616,51 @@ views:
             entities:
               - entity: fan.purifier2s
               - type: divider
-              - entity: sensor.purifier_pm25
+              - entity: sensor.purifier2s_pm2_5
                 name: PM2.5
                 icon: mdi:meteor
               - entity: sensor.purifier_mode
                 name: Mode
-              # - entity: sensor.purifier_fan_speed
-              #   name: Fan speed
-              - entity: sensor.purifier_filter_left
+                tap_action:
+                  action: call-service
+                  service: script.cycle_purifier_mode
+              - entity: sensor.purifier2s_filter_life_remaining
                 name: Filter left
 
-          - type: horizontal-stack
-            cards:
-              - type: button
-                name: mode
-                icon: mdi:fan
-                entity: fan.purifier2s
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: script.cycle_purifier_mode
-              - type: button
-                name: mode
-                icon: mdi:fan
-                entity: fan.purifier2s
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: script.cycle_purifier_mode
-              - type: button
-                name: mode
-                icon: mdi:fan
-                entity: fan.purifier2s
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: script.cycle_purifier_mode
-              - type: button
-                name: mode
-                icon: mdi:fan
-                entity: fan.purifier2s
-                hold_action: none
-                tap_action:
-                  action: call-service
-                  service: script.cycle_purifier_mode
+          # - type: horizontal-stack
+          #   cards:
+          #     - type: button
+          #       name: Speed
+          #       icon: mdi:fan
+          #       entity: fan.purifier2s
+          #       hold_action: none
+          #       tap_action:
+          #         action: call-service
+          #         service: script.cycle_purifier_mode
+          #     - type: button
+          #       name: mode
+          #       icon: mdi:fan
+          #       entity: fan.purifier2s
+          #       hold_action: none
+          #       tap_action:
+          #         action: call-service
+          #         service: script.cycle_purifier_mode
+          #     - type: button
+          #       name: mode
+          #       icon: mdi:fan
+          #       entity: fan.purifier2s
+          #       hold_action: none
+          #       tap_action:
+          #         action: call-service
+          #         service: script.cycle_purifier_mode
+          #     - type: button
+          #       name: mode
+          #       icon: mdi:fan
+          #       entity: fan.purifier2s
+          #       hold_action: none
+          #       tap_action:
+          #         action: call-service
+          #         service: script.cycle_purifier_mode
 
       - type: vertical-stack
         cards:
@@ -3565,7 +3591,7 @@ views:
                     name: S.Plug
                     tap_action: none
                     hold_action: none
-                  - entity: sensor.server_z_hb
+                  - entity: sensor.shp2_socket_server_w
                     name: Power usage
 
               - type: custom:bar-card
@@ -4950,6 +4976,23 @@ views:
             name: EM Voltage
           - entity: sensor.esp32_pzem_hb_voltage
             name: PZEM Voltage
+      - type: entities
+        entities:
+          - sensor.esp32_pzem_hb_current
+          - sensor.esp32_pzem_hb_voltage
+          - sensor.esp32_pzem_hb_power
+          - sensor.esp32_pzem_hb_reactive_power
+          - sensor.esp32_pzem_hb_apparent_power
+          - sensor.esp32_pzem_hb_energy
+          - sensor.esp32_pzem_hb_power_factor
+          - sensor.esp32_pzem_hb_frequency
+          - type: divider
+          - sensor.esp32_pzem_hb_energy_daily
+          - sensor.esp32_pzem_hb_energy_daily_day
+          - sensor.esp32_pzem_hb_energy_daily_night
+          - sensor.esp32_pzem_hb_energy_monthly
+          - sensor.esp32_pzem_hb_energy_monthly_day
+          - sensor.esp32_pzem_hb_energy_monthly_night
 
       - type: entities
         entities:

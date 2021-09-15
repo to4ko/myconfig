@@ -37,6 +37,15 @@ def remove_device(hass: HomeAssistantType, did: str):
         registry.async_remove_device(device.id)
 
 
+def update_device_info(hass: HomeAssistantType, did: str, **kwargs):
+    # lumi.1234567890 => 0x1234567890
+    mac = '0x' + did[5:]
+    registry: DeviceRegistry = hass.data['device_registry']
+    device = registry.async_get_device({('xiaomi_gateway3', mac)}, None)
+    if device:
+        registry.async_update_device(device.id, **kwargs)
+
+
 def migrate_unique_id(hass: HomeAssistantType):
     """New unique_id format: `mac_attr`, no leading `0x`, spaces and uppercase.
     """
@@ -153,25 +162,27 @@ async def get_bindkey(cloud: MiCloud, did: str):
     return bindkey
 
 
+def reverse_mac(s: str):
+    return f"{s[10:]}{s[8:10]}{s[6:8]}{s[4:6]}{s[2:4]}{s[:2]}"
+
+
 EZSP_URLS = {
-    7: 'https://master.dl.sourceforge.net/project/mgl03/zigbee/ncp-uart-sw_mgl03_6_6_2_stock.gbl?viasf=1',
-    8: 'https://master.dl.sourceforge.net/project/mgl03/zigbee/ncp-uart-sw_mgl03_6_7_8_z2m.gbl?viasf=1',
+    7: 'https://master.dl.sourceforge.net/project/mgl03/zigbee/'
+       'ncp-uart-sw_mgl03_6_6_2_stock.gbl?viasf=1',
+    8: 'https://master.dl.sourceforge.net/project/mgl03/zigbee/'
+       'ncp-uart-sw_mgl03_6_7_8_z2m.gbl?viasf=1',
 }
 
 
 def _update_zigbee_firmware(host: str, ezsp_version: int):
     shell = TelnetShell(host)
 
-    ps = shell.get_running_ps()
-    if "Lumi_Z3GatewayHost_MQTT" in ps:
-        shell.stop_lumi_zigbee()
-    if "tcp-l:8888" in ps:
-        shell.stop_zigbee_tcp()
+    # stop all utilities without checking if they are running
+    shell.stop_lumi_zigbee()
+    shell.stop_zigbee_tcp()
     # flash on another port because running ZHA or z2m can breake process
-    if "tcp-l:8889" not in ps:
-        shell.check_or_download_socat()
-        shell.run_zigbee_tcp(port=8889)
-        time.sleep(.5)
+    shell.run_zigbee_tcp(port=8889)
+    time.sleep(.5)
 
     _LOGGER.debug(f"Try update EZSP to version {ezsp_version}")
 
@@ -209,7 +220,7 @@ async def update_zigbee_firmware(hass: HomeAssistantType, host: str,
 
 @lru_cache(maxsize=0)
 def attributes_template(hass: HomeAssistantType) -> Template:
-    template = hass.data[DOMAIN]['config']['attributes_template']
+    template = hass.data[DOMAIN]['attributes_template']
     template.hass = hass
     return template
 

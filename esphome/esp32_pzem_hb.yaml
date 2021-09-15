@@ -7,6 +7,9 @@ esphome:
   board: esp-wrover-kit
   comment: ESP32 PZEM
 
+external_components:
+  - source: github://dentra/esphome-components
+
 wifi:
   ssid: !secret wifi_ssid_hb
   password: !secret wifi_pass
@@ -110,10 +113,12 @@ sensor:
       name: ${board_name}_Current
       accuracy_decimals: 1
       device_class: current
+      id: id_current
     voltage:
       name: ${board_name}_Voltage
       accuracy_decimals: 1
       device_class: voltage
+      id: id_voltage
     energy:
       name: ${board_name}_Energy
       accuracy_decimals: 3
@@ -121,7 +126,8 @@ sensor:
       device_class: energy
       state_class: total_increasing
       filters:
-        - multiply: 0.001      
+        - multiply: 0.001
+      id: id_energy
     power:
       name: ${board_name}_Power
       accuracy_decimals: 0
@@ -131,6 +137,7 @@ sensor:
     frequency:
       name: ${board_name}_Frequency
       accuracy_decimals: 0
+      id: if_frequency
     power_factor:
       name: ${board_name}_Power Factor
       accuracy_decimals: 2
@@ -144,11 +151,12 @@ sensor:
   - platform: template
     name: ${board_name}_Power_kW
     lambda: return (id(id_power).state)*0.001;
+    id: id_power_kw
     accuracy_decimals: 3
     update_interval: 3s
     unit_of_measurement: 'kW'
     icon: mdi:lightning-bolt-outline
-    
+
   - platform: template
     name: ${board_name}_Power_Night
     id: id_power_night
@@ -252,6 +260,16 @@ sensor:
       - multiply: 0.001
     unit_of_measurement: 'kWh'
     accuracy_decimals: 3
+
+  - platform: "energy_monitoring"
+    power: id_power
+    voltage: id_voltage
+    current: id_current
+    apparent_power:
+      name: ${board_name}_Apparent_Power
+    reactive_power:
+      name: ${board_name}_Reactive_Power
+    wait_time: 500
 
 switch:
   - platform: restart

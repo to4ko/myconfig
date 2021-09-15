@@ -1,23 +1,25 @@
 substitutions:
-  board_name: sonoff_dual_k
+  board_name: digma_strip_v
 
 esphome:
   name: ${board_name}
   platform: ESP8266
   board: esp01_1m
-  comment: Sonoff Dual R2 Kitchen Work Light
 
 wifi:
   ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .localdomain
-  reboot_timeout: 0s
+  reboot_timeout: 30min
+  output_power: 17.5dB
   fast_connect: true
   power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.70
+    static_ip: 192.168.1.123
     gateway: 192.168.1.1
     subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
 
 logger:
 
@@ -26,65 +28,51 @@ api:
 
 ota:
 
-web_server:
-  port: 80
-
-# output:
-#   - platform: esp8266_pwm
-#     id: blue_led
-#     pin: GPIO13
-#     inverted: True
-
-# light:
-#   - platform: binary
-#     name: ${board_name}_StatusLED
-#     #internal: true
-#     output: blue_led
-#     id: main_led
+status_led:
+  pin: 
+    number: GPIO1
+    inverted: true
 
 binary_sensor:
-  - platform: gpio
-    pin:
-      number: GPIO10
-      mode: INPUT_PULLUP
-      inverted: True
-    name: "${board_name}_button"
-    #toggle both relays on push
-    on_press:
-      - switch.toggle: relay1
-      - switch.toggle: relay2
-
   - platform: status
     name: ${board_name}_Status
 
-switch:
   - platform: gpio
-    name: "${board_name}_relay1"
-    pin: GPIO12
-    id: relay1
-  - platform: gpio
-    name: "${board_name}_relay2"
-    pin: GPIO05
-    id: relay2
+    pin:
+      number: GPIO03
+      inverted: true
+    internal: true
+    name: ${board_name}_Button
+    id: button
 
+
+switch:
   - platform: restart
     name: ${board_name}_Restart
 
-status_led:
-  pin:
-    number: GPIO13
-    #inverted: yes
+  - platform: gpio
+    name: ${board_name}_Relay1
+    pin: GPIO05
 
-sensor:
-  - platform: uptime
-    name: ${board_name}_Uptime_s
-    id: uptime_sensor
+  - platform: gpio
+    name: ${board_name}_Relay2
+    pin: GPIO04
 
-  - platform: wifi_signal
-    name: ${board_name}_WiFi_RSSI
-    update_interval: 60s
+  - platform: gpio
+    name: ${board_name}_Relay3
+    pin: GPIO12
+    
+  - platform: gpio
+    name: ${board_name}_Relay4
+    pin: GPIO13
+    
+  - platform: gpio
+    name: ${board_name}_Relay5_USB
+    pin: 
+      number: GPIO14
+      inverted: true
 
-  
+
 text_sensor:
   - platform: template
     name: ${board_name}_Uptime
@@ -111,6 +99,16 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+    
 time:
   - platform: homeassistant
     id: homeassistant_time
