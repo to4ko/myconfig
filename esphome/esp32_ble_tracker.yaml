@@ -13,7 +13,7 @@ wifi:
   reboot_timeout: 30min
   output_power: 17.5dB
   fast_connect: true
-  power_save_mode: none
+  #power_save_mode: none
   manual_ip:
     static_ip: 192.168.1.109
     gateway: 192.168.1.1
@@ -30,18 +30,18 @@ api:
 ota:
 
 esp32_ble_tracker:
-  scan_parameters:
-    interval: 512ms
-    window: 48ms
-    active: true
+  # scan_parameters:
+  #   interval: 512ms
+  #   window: 48ms
+  #   active: true
 
 exposure_notifications:
   on_exposure_notification:
     then:
-      # - homeassistant.service:
-      #     service: notify.telegram
-      #     data:
-      #       message: "Tracker HB - COVID-19 Exposure Notify!"
+      - homeassistant.service:
+          service: notify.telegram
+          data:
+            message: "Tracker HB - COVID-19 Exposure Notify!"
       - lambda: |
           ESP_LOGD("main", "Got notification:");
           ESP_LOGD("main", "  RPI: %s", hexencode(x.rolling_proximity_identifier).c_str());
@@ -154,36 +154,6 @@ text_sensor:
       return {buffer};
     icon: mdi:clock-start
     update_interval: 15s
-
-  # - platform: template
-  #   name: ${board_name}_last_connect
-  #   lambda: |-
-  #     auto esptime = id(esp_time).now();
-  #     if(esptime.is_valid()) {
-  #       auto esptime_text = esptime.strftime("%d.%m.%Y %H:%M");
-  #       return esptime_text;
-  #     }
-  #   icon: "mdi:clock-end"   
-
-  # - platform: template
-  #   name: ${board_name}_heap_size_text
-  #   lambda: |-
-  #     uint32_t heby = id(heap_size).state;
-  #     int hekb = 0;
-  #     int hemb = 0;
-  #     if (heby > 1048576) {
-  #       hemb = trunc(heby / 1048576);
-  #       heby = heby - (hemb * 1048576);
-  #     }
-  #     if (heby > 1024) {
-  #       hekb = trunc(heby / 1024);
-  #       heby = heby - (hekb * 1024);
-  #     }
-  #     char buffer[17];
-  #     sprintf(buffer, "%02umb %02ukb %02ub", hemb, hekb, heby);
-  #     return {buffer};
-  #   icon: "mdi:chart-pie"
-  #   #update_interval: ${interval}    
 
 switch:
   - platform: restart

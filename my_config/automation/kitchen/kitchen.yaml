@@ -9,19 +9,23 @@
   id: kitchen_weather_announcement
   initial_state: true
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b4729d_motion, binary_sensor.0x158d0002b48381_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b4729d_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b48381_motion
   condition:
     - condition: time
-      after: '07:20:00'
-      before: '07:30:00'
+      after: "07:20:00"
+      before: "07:30:00"
     - condition: template
       value_template: "{{(as_timestamp(now())|int - as_timestamp(state_attr('automation.kitchen_weather_announcement', 'last_triggered'))|int) > 10*60 }}"
     - condition: state
       entity_id: binary_sensor.workday_sensor
-      state: 'on'
+      state: "on"
   action:
     - service: script.weather_tts
       data:
@@ -37,12 +41,12 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0002c92f31_smoke
-      to: 'on'
-  action: 
+      to: "on"
+  action:
     - service: notify.telegram
       data:
         message: "\U000026d4 Внимание! Сработал датчик дыма!"
-        
+
 # ##################################
 # Kitchen - Gas Detected
 # ##################################
@@ -52,30 +56,11 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d00024bcf85_gas
-      to: 'on'
-  action: 
+      to: "on"
+  action:
     - service: notify.telegram
       data:
         message: "\U000026d4 Внимание! Сработал датчик газа!"
-
-# ##################################
-# Kitchen - Hood Fan
-# ##################################
-# - alias: kitchen_hood_fan
-#   id: kitchen_hood_fan
-#   initial_state: true
-#   trigger:
-#     # - platform: state
-#     #   entity_id: sensor.0x158d0001e0784e_action
-#     #   to: 'button_2_single'
-#     - platform: event
-#       event_type: xiaomi_aqara.click
-#       event_data:
-#         entity_id: sensor.0x158d0001e0784e_action
-#         click_type: button_2_single      
-#   action:
-#     - service: switch.toggle
-#       entity_id: switch.esp8266_hood_k_fan
 
 # ##################################
 # Kitchen - Kettle counter
@@ -86,15 +71,15 @@
   trigger:
     - platform: state
       entity_id: sensor.mi_kettle_state
-      to: 'ON'
+      to: "ON"
     - platform: state
       entity_id: binary_sensor.kettle_boil_k
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
   action:
     - service: counter.increment
       entity_id: counter.kettle_k
-      
+
 # ##################################
 # Kitchen - RO Filter Usage
 # ##################################
@@ -103,7 +88,7 @@
   initial_state: true
   trigger:
     - platform: time
-      at: '00:00:10'
+      at: "00:00:10"
   action:
     - service: input_number.set_value
       data:
@@ -141,7 +126,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: 
+      entity_id:
         - sensor.ro_filter1_wearing
         - sensor.ro_filter2_wearing
         - sensor.ro_filter3_wearing
@@ -188,8 +173,8 @@
       above: 100
     - condition: state
       entity_id: binary_sensor.motion_k
-      state: 'off'
-      for: '00:30:00'
+      state: "off"
+      for: "00:30:00"
   action:
     - service: notify.telegram
       data:
@@ -204,16 +189,16 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.motion_k
-      to: 'off'
+      to: "off"
       for:
         minutes: 30
   condition:
     - condition: time
-      after: '02:00:00'
-      before: '07:00:00'
+      after: "01:00:00"
+      before: "07:00:00"
     - condition: state
       entity_id: switch.0x158d0001e85086_switch
-      state: 'on'
+      state: "on"
   action:
     - service: switch.turn_off
       entity_id: switch.0x158d0001e85086_switch
@@ -227,20 +212,21 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.motion_k
-      to: 'on'
+      to: "on"
+      from: "off"
   condition:
     - condition: time
-      after: '06:00:00'
+      after: "06:00:00"
     - condition: state
       entity_id: switch.0x158d0001e85086_switch
-      state: 'off'
+      state: "off"
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'off'
+      state: "off"
   action:
     - service: switch.turn_on
       entity_id: switch.0x158d0001e85086_switch
-      
+
 # ##################################
 # Kitchen - Oven Target Temp
 # ##################################
@@ -252,7 +238,7 @@
       event_type: automation_reloaded
     - platform: state
       entity_id: binary_sensor.esp8266_oven_temp_k_oven_status
-      to: 'on'
+      to: "on"
   condition:
     - condition: template
       value_template: "{{ states('sensor.oven_target_temperature')|int > 100 }}"
@@ -260,7 +246,7 @@
       value_template: "{{as_timestamp(now()) - as_timestamp(state_attr('automation.kitchen_oven_notify_target_temp', 'last_triggered')) > 60*60 }}"
     - condition: state
       entity_id: binary_sensor.esp8266_oven_temp_k_oven_status
-      state: 'on'
+      state: "on"
   action:
     - wait_for_trigger:
         - platform: template
@@ -273,12 +259,12 @@
         message: "\U0001f321 Духовка нагрелась до {{states('sensor.esp8266_oven_temp_k')|int}}°C!"
     - condition: state
       entity_id: binary_sensor.tod_day
-      state: 'on'
+      state: "on"
     - service: media_player.volume_set
       data:
         entity_id: media_player.home_mini_k
         volume_level: '{{states("input_number.main_volume")|float}}'
     - service: tts.yandextts_say
-      data: 
+      data:
         entity_id: media_player.home_mini_k
         message: "Температура духовки ({{states('sensor.esp8266_oven_temp_k')|int}}°C"

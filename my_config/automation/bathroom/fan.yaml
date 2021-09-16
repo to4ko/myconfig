@@ -9,9 +9,6 @@
   id: bathroom_button_b_single
   initial_state: true
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0001b94abe_action
-    #   to: 'single'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
@@ -20,8 +17,9 @@
   action:
     - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x158d0002a36433_channel_2','off') }}"
+            - condition: state
+              entity_id: group.lights_b
+              state: 'off'
           sequence:
             - service: xiaomi_miio.light_set_scene
               data:
@@ -31,8 +29,9 @@
             - condition: state
               entity_id: switch.esp32_bathroom_node_relay_3
               state: 'off'
-            - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x158d0002a36433_channel_2','on') }}"
+            - condition: state
+              entity_id: group.lights_b
+              state: 'off'
           sequence:
             - service: switch.turn_on
               entity_id: switch.esp32_bathroom_node_relay_3
@@ -46,8 +45,9 @@
             - condition: state
               entity_id: switch.esp32_bathroom_node_relay_3
               state: 'on'
-            - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x158d0002a36433_channel_2','on') }}"
+            - condition: state
+              entity_id: group.lights_b
+              state: 'on'
           sequence:
             - service: switch.turn_off
               entity_id: switch.esp32_bathroom_node_relay_3
@@ -61,9 +61,6 @@
   id: bathroom_button_b_double
   initial_state: true
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0001b94abe_action
-    #   to: 'double'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
@@ -72,18 +69,20 @@
   action:
     - choose:
         - conditions:
-            - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x158d0002a36433_channel_2','off') }}"
+            - condition: state
+              entity_id: group.lights_b
+              state: 'off'
           sequence:
             - service: xiaomi_miio.light_set_scene
               data:
                 entity_id: light.mirror_light_b
                 scene: 1
         - conditions:
-            - condition: template
-              value_template: "{{ is_state('light.mirror_light_b','on') or is_state('switch.0x158d0002a36433_channel_2','on') }}"
+            - condition: state
+              entity_id: group.lights_b
+              state: 'on'
           sequence:
-            - service: switch.turn_{%if is_state('switch.sonoff_pow_r2_1_bottom_fan','on')%}off{%else%}on{%endif%} #service: switch.toggle
+            - service: switch.toggle
               entity_id: switch.sonoff_pow_r2_1_bottom_fan
 
 # ##################################
@@ -93,17 +92,15 @@
   id: bathroom_button_b_hold
   initial_state: true
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0001b94abe_action
-    #   to: 'hold'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
         entity_id: sensor.0x158d0001b94abe_action
         click_type: hold
   condition:
-    - condition: template
-      value_template: "{{ is_state('light.mirror_light_b','off') and is_state('switch.0x158d0002a36433_channel_2','off') }}"
+    - condition: state
+      entity_id: group.lights_b
+      state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.0x158d0002a36433_channel_2

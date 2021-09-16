@@ -10,10 +10,10 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001e05856_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001e05856_motion
     # - platform: state
     #   entity_id: binary_sensor.motion_g3_flex_entrance
     #   from: 'off'
@@ -23,23 +23,14 @@
       entity_id: binary_sensor.tod_day
       state: 'off'
     - condition: state
-      entity_id: light.led_strip_entrance_hb
-      state: 'off'
-    - condition: state
       entity_id: switch.dark_mode
       state: 'off'
     - condition: state
       entity_id: input_boolean.security_mode
       state: 'off'
     - condition: state
-      entity_id: group.lights_main_hb
+      entity_id: group.lights_hb
       state: 'off'
-    # - condition: state
-    #   entity_id: switch.0x158d000223921b_channel_1
-    #   state: 'off'
-    # - condition: state
-    #   entity_id: switch.0x158d000253f04a_channel_2
-    #   state: 'off'
   action:
     - service: light.turn_on
       entity_id: light.led_strip_entrance_hb
@@ -55,14 +46,14 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001e05856_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b482e9_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001e05856_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b482e9_motion
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
@@ -74,26 +65,8 @@
       entity_id: switch.dark_mode
       state: 'off'
     - condition: state
-      entity_id: light.led_strip_hb
+      entity_id: group.lights_hb
       state: 'off'
-    - condition: state
-      entity_id: light.led_strip_entrance_hb
-      state: 'off'
-    - condition: state
-      entity_id: binary_sensor.main_light_hb
-      state: 'off'
-    - condition: state
-      entity_id: switch.0x158d000223921b_channel_1
-      state: 'off'
-    - condition: state
-      entity_id: switch.0x158d000253f04a_channel_2
-      state: 'off'
-    # - condition: state
-    #   entity_id: switch.0x158d000223921b_channel_1
-    #   state: 'off'
-    # - condition: state
-    #   entity_id: switch.0x158d000253f04a_channel_2
-    #   state: 'off'
   action:
     - service: script.turn_on
       entity_id: script.hall_big_led_strip_on
@@ -193,18 +166,18 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: binary_sensor.main_light_hb
+      entity_id: group.lights_main_hb
       to: 'off'
       from: 'on'
     - platform: state
-      entity_id: binary_sensor.main_light_hb
+      entity_id: group.lights_main_hb
       to: 'on'
       from: 'off'
   action:
     - choose:
         - conditions:
             - condition: state
-              entity_id: binary_sensor.main_light_hb
+              entity_id: group.lights_main_hb
               state: 'off'
             - condition: state
               entity_id: input_boolean.security_mode
@@ -214,7 +187,7 @@
               entity_id: script.hall_big_led_strip_on
         - conditions:
             - condition: state
-              entity_id: binary_sensor.main_light_hb
+              entity_id: group.lights_main_hb
               state: 'on'
           sequence:
             - service: light.turn_off
@@ -245,23 +218,18 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001e05856_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b482e9_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001e05856_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b482e9_motion
   condition:
-    condition: or
-    conditions:
-      - condition: state
-        entity_id: switch.0x158d000223921b_channel_1
-        state: 'on'
-      - condition: state
-        entity_id: switch.0x158d000253f04a_channel_2
-        state: 'on'
+    - condition: state
+      entity_id: group.lights_main_hb
+      state: 'on'
   action:
     - service: timer.cancel
       entity_id: timer.main_light_hb
@@ -275,9 +243,6 @@
   id: hall_big_entrance_light_on_from_fridge
   initial_state: true
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d000253f04a_action
-    #   to: 'button_1_single'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
@@ -287,7 +252,7 @@
     - condition: template
       value_template: "{{states('sensor.ha_uptime')|float > 1}}"
   action:
-    - service: switch.toggle #switch.turn_{%if is_state('switch.0x158d000223921b_channel_1','on')%}off{%else%}on{%endif%}
+    - service: switch.toggle
       entity_id: switch.0x158d000223921b_channel_1
 
 # ##################################
@@ -297,9 +262,6 @@
   id: hall_big_fridge_light_on_from_entrance
   initial_state: true
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d000223921b_action
-    #   to: 'button_2_single'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
@@ -309,7 +271,7 @@
     - condition: template
       value_template: "{{states('sensor.ha_uptime')|float > 1}}"
   action:
-    - service: switch.toggle #switch.turn_{%if is_state('switch.0x158d000253f04a_channel_2','on')%}off{%else%}on{%endif%}
+    - service: switch.toggle
       entity_id: switch.0x158d000253f04a_channel_2
 
 # ##################################
@@ -341,22 +303,6 @@
       entity_id: script.led_strip_hb_restart
       
 # ##################################
-# Hall Big - LED Strip Power Switch Turn On
-# ##################################
-- alias: hall_big_led_strip_switch_on
-  id: hall_big_led_strip_switch_on
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: switch.0x158d00023e5812_switch
-      to: 'off'
-      for:
-        seconds: 45
-  action:
-    - service: switch.turn_on
-      entity_id: switch.0x158d00023e5812_switch
-      
-# ##################################
 # Hall Big - LED Strip Entrance Reset 
 # ##################################
 - alias: hall_big_led_strip_entrance_reset
@@ -385,109 +331,45 @@
       entity_id: script.led_strip_entrance_hb_restart
       
 # ##################################      
-# Hall Big - LED Entrance Turn_on
+# Hall Big - LED Entrance Manual
 # ##################################
-- alias: hall_big_led_entance_turn_on
-  id: hall_big_led_entance_turn_on
+- alias: hall_big_led_entance_manual
+  id: hall_big_led_entance_manual
   initial_state: true
   trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0003991051_action
-    #   to: 'single'
     - platform: event
       event_type: xiaomi_aqara.click
       event_data:
         entity_id: sensor.0x158d0003991051_action
-        click_type: single
   condition:
-    - condition: state
-      entity_id: light.led_strip_entrance_hb
-      state: 'off'
+    - condition: template
+      value_template: "{{ states('light.led_strip_entrance_hb') in ['on','off'] }}"
   action:
-    - service: light.turn_on
-      entity_id: light.led_strip_entrance_hb
-      data:
-        brightness_pct: >
-          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
-            15
-          {% else %}
-            100
-          {%endif%}
-        kelvin: >
-          {% if states('binary_sensor.workday_sensor')=='off' and states('sensor.time').split(':').0|int < 10 %}
-            3000
-          {% else %}
-            5000
-          {%endif%}
-
-# ##################################
-# Hall Big - LED Entrance Turn_off
-# ##################################
-- alias: hall_big_led_entance_turn_off
-  id: hall_big_led_entance_turn_off
-  initial_state: true
-  trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0003991051_action
-    #   to: 'single'
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0003991051_action
-        click_type: single
-  condition:
-    - condition: state
-      entity_id: light.led_strip_entrance_hb
-      state: 'on'
-  action:
-    - service: light.turn_off
-      entity_id: light.led_strip_entrance_hb
-      data:
-        transition: 5
-      
-# ##################################
-# Hall Big - LED Entrance Bright
-# ##################################
-- alias: hall_big_led_entance_bright
-  id: hall_big_led_entance_bright
-  initial_state: true
-  trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0003991051_action
-    #   to: 'double'
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0003991051_action
-        click_type: double      
-  action:
-    - service: light.turn_on
-      entity_id: light.led_strip_entrance_hb
-      data:
-        brightness_pct: 90
-        kelvin: 5000
-        
-# ##################################
-# Hall Big - LED Entrance Turn_off
-# ##################################
-- alias: hall_big_led_entance_midnight
-  id: hall_big_led_entance_midnight
-  initial_state: true
-  trigger:
-    # - platform: state
-    #   entity_id: sensor.0x158d0003991051_action
-    #   to: 'hold'
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0003991051_action
-        click_type: hold      
-  action:
-    - service: light.turn_on
-      entity_id: light.led_strip_entrance_hb
-      data:
-        brightness_pct: 15
-        kelvin: 3000
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'single' }}"
+          sequence:
+            - service: light.toggle
+              entity_id: light.led_strip_entrance_hb
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'double' }}"
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_strip_entrance_hb
+              data:
+                brightness_pct: 100
+                kelvin: 5000
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'hold' }}"
+          sequence:
+            - service: light.turn_on
+              entity_id: light.led_strip_entrance_hb
+              data:
+                brightness_pct: 15
+                kelvin: 3000
 
 # ##################################
 # Hall big - LED Strip Timer start
@@ -502,11 +384,11 @@
       from: 'off'
   action:
     - service: timer.cancel
-      entity_id: timer.main_led_strip_hb, timer.night_led_strip_hb
+      entity_id: timer.led_strip_day_hb, timer.led_strip_night_hb
     - service: timer.start
       data:
         entity_id: >
-          timer.{% if is_state('binary_sensor.tod_day','on') %}main_led_strip_hb{%else%}night_led_strip_hb{%endif%}
+          timer.{% if is_state('binary_sensor.tod_day','on') %}led_strip_day_hb{%else%}led_strip_night_hb{%endif%}
 
 # ##################################
 # Hall big - Auto LED Strips off
@@ -518,11 +400,11 @@
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.main_led_strip_hb
+        entity_id: timer.led_strip_day_hb
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.night_led_strip_hb
+        entity_id: timer.led_strip_night_hb
   action:
     - service: light.turn_off
       entity_id: light.led_strip_entrance_hb, light.led_strip_hb
@@ -532,91 +414,98 @@
 # ##################################
 # Hall big - LED Strips Timer restart with movement
 # ################################## 
-- alias: hall_big_led_strips_night_timer_restart
-  id: hall_big_led_strips_night_timer_restart
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001e05856_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b482e9_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0001d5995e_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.motion_g3_flex_entrance #, binary_sensor.motion_g3_flex_hall
-      from: 'off'
-      to: 'on'
-    # - platform: state
-    #   entity_id: light.led_strip_entrance_hb, light.led_strip_hb
-    #   to: 'on'
-  condition:
-    - condition: state
-      entity_id: binary_sensor.tod_day
-      state: 'off'
-    - condition: or
-      conditions:
-        - condition: state
-          entity_id: light.led_strip_entrance_hb
-          state: 'on'
-        - condition: state
-          entity_id: light.led_strip_hb
-          state: 'on'
-    - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_night_timer_restart', 'last_triggered'))|int) > 5 }}"    
-  action:
-    - service: timer.cancel
-      entity_id: timer.night_led_strip_hb
-    - service: timer.start
-      entity_id: timer.night_led_strip_hb
-
-# ##################################
-# Hall big - LED Strips Timer restart with movement
-# ################################## 
 - alias: hall_big_led_strips_timer_restart
   id: hall_big_led_strips_timer_restart
   initial_state: true
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001e05856_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b482e9_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0001d5995e_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001e05856_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b482e9_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001d5995e_motion
     - platform: state
       entity_id: binary_sensor.motion_g3_flex_entrance #, binary_sensor.motion_g3_flex_hall
       from: 'off'
       to: 'on'
-    # - platform: state
-    #   entity_id: light.led_strip_entrance_hb, light.led_strip_hb
-    #   to: 'on'
   condition:
     - condition: state
       entity_id: binary_sensor.tod_day
+      state: 'off'
+    - condition: state
+      entity_id: group.lights_strips_hb
       state: 'on'
-    - condition: or
-      conditions:
-        - condition: state
-          entity_id: light.led_strip_entrance_hb
-          state: 'on'
-        - condition: state
-          entity_id: light.led_strip_hb
-          state: 'on'
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'))|int) > 15 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'))|int) > 5 }}"    
   action:
-    - service: timer.cancel
-      entity_id: timer.main_led_strip_hb
-    - service: timer.start
-      entity_id: timer.main_led_strip_hb
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.tod_day
+              state: 'on'
+          sequence:
+            - service: timer.cancel
+              entity_id: timer.led_strip_day_hb
+            - service: timer.start
+              entity_id: timer.led_strip_day_hb
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.tod_day
+              state: 'off'
+          sequence:
+            - service: timer.cancel
+              entity_id: timer.led_strip_night_hb
+            - service: timer.start
+              entity_id: timer.led_strip_night_hb
+
+# # ##################################
+# # Hall big - LED Strips Timer restart with movement
+# # ################################## 
+# - alias: hall_big_led_strips_timer_restart
+#   id: hall_big_led_strips_timer_restart
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x158d0001e05856_motion
+#       from: 'off'
+#       to: 'on'
+#     - platform: state
+#       entity_id: binary_sensor.0x158d0002b482e9_motion
+#       from: 'off'
+#       to: 'on'
+#     - platform: state
+#       entity_id: binary_sensor.0x158d0001d5995e_motion
+#       from: 'off'
+#       to: 'on'
+#     - platform: state
+#       entity_id: binary_sensor.motion_g3_flex_entrance #, binary_sensor.motion_g3_flex_hall
+#       from: 'off'
+#       to: 'on'
+#     # - platform: state
+#     #   entity_id: light.led_strip_entrance_hb, light.led_strip_hb
+#     #   to: 'on'
+#   condition:
+#     - condition: state
+#       entity_id: binary_sensor.tod_day
+#       state: 'on'
+#     - condition: or
+#       conditions:
+#         - condition: state
+#           entity_id: light.led_strip_entrance_hb
+#           state: 'on'
+#         - condition: state
+#           entity_id: light.led_strip_hb
+#           state: 'on'
+#     - condition: template
+#       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'))|int) > 15 }}"
+#   action:
+#     - service: timer.cancel
+#       entity_id: timer.led_strip_day_hb
+#     - service: timer.start
+#       entity_id: timer.led_strip_day_hb

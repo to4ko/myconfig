@@ -10,14 +10,14 @@
   initial_state: true
   mode: queued
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001ae9f61_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b43ad4_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: inary_sensor.0x158d0001ae9f61_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b43ad4_motion
     - platform: state
       entity_id: binary_sensor.0x158d00025315e9_contact #MB Door
       from: 'off'
@@ -140,9 +140,9 @@
       from: 'off'
   action:
     - service: timer.cancel
-      entity_id: timer.night_led_strip_hs
+      entity_id: timer.led_strip_night_hs
     - service: timer.start
-      entity_id: timer.night_led_strip_hs
+      entity_id: timer.led_strip_night_hs
 
 # ##################################
 # Hall small - Auto LED Strips off
@@ -154,7 +154,7 @@
     - platform: event
       event_type: timer.finished
       event_data:
-        entity_id: timer.night_led_strip_hs
+        entity_id: timer.led_strip_night_hs
   action:
     - service: light.turn_off
       entity_id: light.mono_strip_1_light
@@ -168,14 +168,14 @@
   id: hall_small_led_strip_timer_restart
   initial_state: true
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001ae9f61_motion
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b43ad4_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001ae9f61_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b43ad4_motion
   condition:
     # - condition: state
     #   entity_id: binary_sensor.tod_day
@@ -187,9 +187,9 @@
       state: 'on'
   action:
     - service: timer.cancel
-      entity_id: timer.night_led_strip_hs
+      entity_id: timer.led_strip_night_hs
     - service: timer.start
-      entity_id: timer.night_led_strip_hs
+      entity_id: timer.led_strip_night_hs
 
 # ##################################
 # Hall Small - Timer restart with movement
@@ -199,15 +199,17 @@
   initial_state: true
   mode: single
   trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0002b43ad4_motion, binary_sensor.0x158d0001ae9f61_motion
-      from: 'off'
-      to: 'on'
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0002b43ad4_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001ae9f61_motion
   condition:
-    - condition: or
-      conditions:
-        - condition: template
-          value_template: "{{ not is_state('light.round_led_hs', 'off') }}"
+    - condition: template
+      value_template: "{{ not is_state('light.round_led_hs', 'off') }}"
     - condition: template
       value_template: "{{(as_timestamp(now()) - as_timestamp(state_attr('automation.hall_small_timer_restart', 'last_triggered'))|int) > 5 }}"
     - condition: state
