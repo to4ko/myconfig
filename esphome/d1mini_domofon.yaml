@@ -12,9 +12,9 @@ wifi:
   password: !secret wifi_pass
   domain: .localdomain
   reboot_timeout: 15min
-  output_power: 17.5dB
+  #output_power: 17.5dB
   fast_connect: true
-  power_save_mode: none
+  #power_save_mode: none
   manual_ip:
     static_ip: 192.168.1.81
     gateway: 192.168.1.1
@@ -76,11 +76,12 @@ script:
       - logger.log: "Accept call"
       - script.execute: state_no_call
       - switch.turn_on: id_phone
-      - delay: 1000ms
+      - delay: 1s
       - switch.turn_on: id_open
-      - delay: 1000ms
+      - delay: 1s
+      - switch.turn_on: id_open
+      - delay: 1s      
       - switch.turn_off: id_open      
-      - delay: 2000ms
       - switch.turn_off: id_phone
       - globals.set:
           id: opening
@@ -94,13 +95,14 @@ script:
       - logger.log: "Accept call_mute"
       - script.execute: state_no_call
       - switch.turn_on: id_mute
-      - switch.turn_on: id_headset_mute
       - switch.turn_on: id_phone
-      - delay: 500ms
+      - switch.turn_on: id_headset_mute
+      - delay: 1s
       - switch.turn_on: id_open
-      - delay: 1000ms
-      - switch.turn_off: id_open      
-      - delay: 2000ms
+      - delay: 1s
+      - switch.turn_on: id_open
+      - delay: 1s
+      - switch.turn_off: id_open
       - switch.turn_off: id_phone
       - switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
@@ -111,16 +113,16 @@ script:
   - id: call_accept_manual
     then:
       - logger.log: "Accept call_manual"
+      - script.execute: state_no_call
       - switch.turn_on: id_mute
-      - delay: 50ms
       - switch.turn_on: id_phone
-      - delay: 50ms
       - switch.turn_on: id_headset_mute
-      - delay: 500ms
+      - delay: 1s
       - switch.turn_on: id_open
-      - delay: 1000ms
-      - switch.turn_off: id_open      
-      - delay: 2000ms
+      - delay: 1s
+      - switch.turn_on: id_open
+      - delay: 1s
+      - switch.turn_off: id_open
       - switch.turn_off: id_phone
       - switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
@@ -129,11 +131,10 @@ script:
     then:
       - logger.log: "Reject call"
       - script.execute: state_no_call
-      - delay: 400ms
       - switch.turn_on: id_mute
       - switch.turn_on: id_headset_mute
       - switch.turn_on: id_phone
-      - delay: 3000ms
+      - delay: 3s
       - switch.turn_off: id_phone
       - switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
@@ -215,14 +216,14 @@ script:
   - id: led_off
     then:
       #- light.turn_off: id_led1
-      - light.turn_off: id_led2
-      - light.turn_off: id_led3
+      #- light.turn_off: id_led2
+      #- light.turn_off: id_led3
       - if:
           condition:
             switch.is_on: mute
           then:
             light.turn_on: 
-              id: id_led3
+              id: id_led1
               brightness: 50%
               red: 0%
               green: 0%
@@ -232,7 +233,7 @@ script:
   - id: led_green_soft
     then:
       light.turn_on:
-        id: id_led2
+        id: id_led1
         brightness: 30%
         red: 0%
         green: 100%
@@ -243,7 +244,7 @@ script:
   - id: led_red_on_soft
     then:
       light.turn_on:
-          id: id_led3
+          id: id_led1
           brightness: 30%
           red: 100%
           green: 0%
@@ -254,7 +255,7 @@ script:
   - id: led_blue_on_soft
     then:
       light.turn_on:
-        id: id_led3
+        id: id_led1
         brightness: 30%
         red: 0%
         green: 0%
@@ -265,7 +266,7 @@ script:
   - id: led_blue_on
     then:
       light.turn_on:
-        id: id_led3
+        id: id_led1
         brightness: 50%
         red: 0%
         green: 0%
@@ -275,7 +276,7 @@ script:
   - id: led_green_on
     then:
       light.turn_on:
-        id: id_led2
+        id: id_led1
         brightness: 50%
         red: 0%
         green: 100%
@@ -285,7 +286,7 @@ script:
   - id: led_red_on
     then:
       light.turn_on:
-        id: id_led3
+        id: id_led1
         brightness: 50%
         red: 100%
         green: 0%
@@ -304,8 +305,8 @@ binary_sensor:
     device_class: sound
     id: incoming_call
     filters:
-      - delayed_on: 500ms
-      - delayed_off: 3000ms
+      - delayed_on: 1s
+      - delayed_off: 3s
     on_press:
       then:
         - script.execute: state_call
@@ -326,8 +327,8 @@ binary_sensor:
       number: GPIO15
       #inverted: true
     filters:
-      - delayed_on: 10ms
-      - delayed_off: 10ms         
+      - delayed_on: 30ms
+      - delayed_off: 30ms         
     on_press:
       then:
         #- switch.turn_on: manual_open
@@ -337,18 +338,10 @@ light:
   - platform: fastled_clockless
     chipset: WS2812B
     pin: GPIO13
-    num_leds: 3
+    num_leds: 1
     rgb_order: GRB
     name: ${board_name}_LED
-    id: light1
-
-  - platform: partition
-    name: ${board_name}_LED_1
     id: id_led1
-    segments:
-      - id: light1
-        from: 0
-        to: 0
     effects:
       - automation:
           name: "Blink"
@@ -382,91 +375,133 @@ light:
             - light.turn_on:
                 id: id_led1
                 brightness: 50%
-                transition_length: 50ms        
+                transition_length: 50ms    
 
-  - platform: partition
-    name: ${board_name}_LED_2
-    id: id_led2
-    segments:
-      - id: light1
-        from: 1
-        to: 1
-    effects:
-      - automation:
-          name: "Blink"
-          sequence:
-            - light.turn_on:
-                id: id_led2
-                brightness: 50%
-                transition_length: 500ms
-            - delay: 1000ms
-            - light.turn_on:
-                id: id_led2
-                brightness: 1%
-                transition_length: 300ms
-            - delay: 500ms
-      - automation:
-          name: "Blink Fast"
-          sequence:
-            - light.turn_on:
-                id: id_led2
-                brightness: 50%
-                transition_length: 50ms
-            - delay: 450ms
-            - light.turn_on:
-                id: id_led2
-                brightness: 1%
-                transition_length: 50ms
-            - delay: 450ms
-      - automation:
-          name: "Half"
-          sequence:
-            - light.turn_on:
-                id: id_led2
-                brightness: 50%
-                transition_length: 50ms        
+  # - platform: partition
+  #   name: ${board_name}_LED_1
+  #   id: id_led1
+  #   segments:
+  #     - id: light1
+  #       from: 0
+  #       to: 0
+    # effects:
+    #   - automation:
+    #       name: "Blink"
+    #       sequence:
+    #         - light.turn_on:
+    #             id: id_led1
+    #             brightness: 50%
+    #             transition_length: 500ms
+    #         - delay: 1000ms
+    #         - light.turn_on:
+    #             id: id_led1
+    #             brightness: 1%
+    #             transition_length: 300ms
+    #         - delay: 500ms
+    #   - automation:
+    #       name: "Blink Fast"
+    #       sequence:
+    #         - light.turn_on:
+    #             id: id_led1
+    #             brightness: 50%
+    #             transition_length: 50ms
+    #         - delay: 450ms
+    #         - light.turn_on:
+    #             id: id_led1
+    #             brightness: 1%
+    #             transition_length: 50ms
+    #         - delay: 450ms
+    #   - automation:
+    #       name: "Half"
+    #       sequence:
+    #         - light.turn_on:
+    #             id: id_led1
+    #             brightness: 50%
+    #             transition_length: 50ms        
 
-  - platform: partition
-    name: ${board_name}_LED_3
-    id: id_led3
-    segments:
-      - id: light1
-        from: 2
-        to: 2      
-    effects:
-      - automation:
-          name: "Blink"
-          sequence:
-            - light.turn_on:
-                id: id_led3
-                brightness: 50%
-                transition_length: 500ms
-            - delay: 1000ms
-            - light.turn_on:
-                id: id_led3
-                brightness: 1%
-                transition_length: 300ms
-            - delay: 500ms
-      - automation:
-          name: "Blink Fast"
-          sequence:
-            - light.turn_on:
-                id: id_led3
-                brightness: 50%
-                transition_length: 50ms
-            - delay: 450ms
-            - light.turn_on:
-                id: id_led3
-                brightness: 1%
-                transition_length: 50ms
-            - delay: 450ms
-      - automation:
-          name: "Half"
-          sequence:
-            - light.turn_on:
-                id: id_led3
-                brightness: 50%
-                transition_length: 50ms                
+  # - platform: partition
+  #   name: ${board_name}_LED_2
+  #   id: id_led2
+  #   segments:
+  #     - id: light1
+  #       from: 1
+  #       to: 1
+  #   effects:
+  #     - automation:
+  #         name: "Blink"
+  #         sequence:
+  #           - light.turn_on:
+  #               id: id_led2
+  #               brightness: 50%
+  #               transition_length: 500ms
+  #           - delay: 1000ms
+  #           - light.turn_on:
+  #               id: id_led2
+  #               brightness: 1%
+  #               transition_length: 300ms
+  #           - delay: 500ms
+  #     - automation:
+  #         name: "Blink Fast"
+  #         sequence:
+  #           - light.turn_on:
+  #               id: id_led2
+  #               brightness: 50%
+  #               transition_length: 50ms
+  #           - delay: 450ms
+  #           - light.turn_on:
+  #               id: id_led2
+  #               brightness: 1%
+  #               transition_length: 50ms
+  #           - delay: 450ms
+  #     - automation:
+  #         name: "Half"
+  #         sequence:
+  #           - light.turn_on:
+  #               id: id_led2
+  #               brightness: 50%
+  #               transition_length: 50ms        
+
+  # - platform: partition
+  #   name: ${board_name}_LED_3
+  #   id: id_led3
+  #   segments:
+  #     - id: light1
+  #       from: 2
+  #       to: 2      
+  #   effects:
+  #     - automation:
+  #         name: "Blink"
+  #         sequence:
+  #           - light.turn_on:
+  #               id: id_led3
+  #               brightness: 50%
+  #               transition_length: 500ms
+  #           - delay: 1000ms
+  #           - light.turn_on:
+  #               id: id_led3
+  #               brightness: 1%
+  #               transition_length: 300ms
+  #           - delay: 500ms
+  #     - automation:
+  #         name: "Blink Fast"
+  #         sequence:
+  #           - light.turn_on:
+  #               id: id_led3
+  #               brightness: 50%
+  #               transition_length: 50ms
+  #           - delay: 450ms
+  #           - light.turn_on:
+  #               id: id_led3
+  #               brightness: 1%
+  #               transition_length: 50ms
+  #           - delay: 450ms
+  #     - automation:
+  #         name: "Half"
+  #         sequence:
+  #           - light.turn_on:
+  #               id: id_led3
+  #               brightness: 50%
+  #               transition_length: 50ms                
 
 text_sensor:
   - platform: template
@@ -548,6 +583,9 @@ switch:
     name: ${board_name}_Open_Pin
     icon: mdi:door-open
     id: id_open
+    on_turn_on:
+      - delay: 1s
+      - switch.turn_off: id_open
 
   - platform: gpio
     pin: GPIO00
@@ -633,7 +671,7 @@ switch:
           value: 'false'
       - switch.turn_off: id_mute
       - light.turn_off: 
-          id: id_led3
+          id: id_led1
 
 time:
   - platform: homeassistant
