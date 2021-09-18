@@ -241,8 +241,22 @@
         entity_id: sensor.0x158d0001e0a622_action
         click_type: button_1_single
   action:
-    - service: switch.toggle #switch.turn_{%if is_state('switch.0x158d0002a36433_channel_2','on')%}off{%else%}on{%endif%}
-      entity_id: switch.0x158d0002a36433_channel_2
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: group.lights_b
+              state: 'on'
+          sequence:
+            - service: homeassistant.turn_off
+              entity_id: switch.0x158d0002a36433_channel_2, light.mirror_light_b
+        - conditions:
+            - condition: state
+              entity_id: group.lights_b
+              state: 'off'
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.0x158d0002a36433_channel_2
+
 
 # ##################################
 # Bathroom - Mirror Light Manual

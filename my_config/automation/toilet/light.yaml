@@ -198,14 +198,30 @@
         entity_id: sensor.0x158d0001e0a622_action
         click_type: button_2_single
   action:
-    - service: homeassistant.turn_{% if is_state('switch.0x158d0002a36f7f_channel_1','on') or is_state('light.esp32_bathroom_node_light','on')%}off{%else%}on{%endif%}
-      data:
-        entity_id: >
-          {% if is_state('switch.0x158d0002a36f7f_channel_1','off') and is_state('light.esp32_bathroom_node_light','off') %}
-            switch.0x158d0002a36f7f_channel_1
-          {% else %}
-            switch.0x158d0002a36f7f_channel_1, light.esp32_bathroom_node_light
-          {% endif %}
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: group.lights_t
+              state: 'on'
+          sequence:
+            - service: homeassistant.turn_off
+              entity_id: switch.0x158d0002a36433_channel_2, light.mirror_light_b
+        - conditions:
+            - condition: state
+              entity_id: group.lights_t
+              state: 'off'
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.0x158d0002a36f7f_channel_1
+  
+    # - service: homeassistant.turn_{% if is_state('switch.0x158d0002a36f7f_channel_1','on') or is_state('light.esp32_bathroom_node_light','on')%}off{%else%}on{%endif%}
+    #   data:
+    #     entity_id: >
+    #       {% if is_state('switch.0x158d0002a36f7f_channel_1','off') and is_state('light.esp32_bathroom_node_light','off') %}
+    #         switch.0x158d0002a36f7f_channel_1
+    #       {% else %}
+    #         switch.0x158d0002a36f7f_channel_1, light.esp32_bathroom_node_light
+    #       {% endif %}
 
 # ##################################
 # Toilet - Indicator
