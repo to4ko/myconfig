@@ -31,8 +31,12 @@
               state: 'off'
             - condition: state
               entity_id: group.lights_b
-              state: 'off'
+              state: 'on'
           sequence:
+            - service: switch.turn_off
+              entity_id: switch.esp32_bathroom_node_relay_4
+            - service: timer.pause
+              entity_id: timer.fan_t
             - service: switch.turn_on
               entity_id: switch.esp32_bathroom_node_relay_3
             - service: timer.cancel
@@ -45,9 +49,9 @@
             - condition: state
               entity_id: switch.esp32_bathroom_node_relay_3
               state: 'on'
-            - condition: state
-              entity_id: group.lights_b
-              state: 'on'
+            # - condition: state
+            #   entity_id: group.lights_b
+            #   state: 'on'
           sequence:
             - service: switch.turn_off
               entity_id: switch.esp32_bathroom_node_relay_3
@@ -280,7 +284,7 @@
   action:
     - condition: template
       value_template: "{{ is_state('group.lights_b','off') or is_state('switch.sonoff_pow_r2_1_bottom_fan','on') }}"
-    - service: switch.turn_{%if is_state('switch.sonoff_pow_r2_1_bottom_fan','on')%}off{%else%}on{%endif%} #service: switch.toggle
+    - service: switch.toggle
       entity_id: switch.sonoff_pow_r2_1_bottom_fan
 
 # ##################################
@@ -305,3 +309,10 @@
       entity_id: switch.esp32_bathroom_node_relay_3
     - service: input_boolean.turn_off
       entity_id: input_boolean.fan_manual_b
+    - condition: state
+      entity_id: timer.fan_t
+      state: 'paused'
+    - service: switch.turn_on
+      entity_id: switch.esp32_bathroom_node_relay_4
+    - service: timer.start
+      entity_id: timer.fan_t

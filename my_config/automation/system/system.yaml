@@ -178,6 +178,12 @@
   trigger:
     - platform: event
       event_type: device_registry_updated
+  # condition:
+  #   - condition: template
+  #     value_template: |
+  #         registry = hass.data['device_registry']
+  #         set device = registry.async_get(data['device_id'])
+  #         device.name_by_user == 'delete'
   action:
     - service: python_script.exec
       data:
@@ -187,6 +193,8 @@
           device = registry.async_get(data['device_id'])
           if device and device.name_by_user == 'delete':
               registry.async_remove_device(data['device_id'])
+        
+              
 
 # ##################################
 # System - Hass.io NEW Version
@@ -1333,7 +1341,7 @@
         - binary_sensor.shp6_socket_2_status
         - binary_sensor.sonoff_basic_3_status
         - binary_sensor.sonoff_basic_4_status
-        - binary_sensor.sonoff_mini_2_status
+        #- binary_sensor.sonoff_mini_2_status
         - binary_sensor.sonoff_pow_r2_1_status
         - binary_sensor.ss5_hood_status
         - binary_sensor.sonoff_mini_1_status
@@ -1635,7 +1643,7 @@
         - sensor.shp6_socket_2_uptime_s
         - sensor.sonoff_basic_3_uptime_s
         - sensor.sonoff_basic_4_uptime_s
-        - sensor.sonoff_mini_2_uptime_s
+        #- sensor.sonoff_mini_2_uptime_s
         - sensor.sonoff_pow_r2_1_uptime_s
         - sensor.sonoff_pow_r2_2_uptime_s
         - sensor.sonoff_mini_1_uptime_s
@@ -2081,3 +2089,34 @@
     # - service: persistent_notification.dismiss
     #   data:
     #     notification_id: 'config_entry_discovery'
+
+# ##################################
+# System - Automation Reload
+# ##################################
+- alias: system_cert_validity_check
+  id: system_cert_validity_check
+  initial_state: true
+  trigger:
+    - platform: time
+      at: "20:00:00"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.cert_validity_left
+      below: 16
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U000026a0 Срок действия сертификата заканчивается через 15 дней! Запуск обновления сертификата"
+    - service: hassio.addon_start
+      data:
+        addon: core_letsencrypt
+    - wait_for_trigger:
+        - platform: numeric_state
+          entity_id: sensor.cert_validity_left
+          above: 60
+      timeout:
+        minutes: 20
+      continue_on_timeout: false
+    - service: notify.telegram
+      data:
+        message: "\U00002705 Сертификат успешно обновлен!"

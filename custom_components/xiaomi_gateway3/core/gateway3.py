@@ -191,8 +191,8 @@ class GatewayMesh(GatewayBase):
 
 class GatewayStats(GatewayMesh):
     # global stats for all gateways
-    stats: dict = {}
-    info_ts: float = 0
+    # stats: dict = {}
+    parent_scan_ts: float = 0
 
     # interval for auto parent refresh in minutes, 0 - disabled auto refresh
     # -1 - disabled
@@ -205,30 +205,18 @@ class GatewayStats(GatewayMesh):
     def stats_enable(self):
         return self.options.get('stats')
 
-    def add_stats(self, device: dict, attr: str):
-        if 'stats' in device:
-            return
-
-        device['stats'] = True
-
-        self.setups['sensor'](self, device, attr)
-
-    def set_stats(self, sid: str, entity: XiaomiEntity):
-        self.stats[sid] = entity.update
-
-        if self.parent_scan_interval > 0:
-            self.info_ts = time.time() + 5
-
-    def remove_stats(self, sid: str, entity: XiaomiEntity):
-        entity.device.pop('stats')
-
-        self.stats.pop(sid)
-
     def process_gw_stats(self, payload: dict = None):
         # empty payload - update available state
         self.debug(f"gateway <= {payload or self.available}")
 
-        if self.did not in self.stats:
+        if self.parent_scan_ts and time.time() > self.parent_scan_ts:
+            # block any auto updates in 30 seconds
+            self.parent_scan_ts = time.time() + 30
+
+            self.get_gateway_info()
+
+        device = self.devices.get(self.did)
+        if not device or not device.get('stats'):
             return
 
         if payload:
@@ -251,22 +239,21 @@ class GatewayStats(GatewayMesh):
                     'uptime': f"{d} days, {h:02}:{m:02}:{s:02}",
                 }
 
-        self.stats[self.did](payload)
+        device['stats'].update(payload)
 
-    def process_zb_stats(self, payload: dict):
-        ieee = payload['eui64']
-        if ieee in self.stats:
-            self.stats[ieee](payload)
+    def process_zb_stats(self, payload: dict) -> bool:
+        # convert ieee to did
+        did = 'lumi.' + str(payload['eui64']).lstrip('0x').lower()
+        device = self.devices.get(did)
+        if device and device.get('stats'):
+            device['stats'].update(payload)
+            return True
+        return False
 
-        if self.info_ts and time.time() > self.info_ts:
-            # block any auto updates in 30 seconds
-            self.info_ts = time.time() + 30
-
-            self.get_gateway_info()
-
-    def process_ble_stats(self, mac: str):
-        if mac in self.stats:
-            self.stats[mac]()
+    def process_ble_stats(self, mac: str, data: dict = None):
+        device = self.devices.get(mac)
+        if device and device.get('stats'):
+            device['stats'].update(data)
 
     def process_z3(self, payload: str):
         if payload.startswith("CLI command executed"):
@@ -334,20 +321,19 @@ class GatewayStats(GatewayMesh):
                 parent = '0x' + m4[nwk][0] if nwk in m4 else '-'
 
                 payload = {
+                    'eui64': ieee,
                     'nwk': '0x' + nwk,
                     'ago': ago,
                     'type': type_,
                     'parent': parent
                 }
 
-                if ieee in self.stats:
-                    self.stats[ieee](payload)
-                else:
+                if not self.process_zb_stats(payload):
                     self.debug(f"Unknown zigbee device {ieee}: {payload}")
 
             # one hour later
             if self.parent_scan_interval > 0:
-                self.info_ts = time.time() + self.parent_scan_interval * 60
+                self.parent_scan_ts = time.time() + self.parent_scan_interval * 60
 
         except Exception as e:
             self.debug(f"Can't update parents: {e}")
@@ -432,7 +418,7 @@ class GatewayBLE(GatewayStats):
                 entity.update(payload)
 
         if self.stats_enable:
-            self.add_stats(device, 'ble')
+            self.add_stats(device)
 
         self.process_ble_stats(mac)
 
@@ -630,10 +616,13 @@ class GatewayEntry(Thread, GatewayBLE):
                     self.debug("Stop Zigbee TCP")
                     shell.stop_zigbee_tcp()
 
-                if (self.parent_scan_interval >= 0 and
-                        "Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 -l" not in ps):
-                    self.debug("Run public Zigbee console")
-                    shell.run_public_zb_console()
+                if self.parent_scan_interval >= 0:
+                    if "Lumi_Z3GatewayHost_MQTT -n 1 -b 115200 -l" not in ps:
+                        self.debug("Run public Zigbee console")
+                        shell.run_public_zb_console()
+
+                    if self.parent_scan_interval > 0:
+                        self.parent_scan_ts = 1
 
                 elif "daemon_app.sh" not in ps:
                     self.debug("Run Lumi Zigbee")
@@ -696,7 +685,10 @@ class GatewayEntry(Thread, GatewayBLE):
                 # read Xiaomi devices DB
                 raw = shell.read_file(shell.zigbee_db, as_base64=True)
                 # self.debug(f"Devices RAW: {raw}")
-                if raw.startswith(b'unqlite'):
+                if raw is None:
+                    self.debug("No zigbee database")
+                    data = {}
+                elif raw.startswith(b'unqlite'):
                     db = Unqlite(raw)
                     data = db.read_all()
                 else:
@@ -745,23 +737,23 @@ class GatewayEntry(Thread, GatewayBLE):
             if self.ble_mode:
                 raw = shell.read_file('/data/miio/mible_local.db',
                                       as_base64=True)
-                db = SQLite(raw)
-
-                # load BLE devices
-                rows = db.read_table('gateway_authed_table')
-                for row in rows:
-                    device = {
-                        'did': row[4],
-                        'mac': utils.reverse_mac(row[1]),
-                        'model': row[2],
-                        'type': 'ble',
-                        'online': True,
-                        'init': {}
-                    }
-                    devices.append(device)
-
-                # load Mesh groups
                 try:
+                    db = SQLite(raw)
+
+                    # load BLE devices
+                    rows = db.read_table('gateway_authed_table')
+                    for row in rows:
+                        device = {
+                            'did': row[4],
+                            'mac': utils.reverse_mac(row[1]),
+                            'model': row[2],
+                            'type': 'ble',
+                            'online': True,
+                            'init': {}
+                        }
+                        devices.append(device)
+
+                    # load Mesh groups
                     mesh_groups = {}
 
                     rows = db.read_table(shell.mesh_group_table)
@@ -928,8 +920,8 @@ class GatewayEntry(Thread, GatewayBLE):
                 for param in device['miot_spec'] or []:
                     self.add_entity(param[3], device, param[2])
 
-            if self.stats_enable and type_ in ('gateway', 'zigbee', 'ble'):
-                self.add_stats(device, type_)
+            if self.stats_enable and type_ in ('gateway', 'zigbee'):
+                self.add_stats(device)
 
     def process_zigbee_message(self, data: dict):
         if data['cmd'] == 'heartbeat':
@@ -994,16 +986,10 @@ class GatewayEntry(Thread, GatewayBLE):
                     payload[prop] = param['value'] / 100.0
             elif prop == 'pressure':
                 payload[prop] = param['value'] / 100.0
-            elif prop in ('battery', 'battery_voltage'):
-                # sometimes voltage and battery came in one payload
-                if prop == 'battery_voltage' and 'battery' in payload:
-                    continue
+            elif prop == 'battery':
                 # I do not know if the formula is correct, so battery is more
                 # important than voltage
-                payload['battery'] = (
-                    param['value'] if param['value'] < 1000
-                    else int((min(param['value'], 3200) - 2600) / 6)
-                )
+                payload[prop] = zigbee.fix_xiaomi_battery(param['value'])
             elif prop == 'alive' and param['value']['status'] == 'offline':
                 device['online'] = False
             elif prop == 'angle':

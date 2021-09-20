@@ -1,8 +1,13 @@
 - sensor:
     - name: Cert Validity Left
-      state: "{{((as_timestamp(states('sensor.cert_expiry_main'))+3*60*60 - as_timestamp(now()))|int/(24*60*60))|round(1)}}"
+      state: "{{((as_timestamp(states('sensor.cert_expiry_main'))+3*60*60 - as_timestamp(now()))|int/(24*60*60))|round(0)}}"
       unit_of_measurement: 'd'
-      icon: mdi:timer-sand
+      icon: >-
+        {% if states('sensor.cert_validity_left') | int > 15 %}
+          mdi:certificate
+        {% else %}
+          mdi:certificate-outline
+        {% endif %}
       
     - name: PC S Usage
       state: "{{(states('sensor.pc_s_stats')|float*3600)|timestamp_custom('%H:%M:%S',false)}}"

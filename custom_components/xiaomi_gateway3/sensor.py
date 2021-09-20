@@ -3,7 +3,7 @@ import time
 from datetime import timedelta
 
 from homeassistant.const import *
-from homeassistant.util.dt import now, utc_from_timestamp
+from homeassistant.util.dt import now
 
 from . import DOMAIN
 from .core import zigbee
@@ -16,6 +16,10 @@ except:
     from homeassistant.helpers.entity import Entity as SensorEntity
 
 _LOGGER = logging.getLogger(__name__)
+
+# support for older versions of the Home Assistant
+ELECTRIC_POTENTIAL_VOLT = 'V'
+ELECTRIC_CURRENT_AMPERE = 'A'
 
 UNITS = {
     DEVICE_CLASS_BATTERY: PERCENTAGE,
@@ -48,10 +52,10 @@ ICONS = {
     'moisture': 'mdi:water-percent',
     # 'supply': '?',
     'tvoc': 'mdi:cloud',
+    'gateway': 'mdi:router-wireless',
+    'zigbee': 'mdi:zigbee',
+    'ble': 'mdi:bluetooth',
 }
-
-INFO = ['ieee', 'nwk', 'msg_received', 'msg_missed', 'unresponsive',
-        'link_quality', 'rssi', 'last_seen']
 
 
 async def async_setup_entry(hass, entry, add_entities):
@@ -72,9 +76,6 @@ async def async_setup_entry(hass, entry, add_entities):
 
 
 class XiaomiSensor(XiaomiEntity, SensorEntity):
-    # https://developers.home-assistant.io/docs/core/entity/sensor/#long-term-statistics
-    _attr_state_class = "measurement"
-
     @property
     def state(self):
         return self._state
@@ -90,6 +91,15 @@ class XiaomiSensor(XiaomiEntity, SensorEntity):
     @property
     def icon(self):
         return ICONS.get(self.attr)
+
+    async def async_added_to_hass(self):
+        await super().async_added_to_hass()
+
+        # https://developers.home-assistant.io/docs/core/entity/sensor/#long-term-statistics
+        if self.attr == 'energy':
+            self._attr_state_class = "total_increasing"
+        elif self.attr in UNITS:
+            self._attr_state_class = "measurement"
 
     def update(self, data: dict = None):
         if self.attr in data:
@@ -108,20 +118,15 @@ class GatewayStats(XiaomiSensor):
         return 'timestamp'
 
     @property
-    def icon(self):
-        return 'mdi:router-wireless'
-
-    @property
     def available(self):
         return True
 
     async def async_added_to_hass(self):
-        self.gw.set_stats(self.device['did'], self)
-        # update available when added to Hass
-        self.update()
+        self.gw.set_stats(self)
+        self.hass.add_job(self.update)
 
     async def async_will_remove_from_hass(self) -> None:
-        self.gw.remove_stats(self.device['did'], self)
+        self.gw.remove_stats(self)
 
     def update(self, data: dict = None):
         # empty data - update state to available time
@@ -148,10 +153,6 @@ class ZigbeeStats(XiaomiSensor):
         return 'timestamp'
 
     @property
-    def icon(self):
-        return 'mdi:zigbee'
-
-    @property
     def available(self):
         return True
 
@@ -168,10 +169,10 @@ class ZigbeeStats(XiaomiSensor):
             }
             self.render_attributes_template()
 
-        self.gw.set_stats(self._attrs['ieee'], self)
+        self.gw.set_stats(self)
 
     async def async_will_remove_from_hass(self) -> None:
-        self.gw.remove_stats(self._attrs['ieee'], self)
+        self.gw.remove_stats(self)
 
     def update(self, data: dict = None):
         if 'sourceAddress' in data:
@@ -233,10 +234,6 @@ class BLEStats(XiaomiSensor):
         return 'timestamp'
 
     @property
-    def icon(self):
-        return 'mdi:bluetooth'
-
-    @property
     def available(self):
         return True
 
@@ -248,10 +245,11 @@ class BLEStats(XiaomiSensor):
             }
             self.render_attributes_template()
 
-        self.gw.set_stats(self.device['mac'], self)
+        self.gw.set_stats(self)
+        self.hass.add_job(self.update)
 
     async def async_will_remove_from_hass(self) -> None:
-        self.gw.remove_stats(self.device['mac'], self)
+        self.gw.remove_stats(self)
 
     def update(self, data: dict = None):
         self._attrs['msg_received'] += 1
@@ -323,6 +321,8 @@ class XiaomiAction(XiaomiEntity):
             elif k == 'tilt_angle':
                 data = {'vibration': 2, 'angle': v, self.attr: 'tilt'}
                 break
+            elif k in ('key_id', 'lock_control', 'lock_state'):
+                data[self.attr] = k
 
         if self.attr in data:
             self._action_attrs = {**self._attrs, **data}
