@@ -1,0 +1,247 @@
+substitutions:
+  board_name: esp8266_hood_k
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp01_1m
+  comment: ESP8266 Dual Relay & TCouple K
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 10min
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  # networks:
+  #   - ssid: !secret wifi_ssid_k
+  #     password: !secret wifi_pass
+  #     hidden: true
+  #     bssid: !secret wifi_bssid_hs_iot
+  #     priority: 2
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     bssid: !secret wifi_bssid_hs_main
+  #     priority: 1
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     priority: 0
+  manual_ip:
+    static_ip: 192.168.1.65
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+    
+logger:
+  baud_rate: 0
+
+api:
+  reboot_timeout: 5min
+
+ota:
+
+web_server:
+  port: 80
+
+# output:
+#   - platform: esp8266_pwm
+#     id: blue_led
+#     pin: GPIO13
+#     inverted: True
+
+# light:
+#   - platform: binary
+#     name: ${board_name}_StatusLED
+#     #internal: true
+#     output: blue_led
+#     id: main_led
+
+spi:
+  - id: spi_hood
+    clk_pin: GPIO14
+    miso_pin: GPIO12
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    id: id_status
+
+  - platform: template
+    name: ${board_name}_Stove_Status
+    lambda: |-
+      if ( 
+      (id(hood_temp).state > id(median_temp).state) ) {
+        return true;
+      } else {
+        return false;
+      }
+    device_class: heat
+    filters:
+      - delayed_off: 5min
+    on_press:
+      then:
+        - if:
+            condition:
+              and:
+                - binary_sensor.is_on: id_status
+            then:
+              - switch.turn_on: relay2
+
+    on_release:
+      then:
+        - switch.turn_off: relay2        
+
+  - platform: gpio
+    name: "${board_name}_Fan_Button"
+    pin: 
+      number: GPIO03
+      mode: INPUT_PULLUP
+      inverted: true
+    id: sw1
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - switch.toggle: relay2      
+    # on_click:
+    #   min_length: 50ms
+    #   max_length: 350ms
+    #   then:
+    #     - switch.toggle: relay2
+    
+  - platform: gpio
+    name: "${board_name}_Light_Button"
+    pin: 
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: true
+    id: sw2   
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - switch.toggle: relay1
+    # on_click:
+    #   min_length: 50ms
+    #   max_length: 350ms
+    #   then:
+    #     - switch.toggle: relay1
+    
+    on_multi_click:
+      - timing:
+          - ON for at least 0.75s
+        then:
+          - logger.log: "---------> Long press"
+          - switch.toggle: button_led
+    
+
+switch:
+  - platform: gpio
+    name: "${board_name}_Light"
+    pin: GPIO05
+    id: relay1
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:car-light-fog
+
+  - platform: gpio
+    name: "${board_name}_Fan"
+    pin: GPIO04
+    id: relay2
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:fan
+
+  - platform: gpio
+    name: "${board_name}_Button_LED"
+    pin: GPIO16
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:led-off
+    id: button_led
+
+  - platform: restart
+    name: ${board_name}_Restart
+
+output:
+  - platform: gpio
+    pin: GPIO04
+    id: id_fan_output  
+
+fan:
+  - platform: binary
+    output: id_fan_output
+    name: "${board_name}_Fan"
+
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: max6675
+    name: ${board_name}_TCouple
+    cs_pin: GPIO15
+    update_interval: 30s
+    id: hood_temp
+    spi_id: spi_hood
+    # filters:
+    #   - sliding_window_moving_average:
+    #       window_size: 3
+    #       send_every: 1
+
+  - platform: homeassistant
+    name: ${board_name}_median_ha
+    entity_id: sensor.stove_temperature_median
+    id: median_temp
+    filters:
+      - lambda: |-
+          if (id(id_status).state && x > 20 && x < 40) {
+            return x+5;
+          } else {
+            return 32;
+          }
+    unit_of_measurement: '°C'
+    device_class: temperature
+
+  
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

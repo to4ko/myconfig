@@ -1,0 +1,124 @@
+# #####################################################################################
+#
+# System - Lights
+#
+# #####################################################################################
+# System - Single person at home light control
+# ##################################
+# - alias: system_single_person_at_home_light_control
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: 
+#         - light.square_led_v
+#         - light.round_led_k
+#         - light.round_led_mb
+#         - light.square_led_s
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     - condition: template
+#       value_template: "{{ states('sensor.people_home')|int == 1 }}"
+#   action:
+#     - service: light.turn_off
+#       data:
+#         entity_id: > 
+#           {{states.light | map(attribute='entity_id') | select('ne',trigger.entity_id) | join(', ') }}
+
+# # ##################################
+# # System - Night Off
+# # ##################################
+# - alias: system_night_off
+#   id: system_night_off
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.remote_3b_action
+#       to: '1_single'
+#   action:
+#     - service: homeassistant.turn_off
+#       entity_id: 
+#         - light.esp32_node_k_light
+#         - light.mono_strip_1_light
+#         - switch.0x158d000248bf53_switch
+#         - light.led_strip_hb
+#         - light.led_strip_entrance_hb
+#         - light.mirror_light_b
+      
+# # ##################################
+# # System - Dark Mode
+# # ##################################
+# - alias: system_dark_mode
+#   id: system_dark_mode
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.remote_3b_action
+#       to: '1_double'
+#   action:
+#     - choose:
+#         - conditions:
+#             - condition: state
+#               entity_id: switch.dark_mode
+#               state: 'off'
+#           sequence:
+#             - service: switch.turn_on
+#               data:
+#                 entity_id: switch.dark_mode
+#             - service: homeassistant.turn_off
+#               entity_id: 
+#                 - light.esp32_node_k_light
+#                 - light.mono_strip_1_light
+#                 - switch.0x158d000248bf53_switch
+#                 - light.led_strip_hb
+#                 - light.led_strip_entrance_hb
+#         - conditions:
+#             - condition: state
+#               entity_id: switch.dark_mode
+#               state: 'on'
+#           sequence:
+#             - service: switch.turn_off
+#               data:
+#                 entity_id: switch.dark_mode
+
+# # ##################################
+# # System - Bed LED Dima
+# # ##################################
+# - alias: system_bed_led_dima
+#   id: system_bed_led_dima
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.remote_3b_action
+#       to: '2_single'
+#   action:
+#     - service: light.toggle
+#       entity_id: light.d1mini_bed_leds_strip_dima
+
+# # ##################################
+# # System - Bed LED Sandra
+# # ##################################
+# - alias: system_bed_led_sandra
+#   id: system_bed_led_sandra
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.remote_3b_action
+#       to: '2_double'
+#   action:
+#     - service: light.toggle
+#       entity_id: light.d1mini_bed_leds_strip_sandra
+      
+# # ##################################
+# # System - Breather V
+# # ##################################
+# - alias: system_breather_v
+#   id: system_breather_v
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.remote_3b_action
+#       to: '3_single'
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.digma_ir_v_breather_pwr

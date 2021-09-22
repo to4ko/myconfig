@@ -1,0 +1,221 @@
+# #####################################################################################
+#
+# SYSTEM - Persons
+#
+# #####################################################################################
+# System - Dima At home
+# ##################################
+- alias: system_presence_dima_at_home
+  id: system_presence_dima_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: person.dima
+      to: 'home'
+      for:
+        minutes: 3
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001F9D4 Дима дома!"
+        
+# ##################################
+# System - Vova At home
+# ##################################
+- alias: system_presence_vova_at_home
+  id: system_presence_vova_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: person.vova
+      to: 'home'
+      for:
+        minutes: 3
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001F471 Вова дома!"
+
+# ##################################
+# System - Sandra At home
+# ##################################
+- alias: system_presence_sandra_at_home
+  id: system_presence_sandra_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: person.sandra
+      to: 'home'
+      for:
+        minutes: 3
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001F467 Саша дома!"
+    - service: fan.turn_on
+      entity_id: fan.purifier2s
+
+# ##################################
+# System - Sasha At home
+# ##################################
+#- alias: system_presence_sasha_at_home
+#  initial_state: true
+#  trigger:
+#    - platform: state
+#      #entity_id: device_tracker.life360_sandra_tsymbal
+#      entity_id: person.sasha
+#      to: "home"
+#  action: 
+#    - service: notify.telegram
+#      data:
+#        message: "\U0001F467 Санек дома!"
+
+# ##################################
+# System - Sasha tracker - Toggle
+# ##################################
+- alias: system_sasha_tracker_toggle
+  id: system_sasha_tracker_toggle
+  initial_state: true
+  trigger:
+    # - platform: state
+    #   entity_id: sensor.0x158d0002fa99a8_action
+    #   to: 'single'
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0002fa99a8_action
+        click_type: single
+  action:
+    - service: input_boolean.toggle
+      entity_id: input_boolean.sasha_tracker
+
+# ##################################
+# System - Sasha tracker
+# ##################################
+- alias: system_sasha_tracker
+  id: system_sasha_tracker
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sasha_tracker
+  action:
+    - service: device_tracker.see
+      data:
+        dev_id: sasha
+        location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
+
+# ##################################
+# System - Sasha tracker - Audio
+# ##################################
+- alias: system_sasha_audio_tts
+  id: system_sasha_audio_tts
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: input_boolean.sasha_tracker
+  condition:
+    condition: and
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'on'
+      - condition: state
+        entity_id: switch.dark_mode
+        state: 'off'
+  action:
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: >
+          {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, ', 'З+аяц, ', 'Зайка, '] | random %}
+          {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я б+уду скуч+ать!'] | random %}
+          {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ур+а! Ур+а! Ты верн+улся дом+ой!'] | random %}
+          
+          {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
+    - service: notify.telegram
+      data:
+        message: "Фотография"
+        data:
+          photo:
+            - url: !secret entrance_snap
+              caption: "\U0001F476 Санек {%if is_state('input_boolean.sasha_tracker','on')%}дома{%else%}уходит{%endif%}!"
+
+# ##################################
+# System - Sergey At home
+# ##################################
+- alias: system_presence_sergey_at_home
+  id: system_presence_sergey_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: device_tracker.redmi7_redmi
+      to: 'home'
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001f474 Сережа пришел!"
+
+# ##################################
+# System - Lena At home
+# ##################################
+- alias: system_presence_lena_at_home
+  id: system_presence_lena_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: device_tracker.iphone_elena
+      to: 'home'
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001f471 Лена пришла!"
+        
+
+# ##################################
+# System - Mama At home
+# ##################################
+- alias: system_presence_mama_at_home
+  id: system_presence_mama_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: device_tracker.redminote9pro_redmi
+      to: 'home'
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001f471 Мама пришла!"
+
+# ##################################
+# System - Papa At home
+# ##################################
+- alias: system_presence_papa_at_home
+  id: system_presence_papa_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: device_tracker.note_6_vasya
+      to: 'home'
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001f471 Папа пришел!"
+        
+# ##################################
+# System - Katya At home
+# ##################################
+- alias: system_presence_katya_at_home
+  id: system_presence_katya_at_home
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: device_tracker.katya_phone
+      to: 'home'
+  action: 
+    - service: notify.telegram
+      data:
+        message: "\U0001f471 Катя пришла!"

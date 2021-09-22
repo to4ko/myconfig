@@ -1,0 +1,202 @@
+substitutions:
+  board_name: sonoff_pow_r2_2
+  ip_address: 192.168.1.132
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp01_1m
+  on_boot:
+    priority: -10
+    then:
+      - switch.turn_off: relay
+  comment: Heater T
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 10min
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  # networks:
+  #   - ssid: !secret wifi_ssid_k
+  #     password: !secret wifi_pass
+  #     hidden: true
+  #     bssid: !secret wifi_bssid_hs_iot
+  #     priority: 2
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     bssid: !secret wifi_bssid_hs_main
+  #     priority: 1
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     priority: 0
+  manual_ip:
+    static_ip: 192.168.1.132
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8    
+
+# Enable logging
+logger:
+  baud_rate: 0
+
+uart:
+  rx_pin: RX
+  baud_rate: 4800
+
+api:
+  reboot_timeout: 5min
+
+ota:
+
+web_server:
+  port: 80
+
+i2c:
+  sda: GPIO04
+  scl: GPIO05
+  scan: True
+
+
+# status_led:
+#   pin:
+#     number: GPIO13
+#     #inverted: yes
+
+output:
+  - platform: esp8266_pwm
+    id: blue_led
+    pin: GPIO13
+    inverted: True
+
+light:
+  - platform: binary
+    name: ${board_name}_StatusLED
+    internal: true
+    output: blue_led
+    id: main_led
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    name: ${board_name}_Button
+    on_press:
+      - switch.toggle: relay
+      
+  - platform: status
+    name: ${board_name}_Status
+
+switch:
+  - platform: gpio
+    name: ${board_name}_Relay
+    pin: GPIO12
+    restore_mode: RESTORE_DEFAULT_ON
+    id: relay
+    icon: mdi:radiator
+
+  - platform: restart
+    name: ${board_name}_Restart
+
+sensor:
+  - platform: cse7766
+    update_interval: 15s
+    current:
+      name: ${board_name}_Current
+    voltage:
+      name: ${board_name}_Voltage
+    power:
+      name: ${board_name}_Power
+      id: power
+
+  # - platform: total_daily_energy
+  #   id: total_daily_kwh
+  #   name: ${board_name}_Energy_Daily
+  #   power_id: power
+  #   accuracy_decimals: 3
+  #   unit_of_measurement: 'kWh'
+  #   filters:
+  #     - multiply: 0.001
+  #   icon: mdi:calendar-week-begin
+
+  - platform: bme280
+    temperature:
+      name: ${board_name}_Temperature
+      oversampling: 16x
+      id: bme_temperature
+    pressure:
+      name: ${board_name}_Pressure
+      id: bme_pressure
+    humidity:
+      name: ${board_name}_Humidity
+      id: bme_humidity
+    address: 0x77
+    update_interval: 15s
+    
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+climate:
+  - platform: bang_bang
+    visual:
+      min_temperature: 22 °C
+      max_temperature: 27 °C
+      temperature_step: 1 °C  
+    name: ${board_name}_Heater
+    sensor: bme_temperature
+    default_target_temperature_low: 23 °C
+    default_target_temperature_high: 24 °C
+    heat_action:
+      - switch.turn_on: relay
+    idle_action:
+      - switch.turn_off: relay
+
+  # - platform: thermostat
+  #   name: ${board_name}_Heater
+  #   sensor: bme_temperature
+  #   default_target_temperature_low: 25 °C
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: my_time

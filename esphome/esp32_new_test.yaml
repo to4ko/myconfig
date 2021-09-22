@@ -1,0 +1,96 @@
+esphome:
+  name: ${board_name}
+  platform: ESP32
+  board: esp-wrover-kit
+
+substitutions:
+  board_name: esp32_new_test
+
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 15min
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.242
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+    
+logger:
+  baud_rate: 0
+  
+api:
+  reboot_timeout: 5min
+
+ota:
+
+web_server:
+  port: 80
+  
+dallas:
+  - pin: GPIO26
+    update_interval: 2s
+    id: dallas_node
+    
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: dallas
+    address: 0x0C0120462D297E28
+    dallas_id: dallas_node
+    name: ${board_name}_test
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+sun:
+  latitude: !secret my_lat
+  longitude: !secret my_long
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

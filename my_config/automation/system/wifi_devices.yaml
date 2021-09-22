@@ -1,0 +1,163 @@
+# #####################################################################################
+#
+# SYSTEM - WiFi Devices
+#
+# #####################################################################################
+# System - Critical WiFi Devices state - Unavailable
+# ##################################
+- alias: system_critical_wifi_devices_unavailable
+  id: system_critical_wifi_devices_unavailable
+  initial_state: true
+  mode: queued
+  max_exceeded: silent
+  max: 50
+  trigger:
+    - platform: state
+      entity_id: 
+        - light.square_led_v
+        - light.square_led_s
+        - light.round_led_mb
+        - light.round_led_k
+        - light.round_led_hs
+        - light.led_strip_hb
+        - light.led_strip_entrance_hb
+        - light.bedside_mb
+        - humidifier.humidifier2
+        - switch.sonoff_basic_3_relay
+        - switch.sonoff_basic_4_relay
+        - light.led_color_s
+        - light.led_color_mb
+        - light.led_white_s
+        - light.led_white_mb
+        - fan.purifier2s
+        - switch.shp2_socket_server_relay
+        - switch.shp2_socket_1_relay
+        - switch.shp2_socket_2_relay
+        - switch.shp6_socket_1_relay
+        - switch.shp6_socket_2_relay
+        - switch.shelly_1pm_led_s #switch.sonoff_mini_2_relay
+        - light.round_led_secondary_hs
+        - switch.sonoff_pow_r2_1_relay
+        - switch.sonoff_pow_r2_2_relay
+        - switch.esp8266_hood_k_light
+        - switch.sonoff_mini_1_relay
+        - switch.sonoff_mini_4_relay
+        - switch.d1mini_domofon_open
+        - switch.d1mini_light_l_relay
+      to: 'unavailable'
+      for:
+        minutes: 2
+  action:
+    - service: notify.telegram
+      data:
+        message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - Critical WiFi Devices state - available
+# ##################################
+- alias: system_critical_wifi_devices_available
+  id: system_critical_wifi_devices_available
+  initial_state: true
+  max_exceeded: silent
+  max: 50
+  trigger:
+    - platform: state
+      entity_id: 
+        - light.square_led_v
+        - light.square_led_s
+        - light.round_led_mb
+        - light.round_led_k
+        - light.round_led_hs
+        - light.led_strip_hb
+        - light.led_strip_entrance_hb
+        - light.bedside_mb
+        - humidifier.humidifier2
+        - switch.sonoff_basic_3_relay
+        - switch.sonoff_basic_4_relay
+        - light.led_color_s
+        - light.led_color_mb
+        - light.led_white_s
+        - light.led_white_mb
+        - fan.purifier2s
+        - switch.shp2_socket_server_relay
+        - switch.shp2_socket_1_relay
+        - switch.shp2_socket_2_relay
+        - switch.shp6_socket_1_relay
+        - switch.shp6_socket_2_relay
+        - switch.shelly_1pm_led_s #switch.sonoff_mini_2_relay
+        - light.round_led_secondary_hs
+        - switch.sonoff_pow_r2_1_relay
+        - switch.sonoff_pow_r2_2_relay
+        - switch.esp8266_hood_k_light
+        - switch.sonoff_mini_1_relay
+        - switch.d1mini_domofon_open
+        - switch.d1mini_light_l_relay
+      from: 'unavailable'
+  condition:
+    - condition: template
+      value_template: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 60 }}"
+  action:
+    - service: notify.telegram
+      data:
+        message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# ##################################
+# System - BLE Devices tracker restart
+# ##################################
+- alias: system_ble_device_tracker_restart
+  id: system_ble_device_tracker_restart
+  initial_state: true
+  max_exceeded: silent
+  max: 50
+  trigger:
+    - platform: time_pattern
+      minutes: "/15"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.esp32_ble_tracker_status
+      state: 'off'
+      for:
+        minutes: 3
+  action:
+    - service: switch.turn_off
+      entity_id: switch.digma_strip_hb_relay5_usb
+    - delay: "00:00:15"
+    - service: switch.turn_on
+      entity_id: switch.digma_strip_hb_relay5_usb
+
+# ##################################
+# System - Critical Switches toggle
+# ##################################
+- alias: system_critical_switches_toggle
+  id: system_critical_switches_toggle
+  initial_state: true
+  max_exceeded: silent
+  max: 50
+  trigger:
+    - platform: state
+      entity_id: 
+        - switch.0x158d00023e5812_switch
+        - switch.0x158d000392623d_switch
+        - switch.esp32_bathroom_node_relay_5
+        - switch.shelly_1pm_led_s #switch.sonoff_mini_2_relay
+        - switch.digma_strip_hb_relay1
+        - switch.digma_strip_hb_relay2
+        - switch.digma_strip_hb_relay3
+        - switch.digma_strip_hb_relay4
+        - switch.0x158d00039bd56d_switch
+        - switch.0x158d0002a36433_channel_1
+        - switch.0x158d0002a36f7f_channel_2
+        - switch.sonoff_basic_3_relay
+        - switch.sonoff_basic_4_relay
+        #- switch.0x158d000366815b_channel_1
+        #- switch.0x158d000366815b_channel_2
+      to: 'off'
+      for:
+        seconds: 30
+  action:
+    - service: switch.turn_on
+      data:
+        entity_id: "{{ trigger.entity_id }}"
+    - service: notify.telegram
+      data:
+        message: "\U00002705 Включение - {{trigger.to_state.attributes.friendly_name}}"

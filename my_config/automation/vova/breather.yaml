@@ -1,0 +1,44 @@
+# #####################################################################################
+#
+# VOVA - Lights
+#
+# #####################################################################################
+# Vova- breather On
+# ################################## 
+- alias: vova_breather_on
+  id: vova_breather_on
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"
+  condition:
+    - condition: state
+      entity_id: switch.breather_auto_v
+      state: "on"
+    - condition: or
+      conditions:
+        - condition: and
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.family_home
+              state: "on"
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_v
+              above: 600
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "off"
+            # - condition: state
+            #   entity_id: binary_sensor.0x158d00022ccffe_contact
+            #   state: "off"
+        - condition: and
+          conditions:
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_v
+              below: 450
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "on"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.digma_ir_v_breather_pwr

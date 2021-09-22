@@ -1,0 +1,282 @@
+esphome:
+  name: recuperator
+  platform: ESP8266
+  board: esp8285
+
+wifi:
+  ssid: "*****"
+  password: "*****"
+
+  manual_ip:
+    static_ip: 192.168.1.48
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Recuperator Fallback Hotspot"
+    password: "*****"
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: "*****"
+
+ota:
+  password: "*****"
+  
+web_server:
+  port: 80
+
+uart:
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 9600
+  
+dallas:
+  - pin: GPIO5
+    update_interval: 30s
+
+sensor:
+  - platform: homeassistant
+    name: "co2_off_value"
+    entity_id: input_number.co2_off_value
+    id: co2_off_value
+  - platform: homeassistant
+    name: "co2_low_value"
+    entity_id: input_number.co2_low_value
+    id: co2_low_value
+  - platform: homeassistant
+    name: "co2_med_value"
+    entity_id: input_number.co2_med_value
+    id: co2_med_value
+  - platform: homeassistant
+    name: "co2_high_value"
+    entity_id: input_number.co2_high_value
+    id: co2_high_value
+  - platform: mhz19
+    id: co2_main
+    co2:
+      name: "MH-Z19_CO2"
+      id: CO2_recuperator
+      filters:
+        - median:
+            window_size: 10
+            send_every: 3
+            send_first_at: 3
+    temperature:
+      name: "MH-Z19_Temperature"
+      id: T_recuperator
+      internal: true
+    update_interval: 60s
+    automatic_baseline_calibration: false
+  - platform: dallas
+    address: 0x5A011449C6C9AA28
+    name: "street_air_in"
+    id: street_air_in
+  - platform: dallas
+    address: 0x6601144A4135AA28
+    name: "street_air_out"
+    id: street_air_out
+  - platform: dallas
+    address: 0xC501144A3237AA28
+    name: "home_air_in"
+    id: home_air_in
+  - platform: dallas
+    address: 0xBE0117C04ED5FF28
+    name: "home_air_out"
+    id: home_air_out
+  - platform: template
+    name: "KPD_recuperstor"
+    unit_of_measurement: "%"
+    id: kpd_recuperstor
+    accuracy_decimals: 1
+    lambda: |-
+      if (id(my_global_bool) == 0) {
+        return 0;
+      } else {
+        return ((id(street_air_out).state - id(street_air_in).state) / (id(home_air_in).state - id(street_air_in).state)) * 100;
+      }
+    update_interval: 30s
+  - platform: template
+    name: "co2_off_flash"
+    id: co2_off_flash
+    accuracy_decimals: 0
+    lambda: return id(my_global_off);
+    update_interval: 10s
+  - platform: template
+    name: "co2_med_flash"
+    id: co2_med_flash
+    accuracy_decimals: 0
+    lambda: return id(my_global_med);
+    update_interval: 10s
+  - platform: template
+    name: "co2_low_flash"
+    id: co2_low_flash
+    accuracy_decimals: 0
+    lambda: return id(my_global_low);
+    update_interval: 10s
+  - platform: template
+    name: "co2_high_flash"
+    id: co2_high_flash
+    accuracy_decimals: 0
+    lambda: return id(my_global_high);
+    update_interval: 10s
+    
+globals:
+   - id: my_global_bool
+     type: int
+     restore_value: no
+     initial_value: '0'
+   - id: my_global_switch
+     type: int
+     restore_value: no
+     initial_value: '0'
+   - id: my_global_off
+     type: float
+     restore_value: yes
+     initial_value: '500'
+   - id: my_global_low
+     type: float
+     restore_value: yes
+     initial_value: '900'
+   - id: my_global_med
+     type: float
+     restore_value: yes
+     initial_value: '1200'
+   - id: my_global_high
+     type: float
+     restore_value: yes
+     initial_value: '1500'
+    
+switch:
+  - platform: template
+    name: "co2_calibrate_zero"
+    id: co2_calibrate_zero
+    lambda: 'return false;'
+    turn_on_action:
+      then:
+        - mhz19.calibrate_zero: co2_main
+  - platform: template
+    name: "save_new_seting"
+    id: save_new_seting
+    lambda: 'return false;'
+    turn_on_action:
+      - lambda: |-
+          id(my_global_off) = id(co2_off_value).state;
+          id(my_global_low) = id(co2_low_value).state;
+          id(my_global_med) = id(co2_med_value).state;
+          id(my_global_high) = id(co2_high_value).state;
+          
+  - platform: template
+    name: "auto_mode"
+    lambda: |-
+      if (id(my_global_switch) == 1) {
+        return true;
+      } else {
+        return false;
+      }
+    id: auto_mode
+    turn_on_action:
+      - lambda: |-
+          id(my_global_switch) = 1;
+    turn_off_action:
+      - lambda: |-
+          id(my_global_switch) = 0;
+  - platform: gpio
+    pin: GPIO14
+    name: "fan_low_reley"
+    id: fan_low_reley
+    interlock: [fan_med_relay, fan_high_relay]
+    # internal: true
+
+  - platform: gpio
+    pin: GPIO12
+    name: "fan_med_relay"
+    id: fan_med_relay
+    interlock: [fan_low_reley, fan_high_relay]
+    # internal: true
+    
+  - platform: gpio
+    pin: GPIO15
+    name: "fan_high_relay"
+    id: fan_high_relay
+    interlock: [fan_low_reley, fan_med_relay]
+    # internal: true
+    
+  - platform: gpio
+    pin: GPIO09
+    name: "light_relay"
+    id: light_relay
+    inverted: True
+    
+  - platform: gpio
+    pin: GPIO10
+    name: "buzzer_pin"
+    id: buzzer_pin
+    inverted: True
+    internal: true
+    
+interval:
+  - interval: 30s
+    then:
+    - if:
+        condition:
+          - switch.is_on: auto_mode
+        then:
+          - script.execute: fan_change
+    - if:
+        condition:
+          or:
+            - switch.is_on: fan_low_reley
+            - switch.is_on: fan_med_relay
+            - switch.is_on: fan_high_relay
+        then:
+          - lambda: |-
+              id(my_global_bool) = 1;
+        else:
+          - lambda: |-
+              id(my_global_bool) = 0;
+
+script:
+  - id: fan_change
+    then:
+    - if:
+        condition:
+          lambda: |-
+            return (id(CO2_recuperator).state < id(my_global_off));
+        then:
+            - switch.turn_off: fan_low_reley
+            - switch.turn_off: fan_med_relay
+            - switch.turn_off: fan_high_relay
+        else:
+            - if:
+                condition:
+                  lambda: |-
+                    return (id(CO2_recuperator).state >= id(my_global_low) && id(CO2_recuperator).state < id(my_global_med));
+                then:
+                  - if:
+                      condition:
+                        - switch.is_off: fan_low_reley
+                      then:
+                        - switch.turn_on: fan_med_relay
+                        - delay: 3s
+                  - switch.turn_on: fan_low_reley
+                else: 
+                    - if:
+                        condition:
+                          lambda: |-
+                            return (id(CO2_recuperator).state >= id(my_global_med) && id(CO2_recuperator).state < id(my_global_high));
+                        then:
+                            - switch.turn_on: fan_med_relay
+                        else: 
+                            - if:
+                                condition:
+                                  lambda: |-
+                                    return (id(CO2_recuperator).state >= id(my_global_high));
+                                then:
+                                    - switch.turn_on: fan_high_relay

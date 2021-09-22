@@ -1,0 +1,285 @@
+# #####################################################################################
+#
+# TEST
+#
+# #####################################################################################
+# TEST - One
+# ##################################
+# - id: steckdose1_luftfeuchtigkeit
+#   alias: 'Steckdose 1 Luftfeuchtigkeit'
+#   trigger:
+#     platform: state
+#     entity_id:
+#       - input_number.schieber_steckdose1
+#       - sensor.steckdose1_am2301_humidity
+#   action:
+#     service: >-
+#       {% set hi = (states('input_number.schieber_steckdose1') | float) + 2.5 %}
+#       {% set lo = hi - 5 %}
+#       {% set humidity = states('sensor.steckdose1_am2301_humidity') | float %}
+#       {% if humidity > hi %}
+#         switch.turn_on
+#       {% elif humidity < lo %}
+#         switch.turn_off
+#       {% else %}
+#         switch.turn_{{states('switch.steckdose1') | lower}}
+#       {% endif %}
+#     entity_id: switch.steckdose1
+
+# - alias: test_unavail
+#   initial_state: true
+#   mode: queued
+#   trigger:
+#     - platform: state
+#       entity_id:
+#         - binary_sensor.0x158d0003262ba8_contact
+#         - sensor.0x158d0003262ba8_zigbee
+#         - sensor.0x158d0003262ba8_battery
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "{{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# - alias: test_z2m_1
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: input_boolean.matrix_enable
+#       to: 'on'
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.0x158d000366815b_channel_1
+
+# - alias: test_z2m_2
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: input_boolean.matrix_enable
+#       to: 'off'
+#   action:
+#     - service: switch.turn_off
+#       entity_id: switch.0x158d000366815b_channel_1
+
+# - alias: test_z2m_2
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: sensor.0x00158d00023e5e90_click
+#       to: 'double'
+#   action:
+#     - service: switch.toggle
+#       entity_id: switch.0x00158d000366815b_switch_l2, switch.0x00158d0001a248e9_switch_l2
+
+# - alias: test_3
+#   id: test_3
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: automation.test_3
+#       to: 'on'
+#       from: 'off'
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "запуск - {{ state_attr('automation.', 'last_triggered') }}"
+#     - delay: 00:01:00
+#     - service: notify.telegram
+#       data:
+#         message: "завершение - {{ state_attr('automation.test_3', 'last_triggered') }}"
+
+# - alias: test_5
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: switch.0x00158d0002476ed1_switch
+#   action:
+#     - service: mqtt.publish
+#       data:
+#         topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
+#         payload: "{{states('sensor.hot_water_meter')|float}}"
+#         retain: true
+#     - service: mqtt.publish
+#       data:
+#         topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
+#         payload: "{{states('sensor.cold_water_meter')|float}}"
+#         retain: true
+#     - service: mqtt.publish
+#       data:
+#         topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t1"
+#         payload: "{{states('sensor.power_meter_t1')|float}}"
+#         retain: true
+#     - service: mqtt.publish
+#       data:
+#         topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t2"
+#         payload: "{{states('sensor.power_meter_t2')|float}}"
+#         retain: true
+#     - service: mqtt.publish
+#       data:
+#         topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
+#         payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S')}}"
+#         retain: true
+
+# - alias: test_z2m_5
+#   initial_state: true
+#   trigger:
+#     - platform: device
+#       device_id: 0x00158d00023e5e90
+#       domain: mqtt
+#       subtype: arrow_left_click
+#       type: action
+#   action:
+#     - service: switch.toggle
+#       entity_id: switch.0x00158d000366815b_switch_l1, switch.0x00158d0001a248e9_switch_l1
+
+#- alias: test_one
+#  initial_state: false
+#  trigger:
+#    platform: state
+#    entity_id: sun.sun
+#    to: 'above_horizont'
+#  action:
+#  - service: xiaomi_aqara.remove_device
+#    data:
+#      gw_mac: 7c49eb195e21
+#      device_id: 158d0002a365df
+
+#######################################
+# keyboard mapping - find ou key codes
+#######################################
+#- alias: find out key code
+#  trigger:
+#    platform: event
+#    event_type: keyboard_remote_command_recieved
+#    event_data:
+#      device_description: /dev/input/event0
+#  action:
+#  - service: input_text.set_value
+#  data:
+#    entity_id: input_text.mykeycode
+#    value: '{{ trigger.event.data.key_code  }}'
+#######################################
+# keyboard - key mapping
+#######################################
+#- alias: keyboard all lights
+#  trigger:
+#    platform: event
+#    event_type: keyboard_remote_command_recieved
+#    event_data:
+#      device_description: "/dev/input/event0"
+#  action:
+#    service: light.toggle
+#    entity_id: light.desk_working
+
+# ##################################
+# TEST - Two
+# ##################################
+#- alias: test_two
+#  initial_state: true
+#  trigger:
+#    platform: state
+#    entity_id: sun.sun
+#  action:
+#    - service:  media_player.turn_on
+#      entity_id: media_player.mpd
+#    - service:  media_player.volume_set
+#      entity_id: media_player.mpd
+#      data:
+#        volume_level: 1
+#    - service: media_player.play_media
+#      entity_id: media_player.mpd
+#      data:
+#        media_content_id: "http://192.168.1.14:8123/local/goodnight.mp3"
+#        media_content_type: "audio/mp3"
+
+# - alias: test_10
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: light.round_led_k
+#       from: 'on'
+#       to: 'off'
+#     - platform: state
+#       entity_id: light.round_led_k
+#       from: 'off'
+#       to: 'on'
+#   action:
+#     - service: light.toggle
+#       entity_id: light.round_led_mb
+
+# - alias: test11
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: switch.0x00158d0002476ed1_switch
+#   condition:
+#     - condition: template
+#       value_template: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 30 }}"
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: >
+#           {{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() | int }}
+
+# - alias: test12
+#   initial_state: true
+#   trigger:
+#     - platform: time_pattern
+#       seconds: "/15"
+#   condition:
+#     - condition: state
+#       entity_id: switch.d1mini_air_freshener_restart
+#       state: 'unavailable'
+#       for:
+#         seconds: 10
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "тра-та-та"
+
+# # ##################################
+# # test timer
+# # ##################################
+# - alias: test_timer
+#   initial_state: false
+#   mode: single
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d0002b4729d_occupancy
+#       from: 'off'
+#       to: 'on'
+#   condition:
+#     - condition: template
+#       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.test_timer','last_triggered'))|int) > 15 }}"
+#   action:
+#     - service: timer.start
+#       entity_id: timer.test_timer
+
+# # ##################################
+# # test timer
+# # ##################################
+# - alias: test_timer_telegram
+#   initial_state: false
+#   mode: single
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d0002b4729d_occupancy
+#     - platform: state
+#       entity_id: timer.test_timer
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: >
+#           {{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}},
+#           motion: {{states('binary_sensor.0x00158d0002b4729d_occupancy')}},
+#           timer: {{states('timer.test_timer')}}
+
+# - alias: test_sensor_to_state
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id:
+#         - sensor.0x158d0002a2412d_action
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "{{trigger.from_state.state}} -> {{trigger.to_state.state}}"

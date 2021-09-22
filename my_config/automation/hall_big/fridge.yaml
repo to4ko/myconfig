@@ -1,0 +1,130 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Fridge open for more than 
+# ##################################
+- alias: hall_big_fridge_not_closed_5m
+  id: hall_big_fridge_not_closed_5m
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d000253722b_contact
+      from: 'off'
+      to: 'on'
+      for:
+        minutes: 5
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001F441 Внимание! Холодильник не закрыт!"
+    # - condition: state
+    #   entity_id: binary_sensor.tod_day
+    #   state: 'on'
+    # - service: media_player.volume_set
+    #   data:
+    #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+    #     volume_level: '{{states("input_number.main_volume")|float}}'
+    # - service: tts.yandextts_say
+    #   data:
+    #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+    #     message: 'Вним+ание! Холод+ильник н+е закр+ыт!'
+
+            
+####################################
+# Hall Big - Freezer open for more than 
+####################################
+- alias: hall_big_freezer_not_closed_5m
+  id: hall_big_freezer_not_closed_5m
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d000252acba_contact
+      from: 'off'
+      to: 'on'
+      for:
+        minutes: 5
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001F441 Внимание! Морозильник не закрыт!"
+    # - condition: state
+    #   entity_id: binary_sensor.tod_day
+    #   state: 'on'
+    # - service: media_player.volume_set
+    #   data:
+    #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+    #     volume_level: '{{states("input_number.main_volume")|float}}'
+    # - service: tts.yandextts_say
+    #   data:
+    #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+    #     message: 'Вним+ание! Мороз+ильник н+е закр+ыт!'
+
+# ##################################
+# Hall big - Fridge temp alarm
+# ##################################
+- alias: hall_big_fridge_temp_alarm
+  id: hall_big_fridge_temp_alarm
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      minutes: "/15"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.0x158d0002461e5b_temperature
+      above: 15
+  action:
+  - service: notify.telegram
+    data:
+      message: "\U0001f321 Внимание! Температура в холодильнике {{states('sensor.0x158d0002461e5b_temperature')|int}}°C!"
+
+
+# ##################################
+# Hall big - Freezer temp alarm
+# ##################################
+- alias: hall_big_freezer_temp_alarm
+  id: hall_big_freezer_temp_alarm
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      minutes: "/15"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.0x158d000237167c_temperature
+      above: 0
+  action:
+  - service: notify.telegram
+    data:
+      message: "\U0001f321 Внимание! Температура в морозилке {{states('sensor.0x158d000237167c_temperature')|int}}°C!"
+      
+      
+# ##################################
+# System - Fridge sensors outage
+# ##################################
+- alias: hall_big_fridge_sensors_outage
+  id: hall_big_fridge_sensors_outage
+  mode: queued
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      minutes: '/30'
+  condition:
+    - condition: template
+      value_template: >
+        {{
+        as_timestamp(now())- as_timestamp(states.sensor['0x158d0002461e5b_zigbee'].last_updated) > 2*60*60 or
+        as_timestamp(now())- as_timestamp(states.sensor['0x158d000237167c_zigbee'].last_updated) > 2*60*60 or
+        as_timestamp(now())- as_timestamp(states.sensor['0x158d000253722b_zigbee'].last_updated) > 2*60*60 or
+        as_timestamp(now())- as_timestamp(states.sensor['0x158d000252acba_zigbee'].last_updated) > 2*60*60 }}
+  action:
+    - service: notify.telegram
+      data:
+        message: >-
+          {{'\U0000274c'}} Внимание! Нет данных от датчика 
+          {%- if as_timestamp(now())- as_timestamp(states.sensor['0x158d0002461e5b_zigbee'].last_updated) > 2*60*60 %}температуры холодильника
+          {%- elif as_timestamp(now())- as_timestamp(states.sensor['0x158d000237167c_zigbee'].last_updated) > 2*60*60 %}температуры морозилки
+          {%- elif as_timestamp(now())- as_timestamp(states.sensor['0x158d000253722b_zigbee'].last_updated) > 2*60*60 %}двери холодильника
+          {%- elif as_timestamp(now())- as_timestamp(states.sensor['0x158d000252acba_zigbee'].last_updated) > 2*60*60 %}двери морозилки
+          {%-else%}ххх
+          {%endif%}!

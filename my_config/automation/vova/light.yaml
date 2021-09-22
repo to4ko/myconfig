@@ -1,0 +1,306 @@
+# #####################################################################################
+#
+# VOVA - Lights
+#
+# #####################################################################################
+# Vova Bedside Lamp
+# ##################################
+- alias: vova_bedside_lamp
+  id: vova_bedside_lamp
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c7947e4_action
+        click_type: button_3_single
+  condition:
+    - condition: template
+      value_template: "{{ states('light.bedside_mb') in ['on','off'] }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.bedside_mb
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.bedside_mb
+        - conditions:
+            - condition: state
+              entity_id: light.bedside_mb
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.bedside_mb
+              data:
+                brightness_pct: >
+                  {%- if is_state('binary_sensor.tod_day','off') -%}
+                  5
+                  {%- else -%}
+                  100
+                  {% endif %}
+                kelvin: >
+                  {%- if is_state('binary_sensor.tod_day','off') -%}
+                  3000
+                  {%- else -%}
+                  5000
+                  {% endif %}
+
+# ##################################
+# Vova Main Lamp (Xiaomi Square LED) - Bed Switch
+# ##################################
+- alias: vova_main_lamp_with_bed_switch
+  id: vova_main_lamp_with_bed_switch
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c7947e4_action
+        click_type: button_4_single
+  condition:
+    - condition: template
+      value_template: "{{ states('light.square_led_v_nightlight') in ['on','off'] }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.square_led_v_nightlight
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.square_led_v_nightlight
+        - conditions:
+            - condition: state
+              entity_id: light.square_led_v_nightlight
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.square_led_v_nightlight
+              data:
+                brightness: 20
+
+# ##################################
+# Vova Main Lamp (Xiaomi Square LED) - Main Switch Left Button
+# ##################################
+- alias: vova_main_lamp_left_button
+  id: vova_main_lamp_left_button
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0001712d55_action
+        click_type: button_1_single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c7947e4_action
+        click_type: button_1_single
+  condition:
+    - condition: template
+      value_template: "{{ states('light.square_led_v') in ['on','off'] and states('light.square_led_v_nightlight') in ['on','off'] }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: group.lights_main_v
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.square_led_v
+              data:
+                brightness_pct: 90
+                kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: group.lights_main_v
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.square_led_v, light.square_led_v_nightlight
+      default:
+        - service: light.turn_off
+          entity_id: light.square_led_v, light.square_led_v_nightlight
+
+
+# ##################################
+# Vova Main Lamp (Xiaomi Square LED) - Main Switch Right Button
+# ##################################
+- alias: vova_main_lamp_right_button
+  id: vova_main_lamp_right_button
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0001712d55_action
+        click_type: button_2_single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c7947e4_action
+        click_type: button_2_single
+  condition:
+    - condition: template
+      value_template: "{{ states('light.square_led_v') in ['on','off'] and states('light.square_led_v_nightlight') in ['on','off'] }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: group.lights_main_v
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.square_led_v
+              data:
+                brightness_pct: 5
+                kelvin: 3000
+        - conditions:
+            - condition: state
+              entity_id: group.lights_main_v
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.square_led_v, light.square_led_v_nightlight
+      
+# ##################################
+# Vova - Square LED Reset 
+# ##################################
+- alias: vova_square_led_reset
+  id: vova_square_led_reset
+  initial_state: true
+  trigger:
+    # - platform: time_pattern
+    #   minutes: "/1"
+    - platform: state
+      entity_id: light.square_led_v
+      to: 'unavailable'
+      for:
+        minutes: 2
+    - platform: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 0
+      below: 2
+  condition:
+    - condition: state
+      entity_id: light.square_led_v
+      state: 'unavailable'
+      # for:
+      #   minutes: 2
+  action:
+    - service: script.turn_on
+      entity_id: script.square_led_v_restart
+
+# ##################################
+# Vova - Turn Lamp Switch On if Off
+# ##################################
+- alias: vova_main_lamp_switch_on_if_off
+  id: vova_main_lamp_switch_on_if_off
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0001712d55_action
+        click_type: button_1_single
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0001712d55_action
+        click_type: button_2_single
+  condition:
+    condition: state
+    entity_id: switch.sonoff_basic_4_relay
+    state: 'off'
+  action:
+    service: switch.turn_on
+    entity_id: switch.sonoff_basic_4_relay
+
+# ##################################
+# Vova - Bedside Lamp Reset 
+# ##################################
+- alias: vova_bedside_lamp_reset
+  id: vova_bedside_lamp_reset
+  initial_state: true
+  trigger:
+    # - platform: time_pattern
+    #   minutes: "/1"
+    - platform: state
+      entity_id: light.bedside_mb
+      to: 'unavailable'
+      for:
+        minutes: 2
+    - platform: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 0
+      below: 2
+  condition:
+    - condition: state
+      entity_id: light.bedside_mb
+      state: 'unavailable'
+      # for:
+      #   minutes: 2
+  action:
+    - service: script.turn_on
+      entity_id: script.bedside_mb_restart
+
+# ##################################
+# Vova Main Lamp (Xiaomi Square LED) off Bedstrips on
+# ##################################
+- alias: vova_main_lamp_off_bed_strips_on
+  id: vova_main_lamp_off_bed_strips_on
+  initial_state: true
+  mode: queued
+  trigger:
+    # - platform: template
+    #   value_template: "{{ not is_state('light.square_led_v','on') and not is_state('light.square_led_v_nightlight','on') }}"
+    - platform: state
+      entity_id: group.lights_main_v
+      to: 'off'
+  condition:
+    - condition: state
+      entity_id: binary_sensor.light_outside_mi
+      state: 'off'
+    - condition: template
+      value_template: "{{ not is_state('light.bedside_mb', 'on') }}"
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+  action:
+    - service: light.turn_on
+      entity_id: light.d1mini_bed_leds_strip_sandra,light.d1mini_bed_leds_strip_dima
+      data:
+        brightness_pct: 25
+      
+# ##################################
+# Vova Bed Strips On\Off
+# ##################################
+- alias: vova_bed_strips_mode
+  id: vova_bed_strips_mode
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.bed_led_enable
+      from: 'on'
+      to: 'off'
+    - platform: state
+      entity_id: binary_sensor.bed_led_enable
+      from: 'off'
+      to: 'on'
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.vova_bed_strips_mode', 'last_triggered'))|int) > 5 }}"
+  action:
+    - service: input_boolean.turn_{{states('binary_sensor.bed_led_enable')}}
+      data:
+        entity_id: input_boolean.bed_led_enable

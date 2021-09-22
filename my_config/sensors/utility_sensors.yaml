@@ -1,0 +1,235 @@
+  - platform: statistics
+    name: server_daily_power_consumption
+    entity_id: sensor.shp2_socket_server_w
+    sampling_size: 10000
+    max_age:
+      hours: 24
+
+# ############################################################################
+# Utility (water + Power Cost sensor
+# ############################################################################
+
+  # - platform: min_max
+  #   type: mean
+  #   name: Voltage
+  #   round_digits: 1
+  #   entity_ids:
+  #     - sensor.ippon_1200_input_voltage
+  #     - sensor.ippon_1050_input_voltage
+  #     - sensor.cyber650_input_voltage
+  #     - sensor.shp2_socket_1_v
+  #     - sensor.shp2_socket_2_v
+  #     - sensor.shp6_socket_1_v
+  #     - sensor.shp6_socket_2_v
+  #     - sensor.sonoff_pow_r2_1_voltage
+  #     - sensor.sonoff_pow_r2_2_voltage
+
+  - platform: template
+    sensors:
+      # pc_hosts_cost:
+      #   value_template: "{{states('sensor.shp2_socket_1_w')|float + states('sensor.shp6_socket_2_w')|float + states('sensor.shp2_socket_2_w')|float + states('sensor.shp6_socket_1_w')|float}} "
+
+      server_daily_cost:
+        friendly_name: Server Average Daily Running Cost
+        value_template: "{{(states('input_number.tariff_energy_day')|float*16*states('sensor.server_daily_power_consumption')|float/1000+states('input_number.tariff_energy_night')|float*8*states('sensor.server_daily_power_consumption')|float/1000)|round(2)}}"
+        unit_of_measurement: 'rub'
+        icon_template: mdi:currency-rub
+      server_monthly_cost:
+        friendly_name: Server Average Monthly Running Cost
+        value_template: "{{(states('sensor.server_daily_cost')|float*31)|round(0) }}"
+        unit_of_measurement: 'rub'
+        icon_template: mdi:currency-rub
+      
+      utility_cost:
+        unit_of_measurement: 'rub'
+        icon_template: mdi:currency-rub
+        value_template: "{{ (states('sensor.power_cost')|float + states('sensor.water_cost')|float)|round(0) }}"
+        friendly_name: "Utility Cost/Month"
+
+# ############################################################################
+# Power monitoring sensors
+# ############################################################################
+      # power_consumption:
+      #   value_template: "{{ states('sensor.power_consumption_k')|int + states('sensor.power_consumption_t')|int + states('sensor.power_consumption_b')|int + states('sensor.power_consumption_hs')|int + states('sensor.power_consumption_mb')|int + states('sensor.power_consumption_st')|int + states('sensor.power_consumption_hb')|int +states('sensor.power_consumption_v')|int + states('sensor.power_consumption_s')|int }}"
+      #   unit_of_measurement: W
+      #   icon_template: mdi:flash
+      #   friendly_name: 'Power/Current'
+
+      power_consumption_k:
+        value_template: "{{ ( ((states('light.round_led_k')|replace('on','1'))|int*32*state_attr('light.round_led_k','brightness')|int/255)|float + states('sensor.0x158d0002451850_power')|float + states('sensor.0x158d0002476ed1_power')|float + states('sensor.0x158d000249b25b_power')|float + states('sensor.0x158d0001e85086_power')|float + states('sensor.0x158d000353a2e3_power')|float ) |round(0)}}"
+        unit_of_measurement: W
+        friendly_name: 'Power K'
+        icon_template: mdi:gauge
+
+      power_consumption_t:
+        value_template: "{{ ( ((states('switch.0x158d0002a36f7f_channel_1')|replace('on','1'))|int * 10 )|float)|round(0) + states('sensor.sonoff_pow_r2_2_power')|float|round(0) }}"
+        unit_of_measurement: W
+        friendly_name: 'Power T'
+        icon_template: mdi:gauge
+
+      power_consumption_b:
+        value_template: "{{ ( (states('switch.0x158d0002a36433_channel_2')|replace('on','1'))|int*20 +states('sensor.sonoff_pow_r2_1_power')|float + 1 )|round(0) }}"
+        unit_of_measurement: W
+        friendly_name: 'Power B'
+        icon_template: mdi:gauge
+
+      power_consumption_hs:
+        value_template: "{{ ( ((states('light.round_led_hs')|replace('on','1'))|int*32*state_attr('light.round_led_hs','brightness')|int/255) + states('sensor.0x158d000249b26b_power')|float + states('sensor.0x158d0002924790_power')|float ) | round(0) }}"
+        unit_of_measurement: W
+        friendly_name: 'Power HS'
+        icon_template: mdi:gauge
+
+      power_consumption_mb:
+        value_template: "{{ ( ((states('light.round_led_mb')|replace('on','1'))|int*50*state_attr('light.round_led_mb','brightness')|int/255)|float + states('sensor.0x158d000322e30c_power')|float + states('sensor.0x158d0002467773_power')|float + states('sensor.0x158d000205a835_power')|float + states('sensor.0x158d000224e3e4_power')|float + 1 ) | round(0)}}"
+        unit_of_measurement: W
+        friendly_name: 'Power MB'
+        icon_template: mdi:gauge
+
+      power_consumption_v:
+        value_template: "{{ ( ((states('light.square_led_v')|replace('on','1'))|int*90*state_attr('light.square_led_v','brightness')|int/255)|float + states('sensor.0x158d0002468fbd_power')|float + states('sensor.0x158d0002395dc9_power')|float + states('sensor.0x158d000246776f_power')|float + 1 ) | round(0)}}"
+        unit_of_measurement: W
+        friendly_name: 'Power V'
+        icon_template: mdi:gauge
+
+      power_consumption_s:
+        value_template: "{{ ( states('sensor.shelly_1pm_led_s_power')|float + states('sensor.0x158d00035f44a7_power')|float+ states('sensor.0x158d000239097a_power')|float + states('sensor.0x158d0002395d58_power')|float ) | round(0)}}"
+        unit_of_measurement: W
+        friendly_name: 'Power S'
+        icon_template: mdi:gauge
+    
+      #((states('light.square_led_s')|replace('on','1'))|int*95*state_attr('light.square_led_s','brightness')|int/255)|float
+
+      power_consumption_st:
+        value_template: "{{ ( ((states('switch.0x158d000248bf53_switch')|replace('on','1'))|int*16) + ((states('switch.sonoff_basic_1_relay')|replace('on','1'))|int*16) ) | round(0)}}"
+        unit_of_measurement: W
+        friendly_name: 'Power St'
+        icon_template: mdi:gauge
+
+      power_consumption_hb:
+        value_template: "{{ ( states('switch.0x158d000223921b_channel_1')|replace('on',1)|int*32.5 + states('switch.0x158d000253f04a_channel_2')|replace('on',1)|int*32.5 + states('sensor.0x158d00023e5812_power')|float + states('sensor.0x158d0001f2630e_power')|float + states('sensor.0x158d00024517fe_power')|float + states('sensor.0x158d000230fc52_power')|float + states('sensor.0x158d000358c773_power')|float + 2 ) | round(0) }}"
+        unit_of_measurement: W
+        friendly_name: 'Power HB'
+        icon_template: mdi:gauge
+
+      # total_current:
+      #   icon_template: mdi:current-ac
+      #   value_template: "{{ (((states('sensor.power_consumption')|float / states('sensor.voltage')|float)|float))|round(1) }}"
+      #   unit_of_measurement: "A"
+      #   friendly_name: "Total current"
+
+      power_cost:
+        friendly_name: "Power/Month"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.energy_monthly_day')|float*states('input_number.tariff_energy_day')|float + states('sensor.energy_monthly_night')|float*states('input_number.tariff_energy_night')|float) |round(2) }}"
+      power_t1_cost:
+        friendly_name: "Power/Month/T1"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.energy_monthly_day')|float/1000*states('input_number.tariff_energy_day')|float ) |round(2) }}"
+      power_t2_cost:
+        friendly_name: "Power/Month/T2"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (states('sensor.energy_monthly_night')|float/1000*states('input_number.tariff_energy_night')|float) |round(2) }}"
+
+# ############################################################################
+# Water monitoring sensors
+# ############################################################################
+      cold_water_meter:
+        friendly_name: "Cold water meter"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ ((states('input_number.cold_water_meter'))|float) | round(2) }}"
+ 
+      hot_water_meter:
+        friendly_name: "Hot water meter"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ ((states('input_number.hot_water_meter'))|float) | round(2) }}"
+  
+      cold_water_month:
+        friendly_name: "Cold water/Month"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ (((states('input_number.cold_water_meter_month'))|float))|round(2) }}"
+  
+      hot_water_month:
+        friendly_name: "Hot water/Month"
+        icon_template: mdi:counter
+        unit_of_measurement: 'm3'
+        value_template: "{{ (((states('input_number.hot_water_meter_month'))|float))|round(2) }}"
+
+      cold_water_cost:
+        friendly_name: "Cold water"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (((states('input_number.cold_water_meter_month'))|float) * states('input_number.tariff_cold_water')|float)|round(2) }}"
+  
+      hot_water_cost:
+        friendly_name: "Hot water"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: "{{ (((states('input_number.hot_water_meter_month'))|float) * states('input_number.tariff_hot_water')|float)|round(2) }}"
+  
+      water_cost:
+        friendly_name: "Water cost"
+        icon_template: mdi:currency-rub
+        unit_of_measurement: 'rub'
+        value_template: >
+          {{ (( (((states('input_number.cold_water_meter_month'))|float))*states('input_number.tariff_cold_water')|float) +
+          (((states('input_number.hot_water_meter_month'))|float)*states('input_number.tariff_hot_water')|float) )|round(2) }}
+
+      water:
+        friendly_name: "Water total"
+        unit_of_measurement: 'm3'
+        value_template: >
+          {{ (( (((states('input_number.cold_water_meter_month'))|float))) +
+          (((states('input_number.hot_water_meter_month'))|float)) )|round(2) }}
+          
+# ############################################################################
+# Breathers run time stat
+# ############################################################################
+  - platform: history_stats
+    name: Breather V Run Time Yesterday
+    entity_id: binary_sensor.breather_v
+    state: 'on'
+    type: time
+    end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    duration:
+      hours: 24
+
+  - platform: history_stats
+    name: Breather S Run Time Yesterday
+    entity_id: binary_sensor.breather_s
+    state: 'on'
+    type: time
+    end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    duration:
+      hours: 24
+
+  - platform: history_stats
+    name: Breather MB Run Time Yesterday
+    entity_id: binary_sensor.breather_mb
+    state: 'on'
+    type: time
+    end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    duration:
+      hours: 24
+
+  - platform: history_stats
+    name: Washer B Run Time Yesterday
+    entity_id: binary_sensor.washer_b
+    state: 'on'
+    type: time
+    end: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    duration:
+      hours: 24
+
+  - platform: history_stats
+    name: PC S Stats
+    entity_id: switch.pc_s
+    state: 'on'
+    start: "{{ now().replace(hour=0, minute=0, second=0) }}"
+    end: "{{ now() }}"
+    

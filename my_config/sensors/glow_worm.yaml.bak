@@ -1,0 +1,59 @@
+  - platform: mqtt
+    state_topic: 'lights/firelyluciferin/framerate'
+    name: Glow Worm Producing
+    unit_of_measurement: 'FPS'
+    value_template: '{{ value_json.producing }}'
+
+  - platform: mqtt
+    state_topic: 'lights/firelyluciferin/framerate'
+    name: Glow Worm Consuming
+    unit_of_measurement: 'FPS'
+    value_template: '{{ value_json.consuming }}'
+
+  - platform: mqtt
+    state_topic: 'lights/glowwormluciferin'
+    name: Glow Worm Version
+    unit_of_measurement: ' '
+    value_template: '{{ value_json.ver }}'
+    force_update: true
+
+  - platform: mqtt
+    state_topic: 'lights/glowwormluciferin'
+    name: Glow Worm  FPS idle
+    unit_of_measurement: 'FPS'
+    value_template: '{{ value_json.framerate }}'
+    force_update: true
+
+  - platform: mqtt
+    state_topic: 'lights/glowwormluciferin/fps'
+    name: Glow Worm FPS running
+    unit_of_measurement: 'FPS'
+    value_template: '{{ value_json.framerate }}'
+    force_update: true
+
+  - platform: template
+    sensors:
+      glow_worm_fps:
+        friendly_name: Glow Worm FPS
+        value_template: >-
+          {% if as_timestamp(states.sensor.glow_worm_fps_idle.last_updated) > as_timestamp(states.sensor.glow_worm_fps_running.last_updated) %}
+            {{ states.sensor.glow_worm_fps_idle.state }}
+          {% else %}
+            {{ states.sensor.glow_worm_fps_running.state }}
+          {% endif %}
+        unit_of_measurement: 'FPS'
+
+  - platform: mqtt
+    state_topic: 'lights/glowwormluciferin'
+    name: Glow Worm Num LEDs
+    unit_of_measurement: ''
+    value_template: '{{ value_json.lednum }}'
+
+  - platform: mqtt
+    state_topic: 'lights/glowwormluciferin'
+    name: Glow Worm Last Update
+    value_template: '{{ as_timestamp(now()) | timestamp_custom("%Y-%m-%d ~ %H:%M:%S") }}'
+
+  - platform: mqtt
+    state_topic: 'lights/firelyluciferin/aspectratio'
+    name: Glow Worm Aspect Ratio

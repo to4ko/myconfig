@@ -1,0 +1,218 @@
+# 1006 - ph - ph - 6.0-9.0
+# 1004 - цветность - град - не более 20
+# 1005 - мутность - мг\дм3 - не более 1.5
+# 1121 - остаточный хлор - мг\дм3 - не нормируется
+# 1002 - запах при 20градС - баллы - не более 2
+# 1200 - запах при 60градС - баллы - не более 2
+# 1013 - железо общее - мг\дм3 - не более 0.3
+# 1053 - общее микробное число - кол в 1мл - не более 50
+# 5501 - общие колиморфные бактерии - КОЕ\100мл - отсутствие
+# 1050 - термотолерантные колиморфные бактерии - КОЕ\100мл - отсутствие
+# 1015 - жесткость общая - °Ж - не более 7
+# 1104 - аммоний-ион - мг\дм3 - не более 1.9
+# 1012 - нитриты - мг\дм3 - не более 3
+# 1011 - нитраты - мг\дм3 - не более 45
+# 1037 - фториды - мг\дм3 - не более 1.5
+# 1018 - окисляемость перманганатная - мг\дм3 - не более 5
+# 1008 - хлориды - мг\дм3 - не более 350
+
+  - sensor:
+      - name: Mosvodokanal pH # Кислотность (pH)
+        unit_of_measurement: pH
+        icon: mdi:water-check
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1006, 'value': '")[1].split("'")[0] | float if "'id': 1006, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "6.0 - 9.0"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1006, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1006, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+      
+      - name: Mosvodokanal dH # Жёсткость общая
+        unit_of_measurement: °Ж
+        icon: mdi:water-check
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1015, 'value': '")[1].split("'")[0] | float if "'id': 1015, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 7"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1015, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1015, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+      
+      - name: Mosvodokanal Opacity # Мутность
+        unit_of_measurement: мг/дм3
+        icon: mdi:opacity
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1005, 'value': '")[1].split("'")[0] | float if "'id': 1005, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 1.5"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1005, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1005, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown'  }}  
+      
+      - name: Mosvodokanal Chroma # Цветность
+        unit_of_measurement: град.
+        icon: mdi:palette
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1004, 'value': '")[1].split("'")[0] | float if "'id': 1004, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 20"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1004, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1004, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+      
+      - name: Mosvodokanal Taste # Привкус
+        unit_of_measurement: ""
+        icon: mdi:emoticon-tongue-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 5148, 'value': '")[1].split("'")[0] if "'id': 5148, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не нормируется"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 5148, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 5148, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}  
+      
+      - name: Mosvodokanal Chloro # Остаточный хлор
+        unit_of_measurement: мг/дм3
+        icon: mdi:flask-outline # flask-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1121, 'value': '")[1].split("'")[0] | float if "'id': 1121, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "0.3 - 0.5"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1121, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1121, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+      
+      - name: Mosvodokanal Flavor20 # Запах при 20°C
+        unit_of_measurement: ""
+        icon: mdi:emoticon-confused-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1000, 'value': '")[1].split("'")[0] if "'id': 1000, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не нормируется"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1000, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1000, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+      
+      - name: Mosvodokanal Flavor20 Level # Уровень запаха при 20°C
+        unit_of_measurement: балл
+        icon: mdi:emoticon-confused
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1002, 'value': '")[1].split("'")[0] | float if "'id': 1002, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 2"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1002, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1002, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+      
+      - name: Mosvodokanal Flavor60 # Запах при 60°C
+        unit_of_measurement: ""
+        icon: mdi:emoticon-confused-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1001, 'value': '")[1].split("'")[0] if "'id': 1001, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не нормируется"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1001, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1001, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal Flavor60 Level # Уровень запаха при 60°C
+        unit_of_measurement: балл
+        icon: mdi:emoticon-confused
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1200, 'value': '")[1].split("'")[0] | float if "'id': 1200, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 2"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1200, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1200, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+      
+      - name: Mosvodokanal Nitrates # Нитраты
+        unit_of_measurement: мг/дм3
+        icon: mdi:flask-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1011, 'value': '")[1].split("'")[0] | float if "'id': 1011, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 45"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1011, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1011, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal Nitrites # Нитриты
+        unit_of_measurement: мг/дм3
+        icon: mdi:flask-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1012, 'value': '")[1].split("'")[0] | float if "'id': 1012, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 3"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1012, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1012, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }} 
+
+      - name: Mosvodokanal TCB # Термотолерантные колиморфные бактерии
+        unit_of_measurement: КОЕ/100мл
+        icon: mdi:bacteria-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1050, 'value': '")[1].split("'")[0] | float if "'id': 1050, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Отсутствие"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1050, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1050, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}  
+
+      - name: Mosvodokanal CB # Общие колиморфные бактерии
+        unit_of_measurement: КОЕ/100мл
+        icon: mdi:bacteria-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 5501, 'value': '")[1].split("'")[0] | float if "'id': 5501, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Отсутствие"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 5501, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 5501, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal TMC # Общее микробное число
+        unit_of_measurement: кол/1мл
+        icon: mdi:bacteria
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1053, 'value': '")[1].split("'")[0] | float if "'id': 1053, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 50"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1053, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1053, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal Ferrum # Железо общее
+        unit_of_measurement: мг/дм3
+        icon: mdi:flask-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1013, 'value': '")[1].split("'")[0] | float if "'id': 1013, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 0.3"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1013, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1013, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal Chlorides # Хлориды
+        unit_of_measurement: мг/дм3
+        icon: mdi:flask-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1008, 'value': '")[1].split("'")[0] | float if "'id': 1008, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 350"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1008, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1008, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal Oxidability # Окисляемость перманганатная
+        unit_of_measurement: мг/дм3
+        icon: mdi:water-check
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1018, 'value': '")[1].split("'")[0] | float if "'id': 1018, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 5"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1018, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1018, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal Fluorides # Фториды
+        unit_of_measurement: мг/дм3
+        icon: mdi:flask-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1037, 'value': '")[1].split("'")[0].replace('<','') | float if "'id': 1037, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 1.5"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1037, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1037, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+
+      - name: Mosvodokanal Ammonium # Аммоний-ион
+        unit_of_measurement: мг/дм3
+        icon: mdi:flask-outline
+        state: >
+          {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1104, 'value': '")[1].split("'")[0] | float if "'id': 1104, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}
+        attributes:
+          range: "Не более 1.9"
+          in_range: >
+            {{ (state_attr('sensor.mosvodokanal', 'params') | join ).split("'id': 1104, 'value': '")[1].split("'inrange': ")[1].split("}")[0] == '1' if "'id': 1104, 'value': '" in state_attr('sensor.mosvodokanal', 'params') | join else 'unknown' }}

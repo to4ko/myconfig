@@ -1,0 +1,281 @@
+# #####################################################################################
+#
+# STORAGE - Light
+#
+# #####################################################################################
+# Storage - Auto Light On
+# ##################################
+- alias: storage_auto_light_on
+  id: storage_auto_light_on
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001aea602_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0003f27ce2_motion
+  condition:
+    - condition: state
+      entity_id: timer.main_light_delay_st
+      state: 'idle'
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+    - condition: state
+      entity_id: group.lights_st
+      state: 'off'
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  action:
+    - service: switch.turn_on
+      data:
+        entity_id: >-
+          {%if is_state('binary_sensor.tod_day','on') and is_state('switch.dark_mode','off') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+          {%elif is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','on') %}switch.sonoff_basic_1_relay
+          {%endif%}
+
+# ##################################
+# Storage - Light On
+# ##################################
+- alias: storage_light_on
+  id: storage_light_on
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0002a1b0c8_contact
+      from: 'off'
+      to: 'on'
+      for:
+        seconds: 1
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c79546c_action
+        click_type: button_2_single
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: 'off'
+    - condition: state
+      entity_id: group.lights_st
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      data:
+        entity_id: >-
+          {%if is_state('binary_sensor.tod_day','on') and is_state('switch.dark_mode','off') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+          {%elif is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','on') %}switch.sonoff_basic_1_relay
+          {%endif%}
+
+# # ##################################
+# # Storage - Main Light On
+# # ##################################
+# - alias: storage_main_light_on
+#   id: storage_main_light_on
+#   initial_state: true
+#   mode: queued
+#   trigger:
+#     # - platform: state
+#     #   entity_id: sensor.0x4cf8cdf3c79546c_action
+#     #   to: 'button_2_single'
+#   condition:
+#     - condition: state
+#       entity_id: group.lights_st
+#       state: 'off'
+#   action:
+#     - service: switch.turn_on
+#       data:
+#         entity_id: >-
+#           {%if is_state('binary_sensor.tod_day','on') %}switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+#           {%elif is_state('binary_sensor.tod_day','off') %}switch.sonoff_basic_1_relay
+#           {%endif%}
+
+# ##################################
+# Storage - Main Light Full On
+# ##################################
+- alias: storage_main_light_full_on
+  id: storage_main_light_full_on
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c79546c_action
+        click_type: button_2_double
+  action:
+    - service: switch.turn_on
+      data:
+        entity_id: switch.0x158d000248bf53_switch,switch.sonoff_basic_1_relay
+
+# ##################################
+# Storage - Auto Light Off
+# ##################################
+- alias: storage_light_off
+  id: storage_light_off
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.main_light_st
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c79546c_action
+        click_type: button_2_single 
+    - platform: state
+      entity_id: binary_sensor.0x158d0002a1b0c8_contact
+      from: 'on'
+      to: 'off'
+      for:
+        seconds: 1
+  condition:
+    - condition: state
+      entity_id: group.lights_st
+      state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.0x158d000248bf53_switch, switch.sonoff_basic_1_relay
+    - service: timer.cancel
+      entity_id: timer.main_light_st
+
+# ##################################
+# Storage - Timer Start
+# ##################################
+- alias: storage_timer_start
+  id: storage_timer_start
+  initial_state: true
+  trigger:
+    - platform: template
+      value_template: "{{ is_state('switch.0x158d000248bf53_switch','on') or is_state('switch.sonoff_basic_1_relay','on')}}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_st
+    - service: timer.start
+      entity_id: timer.main_light_st
+
+# ##################################
+# Storage - Timer restart with movement
+# ################################## 
+- alias: storage_timer_restart
+  id: storage_timer_restart
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0001aea602_motion
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x158d0003f27ce2_motion
+  condition:
+    - condition: state
+      entity_id: group.lights_st
+      state: 'on'
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_st
+    - service: timer.start
+      entity_id: timer.main_light_st
+
+# ##################################
+# Storage - Timer off
+# ################################## 
+- alias: storage_timer_off
+  id: storage_timer_off
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: switch.0x158d000248bf53_switch
+      to: 'off'
+      from: 'on'
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_st
+    - service: timer.cancel
+      entity_id: timer.main_light_delay_st
+    - service: timer.start
+      entity_id: timer.main_light_delay_st
+    - service: switch.turn_off
+      entity_id: switch.sonoff_basic_1_relay
+
+# ##################################
+# Storage - Night Off
+# ##################################
+- alias: storage_night_off
+  id: storage_night_off
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c79546c_action
+        click_type: button_1_single
+  action:
+    - service: homeassistant.turn_off
+      entity_id: 
+        - light.esp32_node_k_light
+        - light.mono_strip_1_light
+        - switch.0x158d000248bf53_switch
+        - light.led_strip_hb
+        - light.led_strip_entrance_hb
+        - light.mirror_light_b
+      
+# ##################################
+# Storage - Dark Mode ON
+# ##################################
+- alias: storage_light_dark_mode_on
+  id: storage_light_dark_mode_on
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c79546c_action
+        click_type: button_1_double
+  condition:
+    - condition: state
+      entity_id: switch.dark_mode
+      state: 'off'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.dark_mode
+
+# ##################################
+# Storage - Dark Mode OFF
+# ##################################
+- alias: storage_light_dark_mode_off
+  id: storage_light_dark_mode_off
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x4cf8cdf3c79546c_action
+        click_type: button_1_double
+    - platform: state
+      entity_id: switch.0x158d000223921b_channel_1, switch.0x158d000253f04a_channel_2
+      from: 'on'
+      to: 'off'
+      for:
+        seconds: 5
+    - platform: state
+      entity_id: switch.0x158d000223921b_channel_1, switch.0x158d000253f04a_channel_2
+      from: 'off'
+      to: 'on'
+      for:
+        seconds: 5
+  condition:
+    - condition: state
+      entity_id: switch.dark_mode
+      state: 'on'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.dark_mode

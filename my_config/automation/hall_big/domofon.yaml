@@ -1,0 +1,276 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Domofon Incoming Call
+# ##################################
+- alias: hall_big_domofon_incoming_call
+  id: hall_big_domofon_incoming_call
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1mini_domofon_incomingcall
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        data:
+          photo:
+          - url: !secret window_snap
+            caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"  
+    - service: notify.mobile_app_iphone_12_dtsymbal
+      data:
+        message: "Звонок в домофон!"
+        title: Домофон
+        data:
+          actions:
+            - action: Domofon_Open
+              title: Open
+              authenticationRequired: false
+              activationMode: background
+          image: !secret window_snap  
+    - service: notify.telegram_cam
+      data:
+        title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+        data:
+          photo:
+          - url: !secret window_snap
+            caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+    - condition: state
+      entity_id: switch.silent_mode
+      state: 'on'
+    - service: light.turn_on
+      data:
+        entity_id: light.esp32_node_k_led
+        effect: 'Green_Alarm'
+        brightness_pct: 100
+    - delay: "00:00:20"
+    - service: light.turn_off
+      entity_id: light.esp32_node_k_led
+
+# ##################################
+# Hall Big - Domofon Incoming Call
+# ##################################
+- alias: hall_big_domofon_open_from_iphone
+  id: hall_big_domofon_open_from_iphone
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: "Domofon_Open"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.d1mini_domofon_open
+    - service: notify.telegram
+      data:
+        message: "\U0001f518 Домофон открыт с телефона!"
+
+# ##################################
+# Hall Big - Domofon Auto Open On Arrival
+# ##################################
+# - alias: hall_big_domofon_auto_open_on_arrival
+#   id: hall_big_domofon_auto_open_on_arrival
+#   initial_state: true
+#   trigger:
+#     - platform: state
+#       entity_id: person.dima, person.sandra, person.vova
+#       to: 'home'
+#   condition:
+#     - condition: template
+#       value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: >
+#           {% if trigger.from_state.attributes.friendly_name == "Dima" %} {{"\U0001F9D4"}} Дима прибыл домой!
+#           {% elif trigger.from_state.attributes.friendly_name == "Sandra" %} {{"\U0001F467"}} Саша прибыла домой!
+#           {% elif trigger.from_state.attributes.friendly_name == "Vova" %} {{"\U0001F471"}} Вова прибыл домой!
+#           {%endif%}
+#     - service: >
+#         {% if trigger.from_state.attributes.friendly_name != "Babayka"%} notify.telegram_{{ trigger.from_state.attributes.friendly_name|lower }}
+#         {%else%} script.noop
+#         {%endif%}
+#       data:
+#         message: "\U0001f513 Домофон: Автооткрытие включено на 15мин! {% if is_state('binary_sensor.bottom_lock','off') or is_state('binary_sensor.upper_lock','off') %}Закрыт{%if is_state('binary_sensor.bottom_lock','off') %} нижний{%endif%}{%if is_state('binary_sensor.upper_lock','off')%} и верхний{%endif%} замок{%endif%}"
+#     - service: timer.cancel
+#       entity_id: timer.domofon
+#     - service: timer.start
+#       entity_id: timer.domofon
+#     - service: switch.turn_on
+#       entity_id: switch.d1mini_domofon_auto_open #, switch.d1mini_domofon_mute
+
+# ##################################
+# Hall Big - Domofon auto message
+# ##################################
+- alias: hall_big_domofon_auto_message
+  id: hall_big_domofon_auto_message
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.d1mini_domofon_auto_opening
+      from: 'off'
+      to: 'on'
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001F4DE Домофон открыт автоматически!"
+
+# ##################################
+# Hall Big - Domofon auto opening status
+# ##################################
+- alias: hall_big_domofon_auto_opening
+  id: hall_big_domofon_auto_opening
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: state
+      entity_id: switch.d1mini_domofon_auto_open, switch.d1mini_domofon_auto_open_once
+      to:
+        - 'on'
+        - 'off'
+      from:
+        - 'on'
+        - 'off'
+  condition:
+    - condition: template
+      value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
+  action:
+    - service: notify.telegram
+      data:
+        message: >
+          {% if is_state('switch.d1mini_domofon_auto_open','on') and 'once' not in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Автооткрытие включено!
+          {% elif is_state('switch.d1mini_domofon_auto_open_once','on') and 'once' in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Разовое автооткрытие включено!
+          {% else %}{{'\U0001f512'}} Домофон: Автооткрытие выключено!{% endif %}
+
+# ##################################
+# Hall Big - Domofon auto off on door open\close
+# ##################################
+# - alias: hall_big_domofon_auto_mode_on_door_open_close
+#   id: hall_big_domofon_auto_mode_on_door_open_close
+#   initial_state: true
+#   mode: queued
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x158d0001e5d6be_contact
+#       from: 'on'
+#       to: 'off'
+#     - platform: state
+#       entity_id: binary_sensor.0x158d0001e5d6be_contact
+#       from: 'off'
+#       to: 'on'
+#   action:
+#     - service: switch.turn_on
+#       entity_id: switch.d1mini_domofon_auto_open #, switch.d1mini_domofon_mute
+#     - service: timer.cancel
+#       entity_id: timer.domofon
+#     - service: timer.start
+#       entity_id: timer.domofon
+
+
+# ##################################
+# Hall Bid - Domofon Timer start
+# ################################## 
+- alias: hall_big_domofon_timer_on
+  id: hall_big_domofon_timer_on
+  initial_state: true
+  mode: queued
+  trigger:
+    - platform: template
+      value_template: "{{is_state('switch.d1mini_domofon_auto_open','on') or is_state('switch.d1mini_domofon_auto_open_once','on') }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.domofon
+    - service: timer.start
+      entity_id: timer.domofon
+
+# ##################################
+# Hall Big - Domofon auto open turn off
+# ##################################
+- alias: hall_big_domofon_auto_open_turn_off
+  id: hall_big_domofon_auto_open_turn_off
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.domofon
+  action:
+    - service: switch.turn_off
+      entity_id: switch.d1mini_domofon_auto_open, switch.d1mini_domofon_auto_open_once, switch.d1mini_domofon_mute
+
+# ##################################
+# Hall Bid - Domofon Timer stop
+# ################################## 
+- alias: hall_big_domofon_timer_off
+  id: hall_big_domofon_timer_off
+  initial_state: true
+  trigger:
+    - platform: template
+      value_template: "{{not is_state('switch.d1mini_domofon_auto_open','on') and not is_state('switch.d1mini_domofon_auto_open_once','on') }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.domofon
+
+# ##################################
+# Hall big - Domofon Button
+# ##################################
+- alias: hall_big_domofon_button
+  id: hall_big_domofon_button
+  initial_state: true
+  mode: queued
+  max: 5
+  max_exceeded: silent  
+  trigger:
+    # - platform: state
+    #   entity_id: sensor.0x158d0002f8dd54_action
+    #   to:
+    #     - single
+    #     - double
+    #     - hold
+    # - platform: event
+    #   event_type: xiaomi_aqara.click
+    #   event_data:
+    #     entity_id: sensor.0x158d0002f8dd54_action
+    #     click_type: single
+    # - platform: event
+    #   event_type: xiaomi_aqara.click
+    #   event_data:
+    #     entity_id: sensor.0x158d0002f8dd54_action
+    #     click_type: double
+    # - platform: event
+    #   event_type: xiaomi_aqara.click
+    #   event_data:
+    #     entity_id: sensor.0x158d0002f8dd54_action
+    #     click_type: hold
+    - platform: state
+      entity_id: binary_sensor.d1mini_domofon_button
+      from: 'off'
+      to: 'on'
+  action:
+    # - service: switch.turn_on
+    #   entity_id: switch.d1mini_domofon_open_manual
+    - service: mqtt.publish
+      data:
+        topic: 'wallpanel/digma8027/command'
+        payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+    - service: notify.telegram
+      data:
+        message: "\U0001f518 Домофон открыт вручную!"
+        data:
+          photo:
+            - url: !secret entrance_snap
+              caption: "\U0001f518 Домофон открыт вручную!"
+
+    # - condition: state
+    #   entity_id: light.digma_8592_screen
+    #   state: 'off'
+    # - service: light.turn_on
+    #   entity_id: light.digma_8592_screen

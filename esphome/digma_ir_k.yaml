@@ -1,0 +1,394 @@
+substitutions:
+  board_name: digma_ir_k
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 0s
+  manual_ip:
+    static_ip: 192.168.1.68
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+
+logger:
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+status_led:
+  pin: 
+    number: GPIO4
+    inverted: true
+
+remote_receiver:
+  pin: 
+    number: GPIO5
+    inverted: true
+  dump: all
+
+remote_transmitter:
+  pin: 
+    number: GPIO14
+    inverted: false
+  carrier_duty_percent: 50%
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+  - platform: gpio
+    pin:
+      number: GPIO13
+      inverted: true
+    internal: true
+    name: ${board_name}_Button
+    id: button
+
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+    
+  - platform: template
+    name: ${board_name}_Breather_PWR
+    icon: mdi:power
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x00FF
+          command: 0x20DF
+
+  - platform: template
+    name: ${board_name}_Breather_UP
+    icon: mdi:arrow-up-bold-box
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x00FF
+          command: 0x30CF
+          
+  - platform: template
+    name: ${board_name}_Breather_DOWN
+    icon: mdi:arrow-down-bold-box
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x00FF
+          command: 0x00FF
+    
+  - platform: template
+    name: ${board_name}_TV_Box_PWR
+    icon: mdi:power
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x02FD
+  
+  - platform: template
+    name: ${board_name}_TV_Box_PlayPause
+    icon: mdi:play-pause
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x5AA5
+          
+  - platform: template
+    name: ${board_name}_TV_Box_Up
+    icon: mdi:arrow-up
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x6897
+
+  - platform: template
+    name: ${board_name}_TV_Box_Down
+    icon: mdi:arrow-down
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x58A7
+
+  - platform: template
+    name: ${board_name}_TV_Box_Left
+    icon: mdi:arrow-left
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x8A75
+
+  - platform: template
+    name: ${board_name}_TV_Box_Right
+    icon: mdi:arrow-right
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x0AF5
+
+  - platform: template
+    name: ${board_name}_TV_Box_Stop
+    icon: mdi:stop
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x4AB5
+
+  - platform: template
+    name: ${board_name}_TV_Box_Vol_Up
+    icon: mdi:volume-plus
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x18E7
+
+  - platform: template
+    name: ${board_name}_TV_Box_Vol_Down
+    icon: mdi:volume-minus
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x08F7
+
+  - platform: template
+    name: ${board_name}_TV_Box_OK
+    icon: mdi:keyboard-return
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0xC837
+          
+  - platform: template
+    name: ${board_name}_TV_Box_Home
+    icon: mdi:home
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x8877
+          
+  - platform: template
+    name: ${board_name}_TV_Box_Back
+    icon: mdi:keyboard-backspace
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x9867
+          
+  - platform: template
+    name: ${board_name}_TV_Box_Menu
+    icon: mdi:menu
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x32CD
+          
+  - platform: template
+    name: ${board_name}_TV_Box_Mute
+    icon: mdi:volume-mute
+    turn_on_action:
+      - remote_transmitter.transmit_nec:
+          address: 0x807F
+          command: 0x827D
+
+
+
+  - platform: template
+    name: ${board_name}_TV_PWR
+    icon: mdi:power
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000A90
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+
+  - platform: template
+    name: ${board_name}_TV_Prog_Down
+    icon: mdi:arrow-collapse-down
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000890
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+            
+  - platform: template
+    name: ${board_name}_TV_Prog_Up
+    icon: mdi:arrow-collapse-up
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000090
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+
+  - platform: template
+    name: ${board_name}_TV_Up
+    icon: mdi:arrow-up
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x000002F0
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+            
+  - platform: template
+    name: ${board_name}_TV_Down
+    icon: mdi:arrow-down
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000AF0
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+            
+  - platform: template
+    name: ${board_name}_TV_Left
+    icon: mdi:arrow-left
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x000002D0
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+            
+  - platform: template
+    name: ${board_name}_TV_Right
+    icon: mdi:arrow-right
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000CD0
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+            
+  - platform: template
+    name: ${board_name}_TV_Vol_Up
+    icon: mdi:volume-plus
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000490
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+
+  - platform: template
+    name: ${board_name}_TV_Vol_Down
+    icon: mdi:volume-minus
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000C90
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+            
+  - platform: template
+    name: ${board_name}_TV_OK
+    icon: mdi:keyboard-return
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000A70
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+          
+  - platform: template
+    name: ${board_name}_TV_Input
+    icon: mdi:video-input-component
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000A50
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+          
+  - platform: template
+    name: ${board_name}_TV_Back
+    icon: mdi:keyboard-backspace
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x000062E9
+          nbits: 15
+          repeat:
+            times: 3
+            wait_time: 46ms          
+          
+  - platform: template
+    name: ${board_name}_TV_Menu
+    icon: mdi:menu
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000070
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+            
+  - platform: template
+    name: ${board_name}_TV_Mute
+    icon: mdi:volume-mute
+    turn_on_action:
+      - remote_transmitter.transmit_sony:
+          data: 0x00000290
+          nbits: 12
+          repeat:
+            times: 3
+            wait_time: 46ms
+
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+    
+time:
+  - platform: homeassistant
+    id: homeassistant_time

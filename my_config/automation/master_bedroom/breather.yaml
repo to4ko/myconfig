@@ -1,0 +1,44 @@
+# #####################################################################################
+#
+# MASTER BEDROOM - breather
+#
+# #####################################################################################
+# Master Bedroom- breather On
+# ################################## 
+- alias: master_bedroom_breather_auto
+  id: master_bedroom_breather_auto
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      minutes: "/5"
+  condition:
+    - condition: state
+      entity_id: switch.breather_auto_mb
+      state: "on"
+    - condition: or
+      conditions:
+        - condition: and
+          conditions:
+            - condition: state
+              entity_id: binary_sensor.family_home
+              state: "on"
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_mb
+              above: 1000
+            - condition: state
+              entity_id: binary_sensor.breather_mb
+              state: "off"
+            # - condition: state
+            #   entity_id: binary_sensor.0x158d000200ad58_contact
+            #   state: "off"
+        - condition: and
+          conditions:
+            - condition: numeric_state
+              entity_id: sensor.z19_co2_mb
+              below: 600
+            - condition: state
+              entity_id: binary_sensor.breather_mb
+              state: "on"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.digma_ir_mb_breather_pwr

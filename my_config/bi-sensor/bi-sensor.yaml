@@ -1,0 +1,137 @@
+
+#{{ 'on' if is_state('sensor.fibaro_system_unknown_type_0701_id_4001_access_control', 23) else 'off' }}
+
+  #- platform: random
+
+  - platform: trend
+    sensors:
+      bathroom_humidity_rising:
+        entity_id: sensor.0x158d00020d7c3a_humidity
+        friendly_name: Humidity B Rising
+        sample_duration: 7200
+        min_gradient: 0.02
+      bathroom_humidity_falling:
+        entity_id: sensor.0x158d00020d7c3a_humidity
+        friendly_name: Humidity B Falling
+        sample_duration: 7200
+        min_gradient: -0.01
+      
+      pressure_rising_fast:
+        entity_id: sensor.pressure_average
+        friendly_name: Pressure Rising Fast
+        sample_duration: 3600
+        max_samples: 10
+        min_gradient: 0.00027777777778
+      pressure_rising_slow:
+        entity_id: sensor.pressure_average
+        friendly_name: Pressure Rising Slow
+        sample_duration: 3600
+        max_samples: 10
+        min_gradient: 0.00013888888889
+      pressure_falling_fast:
+        entity_id: sensor.pressure_average
+        friendly_name: Pressure Falling Fast
+        sample_duration: 3600
+        max_samples: 10
+        min_gradient: -0.00027777777778
+      pressure_falling_slow:
+        entity_id: sensor.pressure_average
+        friendly_name: Pressure Falling Slow
+        sample_duration: 3600
+        max_samples: 10
+        min_gradient: -0.00013888888889
+      
+      temp_falling:
+        entity_id: sensor.esp32_node_mb_outside #sensor.0x158d000239ad5b_temperature #sensor.0x158d0001e8995a_temperature
+        sample_duration: 7200
+        min_gradient: -0.0008
+        max_samples: 10
+        device_class: cold
+
+      temp_rising:
+        entity_id: sensor.esp32_node_mb_outside #sensor.0x158d000239ad5b_temperature #sensor.0x158d0001e8995a_temperature
+        sample_duration: 7200
+        min_gradient: 0.0008
+        max_samples: 10
+        device_class: heat
+
+  - platform: mqtt
+    name: SLS Gateway State
+    state_topic: "sls_gateway/bridge/state"
+    device_class: connectivity
+    payload_on: online
+    payload_off: offline
+    # json_attributes_topic: "sls_gateway/bridge/config"
+    # json_attributes_template: "{{ value_json | tojson }}"
+    
+  - platform: mqtt
+    name: Pinhole Camera Status
+    state_topic: "camera/motioneye_cam_status_pinhole"
+    device_class: connectivity
+
+  - platform: mqtt
+    name: Digma100 Camera Status
+    state_topic: "camera/motioneye_cam_status_digma100"
+    device_class: connectivity
+
+
+  # - platform: command_line
+  #   name: GW3 HS State
+  #   command: nmap -p 1883 192.168.1.199 | grep "open" >> /dev/null && echo ON || echo OFF
+  #   scan_interval: 300
+  # - platform: command_line
+  #   name: GW3 HB State
+  #   command: nmap -p 1883 192.168.1.236 | grep "open" >> /dev/null && echo ON || echo OFF
+  #   scan_interval: 300
+  # - platform: command_line
+  #   name: GW3 S State
+  #   command: nmap -p 1883 192.168.1.215 | grep "open" >> /dev/null && echo ON || echo OFF
+  #   scan_interval: 300
+    
+  # - platform: command_line
+  #   command: /bin/bash -c "(echo > /dev/tcp/192.168.1.199/1883) > /dev/null 2>&1 && echo ON || echo OFF"
+  #   value_template: '{{ value }}'
+  #   name: GW3 HS State 2
+  #   scan_interval: 60
+  # - platform: command_line
+  #   command: /bin/bash -c "(echo > /dev/tcp/192.168.1.236/1883) > /dev/null 2>&1 && echo ON || echo OFF"
+  #   value_template: '{{ value }}'
+  #   name: GW3 HB State 2
+  #   scan_interval: 60
+  # - platform: command_line
+  #   command: /bin/bash -c "(echo > /dev/tcp/192.168.1.215/1883) > /dev/null 2>&1 && echo ON || echo OFF"
+  #   value_template: '{{ value }}'
+  #   name: GW3 S State 2
+  #   scan_interval: 60
+
+  # - platform: command_line
+  #   name: GW3 HS State 3
+  #   command_timeout: 30
+  #   scan_interval: 120
+  #   command: 'echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc 192.168.1.199 1883 | hd | grep -o 20 > /dev/null 2>&1 && echo ok || echo fail'
+  #   payload_on: "ok"
+  #   payload_off: "fail"
+
+  # - platform: command_line
+  #   name: GW3 HB State 3
+  #   command_timeout: 30
+  #   scan_interval: 120
+  #   command: 'echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc 192.168.1.236 1883 | hd | grep -o 20 > /dev/null 2>&1 && echo ok || echo fail'
+  #   payload_on: "ok"
+  #   payload_off: "fail"
+    
+  # - platform: command_line
+  #   name: GW3 S State 3
+  #   command_timeout: 30
+  #   scan_interval: 120
+  #   command: 'echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc 192.168.1.215 1883 | hd | grep -o 20 > /dev/null 2>&1 && echo ok || echo fail'
+  #   payload_on: "ok"
+  #   payload_off: "fail"
+    
+  # - platform: command_line
+  #   name: GW3 K State 3
+  #   command_timeout: 30
+  #   scan_interval: 120
+  #   command: 'echo -en "\x10\x0d\x00\x04MQTT\x04\x00\x00\x00\x00\x01a" | nc 192.168.1.238 1883 | hd | grep -o 20 > /dev/null 2>&1 && echo ok || echo fail'
+  #   payload_on: "ok"
+  #   payload_off: "fail"

@@ -1,0 +1,64 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - left home
+# ##################################
+- alias: hall_big_left_home
+  id: hall_big_left_home
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d00023d3206_action
+        click_type: double
+  action:
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: notify.telegram
+      data:
+        message: "\U0001f4a1 Выключаем освещение"
+    - service: tts.yandextts_say
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: 'Выключ+аю освещ+ение!'
+    - delay: '00:00:03'
+    - service: script.turn_on
+      entity_id: script.lights_off
+    - service: notify.telegram
+      data:
+        message: "\U0001f4a1 Освещение выключено"
+    - service: tts.yandextts_say
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: 'Освещ+ение в+ыключено! Всег+о хор+ошего!'
+
+# ##################################
+# Hall Big - left home - abort - somebody home
+# ##################################
+- alias: hall_big_left_home_abort
+  id: hall_big_left_home_abort
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d00023d3206_action
+        click_type: single
+  condition:
+    - condition: state
+      entity_id: binary_sensor.family_home
+      state: 'on'
+  action:
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '{{states("input_number.main_volume")|float}}'
+    - service: tts.yandextts_say
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        message: 'Выключ+ение освещ+ения невозможно - дома кто-то есть!'

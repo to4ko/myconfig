@@ -1,0 +1,818 @@
+substitutions:
+  board_name: esp32_domofon
+  ip_address: 192.168.1.101
+
+esphome:
+  name: ${board_name}
+  platform: ESP32
+  board: lolin32
+  comment: ESP32 Power Meter\Motion Node
+  on_boot:
+    priority: -10
+    then:
+      # - switch.turn_off: relay1
+      # - switch.turn_off: relay2
+      # - switch.turn_off: relay3
+      # - switch.turn_off: relay4
+      - script.execute: led_off
+
+# globals:
+#   - id: mute_mode
+#     type: bool
+#     initial_value: 'false'
+#   - id: opening
+#     type: bool
+#     initial_value: 'false'
+  
+
+wifi:
+  ssid: !secret wifi_ssid_hb
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 10min
+  #output_power: 17.5dB
+  fast_connect: true
+  #power_save_mode: none
+  # networks:
+  #   - ssid: !secret wifi_ssid_hb
+  #     password: !secret wifi_pass
+  #     hidden: true
+  #     bssid: !secret wifi_bssid_hb_iot
+  #     priority: 2
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     bssid: !secret wifi_bssid_hb_main
+  #     priority: 1
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     priority: 0  
+  manual_ip:
+    static_ip: ${ip_address}
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+logger:
+  baud_rate: 0
+
+api:
+  reboot_timeout: 5min
+  # services:
+  #   - service: accept_call
+  #     then:
+  #       - logger.log: "Call service 'Accept Call'"
+  #       - if:
+  #           condition:
+  #             binary_sensor.is_on: incoming_call
+  #           then: 
+  #             lambda: |-
+  #               if (id(mute_mode)) { id(call_accept_mute).execute(); 
+  #               }else { id(call_accept).execute();
+  #               }
+  #           else:
+  #             logger.log: "No incoming call"
+
+  #   - service: reject_call
+  #     then:
+  #       - logger.log: "Call service 'Reject Call'"
+  #       - if:
+  #           condition:
+  #             binary_sensor.is_on: incoming_call
+  #           then:
+  #             script.execute: call_reject
+  #           else:
+  #             logger.log: "No incoming call"  
+
+ota:
+
+web_server:
+  port: 80
+
+script:
+  # # Accept incoming call
+  # - id: call_accept
+  #   then:
+  #     - globals.set:
+  #         id: opening
+  #         value: 'true'      
+  #     - logger.log: "Accept call"
+  #     - script.execute: state_no_call
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 1000ms
+  #     - switch.turn_on: relay3
+  #     - delay: 1000ms
+  #     - switch.turn_off: relay3      
+  #     - delay: 2000ms
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - globals.set:
+  #         id: opening
+  #         value: 'false'
+
+  # - id: call_accept_mute
+  #   then:
+  #     - globals.set:
+  #         id: opening
+  #         value: 'true'      
+  #     - logger.log: "Accept call_mute"
+  #     - script.execute: state_no_call
+  #     - switch.turn_on: relay4
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 1000ms
+  #     - switch.turn_on: relay3
+  #     - delay: 1000ms
+  #     - switch.turn_off: relay3      
+  #     - delay: 2000ms
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - switch.turn_off: relay4
+  #     - globals.set:
+  #         id: opening
+  #         value: 'false'
+          
+  # - id: call_reject
+  #   then:
+  #     - logger.log: "Reject call"
+  #     - script.execute: state_no_call
+  #     - delay: 400ms
+  #     - switch.turn_on: relay4
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 3000ms
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - switch.turn_off: relay4
+
+  # # No call state
+  # - id: state_no_call
+  #   then:
+  #     - logger.log: "Set state 'No call'"
+  #     - script.execute: led_off
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open_once
+  #         then:
+  #           script.execute: led_green_soft
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open
+  #         then:
+  #           script.execute: led_green_on
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_reject
+  #         then:
+  #           script.execute: led_red_on_soft
+  #     - if:
+  #         condition:
+  #           switch.is_on: mute
+  #         then:
+  #           script.execute: led_blue_on_soft
+  #     - if:
+  #         condition:
+  #           and:
+  #             - switch.is_off: auto_open_once
+  #             - switch.is_off: auto_open
+  #             - switch.is_off: auto_reject
+  #         then:
+  #           script.execute: led_off
+
+  # # Call state
+  # - id: state_call
+  #   then:
+  #     - logger.log: "Set state 'Incoming call'"
+  #     - script.execute: led_off
+  #     - if:
+  #         condition:
+  #           and:
+  #             - switch.is_off: auto_open
+  #             - switch.is_off: auto_open_once
+  #             - switch.is_off: auto_reject
+  #             - switch.is_on: mute
+  #         then:
+  #           script.execute: led_red_on
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_reject
+  #         then:
+  #           script.execute: call_reject
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open
+  #         then:
+  #           script.execute: call_accept
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open_once
+  #         then:
+  #           - script.execute: call_accept
+  #           # - lambda: |-
+  #           #     if (id(mute_mode)) { id(call_accept_mute).execute(); 
+  #           #     }else { id(call_accept).execute();
+  #           #     }          
+  #           - delay: 1s
+  #           - switch.turn_off: auto_open_once
+
+  # Turn off leds
+  - id: led_off
+    then:
+      - light.turn_off: light_blue_led
+      - light.turn_off: light_green_led
+      - light.turn_off: light_red_led
+      # - if:
+      #     condition:
+      #       switch.is_on: mute
+      #     then:
+      #       light.turn_on: 
+      #         id: light_blue_led
+      #         effect: "Blink"
+
+
+
+  # blink green led
+  - id: led_green_soft
+    then:
+      - light.turn_on:
+          id: light_green_led
+          effect: "Blink"
+
+  # blink red led
+  - id: led_red_on_soft
+    then:
+      light.turn_on:
+        id: light_red_led
+        effect: "Blink"
+
+  # blink blue led
+  - id: led_blue_on_soft
+    then:
+      light.turn_on:
+        id: light_blue_led
+        effect: "Blink"
+
+  # blue led on
+  - id: led_blue_on
+    then:
+      light.turn_on:
+        id: light_blue_led
+        brightness: 75%
+
+  # green led on
+  - id: led_green_on
+    then:
+      light.turn_on:
+        id: light_green_led
+        brightness: 75%
+
+  # red led on
+  - id: led_red_on
+    then:
+      light.turn_on:
+        id: light_red_led
+        brightness: 75%
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+  - platform: gpio
+    pin:
+      number: GPIO32
+      inverted: false
+    name: ${board_name}_Motion
+    device_class: motion
+
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO21
+  #   name: ${board_name}_IncomingCall
+  #   device_class: sound
+  #   id: incoming_call
+  #   filters:
+  #     - delayed_on: 500ms
+  #     - delayed_off: 3000ms
+  #   on_press:
+  #     then:
+  #       script.execute: state_call
+  #   on_release:
+  #     then:
+  #       script.execute: state_no_call      
+
+  # - platform: template
+  #   name: ${board_name}_Auto_Opening
+  #   lambda: |-
+  #     if (id(opening)) { return true;
+  #     }else { return false;
+  #     }
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: pulse_counter
+    pin: GPIO12 # TO GPIO13
+    unit_of_measurement: 'W'
+    id: id_power
+    update_interval: 10s
+    name: ${board_name}_Power_Meter
+    filters:
+      - multiply: 12 #0.012
+    internal_filter: 10us
+    accuracy_decimals: 0
+#    internal_filter: 10000us
+
+  - platform: template
+    name: ${board_name}_Power_Night
+    id: id_power_night
+    icon: mdi:speedometer
+    lambda: |- 
+      auto id_loc_time = id(sntp_time).now();
+      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
+        if ( (id(sntp_time).now().hour >= 23) || (id(sntp_time).now().hour >= 0 && id(sntp_time).now().hour < 7) ) {
+          return id(id_power).state;
+        } else {
+          return 0.0;
+        }
+      } else {
+        return 0.0;
+      } 
+    accuracy_decimals: 1
+    update_interval: 15s
+    unit_of_measurement: 'W'
+    
+  - platform: template
+    name: ${board_name}_Power_Day
+    id: id_power_day
+    icon: mdi:speedometer
+    lambda: |-
+      auto id_loc_time = id(sntp_time).now();
+      if ((id(id_power).state >= 0) and id_loc_time.is_valid()) {
+        if ( (id(sntp_time).now().hour >= 7 && id(sntp_time).now().hour < 23) ) {
+          return id(id_power).state;
+        } else {
+          return 0.0;
+        }
+      } else {
+        return 0.0;
+      }         
+    accuracy_decimals: 1
+    update_interval: 15s
+    unit_of_measurement: 'W'
+
+  - platform: integration
+    name: ${board_name}_Energy_Monthly
+    id: id_energy_monthly
+    sensor: id_power
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true    
+
+  - platform: integration
+    name: ${board_name}_Energy_Monthly_Day
+    id: id_energy_monthly_day
+    sensor: id_power_day
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true   
+
+  - platform: integration
+    name: ${board_name}_Energy_Monthly_Night
+    id: id_energy_monthly_night
+    sensor: id_power_night
+    time_unit: h
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+    restore: true     
+
+  - platform: total_daily_energy
+    name: ${board_name}_Energy_Daily
+    icon: mdi:gauge
+    id: id_energy_daily
+    power_id: id_power
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3            
+
+  - platform: total_daily_energy
+    name: ${board_name}_Energy_Daily_Night
+    icon: mdi:gauge
+    id: id_energy_daily_night
+    power_id: id_power_night
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+
+  - platform: total_daily_energy
+    name: ${board_name}_Energy_Daily_Day
+    icon: mdi:gauge
+    id: id_energy_daily_day
+    power_id: id_power_day
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 3
+
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+  
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO19
+  #     inverted: yes
+  #   name: ${board_name}_Relay1
+  #   id: relay1
+  #   internal: true
+  #   icon: mdi:phone
+    
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO18
+  #     inverted: yes
+  #   name: ${board_name}_Relay2
+  #   id: relay2
+  #   internal: true
+  #   icon: mdi:phone
+    
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO17
+  #     inverted: yes
+  #   name: ${board_name}_Relay3
+  #   id: relay3
+  #   icon: mdi:door-open
+
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO16
+  #     inverted: yes
+  #   name: ${board_name}_Relay4
+  #   id: relay4
+  #   icon: mdi:volume-off
+
+  # - platform: template
+  #   name: ${board_name}_Open_Button
+  #   icon: mdi:gesture-tap-button
+  #   turn_on_action:
+  #   - switch.turn_on: relay3
+  #   - delay: 2s
+  #   - switch.turn_off: relay3
+  
+  # - platform: template
+  #   name: ${board_name}_Phone
+  #   id: relay_phone
+  #   icon: mdi:phone
+  #   lambda: |-
+  #     if (id(relay1).state) {
+  #       return true;
+  #     } else {
+  #       return false;
+  #     }
+  #   turn_on_action:
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #   turn_off_action:
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+
+  # - platform: template
+  #   name: ${board_name}_Open
+  #   icon: mdi:door
+  #   turn_on_action:
+  #     - switch.turn_on: relay4
+  #     - switch.turn_on: relay1
+  #     - switch.turn_on: relay2
+  #     - delay: 1500ms
+  #     - switch.turn_on: relay3
+  #     - delay: 2000ms
+  #     - switch.turn_off: relay3
+  #     - switch.turn_off: relay1
+  #     - switch.turn_off: relay2
+  #     - switch.turn_off: relay4
+
+  # # Automatically open door switch
+  # - platform: template
+  #   name: ${board_name}_Auto_Open
+  #   id: auto_open
+  #   icon: mdi:check-all
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - switch.turn_off: auto_open_once
+  #     - switch.turn_off: auto_reject
+  #     - script.execute: state_no_call
+  #   on_turn_off:
+  #     script.execute: state_no_call
+
+  # # Automatically open door once switch
+  # - platform: template
+  #   name: ${board_name}_Auto_Open_Once
+  #   id: auto_open_once
+  #   icon: mdi:check
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - switch.turn_off: auto_open
+  #     - switch.turn_off: auto_reject
+  #     - script.execute: state_no_call
+  #   on_turn_off:
+  #     script.execute: state_no_call
+
+  # # Automatically reject call switch
+  # - platform: template
+  #   name: ${board_name}_Reject
+  #   id: auto_reject
+  #   icon: mdi:door-closed-lock
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - switch.turn_off: auto_open
+  #     - switch.turn_off: auto_open_once
+  #     - script.execute: state_no_call
+  #   on_turn_off:
+  #     script.execute: state_no_call
+      
+  # - platform: template
+  #   name: ${board_name}_Mute
+  #   id: mute
+  #   icon: mdi:volume-off
+  #   optimistic: true
+  #   restore_state: true
+  #   on_turn_on:
+  #     - globals.set:
+  #         id: mute_mode
+  #         value: 'true'
+  #     - switch.turn_on: relay4
+  #     - light.turn_on: 
+  #         id: light_blue_led
+  #         effect: "Blink"
+  #   on_turn_off:
+  #     - globals.set:
+  #         id: mute_mode
+  #         value: 'false'
+  #     - switch.turn_off: relay4
+  #     - light.turn_off: 
+  #         id: light_blue_led
+
+  - platform: template
+    name: ${board_name}_Energy_Reset_Monthly_Night
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly_night     
+
+  - platform: template
+    name: ${board_name}_Energy_Reset_Monthly_Day
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly_day
+
+  - platform: template #
+    name: ${board_name}_Energy_Reset_Monthly
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly
+
+  - platform: template
+    name: ${board_name}_Energy_Reset_All
+    turn_on_action: 
+      - sensor.integration.reset: id_energy_monthly
+      - delay: 1s
+      - sensor.integration.reset: id_energy_monthly_day
+      - delay: 1s
+      - sensor.integration.reset: id_energy_monthly_night
+      - homeassistant.service:
+          service: notify.telegram
+          data:
+            message: "ESP32 Domofon - Energy Data Reset Done!"      
+      
+      
+output:
+  - platform: ledc
+    pin: GPIO25
+    id: yellow_led
+  
+  - platform: ledc
+    pin: GPIO26
+    id: green_led
+    
+  - platform: ledc
+    pin: GPIO27
+    id: blue_led
+    
+  - platform: ledc
+    pin: GPIO14 # top GPIO33
+    id: red_led
+  
+# Example usage in a light
+light:
+  - platform: monochromatic
+    output: yellow_led
+    name: ${board_name}_Yellow_LED
+    default_transition_length: 50ms
+    id: light_yellow_led
+    effects:
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: light_yellow_led
+                brightness: 50%
+                transition_length: 500ms
+            - delay: 1000ms
+            - light.turn_on:
+                id: light_yellow_led
+                brightness: 1%
+                transition_length: 300ms
+            - delay: 500ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: light_yellow_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: light_yellow_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms
+      - automation:
+          name: "Half"
+          sequence:
+            - light.turn_on:
+                id: light_yellow_led
+                brightness: 50%
+                transition_length: 50ms
+
+  - platform: monochromatic
+    output: green_led
+    name: ${board_name}_Green_LED
+    default_transition_length: 50ms
+    id: light_green_led
+    effects:
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: light_green_led
+                brightness: 100%
+                transition_length: 50ms
+            - delay: 200ms
+            - light.turn_on:
+                id: light_green_led
+                brightness: 0%
+                transition_length: 50ms
+            - delay: 200ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: light_green_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: light_green_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms
+      - automation:
+          name: "Half"
+          sequence:
+            - light.turn_on:
+                id: light_green_led
+                brightness: 50%
+                transition_length: 50ms
+
+  - platform: monochromatic
+    output: blue_led
+    name: ${board_name}_Blue_LED
+    default_transition_length: 50ms
+    id: light_blue_led
+    effects:
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: light_blue_led
+                brightness: 50%
+                transition_length: 500ms
+            - delay: 1000ms
+            - light.turn_on:
+                id: light_blue_led
+                brightness: 1%
+                transition_length: 300ms
+            - delay: 500ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: light_blue_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: light_blue_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms
+      - automation:
+          name: "Half"
+          sequence:
+            - light.turn_on:
+                id: light_blue_led
+                brightness: 50%
+                transition_length: 50ms
+
+  - platform: monochromatic
+    output: red_led
+    name: ${board_name}_Red_LED
+    default_transition_length: 50ms
+    id: light_red_led
+    effects:
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: light_red_led
+                brightness: 50%
+                transition_length: 500ms
+            - delay: 1000ms
+            - light.turn_on:
+                id: light_red_led
+                brightness: 1%
+                transition_length: 300ms
+            - delay: 500ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: light_red_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: light_red_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms
+      - automation:
+          name: "Half"
+          sequence:
+            - light.turn_on:
+                id: light_red_led
+                brightness: 50%
+                transition_length: 50ms
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: UTC-3

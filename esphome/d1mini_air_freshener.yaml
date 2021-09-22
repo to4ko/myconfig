@@ -1,0 +1,323 @@
+substitutions:
+  board_name: d1mini_air_freshener
+  
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: d1_mini
+  esp8266_restore_from_flash: true
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .localdomain
+  reboot_timeout: 15min
+  output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.98
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+logger:
+  baud_rate: 0
+  
+api:
+  reboot_timeout: 10min
+
+ota:
+
+web_server:
+  port: 80
+
+# i2c:
+#   sda: D5
+#   scl: D2
+#   scan: True
+
+# bme680_bsec:
+#   address: 0x77
+#   sample_rate: lp
+#   iaq_mode: static
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+  - platform: gpio
+    pin:
+      number: GPIO13
+      #mode: INPUT_PULLDOWN_16
+      mode: INPUT_PULLUP
+      inverted: true
+    name: ${board_name}_Button
+    id: button
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      then: 
+        - light.turn_on: id_green_led
+    on_click:
+      then:
+        - switch.turn_on: spray
+        - light.turn_off: id_green_led
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for 0.5s to 1s
+        - OFF for at least 0.2s
+      then:
+        - homeassistant.service:
+            service: script.toilet_air_freshener_counter_rese
+        - light.turn_off: id_green_led
+    
+  - platform: gpio
+    pin:
+      number: GPIO12
+      #mode: INPUT_PULLDOWN_16
+      mode: INPUT_PULLUP
+      inverted: true
+    name: ${board_name}_Canister
+    id: can_presence
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      then: 
+        - light.turn_off: id_red_led
+    on_release:
+      then: 
+        - light.turn_on:
+              id: id_red_led
+              effect: "Blink"
+
+number:
+  - platform: template
+    name: ${board_name}_Counter
+    icon: mdi:counter
+    id: id_counter
+    restore_value: true
+    update_interval: 30s
+    min_value: 0
+    max_value: 3000
+    step: 1
+    optimistic: true
+
+  - platform: template
+    name: ${board_name}_Canister_Resource
+    icon: mdi:counter
+    id: id_canister_resource
+    restore_value: true
+    update_interval: 30s
+    min_value: 0
+    max_value: 3000
+    step: 1
+    optimistic: true
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+
+  # - platform: bme680_bsec
+  #   iaq_accuracy:
+  #     name: ${board_name}_IAQ_Accuracy
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: adc
+    pin: A0
+    name: ${board_name}_ADC
+    id: adc_value
+    unit_of_measurement: 'V'
+    filters:
+      - multiply: 3.3
+    update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_AirQ
+    icon: mdi:gas-cylinder
+    unit_of_measurement: '%'
+    accuracy_decimals: 0
+    id: id_airq
+    lambda: |-
+      float raw_value = id(adc_value).state;
+      return raw_value;    
+    filters:    
+      - calibrate_linear:
+          - 3.2 -> 100.0
+          - 1.1 -> 0.0
+      - lambda: |-
+          if (x >= 100) return 100;
+          else return x;
+    update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_Canister_Left
+    device_class: battery
+    lambda: |-
+      float raw_value = id(id_counter).state;
+      float max_value = id(id_canister_resource).state;
+      return ( 100 * (1 - raw_value/max_value));
+    update_interval: 30s
+    unit_of_measurement: '%'
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+  - platform: gpio
+    pin:
+      number: GPIO15
+      #mode: INPUT_PULLDOWN_16
+    name: ${board_name}_Spray
+    id: spray
+    icon: mdi:sprinkler
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:  
+        - delay: 50ms
+        - switch.turn_off: spray
+        - number.set:
+            id: id_counter
+            value: !lambda |-
+              return ((id(id_counter).state)+1);
+        - component.update: id_counter
+        - light.turn_off: id_green_led
+
+light:
+  - platform: monochromatic #binary #monochromatic
+    name: ${board_name}_LED_Green
+    output: output_led1
+    id: id_green_led
+    effects:
+      - pulse:
+          transition_length: 0.0s
+          update_interval: 0.05s
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: id_green_led
+                brightness: 50%
+                transition_length: 500ms
+            - delay: 1000ms
+            - light.turn_on:
+                id: id_green_led
+                brightness: 1%
+                transition_length: 300ms
+            - delay: 500ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: id_green_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: id_green_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms    
+
+  - platform: monochromatic #binary #monochromatic
+    name: ${board_name}_LED_Red
+    output: output_led2
+    id: id_red_led
+    effects:
+      - pulse:
+          transition_length: 0.0s
+          update_interval: 0.05s
+      - automation:
+          name: "Blink"
+          sequence:
+            - light.turn_on:
+                id: id_red_led
+                brightness: 50%
+                transition_length: 500ms
+            - delay: 1000ms
+            - light.turn_on:
+                id: id_red_led
+                brightness: 1%
+                transition_length: 300ms
+            - delay: 500ms
+      - automation:
+          name: "Blink Fast"
+          sequence:
+            - light.turn_on:
+                id: id_red_led
+                brightness: 50%
+                transition_length: 50ms
+            - delay: 450ms
+            - light.turn_on:
+                id: id_red_led
+                brightness: 1%
+                transition_length: 50ms
+            - delay: 450ms
+            
+output:
+  - platform: esp8266_pwm
+    id: output_led1
+    pin: 
+      number: GPIO00
+      inverted: true
+
+  - platform: esp8266_pwm
+    id: output_led2
+    pin: 
+      number: GPIO02
+      inverted: true
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time 
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
