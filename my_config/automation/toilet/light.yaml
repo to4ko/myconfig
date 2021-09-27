@@ -93,7 +93,7 @@
 - alias: toilet_auto_light_on
   id: toilet_auto_light_on
   initial_state: true
-  mode: queued
+  mode: single
   trigger:
     - platform: event
       event_type: xiaomi_aqara.motion
@@ -110,6 +110,8 @@
     - condition: state
       entity_id: input_boolean.security_mode
       state: 'off'
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - service: homeassistant.turn_on
       data:
@@ -229,16 +231,20 @@
 - alias: toilet_indicator
   id: toilet_indicator
   initial_state: true
-  mode: queued
+  mode: single
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000232ddd6_contact
-      from: 'off'
-      to: 'on'
-    - platform: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      from: 'on'
-      to: 'off'
+  condition:
+    - condition: template
+      value_template: >-
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state
+        }}
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"      
   action:
     - choose:
         - conditions:

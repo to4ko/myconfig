@@ -8,7 +8,9 @@
 - alias: hall_small_auto_night_light
   id: hall_small_auto_night_light
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.motion
@@ -35,6 +37,8 @@
     - condition: state
       entity_id: input_boolean.security_mode
       state: 'off'
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - service: light.turn_on
       entity_id: light.mono_strip_1_light
@@ -47,7 +51,9 @@
 - alias: hall_small_main_lamp_on_single
   id: hall_small_main_lamp_on_single
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -57,7 +63,22 @@
   condition:
     - condition: template
       value_template: "{{ states('light.round_led_hs') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.round_led_hs_nightlight
+              state: 'on'
+            - condition: state
+              entity_id: light.round_led_hs
+              state: 'off'
+          sequence:
+            - service: yeelight.set_mode
+              data:
+                entity_id: light.round_led_hs
+                mode: normal  
     - choose:
         - conditions:
             - condition: state
@@ -93,6 +114,19 @@
     - condition: template
       value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
   action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.round_led_hs_nightlight
+              state: 'on'
+            - condition: state
+              entity_id: light.round_led_hs
+              state: 'off'
+          sequence:
+            - service: yeelight.set_mode
+              data:
+                entity_id: light.round_led_hs
+                mode: normal
     - service: light.turn_on
       entity_id: light.round_led_hs
       data:
@@ -106,23 +140,23 @@
   id: hall_small_main_lamp_reset
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: "/1"
-    - platform: state
-      entity_id: light.round_led_hs
-      to: 'unavailable'
-      for:
-        minutes: 2
-    - platform: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
-      below: 2
+    - platform: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.round_led_hs
+    #   to: 'unavailable'
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
   condition:
     - condition: state
       entity_id: light.round_led_hs
       state: 'unavailable'
-      # for:
-      #   minutes: 2
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.round_led_hs_restart

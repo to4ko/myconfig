@@ -7,11 +7,11 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.family_home
-      to: 'off'
+      to: "off"
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'off'
+      state: "off"
   action:
     - service: notify.telegram
       data:
@@ -29,12 +29,14 @@
 # Security - Sensors State change
 # ##################################
 - alias: security_sensors_state_change
-  id: security_sensors_state_change
+  #id: security_sensors_state_change
   initial_state: true
   mode: queued
+  max: 25
+  max_exceeded: silent
   trigger:
     - platform: state
-      entity_id: 
+      entity_id:
         - binary_sensor.0x158d00027129ae_contact
         - binary_sensor.0x158d0001ef2ffc_contact
         - binary_sensor.0x158d0002a14c5e_contact
@@ -66,21 +68,20 @@
         #- binary_sensor.motion_g3_flex_hall
         - binary_sensor.d1mini_bed_leds_motion_dima
         - binary_sensor.d1mini_bed_leds_motion_sandra
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'on'
+      state: "on"
     - condition: state
       entity_id: timer.security_delay
-      state: 'idle'
+      state: "idle"
   action:
     - service: notify.telegram
       data:
         #title: "Внимание!"
         message: "\U0001f46e Сработал датчик {{trigger.to_state.attributes.friendly_name}}!"
-
 
 # ##################################
 # Security - Alarm delay
@@ -88,16 +89,16 @@
 - alias: security_alarm_delay
   id: security_alarm_delay
   initial_state: true
-  mode: queued
+  mode: single
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0001e5d6be_contact
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'on'
+      state: "on"
   action:
     - service: timer.cancel
       entity_id: timer.security_delay
@@ -113,11 +114,11 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.family_home
-      to: 'on'
+      to: "on"
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'on'
+      state: "on"
   action:
     - service: input_boolean.turn_off
       data:
@@ -177,7 +178,7 @@
 #     - service: notify.telegram
 #       data:
 #         message: "\U0001f693 Охранная система: Тревога {% if is_state('binary_sensor.d1_security_alarm','on') %}включена!{% else %}выключена!{% endif %}"
-        
+
 # ##################################
 # Security- Main door vibration
 # ##################################
@@ -187,23 +188,25 @@
   trigger:
     - platform: state
       entity_id: sensor.0x158d0002b5fbc1_action
-      to: 'vibration'
+      to: "vibration"
   condition:
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'on'
+      state: "on"
   action:
     - service: notify.telegram
       data:
         message: "\U0001F6AA Внимание! Главная дверь - Вибрация!"
-        
+
 # ##################################
 # Security - Sensors State change over night
 # ##################################
 - alias: security_sensors_state_change_night
-  id: security_sensors_state_change_night
+  #id: security_sensors_state_change_night
   initial_state: true
   mode: queued
+  max: 25
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id:
@@ -213,15 +216,15 @@
         - binary_sensor.0x158d00025370d1_contact
         - binary_sensor.0x158d0001e5d6be_contact
         - binary_sensor.0x158d0002531749_contact
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
   condition:
     - condition: state
       entity_id: binary_sensor.tod_day
-      state: 'off'
+      state: "off"
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'off'
+      state: "off"
   action:
     - service: notify.telegram
       data:

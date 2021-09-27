@@ -8,7 +8,9 @@
 - alias: sasha_led_white_control
   id: sasha_led_white_control
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -17,6 +19,8 @@
   condition:
     - condition: template
       value_template: "{{ states('light.led_white_s') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - choose:
         - conditions:
@@ -50,7 +54,9 @@
 - alias: sasha_main_lamp_left_button
   id: sasha_main_lamp_left_button
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -60,7 +66,22 @@
   condition:
     - condition: template
       value_template: "{{ states('light.square_led_s') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.square_led_s_nightlight
+              state: 'on'
+            - condition: state
+              entity_id: light.square_led_s
+              state: 'off'
+          sequence:
+            - service: yeelight.set_mode
+              data:
+                entity_id: light.square_led_s
+                mode: normal  
     - choose:
         - conditions:
             - condition: state
@@ -86,7 +107,9 @@
 - alias: sasha_main_lamp_right_button
   id: sasha_main_lamp_right_button
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -96,7 +119,22 @@
   condition:
     - condition: template
       value_template: "{{ states('light.square_led_s') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.square_led_s_nightlight
+              state: 'on'
+            - condition: state
+              entity_id: light.square_led_s
+              state: 'off'
+          sequence:
+            - service: yeelight.set_mode
+              data:
+                entity_id: light.square_led_s
+                mode: normal  
     - choose:
         - conditions:
             - condition: state
@@ -201,23 +239,23 @@
   id: sasha_square_led_reset
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: "/1"
-    - platform: state
-      entity_id: light.square_led_s
-      to: 'unavailable'
-      for:
-        minutes: 2
-    - platform: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
-      below: 2
+    - platform: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.square_led_s
+    #   to: 'unavailable'
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
   condition:
     - condition: state
       entity_id: light.square_led_s
       state: 'unavailable'
-      # for:
-      #   minutes: 2
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.square_led_s_restart
@@ -247,7 +285,9 @@
 - alias: sasha_timer_restart
   id: sasha_timer_restart
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.motion
@@ -265,7 +305,9 @@
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.sasha_timer_restart', 'last_triggered'))|int) > 15 }}"
     - condition: state
       entity_id: input_boolean.security_mode
-      state: 'off'      
+      state: 'off'
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - service: timer.cancel
       entity_id: timer.main_light_s
@@ -381,23 +423,23 @@
   id: sasha_led_color_s_reset
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: "/1"
-    - platform: state
-      entity_id: light.led_color_s
-      to: 'unavailable'
-      for:
-        minutes: 2
-    - platform: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
-      below: 2
+    - platform: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.led_color_s
+    #   to: 'unavailable'
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
   condition:
     - condition: state
       entity_id: light.led_color_s
       state: 'unavailable'
-      # for:
-      #   minutes: 2
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.led_color_s_restart
@@ -408,7 +450,9 @@
 - alias: sasha_led_color_control
   id: sasha_led_color_control
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -417,6 +461,8 @@
   condition:
     - condition: template
       value_template: "{{ states('light.led_color_s') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - choose:
         - conditions:

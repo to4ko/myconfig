@@ -40,7 +40,7 @@ i2c:
 
 dallas:
   - pin: GPIO03
-    update_interval: 15s
+    update_interval: 5s
     id: dallas_node
 
 # output:
@@ -110,7 +110,7 @@ climate:
       max_temperature: 27 °C
       temperature_step: 1 °C  
     name: ${board_name}_Pipe_Heater
-    sensor: dallas_temperature
+    sensor: dallas_temperature_2
     default_target_temperature_low: 23 °C
     default_target_temperature_high: 24 °C
     heat_action:
@@ -143,13 +143,29 @@ sensor:
     update_interval: 15s
 
   - platform: dallas
-    address: 0xA83C01D607703821
+    address: 0x270000000384D828
     dallas_id: dallas_node
-    name: ${board_name}_Cold_Pipe
+    name: ${board_name}_dallas_long
     accuracy_decimals: 2
     resolution: 12
-    id: dallas_temperature
+    id: dallas_temperature_1
 
+  - platform: dallas
+    address: 0x903C01F096CF1F28
+    dallas_id: dallas_node
+    name: ${board_name}_dallas_short
+    accuracy_decimals: 2
+    resolution: 12
+    id: dallas_temperature_2
+
+  - platform: template
+    name: ${board_name}_dallas_delta
+    lambda: |-
+      return ((id(dallas_temperature_1).state) - (id(dallas_temperature_2).state));
+    unit_of_measurement: degC
+    device_class: temperature
+    accuracy_decimals: 2
+    update_interval: 5s
   
 text_sensor:
   - platform: template

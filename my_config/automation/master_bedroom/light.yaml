@@ -8,7 +8,9 @@
 - alias: master_bedroom_table_lamp
   id: master_bedroom_table_lamp
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -17,6 +19,8 @@
   condition:
     - condition: template
       value_template: "{{ states('light.led_white_mb') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - choose:
         - conditions:
@@ -50,7 +54,9 @@
 - alias: master_bedroom_main_lamp_right_button
   id: master_bedroom_main_lamp_right_button
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -60,6 +66,8 @@
   condition:
     - condition: template
       value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - choose:
         - conditions:
@@ -73,6 +81,26 @@
             - condition: state
               entity_id: light.round_led_mb
               state: "off"
+            - condition: state
+              entity_id: binary_sensor.round_led_mb_nightlight
+              state: 'on'
+          sequence:
+            - service: yeelight.set_mode
+              data:
+                entity_id: light.round_led_mb
+                mode: normal
+            - service: light.turn_on
+              entity_id: light.round_led_mb
+              data:
+                brightness_pct: 90
+                kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: "off"
+            - condition: state
+              entity_id: binary_sensor.round_led_mb_nightlight
+              state: 'off'
           sequence:
             - service: light.turn_on
               entity_id: light.round_led_mb
@@ -86,7 +114,9 @@
 - alias: master_bedroom_main_lamp_right_button_full
   id: master_bedroom_main_lamp_right_button_full
   initial_state: true
-  mode: queued
+  mode: single #queued
+  #max: 5
+  #max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -109,7 +139,9 @@
 - alias: master_bedroom_main_lamp_left_button
   id: master_bedroom_main_lamp_left_button
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -119,7 +151,22 @@
   condition:
     - condition: template
       value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.round_led_mb_nightlight
+              state: 'on'
+            - condition: state
+              entity_id: light.round_led_mb
+              state: 'off'
+          sequence:
+            - service: yeelight.set_mode
+              data:
+                entity_id: light.round_led_mb
+                mode: normal
     - choose:
         - conditions:
             - condition: state
@@ -146,23 +193,23 @@
   id: master_bedroom_round_led_reset
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: "/1"
-    - platform: state
-      entity_id: light.round_led_mb
-      to: "unavailable"
-      for:
-        minutes: 2
-    - platform: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
-      below: 2
+    - platform: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.round_led_mb
+    #   to: "unavailable"
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
   condition:
     - condition: state
       entity_id: light.round_led_mb
       state: "unavailable"
-      # for:
-      #   minutes: 2
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.round_led_mb_restart
@@ -305,7 +352,9 @@
 - alias: master_bedroom_color_table_lamp
   id: master_bedroom_color_table_lamp
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -314,6 +363,8 @@
   condition:
     - condition: template
       value_template: "{{ states('light.led_color_mb') in ['on','off'] }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - choose:
         - conditions:

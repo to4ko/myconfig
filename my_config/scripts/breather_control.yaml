@@ -1,0 +1,47 @@
+  breather_speed_control:
+    alias: Breather Speed Control
+    sequence:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: >
+                  {% if breather == 'V'%}{{is_state('binary_sensor.breather_v','off')}}
+                  {% elif breather == 'S'%}{{is_state('binary_sensor.breather_s','off')}}
+                  {% elif breather == 'MB'%}{{is_state('binary_sensor.breather_mb','off')}}
+                  {%endif%}  
+            sequence:
+              - service: switch.turn_on
+                data:
+                  entity_id: >
+                    {% if breather == "V"%}switch.digma_ir_v_breather_pwr
+                    {% elif breather == "S"%}switch.digma_ir_s_breather_pwr
+                    {% elif breather == "MB"%}switch.digma_ir_mb_breather_pwr
+                    {%endif%}
+              - delay:
+                  seconds: 2
+      - repeat:
+          count: 5
+          sequence:
+            - service: switch.turn_on
+              data:
+                entity_id: >
+                  {% if breather == "V"%}switch.digma_ir_v_breather_down
+                  {% elif breather == "S"%}switch.digma_ir_s_breather_down
+                  {% elif breather == "MB"%}switch.digma_ir_mb_breather_down
+                  {%endif%}
+            - delay:
+                milliseconds: 500
+      - condition: template
+        value_template: "{{ speed|int > 1 }}"
+      - repeat:
+          count: "{{ speed|int - 1 }}"
+          sequence:
+            - service: switch.turn_on
+              data:
+                entity_id: >
+                  {% if breather == "V"%}switch.digma_ir_v_breather_up
+                  {% elif breather == "S"%}switch.digma_ir_s_breather_up
+                  {% elif breather == "MB"%}switch.digma_ir_mb_breather_up
+                  {%endif%}
+            - delay:
+                milliseconds: 500

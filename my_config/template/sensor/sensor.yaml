@@ -4,7 +4,7 @@
       unit_of_measurement: 'min'
       state: >
         {% set x = states('sensor.time') %}
-        {{ ( (as_timestamp(now()) | round(0) - as_timestamp(states.timer.washer_working.last_changed) | int) / 60 ) | round(0) }}
+        {{ ( (as_timestamp(now()) | round(0) - as_timestamp(states.timer.washer_working.last_changed) | int) / 60 ) | round(0) if not is_state('timer.washer_working','idle') else 0}}
 
     - name: Cert Validity Left
       state: "{{((as_timestamp(states('sensor.cert_expiry_main'))+3*60*60 - as_timestamp(now()))|int/(24*60*60))|int}}"
@@ -95,9 +95,10 @@
         list: >-
           {%-for state in expand('group.wifi_devices')|list
             if state.state in ['unavailable','unknown'] %}
-            {{state.name}}{%- if not loop.last -%}, {%-endif%}
+            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
           {%-endfor-%}
       unit_of_measurement: "ea"
+#{{state.name}}{%- if not loop.last -%}, {%-endif%}
 
     - name: Abs Humidity B
       state: >-

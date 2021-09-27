@@ -8,7 +8,9 @@
 - alias: hall_big_auto_night_light_on
   id: hall_big_auto_night_light_on
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.motion
@@ -44,7 +46,9 @@
 - alias: hall_big_auto_light_on
   id: hall_big_auto_light_on
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.motion
@@ -77,7 +81,7 @@
 - alias: hall_big_night_mode_preparation
   id: hall_big_night_mode_preparation
   initial_state: true
-  mode: queued
+  mode: single #queued
   trigger:
     # - platform: time
     #   at: '20:00:00'
@@ -99,7 +103,9 @@
 - alias: hall_big_main_door_open
   id: hall_big_main_door_open
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0001e5d6be_contact
@@ -216,7 +222,9 @@
 - alias: hall_big_timer_restart
   id: hall_big_timer_restart
   initial_state: true
-  mode: queued
+  mode: single
+  max: 5
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.motion
@@ -230,6 +238,8 @@
     - condition: state
       entity_id: group.lights_main_hb
       state: 'on'
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - service: timer.cancel
       entity_id: timer.main_light_hb
@@ -283,23 +293,23 @@
   id: hall_big_led_strip_reset
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: "/1"
-    - platform: state
-      entity_id: light.led_strip_hb
-      to: 'unavailable'
-      for:
-        minutes: 2
-    - platform: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
-      below: 2
+    - platform: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.led_strip_hb
+    #   to: 'unavailable'
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
   condition:
     - condition: state
       entity_id: light.led_strip_hb
       state: 'unavailable'
-      # for:
-      #   minutes: 2
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.led_strip_hb_restart
@@ -311,23 +321,23 @@
   id: hall_big_led_strip_entrance_reset
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: "/1"
-    - platform: state
-      entity_id: light.led_strip_entrance_hb
-      to: 'unavailable'
-      for:
-        minutes: 2
-    - platform: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
-      below: 2
+    - platform: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.led_strip_entrance_hb
+    #   to: 'unavailable'
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
   condition:
     - condition: state
       entity_id: light.led_strip_entrance_hb
       state: 'unavailable'
-      # for:
-      #   minutes: 2
+      for:
+        minutes: 2
   action:
     - service: script.turn_on
       entity_id: script.led_strip_entrance_hb_restart
