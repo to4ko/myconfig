@@ -157,7 +157,6 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - PostgreSQL
   - InfluxDB
 
-
 **Add-On's:** 
   - AirCast
   - File Editor
