@@ -9,10 +9,14 @@
   id: bathroom_timer_restart
   initial_state: true
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d000236bc6d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d000236bc6d_motion
+    - platform: state
+      entity_id: binary_sensor.0x158d000236bc6d_motion
+      from: 'off'
+      to: 'on'
     - platform: state
       entity_id: light.mirror_light_b
       to: "on"
@@ -124,10 +128,14 @@
   id: bathroom_timer_pause_on
   initial_state: true
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d000236bc6d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d000236bc6d_motion
+    - platform: state
+      entity_id: binary_sensor.0x158d000236bc6d_motion
+      from: 'off'
+      to: 'on'        
   condition:
     - condition: state
       entity_id: binary_sensor.0x158d0002a14c5e_contact
@@ -197,10 +205,14 @@
   id: bathroom_auto_light_on_soft
   initial_state: true
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d000236bc6d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d000236bc6d_motion
+    - platform: state
+      entity_id: binary_sensor.0x158d000236bc6d_motion
+      from: 'off'
+      to: 'on'        
   condition:
     - condition: state
       entity_id: group.lights_b
@@ -334,10 +346,10 @@
                 scene: 4
 
 # ##################################
-# Bathroom - Mirror Light Reset
+# Bathroom - Mirror Light Restart
 # ##################################
-- alias: bathroom_mirror_light_reset
-  id: bathroom_mirror_light_reset
+- alias: bathroom_mirror_light_restart
+  id: bathroom_mirror_light_restart
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -357,9 +369,54 @@
       state: "unavailable"
       for:
         minutes: 2
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: state
+      entity_id: switch.mirror_light_b_restart_key
+      state: 'on'
   action:
-    - service: script.turn_on
-      entity_id: script.mirror_light_b_restart
+    - repeat:
+        while:
+          - condition: state
+            entity_id: light.mirror_light_b
+            state: "unavailable"
+          - condition: template
+            value_template: "{{ repeat.index <= 5 }}"
+        sequence:
+          - service: switch.turn_off
+            entity_id: switch.esp32_bathroom_node_relay_5
+          - delay:
+              seconds: 15
+          - service: switch.turn_on
+            entity_id: switch.esp32_bathroom_node_relay_5
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Mirror LED B restart done({{repeat.index}})!"
+          - delay:
+              seconds: 15
+    - condition: state
+      entity_id: light.mirror_light_b
+      state: 'unavailable'
+    - service: notify.telegram
+      data:
+        message: "\U0001f6a8 Mirror LED B restart unsuccessful!"
+    - service: switch.turn_off
+      entity_id: switch.mirror_light_b_restart_key
+
+# ##################################
+# Hall Big - Mirror LED Auto Restart Key Toggle
+# ##################################
+- alias: bathroom_mirror_led_restart_key_toggle
+  id: bathroom_mirror_led_restart_key_toggle
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: light.mirror_light_b
+      from: 'unavailable'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.mirror_light_b_restart_key
 
 # ##################################
 # Bathroom - Indicator

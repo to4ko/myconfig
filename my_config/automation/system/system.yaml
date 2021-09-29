@@ -60,7 +60,7 @@
         - sensor.warnings_during_boot
     - service: notify.telegram
       data:
-        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int}}сек! Ошибок {{states('sensor.errors_during_boot')|int}}, предупреждений {{states('sensor.warnings_during_boot')|int}}. Срок действителен еще {{states('sensor.cert_validity_left')}}д"
+        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int}}сек! Ошибок {{states('sensor.errors_during_boot')|int}}, предупреждений {{states('sensor.warnings_during_boot')|int}}. Сертификат действителен еще {{states('sensor.cert_validity_left')}}д"
     - service: script.turn_on
       entity_id: script.system_start
     - service: counter.increment
@@ -1076,6 +1076,8 @@
   #id: system_zb_devices_status
   initial_state: true
   mode: queued
+  max: 150
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id:
@@ -1222,7 +1224,7 @@
     - condition: template
       value_template: "{{states('sensor.ha_uptime')|float > 0}}"
     - condition: template
-      value_template: "{{ trigger.to_state.state != trigger.from_state.state and (trigger.to_state.state in in ['unknown', 'unavailable'] or trigger.from_state.state in in ['unknown', 'unavailable']) }}"
+      value_template: "{{ trigger.to_state.state != trigger.from_state.state and (trigger.to_state.state in ['unknown', 'unavailable'] or trigger.from_state.state in ['unknown', 'unavailable']) }}"
   action:
     - choose:
         - conditions: "{{ states('input_boolean.ha_shutdown') == 'off' }}"

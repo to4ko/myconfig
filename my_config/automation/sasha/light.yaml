@@ -235,8 +235,8 @@
 # ##################################
 # Sasha - Square LED Reset 
 # ##################################
-- alias: sasha_square_led_reset
-  id: sasha_square_led_reset
+- alias: sasha_square_led_restart
+  id: sasha_square_led_restart
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -256,9 +256,54 @@
       state: 'unavailable'
       for:
         minutes: 2
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: state
+      entity_id: switch.square_led_s_restart_key
+      state: 'on'
   action:
-    - service: script.turn_on
-      entity_id: script.square_led_s_restart
+    - repeat:
+        while:
+          - condition: state
+            entity_id: light.square_led_s
+            state: "unavailable"
+          - condition: template
+            value_template: "{{ repeat.index <= 5 }}"
+        sequence:
+          - service: switch.turn_off
+            entity_id: switch.shelly_1pm_led_s
+          - delay:
+              seconds: 15
+          - service: switch.turn_on
+            entity_id: switch.shelly_1pm_led_s
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Square LED S restart done({{repeat.index}})!"
+          - delay:
+              seconds: 15
+    - condition: state
+      entity_id: light.square_led_s
+      state: 'unavailable'
+    - service: notify.telegram
+      data:
+        message: "\U0001f6a8 Square LED S restart unsuccessful!"
+    - service: switch.turn_off
+      entity_id: switch.square_led_s_restart_key
+
+# ##################################
+# Sasha - Square LED Auto Restart Key Toggle
+# ##################################
+- alias: sasha_square_led_restart_key_toggle
+  id: sasha_square_led_restart_key_toggle
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: light.square_led_s
+      from: 'unavailable'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.square_led_s_restart_key
 
 # ##################################
 # Sasha - Turn Lamp Switch On if Off
@@ -289,14 +334,20 @@
   max: 5
   max_exceeded: silent
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d000224f89f_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0003140824_motion
+    - platform: state
+      entity_id:
+        - binary_sensor.0x158d000224f89f_motion
+        - binary_sensor.0x158d0003140824_motion
+      from: 'off'
+      to: 'on'  
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d000224f89f_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0003140824_motion
   condition:
     - condition: state
       entity_id: light.square_led_s
@@ -419,8 +470,8 @@
 # ##################################
 # Sasha - LED Color S Restart
 # ##################################
-- alias: sasha_led_color_s_reset
-  id: sasha_led_color_s_reset
+- alias: sasha_led_color_s_restart
+  id: sasha_led_color_s_restart
   initial_state: true
   trigger:
     - platform: time_pattern

@@ -10,20 +10,25 @@
   initial_state: true
   mode: single
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b4729d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b48381_motion
+    - platform: state
+      entity_id:
+        - binary_sensor.0x158d0002b4729d_motion
+        - binary_sensor.0x158d0002b48381_motion
+      from: 'off'
+      to: 'on'  
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b4729d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b48381_motion
     - platform: state
       entity_id: sensor.0x158d0002a2412d_action
-      to: "vibration"
-    - platform: state
-      entity_id: sensor.0x158d0002a2412d_action
-      to: "tilt"
+      to: 
+        - "vibration"
+        - "tilt"
   condition:
     - condition: state
       entity_id: group.lights_main_k
@@ -110,14 +115,20 @@
   max: 5
   max_exceeded: silent
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b4729d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b48381_motion
+    - platform: state
+      entity_id:
+        - binary_sensor.0x158d0002b4729d_motion
+        - binary_sensor.0x158d0002b48381_motion
+      from: 'off'
+      to: 'on'  
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b4729d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b48381_motion
   condition:
     - condition: state
       entity_id: binary_sensor.tod_day
@@ -150,14 +161,20 @@
   max: 5
   max_exceeded: silent
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b4729d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b48381_motion
+    - platform: state
+      entity_id:
+        - binary_sensor.0x158d0002b4729d_motion
+        - binary_sensor.0x158d0002b48381_motion
+      from: 'off'
+      to: 'on'  
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b4729d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b48381_motion
   condition:
     - condition: state
       entity_id: binary_sensor.tod_day
@@ -187,26 +204,71 @@
   id: kitchen_main_lamp_restart
   initial_state: true
   trigger:
-    # - platform: time_pattern
-    #   minutes: "/1"
-    - platform: state
-      entity_id: light.round_led_k
-      to: "unavailable"
-      for:
-        minutes: 2
-    - platform: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
-      below: 2
+    - platform: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.round_led_k
+    #   to: "unavailable"
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
   condition:
     - condition: state
       entity_id: light.round_led_k
       state: "unavailable"
-      # for:
-      #   minutes: 2
+      for:
+        minutes: 2
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: state
+      entity_id: switch.round_led_k_restart_key
+      state: 'on'
   action:
-    - service: script.turn_on
-      entity_id: script.round_led_k_restart
+    - repeat:
+        while:
+          - condition: state
+            entity_id: light.round_led_k
+            state: "unavailable"
+          - condition: template
+            value_template: "{{ repeat.index <= 5 }}"
+        sequence:
+          - service: switch.turn_off
+            entity_id: switch.0x158d0002a36f7f_channel_2
+          - delay:
+              seconds: 15
+          - service: switch.turn_on
+            entity_id: switch.0x158d0002a36f7f_channel_2
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Round LED K restart done({{repeat.index}})!"
+          - delay:
+              seconds: 15
+    - condition: state
+      entity_id: light.round_led_k
+      state: 'unavailable'
+    - service: notify.telegram
+      data:
+        message: "\U0001f6a8 Round LED K restart unsuccessful!"
+    - service: switch.turn_off
+      entity_id: switch.round_led_k_restart_key
+
+# ##################################
+# Kitchen - Main Light Auto Restart Key Toggle
+# ##################################
+- alias: kitchen_main_lamp_restart_key_toggle
+  id: kitchen_main_lamp_restart_key_toggle
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: light.round_led_k
+      from: 'unavailable'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.round_led_k_restart_key
 
 # ##################################
 # Kitchen - Turn Lamp Switch On if Off
@@ -264,19 +326,28 @@
             - service: yeelight.set_mode
               data:
                 entity_id: light.round_led_k
-                mode: normal  
-    - choose:
+                mode: normal
+            - service: light.turn_on
+              entity_id: light.round_led_k
+              data:
+                brightness_pct: 90
+                kelvin: 5000
+
         - conditions:
             - condition: state
               entity_id: light.round_led_k
-              state: "on"
+              state: 'on'
           sequence:
             - service: light.turn_off
               entity_id: light.round_led_k
+        
         - conditions:
             - condition: state
               entity_id: light.round_led_k
-              state: "off"
+              state: 'off'
+            - condition: state
+              entity_id: binary_sensor.round_led_k_nightlight
+              state: 'off'
           sequence:
             - service: light.turn_on
               entity_id: light.round_led_k
@@ -367,14 +438,20 @@
   id: kitchen_led_strip_timer_restart
   initial_state: true
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b4729d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b48381_motion
+    - platform: state
+      entity_id:
+        - binary_sensor.0x158d0002b4729d_motion
+        - binary_sensor.0x158d0002b48381_motion
+      from: 'off'
+      to: 'on'  
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b4729d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b48381_motion
     - platform: state
       entity_id: light.esp32_node_k_light
       to: "on"

@@ -72,18 +72,11 @@
     - choose:
         - conditions:
             - condition: state
-              entity_id: light.round_led_mb
-              state: "on"
-          sequence:
-            - service: light.turn_off
-              entity_id: light.round_led_mb
-        - conditions:
-            - condition: state
-              entity_id: light.round_led_mb
-              state: "off"
-            - condition: state
               entity_id: binary_sensor.round_led_mb_nightlight
               state: 'on'
+            - condition: state
+              entity_id: light.round_led_mb
+              state: 'off'
           sequence:
             - service: yeelight.set_mode
               data:
@@ -94,10 +87,19 @@
               data:
                 brightness_pct: 90
                 kelvin: 5000
+
         - conditions:
             - condition: state
               entity_id: light.round_led_mb
-              state: "off"
+              state: 'on'
+          sequence:
+            - service: light.turn_off
+              entity_id: light.round_led_mb
+        
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: 'off'
             - condition: state
               entity_id: binary_sensor.round_led_mb_nightlight
               state: 'off'
@@ -187,10 +189,10 @@
                 kelvin: 3000
 
 # ##################################
-# Master Bedroom - Round LED Reset
+# Master Bedroom - Round LED Restart
 # ##################################
-- alias: master_bedroom_round_led_reset
-  id: master_bedroom_round_led_reset
+- alias: master_bedroom_round_led_restart
+  id: master_bedroom_round_led_restart
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -210,9 +212,54 @@
       state: "unavailable"
       for:
         minutes: 2
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: state
+      entity_id: switch.round_led_mb_restart_key
+      state: 'on'
   action:
-    - service: script.turn_on
-      entity_id: script.round_led_mb_restart
+    - repeat:
+        while:
+          - condition: state
+            entity_id: light.round_led_mb
+            state: "unavailable"
+          - condition: template
+            value_template: "{{ repeat.index <= 5 }}"
+        sequence:
+          - service: switch.turn_off
+            entity_id: switch.sonoff_basic_3_relay
+          - delay:
+              seconds: 15
+          - service: switch.turn_on
+            entity_id: switch.sonoff_basic_3_relay
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Round LED MB restart done({{repeat.index}})!"
+          - delay:
+              seconds: 15
+    - condition: state
+      entity_id: light.round_led_mb
+      state: 'unavailable'
+    - service: notify.telegram
+      data:
+        message: "\U0001f6a8 Round LED MB restart unsuccessful!"
+    - service: switch.turn_off
+      entity_id: switch.round_led_mb_restart_key
+
+# ##################################
+# Master Bedroom - Main Light Auto Restart Key Toggle
+# ##################################
+- alias: master_bedroom_main_lamp_restart_key_toggle
+  id: master_bedroom_lamp_restart_key_toggle
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: light.round_led_mb
+      from: 'unavailable'
+  action:
+    - service: switch.turn_on
+      entity_id: switch.round_led_mb_restart_key
 
 # ##################################
 # Master Bedroom - Turn Lamp Switch On if Off
@@ -241,10 +288,14 @@
   id: master_bedroom_timer_restart
   initial_state: true
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0001e53cda_motion
+    - platform: state
+      entity_id: binary_sensor.0x158d0001e53cda_motion
+      from: 'off'
+      to: 'on'  
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0001e53cda_motion
   condition:
     - condition: state
       entity_id: light.round_led_mb

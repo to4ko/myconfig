@@ -9,14 +9,20 @@
   id: kitchen_weather_announcement
   initial_state: true
   trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b4729d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b48381_motion
+    - platform: state
+      entity_id:
+        - binary_sensor.0x158d0002b4729d_motion
+        - binary_sensor.0x158d0002b48381_motion
+      from: 'off'
+      to: 'on'  
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b4729d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d0002b48381_motion
   condition:
     - condition: time
       after: "07:20:00"
@@ -144,6 +150,8 @@
         {{ trigger.from_state.state not in ignore and
            trigger.to_state.state not in ignore and
            trigger.to_state.state != trigger.from_state.state }}
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - service: notify.telegram
       data:
