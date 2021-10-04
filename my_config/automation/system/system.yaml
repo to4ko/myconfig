@@ -9,6 +9,7 @@
   #id: system_error_counter
   initial_state: true
   mode: queued
+  max: 100
   max_exceeded: silent
   trigger:
     - platform: event
@@ -27,7 +28,9 @@
 # ##################################
 - alias: system_warning_counter
   #id: system_warning_counter
+  initial_state: true
   mode: queued
+  max: 100
   max_exceeded: silent
   trigger:
     - platform: event
@@ -74,10 +77,10 @@
   initial_state: true
   mode: single #queued
   trigger:
-    - platform: event
-      event_type: homeassistant_stop
-    # - platform: homeassistant
-    #   event: shutdown
+    # - platform: event
+    #   event_type: homeassistant_stop
+    - platform: homeassistant
+      event: shutdown
     # - platform: event
     #   event_type: call_service
     #   event_data:
@@ -89,20 +92,43 @@
     #     domain: homeassistant
     #     service: stop
   action:
-    - service: input_boolean.turn_on
-      data:
-        entity_id: input_boolean.ha_shutdown
-    - service: automation.turn_off
-      entity_id:
-        - automation.system_gw3_state
-        - automation.system_zb_devices_status
-        - automation.system_esp_devices_status
-        - automation.system_xiaomi_gw3_error
     - service: notify.telegram
       data:
         message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
-    # - service: automation.turn_off
-    #   entity_id: all
+
+# ##################################
+# System - STOP flag set
+# ##################################
+- alias: system_start_stop_flag_set
+  id: system_start_stop_flag_set
+  initial_state: true
+  trigger:
+    - platform: homeassistant
+      event: start
+      id: "homeassistant_start"
+    - platform: event
+      event_type: homeassistant_stop
+  action:
+    - service: >
+        {% if trigger.id == 'homeassistant_start' -%}
+            input_boolean.turn_off
+        {% else -%}
+            input_boolean.turn_on
+        {% endif %}
+      data:
+        entity_id: input_boolean.ha_shutdown
+    - service: >
+        {% if trigger.id == 'homeassistant_start' -%}
+            automation.turn_on
+        {% else -%}
+            automation.turn_off
+        {% endif %}
+      data:
+        entity_id:
+          - automation.system_gw3_state
+          - automation.system_zb_devices_status
+          - automation.system_esp_devices_status
+          - automation.system_xiaomi_gw3_error
 
 # ##################################
 # System - Github star
@@ -193,8 +219,6 @@
           device = registry.async_get(data['device_id'])
           if device and device.name_by_user == 'delete':
               registry.async_remove_device(data['device_id'])
-        
-              
 
 # ##################################
 # System - Hass.io NEW Version
@@ -1345,7 +1369,7 @@
         - binary_sensor.esp8266_oven_temp_k_status
         - binary_sensor.shp2_socket_1_status
         - binary_sensor.shp2_socket_2_status
-        - binary_sensor.shp2_socket_server_status
+        #- binary_sensor.shp2_socket_server_status
         - binary_sensor.shp6_socket_1_status
         - binary_sensor.shp6_socket_2_status
         - binary_sensor.sonoff_basic_3_status
@@ -1649,7 +1673,7 @@
         - sensor.lt11_1_uptime_s
         - sensor.shp2_socket_1_uptime_s
         - sensor.shp2_socket_2_uptime_s
-        - sensor.shp2_socket_server_uptime_s
+        #- sensor.shp2_socket_server_uptime_s
         - sensor.shp6_socket_1_uptime_s
         - sensor.shp6_socket_2_uptime_s
         - sensor.sonoff_basic_3_uptime_s
@@ -2074,9 +2098,9 @@
 #           {{ expand('group.dynamic_group_automation_for_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id')  | join(', ') }}
 #     - choose:
 #         - conditions: >
-#             {{ 
-#               trigger.event.event_type == 'automation_reloaded' and 
-#               expand('group.dynamic_group_all_automation_before_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id') | reject('in', expand('group.dynamic_group_automation_for_reload') | map(attribute = 'entity_id') | list) | list | count > 0 
+#             {{
+#               trigger.event.event_type == 'automation_reloaded' and
+#               expand('group.dynamic_group_all_automation_before_reload') | selectattr('state', 'ne', 'unavailable') | map(attribute = 'entity_id') | reject('in', expand('group.dynamic_group_automation_for_reload') | map(attribute = 'entity_id') | list) | list | count > 0
 #             }}
 #           sequence:
 #             - service: automation.turn_off
@@ -2109,30 +2133,44 @@
 # ##################################
 # System - Automation Reload
 # ##################################
-- alias: system_cert_validity_check
-  id: system_cert_validity_check
+# - alias: system_cert_validity_check
+#   id: system_cert_validity_check
+#   initial_state: true
+#   trigger:
+#     - platform: time
+#       at: "20:00:00"
+#   condition:
+#     - condition: numeric_state
+#       entity_id: sensor.cert_validity_left
+#       below: 16
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U000026a0 Срок действия сертификата заканчивается через 15 дней! Запуск обновления сертификата"
+#     - service: hassio.addon_start
+#       data:
+#         addon: core_letsencrypt
+#     - wait_for_trigger:
+#         - platform: numeric_state
+#           entity_id: sensor.cert_validity_left
+#           above: 60
+#       timeout:
+#         minutes: 20
+#       continue_on_timeout: false
+#     - service: notify.telegram
+#       data:
+#         message: "\U00002705 Сертификат успешно обновлен!"
+
+# ##################################
+# System - Ya Station Response
+# ##################################
+- alias: system_ya_response
+  id: system_ya_response
   initial_state: true
   trigger:
-    - platform: time
-      at: "20:00:00"
-  condition:
-    - condition: numeric_state
-      entity_id: sensor.cert_validity_left
-      below: 16
+    - platform: event
+      event_type: yandex_station_response
   action:
     - service: notify.telegram
       data:
-        message: "\U000026a0 Срок действия сертификата заканчивается через 15 дней! Запуск обновления сертификата"
-    - service: hassio.addon_start
-      data:
-        addon: core_letsencrypt
-    - wait_for_trigger:
-        - platform: numeric_state
-          entity_id: sensor.cert_validity_left
-          above: 60
-      timeout:
-        minutes: 20
-      continue_on_timeout: false
-    - service: notify.telegram
-      data:
-        message: "\U00002705 Сертификат успешно обновлен!"
+        message: "{{ trigger.event.data.text }}"

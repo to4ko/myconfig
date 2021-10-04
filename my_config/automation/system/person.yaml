@@ -123,18 +123,30 @@
         entity_id: switch.dark_mode
         state: 'off'
   action:
+    # - service: media_player.volume_set
+    #   data:
+    #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+    #     volume_level: '{{states("input_number.main_volume")|float}}'
+    # - service: tts.yandextts_say
+    #   data:
+    #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+    #     message: >
     - service: media_player.volume_set
       data:
-        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        entity_id: 
+          #- media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.yandex_lite_hb
         volume_level: '{{states("input_number.main_volume")|float}}'
-    - service: tts.yandextts_say
+    - service: media_player.play_media
       data:
-        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
-        message: >
+        media_content_type: dialog
+        entity_id: 
+          #- media_player.{{states('input_select.main_audio_out')|lower}}
+          - media_player.yandex_lite_hb
+        media_content_id: >-
           {% set name1 = ['С+аша, ','Сан+ёк, ','Алекс+андр, ','М+итрич, ','Алекс+андр Дм+итриевич, ', 'М+аленький хоз+яин, ', 'З+аяц, ', 'Зайка, '] | random %}
           {% set greet2  = ['пок+а!','до свид+ания!','до встр+ечи!','чава-как+ава!','всег+о хор+ошего!', 'я б+уду скуч+ать!'] | random %}
           {% set greet1 = ['прив+ет!','здар+ова!','здр+авствуй!','здр+авия жел+аю!','сал+ют!',' Ур+а! Ур+а! Ты верн+улся дом+ой!'] | random %}
-          
           {{name1}} {% if is_state('input_boolean.sasha_tracker','on')%}{{greet1}}{%else%}{{greet2}}{%endif%}
     - service: notify.telegram
       data:
@@ -152,7 +164,9 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: device_tracker.redmi7_redmi
+      entity_id: 
+        - device_tracker.redmi7_sergey
+        - device_tracker.a32_sergey
       to: 'home'
   action: 
     - service: notify.telegram

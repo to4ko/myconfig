@@ -1,6 +1,10 @@
   breather_speed_control:
     alias: Breather Speed Control
+    mode: queued
     sequence:
+      - service: notify.telegram
+        data:
+          message: "name {{breather}}"
       - choose:
           - conditions:
               - condition: template
@@ -31,10 +35,13 @@
                   {%endif%}
             - delay:
                 milliseconds: 500
+      - service: notify.telegram
+        data:
+          message: "speed {{speed}}"
       - condition: template
-        value_template: "{{ speed|int > 1 }}"
+        value_template: "{{ ((speed|int) / 25) - 1 }}"
       - repeat:
-          count: "{{ speed|int - 1 }}"
+          count: "{{ ((speed|int) / 25) - 1}}"
           sequence:
             - service: switch.turn_on
               data:
