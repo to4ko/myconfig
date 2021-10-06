@@ -189,7 +189,7 @@
       entity_id: timer.fan_b
       state: 'idle'
     # - condition: template
-    #   value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.bathroom_fan_auto', 'last_triggered'))|int) > 60 }}"
+    #   value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.bathroom_fan_auto', 'last_triggered'))|int(0)) > 60 }}"
   action:
     - choose:
         - conditions:
@@ -234,9 +234,9 @@
       entity_id: group.lights_b
       to: 'on'
   condition:
-    - condition: state
-      entity_id: timer.fan_b
-      state: 'idle'
+    # - condition: state
+    #   entity_id: timer.fan_b
+    #   state: 'idle'
     - condition: template
       value_template: "{{ is_state('switch.esp32_bathroom_node_relay_3','on') or is_state('switch.sonoff_pow_r2_1_bottom_fan','on') }}"
     - condition: state
@@ -316,3 +316,30 @@
       entity_id: switch.esp32_bathroom_node_relay_4
     - service: timer.start
       entity_id: timer.fan_t
+
+# ##################################
+# Bathroom - Main Fan Timer with switch
+# ##################################
+- alias: bathroom_main_fan_timer_with_switch
+  id: bathroom_main_fan_timer_with_switch
+  mode: single
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: switch.esp32_bathroom_node_relay_3
+  condition:
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: template
+      value_template: "{{ states('switch.esp32_bathroom_node_relay_3') in ['on','off'] }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.fan_b
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: switch.esp32_bathroom_node_relay_3
+              state: 'on'
+          sequence:
+            - service: timer.start
+              entity_id: timer.fan_b

@@ -1,19 +1,27 @@
   - binary_sensor:
+      - name: Yandex Lite Speakers
+        state: >
+          {{not (is_state('media_player.yandex_lite_hb','unavailable') and
+          is_state('media_player.yandex_lite_mb','unavailable') and
+          is_state('media_player.yandex_lite_k','unavailable') and
+          is_state('media_player.yandex_lite_s','unavailable') and
+          is_state('media_player.yandex_lite_v','unavailable')) }}
+        device_class: connectivity
         
       - name: Overvoltage
-        state: "{{ states('sensor.shelly_em_channel_1_voltage')|float > 253 }}"
+        state: "{{ states('sensor.shelly_em_channel_1_voltage')|float(0) > 253 }}"
         device_class: problem
         
       - name: Undervoltage
-        state: "{{ states('sensor.shelly_em_channel_1_voltage')|float < 207 }}"
+        state: "{{ states('sensor.shelly_em_channel_1_voltage')|float(0) < 207 }}"
         device_class: problem
 
       - name: Voltage State
-        state: "{{ 207 > states('sensor.shelly_em_channel_1_voltage')|float > 253 }}"
+        state: "{{ 207 > states('sensor.shelly_em_channel_1_voltage')|float(0) > 253 }}"
         device_class: problem
         
       - name: Central Heating
-        state: "{{states('sensor.esp32_node_v_heating_pipe')|int > 30 and states('sensor.esp32_node_mb_heating_pipe')|int > 30 }}"
+        state: "{{states('sensor.esp32_node_v_heating_pipe')|int(0) > 30 and states('sensor.esp32_node_mb_heating_pipe')|int(0) > 30 }}"
         device_class: heat
         delay_off:
           hours: 3
@@ -21,15 +29,15 @@
         #   hours: 3
 
       - name: Hot Water
-        state: "{{ states('sensor.esp32_bathroom_node_hot_pipe')|int > 45 }}"
+        state: "{{ states('sensor.esp32_bathroom_node_hot_pipe')|int(0) > 45 }}"
         device_class: heat
 
       - name: Cold Water
-        state: "{{ states('sensor.esp32_bathroom_node_cold_pipe')|int <= states('sensor.0x158d0001e58754_temperature')|float - 2 }}"
+        state: "{{ states('sensor.esp32_bathroom_node_cold_pipe')|int(0) <= states('sensor.0x158d0001e58754_temperature')|float(0) - 2 }}"
         device_class: cold
 
       # - name: Out Humidity Change 15m
-      #   state: "{{(state_attr('sensor.out_humidity_stats','change')|float) > 5}}"
+      #   state: "{{(state_attr('sensor.out_humidity_stats','change')|float(0)) > 5}}"
       #   device_class: moisture
         
       - name: Light Outside Mi
@@ -58,14 +66,14 @@
         device_class: problem
         #state: "{{ state_attr('sensor.supervisor_updates', 'current_version') != state_attr('sensor.supervisor_updates', 'newest_version') }}"
         state: >-
-          {{state_attr('sensor.supervisor_updates', 'newest_version').split('.')[0]|int >= state_attr('sensor.supervisor_updates', 'current_version').split('.')[0]|int and
-          state_attr('sensor.supervisor_updates', 'newest_version').split('.')[1]|int >= state_attr('sensor.supervisor_updates', 'current_version').split('.')[1]|int and
-          state_attr('sensor.supervisor_updates', 'newest_version').split('.')[0]|int > state_attr('sensor.supervisor_updates', 'current_version').split('.')[2]|int }}
+          {{state_attr('sensor.supervisor_updates', 'newest_version').split('.')[0]|int(0) >= state_attr('sensor.supervisor_updates', 'current_version').split('.')[0]|int(0) and
+          state_attr('sensor.supervisor_updates', 'newest_version').split('.')[1]|int(0) >= state_attr('sensor.supervisor_updates', 'current_version').split('.')[1]|int(0) and
+          state_attr('sensor.supervisor_updates', 'newest_version').split('.')[0]|int(0) > state_attr('sensor.supervisor_updates', 'current_version').split('.')[2]|int(0) }}
         availability: "{{ (states('sensor.supervisor_updates') | int(-1)) > -1 }}"
   
       - name: Updater Addons
         device_class: problem
-        state: "{{ states('sensor.supervisor_updates') | int > 0 }}"
+        state: "{{ states('sensor.supervisor_updates') | int(0) > 0 }}"
 
       - name: Updater Core
         device_class: problem
@@ -94,7 +102,7 @@
         delay_off: "01:00:00"
         device_class: occupancy
 
-#{{states('proximity.dima_home')|int < 500 and states('proximity.sandra_home')|int < 500 and states('proximity.vova_home')|int < 500 }}
+#{{states('proximity.dima_home')|int(0) < 500 and states('proximity.sandra_home')|int(0) < 500 and states('proximity.vova_home')|int(0) < 500 }}
 
       - name: Bad AirQ Toilet
         icon: mdi:smoking-off
@@ -107,8 +115,8 @@
 
       - name: High Humidity B
         device_class: moisture
-        # state: "{{ states('sensor.0x158d00020d7c3a_humidity') | float > 65 }}"
-        state: "{{ states('sensor.0x158d00020d7c3a_humidity')|float > states('sensor.humidity_average')|float + 10 }}"
+        # state: "{{ states('sensor.0x158d00020d7c3a_humidity') | float(0) > 65 }}"
+        state: "{{ states('sensor.0x158d00020d7c3a_humidity')|float(0) > states('sensor.humidity_average')|float(0) + 10 }}"
         delay_off:
           minutes: 5
         delay_on:
@@ -116,7 +124,7 @@
 
       - name: Monitor Dell
         icon: mdi:monitor
-        state: "{{ states('sensor.0x158d0003600ea4_power')|float > 5 }}"
+        state: "{{ states('sensor.0x158d0003600ea4_power')|float(0) > 5 }}"
 
       - name: TV V
         icon: mdi:television
@@ -136,20 +144,20 @@
 
       - name: Breather V
         icon: mdi:power
-        state: "{{ states('sensor.0x158d000344998e_power')|float > 9 }}"
+        state: "{{ states('sensor.0x158d000344998e_power')|float(0) > 9 }}"
 
       - name: Breather S
         icon: mdi:power
-        state: "{{ states('sensor.0x158d00036148b9_power')|float > 9 }}"
+        state: "{{ states('sensor.0x158d00036148b9_power')|float(0) > 9 }}"
 
       - name: Breather MB
         icon: mdi:power
-        state: "{{ states('sensor.0x158d000345119e_power')|float > 9 }}"
+        state: "{{ states('sensor.0x158d000345119e_power')|float(0) > 9 }}"
 
       - name: Washer B
         delay_off:
           minutes: 2
-        state: "{{ states('sensor.sonoff_pow_r2_1_power')|float > 5 }}"
+        state: "{{ states('sensor.sonoff_pow_r2_1_power')|float(0) > 5 }}"
         icon: >
           {% if is_state("binary_sensor.washer_b", "on") and not is_state('input_select.washer_state','Drying')%}
             mdi:washing-machine
@@ -181,12 +189,12 @@
 
       - name: Fridge HB
         icon: mdi:fridge
-        state: "{{ states('sensor.0x158d0003539447_power')|float > 5 }}"
+        state: "{{ states('sensor.0x158d0003539447_power')|float(0) > 5 }}"
       
       - name: Kettle K
-        state: "{{ states('sensor.0x158d00028c9875_power')|float > 50 }}"
+        state: "{{ states('sensor.0x158d00028c9875_power')|float(0) > 50 }}"
         icon: >
-          {% if states('sensor.0x158d00028c9875_power')|float > 500 %}
+          {% if states('sensor.0x158d00028c9875_power')|float(0) > 500 %}
           mdi:kettle-steam
           {% else %}
           mdi:kettle-outline
@@ -194,13 +202,13 @@
 
       - name: Kettle Boil K
         icon: mdi:kettle-steam
-        state: "{{ states('sensor.0x158d00028c9875_power')|float > 500 }}"
+        state: "{{ states('sensor.0x158d00028c9875_power')|float(0) > 500 }}"
         delay_off:
           minutes: 1
 
       - name: Microwave K
         icon: mdi:microwave
-        state: "{{ states('sensor.0x158d00028a54e4_power')|float > 10 }}"
+        state: "{{ states('sensor.0x158d00028a54e4_power')|float(0) > 10 }}"
 
       - name: Ippon 1200 Status
         state: "{{ states('sensor.ippon_1200_status_data') not in ['none','unknown','unavailable'] }}"
@@ -298,7 +306,7 @@
         delay_off:
           minutes: 3
         icon: >
-          {% if is_state('binary_sensor.motion_b_5m','on') %}
+          {% if is_state('binary_sensor.motion_b_delay','on') %}
           mdi:run
           {% else %}
           mdi:walk
@@ -309,9 +317,9 @@
         device_class: lock
         state: "{{is_state('binary_sensor.0x158d0002a1a4b2_contact','on')}}"
         delay_off:
-          seconds: 2
+          seconds: 5
         delay_on:
-          seconds: 2
+          seconds: 5
         icon: >
           {% if is_state('binary_sensor.bottom_lock','on') %}
           mdi:lock-open-variant
@@ -329,9 +337,9 @@
         device_class: lock
         state: "{{is_state('binary_sensor.0x158d0002b7c2c8_contact','on')}}"
         delay_off:
-          seconds: 2
+          seconds: 5
         delay_on:
-          seconds: 2
+          seconds: 5
         icon: >
           {% if is_state('binary_sensor.top_lock','on') %}
           mdi:lock-open-variant-outline
@@ -341,15 +349,15 @@
           
       - name: Ice Alarm Current
         device_class: cold
-        state: "{{ 1 > states('sensor.esp32_node_mb_outside')|float > -3}}"
+        state: "{{ 1 > states('sensor.esp32_node_mb_outside')|float(0) > -3}}"
 
       - name: Ice Alarm 0d
         device_class: cold
-        state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_0d')|float > -3}}"
+        state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_0d')|float(0) > -3}}"
 
       - name: Ice Alarm 1d
         device_class: cold
-        state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_1d')|float > -3}}"
+        state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_1d')|float(0) > -3}}"
 
       # - name: Bright Light Allowed
       #   #state: "{{ (is_state('binary_sensor.workday_sensor','on') and is_state('binary_sensor.tod_day','on')) or (is_state('binary_sensor.workday_sensor','off') and is_state('binary_sensor.tod_day_non_working','on')) }}"

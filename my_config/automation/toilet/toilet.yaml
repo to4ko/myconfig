@@ -9,7 +9,7 @@
       entity_id: number.d1mini_air_freshener_counter
   condition:
     - condition: template
-      value_template: "{{ trigger.to_state.state|int > trigger.from_state.state|int }}"
+      value_template: "{{ trigger.to_state.state|int(0) > trigger.from_state.state|int(0) }}"
     - condition: template
       value_template: >
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
@@ -19,10 +19,10 @@
         }}
   action:
     - condition: template
-      value_template: "{{ (states('sensor.d1mini_air_freshener_canister_left')|int < 10) and (states('number.d1mini_air_freshener_counter')|int % 25) == 0 }}"
+      value_template: "{{ (states('sensor.d1mini_air_freshener_canister_left')|int(0) < 10) and (states('number.d1mini_air_freshener_counter')|int(0) % 25) == 0 }}"
     - service: notify.telegram
       data:
-        message: "\U0001f50b Необходимо заменить баллон в освежителе - осталось менее {{states('sensor.d1mini_air_freshener_canister_left')|int}}%!"
+        message: "\U0001f50b Необходимо заменить баллон в освежителе - осталось менее {{states('sensor.d1mini_air_freshener_canister_left')|int(0)}}%!"
 
 # ##################################
 # Toilet - Air Freshener Spray
@@ -94,7 +94,7 @@
 #       hours: "/2"
 #   condition:
 #     - condition: template
-#       value_template: "{{(as_timestamp(now())|int - states('sensor.air_freshener_last_spray')|int ) > 2*60*60 }}"
+#       value_template: "{{(as_timestamp(now())|int(0) - states('sensor.air_freshener_last_spray')|int(0) ) > 2*60*60 }}"
 #     - condition: state
 #       entity_id: binary_sensor.0x158d000232ddd6_contact
 #       state: "off"
@@ -113,9 +113,9 @@
   initial_state: true
   trigger:
     - platform: template
-      value_template: "{{ not (6>=now().hour|int >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) }}"
+      value_template: "{{ not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) }}"
   action:
-    - service: climate.turn_{% if not (6>=now().hour|int >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
+    - service: climate.turn_{% if not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
       entity_id: climate.sonoff_pow_r2_2_heater
 
 # # ##################################
@@ -137,7 +137,7 @@
       entity_id: switch.dark_mode
       state: "off"
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_close_seat_notify', 'last_triggered'))|int) > 15 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_close_seat_notify', 'last_triggered'))|int(0)) > 15 }}"
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
@@ -157,7 +157,7 @@
     - service: media_player.volume_set
       data:
         entity_id: media_player.yandex_lite_k
-        volume_level: '{{states("input_number.main_volume")|float}}'
+        volume_level: '{{states("input_number.main_volume")|float(0)}}'
     # - service: tts.yandextts_say
     #   data:
     #     entity_id: media_player.home_mini_k

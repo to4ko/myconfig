@@ -19,21 +19,21 @@
     - service: input_number.set_value
       data:
         entity_id: input_number.cold_water_meter
-        value: "{{ (states('input_number.cold_water_meter')|float + 0.01 ) | round(2) }}"
+        value: "{{ (states('input_number.cold_water_meter')|float(0) + 0.01 ) | round(2) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.cold_water_meter_month
-        value: "{{ (states('input_number.cold_water_meter_month')|float + 0.01 ) | round(2) }}"
+        value: "{{ (states('input_number.cold_water_meter_month')|float(0) + 0.01 ) | round(2) }}"
 
     - service: mqtt.publish
       data:
         topic: "utility/main/cold_water_meter"
-        payload: "{{states('input_number.cold_water_meter')|float}}"
+        payload: "{{states('input_number.cold_water_meter')|float(0)}}"
         retain: true
     - service: mqtt.publish
       data:
         topic: "utility/main/cold_water_meter_month"
-        payload: "{{states('input_number.cold_water_meter_month')|float}}"
+        payload: "{{states('input_number.cold_water_meter_month')|float(0)}}"
         retain: true
 
 # ##################################
@@ -53,21 +53,21 @@
     - service: input_number.set_value
       data:
         entity_id: input_number.hot_water_meter
-        value: "{{ (states('input_number.hot_water_meter')|float + 0.01 ) | round(2) }}"
+        value: "{{ (states('input_number.hot_water_meter')|float(0) + 0.01 ) | round(2) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.hot_water_meter_month
-        value: "{{ (states('input_number.hot_water_meter_month')|float + 0.01 ) | round(2) }}"
+        value: "{{ (states('input_number.hot_water_meter_month')|float(0) + 0.01 ) | round(2) }}"
 
     - service: mqtt.publish
       data:
         topic: "utility/main/hot_water_meter"
-        payload: "{{states('input_number.hot_water_meter')|float}}"
+        payload: "{{states('input_number.hot_water_meter')|float(0)}}"
         retain: true
     - service: mqtt.publish
       data:
         topic: "utility/main/hot_water_meter_month"
-        payload: "{{states('input_number.hot_water_meter_month')|float}}"
+        payload: "{{states('input_number.hot_water_meter_month')|float(0)}}"
         retain: true
 
 # ##################################
@@ -89,11 +89,11 @@
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t1
-                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp32_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t1')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_day')|float(0)/1 )|round(2) }}"
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t2
-                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp32_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t2')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_night')|float(0)/1 )|round(2) }}"
             - service: mqtt.publish
               data:
                 topic: "utility/main/energy/day"
@@ -128,11 +128,11 @@
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t1
-                value: "{{ ((states('input_number.power_meter_t1')) | float + states('sensor.esp32_pzem_hb_energy_daily_day')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t1')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_day')|float(0)/1 )|round(2) }}"
             - service: input_number.set_value
               data:
                 entity_id: input_number.power_meter_t2
-                value: "{{ ((states('input_number.power_meter_t2')) | float + states('sensor.esp32_pzem_hb_energy_daily_night')|float/1 )|round(2) }}"
+                value: "{{ ((states('input_number.power_meter_t2')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_night')|float(0)/1 )|round(2) }}"
             - service: mqtt.publish
               data:
                 topic: "utility/main/energy/day"
@@ -158,65 +158,65 @@
       at: "00:00:10"
   condition:
     - condition: template
-      value_template: "{{ strptime(states('sensor.date'), '%Y-%m-%d').day|int == 21 }}"
+      value_template: "{{ strptime(states('sensor.date'), '%Y-%m-%d').day|int(0) == 21 }}"
   action:
     - service: mqtt.publish
       data:
         topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
-        payload: "{{states('input_number.hot_water_meter')|float}}"
+        payload: "{{states('input_number.hot_water_meter')|float(0)}}"
         retain: true
     - service: mqtt.publish
       data:
         topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
-        payload: "{{states('input_number.cold_water_meter')|float}}"
+        payload: "{{states('input_number.cold_water_meter')|float(0)}}"
         retain: true
     - service: mqtt.publish
       data:
         topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t1"
-        payload: "{{((states('input_number.power_meter_t1'))|float)}}"
+        payload: "{{((states('input_number.power_meter_t1'))|float(0))}}"
         retain: true
     - service: mqtt.publish
       data:
         topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t2"
-        payload: "{{((states('input_number.power_meter_t2'))|float)}}"
+        payload: "{{((states('input_number.power_meter_t2'))|float(0))}}"
         retain: true
     - service: mqtt.publish
       data:
         topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
-        payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S')}}"
+        payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S',false,0)}}"
         retain: true
     - service: notify.telegram
       data:
         message: >
           {{ "\U0001f4a6" }}
           Показания счетчиков:
-          ХВС: {{ states('input_number.cold_water_meter')|float }}м3
-          ГВС: {{ states('input_number.hot_water_meter')|float }}м3
+          ХВС: {{ states('input_number.cold_water_meter')|float(0) }}м3
+          ГВС: {{ states('input_number.hot_water_meter')|float(0) }}м3
 
           За месяц:
-          ХВС: {{ states('input_number.cold_water_meter_month')|float }}м3
-          ГВС: {{ states('input_number.hot_water_meter_month')|float }}м3
-          Стоимость: {{ ((states('sensor.water_cost'))|float)}}руб.
+          ХВС: {{ states('input_number.cold_water_meter_month')|float(0) }}м3
+          ГВС: {{ states('input_number.hot_water_meter_month')|float(0) }}м3
+          Стоимость: {{ ((states('sensor.water_cost'))|float(0))}}руб.
     - service: notify.telegram
       data:
         message: >
           {{ "\U0001f50c" }}
           Показания счетчика:
-          Т1: {{ ((states('input_number.power_meter_t1'))|float)}} кВт*ч
-          Т2: {{ ((states('input_number.power_meter_t2'))|float)}} кВт*ч
+          Т1: {{ ((states('input_number.power_meter_t1'))|float(0))}} кВт*ч
+          Т2: {{ ((states('input_number.power_meter_t2'))|float(0))}} кВт*ч
 
           За месяц:
-          Т1: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_day')|float))|round(0)}} кВт*ч
-          Т2: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_night')|float))|round(0)}} кВт*ч
-          Стоимость: {{ ((states('sensor.power_cost'))|float) }} руб.
+          Т1: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_day')|float(0)))|round(0)}} кВт*ч
+          Т2: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_night')|float(0)))|round(0)}} кВт*ч
+          Стоимость: {{ ((states('sensor.power_cost'))|float(0)) }} руб.
     - service: input_number.set_value
       data:
         entity_id: input_number.power_meter_last_month_t1
-        value: "{{ states('input_number.power_meter_t1')|float}}"
+        value: "{{ states('input_number.power_meter_t1')|float(0)}}"
     - service: input_number.set_value
       data:
         entity_id: input_number.power_meter_last_month_t2
-        value: "{{ states('input_number.power_meter_t2')|float}}"
+        value: "{{ states('input_number.power_meter_t2')|float(0)}}"
 
     - service: switch.turn_on
       entity_id: switch.esp32_pzem_hb_energy_reset_all
@@ -239,11 +239,11 @@
     - service: input_number.set_value
       data:
         entity_id: input_number.hot_water_meter_last_month
-        value: "{{ states('input_number.hot_water_meter')|float }}"
+        value: "{{ states('input_number.hot_water_meter')|float(0) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.cold_water_meter_last_month
-        value: "{{ states('input_number.cold_water_meter')|float }}"
+        value: "{{ states('input_number.cold_water_meter')|float(0) }}"
     - service: input_number.set_value
       data:
         entity_id:
@@ -264,7 +264,7 @@
       below: 20
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.system_power_15A_current', 'last_triggered'))|int) > 10*60 }}"
+      value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_15A_current', 'last_triggered'))|int(0)) > 10*60 }}"
   action:
     - service: notify.telegram
       data:
@@ -283,7 +283,7 @@
       below: 30
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.system_power_20A_current', 'last_triggered'))|int) > 10*60 }}"
+      value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_20A_current', 'last_triggered'))|int(0)) > 10*60 }}"
   action:
     - service: notify.telegram
       data:
@@ -302,7 +302,7 @@
       below: 40
   condition:
     - condition: template
-      value_template: "{{ (as_timestamp(now())|int - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'))|int) > 10*60 }}"
+      value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'))|int(0)) > 10*60 }}"
   action:
     - service: notify.telegram
       data:
@@ -360,11 +360,11 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int}}Вт!"
+        message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
     - service: notify.mobile_app_iphone_12_dtsymbal
       data:
         title: "Внимание!"
-        message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int}}Вт!"
+        message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
         data:
           push:
             sound:

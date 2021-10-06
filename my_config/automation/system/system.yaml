@@ -6,7 +6,7 @@
 # System - Errors counter
 # ##################################
 - alias: system_error_counter
-  #id: system_error_counter
+  id: system_error_counter
   initial_state: true
   mode: queued
   max: 100
@@ -27,7 +27,7 @@
 # System - Warning counter
 # ##################################
 - alias: system_warning_counter
-  #id: system_warning_counter
+  id: system_warning_counter
   initial_state: true
   mode: queued
   max: 100
@@ -63,7 +63,7 @@
         - sensor.warnings_during_boot
     - service: notify.telegram
       data:
-        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int}}сек! Ошибок {{states('sensor.errors_during_boot')|int}}, предупреждений {{states('sensor.warnings_during_boot')|int}}. Сертификат действителен еще {{states('sensor.cert_validity_left')}}д"
+        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int(0)}}сек! Ошибок {{states('sensor.errors_during_boot')|int(0)}}, предупреждений {{states('sensor.warnings_during_boot')|int(0)}}"
     - service: script.turn_on
       entity_id: script.system_start
     - service: counter.increment
@@ -155,7 +155,7 @@
 # System - Hass.io NEW Device
 # ##################################
 - alias: system_new_device_found
-  #id: system_new_device_found
+  id: system_new_device_found
   initial_state: true
   mode: queued
   trigger:
@@ -170,7 +170,7 @@
 # System - Entity Change
 # ##################################
 - alias: system_entity_change
-  #id: system_entity_change
+  id: system_entity_change
   initial_state: true
   mode: queued
   max: 999
@@ -198,7 +198,7 @@
 # System - Device Deletion
 # ##################################
 - alias: system_device_entity_deletion
-  #id: system_device_entity_deletion
+  id: system_device_entity_deletion
   initial_state: true
   mode: queued
   trigger:
@@ -252,7 +252,7 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int }}, ошибок - {{states('counter.error_counter')|int }}, предупреждений - {{states('counter.warning_counter')|int}}, ошибок входа - {{states('counter.badlogin_counter')|int}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int}}раз(а). Чайник включали - {{states('counter.kettle_k')|int}}раз(а). Срок действителен еще {{states('sensor.cert_validity_left')}}д."
+        message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int(0) }}, ошибок - {{states('counter.error_counter')|int(0) }}, предупреждений - {{states('counter.warning_counter')|int(0)}}, ошибок входа - {{states('counter.badlogin_counter')|int(0)}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int(0)}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int(0)}}раз(а). Чайник включали - {{states('counter.kettle_k')|int(0)}}раз(а)"
     - service: counter.reset
       entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb, counter.automation_error_counter, counter.kettle_k
     - service: switch.turn_off
@@ -344,12 +344,12 @@
 #   condition:
 #     - condition: template
 #       value_template: >
-#         {{ ( states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | list | count ) >1 }}
+#         {{ ( states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int(0) ) | list | count ) >1 }}
 #   action:
 #   - service: notify.telegram
 #     data:
 #       message: >
-#         {%- set switch_list = states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int ) | map(attribute='name') | list | join(', ') -%}
+#         {%- set switch_list = states.switch | selectattr('attributes.temperature', 'defined') | selectattr('attributes.temperature','>', 65 |int(0) ) | map(attribute='name') | list | join(', ') -%}
 #         {{"\U0001f321"}} Внимание! Высокая температура: {{ switch_list }}
 
 # ##################################
@@ -563,7 +563,7 @@
       to: "on"
   condition:
     - condition: template
-      value_template: "{{ states('sensor.supervisor_updates')|int >0 }}"
+      value_template: "{{ states('sensor.supervisor_updates')|int(0) >0 }}"
     - condition: template
       value_template: >
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
@@ -580,7 +580,7 @@
 # System - System Automation Errors
 # ##################################
 - alias: system_automation_error
-  #id: system_automation_error
+  id: system_automation_error
   initial_state: true
   mode: queued
   trigger:
@@ -620,13 +620,13 @@
       above: 100
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'))|int) > 15 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'))|int(0)) > 15 }}"
     - condition: template
-      value_template: "{{ (states('sensor.error_counter_hourly')|int % 50) == 0 }}"
+      value_template: "{{ (states('sensor.error_counter_hourly')|int(0) % 50) == 0 }}"
   action:
     - service: notify.telegram
       data:
-        message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{states('sensor.error_counter_hourly')|int}}"
+        message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{states('sensor.error_counter_hourly')|int(0)}}"
 
 # ##################################
 # System - Servers Plugs turn on
@@ -725,7 +725,7 @@
 # System - Critical Error notification
 # ##################################
 - alias: system_critical_error_notify
-  #id: system_critical_error_notify
+  id: system_critical_error_notify
   initial_state: true
   mode: queued
   trigger:
@@ -758,7 +758,7 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.geiger_radiation_dose_per_hour')|int}}мкР/ч!"
+        message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.geiger_radiation_dose_per_hour')|int(0)}}мкР/ч!"
 
 # ##################################
 # System - Radiation sensor restart
@@ -768,12 +768,12 @@
 #   initial_state: true
 #   trigger:
 #     - platform: template
-#       value_template: "{{(as_timestamp(now())|int-states('sensor.geiger_last_seen')|int) > 2*60*60 }}"
+#       value_template: "{{(as_timestamp(now())|int(0)-states('sensor.geiger_last_seen')|int(0)) > 2*60*60 }}"
 #     - platform: homeassistant
 #       event: start
 #   condition:
 #     - condition: template
-#       value_template: "{{(as_timestamp(now())|int-states('sensor.geiger_last_seen')|int) > 2*60*60 }}"
+#       value_template: "{{(as_timestamp(now())|int(0)-states('sensor.geiger_last_seen')|int(0)) > 2*60*60 }}"
 #   action:
 #     - service: notify.telegram
 #       data:
@@ -854,13 +854,13 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178_black')|int}}%, C {{states('sensor.hp_178_cyan')|int}}%, M {{states('sensor.hp_178_magenta')|int}}%, Y {{states('sensor.hp_178_yellow')|int}}%"
+        message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178_black')|int(0)}}%, C {{states('sensor.hp_178_cyan')|int(0)}}%, M {{states('sensor.hp_178_magenta')|int(0)}}%, Y {{states('sensor.hp_178_yellow')|int(0)}}%"
 
 # ##################################
 # System - GW3 State
 # ##################################
 - alias: system_gw3_state
-  #id: system_gw3_state
+  id: system_gw3_state
   initial_state: true
   mode: queued
   trigger:
@@ -894,7 +894,7 @@
     - condition: template
       value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
     - condition: template
-      value_template: "{{states('sensor.ha_uptime')|float > 0}}"
+      value_template: "{{states('sensor.ha_uptime')|int(0) > 0}}"
   action:
     - service: notify.telegram
       data:
@@ -975,7 +975,7 @@
     - condition: template
       value_template: "{{ states(trigger.entity_id) != 'unknown'}}"
     - condition: template
-      value_template: "{{ (states(trigger.entity_id) | float) != 0}}"
+      value_template: "{{ (states(trigger.entity_id)|int(0)) != 0}}"
   action:
     - service: persistent_notification.create
       data:
@@ -1044,7 +1044,7 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_bathroom_node_cold_pipe')|int}}°C"
+        message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_bathroom_node_cold_pipe')|int(0)}}°C"
 
 # ##################################
 # System - Central Heating
@@ -1097,7 +1097,7 @@
 # System - ZB Devices Status
 # ##################################
 - alias: system_zb_devices_status
-  #id: system_zb_devices_status
+  id: system_zb_devices_status
   initial_state: true
   mode: queued
   max: 150
@@ -1246,7 +1246,7 @@
       entity_id: input_boolean.ha_shutdown
       state: "off"
     - condition: template
-      value_template: "{{states('sensor.ha_uptime')|float > 0}}"
+      value_template: "{{states('sensor.ha_uptime')|int(0) > 0}}"
     - condition: template
       value_template: "{{ trigger.to_state.state != trigger.from_state.state and (trigger.to_state.state in ['unknown', 'unavailable'] or trigger.from_state.state in ['unknown', 'unavailable']) }}"
   action:
@@ -1261,7 +1261,7 @@
 # System - ZB Devices Status
 # ##################################
 # - alias: system_zb_devices_status
-#   #id: system_zb_devices_status
+#   id: system_zb_devices_status
 #   initial_state: true
 #   mode: queued
 #   max: 1000
@@ -1341,7 +1341,7 @@
 # System - ESP Devices Status
 # ##################################
 - alias: system_esp_devices_status
-  #id: system_esp_devices_status
+  id: system_esp_devices_status
   initial_state: true
   mode: queued
   max: 25
@@ -1405,13 +1405,13 @@
 #       entity_id: binary_sensor.tod_day
 #       state: "on"
 #     - condition: template
-#       value_template: "{{(as_timestamp(now())|int - as_timestamp(states.sensor.sensor.gismeteo_geomagnetic_field.last_changed)|int) < 60*60 }}"
+#       value_template: "{{(as_timestamp(now())|int(0) - as_timestamp(states.sensor.sensor.gismeteo_geomagnetic_field.last_changed)|int(0)) < 60*60 }}"
 #   action:
 #     - service: notify.telegram
 #       data:
 #         message: >-
 #           {% set magnetic_conditions = ['Норма','Небольшие возмущения','Небольшие возмущения','Небольшие возмущения','Слабая буря','Умеренная буря','Сильная буря','Шторм','Экстремальный шторм'] %}
-#           {{ "\U0001f9f2" }} Геомагнитная обстановка -> {{magnetic_conditions[states('sensor.gismeteo_geomagnetic_field')|int]}}
+#           {{ "\U0001f9f2" }} Геомагнитная обстановка -> {{magnetic_conditions[states('sensor.gismeteo_geomagnetic_field')|int(0)]}}
 
 # ##################################
 # System - Caller ID
@@ -1448,7 +1448,7 @@
 # System - GW3 Error
 # ##################################
 - alias: system_xiaomi_gw3_error
-  #id: system_xiaomi_gw3_error
+  id: system_xiaomi_gw3_error
   initial_state: true
   mode: single
   trigger:
@@ -1470,7 +1470,7 @@
 # System - Already running log
 # ##################################
 - alias: system_already_running_log
-  #id: system_already_running_log
+  id: system_already_running_log
   initial_state: true
   mode: queued
   trigger:
@@ -1558,7 +1558,7 @@
     - platform: state
       entity_id: sensor.hp_color_laser_mfp_178nw
       to: "unavailable"
-      for: "00:01:00"
+      for: "00:05:00"
   action:
     - service: notify.telegram
       data:
@@ -1594,19 +1594,19 @@
     - service: input_number.set_value
       data:
         entity_id: input_number.breather_v_run_time
-        value: "{{ (states('input_number.breather_v_run_time') | float + states('sensor.breather_v_run_time_yesterday') | float) | round(2) }}"
+        value: "{{ (states('input_number.breather_v_run_time') | float(0) + states('sensor.breather_v_run_time_yesterday') | float(0)) | round(2) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.breather_s_run_time
-        value: "{{ (states('input_number.breather_s_run_time') | float + states('sensor.breather_s_run_time_yesterday') | float) | round(2) }}"
+        value: "{{ (states('input_number.breather_s_run_time') | float(0) + states('sensor.breather_s_run_time_yesterday') | float(0)) | round(2) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.breather_mb_run_time
-        value: "{{ (states('input_number.breather_mb_run_time') | float + states('sensor.breather_mb_run_time_yesterday') | float) | round(2) }}"
+        value: "{{ (states('input_number.breather_mb_run_time') | float(0) + states('sensor.breather_mb_run_time_yesterday') | float(0)) | round(2) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.washer_b_run_time
-        value: "{{ (states('input_number.washer_b_run_time') | float + states('sensor.washer_b_run_time_yesterday') | float) | round(2) }}"
+        value: "{{ (states('input_number.washer_b_run_time') | float(0) + states('sensor.washer_b_run_time_yesterday') | float(0)) | round(2) }}"
     # - service: notify.telegram
     #   data:
     #     message: "\U0001f9ed Статистика использования устройств обновлена!"
@@ -1642,7 +1642,7 @@
 # System - ESP reboot
 # ##################################
 - alias: system_esp_reboot
-  #id: system_esp_reboot
+  id: system_esp_reboot
   initial_state: true
   mode: queued
   max: 50
@@ -1772,7 +1772,7 @@
         {%- set act_time = as_timestamp(now()) %} 
         {%- for sensor in sensors %}
           {%- if as_timestamp(sensor.last_updated) == as_timestamp(sensors | map(attribute='last_updated') | min ) %}
-          {{ (act_time|int-as_timestamp(sensor.last_updated)|int)>30*60 }}
+          {{ (act_time|int(0)-as_timestamp(sensor.last_updated)|int(0))>30*60 }}
           {%- endif %}
         {%- endfor %}
   action:
@@ -1868,7 +1868,7 @@
       to: "on"
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_doorcam_panel_relaunch', 'last_triggered'))|int) > 5 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_doorcam_panel_relaunch', 'last_triggered'))|int(0)) > 5 }}"
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
@@ -2131,7 +2131,7 @@
     #     notification_id: 'config_entry_discovery'
 
 # ##################################
-# System - Automation Reload
+# System - Cert Validity Check
 # ##################################
 # - alias: system_cert_validity_check
 #   id: system_cert_validity_check
@@ -2161,16 +2161,33 @@
 #       data:
 #         message: "\U00002705 Сертификат успешно обновлен!"
 
+# # ##################################
+# # System - Ya Station Response
+# # ##################################
+# - alias: system_ya_response
+#   id: system_ya_response
+#   initial_state: true
+#   trigger:
+#     - platform: event
+#       event_type: yandex_station_response
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "{{ trigger.event.data.text }}"
+
 # ##################################
-# System - Ya Station Response
+# System - GW3 Devices Msg Missed
 # ##################################
-- alias: system_ya_response
-  id: system_ya_response
+- alias: system_gw3_devices_msg_missed
+  id: system_gw3_devices_msg_missed
+  mode: queued
+  max: 100
+  max_exceeded: silent
   initial_state: true
   trigger:
-    - platform: event
-      event_type: yandex_station_response
+    - platform: template
+      value_template: "{{ states.sensor | selectattr('attributes.last_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.last_missed','>', 10 ) | list  | length > 0  }}"
   action:
-    - service: notify.telegram
+    - service: notify.me
       data:
-        message: "{{ trigger.event.data.text }}"
+        message: "\U000026a0 Внимание! {{ trigger.to_state.attributes.name }} пропустил {{ trigger.to_state.attributes.last_missed }} пакетов!"

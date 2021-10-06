@@ -122,3 +122,35 @@
             - service: switch.turn_on
               entity_id: switch.digma_ir_v_breather_pwr
 
+# ##################################
+# Vova - Purifier Favorite at night
+# ##################################
+- alias: vova_purifier_favorite_mode
+  id: vova_purifier_favorite_mode
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: state
+      entity_id: fan.purifier2s
+      for:
+        minutes: 1
+  condition:
+    - condition: state
+      entity_id: fan.purifier2s
+      state: 'on'
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'off'
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: fan.purifier2s
+          attribute: preset_mode
+          state: 'Favorite'
+  action:
+    - service: fan.set_preset_mode
+      data:
+        entity_id: fan.purifier2s
+        preset_mode: Favorite

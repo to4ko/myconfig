@@ -4,42 +4,42 @@
       unit_of_measurement: 'min'
       state: >
         {% set x = states('sensor.time') %}
-        {{ ( (as_timestamp(now()) | round(0) - as_timestamp(states.timer.washer_working.last_changed) | int) / 60 ) | round(0) if not is_state('timer.washer_working','idle') else 0}}
+        {{ ( (as_timestamp(now()) | round(0) - as_timestamp(states.timer.washer_working.last_changed) | int(0)) / 60 ) | round(0) if not is_state('timer.washer_working','idle') else 0}}
 
     - name: Cert Validity Left
-      state: "{{((as_timestamp(states('sensor.cert_expiry_main'))+3*60*60 - as_timestamp(now()))|int/(24*60*60))|int}}"
+      state: "{{((as_timestamp(states('sensor.cert_expiry_main'),0)+3*60*60 - as_timestamp(now()))|int(0)/(24*60*60))|int(0)}}"
       unit_of_measurement: 'd'
       icon: >-
-        {% if states('sensor.cert_validity_left') | int > 15 %}
+        {% if states('sensor.cert_validity_left') | int(0) > 15 %}
           mdi:certificate
         {% else %}
           mdi:certificate-outline
         {% endif %}
       
     - name: PC S Usage
-      state: "{{(states('sensor.pc_s_stats')|float*3600)|timestamp_custom('%H:%M:%S',false)}}"
+      state: "{{(states('sensor.pc_s_stats')|float(0)*3600)|timestamp_custom('%H:%M:%S',false, 0)}}"
       icon: mdi:progress-clock
       
     - name: Stove Temperature Median
-      state: "{{ state_attr('sensor.stove_temperature_stats', 'median')|float }}"
+      state: "{{ state_attr('sensor.stove_temperature_stats', 'median')|float(0) }}"
       unit_of_measurement: "°C"
       device_class: temperature
 
     - name: Next Sunrise
-      state: "{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%R')  }}"
+      state: "{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%H:%M:%S',false,0) }}"
       icon: mdi:weather-sunset-up
 
     - name: Next Sunset
-      state: "{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%R') }}"
+      state: "{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%H:%M:%S',false,0) }}"
       icon: mdi:weather-sunset-down
 
     - name: Temperature Min Out
-      state: "{{ state_attr('sensor.out_temperature_stats', 'min_value')|float }}"
+      state: "{{ state_attr('sensor.out_temperature_stats', 'min_value')|float(0) }}"
       unit_of_measurement: "°C"
       device_class: temperature
 
     - name: Temperature Max Out
-      state: "{{ state_attr('sensor.out_temperature_stats', 'max_value')|float }}"
+      state: "{{ state_attr('sensor.out_temperature_stats', 'max_value')|float(0) }}"
       unit_of_measurement: "°C"
       device_class: temperature
 
@@ -50,8 +50,8 @@
         {% set b = 17.368 %}
         {% set c = 238.88 %}
         {% set a = 6.1121 %}
-        {% set rh = states('sensor.0x158d00020d7c3a_humidity') | float %}
-        {% set t = states('sensor.0x158d00020d7c3a_temperature') | float %}
+        {% set rh = states('sensor.0x158d00020d7c3a_humidity') | float(1) %}
+        {% set t = states('sensor.0x158d00020d7c3a_temperature') | float(0) %}
         {% set gamma = log(rh / 100) + b * t / (c + t) %}
         {{ (c * gamma / (b - gamma)) | round(1) }}
 
@@ -62,8 +62,8 @@
         {% set b = 17.368 %}
         {% set c = 238.88 %}
         {% set a = 6.1121 %}
-        {% set rh = states('sensor.0x158d0001e58754_humidity') | float %}
-        {% set t = states('sensor.0x158d0001e58754_temperature') | float %}
+        {% set rh = states('sensor.0x158d0001e58754_humidity') | float(1) %}
+        {% set t = states('sensor.0x158d0001e58754_temperature') | float(0) %}
         {% set gamma = log(rh / 100) + b * t / (c + t) %}
         {{ (c * gamma / (b - gamma)) | round(1) }}
 
@@ -86,7 +86,7 @@
     - name: WiFi Devices Unavailable
       state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
       icon: >
-        {% if states('sensor.wifi_devices_unavailable')|int >  0 %}
+        {% if states('sensor.wifi_devices_unavailable')|int(0) >  0 %}
         mdi:signal-off
         {% else %}
         mdi:signal
@@ -102,11 +102,11 @@
 
     - name: Abs Humidity B
       state: >-
-        {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float, states('sensor.0x158d00020d7c3a_temperature') %}
+        {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float(0), states('sensor.0x158d00020d7c3a_temperature') %}
         {% if not h or t == 'unknown' -%}
          'unknown'
         {%- else %}
-        {% set t = t | float %}
+        {% set t = t | float(0) %}
         {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
         {% endif %}
       unit_of_measurement: "g/m³"
@@ -114,11 +114,11 @@
 
     - name: Abs Humidity T
       state: >-
-        {% set h, t = states('sensor.0x158d0001e58754_humidity') | float, states('sensor.0x158d0001e58754_temperature') %}
+        {% set h, t = states('sensor.0x158d0001e58754_humidity') | float(0), states('sensor.0x158d0001e58754_temperature') %}
         {% if not h or t == 'unknown' -%}
          'unknown'
         {%- else %}
-        {% set t = t | float %}
+        {% set t = t | float(0) %}
         {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
         {% endif %}
       unit_of_measurement: "g/m³"
@@ -126,11 +126,11 @@
 
     - name: Abs Humidity H
       state: >-
-        {% set h, t = states('sensor.humidity_average') | float, states('sensor.temperature_average') %}
+        {% set h, t = states('sensor.humidity_average') | float(0), states('sensor.temperature_average') %}
         {% if not h or t == 'unknown' -%}
         'unknown'
         {%- else %}
-        {% set t = t | float %}
+        {% set t = t | float(0) %}
         {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2) }}
         {% endif %}
       unit_of_measurement: "g/m³"
@@ -149,22 +149,22 @@
 
     # restarts_per_day:
     # - name: Qty Of Restart
-    #   state: "{{states('counter.restart_counter')|int}}"
+    #   state: "{{states('counter.restart_counter')|int(0)}}"
     #   unit_of_measurement: 'ea'
 
     - name: Config Line Count Ratio
-      state: "{{'NA' if states('sensor.config_line_count')==0 else  (states('sensor.config_line_count_code')|int / states('sensor.config_line_count')|int * 100) | round(0) }}"
+      state: "{{'NA' if states('sensor.config_line_count')==0 else  (states('sensor.config_line_count_code')|int(0) / states('sensor.config_line_count')|int(0) * 100) | round(0) }}"
       unit_of_measurement: "%"
       icon: mdi:brightness-percent
 
     - name: Oven Target Temperature
-      state: "{{ states('input_select.oven_target_temperature')|int}}"
+      state: "{{ states('input_select.oven_target_temperature')|int(0)}}"
       device_class: temperature
       unit_of_measurement: "°C"
 
     - name: GDrive Last Backup
       icon: mdi:clock
-      state: "{{(as_timestamp(state_attr('sensor.backup_state','last_backup')) )|timestamp_custom('%H:%M %d.%m.%Y ')}}"
+      state: "{{(as_timestamp(state_attr('sensor.backup_state','last_backup'), 0) )|timestamp_custom('%H:%M %d.%m.%Y',false,0)}}"
 
     - name: GDrive Backup State
       icon: mdi:backup-restore
@@ -181,7 +181,7 @@
     # - name: GDrive Last Backup Name And Size
     #   icon: mdi:backup-restore
     #   state: >-
-    #     {%- set upt=((as_timestamp(now())|int-as_timestamp(states('sensor.uptime'))|int) / 60 )|int %}
+    #     {%- set upt=((as_timestamp(now())|int(0)-as_timestamp(states('sensor.uptime'))|int(0)) / 60 )|int(0) %}
     #     {%- set found=namespace(snapshot=None,time=0) %}
     #     {%- if upt > 0 %}
     #       {%-for snapshot in state_attr('sensor.backup_state', 'snapshots') %}
@@ -199,22 +199,22 @@
     #     {%- else %}Unknown{%endif%}
 
     - name: Git Stars
-      state: "{{state_attr('sensor.myconfig','stargazers')|int}}"
+      state: "{{state_attr('sensor.myconfig','stargazers')|int(0)}}"
       icon: mdi:star
 
     - name: Git Views
-      state: "{{state_attr('sensor.myconfig','views')|int}}"
+      state: "{{state_attr('sensor.myconfig','views')|int(0)}}"
       icon: mdi:account-multiple
 
     - name: Git Views Unique
-      state: "{{state_attr('sensor.myconfig','views_unique')|int}}"
+      state: "{{state_attr('sensor.myconfig','views_unique')|int(0)}}"
       icon: mdi:account-check
 
     # - name: GW3 NonResposing Devices
     #   state: >-
     #     {%- macro dev_list() -%}
     #     {%- for state in states.sensor -%}
-    #     {%- if states('sensor.ha_uptime')|int > 0 and state.entity_id.endswith("_zigbee") and (as_timestamp(now())|int-as_timestamp(state.state)|int(0) > 3*60*60) -%}
+    #     {%- if states('sensor.ha_uptime')|int(0) > 0 and state.entity_id.endswith("_zigbee") and (as_timestamp(now())|int(0)-as_timestamp(state.state)|int(0) > 3*60*60) -%}
     #     X
     #     {%-endif-%}
     #     {%-endfor-%}
@@ -227,30 +227,30 @@
     #   attributes:
     #     list: >-
     #       {%-for state in states.sensor
-    #       if states('sensor.ha_uptime')|int > 0 and state.entity_id.endswith("_zigbee") and (as_timestamp(now())-as_timestamp(state.state)|int(0) > 3*60*60) %}
-    #       {{state.attributes.name}}: {% if state.state =="unknown"%}NAN{%else%}{{((as_timestamp(now())|int-as_timestamp(state.state))|int(0)/60)|int}}min{%-endif-%}{%- if not loop.last -%}, {%-endif%}
+    #       if states('sensor.ha_uptime')|int(0) > 0 and state.entity_id.endswith("_zigbee") and (as_timestamp(now())-as_timestamp(state.state)|int(0) > 3*60*60) %}
+    #       {{state.attributes.name}}: {% if state.state =="unknown"%}NAN{%else%}{{((as_timestamp(now())|int(0)-as_timestamp(state.state))|int(0)/60)|int(0)}}min{%-endif-%}{%- if not loop.last -%}, {%-endif%}
     #       {%-endfor-%}
     #   icon: mdi:zigbee
     #   unit_of_measurement: "ea"
     
     # - name: Automations Running
     #   state: >-
-    #     {% set thrsh = states('input_number.automation_current_threshold')|int %}
+    #     {% set thrsh = states('input_number.automation_current_threshold')|int(0) %}
     #     {{states.automation| selectattr('attributes.current', 'defined')|selectattr('attributes.current','>=', thrsh ) | map(attribute='entity_id') | list  | count }}
     #   attributes:
     #     list: >-
-    #       {% set thrsh = states('input_number.automation_current_threshold')|int %}
+    #       {% set thrsh = states('input_number.automation_current_threshold')|int(0) %}
     #       {{states.automation| selectattr('attributes.current', 'defined')|selectattr('attributes.current','>=', thrsh ) | map(attribute='entity_id') | list  | join('\n') }}
     #   unit_of_measurement: 'ea'
     #   icon: mdi:robot
         
     # - name: GW3 MsgMissed
     #   state: >-
-    #     {% set thrsh = states('input_number.msg_missed_threshold')|int %} 
+    #     {% set thrsh = states('input_number.msg_missed_threshold')|int(0) %} 
     #     {{ states.sensor | selectattr('attributes.msg_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.msg_missed','>', thrsh ) | list  | length  }}
     #   attributes:
     #     list: >-
-    #       {% set thrsh = states('input_number.msg_missed_threshold')|int %}
+    #       {% set thrsh = states('input_number.msg_missed_threshold')|int(0) %}
     #       {{ states.sensor | selectattr('attributes.msg_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.msg_missed','>', thrsh ) | map(attribute='attributes.name')| list  | join(', ') }}
     #   icon: mdi:zigbee
     #   unit_of_measurement: "ea"

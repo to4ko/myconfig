@@ -18,8 +18,8 @@
     #     entity_id: binary_sensor.0x158d0001e05856_motion
     - platform: state
       entity_id: binary_sensor.0x158d0001e05856_motion
-      from: 'off'
-      to: 'on'        
+      from: "off"
+      to: "on"
     # - platform: state
     #   entity_id: binary_sensor.motion_g3_flex_entrance
     #   from: 'off'
@@ -56,14 +56,14 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0002b482e9_motion
-      from: 'off'
-      to: 'on'  
+      from: "off"
+      to: "on"
       id: "fridge"
     - platform: state
       entity_id: binary_sensor.0x158d0001e05856_motion
-      from: 'off'
-      to: 'on'  
-      id: "entrance" 
+      from: "off"
+      to: "on"
+      id: "entr"
     # - platform: event
     #   event_type: xiaomi_aqara.motion
     #   event_data:
@@ -83,11 +83,12 @@
       entity_id: switch.dark_mode
       state: "off"
     - condition: state
-      entity_id: group.lights_hb
+      entity_id: group.lights_main_hb
       state: "off"
   action:
-    - service: script.turn_on
-      entity_id: script.hall_big_led_strip_on
+    - service: script.hall_big_led_strip_on
+      data:
+        strips: "{{ trigger.id }}"
     # - service: script.hall_big_led_strip_on_separate
     #   data:
     #     motion: "{{ trigger.id }}"
@@ -129,12 +130,13 @@
       from: "off"
       to: "on"
   action:
-    - service: script.turn_on
-      entity_id: script.hall_big_led_strip_on
+    - service: script.hall_big_led_strip_on
+      data:
+        strips: both
     - service: input_number.set_value
       data:
         entity_id: input_number.main_door_open
-        value: "{{as_timestamp(now())|int }}"
+        value: "{{as_timestamp(now())|int(0) }}"
     - service: counter.increment
       entity_id: counter.main_door_hb
     - service: notify.telegram
@@ -206,8 +208,9 @@
               entity_id: input_boolean.security_mode
               state: "off"
           sequence:
-            - service: script.turn_on
-              entity_id: script.hall_big_led_strip_on
+            - service: script.hall_big_led_strip_on
+              data:
+                strips: both
         - conditions:
             - condition: state
               entity_id: group.lights_main_hb
@@ -244,11 +247,11 @@
   max_exceeded: silent
   trigger:
     - platform: state
-      entity_id: 
+      entity_id:
         - binary_sensor.0x158d0001e05856_motion
         - binary_sensor.0x158d0002b482e9_motion
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
     # - platform: event
     #   event_type: xiaomi_aqara.motion
     #   event_data:
@@ -283,7 +286,7 @@
         click_type: button_1_single
   condition:
     - condition: template
-      value_template: "{{states('sensor.ha_uptime')|float > 1}}"
+      value_template: "{{states('sensor.ha_uptime')|int(0) > 1}}"
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
@@ -304,7 +307,7 @@
         click_type: button_2_single
   condition:
     - condition: template
-      value_template: "{{states('sensor.ha_uptime')|float > 1}}"
+      value_template: "{{states('sensor.ha_uptime')|int(0) > 1}}"
   action:
     - service: switch.toggle
       entity_id: switch.0x158d000253f04a_channel_2
@@ -337,7 +340,7 @@
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: state
       entity_id: switch.led_strip_hb_restart_key
-      state: 'on'
+      state: "on"
   action:
     - repeat:
         while:
@@ -360,7 +363,7 @@
               seconds: 15
     - condition: state
       entity_id: light.led_strip_hb
-      state: 'unavailable'
+      state: "unavailable"
     - service: notify.telegram
       data:
         message: "\U0001f6a8 LED Strip HB restart unsuccessful!"
@@ -377,7 +380,7 @@
   trigger:
     - platform: state
       entity_id: light.led_strip_hb
-      from: 'unavailable'
+      from: "unavailable"
   action:
     - service: switch.turn_on
       entity_id: switch.led_strip_hb_restart_key
@@ -411,7 +414,7 @@
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: state
       entity_id: switch.led_strip_entrance_hb_restart_key
-      state: 'on'
+      state: "on"
   action:
     - repeat:
         while:
@@ -434,7 +437,7 @@
               seconds: 15
     - condition: state
       entity_id: light.led_strip_entrance_hb
-      state: 'unavailable'
+      state: "unavailable"
     - service: notify.telegram
       data:
         message: "\U0001f6a8 LED Strip Entrance HB restart unsuccessful!"
@@ -451,7 +454,7 @@
   trigger:
     - platform: state
       entity_id: light.led_strip_entrance_hb
-      from: 'unavailable'
+      from: "unavailable"
   action:
     - service: switch.turn_on
       entity_id: switch.led_strip_entrance_hb_restart_key
@@ -508,6 +511,9 @@
       entity_id: light.led_strip_entrance_hb, light.led_strip_hb
       to: "on"
       from: "off"
+  condition:
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
     - service: timer.cancel
       entity_id: timer.led_strip_day_hb, timer.led_strip_night_hb
@@ -549,8 +555,8 @@
         - binary_sensor.0x158d0001e05856_motion
         - binary_sensor.0x158d0002b482e9_motion
         - binary_sensor.0x158d0001d5995e_motion
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
     # - platform: event
     #   event_type: xiaomi_aqara.motion
     #   event_data:
@@ -572,7 +578,7 @@
       entity_id: group.lights_strips_hb
       state: "on"
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'))|int) > 5 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'))|int(0)) > 5 }}"
   action:
     - choose:
         - conditions:
@@ -632,7 +638,7 @@
 #           entity_id: light.led_strip_hb
 #           state: 'on'
 #     - condition: template
-#       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'))|int) > 15 }}"
+#       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'))|int(0)) > 15 }}"
 #   action:
 #     - service: timer.cancel
 #       entity_id: timer.led_strip_day_hb
