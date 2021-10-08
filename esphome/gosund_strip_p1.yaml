@@ -1,0 +1,210 @@
+substitutions:
+  board_name: gosund_strip_p1
+
+esphome:
+  name: ${board_name}
+  platform: ESP8266
+  board: esp01_1m
+  comment: Gosund Strip P1
+  esp8266_restore_from_flash: true
+  on_boot:
+    priority: -10
+    then:
+      - switch.turn_on: relay1
+      - switch.turn_on: relay2
+      - switch.turn_on: relay3
+      - switch.turn_on: relay4
+      
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .local
+  reboot_timeout: 15min
+  fast_connect: true
+  manual_ip:
+    static_ip: 192.168.1.180
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+logger:
+  baud_rate: 0
+  logs:
+    adc: INFO
+api:
+  reboot_timeout: 0s
+
+ota:
+
+
+status_led:
+  pin:
+    number: GPIO02
+    inverted: True
+
+uart:
+  rx_pin: GPIO03
+  #tx_pin: GPIO01
+  baud_rate: 4800
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+  - platform: gpio
+    id: button
+    internal: true
+    pin:
+      number: GPIO16
+      mode: INPUT_PULLUP
+      inverted: true
+    on_press:
+      - switch.toggle: relay4
+
+  - platform: template
+    id: buttonrelay1
+    internal: true
+    on_press:
+      - switch.toggle: relay1
+    filters:
+      - delayed_off: 100ms
+
+  - platform: template
+    id: buttonrelay2
+    internal: true
+    on_press:
+      - switch.toggle: relay2
+    filters:
+      - delayed_off: 100ms
+
+  - platform: template
+    id: buttonrelay3
+    internal: true
+    on_press:
+      - switch.toggle: relay3
+    filters:
+      - delayed_off: 100ms
+
+
+switch:
+  - platform: restart
+    name: ${board_name}_Restart
+
+  - platform: gpio
+    pin: GPIO14
+    id: relay1
+    restore_mode: RESTORE_DEFAULT_ON
+    name: ${board_name} - Relay1
+    icon: mdi:power-socket-eu
+
+  - platform: gpio
+    pin: GPIO12
+    id: relay2
+    restore_mode: RESTORE_DEFAULT_ON
+    name: ${board_name} - Relay2
+    icon: mdi:power-socket-eu
+
+  - platform: gpio
+    pin: GPIO13
+    id: relay3
+    restore_mode: RESTORE_DEFAULT_ON
+    name: ${board_name} - Relay3
+    icon: mdi:power-socket-eu
+
+  - platform: gpio
+    pin: GPIO05
+    id: relay4
+    restore_mode: RESTORE_DEFAULT_ON
+    name: ${board_name} - Relay_USB
+    icon: mdi:power-socket-eu
+    inverted: yes
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: cse7766
+    current:
+      name: ${board_name}_A
+      unit_of_measurement: 'A'
+      accuracy_decimals: 3
+      icon: mdi:flash-outline
+      device_class: current
+    voltage:
+      name: ${board_name}_V
+      unit_of_measurement: 'V'
+      accuracy_decimals: 1
+      icon: mdi:flash-outline
+      filters:
+        - lambda: return x * 2.34245;
+      device_class: voltage
+    power:
+      name: ${board_name}_W
+      unit_of_measurement: 'W'
+      id: id_power
+      icon: mdi:flash-outline
+      filters:
+        - lambda: return x * 2.34245;
+      device_class: power
+    update_interval: 5s
+    
+  - platform: adc
+    pin: GPIO17
+    id: gpio17
+    internal: true
+    update_interval: 0.1s
+    filters:
+      - lambda: |-
+          if(x >= 0.60 && x < 0.90){
+            id(buttonrelay1).publish_state(true);
+          } else if(x >= 0.30 && x < 0.60){
+            id(buttonrelay2).publish_state(true);
+          }
+          else if(x > 0.10 && x < 0.30){
+            id(buttonrelay3).publish_state(true);
+          } else {
+            id(buttonrelay1).publish_state(false);
+            id(buttonrelay2).publish_state(false);
+            id(buttonrelay3).publish_state(false);
+          }
+          return{};
+
+
+    
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+

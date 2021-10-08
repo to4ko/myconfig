@@ -21,8 +21,8 @@
       entity_id: input_select.washer_state
       state: 
         - 'Idle'
-        - 'Washing'
-        - 'Pause'
+        #- 'Washing'
+        #- 'Pause'
         - 'Drying'
   action:
     - service: input_number.set_value
@@ -420,4 +420,21 @@
     - service: timer.cancel
       entity_id: timer.washing_machine_door, timer.washing_machine_door
     - service: input_boolean.turn_off
-      entity_id: input_boolean.washer_door_issue      
+      entity_id: input_boolean.washer_door_issue
+
+##################################
+# Bathroom - Washing Machine Door Issue Flag reset
+##################################
+- alias: bathroom_washing_machine_open_door_issue_flag_reset
+  id: bathroom_washing_machine_open_door_issue_flag_reset
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x158d0003fa6cf5_contact
+  condition:
+    - condition: state
+      entity_id: input_boolean.washer_door_issue
+      state: 'on'
+  action:
+    - service: input_boolean.turn_off
+      entity_id: input_boolean.washer_door_issue

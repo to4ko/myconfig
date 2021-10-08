@@ -1,36 +1,36 @@
 - sensor:
     - name: Washing Machine Stopwatch
       icon: mdi:timer-outline-outline
-      unit_of_measurement: 'min'
+      unit_of_measurement: "min"
       state: >
         {% set x = states('sensor.time') %}
         {{ ( (as_timestamp(now()) | round(0) - as_timestamp(states.timer.washer_working.last_changed) | int(0)) / 60 ) | round(0) if not is_state('timer.washer_working','idle') else 0}}
 
-    - name: Cert Validity Left
-      state: "{{((as_timestamp(states('sensor.cert_expiry_main'),0)+3*60*60 - as_timestamp(now()))|int(0)/(24*60*60))|int(0)}}"
-      unit_of_measurement: 'd'
-      icon: >-
-        {% if states('sensor.cert_validity_left') | int(0) > 15 %}
-          mdi:certificate
-        {% else %}
-          mdi:certificate-outline
-        {% endif %}
-      
+    # - name: Cert Validity Left
+    #   state: "{{((as_timestamp(states('sensor.cert_expiry_main'),0)+3*60*60 - as_timestamp(now()))|int(0)/(24*60*60))|int(0)}}"
+    #   unit_of_measurement: 'd'
+    #   icon: >-
+    #     {% if states('sensor.cert_validity_left') | int(0) > 15 %}
+    #       mdi:certificate
+    #     {% else %}
+    #       mdi:certificate-outline
+    #     {% endif %}
+
     - name: PC S Usage
       state: "{{(states('sensor.pc_s_stats')|float(0)*3600)|timestamp_custom('%H:%M:%S',false, 0)}}"
       icon: mdi:progress-clock
-      
+
     - name: Stove Temperature Median
       state: "{{ state_attr('sensor.stove_temperature_stats', 'median')|float(0) }}"
       unit_of_measurement: "°C"
       device_class: temperature
 
     - name: Next Sunrise
-      state: "{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%H:%M:%S',false,0) }}"
+      state: "{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%H:%M:%S',true,0) }}"
       icon: mdi:weather-sunset-up
 
     - name: Next Sunset
-      state: "{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%H:%M:%S',false,0) }}"
+      state: "{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%H:%M:%S',true,0) }}"
       icon: mdi:weather-sunset-down
 
     - name: Temperature Min Out
@@ -98,7 +98,7 @@
             {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
           {%-endfor-%}
       unit_of_measurement: "ea"
-#{{state.name}}{%- if not loop.last -%}, {%-endif%}
+    #{{state.name}}{%- if not loop.last -%}, {%-endif%}
 
     - name: Abs Humidity B
       state: >-
@@ -164,7 +164,7 @@
 
     - name: GDrive Last Backup
       icon: mdi:clock
-      state: "{{(as_timestamp(state_attr('sensor.backup_state','last_backup'), 0) )|timestamp_custom('%H:%M %d.%m.%Y',false,0)}}"
+      state: "{{(as_timestamp(state_attr('sensor.backup_state','last_backup'), 0) )|timestamp_custom('%H:%M %d.%m.%Y',true,0)}}"
 
     - name: GDrive Backup State
       icon: mdi:backup-restore
@@ -232,7 +232,7 @@
     #       {%-endfor-%}
     #   icon: mdi:zigbee
     #   unit_of_measurement: "ea"
-    
+
     # - name: Automations Running
     #   state: >-
     #     {% set thrsh = states('input_number.automation_current_threshold')|int(0) %}
@@ -243,17 +243,17 @@
     #       {{states.automation| selectattr('attributes.current', 'defined')|selectattr('attributes.current','>=', thrsh ) | map(attribute='entity_id') | list  | join('\n') }}
     #   unit_of_measurement: 'ea'
     #   icon: mdi:robot
-        
-    # - name: GW3 MsgMissed
-    #   state: >-
-    #     {% set thrsh = states('input_number.msg_missed_threshold')|int(0) %} 
-    #     {{ states.sensor | selectattr('attributes.msg_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.msg_missed','>', thrsh ) | list  | length  }}
-    #   attributes:
-    #     list: >-
-    #       {% set thrsh = states('input_number.msg_missed_threshold')|int(0) %}
-    #       {{ states.sensor | selectattr('attributes.msg_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.msg_missed','>', thrsh ) | map(attribute='attributes.name')| list  | join(', ') }}
-    #   icon: mdi:zigbee
-    #   unit_of_measurement: "ea"
+
+    - name: GW3 MsgMissed
+      state: >-
+        {% set thrsh = states('input_number.msg_missed_threshold')|int(0) %} 
+        {{ states.sensor | selectattr('attributes.msg_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.msg_missed','>', thrsh ) | list  | length  }}
+      attributes:
+        list: >-
+          {% set thrsh = states('input_number.msg_missed_threshold')|int(0) %}
+          {{ states.sensor | selectattr('attributes.msg_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.msg_missed','>', thrsh ) | map(attribute='attributes.name')| list  | join(', ') }}
+      icon: mdi:zigbee
+      unit_of_measurement: "ea"
 
     - name: Addons Update Available
       state: >-
@@ -321,6 +321,6 @@
       unit_of_measurement: "ea"
 
     - name: GW3 BT Devices Count
-      state: "{{ states.sensor|selectattr('attributes.mac', 'defined')| map(attribute='attributes.name') | unique | list  | count }}"
+      state: "{{ states.sensor|selectattr('attributes.MAC', 'defined')| map(attribute='attributes.name') | unique | list  | count }}"
       icon: mdi:bluetooth
       unit_of_measurement: "ea"
