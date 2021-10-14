@@ -6,29 +6,29 @@
 # Bathroom - Washing Machine Washing
 # ##################################
 - alias: bathroom_washing_machine_washing
-  id: bathroom_washing_machine_washing
+  #id:bathroom_washing_machine_washing
   initial_state: true
   trigger:
     - platform: state
       entity_id: binary_sensor.washer_b
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
   condition:
     - condition: numeric_state
       entity_id: sensor.ha_uptime
       above: 5
     - condition: state
       entity_id: input_select.washer_state
-      state: 
-        - 'Idle'
+      state:
+        - "Idle"
         #- 'Washing'
         #- 'Pause'
-        - 'Drying'
+        - "Drying"
   action:
     - service: input_number.set_value
       data:
         entity_id: input_number.washer_start
-        value: '{{as_timestamp (now())|int(0)}}'
+        value: "{{as_timestamp (now())|int(0)}}"
     - service: timer.cancel
       entity_id: timer.washer_working
     - service: timer.start
@@ -38,7 +38,7 @@
         entity_id: input_select.washer_state
         option: Washing
     - service: notify.telegram
-      data: 
+      data:
         message: "\U000023F3 Стирка начата!"
     - service: counter.increment
       entity_id: counter.washing_machine_runs
@@ -47,38 +47,38 @@
 # Bathroom - Washing Machine sensors issue
 # ##################################
 - alias: bathroom_washing_machine_sensors_issue
-  id: bathroom_washing_machine_sensors_issue
+  #id:bathroom_washing_machine_sensors_issue
   initial_state: true
   trigger:
     platform: state
     entity_id: binary_sensor.washer_b
-    to: 'on'
-    from: 'off'
+    to: "on"
+    from: "off"
   condition:
     - condition: state
       entity_id: binary_sensor.0x158d0003fa6cf5_contact
-      state: 'on'
+      state: "on"
   action:
     - service: input_boolean.turn_on
       entity_id: input_boolean.washer_door_issue
     - service: notify.telegram
-      data: 
+      data:
         message: "\U0000274c Внимание! Обнаружена ошибка сенсора двери стиральной машины!"
 
 # ##################################
 # Bathroom - Washing Machine Pause - Hatch Open
 # ##################################
 - alias: bathroom_washing_machine_pause_hatch_open
-  id: bathroom_washing_machine_hatch_open
+  #id:bathroom_washing_machine_hatch_open
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0003fa6cf5_contact
-      to: 'on'
+      to: "on"
   condition:
     - condition: state
       entity_id: input_select.washer_state
-      state: 
-        - 'Washing'
+      state:
+        - "Washing"
     - condition: numeric_state
       entity_id: sensor.washing_machine_stopwatch
       below: 21
@@ -100,15 +100,15 @@
 # Bathroom - Washing Machine Pause - Hatch Close
 # ##################################
 - alias: bathroom_washing_machine_pause_hatch_close
-  id: bathroom_washing_machine_hatch_close
+  #id:bathroom_washing_machine_hatch_close
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0003fa6cf5_contact
-      to: 'off'
+      to: "off"
   condition:
     - condition: state
       entity_id: input_select.washer_state
-      state: 'Pause'
+      state: "Pause"
   action:
     - service: input_select.select_option
       data:
@@ -126,25 +126,25 @@
 # Bathroom - Washing Machine Drying
 # ##################################
 - alias: bathroom_washing_machine_drying
-  id: bathroom_washing_machine_drying
+  #id:bathroom_washing_machine_drying
   initial_state: true
   trigger:
     platform: state
     entity_id: binary_sensor.washer_b
-    to: 'off'
-    from: 'on'
+    to: "off"
+    from: "on"
   condition:
     - condition: state
       entity_id: binary_sensor.0x158d0003fa6cf5_contact
-      state: 'off'
+      state: "off"
     - condition: state
       entity_id: input_select.washer_state
-      state: 
-        - 'Washing'
-        - 'Pause'
+      state:
+        - "Washing"
+        - "Pause"
     - condition: state
       entity_id: input_boolean.washer_door_issue
-      state: 'off'
+      state: "off"
   action:
     - service: timer.cancel
       entity_id: timer.washing_machine_door, timer.washer_working
@@ -155,20 +155,20 @@
         entity_id: input_select.washer_state
         option: Drying
     - service: notify.telegram
-      data: 
-        message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0) }}мин."
+      data:
+        message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common' ,0) }}мин."
     - condition: state
       entity_id: binary_sensor.tod_day
-      state: 'on'
+      state: "on"
     - condition: state
       entity_id: switch.dark_mode
-      state: 'off'
+      state: "off"
     - service: media_player.volume_set
       data:
         entity_id: media_player.yandex_lite_k
         volume_level: '{{states("input_number.main_volume")|float(0)}}'
     # - service: tts.yandextts_say
-    #   data: 
+    #   data:
     #     entity_id: media_player.home_mini_k
     #     message: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
     - service: media_player.play_media
@@ -181,7 +181,7 @@
 # Bathroom - Washing Machine Extract
 # ##################################
 # - alias: bathroom_washing_machine_extract
-#   id: bathroom_washing_machine_extract
+#   #id:bathroom_washing_machine_extract
 #   initial_state: true
 #   trigger:
 #     platform: state
@@ -224,7 +224,7 @@
 # Bathroom - Washing Machine Add Load
 # ##################################
 # - alias: bathroom_washing_machine_add_load
-#   id: bathroom_washing_machine_add_load
+#   #id:bathroom_washing_machine_add_load
 #   initial_state: true
 #   trigger:
 #     platform: state
@@ -242,7 +242,7 @@
 #     - service: input_select.select_option
 #       data:
 #         entity_id: input_select.washer_state
-#         option: Washing 
+#         option: Washing
 #     - service: input_boolean.turn_off
 #       entity_id: input_boolean.washer_door_issue
 
@@ -250,17 +250,17 @@
 # Bathroom - Washing Machine Drying from Washing
 # ##################################
 - alias: bathroom_washing_machine_drying_from_washing
-  id: bathroom_washing_machine_drying_from_washing
+  #id:bathroom_washing_machine_drying_from_washing
   initial_state: true
   trigger:
     platform: state
     entity_id: binary_sensor.washer_b
-    to: 'off'
-    from: 'on'
+    to: "off"
+    from: "on"
   condition:
     - condition: state
       entity_id: input_boolean.washer_door_issue
-      state: 'on'
+      state: "on"
   action:
     - service: input_select.select_option
       data:
@@ -275,17 +275,17 @@
 # Bathroom - Washing Machine Idle
 # ##################################
 - alias: bathroom_washing_machine_idle
-  id: bathroom_washing_machine_idle
+  #id:bathroom_washing_machine_idle
   initial_state: true
   trigger:
     platform: state
     entity_id: binary_sensor.0x158d0003fa6cf5_contact
-    to: 'on'
-    from: 'off'
+    to: "on"
+    from: "off"
   condition:
     - condition: state
       entity_id: input_select.washer_state
-      state: 'Drying'
+      state: "Drying"
   action:
     - service: input_select.select_option
       data:
@@ -300,7 +300,7 @@
 # # Bathroom - Washing Machine Door Issue Turn Off
 # # ##################################
 # - alias: bathroom_washing_machine_door_issue_turn_off
-#   id: bathroom_washing_machine_door_issue_turn_off
+#   #id:bathroom_washing_machine_door_issue_turn_off
 #   initial_state: true
 #   trigger:
 #     - platform: state
@@ -319,7 +319,7 @@
 # Bathroom - Washing Machine Open Door Notification
 ##################################
 - alias: bathroom_washing_machine_open_door_after_washing
-  id: bathroom_washing_machine_open_door_after_washing
+  #id:bathroom_washing_machine_open_door_after_washing
   initial_state: true
   trigger:
     - platform: event
@@ -332,13 +332,13 @@
       above: 5
     - condition: state
       entity_id: input_select.washer_state
-      state: 'Drying'
+      state: "Drying"
     - condition: state
       entity_id: binary_sensor.0x158d0003fa6cf5_contact
-      state: 'off'
+      state: "off"
   action:
     - service: notify.telegram
-      data: 
+      data:
         message: "{{'\U0001f4a8'}} Откройте дверцу стиральной машины!"
     - service: timer.cancel
       entity_id: timer.washing_machine_door
@@ -349,33 +349,33 @@
 # Bathroom - Washing Machine Ready Notification
 ##################################
 - alias: bathroom_washing_machine_ready_notification
-  id: bathroom_washing_machine_ready_notification
+  #id:bathroom_washing_machine_ready_notification
   initial_state: true
   trigger:
     - platform: state
-      entity_id: 
+      entity_id:
         - binary_sensor.0x158d0002b43ad4_motion
         - binary_sensor.0x158d0001ae9f61_motion
         - binary_sensor.0x158d0002b48381_motion
         - binary_sensor.0x158d0002b4729d_motion
-      from: 'off'
-      to: 'on'
+      from: "off"
+      to: "on"
   condition:
     - condition: numeric_state
       entity_id: sensor.ha_uptime
       above: 5
     - condition: state
       entity_id: binary_sensor.tod_day
-      state: 'on'
+      state: "on"
     - condition: state
       entity_id: switch.dark_mode
-      state: 'off'
+      state: "off"
     - condition: state
       entity_id: input_select.washer_state
-      state: 'Drying'
+      state: "Drying"
     - condition: state
       entity_id: binary_sensor.0x158d0003fa6cf5_contact
-      state: 'off'
+      state: "off"
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.bathroom_washing_machine_ready_notification', 'last_triggered'))|int(0)) > 30*60 }}"
     - condition: template
@@ -386,7 +386,7 @@
         entity_id: media_player.yandex_lite_k
         volume_level: '{{states("input_number.main_volume")|float(0)}}'
     # - service: tts.yandextts_say
-    #   data: 
+    #   data:
     #     entity_id: media_player.home_mini_k
     #     message: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
     - service: media_player.play_media
@@ -399,23 +399,23 @@
 # Bathroom - Washing Machine Open Door Notification Stop
 ##################################
 - alias: bathroom_washing_machine_open_door_after_washing_stop
-  id: bathroom_washing_machine_open_door_after_washing_stop
+  #id:bathroom_washing_machine_open_door_after_washing_stop
   initial_state: true
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d0003fa6cf5_contact
-      to: 'on'
-      from: 'off'
+      to: "on"
+      from: "off"
   condition:
     - condition: numeric_state
       entity_id: sensor.ha_uptime
       above: 5
     - condition: state
       entity_id: input_select.washer_state
-      state: 'Drying'
+      state: "Drying"
   action:
     - service: notify.telegram
-      data: 
+      data:
         message: "{{'\U00002705'}} Дверца стиральной машинки открыта!"
     - service: timer.cancel
       entity_id: timer.washing_machine_door, timer.washing_machine_door
@@ -426,7 +426,7 @@
 # Bathroom - Washing Machine Door Issue Flag reset
 ##################################
 - alias: bathroom_washing_machine_open_door_issue_flag_reset
-  id: bathroom_washing_machine_open_door_issue_flag_reset
+  #id:bathroom_washing_machine_open_door_issue_flag_reset
   initial_state: true
   trigger:
     - platform: state
@@ -434,7 +434,7 @@
   condition:
     - condition: state
       entity_id: input_boolean.washer_door_issue
-      state: 'on'
+      state: "on"
   action:
     - service: input_boolean.turn_off
       entity_id: input_boolean.washer_door_issue

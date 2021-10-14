@@ -9,8 +9,8 @@
   #id: system_error_counter
   initial_state: true
   mode: queued
-  max: 100
-  max_exceeded: silent
+  #max: 100
+  # max_exceeded: silent
   trigger:
     - platform: event
       event_type: system_log_event
@@ -30,8 +30,8 @@
   #id: system_warning_counter
   initial_state: true
   mode: queued
-  max: 100
-  max_exceeded: silent
+  #max: 100
+  # max_exceeded: silent
   trigger:
     - platform: event
       event_type: system_log_event
@@ -45,9 +45,9 @@
       entity_id: counter.warning_counter
 
 # ##################################
-# System - START message
+# System - START
 # ##################################
-- alias: system_start_message
+- alias: system_start
   #id: system_start_message
   initial_state: true
   trigger:
@@ -63,16 +63,17 @@
         - sensor.warnings_during_boot
     - service: notify.telegram
       data:
-        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int(0)}}сек! Ошибок {{states('sensor.errors_during_boot')|int(0)}}, предупреждений {{states('sensor.warnings_during_boot')|int(0)}}"
+        message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int(0)}}сек! {{states('sensor.errors_during_boot')|int(0) | format(morph='ошибка', as_text=false) }}, {{states('sensor.warnings_during_boot')|int(0)| format(morph='предупреждение', as_text=false) }}"
     - service: script.turn_on
       entity_id: script.system_start
     - service: counter.increment
       entity_id: counter.restart_counter
+    #- service: script.test_automation_off
 
 # ##################################
-# System - STOP message
+# System - STOP
 # ##################################
-- alias: system_stop_message
+- alias: system_stop
   #id: system_stop_message
   initial_state: true
   mode: single #queued
@@ -92,43 +93,56 @@
     #     domain: homeassistant
     #     service: stop
   action:
+    - service: input_boolean.turn_on
+      data:
+        entity_id: input_boolean.ha_shutdown
+    - service: automation.turn_off
+      entity_id:
+        - automation.system_gw3_state
+        - automation.system_zb_devices_status
+        - automation.system_esp_devices_status
+        - automation.system_xiaomi_gw3_error
     - service: notify.telegram
       data:
         message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
+    - service: automation.turn_off
+      data:
+        entity_id: all
+        stop_actions: true
 
 # ##################################
 # System - STOP flag set
 # ##################################
-- alias: system_start_stop_flag_set
-  #id: system_start_stop_flag_set
-  initial_state: true
-  trigger:
-    - platform: homeassistant
-      event: start
-      id: "homeassistant_start"
-    - platform: event
-      event_type: homeassistant_stop
-  action:
-    - service: >
-        {% if trigger.id == 'homeassistant_start' -%}
-            input_boolean.turn_off
-        {% else -%}
-            input_boolean.turn_on
-        {% endif %}
-      data:
-        entity_id: input_boolean.ha_shutdown
-    - service: >
-        {% if trigger.id == 'homeassistant_start' -%}
-            automation.turn_on
-        {% else -%}
-            automation.turn_off
-        {% endif %}
-      data:
-        entity_id:
-          - automation.system_gw3_state
-          - automation.system_zb_devices_status
-          - automation.system_esp_devices_status
-          - automation.system_xiaomi_gw3_error
+# - alias: system_start_stop_flag_set
+#   #id: system_start_stop_flag_set
+#   initial_state: true
+#   trigger:
+#     - platform: homeassistant
+#       event: start
+#       id: "homeassistant_start"
+#     - platform: event
+#       event_type: homeassistant_stop
+#   action:
+#     - service: >
+#         {% if trigger.id == 'homeassistant_start' -%}
+#             input_boolean.turn_off
+#         {% else -%}
+#             input_boolean.turn_on
+#         {% endif %}
+#       data:
+#         entity_id: input_boolean.ha_shutdown
+#     - service: >
+#         {% if trigger.id == 'homeassistant_start' -%}
+#             automation.turn_on
+#         {% else -%}
+#             automation.turn_off
+#         {% endif %}
+#       data:
+#         entity_id:
+#           - automation.system_gw3_state
+#           - automation.system_zb_devices_status
+#           - automation.system_esp_devices_status
+#           - automation.system_xiaomi_gw3_error
 
 # ##################################
 # System - Github star
@@ -179,17 +193,6 @@
     - platform: event
       event_type: entity_registry_updated
   action:
-    # - choose:
-    #     - conditions:
-    #         - condition: template
-    #           value_template: "{{ trigger.event.data.action == 'create' and not ['device_tracker.unifi_','default'] in trigger.event.data.entity_id }}"
-    #         - condition: template
-    #           value_template: "{{ trigger.event.data.entity_id.attributes.ip is defined }}"
-    #       sequence:
-    #         - service: notify.telegram
-    #           data:
-    #             message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
-    # default:
     - service: notify.telegram
       data:
         message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
@@ -200,7 +203,7 @@
 - alias: system_device_entity_deletion
   #id: system_device_entity_deletion
   initial_state: true
-  mode: parallel
+  mode: queued
   # max: 20
   # max_exceeded: silent
   trigger:
@@ -618,7 +621,7 @@
       above: 100
   condition:
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'))|int(0)) > 15 }}"
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'), 0)|int(0) ,0) > 15 }}"
     - condition: template
       value_template: "{{ (states('sensor.error_counter_hourly')|int(0) % 50) == 0 }}"
   action:
@@ -842,8 +845,8 @@
   #id: system_printer_toner_level
   initial_state: true
   mode: queued
-  max: 4
-  max_exceeded: silent
+  # max: 4
+  # max_exceeded: silent
   trigger:
     - platform: numeric_state
       entity_id:
@@ -864,8 +867,8 @@
   #id: system_gw3_state
   initial_state: true
   mode: queued
-  max: 5
-  max_exceeded: silent
+  # max: 5
+  # max_exceeded: silent
   trigger:
     # - platform: state
     #   entity_id:
@@ -898,7 +901,7 @@
       value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
     - condition: numeric_state
       entity_id: sensor.ha_uptime
-      above: 0      
+      above: 0
   action:
     - service: notify.telegram
       data:
@@ -1104,8 +1107,8 @@
   #id: system_zb_devices_status
   initial_state: true
   mode: queued
-  max: 20
-  max_exceeded: silent
+  # max: 5
+  # max_exceeded: silent
   trigger:
     - platform: state
       entity_id:
@@ -1349,8 +1352,8 @@
   #id: system_esp_devices_status
   initial_state: true
   mode: queued
-  max: 25
-  max_exceeded: silent
+  # max: 5
+  # max_exceeded: silent
   trigger:
     - platform: state
       entity_id:
@@ -1565,7 +1568,7 @@
     - platform: state
       entity_id: sensor.hp_color_laser_mfp_178nw
       to: "unavailable"
-      for: 
+      for:
         minutes: 5
   action:
     - service: notify.telegram
@@ -1602,19 +1605,19 @@
     - service: input_number.set_value
       data:
         entity_id: input_number.breather_v_run_time
-        value: "{{ (states('input_number.breather_v_run_time') | float(0) + states('sensor.breather_v_run_time_yesterday') | float(0)) | round(2) }}"
+        value: "{{ (states('input_number.breather_v_run_time') | float(0) + states('sensor.breather_v_run_time_yesterday') | float(0)) | round(2, 'common' ,0) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.breather_s_run_time
-        value: "{{ (states('input_number.breather_s_run_time') | float(0) + states('sensor.breather_s_run_time_yesterday') | float(0)) | round(2) }}"
+        value: "{{ (states('input_number.breather_s_run_time') | float(0) + states('sensor.breather_s_run_time_yesterday') | float(0)) | round(2, 'common' ,0) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.breather_mb_run_time
-        value: "{{ (states('input_number.breather_mb_run_time') | float(0) + states('sensor.breather_mb_run_time_yesterday') | float(0)) | round(2) }}"
+        value: "{{ (states('input_number.breather_mb_run_time') | float(0) + states('sensor.breather_mb_run_time_yesterday') | float(0)) | round(2, 'common' ,0) }}"
     - service: input_number.set_value
       data:
         entity_id: input_number.washer_b_run_time
-        value: "{{ (states('input_number.washer_b_run_time') | float(0) + states('sensor.washer_b_run_time_yesterday') | float(0)) | round(2) }}"
+        value: "{{ (states('input_number.washer_b_run_time') | float(0) + states('sensor.washer_b_run_time_yesterday') | float(0)) | round(2, 'common' ,0) }}"
     # - service: notify.telegram
     #   data:
     #     message: "\U0001f9ed Статистика использования устройств обновлена!"
@@ -1653,8 +1656,8 @@
   #id: system_esp_reboot
   initial_state: true
   mode: queued
-  max: 10
-  max_exceeded: silent
+  # max: 5
+  # max_exceeded: silent
   trigger:
     - platform: state
       entity_id:
@@ -1832,7 +1835,7 @@
       event_type: automation_reloaded
   condition:
     - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"  
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: template
       value_template: "{{ states('binary_sensor.cold_water') in ['on','off'] }}"
   action:
@@ -2041,19 +2044,19 @@
 # ##################################
 # System - New Feeds
 # ##################################
-- alias: system_new_feeds
-  #id: system_new_feeds
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: feedreader
-  action:
-    - service: telegram_bot.send_message
-      data:
-        target: !secret tel_chat_id
-        disable_notification: true
-        title: "{{ '\U0001F4F0' }} RSS новости"
-        message: "Новости в ленте RSS: [{{- trigger.event.data.title -}}]({{- trigger.event.data.link -}})"
+# - alias: system_new_feeds
+#   #id: system_new_feeds
+#   initial_state: true
+#   trigger:
+#     - platform: event
+#       event_type: feedreader
+#   action:
+#     - service: telegram_bot.send_message
+#       data:
+#         target: !secret tel_chat_id
+#         disable_notification: true
+#         title: "{{ '\U0001F4F0' }} RSS новости"
+#         message: "Новости в ленте RSS: [{{- trigger.event.data.title -}}]({{- trigger.event.data.link -}})"
 
 # ##################################
 # System - Automation Reload
@@ -2138,7 +2141,6 @@
     # - service: persistent_notification.dismiss
     #   data:
     #     notification_id: 'config_entry_discovery'
-
 # ##################################
 # System - Cert Validity Check
 # ##################################
@@ -2189,14 +2191,140 @@
 # ##################################
 - alias: system_gw3_devices_msg_missed
   #id: system_gw3_devices_msg_missed
-  mode: queued
-  max: 10
-  max_exceeded: silent
+  mode: single
   initial_state: true
   trigger:
-    - platform: template
-      value_template: "{{ (states.sensor | selectattr('attributes.last_missed', 'defined') | selectattr('attributes.integration','eq','gw3')| selectattr('attributes.last_missed','>', 10 ) | list | length) > 0 }}"
+    - platform: numeric_state
+      entity_id:
+        - sensor.0x158d00013e6aa5_zigbee
+        - sensor.0x158d00016bdb4a_zigbee
+        - sensor.0x158d0001712d55_zigbee
+        - sensor.0x158d00019c8afd_zigbee
+        - sensor.0x158d0001ae9f61_zigbee
+        - sensor.0x158d0001aea602_zigbee
+        - sensor.0x158d0001b94abe_zigbee
+        - sensor.0x158d0001b97111_zigbee
+        - sensor.0x158d0001d5995e_zigbee
+        - sensor.0x158d0001e05856_zigbee
+        - sensor.0x158d0001e0a622_zigbee
+        - sensor.0x158d0001e53cda_zigbee
+        - sensor.0x158d0001e54280_zigbee
+        - sensor.0x158d0001e586af_zigbee
+        - sensor.0x158d0001e58714_zigbee
+        - sensor.0x158d0001e58754_zigbee
+        - sensor.0x158d0001e5d6be_zigbee
+        - sensor.0x158d0001e6d85a_zigbee
+        - sensor.0x158d0001e85086_zigbee
+        - sensor.0x158d0001e8995a_zigbee
+        - sensor.0x158d0001ef2ffc_zigbee
+        - sensor.0x158d0001ef6089_zigbee
+        - sensor.0x158d0001ef61be_zigbee
+        - sensor.0x158d0001f2630e_zigbee
+        - sensor.0x158d0001f3627d_zigbee
+        - sensor.0x158d000200ad58_zigbee
+        - sensor.0x158d000205a835_zigbee
+        - sensor.0x158d00020d7c3a_zigbee
+        - sensor.0x158d000222c746_zigbee
+        - sensor.0x158d000223921b_zigbee
+        - sensor.0x158d000224e3e4_zigbee
+        - sensor.0x158d000224f89f_zigbee
+        - sensor.0x158d00022ccffe_zigbee
+        - sensor.0x158d000230fc52_zigbee
+        - sensor.0x158d00023297e7_zigbee
+        - sensor.0x158d000232ddd6_zigbee
+        - sensor.0x158d000232de79_zigbee
+        - sensor.0x158d000233fb72_zigbee
+        - sensor.0x158d00023684c2_zigbee
+        - sensor.0x158d000236bb94_zigbee
+        - sensor.0x158d000236bc6d_zigbee
+        - sensor.0x158d000236fcd5_zigbee
+        - sensor.0x158d000236fdc9_zigbee
+        - sensor.0x158d000237167c_zigbee
+        - sensor.0x158d0002373a67_zigbee
+        - sensor.0x158d000239097a_zigbee
+        - sensor.0x158d0002395d58_zigbee
+        - sensor.0x158d0002395dc9_zigbee
+        - sensor.0x158d00023a657a_zigbee
+        - sensor.0x158d00023d3116_zigbee
+        - sensor.0x158d00023d3206_zigbee
+        - sensor.0x158d00023e5812_zigbee
+        - sensor.0x158d00024517fe_zigbee
+        - sensor.0x158d0002451850_zigbee
+        - sensor.0x158d0002461e5b_zigbee
+        - sensor.0x158d0002464ec0_zigbee
+        - sensor.0x158d000246776f_zigbee
+        - sensor.0x158d0002467773_zigbee
+        - sensor.0x158d0002468fbd_zigbee
+        - sensor.0x158d0002476ed1_zigbee
+        - sensor.0x158d000248bf53_zigbee
+        - sensor.0x158d000249b25b_zigbee
+        - sensor.0x158d000249b26b_zigbee
+        - sensor.0x158d00024bcf85_zigbee
+        - sensor.0x158d0002529b9c_zigbee
+        - sensor.0x158d000252acba_zigbee
+        - sensor.0x158d00025315e9_zigbee
+        - sensor.0x158d0002531749_zigbee
+        - sensor.0x158d00025370d1_zigbee
+        - sensor.0x158d00025371f6_zigbee
+        - sensor.0x158d000253722b_zigbee
+        - sensor.0x158d000253f04a_zigbee
+        - sensor.0x158d00026ea94e_zigbee
+        - sensor.0x158d00026eb820_zigbee
+        - sensor.0x158d00027129ae_zigbee
+        - sensor.0x158d00028a54e4_zigbee
+        - sensor.0x158d00028b4fc3_zigbee
+        - sensor.0x158d00028c9875_zigbee
+        - sensor.0x158d000290a093_zigbee
+        - sensor.0x158d000290a0bc_zigbee
+        - sensor.0x158d0002924790_zigbee
+        - sensor.0x158d0002a14c5e_zigbee
+        - sensor.0x158d0002a1a47a_zigbee
+        - sensor.0x158d0002a1a4b2_zigbee
+        - sensor.0x158d0002a1b0c8_zigbee
+        - sensor.0x158d0002a2412d_zigbee
+        - sensor.0x158d0002a36433_zigbee
+        - sensor.0x158d0002a36f7f_zigbee
+        - sensor.0x158d0002a8ac3c_zigbee
+        - sensor.0x158d0002b43ad4_zigbee
+        - sensor.0x158d0002b4729d_zigbee
+        - sensor.0x158d0002b482e9_zigbee
+        - sensor.0x158d0002b48381_zigbee
+        - sensor.0x158d0002b5fbc1_zigbee
+        - sensor.0x158d0002b7c2c8_zigbee
+        - sensor.0x158d0002c3d86e_zigbee
+        - sensor.0x158d0002c92f31_zigbee
+        - sensor.0x158d0002fa99a8_zigbee
+        - sensor.0x158d0003140824_zigbee
+        - sensor.0x158d000322e30c_zigbee
+        - sensor.0x158d000323c87c_zigbee
+        - sensor.0x158d0003262a35_zigbee
+        - sensor.0x158d0003262acc_zigbee
+        - sensor.0x158d000344998e_zigbee
+        - sensor.0x158d000345119e_zigbee
+        - sensor.0x158d0003535ee5_zigbee
+        - sensor.0x158d0003539447_zigbee
+        - sensor.0x158d000353a2e3_zigbee
+        - sensor.0x158d000358c773_zigbee
+        - sensor.0x158d00035c194f_zigbee
+        - sensor.0x158d00035f44a7_zigbee
+        - sensor.0x158d0003600ea4_zigbee
+        - sensor.0x158d00036148b9_zigbee
+        - sensor.0x158d00039258de_zigbee
+        - sensor.0x158d000392623d_zigbee
+        - sensor.0x158d0003991051_zigbee
+        - sensor.0x158d00039bd56d_zigbee
+        - sensor.0x158d0003f27ce2_zigbee
+        - sensor.0x158d0003fa6cf5_zigbee
+        - sensor.0x158d000423f316_zigbee
+        - sensor.0x158d0006b1c7bc_zigbee
+        - sensor.0x4cf8cdf3c77271d_zigbee
+        - sensor.0x4cf8cdf3c7754a8_zigbee
+        - sensor.0x4cf8cdf3c78d26e_zigbee
+        - sensor.0x4cf8cdf3c7947e4_zigbee
+        - sensor.0x4cf8cdf3c79546c_zigbee
+      attribute: last_missed
+      above: 9
   action:
     - service: notify.telegram
       data:
-        message: "\U000026a0 Внимание! {{ trigger.to_state.attributes.friendly_name | replace (' Zigbee', '') }} пропустил {{ trigger.to_state.attributes.last_missed }} пакетов!"
+        message: "\U000023ed Внимание! {{ trigger.to_state.attributes.name }} пропустил {{ trigger.to_state.attributes.last_missed | format(morph='пакет', as_text=false) }}!"

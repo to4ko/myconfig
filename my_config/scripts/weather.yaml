@@ -15,8 +15,8 @@ weather_telegram:
           {% if hour_num >=6 and hour_num <12 %}{{"\U00002600"}}Доброе утро!{% elif hour_num>=12 and hour_num<17 %}{{"\U0001f31e"}}Добрый день!{% elif hour_num>=17 and hour_num<22 %}{{"\U0001f31d"}}Добрый вечер!{% else %}{{"\U0001f31a"}}Доброй ночи!{% endif %}
           {% if hour_num < 17 and hour_num >= 0 %}Сегодня {{ weekday }}, {{ now().day|int(0) }} {{ month_list[now().month-1] }}.
           {{ states('sensor.dark_sky_summary_0d') }}
-          Температура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}}°C. 
-          Вероятность осадков {{states('sensor.dark_sky_precip_probability_0d')|round(0)}}%. 
+          Температура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|int(0)}}°C. 
+          {%if states('sensor.dark_sky_precip_probability_0d')|int(0) == 0 %}Оcадков не ожидается.{%else%}Вероятность осадков {{states('sensor.dark_sky_precip_probability_0d')|int(0)}}%.{%endif%}
           {%if states('sensor.dark_sky_precip_probability_0d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_0d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
           Текущая температура {{states('sensor.esp32_node_mb_outside')|int(0)}}°C.
           {%if is_state('binary_sensor.ice_alarm_0d','on')%}Внимание! Возможнен гололед!{%endif%}
@@ -24,8 +24,8 @@ weather_telegram:
           {% endif %}
           {%if hour_num >= 17 and hour_num <= 23 %}
           Прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
-          Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}}°C. 
-          Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|round(0)}} %.
+          Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|int(0)}}°C. 
+          {%if states('sensor.dark_sky_precip_probability_1d')|int(0) == 0 %}Оcадков не ожидается.{%else%}Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|int(0)}}%.{%endif%}
           {%if states('sensor.dark_sky_precip_probability_1d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_1d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
           {%if is_state('binary_sensor.ice_alarm_1d','on')%}Внимание! Возможнен гололед!{%endif%}
           {% endif %}
@@ -37,7 +37,7 @@ weather_tts:
     - service: media_player.volume_set
       data:
         entity_id: "{{ entity_id }}"
-        volume_level: "{{ volume_level|float(0) + 0.3 }}"
+        volume_level: "{{ volume_level|float(0) }}"
     - service: media_player.play_media
       data:
         media_content_type: dialog
@@ -62,20 +62,18 @@ weather_tts:
           Д+обрый в+ечер!
           {%- else %}
           Д+оброй н+очи!
-          {%- endif %}        
+          {%- endif %}
           Сег+одня {{ weekday }} {{ day }} {{ month }}.
           {{ states('sensor.dark_sky_summary_0d') }}
-          Температ+ура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|round(0)}} °C. 
-          Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_0d')|round(0)}} %. 
-          {% if states('sensor.dark_sky_precip_probability_0d')|int(0) > 0 %}В+ид ос+адков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_0d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{% endif %}
+          Температ+ура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|int(0)}} °C. 
+          {% if states('sensor.dark_sky_precip_probability_0d')|int(0) == 0 %}Осадков не ожидается.{%else%}Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_0d')|int(0)}} %. В+ид ос+адков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_0d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{%endif%} 
           Текущая температура {{states('sensor.esp32_node_mb_outside')|int(0)}}°C.
           {% if is_state('binary_sensor.ice_alarm_0d','on')%}Вним+ание! Возм+ожнен голол+ёд!{%endif%}
 
           {%if hour_num > 17 and hour_num < 6 %}
           Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
-          Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|round(0)}} °C. 
-          Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|round(0)}} %.
-          {%if states('sensor.dark_sky_precip_probability_1d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_1d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}{% endif %}
+          Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|int(0)}} °C. 
+          {% if states('sensor.dark_sky_precip_probability_1d')|int(0) == 0 %}Осадков не ожидается.{%else%}Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_1d')|int(0)}} %. В+ид ос+адков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_1d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{%endif%}
           {%if is_state('binary_sensor.ice_alarm_1d','on')%}Вним+ание! Возм+ожнен голол+ёд!{%endif%}
 
           {% endif %}
