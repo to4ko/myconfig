@@ -3,52 +3,80 @@
 # SYSTEM - General
 #
 # #####################################################################################
-# System - Errors counter
+# # System - Errors counter
+# # ##################################
+# - alias: system_error_counter
+#   id:  system_error_counter
+#   initial_state: true
+#   mode: queued
+#   #max: 100
+#   # max_exceeded: silent
+#   trigger:
+#     - platform: event
+#       event_type: system_log_event
+#       event_data:
+#         level: ERROR
+#   condition:
+#     - condition: template
+#       value_template: "{{ not trigger.event.data.message | regex_search('system_error_counter') }} }}"
+#   action:
+#     - service: counter.increment
+#       entity_id: counter.error_counter
+
+# # ##################################
+# # System - Warning counter
+# # ##################################
+# - alias: system_warning_counter
+#   id:  system_warning_counter
+#   initial_state: true
+#   mode: queued
+#   #max: 100
+#   # max_exceeded: silent
+#   trigger:
+#     - platform: event
+#       event_type: system_log_event
+#       event_data:
+#         level: WARNING
+#   condition:
+#     - condition: template
+#       value_template: "{{ not trigger.event.data.message | regex_search('system_warning_counter') }}"
+#   action:
+#     - service: counter.increment
+#       entity_id: counter.warning_counter
+
 # ##################################
-- alias: system_error_counter
-  #id: system_error_counter
+# System - Error\Warning counter
+# ##################################
+- alias: system_error_warning_counter
+  id: system_error_warning_counter
   initial_state: true
   mode: queued
-  #max: 100
-  # max_exceeded: silent
+  max: 100
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: system_log_event
       event_data:
         level: ERROR
-  condition:
-    - condition: template
-      value_template: "{{ not 'system_error_counter' in trigger.event.data.message }}"
-  action:
-    - service: counter.increment
-      entity_id: counter.error_counter
-
-# ##################################
-# System - Warning counter
-# ##################################
-- alias: system_warning_counter
-  #id: system_warning_counter
-  initial_state: true
-  mode: queued
-  #max: 100
-  # max_exceeded: silent
-  trigger:
     - platform: event
       event_type: system_log_event
       event_data:
         level: WARNING
   condition:
     - condition: template
-      value_template: "{{ not 'system_warning_counter' in trigger.event.data.message }}"
+      value_template: "{{ not this.name in trigger.event.data.message }}"
   action:
     - service: counter.increment
-      entity_id: counter.warning_counter
+      data:
+        entity_id: >- 
+            {{ 'counter.' + trigger.event.data.level | lower + '_counter' }}
+
 
 # ##################################
 # System - START
 # ##################################
 - alias: system_start
-  #id: system_start_message
+  id:  system_start_message
   initial_state: true
   trigger:
     - platform: homeassistant
@@ -74,14 +102,14 @@
 # System - STOP
 # ##################################
 - alias: system_stop
-  #id: system_stop_message
+  id:  system_stop_message
   initial_state: true
   mode: single #queued
   trigger:
-    - platform: event
-      event_type: homeassistant_stop
-    # - platform: homeassistant
-    #   event: shutdown
+    # - platform: event
+    #   event_type: homeassistant_stop
+    - platform: homeassistant
+      event: shutdown
     # - platform: event
     #   event_type: call_service
     #   event_data:
@@ -93,62 +121,62 @@
     #     domain: homeassistant
     #     service: stop
   action:
-    - service: input_boolean.turn_on
-      data:
-        entity_id: input_boolean.ha_shutdown
-    - service: automation.turn_off
-      entity_id:
-        - automation.system_gw3_state
-        - automation.system_zb_devices_status
-        - automation.system_esp_devices_status
-        - automation.system_xiaomi_gw3_error
+    # - service: input_boolean.turn_on
+    #   data:
+    #     entity_id: input_boolean.ha_shutdown
+    # - service: automation.turn_off
+    #   entity_id:
+    #     - automation.system_gw3_state
+    #     - automation.system_zb_devices_status
+    #     - automation.system_esp_devices_status
+    #     - automation.system_xiaomi_gw3_error
     - service: notify.telegram
       data:
         message: "\U0001F621 Сервер остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
-    - service: automation.turn_off
-      data:
-        entity_id: all
-        stop_actions: true
+    # - service: automation.turn_off
+    #   data:
+    #     entity_id: all
+    #     stop_actions: true
 
 # ##################################
 # System - STOP flag set
 # ##################################
-# - alias: system_start_stop_flag_set
-#   #id: system_start_stop_flag_set
-#   initial_state: true
-#   trigger:
-#     - platform: homeassistant
-#       event: start
-#       id: "homeassistant_start"
-#     - platform: event
-#       event_type: homeassistant_stop
-#   action:
-#     - service: >
-#         {% if trigger.id == 'homeassistant_start' -%}
-#             input_boolean.turn_off
-#         {% else -%}
-#             input_boolean.turn_on
-#         {% endif %}
-#       data:
-#         entity_id: input_boolean.ha_shutdown
-#     - service: >
-#         {% if trigger.id == 'homeassistant_start' -%}
-#             automation.turn_on
-#         {% else -%}
-#             automation.turn_off
-#         {% endif %}
-#       data:
-#         entity_id:
-#           - automation.system_gw3_state
-#           - automation.system_zb_devices_status
-#           - automation.system_esp_devices_status
-#           - automation.system_xiaomi_gw3_error
+- alias: system_start_stop_flag_set
+  id:  system_start_stop_flag_set
+  initial_state: true
+  trigger:
+    - platform: homeassistant
+      event: start
+      id: "homeassistant_start"
+    - platform: event
+      event_type: homeassistant_stop
+  action:
+    - service: >
+        {% if trigger.id == 'homeassistant_start' -%}
+            input_boolean.turn_off
+        {% else -%}
+            input_boolean.turn_on
+        {% endif %}
+      data:
+        entity_id: input_boolean.ha_shutdown
+    - service: >
+        {% if trigger.id == 'homeassistant_start' -%}
+            automation.turn_on
+        {% else -%}
+            automation.turn_off
+        {% endif %}
+      data:
+        entity_id:
+          - automation.system_gw3_state
+          - automation.system_zb_devices_status
+          - automation.system_esp_devices_status
+          - automation.system_xiaomi_gw3_error
 
 # ##################################
 # System - Github star
 # ##################################
 - alias: system_github_star
-  #id: system_github_star
+  id:  system_github_star
   initial_state: true
   trigger:
     - platform: state
@@ -169,7 +197,7 @@
 # System - Hass.io NEW Device
 # ##################################
 - alias: system_new_device_found
-  #id: system_new_device_found
+  id:  system_new_device_found
   initial_state: true
   mode: queued
   trigger:
@@ -184,7 +212,7 @@
 # System - Entity Change
 # ##################################
 - alias: system_entity_change
-  #id: system_entity_change
+  id:  system_entity_change
   initial_state: true
   mode: queued
   max: 20
@@ -201,7 +229,7 @@
 # System - Device Deletion
 # ##################################
 - alias: system_device_entity_deletion
-  #id: system_device_entity_deletion
+  id:  system_device_entity_deletion
   initial_state: true
   mode: queued
   # max: 20
@@ -223,7 +251,7 @@
 # System - Hass.io NEW Version
 # ##################################
 - alias: system_hassio_new_version
-  #id: system_hassio_new_version
+  id:  system_hassio_new_version
   initial_state: true
   trigger:
     - platform: state
@@ -243,7 +271,7 @@
 # System - NEW DAY
 # ##################################
 - alias: system_new_day_telegram
-  #id: system_new_day_telegram
+  id:  system_new_day_telegram
   initial_state: true
   trigger:
     - platform: time
@@ -261,7 +289,7 @@
 # System - Weather FCST to Telegram
 # ##################################
 - alias: system_weather_to_telegram
-  #id: system_weather_to_telegram
+  id:  system_weather_to_telegram
   initial_state: true
   trigger:
     - platform: time
@@ -276,7 +304,7 @@
 # System - login failure message
 # ##################################
 - alias: system_login_failure
-  #id: system_login_failure
+  id:  system_login_failure
   initial_state: true
   trigger:
     - platform: state
@@ -298,7 +326,7 @@
 # System - Zigbee Group Rebuild
 # ##################################
 - alias: system_zigbee_group_rebuild
-  #id: system_zigbee_group_rebuild
+  id:  system_zigbee_group_rebuild
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -316,7 +344,7 @@
 # System - Sensors Low Battery Notification
 # ##################################
 - alias: system_low_battery
-  #id: system_low_battery
+  id:  system_low_battery
   initial_state: true
   trigger:
     - platform: time
@@ -372,7 +400,7 @@
 # System - Database Purge
 # ##################################
 - alias: system_database_purge
-  #id: system_database_purge
+  id:  system_database_purge
   initial_state: true
   trigger:
     - platform: time
@@ -390,7 +418,7 @@
 # System - Transmission completed Torrent
 # ##################################
 - alias: system_transmission_completed_torrent
-  #id: system_transmission_completed_torrent
+  id:  system_transmission_completed_torrent
   initial_state: true
   mode: single
   trigger:
@@ -405,7 +433,7 @@
 # System - Telegram message on Config error
 # ##################################
 - alias: system_config_error_notification
-  #id: system_config_error_notification
+  id:  system_config_error_notification
   initial_state: true
   mode: single
   trigger:
@@ -434,7 +462,7 @@
 # System - Pinhole restart
 # ##################################
 - alias: system_pinhole_restart
-  #id: system_pinhole_restart
+  id:  system_pinhole_restart
   initial_state: true
   trigger:
     - platform: state
@@ -463,7 +491,7 @@
 # System - Digma100 restart
 # ##################################
 - alias: system_digma100_restart
-  #id: system_digma100_restart
+  id:  system_digma100_restart
   initial_state: true
   trigger:
     - platform: state
@@ -492,7 +520,7 @@
 # System - HACS Update Available
 # ##################################
 - alias: system_hacs_update_available
-  #id: system_hacs_update_available
+  id:  system_hacs_update_available
   initial_state: true
   trigger:
     - platform: state
@@ -515,7 +543,7 @@
 # System - Supervisor Update Available
 # ##################################
 - alias: system_supervisor_update_available
-  #id: system_supervisor_update_available
+  id:  system_supervisor_update_available
   initial_state: true
   trigger:
     - platform: state
@@ -531,7 +559,7 @@
 # System - Supervisor Updated
 # ##################################
 - alias: system_supervisor_updated
-  #id: system_supervisor_updated
+  id:  system_supervisor_updated
   initial_state: true
   trigger:
     - platform: state
@@ -553,7 +581,7 @@
 # System - Addons Update Available
 # ##################################
 - alias: system_addons_update_available
-  #id: system_addons_update_available
+  id:  system_addons_update_available
   initial_state: true
   trigger:
     - platform: state
@@ -579,7 +607,7 @@
 # System - System Automation Errors
 # ##################################
 - alias: system_automation_error
-  #id: system_automation_error
+  id:  system_automation_error
   initial_state: true
   mode: queued
   max: 10
@@ -597,13 +625,12 @@
           trigger.event.data.message | regex_search('Error executing script')
         }}
     - condition: template
-      value_template: "{{ not 'automation.system_automation_error' in trigger.event.data.message }}"
+      value_template: "{{ not trigger.event.data.message | regex_search('system_automation_error') }}"
   action:
     - service: notify.telegram
       data:
         message: |
-          {{ '\U0000274C' }} Ошибка выполнения автоматизации: 
-          {{ trigger.event.data.message }}.
+          {{ '\U0000274C' }} Ошибка выполнения автоматизации: {{ trigger.event.data.message }}
     - service: counter.increment
       data:
         entity_id: counter.automation_error_counter
@@ -612,7 +639,7 @@
 # System - System Errors per hour
 # ##################################
 - alias: system_error_per_hour
-  #id: system_error_per_hour
+  id:  system_error_per_hour
   initial_state: true
   mode: single
   trigger:
@@ -630,10 +657,31 @@
         message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{states('sensor.error_counter_hourly')|int(0)}}"
 
 # ##################################
+# System - System Warinings per hour
+# ##################################
+- alias: system_warning_per_hour
+  id:  system_warning_per_hour
+  initial_state: true
+  mode: single
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.warning_counter_hourly
+      above: 100
+  condition:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_warning_per_hour', 'last_triggered'), 0)|int(0) ,0) > 15 }}"
+    - condition: template
+      value_template: "{{ (states('sensor.warning_counter_hourly')|int(0) % 50) == 0 }}"
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U000026a0 Внимание! Количество предупреждений в час выросло до {{states('sensor.warning_counter_hourly')|int(0)}}"
+
+# ##################################
 # System - Servers Plugs turn on
 # ##################################
 # - alias: system_servers_plugs_restore
-#   #id: system_servers_plugs_restore
+#   id:  system_servers_plugs_restore
 #   initial_state: true
 #   trigger:
 #     - platform: state
@@ -657,7 +705,7 @@
 # System - Mopidy restart
 # ##################################
 - alias: system_mopidy_restart
-  #id: system_mopidy_restart
+  id:  system_mopidy_restart
   initial_state: true
   trigger:
     - platform: state
@@ -676,7 +724,7 @@
 # System - IP Blocked
 # ##################################
 - alias: system_blocked_ip
-  #id: system_blocked_ip
+  id:  system_blocked_ip
   initial_state: true
   trigger:
     - platform: state
@@ -726,7 +774,7 @@
 # System - Critical Error notification
 # ##################################
 - alias: system_critical_error_notify
-  #id: system_critical_error_notify
+  id:  system_critical_error_notify
   initial_state: true
   mode: queued
   trigger:
@@ -747,7 +795,7 @@
 # System - Radiation alert
 # ##################################
 - alias: system_radiation_alert
-  #id: system_radiation_alert
+  id:  system_radiation_alert
   initial_state: true
   trigger:
     - platform: state
@@ -765,7 +813,7 @@
 # System - Radiation sensor restart
 # ##################################
 # - alias: system_radiation_sensor_restart
-#   #id: system_radiation_sensor_restart
+#   id:  system_radiation_sensor_restart
 #   initial_state: true
 #   trigger:
 #     - platform: template
@@ -789,7 +837,7 @@
 # # System - LC Plug State restart
 # # ##################################
 # - alias: system_lc_plug_state
-#   #id: system_lc_plug_state
+#   id:  system_lc_plug_state
 #   initial_state: true
 #   mode: queued
 #   max: 25
@@ -811,7 +859,7 @@
 # System - Silent Mode Toggle
 # ##################################
 - alias: system_silent_mode_toggle
-  #id: system_silent_mode_toggle
+  id:  system_silent_mode_toggle
   initial_state: true
   trigger:
     - platform: state
@@ -842,7 +890,7 @@
 # System - HP 178 Toner Level
 # ##################################
 - alias: system_printer_toner_level
-  #id: system_printer_toner_level
+  id:  system_printer_toner_level
   initial_state: true
   mode: queued
   # max: 4
@@ -860,53 +908,53 @@
       data:
         message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178_black')|int(0)}}%, C {{states('sensor.hp_178_cyan')|int(0)}}%, M {{states('sensor.hp_178_magenta')|int(0)}}%, Y {{states('sensor.hp_178_yellow')|int(0)}}%"
 
-# # ##################################
-# # System - GW3 State
-# # ##################################
-# - alias: system_gw3_state
-#   #id: system_gw3_state
-#   initial_state: true
-#   mode: queued
-#   # max: 5
-#   # max_exceeded: silent
-#   trigger:
-#     # - platform: state
-#     #   entity_id:
-#     #     - remote.0x588e81fffedcb38d_pair
-#     #     - remote.0x842e14fffe1508a6_pair
-#     #     - remote.0x588e81fffedd3c41_pair
-#     #     - remote.0x588e81fffe72678e_pair
-#     #     - remote.0xbc33acfffe537cf5_pair
-#     #     - remote.0x680ae2fffed2ac53_pair
-#     - platform: state
-#       entity_id:
-#         - sensor.0x588e81fffe72678e_gateway
-#         - sensor.0x588e81fffedcb38d_gateway
-#         - sensor.0x588e81fffedd3c41_gateway
-#         - sensor.0x842e14fffe1508a6_gateway
-#         - sensor.0xbc33acfffe537cf5_gateway
-#         - sensor.0x680ae2fffed2ac53_gateway
-#       to: "unknown"
-#     - platform: state
-#       entity_id:
-#         - sensor.0x588e81fffe72678e_gateway
-#         - sensor.0x588e81fffedcb38d_gateway
-#         - sensor.0x588e81fffedd3c41_gateway
-#         - sensor.0x842e14fffe1508a6_gateway
-#         - sensor.0xbc33acfffe537cf5_gateway
-#         - sensor.0x680ae2fffed2ac53_gateway
-#       from: "unknown"
-#   condition:
-#     - condition: template
-#       value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
-#     - condition: numeric_state
-#       entity_id: sensor.ha_uptime
-#       above: 0
-#   action:
-#     - service: notify.telegram
-#       data:
-#         #message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-#         message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {% if trigger.from_state.state in ['on','off','unknown','unavailable'] %}{{trigger.from_state.state}}{%else%}online{%endif%} -> {% if trigger.to_state.state in ['on','off','unknown','unavailable'] %}{{trigger.to_state.state}}{%else%}online{%endif%}"
+# ##################################
+# System - GW3 State
+# ##################################
+- alias: system_gw3_state
+  id:  system_gw3_state
+  initial_state: true
+  mode: queued
+  # max: 5
+  # max_exceeded: silent
+  trigger:
+    # - platform: state
+    #   entity_id:
+    #     - remote.0x588e81fffedcb38d_pair
+    #     - remote.0x842e14fffe1508a6_pair
+    #     - remote.0x588e81fffedd3c41_pair
+    #     - remote.0x588e81fffe72678e_pair
+    #     - remote.0xbc33acfffe537cf5_pair
+    #     - remote.0x680ae2fffed2ac53_pair
+    - platform: state
+      entity_id:
+        - sensor.0x588e81fffe72678e_gateway
+        - sensor.0x588e81fffedcb38d_gateway
+        - sensor.0x588e81fffedd3c41_gateway
+        - sensor.0x842e14fffe1508a6_gateway
+        - sensor.0xbc33acfffe537cf5_gateway
+        - sensor.0x680ae2fffed2ac53_gateway
+      to: "unknown"
+    - platform: state
+      entity_id:
+        - sensor.0x588e81fffe72678e_gateway
+        - sensor.0x588e81fffedcb38d_gateway
+        - sensor.0x588e81fffedd3c41_gateway
+        - sensor.0x842e14fffe1508a6_gateway
+        - sensor.0xbc33acfffe537cf5_gateway
+        - sensor.0x680ae2fffed2ac53_gateway
+      from: "unknown"
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 0
+  action:
+    - service: notify.telegram
+      data:
+        #message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {% if trigger.from_state.state in ['on','off','unknown','unavailable'] %}{{trigger.from_state.state}}{%else%}online{%endif%} -> {% if trigger.to_state.state in ['on','off','unknown','unavailable'] %}{{trigger.to_state.state}}{%else%}online{%endif%}"
 
 # ##################################
 # System - GW3 Connection lost
@@ -932,7 +980,7 @@
 # System - Watchdog
 # ##################################
 - alias: system_watchdog
-  #id: system_watchdog
+  id:  system_watchdog
   initial_state: true
   mode: single
   trigger:
@@ -949,7 +997,7 @@
 # System - Dark Mode
 # ##################################
 - alias: system_dark_mode
-  #id: system_dark_mode
+  id:  system_dark_mode
   initial_state: true
   trigger:
     - platform: state
@@ -973,7 +1021,7 @@
 # System - HACS Update Pending
 # ##################################
 - alias: system_hacs_update_pending
-  #id: system_hacs_update_pending
+  id:  system_hacs_update_pending
   initial_state: true
   trigger:
     - platform: state
@@ -1019,7 +1067,7 @@
 # System - Hot water pipe warning
 # ##################################
 - alias: system_hot_water_pipe
-  #id: system_hot_water_pipe
+  id:  system_hot_water_pipe
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1040,7 +1088,7 @@
 # System - Cold water pipe warning
 # ##################################
 - alias: system_cold_water_pipe
-  #id: system_cold_water_pipe
+  id:  system_cold_water_pipe
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1057,7 +1105,7 @@
 # System - Central Heating
 # ##################################
 - alias: system_central_heating
-  #id: system_central_heating
+  id:  system_central_heating
   initial_state: true
   trigger:
     - platform: state
@@ -1081,7 +1129,7 @@
 # System - Heating pipes warning
 # ##################################
 - alias: system_heating_pipes_warning
-  #id: system_heating_pipes_warning
+  id:  system_heating_pipes_warning
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1104,7 +1152,7 @@
 # System - ZB Devices Status
 # ##################################
 - alias: system_zb_devices_status
-  #id: system_zb_devices_status
+  id:  system_zb_devices_status
   initial_state: true
   mode: queued
   # max: 5
@@ -1269,7 +1317,7 @@
 # System - ZB Devices Status
 # ##################################
 # - alias: system_zb_devices_status
-#   #id: system_zb_devices_status
+#   id:  system_zb_devices_status
 #   initial_state: true
 #   mode: queued
 #   max: 1000
@@ -1305,7 +1353,7 @@
 # System - ZB Devices Status
 # ##################################
 # - alias: system_zb_devices_status_2
-#   #id: system_zb_devices_status_2
+#   id:  system_zb_devices_status_2
 #   initial_state: true
 #   mode: queued
 #   trigger:
@@ -1333,7 +1381,7 @@
 # System - ZB Devices Status Normal
 # ##################################
 - alias: system_zb_devices_status_normal
-  #id: system_zb_devices_status_normal
+  id:  system_zb_devices_status_normal
   initial_state: true
   mode: single
   trigger:
@@ -1349,7 +1397,7 @@
 # System - ESP Devices Status
 # ##################################
 - alias: system_esp_devices_status
-  #id: system_esp_devices_status
+  id:  system_esp_devices_status
   initial_state: true
   mode: queued
   # max: 5
@@ -1425,7 +1473,7 @@
 # System - Caller ID
 # ##################################
 # - alias: system_caller_id
-#   #id: system_caller_id
+#   id:  system_caller_id
 #   initial_state: true
 #   trigger:
 #     - platform: state
@@ -1456,7 +1504,7 @@
 # System - GW3 Error
 # ##################################
 - alias: system_xiaomi_gw3_error
-  #id: system_xiaomi_gw3_error
+  id:  system_xiaomi_gw3_error
   initial_state: true
   mode: single
   trigger:
@@ -1478,7 +1526,7 @@
 # System - Already running log
 # ##################################
 - alias: system_already_running_log
-  #id: system_already_running_log
+  id:  system_already_running_log
   initial_state: true
   max: 10
   max_exceeded: silent
@@ -1500,7 +1548,7 @@
 # System - Automation Reload
 # ##################################
 - alias: system_automation_reload
-  #id: system_automation_reload
+  id:  system_automation_reload
   initial_state: true
   trigger:
     # - platform: event
@@ -1519,7 +1567,7 @@
 # System - Scripts Reload
 # ##################################
 - alias: system_scripts_reload
-  #id: system_scripts_reload
+  id:  system_scripts_reload
   initial_state: true
   trigger:
     - platform: event
@@ -1562,7 +1610,7 @@
 # System - Printer offline
 # ##################################
 - alias: system_printer_offline
-  #id: system_printer_offline
+  id:  system_printer_offline
   initial_state: true
   trigger:
     - platform: state
@@ -1596,7 +1644,7 @@
 # System - Device Stats
 # ##################################
 - alias: system_devices_stats
-  #id: system_devices_stats
+  id:  system_devices_stats
   initial_state: true
   trigger:
     - platform: time
@@ -1626,7 +1674,7 @@
 # System - AC Power Status
 # ##################################
 - alias: system_ac_power_status
-  #id: system_ac_power_status
+  id:  system_ac_power_status
   initial_state: true
   trigger:
     - platform: state
@@ -1653,7 +1701,7 @@
 # System - ESP reboot
 # ##################################
 - alias: system_esp_reboot
-  #id: system_esp_reboot
+  id:  system_esp_reboot
   initial_state: true
   mode: queued
   # max: 5
@@ -1711,7 +1759,7 @@
 # System - Air Quality pm25
 # ##################################
 - alias: system_air_quality_pm25
-  #id: system_air_quality_pm25
+  id:  system_air_quality_pm25
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1728,7 +1776,7 @@
 # System - Air Quality pm10
 # ##################################
 - alias: system_air_quality_pm10
-  #id: system_air_quality_pm10
+  id:  system_air_quality_pm10
   initial_state: true
   trigger:
     - platform: numeric_state
@@ -1745,7 +1793,7 @@
 # System - State to Unavailable
 # ##################################
 # - alias: system_state_to_unavailable
-#   #id: system_state_to_unavailable
+#   id:  system_state_to_unavailable
 #   mode: queued
 #   max: 50
 #   max_exceeded: silent
@@ -1769,7 +1817,7 @@
 # System - Weather Sensors Update
 # ##################################
 - alias: system_weather_update
-  #id: system_weather_update
+  id:  system_weather_update
   initial_state: true
   trigger:
     - platform: time
@@ -1802,7 +1850,7 @@
 # System - Hot Water Boolean Change
 # ##################################
 - alias: system_hot_water_boolean_change
-  #id: system_hot_water_boolean_change
+  id:  system_hot_water_boolean_change
   initial_state: true
   trigger:
     - platform: state
@@ -1824,7 +1872,7 @@
 # System - Cold Water Boolean Change
 # ##################################
 - alias: system_cold_water_boolean_change
-  #id: system_cold_water_boolean_change
+  id:  system_cold_water_boolean_change
   initial_state: true
   trigger:
     - platform: state
@@ -1846,7 +1894,7 @@
 # System - Central Heating
 # ##################################
 - alias: system_central_heating_boolean_change
-  #id: system_central_heating_boolean_change
+  id:  system_central_heating_boolean_change
   initial_state: true
   trigger:
     - platform: state
@@ -1866,7 +1914,7 @@
 # System - Doorcam panel relauch
 # ##################################
 - alias: system_doorcam_panel_relaunch
-  #id: system_doorcam_panel_relaunch
+  id:  system_doorcam_panel_relaunch
   initial_state: true
   trigger:
     - platform: time_pattern
@@ -1893,7 +1941,7 @@
 # System - Dark Mode ON action
 # ##################################
 - alias: system_light_dark_mode_on_action
-  #id: system_light_dark_mode_on_action
+  id:  system_light_dark_mode_on_action
   initial_state: true
   trigger:
     - platform: state
@@ -1914,7 +1962,7 @@
 # System - Wallpanel charge
 # ##################################
 # - alias: system_wallpanel_charge
-#   #id: system_wallpanel_charge
+#   id:  system_wallpanel_charge
 #   initial_state: false
 #   mode: queued
 #   max: 10
@@ -1985,7 +2033,7 @@
 # # System - Breathers control
 # # ##################################
 # - alias: system_breathers_control
-#   #id: system_breathers_control
+#   id:  system_breathers_control
 #   initial_state: true
 #   mode: queued
 #   max: 10
@@ -2003,7 +2051,7 @@
 # System - SLS state change
 # ##################################
 - alias: system_sls_state_change
-  #id: system_sls_state_change
+  id:  system_sls_state_change
   initial_state: true
   trigger:
     - platform: state
@@ -2024,7 +2072,7 @@
 # System - WallPanel connection
 # ##################################
 - alias: system_wallpanel_connection
-  #id: system_wallpanel_connection
+  id:  system_wallpanel_connection
   initial_state: true
   trigger:
     - platform: state
@@ -2045,7 +2093,7 @@
 # System - New Feeds
 # ##################################
 # - alias: system_new_feeds
-#   #id: system_new_feeds
+#   id:  system_new_feeds
 #   initial_state: true
 #   trigger:
 #     - platform: event
@@ -2062,7 +2110,7 @@
 # System - Automation Reload
 # ##################################
 # - alias: system_automations_reloads
-#   #id: system_automations_reloads
+#   id:  system_automations_reloads
 #   initial_state: true
 #   trigger:
 #     - platform: event
@@ -2124,7 +2172,7 @@
 # System - Automation Reload
 # ##################################
 - alias: system_config_entry_discovery
-  #id: system_config_entry_discovery
+  id:  system_config_entry_discovery
   mode: single
   initial_state: true
   trigger:
@@ -2145,7 +2193,7 @@
 # System - Cert Validity Check
 # ##################################
 # - alias: system_cert_validity_check
-#   #id: system_cert_validity_check
+#   id:  system_cert_validity_check
 #   initial_state: true
 #   trigger:
 #     - platform: time
@@ -2176,7 +2224,7 @@
 # # System - Ya Station Response
 # # ##################################
 # - alias: system_ya_response
-#   #id: system_ya_response
+#   id:  system_ya_response
 #   initial_state: true
 #   trigger:
 #     - platform: event
@@ -2190,7 +2238,7 @@
 # System - GW3 Devices Msg Missed
 # ##################################
 - alias: system_gw3_devices_msg_missed
-  #id: system_gw3_devices_msg_missed
+  id:  system_gw3_devices_msg_missed
   mode: single
   initial_state: true
   trigger:

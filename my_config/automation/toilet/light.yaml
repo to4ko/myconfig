@@ -6,7 +6,7 @@
 # Toilet - Timer restart with movement
 # ################################## 
 - alias: toilet_timer_restart
-  #id:toilet_timer_restart
+  id: toilet_timer_restart
   initial_state: true
   trigger:
     - platform: state
@@ -30,7 +30,7 @@
 # Toilet - Timer start
 # ################################## 
 - alias: toilet_timer_on
-  #id:toilet_timer_on
+  id: toilet_timer_on
   initial_state: true
   trigger:
     - platform: state
@@ -57,7 +57,7 @@
 # Toilet - Timer stop at light off
 # ################################## 
 - alias: toilet_timer_off
-  #id:toilet_timer_off
+  id: toilet_timer_off
   initial_state: true
   trigger:
     - platform: template
@@ -94,7 +94,7 @@
 # Toilet - Auto Light On
 # ##################################
 - alias: toilet_auto_light_on
-  #id:toilet_auto_light_on
+  id: toilet_auto_light_on
   initial_state: true
   mode: single
   trigger:
@@ -120,16 +120,31 @@
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
-    - service: homeassistant.turn_on
-      data:
-        entity_id: >
-          {% if is_state('binary_sensor.tod_day','on') %}switch.0x158d0002a36f7f_channel_1{%else%}light.esp32_bathroom_node_light{%endif%}
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.tod_day
+              state: 'on'
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.0x158d0002a36f7f_channel_1
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.tod_day
+              state: 'off'
+          sequence:
+            - service: light.turn_on
+              entity_id: light.esp32_bathroom_node_light
+    # - service: homeassistant.turn_on
+    #   data:
+    #     entity_id: >
+    #       {% if is_state('binary_sensor.tod_day','on') %}switch.0x158d0002a36f7f_channel_1{%else%}light.esp32_bathroom_node_light{%endif%}
 
 # ##################################
 # Toilet - Light On
 # ##################################
 - alias: toilet_light_on
-  #id:toilet_light_on
+  id: toilet_light_on
   initial_state: true
   trigger:
     - platform: event
@@ -152,7 +167,7 @@
 # Toilet - Auto Light Off
 # ##################################
 - alias: toilet_auto_light_off
-  #id:toilet_auto_light_off
+  id: toilet_auto_light_off
   initial_state: true
   trigger:
     - platform: event
@@ -175,7 +190,7 @@
 # Toilet - Auto Light off - No Motion 5m with Closed Cover
 # ##################################
 - alias: toilet_auto_light_off_no_motion_cover_closed
-  #id:toilet_auto_light_off_no_motion_cover_closed
+  id: toilet_auto_light_off_no_motion_cover_closed
   initial_state: true
   trigger:
     - platform: state
@@ -198,7 +213,7 @@
 # Toilet - Light Toggle with Repeater
 # ##################################
 - alias: toilet_light_toggle
-  #id:toilet_light_toggle
+  id: toilet_light_toggle
   initial_state: true
   trigger:
     - platform: event
@@ -236,7 +251,7 @@
 # Toilet - Indicator
 # ##################################
 - alias: toilet_indicator
-  #id:toilet_indicator
+  id: toilet_indicator
   initial_state: true
   mode: single
   trigger:
