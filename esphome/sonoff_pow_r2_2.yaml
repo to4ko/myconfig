@@ -93,24 +93,36 @@ switch:
 
 sensor:
   - platform: cse7766
-    update_interval: 15s
+    update_interval: 5s
     current:
       name: ${board_name}_Current
+      accuracy_decimals: 1
+      device_class: current
+      id: id_current
     voltage:
       name: ${board_name}_Voltage
+      accuracy_decimals: 1
+      device_class: voltage
+      id: id_voltage
     power:
       name: ${board_name}_Power
-      id: power
+      accuracy_decimals: 0
+      id: id_power
+      unit_of_measurement: W
+      device_class: power
 
-  # - platform: total_daily_energy
-  #   id: total_daily_kwh
-  #   name: ${board_name}_Energy_Daily
-  #   power_id: power
-  #   accuracy_decimals: 3
-  #   unit_of_measurement: 'kWh'
-  #   filters:
-  #     - multiply: 0.001
-  #   icon: mdi:calendar-week-begin
+  - platform: integration
+    name: ${board_name}_Energy
+    sensor: id_power
+    time_unit: h
+    accuracy_decimals: 3
+    unit_of_measurement: 'kWh'
+    device_class: energy
+    state_class: total_increasing
+    filters:
+      - multiply: 0.001
+    id: id_energy
+    restore: true
 
   - platform: bme280
     temperature:

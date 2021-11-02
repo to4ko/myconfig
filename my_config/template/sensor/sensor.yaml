@@ -84,7 +84,8 @@
       unit_of_measurement: "ea"
 
     - name: WiFi Devices Unavailable
-      state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
+      state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count + expand('group.esp_devices') | selectattr('state','in',['unavailable','unknown','off']) | map(attribute='name') | list | count }}"
+
       icon: >
         {% if states('sensor.wifi_devices_unavailable')|int(0) >  0 %}
         mdi:signal-off
@@ -94,6 +95,10 @@
       attributes:
         list: >-
           {%-for state in expand('group.wifi_devices')|list
+            if state.state in ['unavailable','unknown'] %}
+            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
+          {%-endfor-%}{%-if expand('group.esp_devices') | selectattr('state','in',['unavailable','unknown','off']) | map(attribute='name') | list | count >0 %}, {%endif%}
+          {%-for state in expand('group.esp_devices')|list
             if state.state in ['unavailable','unknown'] %}
             {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
           {%-endfor-%}

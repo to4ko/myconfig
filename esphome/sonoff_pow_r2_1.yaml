@@ -83,7 +83,7 @@ binary_sensor:
   - platform: template
     name: ${board_name}_Washer_Status
     lambda: |-
-      if (id(power).state > 5) {
+      if (id(id_power).state > 5) {
         return true;
       } else {
         return false;
@@ -135,18 +135,33 @@ sensor:
     update_interval: 5s
     current:
       name: ${board_name}_Current
+      accuracy_decimals: 1
+      device_class: current
+      id: id_current
     voltage:
       name: ${board_name}_Voltage
+      accuracy_decimals: 1
+      device_class: voltage
+      id: id_voltage
     power:
       name: ${board_name}_Power
-      id: power
-      on_value_range:
-        - above: 6.0
-          then:
-            - light.turn_on: main_led
-        - below: 5.0
-          then:
-            - light.turn_off: main_led
+      accuracy_decimals: 0
+      id: id_power
+      unit_of_measurement: W
+      device_class: power
+
+  - platform: integration
+    name: ${board_name}_Energy
+    sensor: id_power
+    time_unit: h
+    accuracy_decimals: 3
+    unit_of_measurement: 'kWh'
+    device_class: energy
+    state_class: total_increasing
+    filters:
+      - multiply: 0.001
+    id: id_energy
+    restore: true
 
   - platform: uptime
     name: ${board_name}_Uptime_s
