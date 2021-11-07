@@ -5,6 +5,16 @@ esphome:
   name: ${board_name}
   platform: ESP32
   board: esp32dev
+  # on_boot:
+  #   priority: -100
+  #   then:
+  #     - wait_until:
+  #         time.has_time:
+  #     - delay: 1s
+  #     - logger.log: "-----> Board started"
+  #     - sensor.template.publish:
+  #         id: id_start
+  #         state: !lambda 'return id(sntp_time).now().timestamp;'
 
 wifi:
   ssid: !secret wifi_ssid_hb
@@ -30,10 +40,10 @@ api:
 ota:
 
 esp32_ble_tracker:
-  # scan_parameters:
-  #   interval: 512ms
-  #   window: 48ms
-  #   active: true
+  scan_parameters:
+    interval: 512ms
+    window: 48ms
+    active: true
 
 #exposure_notifications:
   #on_exposure_notification:
@@ -47,8 +57,8 @@ esp32_ble_tracker:
        #   ESP_LOGD("main", "  RPI: %s", hexencode(x.rolling_proximity_identifier).c_str());
         #  ESP_LOGD("main", "  RSSI: %d", x.rssi);
 
-web_server:
-  port: 80
+# web_server:
+#   port: 80
 
 binary_sensor:
   - platform: status
@@ -87,6 +97,12 @@ binary_sensor:
 # 3B:EF:3E:DE:98:6B GREY
 
 sensor:
+  # - platform: template
+  #   name: ${board_name}_Last_Boot
+  #   update_interval: never
+  #   device_class: timestamp
+  #   id: id_start
+    
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
@@ -161,5 +177,8 @@ switch:
     id: restart_switch
 
 time:
-  - platform: homeassistant
-    id: esp_time
+#  - platform: homeassistant
+#    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: UTC-3

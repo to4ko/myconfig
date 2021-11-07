@@ -2056,6 +2056,8 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.sls_gateway_state
+      for:
+        seconds: 5      
   condition:
     - condition: template
       value_template: >
@@ -2077,6 +2079,8 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.wp_digma8027_motion
+      for:
+        seconds: 5
   condition:
     - condition: template
       value_template: >
@@ -2380,3 +2384,26 @@
     - service: notify.telegram
       data:
         message: "\U000023ed Внимание! {{ trigger.to_state.attributes.name }} пропустил {{ trigger.to_state.attributes.last_missed | format(morph='пакет', as_text=false) }}!"
+
+# ##################################
+# System - Ya Station Mode
+# ##################################
+- alias: system_ya_station_mode
+  id: system_ya_station_mode
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: 
+        - media_player.yandex_k
+        - media_player.yandex_hb
+        - media_player.yandex_v
+        - media_player.yandex_s
+        - media_player.yandex_mb
+      attribute: connection_class
+      for:
+        seconds: 5
+  action:
+    - service: notify.telegram
+      data:
+        message: >-
+          {% if trigger.to_state.attributes.connection_class in ['local_push', 'local_poll'] -%}{{ '\U00002705' }}{%- else -%}{{ '\U000026A0' }}{%- endif -%}{{- trigger.to_state.name -}}: {{- trigger.from_state.attributes.connection_class-}} --> {{- trigger.to_state.attributes.connection_class-}}
