@@ -5397,6 +5397,7 @@ views:
               "tbody tr:nth-child(even)": "background-color: #a2542f6;"
               td.left: "padding: 10px 10px 10px 10px"
               th.left: "padding: 0px 0px 10px 10px"
+
   - title: test
     cards:
       - type: entities
@@ -5500,7 +5501,7 @@ views:
           - binary_sensor.0x158d0002b4729d_motion
           - binary_sensor.0x158d0002b48381_motion
           - binary_sensor.50ec50cd0062_motion
-          - binary_sensor.0x158d000423f316_contact
+          - binary_sensor.ro_pump_status #binary_sensor.0x158d000423f316_contact
           - binary_sensor.esp8266_hood_k_light_button
           - binary_sensor.esp8266_hood_k_fan_button
           - binary_sensor.sonoff_mini_4_sw
@@ -5534,27 +5535,168 @@ views:
           - binary_sensor.0x158d0003fa6cf5_contact
           - sensor.0x158d0001b94abe_action
           - sensor.0x158d0001ef6089_action
-      - type: entities
-        title: test
-        state_color: true
-        entities:
-          - binary_sensor.0x158d0002b4729d_motion
-          - switch.0x158d00028c9875_switch
-          - switch.0x158d00028a54e4_switch
 
-  # - title: Pinhole
-  #   icon: mdi:camera-wireless-outline
-  #   panel: true
-  #   cards:
-  #     # - type: picture-entity
-  #     #   camera_view: live
-  #     #   aspect_ratio: "16x9"
-  #     #   entity: camera.door_hb
-  #     #   show_name: false
-  #     #   show_state: false
-  #     - type: picture-entity
-  #       camera_view: live
-  #       aspect_ratio: "16x9"
-  #       entity: camera.door_hb
-  #       show_name: false
-  #       show_state: false
+  - title: Radio Quality [GW 3]
+    path: gw3
+    icon: mdi:radio-tower
+    panel: true
+    cards:
+      - type: vertical-stack
+        cards:
+          # Gateways
+          - type: markdown
+            content: "### <center> Gateways </center>"
+          - type: "custom:flex-table-card"
+            clickable: false
+            entities:
+              include:
+                - sensor.*_gateway
+            sort_by: friendly_name
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: '(x+"").replace(/ Gateway$/,"")'
+              - data: network_pan_id
+                name: Network PAN ID
+                modify: 'x == "" ? "-" : x+""'
+              - data: radio_tx_power
+                name: Radio TX Power
+                modify: 'isNaN(parseInt(x, 10)) ? "-" : parseInt(x, 10)'
+              - data: radio_channel
+                name: Radio Channel
+                modify: 'isNaN(parseInt(x, 10)) ? "-" : parseInt(x, 10)'
+              - data: free_mem
+                name: Memory Free (KB)
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: load_avg
+                name: Load Avg (1m, 5m, 15m)
+                modify: '(x+"").split("|").slice(0, 3).join(", ")'
+              - data: zigbee_tx
+                name: ZB Tx
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: zigbee_rx
+                name: ZB Rx
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: zigbee_oe
+                name: ZB Err
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: bluetooth_tx
+                name: BT Tx
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: bluetooth_rx
+                name: BT Rx
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: bluetooth_oe
+                name: BT Err
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: rssi
+                name: RSSI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : (100 + parseInt(x, 10)) * -1'
+              - data: uptime
+                name: Gateway Uptime
+                modify: x+''
+              - data: state
+                name: Connected Since
+                modify: >
+                  var dt = new Date(x);
+                  var hrs = parseInt((Date.now()-Date.parse(x)) / 3600000);
+                  var min = parseInt(((Date.now()-Date.parse(x)) / 60000) % 60);
+                  var sec = parseInt(((Date.now()-Date.parse(x)) / 1000) % 60);
+                  hrs = (hrs < 10) ? "0" + hrs : hrs;
+                  min = (min < 10) ? "0" + min : min;
+                  sec = (sec < 10) ? "0" + sec : sec;
+                  isFinite(dt) ? dt.toLocaleString(['ru-RU', 'en-US']) +
+                  " (Up: " + hrs + ":" + min + ":" + sec + ")" : ""
+            css:
+              table+: "padding-top: 15px;"
+              "tbody tr:nth-child(even)": "background-color: #a2542f6;"
+              td.left: "padding: 10px 10px 10px 10px"
+              th.left: "padding: 0px 0px 10px 10px"
+          # ZigBee
+          - type: markdown
+            content: "### <center> ZigBee </center>"
+          - type: "custom:flex-table-card"
+            clickable: false
+            entities:
+              include:
+                - sensor.*_zigbee
+            sort_by: ieee
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: 'x.replace(/ Zigbee$/,"")'
+              - data: ieee
+                name: IEEE
+                modify: (x+'').toLowerCase()
+              - data: nwk
+                name: NWK
+                modify: (x+'').replace(/^0x/,"")
+              - data: parent
+                name: Parent
+                modify: (x+'').replace(/^0x/,"").toLowerCase()
+              - data: type
+                name: Type
+                modify: (x+'').replace(/^-$/, "child device")
+              - data: msg_received
+                name: Received
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: msg_missed
+                name: Missed (Total)
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: last_missed
+                name: Missed (Last)
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: unresponsive
+                name: Unresponsive
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: reset_cnt
+                name: Reset Count
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: link_quality
+                name: LQI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: rssi
+                name: RSSI
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: last_msg
+                name: Last Message
+                modify: x+''
+              - data: state
+                name: Last Seen
+                modify: >
+                  var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
+                  isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
+            css:
+              table+: "padding-top: 15px;"
+              "tbody tr:nth-child(even)": "background-color: #a2542f6;"
+              td.left: "padding: 10px 10px 10px 10px"
+              th.left: "padding: 0px 0px 10px 10px"
+          # Bluetooth
+          - type: markdown
+            content: "### <center> Bluetooth </center>"
+          - type: "custom:flex-table-card"
+            clickable: false
+            entities:
+              include:
+                - sensor.*_ble
+            sort_by: mac
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: 'x.replace(/ Ble$/,"")'
+              - data: mac
+                name: MAC
+                modify: (x+'').replace(/(.{2}(?!$))/g,"$1:")
+              - data: msg_received
+                name: Received
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: state
+                name: Last Seen
+                modify: >
+                  var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
+                  isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
+            css:
+              table+: "padding-top: 15px;"
+              "tbody tr:nth-child(even)": "background-color: #a2542f6;"
+              td.left: "padding: 10px 10px 10px 10px"
+              th.left: "padding: 0px 0px 10px 10px"
