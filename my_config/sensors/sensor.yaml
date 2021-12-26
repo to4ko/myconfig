@@ -48,10 +48,11 @@
 #   password: !secret 17track_pass
 
 - platform: statistics
-  name: airq_toilet_stat
+  name: bad_airq_toilet
   entity_id: sensor.d1mini_air_freshener_airq
-  state_characteristic: mean
-  max_age: "00:03:00"
+  state_characteristic: change
+  max_age:
+    minutes: 1
   sampling_size: 20
 
 - platform: statistics
@@ -61,13 +62,6 @@
   max_age:
     days: 1
   sampling_size: 11520
-
-- platform: derivative
-  source: sensor.d1mini_air_freshener_airq
-  name: Toilet AirQ Derivative
-  round: 1
-  unit_time: min
-  time_window: "00:03:00"
 
 - platform: command_line
   name: ERRORS during Boot
@@ -196,17 +190,26 @@
 #     minutes: 15
 
 - platform: statistics
-  name: out_temperature_stats
+  name: out_temperature_max_24h
   entity_id: sensor.esp32_node_mb_outside #sensor.0x158d0001e8995a_temperature
-  state_characteristic: mean
+  state_characteristic: value_max
   sampling_size: 6000
   max_age:
     hours: 24
 
 - platform: statistics
-  name: stove_temperature_stats
+  name: out_temperature_min_24h
+  entity_id: sensor.esp32_node_mb_outside #sensor.0x158d0001e8995a_temperature
+  state_characteristic: value_min
+  sampling_size: 6000
+  max_age:
+    hours: 24
+
+
+- platform: statistics
+  name: stove_temperature_median
   entity_id: sensor.esp8266_hood_k_tcouple
-  state_characteristic: mean
+  state_characteristic: median
   sampling_size: 3000
   max_age:
     hours: 6
@@ -371,16 +374,16 @@
 
 - platform: statistics
   entity_id: sensor.pressure_average
-  name: pressure_stats_3h
-  state_characteristic: mean
+  name: pressure_change_3h
+  state_characteristic: change
   max_age:
     hours: 3
   sampling_size: 10800
 
 - platform: statistics
   entity_id: sensor.pressure_average
-  name: pressure_stats_6h
-  state_characteristic: mean
+  name: pressure_change_6h
+  state_characteristic: change
   max_age:
     hours: 6
   sampling_size: 21600
