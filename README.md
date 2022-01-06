@@ -9,12 +9,20 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - 2*8Gb Sk Hynix DDR4 SODIMM
   - 512Gb Samsung 970 Pro NVME
 
-**Storage\Backup Host:** 
+**Main Storage Host:** 
   - Synology DS1621+
   - 2*16Gb Micron DDR4 SODIMM
   - 8TB WD White as Media Storage
   - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
   - 256Gb Adata SX6000 Lite as NVME read cache
+
+**Backup Storage Host:** 
+  - Synology DS220J
+  - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
+
+**Remote Storage Host:** 
+  - Synology DS215J
+  - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
 
 **Network(WAN 500mb\s):**
   - Unifi Dream Machine Pro
