@@ -3,47 +3,22 @@
 
 First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [Vasilchuk](https://github.com/Anonym-tsk), [S_p_i_r_i_t_u_s](https://github.com/Spirituss), [lapatoc](https://github.com/bastshoes), [Vtel](https://github.com/zvldz), [Enzokot](https://github.com/Enzokot), [AVBor](https://github.com/avbor), [Andrew](https://github.com/andrewjswan) for help and support!
 
-**Main Server:** 
-  - Ryzen 5 3600 cooled by Noctua NH-U12DX i4 with NM-AM4 kit
-  - Asrock Rack x470d4u
-  - 2*16gb MICRON (Crucial) DDR4 3200MHz pc-25600 ECC (MTA9ASF2G72AZ-3G2B1)
-  - 128Gb Kingston SSD Boot drive
-  - Asus Hyper M.2 x16 card v2 (all NVME drives are connected via this card)
-  - 512Gb * 2ea ADATA 8200Pro in Raid-1 Root drive
-  - 256Gb ADATA 8200Pro as DB drive
-  - 256Gb ADATA 8200Pro connected but not used at the moment
-  - 3ea WD RED 2Tb (Storage section for critital files) in Software Raid-1 (1 drive is spare)
-  - 2Tb Seagate SV35 for pinhole camera records
-  - 8TB Toshiba MG06ACA800E as media storage (Torrent heap)
-  - Corsair HX1200i Power supply
-  - Fractal Design Mini C with be quite Pure Wings 2 120mm PWM fans (3ea)
-  - not in use - USR 56k USB Modem
-  - Google Coral M.2 Accelerator
+**Main Host:** 
+  - HP Prodesk 400 G6 Mini
+  - Intel i3-10100T
+  - 2*8Gb Sk Hynix DDR4 SODIMM
+  - 512Gb Samsung 970 Pro NVME
 
-**Backup Server:**
-  - Asrock 3455-ITX with integrated Celeron j3455
-  - 16gb DDR3 RAM
-  - 120Gb SSD Crucial BX500
-
-**not in use - MQTT\Zigbee2MQTT Server #1:**
-  - Gigabyte Brix Celeron j3455
-  - 16gb DDR3 RAM
-  - 120Gb SSD Crucial BX500
-  - not in use - zzh CC2652R Zigbee Stick
-
-**Test server \ possible next Backup server:**
-  - Intel Nuc Celeron N2830
-  - 4gb DDR3 RAM
-  - 120Gb SSD Crucial BX500
-
-**not in use - Test Server:**
-  - Raspberry Pi 3B+
-  - 120Gb SSD Crucial BX500
+**Storage\Backup Host:** 
+  - Synology DS1621+
+  - 2*16Gb Micron DDR4 SODIMM
+  - 8TB WD White as Media Storage
+  - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
+  - 256Gb Adata SX6000 Lite as NVME read cache
 
 **Network(WAN 500mb\s):**
   - Unifi Dream Machine Pro
   - Unifi Switch 16-150W
-  - not in use - Unifi Switch 24
   - Unifi Switch 8-60W (3ea)
   - Unifi Switch Mini
   - Unifi AC-AP-Lite (2ea)
@@ -147,18 +122,12 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
   - Shelly EM - energy monitoring (comparing to PZEM...not shure which one os better)
   
-**Software:**
-  - Ubuntu Server 20.04.2 LTS
+**Main Host Software:**
+  - Debian 11
   - Home Assistant Core Supervised
-  - MotionEye (Pinhole camera motion detection)
-  - Mosquitto
-
-**DB used:**
   - PostgreSQL
-  - InfluxDB
 
 **Add-On's:** 
-  - AirCast
   - File Editor
   - Custom deps deployment
   - ESPhome
@@ -168,6 +137,10 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Log Viewer
   - Portainer
   - RPC shutdown
+
+**DB used:**
+  - PostgreSQL
+  - InfluxDB
 
 **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
