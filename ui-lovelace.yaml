@@ -41,11 +41,11 @@ views:
               #   name: 5V
               #   tap_action:
               #     action: toggle
-              - type: glance
-                entities:
-                  - sensor.udmp_wan
-                  - binary_sensor.udmp_wan1_state
-                  - binary_sensor.udmp_wan2_state
+              # - type: glance
+              #   entities:
+              #     - sensor.udmp_wan
+              #     - binary_sensor.udmp_wan1_state
+              #     - binary_sensor.udmp_wan2_state
               - type: glance
                 show_name: true
                 show_state: true
@@ -148,9 +148,17 @@ views:
               - person.dima
               - person.sandra
               - person.vova
-          - type: custom:weather-card
-            entity: weather.my_weather #weather.dark_sky #weather.gismeteo_daily
-            icons: "/local/icons/"
+          # - type: custom:weather-card
+          #   entity: weather.my_weather #weather.dark_sky #weather.gismeteo_daily
+          #   icons: "/local/icons/"
+            
+          - type: custom:weather-chart-card
+            entity: weather.my_weather
+            #icons: "/local/icons/"
+            units:
+              pressure: mmHg
+              speed: m/s
+            
           - type: custom:stack-in-card
             mode: vertical
             cards:
@@ -168,7 +176,7 @@ views:
                     name: RAM
                   - entity: sensor.db_size
                     name: DB
-                  - entity: sensor.influxdb_size #sensor.influxdb_total_size
+                  - entity: sensor.influxdb_folder_size #sensor.influxdb_size #sensor.influxdb_total_size
                     name: Influx
               - type: horizontal-stack
                 cards:
@@ -221,7 +229,7 @@ views:
                           name: S
 
           - type: glance
-            columns: 6
+            columns: 5
             state_color: true
             entities:
               - entity: media_player.yandex_v #home_mini_v
@@ -234,11 +242,11 @@ views:
                 name: MB
               - entity: media_player.yandex_hb #home_mini_hb
                 name: HB
-              - entity: media_player.mpd
-                name: MPD
+              # - entity: media_player.mpd
+              #   name: MPD
 
           - type: glance
-            columns: 6
+            columns: 5
             state_color: true
             entities:
               - entity: sensor.yandex_v_alice_state
@@ -251,8 +259,8 @@ views:
                 name: MB
               - entity: sensor.yandex_hb_alice_state
                 name: HB
-              - entity: media_player.mpd
-                name: MPD
+              # - entity: media_player.mpd
+              #   name: MPD
 
       # ##################################
       # Center Block
@@ -314,7 +322,7 @@ views:
                 name: HS
               - entity: binary_sensor.motion_k
                 name: K
-              - entity: binary_sensor.0x158d000236bc6d_motion
+              - entity: binary_sensor.motion_b #binary_sensor.0x158d000236bc6d_motion
                 name: B
               - entity: binary_sensor.0x158d0001e54280_motion
                 name: T
@@ -1341,6 +1349,8 @@ views:
             secondary_info: last-changed
           - entity: binary_sensor.0x158d000236bc6d_motion
             secondary_info: last-changed
+          - entity: binary_sensor.0x158d00024e58e7_motion
+            secondary_info: last_changed
           - entity: binary_sensor.0x158d0001e54280_motion
             secondary_info: last-changed
           - entity: binary_sensor.0x158d0001aea602_motion
@@ -1624,6 +1634,7 @@ views:
         entities:
           - binary_sensor.0x158d0002a14c5e_contact
           - binary_sensor.0x158d000236bc6d_motion
+          - binary_sensor.0x158d00024e58e7_motion
           - sensor.0x158d0001b94abe_action
           - binary_sensor.0x158d0002373a67_moisture
           - sensor.0x158d00020d7c3a_temperature
@@ -2238,9 +2249,9 @@ views:
             state_color: true
             entities:
               - entity: sensor.shelly_plug_s_power
-                name: Plug Server HB
-              - entity: sensor.syno_plug_hb_power
-                name: Plug Syno HB
+                name: HP400G6 Plug HB
+              - entity: sensor.ds1621plus_plug_hb_power
+                name: DS1621+ Plug HB
               - entity: sensor.0x158d0003539447_power
                 name: Plug Fridge HB
               - entity: sensor.0x158d000230fc52_power
@@ -2249,8 +2260,8 @@ views:
                 name: Socket Entrance HB
               - entity: sensor.0x158d0001f2630e_power
                 name: Socket Wadrobe L HB
-              # - entity: sensor.0x158d00023e5812_power
-              #   name: Socket Wadrobe R HB
+              - entity: sensor.0x158d00023e5812_power
+                name: Socket Wadrobe R HB
               - entity: sensor.0x158d000358c773_power
                 name: Plug Digma Strip HB
 
@@ -2290,10 +2301,10 @@ views:
                 name: Plug Breather MB
               - entity: sensor.0x158d00028b4fc3_power
                 name: Plug Printer MB
-              - entity: sensor.shp6_socket_1_w
-                name: Plug n2830 MB
-              - entity: sensor.0x158d0002c3d86e_power
-                name: Plug Xpenology MB
+              # - entity: sensor.shp6_socket_1_w
+              #   name: Plug n2830 MB
+              - entity: sensor.ds220j_plug_mb_power
+                name: Plug DS220J MB
 
       ##########################################
       # Right column
@@ -2983,11 +2994,13 @@ views:
               - sensor.db_size_change_1h
               - type: divider
               - sensor.influxdb_size
+              - sensor.influxdb_folder_size
               #   sensor.influxdb_total_size #sensor.influxdb_size
               # - sensor.influxdb_internal_size
               # - sensor.influxdb_hass_autogen_size
               # - sensor.influxdb_hass_infinite_size
               - sensor.influxdb_size_change_1h
+              - sensor.influxdb_folder_size_change_1h
               - type: call-service
                 icon: mdi:database-minus
                 name: Purge 0
@@ -3803,22 +3816,22 @@ views:
                   action: call-service
                   service: script.ha_released_update
 
+          # - type: glance
+          #   columns: 5
+          #   state_color: true
+          #   entities:
+          #     - entity: sensor.nvme0_write_change_1h
+          #       name: N0
+              # - entity: sensor.nvme1_write_change_1h
+              #   name: N1
+              # - entity: sensor.nvme2_write_change_1h
+              #   name: N2
+              # - entity: sensor.nvme3_write_change_1h
+              #   name: N3
+              # - entity: sensor.boot_write_change_1h
+              #   name: boot
           - type: glance
-            columns: 5
-            state_color: true
-            entities:
-              - entity: sensor.nvme0_write_change_1h
-                name: N0
-              - entity: sensor.nvme1_write_change_1h
-                name: N1
-              - entity: sensor.nvme2_write_change_1h
-                name: N2
-              - entity: sensor.nvme3_write_change_1h
-                name: N3
-              - entity: sensor.boot_write_change_1h
-                name: boot
-          - type: glance
-            columns: 4
+            columns: 6
             state_color: true
             entities:
               # NVME 0
@@ -3829,8 +3842,12 @@ views:
                 name: R Session
               - entity: sensor.nvme0_session_write
                 name: W Session
+              - entity: sensor.nvme0_write_change_1h
+                name: W\h
               - entity: sensor.nvme0_life_left_smart
                 name: "%"
+              - entity: sensor.nvme0_temp
+                name: T
           #     # NVME 1
           #     - entity: sensor.nvme1_tb_written
           #       name: nvme1
@@ -3925,25 +3942,25 @@ views:
       #         - entity: sensor.temp_session_write
       #           name: T W
 
-          - type: glance
-            columns: 5
-            state_color: true
-            entities:
-              # nvme0
-              - entity: sensor.nvme0_temp
-                name: N0
-              # nvme1
-              - entity: sensor.nvme1_temp
-                name: N1
-              # nvme2
-              - entity: sensor.nvme2_temp
-                name: N2
-              # nvme3
-              - entity: sensor.nvme3_temp
-                name: N3
-              # boot
-              - entity: sensor.boot_temp
-                name: boot
+          # - type: glance
+          #   columns: 5
+          #   state_color: true
+          #   entities:
+          #     # nvme0
+          #     - entity: sensor.nvme0_temp
+          #       name: N0
+              # # nvme1
+              # - entity: sensor.nvme1_temp
+              #   name: N1
+              # # nvme2
+              # - entity: sensor.nvme2_temp
+              #   name: N2
+              # # nvme3
+              # - entity: sensor.nvme3_temp
+              #   name: N3
+              # # boot
+              # - entity: sensor.boot_temp
+              #   name: boot
 
           # - type: glance
           #   columns: 2
@@ -4019,7 +4036,7 @@ views:
                       action: call-service
                       service: script.radio_off
           - type: glance
-            columns: 6
+            columns: 5
             state_color: true
             entities:
               - entity: media_player.yandex_v #home_mini_v
@@ -4032,8 +4049,8 @@ views:
                 name: MB
               - entity: media_player.yandex_hb #home_mini_hb
                 name: HB
-              - entity: media_player.mpd
-                name: MPD
+              # - entity: media_player.mpd
+              #   name: MPD
 
   ################################################################
   # Weather monitoring
@@ -4953,8 +4970,11 @@ views:
             name: V
             secondary_info: last-changed
           - entity: binary_sensor.0x158d000236bc6d_motion
-            name: B
+            name: B - Entrance
             secondary_info: last-changed
+          - entity: binary_sensor.0x158d00024e58e7_motion
+            name: B - Tub
+            secondary_info: last_changed
           - entity: binary_sensor.0x158d0002b4729d_motion
             name: K - Main
             secondary_info: last-changed
@@ -5001,6 +5021,8 @@ views:
             secondary_info: last-changed
           - entity: binary_sensor.0x158d000236bc6d_motion
             secondary_info: last-changed
+          - entity: binary_sensor.0x158d00024e58e7_motion
+            secondary_info: last_changed
           - entity: binary_sensor.0x158d000236fcd5_contact
             secondary_info: last-changed
           - entity: binary_sensor.0x158d000236fdc9_contact
@@ -5307,44 +5329,23 @@ views:
   - title: Testing
     icon: mdi:alpha
     cards:
+      - type: glance
+        entities:
+          - entity: sensor.0x158d0001e8995a_temperature
+            name: T
+          - entity: sensor.a4c138f0a65b_temperature
+            name: BT
+          - entity: sensor.0x158d0001f2630e_power
+            name: Power
       - type: history-graph
-        hours_to_show: 24
+        hours_to_show: 12
         entities:
-          - entity: sensor.shelly_em_channel_1_power
-            name: EM Power
-          - entity: sensor.esp32_pzem_hb_power
-            name: PZEM Power
-      - type: history-graph
-        hours_to_show: 24
-        entities:
-          - entity: sensor.shelly_em_channel_1_voltage
-            name: EM Voltage
-          - entity: sensor.esp32_pzem_hb_voltage
-            name: PZEM Voltage
-      - type: entities
-        entities:
-          - sensor.esp32_pzem_hb_current
-          - sensor.esp32_pzem_hb_voltage
-          - sensor.esp32_pzem_hb_power
-          - sensor.esp32_pzem_hb_reactive_power
-          - sensor.esp32_pzem_hb_apparent_power
-          - sensor.esp32_pzem_hb_energy
-          - sensor.esp32_pzem_hb_power_factor
-          - sensor.esp32_pzem_hb_frequency
-          - type: divider
-          - sensor.esp32_pzem_hb_energy_daily
-          - sensor.esp32_pzem_hb_energy_daily_day
-          - sensor.esp32_pzem_hb_energy_daily_night
-          - sensor.esp32_pzem_hb_energy_monthly
-          - sensor.esp32_pzem_hb_energy_monthly_day
-          - sensor.esp32_pzem_hb_energy_monthly_night
-
-      - type: entities
-        entities:
-          - sensor.iphone_8_dtsymbal_ssid
-          - sensor.iphone_12_dtsymbal_ssid
-          - sensor.iphone_se_sandra_ssid
-          - sensor.note_9_pro_vova_wifi_soedinenie
+          - entity: sensor.0x158d0001e8995a_temperature
+            name: T
+          - entity: sensor.a4c138f0a65b_temperature
+            name: BT
+          - entity: sensor.0x158d0001f2630e_power
+            name: Power
 
       - type: glance
         entities:
@@ -5357,32 +5358,14 @@ views:
           - entity: binary_sensor.esp32_ble_tracker_white
             name: Dima(white)
 
-      - type: thermostat
-        entity: climate.sonoff_sv_pad
-
-      # - type: custom:auto-entities
-      #   show_empty: false
-      #   card:
-      #     type: entities
-      #     #title: Lights on
-      #     show_header_toggle: false
-      #     state_color: true
-      #   filter:
-      #     include:
-      #       - domain: light
-      #         state: "on"
-      #         options:
-      #           tap_action:
-      #             action: toggle
-
       - type: history-graph
         hours_to_show: 48
         entities:
           - entity: sensor.esp32_node_mb_outside
             name: T
-          - entity: sensor.temperature_max_out
+          - entity: sensor.out_temperature_max_24h
             name: Tmax
-          - entity: sensor.temperature_min_out
+          - entity: sensor.out_temperature_min_24h
             name: Tmin
       - type: vertical-stack
         cards:
@@ -5563,6 +5546,7 @@ views:
           - binary_sensor.occupancy_b
           - type: divider
           - binary_sensor.0x158d000236bc6d_motion
+          - binary_sensor.0x158d00024e58e7_motion
           - binary_sensor.0x158d0002a14c5e_contact
           - binary_sensor.0x158d0003fa6cf5_contact
           - sensor.0x158d0001b94abe_action

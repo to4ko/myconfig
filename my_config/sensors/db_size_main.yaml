@@ -40,15 +40,27 @@
   port: !secret influxdb_port
   username: !secret influxdb_username
   password: !secret influxdb_password
+  scan_interval: 60
   queries:
     - name: InfluxDB Size
-      unit_of_measurement: MB
+      unit_of_measurement: Mb
       value_template: "{{ (value | float(0) / 1024 /1024) | round(0, 'common' ,0) }}"
       group_function: mean
       measurement: '"monitor"."shard"'
       database: _internal
       where: 'time > now() - 1m AND "database"=''hass'''
       field: diskBytes
+
+- platform: ssh
+  name: influxdb_folder_size
+  host: !secret ds1621_ip
+  username: !secret ds1621_usr
+  password: !secret ds1621_passwd
+  command: !secret ds1621_influxdb_size
+  scan_interval: 60
+  #value_template: "{{ ( value.split(' ')[0]|int / 1024 ) | round(0, 'common', 0) }}"
+  value_template: "{{ (value.split('\n')[1]|int / 1024 ) | round(0, 'common' ,0)  }}"
+  unit_of_measurement: 'Mb'
 
 # - platform: mqtt
 #   name: InfluxDB Hass Size
@@ -114,6 +126,7 @@
   sampling_size: 20000
   max_age:
     minutes: 60
+  precision: 0
 
 - platform: statistics
   entity_id: sensor.influxdb_size
@@ -122,3 +135,13 @@
   sampling_size: 20000
   max_age:
     minutes: 60
+  precision: 0
+
+- platform: statistics
+  entity_id: sensor.influxdb_folder_size
+  name: InfluxDB Folder Size Change 1h
+  state_characteristic: change
+  sampling_size: 100
+  max_age:
+    minutes: 60
+  precision: 0

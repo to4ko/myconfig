@@ -5,18 +5,49 @@ esphome:
   name: sonoff_mini
   platform: ESP8266
   board: esp01_1m
+  comment: Sonoff Mini Thermo Pad Controller 
   on_boot:
-    if:
-      condition:
-        wifi.connected:
-      then:
-        - light.turn_on: wifi_led
+    priority: -100
+    then:
+      - wait_until:
+          time.has_time:
+      # - wait_until:
+      #     mqtt.connected:
+      - delay: 1s
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - light.turn_on: wifi_led
+      - delay: 5s
+      - if:
+          condition:
+            sensor.in_range:
+              id: dallas_ambient
+              above: 30
+          then:
+            - climate.control:
+                id: climate_pad
+                mode: 'OFF'
+      - if:
+          condition:
+            sensor.in_range:
+              id: dallas_ambient
+              below: 30
+          then:
+            - climate.control:
+                id: climate_pad
+                mode: HEAT
 
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_pass
   domain: .local
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  fast_connect: true
+  #power_save_mode: none
   manual_ip:
     static_ip: 192.168.1.117
     gateway: 192.168.1.1
@@ -33,6 +64,11 @@ ota:
 
 web_server:
   port: 80
+
+dallas:
+  - pin: GPIO04
+    update_interval: 3s
+    id: dallas_node
 
 output:
   - platform: esp8266_pwm
@@ -60,18 +96,18 @@ binary_sensor:
       - switch.toggle: 
           id: relay
 
-  - platform: gpio
-    name: ${board_name}_sw
-    pin: GPIO04
-    id: switch_1
-    on_press:
-      then:
-        - switch.toggle:
-            id: relay
-    on_release:
-      then:
-        - switch.toggle:
-            id: relay
+  # - platform: gpio
+  #   name: ${board_name}_sw
+  #   pin: GPIO04
+  #   id: switch_1
+  #   on_press:
+  #     then:
+  #       - switch.toggle:
+  #           id: relay
+  #   on_release:
+  #     then:
+  #       - switch.toggle:
+  #           id: relay
 
   - platform: status
     name: ${board_name}_Status
@@ -81,6 +117,22 @@ switch:
     name: ${board_name}_Relay
     pin: GPIO12
     id: relay
+
+climate:
+  - platform: bang_bang
+    visual:
+      min_temperature: 32 °C
+      max_temperature: 42 °C
+      temperature_step: 1 °C  
+    name: ${board_name}_Thermo_Pad
+    sensor: dallas_pad
+    default_target_temperature_low: 33 °C
+    default_target_temperature_high: 38 °C
+    heat_action:
+      - switch.turn_on: relay
+    idle_action:
+      - switch.turn_off: relay
+    id: climate_pad
     
 sensor:
   - platform: uptime
@@ -90,6 +142,33 @@ sensor:
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
+
+  - platform: dallas
+    address: 0x613C01D075384328
+    dallas_id: dallas_node
+    name: ${board_name}_ambient_temperature
+    accuracy_decimals: 2
+    resolution: 12
+    id: dallas_ambient
+    on_value_range:
+      - above: 30
+        then:
+          - climate.control:
+              id: climate_pad
+              mode: 'OFF'
+      - below: 30
+        then:
+          - climate.control:
+              id: climate_pad
+              mode: HEAT            
+
+  - platform: dallas
+    address: 0x2A01203768D6D728
+    dallas_id: dallas_node
+    name: ${board_name}_pad_temperture
+    accuracy_decimals: 2
+    resolution: 12
+    id: dallas_pad
 
 text_sensor:
   - platform: template
@@ -116,6 +195,10 @@ text_sensor:
       return {buffer};
     icon: mdi:clock-start
     update_interval: 15s
+
+button:
+  - platform: restart
+    name: ${board_name}_Restart
 
 time:
   - platform: homeassistant
