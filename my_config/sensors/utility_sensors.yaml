@@ -1,6 +1,22 @@
 - platform: statistics
-  name: server_daily_power_consumption
-  entity_id: sensor.shelly_plug_s_power
+  name: Server Daily Power Consumption
+  entity_id: sensor.server_plug_hb_power
+  state_characteristic: mean
+  sampling_size: 10000
+  max_age:
+    hours: 24
+
+- platform: statistics
+  name: Ds1621plus Daily Power Consumption
+  entity_id: sensor.ds1621plus_plug_hb_power
+  state_characteristic: mean
+  sampling_size: 10000
+  max_age:
+    hours: 24
+    
+- platform: statistics
+  name: Ds220j Daily Power Consumption
+  entity_id: sensor.ds220j_plug_mb_power
   state_characteristic: mean
   sampling_size: 10000
   max_age:
@@ -38,6 +54,28 @@
     server_monthly_cost:
       friendly_name: Server Average Monthly Running Cost
       value_template: "{{(states('sensor.server_daily_cost')|float(0)*31)|round(0, 'common' ,0) }}"
+      unit_of_measurement: "rub"
+      icon_template: mdi:currency-rub
+
+    ds1621plus_daily_cost:
+      friendly_name: Ds1621plus Average Daily Running Cost
+      value_template: "{{(states('input_number.tariff_energy_day')|float(0)*16*states('sensor.ds1621plus_daily_power_consumption')|float(0)/1000+states('input_number.tariff_energy_night')|float(0)*8*states('sensor.ds1621plus_daily_power_consumption')|float(0)/1000)|round(2, 'common' ,0)}}"
+      unit_of_measurement: "rub"
+      icon_template: mdi:currency-rub
+    ds1621plus_monthly_cost:
+      friendly_name: Ds1621plus Average Monthly Running Cost
+      value_template: "{{(states('sensor.ds1621plus_daily_cost')|float(0)*30)|round(0, 'common' ,0) }}"
+      unit_of_measurement: "rub"
+      icon_template: mdi:currency-rub
+      
+    ds220j_daily_cost:
+      friendly_name: Ds220j Average Daily Running Cost
+      value_template: "{{(states('input_number.tariff_energy_day')|float(0)*16*states('sensor.ds220j_daily_power_consumption')|float(0)/1000+states('input_number.tariff_energy_night')|float(0)*8*states('sensor.ds220j_daily_power_consumption')|float(0)/1000)|round(2, 'common' ,0)}}"
+      unit_of_measurement: "rub"
+      icon_template: mdi:currency-rub
+    ds220j_monthly_cost:
+      friendly_name: Ds220j Average Monthly Running Cost
+      value_template: "{{(states('sensor.ds220j_daily_cost')|float(0)*30)|round(0, 'common' ,0) }}"
       unit_of_measurement: "rub"
       icon_template: mdi:currency-rub
 

@@ -105,7 +105,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - ESP32 - Node K - Kitchen MH-Z19B, BME280, BHI1750, Water Filter Counters, IR controller
   - ESP32 - Node B - Bathroom Relays (Water vales, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
   - ESP32 - Node MB - Master Bedroom MH-Z19B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
-  - ESP32 - Node V - Vova's Room MH-Z19B, BME280, BHI1750, Dallas sensor (Heating pipe)
+  - ESP32 - Node V - Vova Room MH-Z19B, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
   - ESP32 - BLE Tracker (Nut find 3)
   - ESP32 - BLE Tracker (Xiaomi Scale 2 and Nut find 3)
@@ -115,7 +115,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
   - ESP01 Weight Cell
   - D1 Mini LED Bed light
-  - D1 Mini S - Sasha's Room MH-Z19B, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
+  - D1 Mini S - Sasha Room MH-Z19B, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
 
 **Other Devices:**
