@@ -1,47 +1,47 @@
 substitutions:
-  board_name: sonoff_mini
+  board_name: Thermal Pad
 
 esphome:
   name: sonoff_mini
   platform: ESP8266
   board: esp01_1m
   comment: Sonoff Mini Thermo Pad Controller 
-  on_boot:
-    priority: -100
-    then:
-      - wait_until:
-          time.has_time:
-      # - wait_until:
-      #     mqtt.connected:
-      - delay: 1s
-      - if:
-          condition:
-            wifi.connected:
-          then:
-            - light.turn_on: wifi_led
-      - delay: 5s
-      - if:
-          condition:
-            sensor.in_range:
-              id: dallas_ambient
-              above: 30
-          then:
-            - climate.control:
-                id: climate_pad
-                mode: 'OFF'
-      - if:
-          condition:
-            sensor.in_range:
-              id: dallas_ambient
-              below: 30
-          then:
-            - climate.control:
-                id: climate_pad
-                mode: HEAT
+  # on_boot:
+  #   priority: -100
+  #   then:
+  #     - wait_until:
+  #         time.has_time:
+  #     # - wait_until:
+  #     #     mqtt.connected:
+  #     - delay: 1s
+  #     - if:
+  #         condition:
+  #           wifi.connected:
+  #         then:
+  #           - light.turn_on: wifi_led
+  #     - delay: 5s
+  #     - if:
+  #         condition:
+  #           sensor.in_range:
+  #             id: dallas_ambient
+  #             above: 30
+  #         then:
+  #           - climate.control:
+  #               id: climate_pad
+  #               mode: 'OFF'
+  #     - if:
+  #         condition:
+  #           sensor.in_range:
+  #             id: dallas_ambient
+  #             below: 30
+  #         then:
+  #           - climate.control:
+  #               id: climate_pad
+  #               mode: HEAT
 
 
 wifi:
-  ssid: !secret wifi_ssid
+  ssid: !secret wifi_ssid_hb
   password: !secret wifi_pass
   domain: .local
   reboot_timeout: 15min
@@ -121,13 +121,13 @@ switch:
 climate:
   - platform: bang_bang
     visual:
-      min_temperature: 32 °C
-      max_temperature: 42 °C
+      min_temperature: 30 °C
+      max_temperature: 50 °C
       temperature_step: 1 °C  
     name: ${board_name}_Thermo_Pad
     sensor: dallas_pad
-    default_target_temperature_low: 33 °C
-    default_target_temperature_high: 38 °C
+    default_target_temperature_low: 42 °C
+    default_target_temperature_high: 46 °C
     heat_action:
       - switch.turn_on: relay
     idle_action:
@@ -170,6 +170,28 @@ sensor:
     resolution: 12
     id: dallas_pad
 
+  - platform: template
+    name: ${board_name} Power
+    lambda: |-
+      if (id(relay).state) {
+        return 140.0;
+      } else {
+        return 0.0;
+      }
+    update_interval: 15s
+    device_class: "power"
+    unit_of_measurement: 'W'
+    state_class: "measurement"
+    id: power
+
+  - platform: total_daily_energy
+    name: ${board_name} Daily Energy
+    power_id: power
+    filters:
+      - multiply: 0.001
+    unit_of_measurement: 'kWh'
+    accuracy_decimals: 1
+    
 text_sensor:
   - platform: template
     name: ${board_name}_Uptime
@@ -201,5 +223,6 @@ button:
     name: ${board_name}_Restart
 
 time:
-  - platform: homeassistant
-    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
