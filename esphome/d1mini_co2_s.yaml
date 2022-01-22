@@ -96,20 +96,38 @@ sensor:
     update_interval: 15s
 
   - platform: mhz19
-    id: my_mhz19_id
     co2:
       name: "Z19 CO2 S"
     temperature:
       name: "Z19 Temp S"
     update_interval: 60s
+    id: my_mhz19_id
+    automatic_baseline_calibration: false
 
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s    
 
-switch:
+button:
   - platform: restart
     name: ${board_name}_Restart
+
+switch:
+  - platform: template
+    name: ${board_name}_MH-Z19 ABC
+    optimistic: true
+    on_turn_on:
+      mhz19.abc_enable: my_mhz19_id
+    on_turn_off:
+      mhz19.abc_disable: my_mhz19_id
+
+  - platform: template
+    name: ${board_name}_MH-Z19 Calibrate
+    on_turn_on:
+      mhz19.calibrate_zero: my_mhz19_id
+    turn_off_action:
+      switch.turn_off: mhz19_zero
+    id: mhz19_zero
 
   # - platform: template
   #   name: "Z19 ABC"
@@ -120,5 +138,6 @@ switch:
   #     mhz19.abc_disable: my_mhz19_id
 
 time:
-  - platform: homeassistant
-    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

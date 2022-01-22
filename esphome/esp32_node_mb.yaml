@@ -122,7 +122,9 @@ sensor:
     temperature:
       name: "Z19 Temp MB"
     update_interval: 30s
-
+    id: my_mhz19_id
+    automatic_baseline_calibration: false
+    
   - platform: bme280
     temperature:
       name: ${board_name}_Temperature
@@ -148,9 +150,26 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
     
-switch:
+button:
   - platform: restart
     name: ${board_name}_Restart
+
+switch:
+  - platform: template
+    name: ${board_name}_MH-Z19 ABC
+    optimistic: true
+    on_turn_on:
+      mhz19.abc_enable: my_mhz19_id
+    on_turn_off:
+      mhz19.abc_disable: my_mhz19_id
+
+  - platform: template
+    name: ${board_name}_MH-Z19 Calibrate
+    on_turn_on:
+      mhz19.calibrate_zero: my_mhz19_id
+    turn_off_action:
+      switch.turn_off: mhz19_zero
+    id: mhz19_zero
 
 time:
   - platform: homeassistant
