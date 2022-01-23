@@ -2,7 +2,7 @@
   name: Server Daily Power Consumption
   entity_id: sensor.server_plug_hb_power
   state_characteristic: mean
-  sampling_size: 10000
+  sampling_size: 90000
   max_age:
     hours: 24
 
@@ -10,7 +10,7 @@
   name: Ds1621plus Daily Power Consumption
   entity_id: sensor.ds1621plus_plug_hb_power
   state_characteristic: mean
-  sampling_size: 10000
+  sampling_size: 90000
   max_age:
     hours: 24
     
@@ -18,7 +18,15 @@
   name: Ds220j Daily Power Consumption
   entity_id: sensor.ds220j_plug_mb_power
   state_characteristic: mean
-  sampling_size: 10000
+  sampling_size: 90000
+  max_age:
+    hours: 24
+
+- platform: statistics
+  name: Thermo Pad Hourly Power Consumption
+  entity_id: sensor.0x158d000392623d_power
+  state_characteristic: mean
+  sampling_size: 90000
   max_age:
     hours: 24
 
@@ -45,6 +53,17 @@
   sensors:
     # pc_hosts_cost:
     #   value_template: "{{states('sensor.shp2_socket_1_w')|float(0) + states('sensor.shp6_socket_2_w')|float(0) + states('sensor.shp2_socket_2_w')|float(0) + states('sensor.shp6_socket_1_w')|float(0)}} "
+
+    thermo_pad_daily_cost:
+      friendly_name: Thermo Pad Average Daily Running Cost
+      value_template: "{{(states('input_number.tariff_energy_day')|float(0)*16*states('sensor.thermo_pad_hourly_power_consumption')|float(0)/1000+states('input_number.tariff_energy_night')|float(0)*8*states('sensor.thermo_pad_hourly_power_consumption')|float(0)/1000)|round(2, 'common' ,0)}}"
+      unit_of_measurement: "rub"
+      icon_template: mdi:currency-rub
+    thermo_pad_monthly_cost:
+      friendly_name: Thermo Pad Average Monthly Running Cost
+      value_template: "{{(states('sensor.thermo_pad_daily_cost')|float(0)*30)|round(0, 'common' ,0) }}"
+      unit_of_measurement: "rub"
+      icon_template: mdi:currency-rub
 
     server_daily_cost:
       friendly_name: Server Average Daily Running Cost

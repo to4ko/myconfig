@@ -164,9 +164,9 @@
           minutes: 2
         state: "{{ states('sensor.sonoff_pow_r2_1_power')|float(0) > 5 }}"
         icon: >
-          {% if is_state("binary_sensor.washer_b", "on") and not is_state('input_select.washer_state','Drying')%}
+          {% if states('sensor.sonoff_pow_r2_1_power')|float(0) == 0 %}
             mdi:washing-machine-off
-          {% elif is_state("binary_sensor.washer_b", "off") and is_state('input_select.washer_state','Drying')%}
+          {% elif (states('sensor.sonoff_pow_r2_1_power')|float(0) > 0 and states('sensor.sonoff_pow_r2_1_power')|float(0) <= 0 ) %}
             mdi:washing-machine-alert
           {% else %}
             mdi:washing-machine
@@ -467,3 +467,124 @@
       #   friendly_name: Sandra home
       #   value_template: "{{is_state('person.sandra','home')}}"
       #   delay_off: 120
+
+      # - name: Main Switch K Button
+      #   state: "{{ states('sensor.0x158d0002a36f7f_action') in ['button_2_single','button_2_double'] }}"
+
+      # - name: Main Switch MB Button
+      #   state: "{{ states('sensor.0x158d00013e6aa5_action') in ['button_2_single','button_2_double','button_1_single','button_1_double'] }}"
+
+      # - name: Main Switch V Button
+      #   state: "{{ states('sensor.0x158d0001712d55_action') in ['button_2_single','button_2_double','button_1_single','button_1_double'] }}"
+
+      # - name: Main Switch S Button
+      #   state: "{{ states('sensor.0x158d00026eb820_action') in ['button_2_single','button_2_double','button_1_single','button_1_double'] }}"
+
+      # - name: Main Switch HS Button
+      #   state: "{{ states('sensor.0x158d0002a36433_action') in ['button_1_single','button_1_double'] }}"
+
+
+  - trigger:
+      - platform: state
+        entity_id: light.round_led_k
+        to: 'on'
+        from: 'off'
+        for:
+          seconds: 3
+      - platform: state
+        entity_id: light.round_led_k
+        to: 'off'
+        from: 'on'
+        for:
+          seconds: 3
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Round LED K Prev
+        state: >-
+          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+          {{ states('light.round_led_k') if states('light.round_led_k') not in ignore else states('binary_sensor.round_led_k_prev') }}
+
+  - trigger:
+      - platform: state
+        entity_id: light.round_led_hs
+        to: 'on'
+        from: 'off'
+        for:
+          seconds: 3
+      - platform: state
+        entity_id: light.round_led_hs
+        to: 'off'
+        from: 'on'
+        for:
+          seconds: 3
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Round LED HS Prev
+        state: >-
+          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+          {{ states('light.round_led_hs') if states('light.round_led_hs') not in ignore else states('binary_sensor.round_led_hs_prev') }}
+
+  - trigger:
+      - platform: state
+        entity_id: light.round_led_mb
+        to: 'on'
+        from: 'off'
+        for:
+          seconds: 3
+      - platform: state
+        entity_id: light.round_led_mb
+        to: 'off'
+        from: 'on'
+        for:
+          seconds: 3
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Round LED MB Prev
+        state: >-
+          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+          {{ states('light.round_led_mb') if states('light.round_led_mb') not in ignore else states('binary_sensor.round_led_mb_prev') }}
+
+  - trigger:
+      - platform: state
+        entity_id: light.square_led_s
+        to: 'on'
+        from: 'off'
+        for:
+          seconds: 3
+      - platform: state
+        entity_id: light.square_led_s
+        to: 'off'
+        from: 'on'
+        for:
+          seconds: 3
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Square LED S Prev
+        state: >-
+          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+          {{ states('light.square_led_s') if states('light.square_led_s') not in ignore else states('binary_sensor.square_led_s_prev') }}
+
+  - trigger:
+      - platform: state
+        entity_id: light.square_led_v
+        to: 'on'
+        from: 'off'
+        for:
+          seconds: 3
+      - platform: state
+        entity_id: light.square_led_v
+        to: 'off'
+        from: 'on'
+        for:
+          seconds: 3
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Square LED V Prev
+        state: >-
+          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+          {{ states('light.square_led_v') if states('light.square_led_v') not in ignore else states('binary_sensor.square_led_v_prev') }}
