@@ -64,7 +64,7 @@
         level: WARNING
   condition:
     - condition: template
-      value_template: "{{ not this.name in trigger.event.data.message }}"
+      value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}"
   action:
     - service: counter.increment
       data:
@@ -103,7 +103,8 @@
 - alias: system_stop
   id:  system_stop_message
   initial_state: true
-  mode: single #queued
+  mode: single
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: homeassistant_stop
@@ -425,6 +426,7 @@
   id:  system_transmission_completed_torrent
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: transmission_downloaded_torrent
@@ -440,6 +442,7 @@
   id:  system_config_error_notification
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id:
@@ -629,7 +632,7 @@
           trigger.event.data.message | regex_search('Error executing script')
         }}
     - condition: template
-      value_template: "{{ not trigger.event.data.message | regex_search('system_automation_error') }}"
+      value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}" #"{{ not trigger.event.data.message | regex_search('system_automation_error') }}"
     # - condition: template
     #   value_template: "{{ not trigger.event.data.message | regex_search(this.entity_id) }}"
   action:
@@ -648,6 +651,7 @@
   id:  system_error_per_hour
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: numeric_state
       entity_id: sensor.error_counter_hourly
@@ -669,6 +673,7 @@
   id:  system_warning_per_hour
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: numeric_state
       entity_id: sensor.warning_counter_hourly
@@ -989,6 +994,7 @@
   id:  system_watchdog
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id: binary_sensor.0x158d000323c87c_contact
@@ -1077,7 +1083,7 @@
   initial_state: true
   trigger:
     - platform: numeric_state
-      entity_id: sensor.esp32_bathroom_node_hot_pipe
+      entity_id: sensor.esp32_node_b_hot_pipe
       below: 40
       for:
         minutes: 5
@@ -1098,14 +1104,14 @@
   initial_state: true
   trigger:
     - platform: numeric_state
-      entity_id: sensor.esp32_bathroom_node_cold_pipe
+      entity_id: sensor.esp32_node_b_cold_pipe
       above: sensor.0x158d0001e58754_temperature
       for:
         minutes: 5
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_bathroom_node_cold_pipe')|int(0)}}°C"
+        message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_node_b_cold_pipe')|int(0)}}°C"
 
 # ##################################
 # System - Central Heating
@@ -1391,6 +1397,7 @@
   id:  system_zb_devices_status_normal
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: numeric_state
       entity_id: sensor.zigbee_devices_unavailable
@@ -1420,7 +1427,7 @@
         - binary_sensor.digma_ir_s_status
         - binary_sensor.digma_ir_v_status
         - binary_sensor.esp01_weight_pad_status
-        - binary_sensor.esp32_bathroom_node_status
+        - binary_sensor.esp32_node_b_status
         - binary_sensor.esp32_ble_tracker_status
         - binary_sensor.esp32_domofon_status
         - binary_sensor.d1mini_domofon_status
@@ -1514,6 +1521,7 @@
   id:  system_xiaomi_gw3_error
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: system_log_event
@@ -1682,7 +1690,7 @@
         - sensor.digma_ir_v_uptime_s
         - sensor.esp01_air_freshener_uptime_s
         - sensor.esp01_weight_pad_uptime_s
-        - sensor.esp32_bathroom_node_uptime_s
+        - sensor.esp32_node_b_uptime_s
         - sensor.esp32_ble_tracker_2_uptime_s
         - sensor.esp32_ble_tracker_uptime_s
         - sensor.esp32_domofon_uptime_s
@@ -2142,6 +2150,7 @@
 - alias: system_config_entry_discovery
   id:  system_config_entry_discovery
   mode: single
+  max_exceeded: silent
   initial_state: true
   trigger:
     - platform: state
@@ -2208,6 +2217,7 @@
 - alias: system_gw3_devices_msg_missed
   id:  system_gw3_devices_msg_missed
   mode: single
+  max_exceeded: silent
   initial_state: true
   trigger:
     - platform: numeric_state

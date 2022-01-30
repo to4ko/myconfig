@@ -31,7 +31,6 @@
   id: toilet_air_freshener_spray
   initial_state: true
   mode: single
-  max: 25
   max_exceeded: silent
   trigger:
     - platform: state
@@ -39,15 +38,11 @@
       from: "off"
       to: "on"
       for:
-        minutes: 1
+        minutes: 2
   condition:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   action:
-    - delay: "00:01:00"
-    - condition: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      state: "on"
     - service: switch.turn_on
       entity_id: switch.d1mini_air_freshener_spray
     - wait_for_trigger:
@@ -60,11 +55,7 @@
         minutes: 20
       continue_on_timeout: false
     - service: switch.turn_on
-      entity_id: switch.d1mini_air_freshener_spray, switch.esp32_bathroom_node_relay_4
-    - delay:
-        seconds: 3
-    - service: light.turn_off
-      entity_id: light.d1mini_air_freshener_led_green
+      entity_id: switch.d1mini_air_freshener_spray, switch.esp32_node_b_relay_4
 
 # ##################################
 # Toilet - Air Freshener Spray Manual
@@ -73,6 +64,7 @@
   id: toilet_air_freshener_spray_manual
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: event
       event_type: xiaomi_aqara.click
@@ -116,7 +108,7 @@
       value_template: "{{ not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) }}"
   action:
     - service: climate.turn_{% if not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
-      entity_id: climate.sonoff_dual_t_wall_heater
+      entity_id: climate.sonoff_pow_r2_2_wall_heater
 
 # # ##################################
 # # Toilet - Close Seat notify

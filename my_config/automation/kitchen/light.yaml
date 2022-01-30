@@ -9,6 +9,7 @@
   id: kitchen_timer_restart
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id:
@@ -112,7 +113,6 @@
   id: kitchen_auto_light_on
   initial_state: true
   mode: single
-  max: 5
   max_exceeded: silent
   trigger:
     - platform: state
@@ -158,7 +158,6 @@
   id: kitchen_auto_night_light
   initial_state: true
   mode: single
-  max: 5
   max_exceeded: silent
   trigger:
     - platform: state
@@ -246,14 +245,22 @@
               message: "\U0001f6a8 Round LED K restart done({{repeat.index}})!"
           - delay:
               seconds: 30
-    - condition: state
-      entity_id: light.round_led_k
-      state: 'unavailable'
-    - service: notify.telegram
-      data:
-        message: "\U0001f6a8 Round LED K restart unsuccessful!"
-    - service: switch.turn_off
-      entity_id: switch.round_led_k_restart_key
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_k
+              state: 'unavailable'
+          sequence:
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 Round LED K restart unsuccessful!"
+            - service: switch.turn_off
+              entity_id: switch.round_led_k_restart_key
+      default:
+        - service: light.turn_{{ states("binary_sensor.round_led_k_prev") | lower }}
+          entity_id: light.round_led_k
+        - service: switch.turn_on
+          entity_id: switch.round_led_k_restart_key
 
 # ##################################
 # Kitchen - Main Light Auto Restart Key Toggle
@@ -262,6 +269,7 @@
   id: kitchen_main_lamp_restart_key_toggle
   initial_state: true
   mode: single
+  max_exceeded: silent
   trigger:
     - platform: state
       entity_id: light.round_led_k
@@ -297,7 +305,6 @@
   id: kitchen_main_lamp_on
   initial_state: true
   mode: single
-  max: 5
   max_exceeded: silent
   trigger:
     - platform: event
@@ -365,7 +372,6 @@
   id: kitchen_main_lamp_on_full
   initial_state: true
   mode: single
-  max: 5
   max_exceeded: silent
   trigger:
     - platform: event

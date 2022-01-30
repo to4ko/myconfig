@@ -15,11 +15,13 @@ esphome:
 
 
 wifi:
-  ssid: !secret wifi_ssid
+  ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .local
   reboot_timeout: 15min
+  #output_power: 17.5dB
   fast_connect: true
+  #power_save_mode: none
   manual_ip:
     static_ip: 192.168.1.54
     gateway: 192.168.1.1
@@ -28,6 +30,7 @@ wifi:
     dns2: 8.8.8.8
 
 logger:
+  baud_rate: 0
 
 api:
   reboot_timeout: 0s
@@ -37,15 +40,21 @@ ota:
 web_server:
   port: 80
 
+i2c:
+  id: i2c_component
+  sda: GPIO3
+  scl: GPIO1
+  scan: True
+
 output:
-  - platform: esp8266_pwm
+  - platform: gpio
     id: manual_status_led
     pin: 
       number: GPIO13
       inverted: false
 
 light:
-  - platform: monochromatic
+  - platform: binary
     name: ${board_name}_Status_LED
     internal: true
     output: manual_status_led
@@ -94,6 +103,35 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
+  - platform: bme280
+    temperature:
+      name: ${board_name}_Temperature
+      oversampling: 16x
+      id: bme_temperature
+    pressure:
+      name: ${board_name}_Pressure
+      id: bme_pressure
+    humidity:
+      name: ${board_name}_Humidity
+      id: bme_humidity
+    address: 0x76
+    update_interval: 15s
+
+climate:
+  - platform: bang_bang
+    visual:
+      min_temperature: 20 °C
+      max_temperature: 27 °C
+      temperature_step: 1 °C  
+    name: ${board_name}_Wall_Heater
+    sensor: bme_temperature
+    default_target_temperature_low: 21 °C
+    default_target_temperature_high: 23 °C
+    heat_action:
+      - switch.turn_on: relay
+    idle_action:
+      - switch.turn_off: relay
+
 text_sensor:
   - platform: template
     name: ${board_name}_Uptime
@@ -120,6 +158,11 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+
 time:
-  - platform: homeassistant
-    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
