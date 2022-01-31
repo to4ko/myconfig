@@ -17,6 +17,7 @@
           Сейчас {{ now().strftime('%H')|int | format(morph='час', as_text=false) }} {{ now().strftime('%M')|int | format(morph='минута', as_text=false) }}.
         {% endif %}
       </p>
+
       <p>
       {{ [
           'Сегодня ',
@@ -24,17 +25,40 @@
           'Знаете какой сегодня день недели? ',
           'Неожиданно, но сегодня '
       ]|random }}
-      {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now()|timestamp_custom("%w",true,0)-1]}}.
+      {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}}, 
+      {{now().strftime('%d')|int|format(morph='первое', as_ordinal=True)}} {{['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'][now().strftime('%m')|int -1]|lower}}.
+      {% if state_attr('calendar.fazy_luny','message').split(":")[0] in ['Новолуние','Полнолуние'] %}
+        {{state_attr('calendar.fazy_luny','message').split(":")[0]}}
+      {% endif %}
       </p>
       <p>
-        Текущая температура {{states('sensor.esp32_node_mb_outside')|int(0)}} °C 
+        Текущая температура {{states('sensor.esp32_node_mb_outside')|int(0)}} °C,
       </p>
       <p>
-        По прогнозу сегодня {{states('sensor.dark_sky_summary_0d')}}
+        а по прогнозу сегодня {{states('sensor.dark_sky_summary_0d')}}
+      </p>
+      <p>
+        {% if ((now().weekday() + 1 ) <= 5 and is_state('binary_sensor.workday','off')) or
+              ((now().weekday() + 1 ) > 5 and is_state('binary_sensor.workday','on')) %}
+        Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
+        {% endif %}
+      </p>
+      <p>
+        {% if 0 < states('sensor.birthday_0')|int <= 30 %}
+          {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}} отмечает день рождения через {{states('sensor.birthday_0')|int|format(morph='день')}}.
+        {% elif states('sensor.birthday_0')|int == 0 %}
+           Сегодня отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}!
+        {%endif %}
+
+        {% if 0 < states('sensor.holiday_0')|int <= 30 %}
+          Ближайший праздник - {{ state_attr('sensor.holiday_0','friendly_name') }} через {{states('sensor.holiday_0')|int|format(morph='день')}}.
+        {% elif event_counter == 0 %}
+          Сегодня праздник {{ state_attr('sensor.holiday_0','friendly_name') }}! Поздравляю!
+        {% endif %}
+
       </p>
 
   {%- endmacro -%}
-
 
   {# a macro that removes all newline characters, empty spaces, and returns formatted text  #}
     {%- macro cleanup(data) -%}
@@ -49,6 +73,7 @@
     
     {# Call the macro  #}
     {{- cleanup(mother_of_all_macros()) -}}
+    
     
 #   <p>
 #   {% if is_state('sensor.halloween_countdown','0') %}
@@ -98,3 +123,15 @@
 #     {% endif %}
 #     Currently it will take {{states.sensor.home_to_summit.state|round}} minutes to get to Summit taking {{ states.sensor.home_to_summit.attributes.route }}.
 # </p>    
+
+# {{ ((as_timestamp(state_attr('calendar.dni_rozhdeniia','start_time')) -as_timestamp(now()) ) / (24*60*60))|round(0, 'floor' ,0) }}
+
+# {{ state_attr('calendar.dni_rozhdeniia','message').split(' – ')[0] }}
+
+# {{ ((as_timestamp(state_attr('calendar.prazdniki_rossii','start_time')) -as_timestamp(now()) ) / (24*60*60))|round(0, 'floor' ,0) }}
+
+# {{ state_attr('calendar.prazdniki_rossii','message') }}
+
+# {{ ((as_timestamp(state_attr('calendar.fazy_luny','start_time')) -as_timestamp(now()) ) / (24*60*60))|round(0, 'floor' ,0) }}
+
+# {{ state_attr('calendar.fazy_luny','message').split(":")[0] }}
