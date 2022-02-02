@@ -1,0 +1,34 @@
+  - alias: system_gw3_ota_update_sensor
+    id: system_gw3_ota_update_sensor
+    initial_state: false
+    mode: parallel
+    max: 100
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: time_pattern
+        minutes: "/59"
+    action:
+      - service: script.update_sensor_ota
+      - delay: '00:00:09'
+      - service: script.update_ota_status
+        data:
+          zigbee_devices: "{{ states | selectattr('entity_id', 'match', 'sensor.*_zigbee') | map(attribute='entity_id') | list }}"
+
+  - alias: system_gw3_ota_update_fw
+    id: system_gw3_ota_update_fw
+    initial_state: false
+    mode: parallel
+    max: 100
+    trigger:
+      - platform: event
+        event_type: state_changed
+    condition:
+      - condition: template
+        value_template: "{{ (as_timestamp(now()) - as_timestamp(states('sensor.ha_start'))) | int(0) > 10 }}"
+      - condition: template
+        value_template: "{{ trigger.event.data.entity_id.endswith('_zigbee') and state_attr(trigger.event.data.entity_id, 'tmp_update_flag') == none }}"
+    action:
+      - service: script.update_ota_status
+        data:
+          zigbee_devices: "{{ (trigger.event.data.entity_id,) | list }}"

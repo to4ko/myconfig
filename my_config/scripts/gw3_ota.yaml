@@ -1,0 +1,75 @@
+  update_ota_status:
+    mode: parallel
+    max: 100
+    fields:
+      zigbee_devices:
+        description: "List of zigbee device for update ota status"
+    sequence:
+      - service: python_script.exec
+        data:
+          gw3_devices: "{{ zigbee_devices }}"
+          source: |
+            import json
+            OTA_SENSOR='sensor.lumi_ota_list'
+            lumi_list =json.loads(hass.states.get(OTA_SENSOR).attributes['ota_list'])
+            gw3_devices = data['gw3_devices']
+            # logger.info(f"update device(s): { gw3_devices }")
+            for device in gw3_devices:
+                device_fw_ver = hass.states.get(device).attributes['device_fw_ver']
+                device_model = hass.states.get(device).attributes['device_model']
+                device_ota_ver = 0
+                if device_model in lumi_list:
+                    device_ota_ver = lumi_list[device_model]
+                    state = hass.states.get(device).state
+                    attrs = hass.states.get(device).attributes.copy()
+                    attrs['device_ota_ver'] = device_ota_ver
+                    if device_ota_ver > device_fw_ver:
+                        update_available = "true"
+                    else:
+                        update_available = "false"
+                    attrs['update_available'] = update_available
+                    attrs['tmp_update_flag'] = 1
+                    hass.states.set(device, state, attrs)
+  
+  update_sensor_ota:
+    mode: parallel
+    max: 100
+    sequence:
+      - service: python_script.exec
+        data:
+          source: |
+            import json
+            import os
+            import time
+            from urllib import request
+            OTA_INDEX_FILE='/tmp/z2m_index.json'
+            OTA_SENSOR='sensor.lumi_ota_list'
+            def get_lumi_list(ota_index_file: str):
+                import json
+                try:
+                    f = open(ota_index_file)
+                    ota_list = json.load(f)
+                except Exception as err:
+                    return False
+                f.close()
+                lumi_list = {}
+                for item in ota_list:
+                    if 'manufacturerCode' in item and 'fileVersion' in item and 'modelId' in item and item['manufacturerCode'] == 4447:
+                        lumi_list[item['modelId']] = item['fileVersion']
+                return lumi_list
+            fstat = False
+            if os.path.isfile(OTA_INDEX_FILE):
+                fstat = os.stat(OTA_INDEX_FILE)
+            if fstat and fstat.st_size > 0 and (time.time() - fstat.st_mtime) > (60*60):
+                lumi_list = get_lumi_list(OTA_INDEX_FILE)
+            else:
+                try:
+                    request.urlretrieve('https://raw.githubusercontent.com/Koenkk/zigbee-OTA/master/index.json', OTA_INDEX_FILE)
+                    lumi_list = get_lumi_list(OTA_INDEX_FILE)
+                except Exception as lerr:
+                    logger.info(f"{lerr}")
+                    lumi_list = False
+            if lumi_list:
+                lattrs = hass.states.get(OTA_SENSOR).attributes.copy()
+                lattrs['ota_list'] = json.dumps(lumi_list)
+                hass.states.set(OTA_SENSOR, 'OK', lattrs)

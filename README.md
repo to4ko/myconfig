@@ -44,7 +44,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
   - Ubiquiti G3 Flex Cameras (6ea)
   - Digma 100
-  - Cheap Aliexpress Pinhole cam via Motioneye (motion detection and stream recording)
+  - Cheap Aliexpress Pinhole cam via iSpyAgent DVR (Docker on DS1621+)
 
 **Xiaomi\Aqara WiFi Devices:**
   - Xiaomi Gateway v3 (6ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
@@ -57,12 +57,11 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Yeelight Jiaoyue 260 (YLXD62YI)
   - Xiaomi Yeelight Bedside Lamp 2
   - Yeelight Bedside Lamp D2
-  - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
+  - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
   - Xiaomi Philips Zhirui Downlight (9290012799)
   - Yeelight Xiaomi Led Bulb (Color) (YLDP06YL) (2ea)
   - Yeelight Xiaomi Led Tunable Bulb (White) (YLDP05YL) (2ea)
   - not in use - Xiaomi Smart WiFi Power Strip (2ea)
-  - Xiaomi Smartmi Humidifier 2
   - Xiaomi Air Purifier 2s
   - Xiaomi Wifi Plugs v2 (4ea)
   - not in use - Xiaomi Wifi Plugs v2 (3ea)
@@ -87,7 +86,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Xiaomi Natural Gas Detector (1ea)
   - Aqara Zigbee Relay (1ea)
   - Xiaomi Light Sensor (2ea)
-  - Aqara Opple Wireless Switch (1ea)
+  - Aqara Opple Wireless Switch (2ea)
   - not in use - Aqara Opple Wireless Switch (4ea)
 
 **ESPHome devices:**
@@ -112,23 +111,20 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP32 PZEM HB - Hall Big Breaker Box PZEM-004T
   - Digma IR Remote (3ea)
-  - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
+  - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
   - ESP01 Weight Cell
   - D1 Mini LED Bed light
   - D1 Mini S - Sasha Room MH-Z19B, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
+  - D1 Mini Air Freshener with Figaro air sensor
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
 
 **Other Devices:**
-  - not in use - DIYRuZ_FreePad v1
-  - not in use - LifeControl E27 RGB Lamp
-  - not in use - LifeControl Plug (2ea)
-  - not in use - Blitzwolf SHP13 Zigbee3.0 Plug (2ea)
-  - [SLS Gateway](https://t.me/slsys) by @avenit
-  - SLS Gateway v4 by [egony](https://github.com/egony)
+  - SLS Gateway
   - DIYRuZ_Geiger Sensor via SLS GW
-  - Google Home Mini (6ea)
+  - not in use - Google Home Mini (6ea)
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
   - Shelly EM - energy monitoring (comparing to PZEM...not shure which one os better)
+  - Shelly 1PM
   
 **Main Host Software:**
   - Debian 11

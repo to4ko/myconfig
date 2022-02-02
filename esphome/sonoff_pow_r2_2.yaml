@@ -76,6 +76,7 @@ climate:
       - switch.turn_on: relay
     idle_action:
       - switch.turn_off: relay
+    id: my_climate
 
 binary_sensor:
   - platform: gpio
@@ -89,6 +90,13 @@ binary_sensor:
       
   - platform: status
     name: ${board_name}_Status
+
+  - platform: template
+    name: ${board_name}_Alarm
+    id: template_bin_alarm
+    filters:
+      - delayed_off: 15s
+    device_class: problem
 
 switch:
   - platform: gpio
@@ -136,6 +144,40 @@ sensor:
       name: ${board_name}_Temperature
       oversampling: 16x
       id: bme_temperature
+      on_value:
+        then:
+          - if:
+              condition:
+                lambda: 'return ((id(bme_temperature).state - id(my_climate).target_temperature_high) >= 1 );'
+              then:
+                - logger.log: " >>> The bme above target high"
+                - text_sensor.template.publish:
+                    id: template_text_log
+                    state: "The bme above target high"                
+                - if:
+                    condition:
+                      switch.is_on: relay
+                    then:
+                      - binary_sensor.template.publish:
+                          id: template_bin_alarm
+                          state: ON                  
+                      - logger.log: " >>> Switching off relay"
+                      - text_sensor.template.publish:
+                          id: template_text_log
+                          state: "Switching off relay"    
+                      - switch.turn_off: relay
+                      - delay: '00:00:15'
+                      - binary_sensor.template.publish:
+                          id: template_bin_alarm
+                          state: OFF                        
+              else:
+                - logger.log: " >>> The bme below target high"
+                - text_sensor.template.publish:
+                    id: template_text_log
+                    state: "The bme below target high"
+                - binary_sensor.template.publish:
+                    id: template_bin_alarm
+                    state: OFF                
     pressure:
       name: ${board_name}_Pressure
       id: bme_pressure
@@ -144,6 +186,10 @@ sensor:
       id: bme_humidity
     address: 0x77
     update_interval: 15s
+
+
+
+    
     
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -178,6 +224,10 @@ text_sensor:
       return {buffer};
     icon: mdi:clock-start
     update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_Log
+    id: template_text_log
 
 button:
   - platform: restart

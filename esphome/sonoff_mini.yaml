@@ -112,6 +112,13 @@ binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
+  - platform: template
+    name: ${board_name}_Alarm
+    id: template_bin_alarm
+    filters:
+      - delayed_off: 15s
+    device_class: problem
+
 switch:
   - platform: gpio
     name: ${board_name}_Relay
@@ -126,8 +133,8 @@ climate:
       temperature_step: 1 °C  
     name: ${board_name}_Thermo_Pad
     sensor: dallas_pad
-    default_target_temperature_low: 35 °C
-    default_target_temperature_high: 40 °C
+    default_target_temperature_low: 42 °C
+    default_target_temperature_high: 48 °C
     heat_action:
       - switch.turn_on: relay
     idle_action:
@@ -169,6 +176,40 @@ sensor:
     accuracy_decimals: 2
     resolution: 12
     id: dallas_pad
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return ((id(dallas_pad).state - id(climate_pad).target_temperature_high ) >= 1) ;'
+            then:
+              - logger.log: " >>> The dallas_pad above target high"
+              - text_sensor.template.publish:
+                  id: template_text_log
+                  state: "The dallas_pad above target high"
+              - if:
+                  condition:
+                    switch.is_on: relay
+                  then:
+                    - binary_sensor.template.publish:
+                        id: template_bin_alarm
+                        state: ON                  
+                    - logger.log: " >>> Switching off relay"
+                    - text_sensor.template.publish:
+                        id: template_text_log
+                        state: "Switching off relay"
+                    - switch.turn_off: relay
+                    - delay: '00:00:15'
+                    - binary_sensor.template.publish:
+                        id: template_bin_alarm
+                        state: OFF                    
+            else:
+              - logger.log: " >>> The dallas_pad below target high"
+              - text_sensor.template.publish:
+                  id: template_text_log
+                  state: "The dallas_pad below target high"
+              - binary_sensor.template.publish:
+                  id: template_bin_alarm
+                  state: OFF
 
   - platform: template
     name: ${board_name} Power
@@ -217,6 +258,10 @@ text_sensor:
       return {buffer};
     icon: mdi:clock-start
     update_interval: 15s
+
+  - platform: template
+    name: ${board_name}_Log
+    id: template_text_log
 
 button:
   - platform: restart
