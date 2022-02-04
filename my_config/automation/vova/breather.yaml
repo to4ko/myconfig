@@ -42,3 +42,83 @@
   action:
     - service: switch.turn_on
       entity_id: switch.digma_ir_v_breather_pwr
+
+# ##################################
+# Vova - Breather on off hourly
+# ##################################
+- alias: vova_breather_on_off_hourly
+  id: vova_breather_on_off_hourly
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.breather_v
+      from: 'off'
+      to: 'on'
+      id: 'to_on'
+    - platform: state
+      entity_id: binary_sensor.breather_v
+      from: 'on'
+      to: 'off'
+      id: 'to_off'
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.breather_v
+      id: 'timer_finish'
+  action:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: "to_on"
+          sequence:
+            - condition: state
+              entity_id: person.sandra
+              state: 'home'
+            - service: timer.cancel
+              entity_id: timer.breather_v
+            - service: timer.start
+              entity_id: timer.breather_v
+        - conditions:
+            - condition: trigger
+              id: "to_off"
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: state
+                      entity_id: person.sandra
+                      state: 'home'
+                  sequence:
+                    - service: timer.cancel
+                      entity_id: timer.breather_v
+                    - service: timer.start
+                      entity_id: timer.breather_v
+              default:
+                - service: timer.cancel
+                  entity_id: timer.breather_v
+        - conditions:
+            - condition: trigger
+              id: "timer_finish"
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: state
+                      entity_id: binary_sensor.breather_v
+                      state: 'on'
+                  sequence:
+                    - service: switch.turn_on
+                      entity_id: switch.digma_ir_v_breather_pwr
+                - conditions:
+                    - condition: state
+                      entity_id: binary_sensor.breather_v
+                      state: 'off'
+                    - condition: numeric_state
+                      entity_id: sensor.0x158d0001e58714_temperature
+                      above: 19
+                    - condition: state
+                      entity_id: person.sandra
+                      state: 'home'
+                  sequence:
+                    - service: switch.turn_on
+                      entity_id: switch.digma_ir_v_breather_pwr
+
+

@@ -1,4 +1,16 @@
   - sensor:
+      # - name: Bus 22 to Work
+      #   state: "{{state_attr('sensor.bus_to_work','22')[0]}}"
+      
+      # - name: Bus 801 to Work
+      #   state: "{{state_attr('sensor.bus_to_work','801')[0]}}"
+
+      # - name: Bus to Work Next
+      #   state: "{{((as_timestamp(states('sensor.bus_to_work')) - as_timestamp(now()))/60)|round(0,'common',0)}}"
+
+      # - name: Bus to Home Next
+      #   state: "{{((as_timestamp(states('sensor.bus_to_home_from_koptevo')) - as_timestamp(now()))/60)|round(0,'common',0)}}"
+        
       - name: LUMI OTA List
         state: "OK"
         
@@ -100,7 +112,7 @@
           {{ (c * gamma / (b - gamma)) | round(1, 'common' ,0) }}
   
       - name: Zigbee Devices Unavailable
-        state: "{{ expand('group.zigbee_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count }}"
+        state: "{{ expand('group.zigbee_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count }}"
         icon: >
           {% if states('sensor.zigbee_devices_unavailable') == "on" %}
           mdi:signal-off
@@ -110,14 +122,13 @@
         attributes:
           list: >-
             {%-for state in expand('group.zigbee_devices')|list
-              if state.state in ['unavailable','unknown'] %}
+              if state.state in ['unavailable'] %}
               {{state.name}}{%- if not loop.last -%}, {%-endif%}
             {%-endfor-%}
         unit_of_measurement: "ea"
   
       - name: WiFi Devices Unavailable
-        state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable','unknown']) | map(attribute='name') | list | count + expand('group.esp_devices') | selectattr('state','in',['unavailable','unknown','off']) | map(attribute='name') | list | count }}"
-  
+        state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count + expand('group.esp_devices') | selectattr('state','in',['unavailable','off']) | map(attribute='name') | list | count }}"
         icon: >
           {% if states('sensor.wifi_devices_unavailable')|int(0) >  0 %}
           mdi:signal-off
@@ -127,33 +138,33 @@
         attributes:
           list: >-
             {%-for state in expand('group.wifi_devices')|list
-              if state.state in ['unavailable','unknown'] %}
+              if state.state in ['unavailable'] %}
               {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
-            {%-endfor-%}{%-if expand('group.esp_devices') | selectattr('state','in',['unavailable','unknown','off']) | map(attribute='name') | list | count >0 %}, {%endif%}
+            {%-endfor-%}{%-if expand('group.esp_devices') | selectattr('state','in',['unavailable','off']) | map(attribute='name') | list | count >0 %}, {%endif%}
             {%-for state in expand('group.esp_devices')|list
-              if state.state in ['unavailable','unknown','off'] %}
+              if state.state in ['unavailable','off'] %}
               {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
             {%-endfor-%}
         unit_of_measurement: "ea"
       #{{state.name}}{%- if not loop.last -%}, {%-endif%}
-  
+
       - name: Abs Humidity B
         state: >-
           {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float(0), states('sensor.0x158d00020d7c3a_temperature') %}
           {% if not h or t == 'unknown' -%}
-           'unknown'
+          'unknown'
           {%- else %}
           {% set t = t | float(0) %}
           {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2, 'common' ,0) }}
           {% endif %}
         unit_of_measurement: "g/m³"
         icon: mdi:water-percent
-  
+
       - name: Abs Humidity T
         state: >-
           {% set h, t = states('sensor.0x158d0001e58754_humidity') | float(0), states('sensor.0x158d0001e58754_temperature') %}
           {% if not h or t == 'unknown' -%}
-           'unknown'
+          'unknown'
           {%- else %}
           {% set t = t | float(0) %}
           {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2, 'common' ,0) }}
@@ -235,17 +246,17 @@
       #       {%- endif %}
       #     {%- else %}Unknown{%endif%}
   
-      - name: Git Stars
-        state: "{{state_attr('sensor.myconfig','stargazers')|int(0)}}"
-        icon: mdi:star
+      # - name: Git Stars
+      #   state: "{{state_attr('sensor.myconfig','stargazers')|int(0)}}"
+      #   icon: mdi:star
   
-      - name: Git Views
-        state: "{{state_attr('sensor.myconfig','views')|int(0)}}"
-        icon: mdi:account-multiple
+      # - name: Git Views
+      #   state: "{{state_attr('sensor.myconfig','views')|int(0)}}"
+      #   icon: mdi:account-multiple
   
-      - name: Git Views Unique
-        state: "{{state_attr('sensor.myconfig','views_unique')|int(0)}}"
-        icon: mdi:account-check
+      # - name: Git Views Unique
+      #   state: "{{state_attr('sensor.myconfig','views_unique')|int(0)}}"
+      #   icon: mdi:account-check
   
       # - name: GW3 NonResposing Devices
       #   state: >-
