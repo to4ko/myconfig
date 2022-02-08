@@ -43,6 +43,17 @@
             sequence:
               - service: script.turn_on
                 entity_id: script.away_mode_on
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{(as_timestamp(now())|int - states('input_number.last_action_breather_v')|int)/60 < 60 }}"
+            sequence:
+              - service: timer.cancel
+                entity_id: timer.breather_v
+              - service: timer.start
+                entity_id: timer.breather_v
+                data:
+                  duration: "{{ (as_timestamp(now())|int - states('input_number.last_action_breather_v')|int) }}"
 
 
   sasha_presence:
