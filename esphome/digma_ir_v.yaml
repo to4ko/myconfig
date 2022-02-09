@@ -57,6 +57,34 @@ binary_sensor:
     name: ${board_name}_Button
     id: id_button
 
+  - platform: remote_receiver
+    name: ${board_name}_Breather_PWR
+    nec:
+      address: '0xFF00'
+      command: '0xFB04'
+    on_press:
+      then:
+        - if:
+            condition:
+              binary_sensor.is_off: id_self_code
+            then:
+              - binary_sensor.template.publish:
+                  id: id_breather_remote_used
+                  state: ON
+              - delay: 500ms
+              - binary_sensor.template.publish:
+                  id: id_breather_remote_used
+                  state: OFF
+
+
+  - platform: template
+    name: ${board_name}_Breather_Self_Code
+    id: id_self_code
+
+      
+  - platform: template
+    name: ${board_name}_Breather_Remote_Used
+    id: id_breather_remote_used
 
 # switch:
 #   - platform: template
@@ -326,7 +354,14 @@ button:
       - remote_transmitter.transmit_nec:
           address: '0xFF00'
           command: '0xFB04'
-  
+      - binary_sensor.template.publish:
+          id: id_self_code
+          state: ON
+      - delay: 500ms
+      - binary_sensor.template.publish:
+          id: id_self_code
+          state: OFF
+          
   - platform: template
     name: ${board_name}_Breather_UP
     icon: mdi:arrow-up-bold-box
