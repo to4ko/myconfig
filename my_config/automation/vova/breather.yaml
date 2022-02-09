@@ -65,6 +65,14 @@
       event_data:
         entity_id: timer.breather_v
       id: 'timer_finish'
+    - platform: state
+      entity_id: binary_sensor.digma_ir_v_breather_remote_used
+      to: 'on'
+      id: 'remote_used'
+    - platform: state
+      entity_id: binary_sensor.digma_ir_v_breather_self_code
+      to: 'on'
+      id: 'digma_used'
   action:
     - choose:
         - conditions:
@@ -97,6 +105,9 @@
                     - condition: state
                       entity_id: person.sandra
                       state: 'home'
+                    - condition: numeric_state
+                      entity_id: input_number.last_action_breather_v
+                      above: 0
                   sequence:
                     - service: timer.cancel
                       entity_id: timer.breather_v
@@ -134,5 +145,21 @@
                       entity_id: person.sandra
                       state: 'home'
                   sequence:
+                    - service: button.press
+                      entity_id: button.digma_ir_v_breather_pwr
+        - conditions:
+            - condition: trigger
+              id: "remote_used"
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: state
+                      entity_id: binary_sensor.breather_v
+                      state: 'on'
+                  sequence:
+                    - service: input_number.set_value
+                      entity_id: input_number.last_action_breather_v
+                      data:
+                        value: "0"
                     - service: button.press
                       entity_id: button.digma_ir_v_breather_pwr
