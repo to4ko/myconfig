@@ -5,372 +5,372 @@
 # #####################################################################################
 # Hall Small - Auto Light On
 # ##################################
-- alias: hall_small_auto_night_light
-  id: hall_small_auto_night_light
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    # - platform: state
-    #   entity_id:
-    #     - binary_sensor.0x158d0001ae9f61_motion
-    #     - binary_sensor.0x158d0002b43ad4_motion
-    #   from: 'off'
-    #   to: 'on'
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: inary_sensor.0x158d0001ae9f61_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b43ad4_motion
-    - platform: state
-      entity_id: binary_sensor.0x158d00025315e9_contact #MB Door
-      from: 'off'
-      to: 'on'
-  condition:
-    - condition: state
-      entity_id: group.lights_k
-      state: 'off'
-    - condition: state
-      entity_id: group.lights_main_hs
-      state: 'off'
-    - condition: state
-      entity_id: binary_sensor.light_outside_mi
-      state: 'off'
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: 'off'
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
-    - service: light.turn_on
-      entity_id: light.mono_strip_1_light
-      data:
-        brightness_pct: 50
-
+  - alias: hall_small_auto_night_light
+    id: hall_small_auto_night_light
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      # - platform: state
+      #   entity_id:
+      #     - binary_sensor.0x158d0001ae9f61_motion
+      #     - binary_sensor.0x158d0002b43ad4_motion
+      #   from: 'off'
+      #   to: 'on'
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: inary_sensor.0x158d0001ae9f61_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0002b43ad4_motion
+      - platform: state
+        entity_id: binary_sensor.0x158d00025315e9_contact #MB Door
+        from: 'off'
+        to: 'on'
+    condition:
+      - condition: state
+        entity_id: group.lights_k
+        state: 'off'
+      - condition: state
+        entity_id: group.lights_main_hs
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.light_outside_mi
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - service: light.turn_on
+        entity_id: light.mono_strip_1_light
+        data:
+          brightness_pct: 50
+  
 # ##################################
 # Hall Small-  Main Lamp (Xiaomi Round LED) - On
 # ##################################
-- alias: hall_small_main_lamp_on_single
-  id: hall_small_main_lamp_on_single
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0002a36433_action
-        click_type: button_1_single
-  condition:
-    - condition: template
-      value_template: "{{ states('light.round_led_hs') in ['on','off'] }}"
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: binary_sensor.round_led_hs_nightlight
-              state: 'on'
-            - condition: state
-              entity_id: light.round_led_hs
-              state: 'off'
-          sequence:
-            - service: yeelight.set_mode
-              data:
+  - alias: hall_small_main_lamp_on_single
+    id: hall_small_main_lamp_on_single
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d0002a36433_action
+          click_type: button_1_single
+    condition:
+      - condition: template
+        value_template: "{{ states('light.round_led_hs') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.round_led_hs_nightlight
+                state: 'on'
+              - condition: state
                 entity_id: light.round_led_hs
-                mode: normal  
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: light.round_led_hs
-              state: 'on'
-          sequence:
-            - service: light.turn_off
-              entity_id: light.round_led_hs
-        - conditions:
-            - condition: state
-              entity_id: light.round_led_hs
-              state: 'off'
-          sequence:
-            - service: light.turn_on
-              entity_id: light.round_led_hs
-              data:
-                brightness_pct: 25
-                kelvin: 5000
-
+                state: 'off'
+            sequence:
+              - service: yeelight.set_mode
+                data:
+                  entity_id: light.round_led_hs
+                  mode: normal  
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: light.round_led_hs
+                state: 'on'
+            sequence:
+              - service: light.turn_off
+                entity_id: light.round_led_hs
+          - conditions:
+              - condition: state
+                entity_id: light.round_led_hs
+                state: 'off'
+            sequence:
+              - service: light.turn_on
+                entity_id: light.round_led_hs
+                data:
+                  brightness_pct: 25
+                  kelvin: 5000
+  
 # ##################################
 # Hall Small-  Main Lamp (Xiaomi Round LED) - Double
 # ##################################
-- alias: hall_small_main_lamp_on_double
-  id: hall_small_main_lamp_on_double
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0002a36433_action
-        click_type: button_1_double
-  condition:
-    - condition: template
-      value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: binary_sensor.round_led_hs_nightlight
-              state: 'on'
-            - condition: state
-              entity_id: light.round_led_hs
-              state: 'off'
-          sequence:
-            - service: yeelight.set_mode
-              data:
+  - alias: hall_small_main_lamp_on_double
+    id: hall_small_main_lamp_on_double
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d0002a36433_action
+          click_type: button_1_double
+    condition:
+      - condition: template
+        value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.round_led_hs_nightlight
+                state: 'on'
+              - condition: state
                 entity_id: light.round_led_hs
-                mode: normal
-    - service: light.turn_on
-      entity_id: light.round_led_hs
-      data:
-        brightness_pct: 90
-        kelvin: 5000
-        
+                state: 'off'
+            sequence:
+              - service: yeelight.set_mode
+                data:
+                  entity_id: light.round_led_hs
+                  mode: normal
+      - service: light.turn_on
+        entity_id: light.round_led_hs
+        data:
+          brightness_pct: 90
+          kelvin: 5000
+          
 # ##################################
 # Hall Small - Main Lamp Restart
 # ##################################
-- alias: hall_small_main_lamp_restart
-  id: hall_small_main_lamp_restart
-  initial_state: true
-  trigger:
-    - platform: time_pattern
-      minutes: "/1"
-    # - platform: state
-    #   entity_id: light.round_led_hs
-    #   to: 'unavailable'
-    #   for:
-    #     minutes: 2
-    # - platform: numeric_state
-    #   entity_id: sensor.ha_uptime
-    #   above: 0
-    #   below: 2
-  condition:
-    - condition: state
-      entity_id: light.round_led_hs
-      state: 'unavailable'
-      for:
-        minutes: 2
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    - condition: state
-      entity_id: switch.round_led_hs_restart_key
-      state: 'on'
-  action:
-    - repeat:
-        while:
-          - condition: state
-            entity_id: light.round_led_hs
-            state: "unavailable"
-          - condition: template
-            value_template: "{{ repeat.index <= 5 }}"
-        sequence:
-          - service: switch.turn_off
-            entity_id: switch.0x158d0002a36433_channel_1
-          - delay:
-              seconds: 15
-          - service: switch.turn_on
-            entity_id: switch.0x158d0002a36433_channel_1
-          - service: notify.telegram
-            data:
-              message: "\U0001f6a8 Round LED HS restart done({{repeat.index}})!"
-          - delay:
-              seconds: 30
-    - condition: state
-      entity_id: light.round_led_hs
-      state: 'unavailable'
-    - service: notify.telegram
-      data:
-        message: "\U0001f6a8 Round LED HS restart unsuccessful!"
-    - service: switch.turn_off
-      entity_id: switch.round_led_hs_restart_key
-
+  - alias: hall_small_main_lamp_restart
+    id: hall_small_main_lamp_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.round_led_hs
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.round_led_hs
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: switch.round_led_hs_restart_key
+        state: 'on'
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.round_led_hs
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.0x158d0002a36433_channel_1
+            - delay:
+                seconds: 15
+            - service: switch.turn_on
+              entity_id: switch.0x158d0002a36433_channel_1
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 Round LED HS restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.round_led_hs
+        state: 'unavailable'
+      - service: notify.telegram
+        data:
+          message: "\U0001f6a8 Round LED HS restart unsuccessful!"
+      - service: switch.turn_off
+        entity_id: switch.round_led_hs_restart_key
+  
 # ##################################
 # Hall Big - Mirror LED Auto Restart Key Toggle
 # ##################################
-- alias: hall_small_main_lamp_restart_key_toggle
-  id: hall_small_main_lamp_restart_key_toggle
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: light.round_led_hs
-      from: 'unavailable'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.round_led_hs_restart_key
-      
+  - alias: hall_small_main_lamp_restart_key_toggle
+    id: hall_small_main_lamp_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.round_led_hs
+        from: 'unavailable'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.round_led_hs_restart_key
+        
 # ##################################
 # Hall small - LED STrip Timer start
 # ################################## 
-- alias: hall_small_led_strip_timer_on
-  id: hall_small_led_strip_timer_on
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: light.mono_strip_1_light
-      to: 'on'
-      from: 'off'
-  action:
-    - service: timer.cancel
-      entity_id: timer.led_strip_night_hs
-    - service: timer.start
-      entity_id: timer.led_strip_night_hs
-
+  - alias: hall_small_led_strip_timer_on
+    id: hall_small_led_strip_timer_on
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: light.mono_strip_1_light
+        to: 'on'
+        from: 'off'
+    action:
+      - service: timer.cancel
+        entity_id: timer.led_strip_night_hs
+      - service: timer.start
+        entity_id: timer.led_strip_night_hs
+  
 # ##################################
 # Hall small - Auto LED Strips off
 # ##################################
-- alias: hall_small_led_strip_auto_led_off
-  id: hall_small_led_strip_auto_led_off
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.led_strip_night_hs
-  action:
-    - service: light.turn_off
-      entity_id: light.mono_strip_1_light
-      data:
-        transition: 5
-        
+  - alias: hall_small_led_strip_auto_led_off
+    id: hall_small_led_strip_auto_led_off
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.led_strip_night_hs
+    action:
+      - service: light.turn_off
+        entity_id: light.mono_strip_1_light
+        data:
+          transition: 5
+          
 # ##################################
 # Hall small - LED Strip Timer restart with movement
 # ################################## 
-- alias: hall_small_led_strip_timer_restart
-  id: hall_small_led_strip_timer_restart
-  initial_state: true
-  trigger:
-    # - platform: state
-    #   entity_id:
-    #     - binary_sensor.0x158d0001ae9f61_motion
-    #     - binary_sensor.0x158d0002b43ad4_motion
-    #   from: 'off'
-    #   to: 'on'
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0001ae9f61_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b43ad4_motion
-  condition:
-    # - condition: state
-    #   entity_id: binary_sensor.tod_day
-    #   state: 'off'
-    - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_small_led_strip_timer_restart', 'last_triggered'))|int(0)) > 5 }}"
-    - condition: state
-      entity_id: light.mono_strip_1_light
-      state: 'on'
-  action:
-    - service: timer.cancel
-      entity_id: timer.led_strip_night_hs
-    - service: timer.start
-      entity_id: timer.led_strip_night_hs
-
+  - alias: hall_small_led_strip_timer_restart
+    id: hall_small_led_strip_timer_restart
+    initial_state: true
+    trigger:
+      # - platform: state
+      #   entity_id:
+      #     - binary_sensor.0x158d0001ae9f61_motion
+      #     - binary_sensor.0x158d0002b43ad4_motion
+      #   from: 'off'
+      #   to: 'on'
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0001ae9f61_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0002b43ad4_motion
+    condition:
+      # - condition: state
+      #   entity_id: binary_sensor.tod_day
+      #   state: 'off'
+      - condition: template
+        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_small_led_strip_timer_restart', 'last_triggered'))|int(0)) > 5 }}"
+      - condition: state
+        entity_id: light.mono_strip_1_light
+        state: 'on'
+    action:
+      - service: timer.cancel
+        entity_id: timer.led_strip_night_hs
+      - service: timer.start
+        entity_id: timer.led_strip_night_hs
+  
 # ##################################
 # Hall Small - Timer restart with movement
 # ################################## 
-- alias: hall_small_timer_restart
-  id: hall_small_timer_restart
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    # - platform: state
-    #   entity_id:
-    #     - binary_sensor.0x158d0001ae9f61_motion
-    #     - binary_sensor.0x158d0002b43ad4_motion
-    #   from: 'off'
-    #   to: 'on'
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0002b43ad4_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0001ae9f61_motion
-  condition:
-    - condition: template
-      value_template: "{{ not is_state('light.round_led_hs', 'off') }}"
-    - condition: template
-      value_template: "{{(as_timestamp(now()) - as_timestamp(state_attr('automation.hall_small_timer_restart', 'last_triggered'))|int(0)) > 5 }}"
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: 'off'
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_hs
-    - service: timer.start
-      entity_id: timer.main_light_hs
-
+  - alias: hall_small_timer_restart
+    id: hall_small_timer_restart
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      # - platform: state
+      #   entity_id:
+      #     - binary_sensor.0x158d0001ae9f61_motion
+      #     - binary_sensor.0x158d0002b43ad4_motion
+      #   from: 'off'
+      #   to: 'on'
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0002b43ad4_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0001ae9f61_motion
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('light.round_led_hs', 'off') }}"
+      - condition: template
+        value_template: "{{(as_timestamp(now()) - as_timestamp(state_attr('automation.hall_small_timer_restart', 'last_triggered'))|int(0)) > 5 }}"
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+    action:
+      - service: timer.cancel
+        entity_id: timer.main_light_hs
+      - service: timer.start
+        entity_id: timer.main_light_hs
+  
 # ##################################
 # Hall Small - Timer off
 # ################################## 
-- alias: hall_small_timer_off
-  id: hall_small_timer_off
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: light.round_led_hs
-      to: 'off'
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_hs
-
+  - alias: hall_small_timer_off
+    id: hall_small_timer_off
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.round_led_hs
+        to: 'off'
+    action:
+      - service: timer.cancel
+        entity_id: timer.main_light_hs
+  
 # ##################################
 # Hall Small - Timer start on light on
 # ################################## 
-- alias: hall_small_timer_on
-  id: hall_small_timer_on
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: light.round_led_hs
-      to: 'on'
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_hs
-    - service: timer.start
-      entity_id: timer.main_light_hs
-
+  - alias: hall_small_timer_on
+    id: hall_small_timer_on
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.round_led_hs
+        to: 'on'
+    action:
+      - service: timer.cancel
+        entity_id: timer.main_light_hs
+      - service: timer.start
+        entity_id: timer.main_light_hs
+  
 # ##################################
 # Hall Small - Auto Light Off
 # ##################################
-- alias: hall_small_auto_light_off
-  id: hall_small_auto_light_off
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.main_light_hs
-  condition:
-    - condition: state
-      entity_id: binary_sensor.tod_day
-      state: 'on'
-  action:
-    - service: light.turn_off
-      entity_id: light.round_led_hs
-      data:
-        transition: 15
+  - alias: hall_small_auto_light_off
+    id: hall_small_auto_light_off
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.main_light_hs
+    condition:
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'on'
+    action:
+      - service: light.turn_off
+        entity_id: light.round_led_hs
+        data:
+          transition: 15

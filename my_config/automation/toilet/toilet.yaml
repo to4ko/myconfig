@@ -1,257 +1,212 @@
 # ##################################
 # Toilet - Air Freshener Counter
 # ##################################
-- alias: toilet_air_freshener_counter
-  id: toilet_air_freshener_counter
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: number.d1mini_air_freshener_counter
-  condition:
-    - condition: template
-      value_template: "{{ trigger.to_state.state|int(0) > trigger.from_state.state|int(0) }}"
-    - condition: template
-      value_template: >
-        {% set ignore = ['unknown', 'unavailable', 'none'] %}
-        {{ trigger.from_state.state not in ignore and
-           trigger.to_state.state not in ignore and
-           trigger.to_state.state != trigger.from_state.state
-        }}
-  action:
-    - condition: template
-      value_template: "{{ (states('sensor.d1mini_air_freshener_canister_left')|int(0) < 10) and (states('number.d1mini_air_freshener_counter')|int(0) % 25) == 0 }}"
-    - service: notify.telegram
-      data:
-        message: "\U0001f50b Необходимо заменить баллон в освежителе - осталось менее {{states('sensor.d1mini_air_freshener_canister_left')|int(0)}}%!"
-
+  - alias: toilet_air_freshener_counter
+    id: toilet_air_freshener_counter
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: number.d1mini_air_freshener_counter
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state|int(0) > trigger.from_state.state|int(0) }}"
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ trigger.from_state.state not in ignore and
+             trigger.to_state.state not in ignore and
+             trigger.to_state.state != trigger.from_state.state
+          }}
+    action:
+      - condition: template
+        value_template: "{{ (states('sensor.d1mini_air_freshener_canister_left')|int(0) < 10) and (states('number.d1mini_air_freshener_counter')|int(0) % 25) == 0 }}"
+      - service: notify.telegram
+        data:
+          message: "\U0001f50b Необходимо заменить баллон в освежителе - осталось менее {{states('sensor.d1mini_air_freshener_canister_left')|int(0)}}%!"
+  
 # ##################################
 # Toilet - Air Freshener Spray
 # ##################################
-- alias: toilet_air_freshener_spray
-  id: toilet_air_freshener_spray
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      from: "off"
-      to: "on"
-      for:
-        minutes: 2
-  condition:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
-    - service: switch.turn_on
-      entity_id: switch.d1mini_air_freshener_spray
-    - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.0x158d000232ddd6_contact
-          to: "off"
-          for:
-            seconds: 10
-      timeout:
-        minutes: 20
-      continue_on_timeout: false
-    - service: switch.turn_on
-      entity_id: switch.d1mini_air_freshener_spray, switch.esp32_node_b_relay_4
-
+  - alias: toilet_air_freshener_spray
+    id: toilet_air_freshener_spray
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.0x158d000232ddd6_contact
+        from: "off"
+        to: "on"
+        for:
+          minutes: 2
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - service: switch.turn_on
+        entity_id: switch.d1mini_air_freshener_spray
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.0x158d000232ddd6_contact
+            to: "off"
+            for:
+              seconds: 10
+        timeout:
+          minutes: 20
+        continue_on_timeout: false
+      - service: switch.turn_on
+        entity_id: switch.d1mini_air_freshener_spray, switch.esp32_node_b_relay_4
+  
 # ##################################
 # Toilet - Air Freshener Spray Manual
 # ##################################
-- alias: toilet_air_freshener_spray_manual
-  id: toilet_air_freshener_spray_manual
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0001b97111_action
-        click_type: double
-  action:
-    - service: switch.turn_on
-      entity_id: switch.d1mini_air_freshener_spray
-
+  - alias: toilet_air_freshener_spray_manual
+    id: toilet_air_freshener_spray_manual
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d0001b97111_action
+          click_type: double
+    action:
+      - service: switch.turn_on
+        entity_id: switch.d1mini_air_freshener_spray
+  
 # ##################################
-# Toilet - Air Freshener Hourly
+# Toilet - Heater Control
 # ##################################
-# - alias: toilet_air_freshener_bi_hourly
-#   id: toilet_air_freshener_bi_hourly
-#   initial_state: true
-#   trigger:
-#     - platform: time_pattern
-#       hours: "/2"
-#   condition:
-#     - condition: template
-#       value_template: "{{(as_timestamp(now())|int(0) - states('sensor.air_freshener_last_spray')|int(0) ) > 2*60*60 }}"
-#     - condition: state
-#       entity_id: binary_sensor.0x158d000232ddd6_contact
-#       state: "off"
-#     - condition: state
-#       entity_id: binary_sensor.tod_day
-#       state: "on"
-#   action:
-#     - service: switch.turn_on
-#       entity_id: switch.air_freshener_spray
-
-# # ##################################
-# # Toilet - Heater Control
-# # ##################################
-- alias: toilet_heater_control
-  id: toilet_heater_control
-  initial_state: true
-  trigger:
-    - platform: template
-      value_template: "{{ not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) }}"
-  action:
-    - service: climate.turn_{% if not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
-      entity_id: climate.sonoff_pow_r2_2_wall_heater
-
-# # ##################################
-# # Toilet - Close Seat notify
-# # ##################################
-- alias: toilet_close_seat_notify
-  id: toilet_close_seat_notify
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0003262a35_contact
-      from: "off"
-      to: "on"
-  condition:
-    - condition: state
-      entity_id: binary_sensor.tod_day
-      state: "on"
-    - condition: state
-      entity_id: switch.dark_mode
-      state: "off"
-    - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_close_seat_notify', 'last_triggered'))|int(0)) > 15 }}"
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
-    - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.0x158d0001ef2ffc_contact
-          to: "on"
-        - platform: state
-          entity_id: binary_sensor.0x158d0001ef2ffc_contact
-          to: "off"
-      timeout:
-        minutes: 20
-      continue_on_timeout: false
-    - condition: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      state: "on"
-    - service: media_player.volume_set
-      data:
-        entity_id: media_player.yandex_k
-        volume_level: '{{states("input_number.main_volume")|float(0) + 0.1}}'
-    # - service: tts.yandextts_say
-    #   data:
-    #     entity_id: media_player.home_mini_k
-    #     message: "Пож+алуйста закр+ойте кр+ышку унит+аза! Спас+ибо!"
-    - wait_for_trigger:
-        - platform: state
-          entity_id: binary_sensor.0x158d000232ddd6_contact
-          to: "off"
-      timeout:
-        minutes: 5
-      continue_on_timeout: false
-    - service: media_player.play_media
-      data:
-        media_content_type: dialog
-        entity_id: media_player.yandex_k
-        media_content_id: "Больш+ое спас+ибо!"
-
-        ###############################################
-# - id: '1594184102192'
-#   alias: Toilet Light Auto Off
-#   description: ''
-#   trigger:
-#   - platform: state
-#     entity_id: light.aqara_lightbulb_93c9_light
-#     to: 'on'
-#     for: '60'
-#   - platform: state
-#     entity_id:
-#     from: 'on'
-#     to: 'off'
-#   condition:
-#   - condition: state
-#     entity_id: binary_sensor.toilet_occupied
-#     state: 'off'
-#   action:
-#   - service: light.turn_off
-#     data: {}
-#     entity_id: light.aqara_lightbulb_93c9_light
-#   mode: single
-
-- alias: toilet_occupancy_turn_on
-  id: toilet_occupancy_turn_on
-  initial_state: true
-  trigger:
-    # - platform: state
-    #   entity_id: binary_sensor.0x158d0001e54280_motion
-    #   from: "off"
-    #   to: "on"
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d0001e54280_motion
-  condition:
-    - condition: state
-      entity_id: input_boolean.toilet_occupancy
-      state: "off"
-    - condition: state
-      entity_id: binary_sensor.0x158d0001ef2ffc_contact
-      state: "off"
-      for:
-        seconds: 3
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.toilet_occupancy
-
-- alias: toilet_occupancy_turn_on_with_button_and_seat
-  id: toilet_occupancy_turn_on_with_button_and_seat
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0001b97111_action
-    - platform: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      to: "on"
-      from: "off"
-  condition:
-    - condition: state
-      entity_id: input_boolean.toilet_occupancy
-      state: "off"
-  action:
-    - service: input_boolean.turn_on
-      entity_id: input_boolean.toilet_occupancy
-
-- alias: toilet_occupancy_turn_off
-  id: toilet_occypancy_turn_off
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001ef2ffc_contact
-      to: "on"
-      for:
-        minutes: 3
-    - platform: state
-      entity_id: binary_sensor.0x158d000232ddd6_contact
-      to: "off"
-      from: "on"
-  condition:
-    - condition: state
-      entity_id: input_boolean.toilet_occupancy
-      state: "on"
-  action:
-    - service: input_boolean.turn_off
-      entity_id: input_boolean.toilet_occupancy
+  - alias: toilet_heater_control
+    id: toilet_heater_control
+    initial_state: true
+    trigger:
+      - platform: template
+        value_template: "{{ not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) }}"
+    action:
+      - service: climate.turn_{% if not (6>=now().hour|int(0) >=0 or is_state('input_boolean.security_mode','on') or (is_state('binary_sensor.0x158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
+        entity_id: climate.sonoff_pow_r2_2_wall_heater
+  
+# ##################################
+# Toilet - Close Seat notify
+# ##################################
+  - alias: toilet_close_seat_notify
+    id: toilet_close_seat_notify
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.0x158d0003262a35_contact
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: "on"
+      - condition: state
+        entity_id: switch.dark_mode
+        state: "off"
+      - condition: template
+        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_close_seat_notify', 'last_triggered'))|int(0)) > 15 }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.0x158d0001ef2ffc_contact
+            to: "on"
+          - platform: state
+            entity_id: binary_sensor.0x158d0001ef2ffc_contact
+            to: "off"
+        timeout:
+          minutes: 20
+        continue_on_timeout: false
+      - condition: state
+        entity_id: binary_sensor.0x158d000232ddd6_contact
+        state: "on"
+      - service: media_player.volume_set
+        data:
+          entity_id: media_player.yandex_k
+          volume_level: '{{states("input_number.main_volume")|float(0) + 0.1}}'
+      # - service: tts.yandextts_say
+      #   data:
+      #     entity_id: media_player.home_mini_k
+      #     message: "Пож+алуйста закр+ойте кр+ышку унит+аза! Спас+ибо!"
+      - wait_for_trigger:
+          - platform: state
+            entity_id: binary_sensor.0x158d000232ddd6_contact
+            to: "off"
+        timeout:
+          minutes: 5
+        continue_on_timeout: false
+      - service: media_player.play_media
+        data:
+          media_content_type: dialog
+          entity_id: media_player.yandex_k
+          media_content_id: "Больш+ое спас+ибо!"
+  
+  - alias: toilet_occupancy_turn_on
+    id: toilet_occupancy_turn_on
+    initial_state: true
+    trigger:
+      # - platform: state
+      #   entity_id: binary_sensor.0x158d0001e54280_motion
+      #   from: "off"
+      #   to: "on"
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0001e54280_motion
+    condition:
+      - condition: state
+        entity_id: input_boolean.toilet_occupancy
+        state: "off"
+      - condition: state
+        entity_id: binary_sensor.0x158d0001ef2ffc_contact
+        state: "off"
+        for:
+          seconds: 3
+    action:
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.toilet_occupancy
+  
+  - alias: toilet_occupancy_turn_on_with_button_and_seat
+    id: toilet_occupancy_turn_on_with_button_and_seat
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d0001b97111_action
+      - platform: state
+        entity_id: binary_sensor.0x158d000232ddd6_contact
+        to: "on"
+        from: "off"
+    condition:
+      - condition: state
+        entity_id: input_boolean.toilet_occupancy
+        state: "off"
+    action:
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.toilet_occupancy
+  
+  - alias: toilet_occupancy_turn_off
+    id: toilet_occypancy_turn_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.0x158d0001ef2ffc_contact
+        to: "on"
+        for:
+          minutes: 3
+      - platform: state
+        entity_id: binary_sensor.0x158d000232ddd6_contact
+        to: "off"
+        from: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.toilet_occupancy
+        state: "on"
+    action:
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.toilet_occupancy

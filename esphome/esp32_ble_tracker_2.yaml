@@ -9,6 +9,9 @@ esphome:
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
 
+external_components:
+  - source: github://myhomeiot/esphome-components  
+
 wifi:
   ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
@@ -38,20 +41,64 @@ esp32_ble_tracker:
     window: 48ms
     active: true
 
-# exposure_notifications:
-#   on_exposure_notification:
-#     then:
-#       #- homeassistant.service:
-#       #   service: notify.telegram
-#         #  data:
-#         #    message: "Tracker HS - COVID-19 Exposure Notify!"
-#       - lambda: |
-#           ESP_LOGD("main", "Got notification:");
-#           ESP_LOGD("main", "  RPI: %s", hexencode(x.rolling_proximity_identifier).c_str());
-#           ESP_LOGD("main", "  RSSI: %d", x.rssi);
-
 # web_server:
 #   port: 80
+
+ble_gateway:
+  id: esp32_ble_tracker_hs
+  devices:
+    - mac_address: 7E:FE:3E:EC:59:FB
+    - mac_address: 3B:EF:3E:DE:98:6B
+    - mac_address: 2A:BC:3E:DC:57:65
+    - mac_address: 6B:9C:3E:D1:C5:9A
+  on_ble_advertise:
+    then:
+      homeassistant.event:
+        event: esphome.on_ble_advertise
+        data:
+          packet: !lambda return packet;
+          gateway_id: esp32_ble_gateway_hs
+
+myhomeiot_ble_host:
+
+myhomeiot_ble_client:
+  - mac_address: 7E:FE:3E:EC:59:FB
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_White_Battery).publish_state(x[0]);
+
+
+  - mac_address: 2A:BC:3E:DC:57:65
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_Pink_Battery).publish_state(x[0]);
+
+  - mac_address: 6B:9C:3E:D1:C5:9A
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_Green_Battery).publish_state(x[0]);
+
+
+  - mac_address: 2A:BC:3E:DC:57:65
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_Grey_Battery).publish_state(x[0]);
 
 binary_sensor:
   - platform: status
@@ -76,13 +123,6 @@ binary_sensor:
     mac_address: 6B:9C:3E:D1:C5:9A
     name: ${board_name}_Green
     device_class: presence
-
-#   - platform: ble_presence
-#     mac_address: FF:FF:B0:00:95:1F
-#     name: ${board_name}_iTag_white
-#     device_class: presence
-
-# # FF:FF:B0:00:95:1F white itag
 
 # 7E:FE:3E:EC:59:FB white
 # 6B:9C:3E:D1:C5:9A green
@@ -126,19 +166,37 @@ sensor:
     impedance:
       name: ${board_name}_Scale_Impedance
 
+  - platform: template
+    id: ${board_name}_White_Battery
+    name: ${board_name}_White_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
 
-  # - platform: ble_rssi
-  #   mac_address: FF:FF:B0:00:95:1F
-  #   name: ${board_name}_iTag_white RSSI
-  #   icon: "mdi:wifi"
+  - platform: template
+    id: ${board_name}_Pink_Battery
+    name: ${board_name}_Pink_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
 
-  # - platform: template
-  #   name: ${board_name}_free_ram
-  #   lambda: "return ESP.getFreeHeap();"
-  #   id: heap_size
-  #   update_interval: 20s
-  #   unit_of_measurement: bytes
-  #   accuracy_decimals: 0
+  - platform: template
+    id: ${board_name}_Green_Battery
+    name: ${board_name}_Green_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
+    
+  - platform: template
+    id: ${board_name}_Grey_Battery
+    name: ${board_name}_Grey_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
 
 text_sensor:
   - platform: template
@@ -166,35 +224,14 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
-  # - platform: template
-  #   name: ${board_name}_last_connect
-  #   lambda: |-
-  #     auto esptime = id(esp_time).now();
-  #     if(esptime.is_valid()) {
-  #       auto esptime_text = esptime.strftime("%d.%m.%Y %H:%M");
-  #       return esptime_text;
-  #     }
-  #   icon: "mdi:clock-end"   
-
-  # - platform: template
-  #   name: ${board_name}_heap_size_text
-  #   lambda: |-
-  #     uint32_t heby = id(heap_size).state;
-  #     int hekb = 0;
-  #     int hemb = 0;
-  #     if (heby > 1048576) {
-  #       hemb = trunc(heby / 1048576);
-  #       heby = heby - (hemb * 1048576);
-  #     }
-  #     if (heby > 1024) {
-  #       hekb = trunc(heby / 1024);
-  #       heby = heby - (hekb * 1024);
-  #     }
-  #     char buffer[17];
-  #     sprintf(buffer, "%02umb %02ukb %02ub", hemb, hekb, heby);
-  #     return {buffer};
-  #   icon: "mdi:chart-pie"
-  #   #update_interval: ${interval}    
+  # BLE Devices
+  - platform: homeassistant
+    id: ble_gateway_devices
+    entity_id: binary_sensor.ble_gateway
+    attribute: devices
+    on_value:
+      then:
+        - lambda: id(esp32_ble_tracker_hs).set_devices(x);
 
 button:
   - platform: restart

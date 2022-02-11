@@ -1,114 +1,114 @@
 # ##################################
 # System - Vova GPS Delta
 # ##################################
-- alias: system_gps_vova_delta
-  id: system_gps_vova_delta
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: device_tracker.life360_vova_tsymbal
-      to: ~
-  condition:
-    - condition: template
-      value_template: "{{states('person.vova') not in ['home','Home','Dima Parents','Sasha Parents','Dacha']}}"
-  action:
-    - service: input_number.set_value
-      data:
-        entity_id: input_number.vova_gps_delta
-        value: "{{ ((as_timestamp(trigger.to_state.attributes.last_seen)|int(0) - as_timestamp(trigger.from_state.attributes.last_seen)|int(0))/60)|round(2, 'common' ,0) }}"
-
+  - alias: system_gps_vova_delta
+    id: system_gps_vova_delta
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: device_tracker.life360_vova_tsymbal
+        to: ~
+    condition:
+      - condition: template
+        value_template: "{{states('person.vova') not in ['home','Home','Dima Parents','Sasha Parents','Dacha']}}"
+    action:
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.vova_gps_delta
+          value: "{{ ((as_timestamp(trigger.to_state.attributes.last_seen)|int(0) - as_timestamp(trigger.from_state.attributes.last_seen)|int(0))/60)|round(2, 'common' ,0) }}"
+  
 # ##################################
 # Location - Vova GPS Delta notify
 # ##################################
-- alias: location_system_gps_vova_delta_notify
-  id: location_system_gps_vova_delta_notify
-  initial_state: true
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.vova_gps_delta
-      above: 30
-  action:
-    - service: notify.telegram
-      data:
-        message: "\U0001f910 Внимание! Нет данных от Vova_GPS более 30 минут!"
-
+  - alias: location_system_gps_vova_delta_notify
+    id: location_system_gps_vova_delta_notify
+    initial_state: true
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.vova_gps_delta
+        above: 30
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0001f910 Внимание! Нет данных от Vova_GPS более 30 минут!"
+  
 # ##################################
 # Location - life360 Overdue update
 # ##################################
-- alias: location_life360_overdue_update
-  id: location_life360_overdue_update
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: life360_update_overdue
-  action:
-    - service: notify.telegram
-      data:
-        title: Life360 update overdue
-        message: "\U0001f910 Внимание! Задержка апдейта {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}}"
-
+  - alias: location_life360_overdue_update
+    id: location_life360_overdue_update
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: life360_update_overdue
+    action:
+      - service: notify.telegram
+        data:
+          title: Life360 update overdue
+          message: "\U0001f910 Внимание! Задержка апдейта {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}}"
+  
 # ##################################
 # Location - life360 Overdue update
 # ##################################
-- alias: location_life360_update_restored
-  id: location_life360_update_restored
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: life360_update_restored
-  action:
-    - service: notify.telegram
-      data:
-        title: Life360 update restored
-        message: "\U0001f910 Внимание! Апдейт получен для {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}} спустя {{ trigger.event.data.wait }}."
-# ##################################
-# System - Dima Location changing
-# ##################################
-#- alias: system_location_dima
-#  initial_state: true
-#  trigger:
-#    platform: state
-#    entity_id: person.dima
-#  action:
-#    service: notify.telegram_errors
-#    data:
-#      message: 'Dima: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
-
-# ##################################
-# System - Sandra Location changing
-# ##################################
-#- alias: location_sandra
-#  initial_state: false
-#  trigger:
-#    platform: state
-#    entity_id: person.sandra
-#  action:
-#    service: notify.telegram_errors
-#    data:
-#      message: 'Sandra: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
-
-# ##################################
-# System - Vova Location changing
-# ##################################
-#- alias: location_vova
-#  initial_state: false
-#  trigger:
-#    platform: state
-#    entity_id: person.vova
-#  action:
-#    service: notify.telegram_errors
-#    data:
-#      message: 'Vova: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
-
-# ##################################
-# System - Sasha Location changing
-# ##################################
-#- alias: location_sasha
-#  initial_state: false
-#  trigger:
-#    platform: state
-#    entity_id: person.sasha
-#  action:
-#    service: notify.telegram_errors
-#    data:
-#      message: 'Sasha: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
+  - alias: location_life360_update_restored
+    id: location_life360_update_restored
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: life360_update_restored
+    action:
+      - service: notify.telegram
+        data:
+          title: Life360 update restored
+          message: "\U0001f910 Внимание! Апдейт получен для {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}} спустя {{ trigger.event.data.wait }}."
+  # ##################################
+  # System - Dima Location changing
+  # ##################################
+  #- alias: system_location_dima
+  #  initial_state: true
+  #  trigger:
+  #    platform: state
+  #    entity_id: person.dima
+  #  action:
+  #    service: notify.telegram_errors
+  #    data:
+  #      message: 'Dima: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
+  
+  # ##################################
+  # System - Sandra Location changing
+  # ##################################
+  #- alias: location_sandra
+  #  initial_state: false
+  #  trigger:
+  #    platform: state
+  #    entity_id: person.sandra
+  #  action:
+  #    service: notify.telegram_errors
+  #    data:
+  #      message: 'Sandra: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
+  
+  # ##################################
+  # System - Vova Location changing
+  # ##################################
+  #- alias: location_vova
+  #  initial_state: false
+  #  trigger:
+  #    platform: state
+  #    entity_id: person.vova
+  #  action:
+  #    service: notify.telegram_errors
+  #    data:
+  #      message: 'Vova: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
+  
+  # ##################################
+  # System - Sasha Location changing
+  # ##################################
+  #- alias: location_sasha
+  #  initial_state: false
+  #  trigger:
+  #    platform: state
+  #    entity_id: person.sasha
+  #  action:
+  #    service: notify.telegram_errors
+  #    data:
+  #      message: 'Sasha: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'

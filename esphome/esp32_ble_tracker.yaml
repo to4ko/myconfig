@@ -8,6 +8,9 @@ esphome:
   comment: ESP32 BLE Tracker HB
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
+
+external_components:
+  - source: github://myhomeiot/esphome-components  
     
 wifi:
   ssid: !secret wifi_ssid_hb
@@ -52,6 +55,62 @@ esp32_ble_tracker:
 
 # web_server:
 #   port: 80
+
+ble_gateway:
+  id: esp32_ble_tracker_hb
+  devices:
+    - mac_address: 7E:FE:3E:EC:59:FB
+    - mac_address: 3B:EF:3E:DE:98:6B
+    - mac_address: 2A:BC:3E:DC:57:65
+    - mac_address: 6B:9C:3E:D1:C5:9A
+  on_ble_advertise:
+    then:
+      homeassistant.event:
+        event: esphome.on_ble_advertise
+        data:
+          packet: !lambda return packet;
+          gateway_id: esp32_ble_gateway_hb
+
+myhomeiot_ble_host:
+
+myhomeiot_ble_client:
+  - mac_address: 7E:FE:3E:EC:59:FB
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_White_Battery).publish_state(x[0]);
+
+
+  - mac_address: 2A:BC:3E:DC:57:65
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_Pink_Battery).publish_state(x[0]);
+
+  - mac_address: 6B:9C:3E:D1:C5:9A
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_Green_Battery).publish_state(x[0]);
+
+
+  - mac_address: 2A:BC:3E:DC:57:65
+    service_uuid: '180F'
+    characteristic_uuid: '2A19'
+    update_interval: 24h
+    on_value:
+      then:
+        lambda: |-
+          id(${board_name}_Grey_Battery).publish_state(x[0]);
 
 binary_sensor:
   - platform: status
@@ -125,6 +184,38 @@ sensor:
     name: ${board_name}_Green_RSSI
     icon: "mdi:wifi"
 
+  - platform: template
+    id: ${board_name}_White_Battery
+    name: ${board_name}_White_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: template
+    id: ${board_name}_Pink_Battery
+    name: ${board_name}_Pink_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: template
+    id: ${board_name}_Green_Battery
+    name: ${board_name}_Green_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
+    
+  - platform: template
+    id: ${board_name}_Grey_Battery
+    name: ${board_name}_Grey_Battery
+    device_class: battery
+    unit_of_measurement: '%'
+    state_class: measurement
+    accuracy_decimals: 0
+
   # - platform: ble_rssi
   #   mac_address: FF:FF:B0:00:95:1F
   #   name: ${board_name}_iTag_white RSSI
@@ -163,6 +254,15 @@ text_sensor:
       return {buffer};
     icon: mdi:clock-start
     update_interval: 15s
+
+  # BLE Devices
+  - platform: homeassistant
+    id: ble_gateway_devices
+    entity_id: binary_sensor.ble_gateway
+    attribute: devices
+    on_value:
+      then:
+        - lambda: id(esp32_ble_tracker_hb).set_devices(x);
 
 button:
   - platform: restart

@@ -3,197 +3,144 @@
 # VOVA - General
 #
 # #####################################################################################
-# # Vova - TV Box Off with TV Off
-# # ##################################
-# - alias: vova_tv_box_off_tv_off
-#   initial_state: true
-#   trigger:
-#     - platform: time_pattern
-#       minutes: '/1'
-#   condition:
-#       - condition: state
-#         entity_id: binary_sensor.h96_v
-#         state: 'on'
-#       - condition: state
-#         entity_id: binary_sensor.tv_v
-#         state: 'off'
-#         for:
-#           minutes: 2
-#   action:
-#     - service: switch.turn_off
-#       entity_id: switch.0x158d000290a0bc_switch
-
-# # ##################################
-# # Vova - Night mode
-# # ##################################
-# - alias: vova_night_mode
-#   initial_state: false
-#   trigger:
-#     platform: time
-#     at: '23:00:00'
-#   action:
-#     - service: switch.turn_off
-#       entity_id: switch.0x158d000246776f_switch
-
-# # ##################################
-# # Vova - TV Box Plug Off with TV Off
-# # ##################################
-# - alias: vova_tv_box_plug_off_with_tv_off
-#   initial_state: true
-#   trigger:
-#     - platform: state
-#       entity_id: binary_sensor.tv_v
-#       from: 'off'
-#       to: 'on'
-#     - platform: state
-#       entity_id: binary_sensor.tv_v
-#       from: 'on'
-#       to: 'off'
-#   action:
-#     - service: switch.turn_{{states('binary_sensor.tv_v')}}
-#       entity_id: switch.0x158d000290a0bc_switch
-
-# ##################################
 # Vova - TV Box Restart
 # ##################################
-- alias: vova_tv_box_restart_sunday_9am
-  id: vova_tv_box_restart_sunday_9am
-  initial_state: true
-  trigger:
-    - platform: time
-      at: "09:00:00"
-  condition:
-    - condition: time
-      weekday:
-        - sun
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: "off"
-  action:
-    - service: switch.turn_off
-      entity_id: switch.0x158d000290a0bc_switch
-    - delay: "00:00:05"
-    - service: switch.turn_on
-      entity_id: switch.0x158d000290a0bc_switch
-
+  - alias: vova_tv_box_restart_sunday_9am
+    id: vova_tv_box_restart_sunday_9am
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "09:00:00"
+    condition:
+      - condition: time
+        weekday:
+          - sun
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: "off"
+    action:
+      - service: switch.turn_off
+        entity_id: switch.0x158d000290a0bc_switch
+      - delay: "00:00:05"
+      - service: switch.turn_on
+        entity_id: switch.0x158d000290a0bc_switch
+  
 # ##################################
 # Vova - Purifier on\off
 # ##################################
-- alias: vova_purifier_toggle
-  id: vova_purifier_toggle
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: person.sandra
-    # - platform: homeassistant
-    #   event: start
-    # - platform: event
-    #   event_type: automation_reloaded
-  condition:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: person.sandra
-              state: 'home'
-          sequence:
-            - service: fan.turn_on
-              entity_id: fan.purifier2s
-            - condition: state
-              entity_id: binary_sensor.breather_v
-              state: 'off'
-            - service: button.press
-              entity_id: button.digma_ir_v_breather_pwr
-        - conditions:
-            - condition: not
-              conditions:
-                - condition: state
-                  entity_id: person.sandra
-                  state: 'home'
-          sequence:
-            - service: fan.turn_off
-              entity_id: fan.purifier2s
-            - condition: state
-              entity_id: binary_sensor.breather_v
-              state: 'on'
-            - service: button.press
-              entity_id: button.digma_ir_v_breather_pwr
-
-
+  - alias: vova_purifier_toggle
+    id: vova_purifier_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: person.sandra
+      # - platform: homeassistant
+      #   event: start
+      # - platform: event
+      #   event_type: automation_reloaded
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: person.sandra
+                state: 'home'
+            sequence:
+              - service: fan.turn_on
+                entity_id: fan.purifier2s
+              - condition: state
+                entity_id: binary_sensor.breather_v
+                state: 'off'
+              - service: button.press
+                entity_id: button.digma_ir_v_breather_pwr
+          - conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: person.sandra
+                    state: 'home'
+            sequence:
+              - service: fan.turn_off
+                entity_id: fan.purifier2s
+              - condition: state
+                entity_id: binary_sensor.breather_v
+                state: 'on'
+              - service: button.press
+                entity_id: button.digma_ir_v_breather_pwr
+  
 # ##################################
 # Vova - Purifier Favorite at night
 # ##################################
-- alias: vova_purifier_favorite_mode
-  id: vova_purifier_favorite_mode
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: fan.purifier2s
-      for:
-        minutes: 1
-  condition:
-    - condition: state
-      entity_id: fan.purifier2s
-      state: 'on'
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    - condition: state
-      entity_id: binary_sensor.tod_day
-      state: 'off'
-    - condition: not
-      conditions:
-        - condition: state
-          entity_id: fan.purifier2s
-          attribute: preset_mode
-          state: 'Favorite'
-  action:
-    - service: fan.set_preset_mode
-      data:
+  - alias: vova_purifier_favorite_mode
+    id: vova_purifier_favorite_mode
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
         entity_id: fan.purifier2s
-        preset_mode: Favorite
-        
-
+        for:
+          minutes: 1
+    condition:
+      - condition: state
+        entity_id: fan.purifier2s
+        state: 'on'
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'off'
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: fan.purifier2s
+            attribute: preset_mode
+            state: 'Favorite'
+    action:
+      - service: fan.set_preset_mode
+        data:
+          entity_id: fan.purifier2s
+          preset_mode: Favorite
+          
 # ##################################
 # Vova - Alice Stop\Start
 # ##################################
-- alias: vova_alice_stop_start
-  id: vova_alice_stop_start
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0001ef609b_action
-        click_type: single
-  condition:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: media_player.yandex_v
-              state: 'playing'
-          sequence:
-            - service: media_player.turn_off
-              entity_id: media_player.yandex_v
-        - conditions:
-            - condition: not
-              conditions:
-                - condition: state
-                  entity_id: media_player.yandex_v
-                  state: 'playing'
-          sequence:
-            - service: media_player.play_media
-              entity_id: media_player.yandex_v
-              data:
-                media_content_id: Включи ланфрен-ланфра по кругу
-                media_content_type: command
+  - alias: vova_alice_stop_start
+    id: vova_alice_stop_start
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d0001ef609b_action
+          click_type: single
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: media_player.yandex_v
+                state: 'playing'
+            sequence:
+              - service: media_player.turn_off
+                entity_id: media_player.yandex_v
+          - conditions:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: media_player.yandex_v
+                    state: 'playing'
+            sequence:
+              - service: media_player.play_media
+                entity_id: media_player.yandex_v
+                data:
+                  media_content_id: Включи ланфрен-ланфра по кругу
+                  media_content_type: command

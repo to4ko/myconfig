@@ -5,488 +5,488 @@
 # #####################################################################################
 # Bathroom - Timer restart with movement
 # ##################################
-- alias: bathroom_timer_restart
-  id: bathroom_timer_restart
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d000236bc6d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d00024e58e7_motion
-        # - platform: state
-    #   entity_id: binary_sensor.0x158d000236bc6d_motion
-    #   from: 'off'
-    #   to: 'on'
-    # - platform: state
-    #   entity_id: binary_sensor.0x158d00024e58e7_motion
-    #   from: 'off'
-    #   to: 'on'
-    - platform: state
-      entity_id: light.mirror_light_b
-      to: "on"
-      from: "off"
-  condition:
-    - condition: state
-      entity_id: binary_sensor.0x158d0002a14c5e_contact
-      state: "on"
-    - condition: state
-      entity_id: group.lights_b
-      state: "on"
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.bathroom_timer_restart', 'last_triggered'))|int(0)) > 5 }}"
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_b
-    - service: timer.start
-      entity_id: timer.main_light_b
-
+  - alias: bathroom_timer_restart
+    id: bathroom_timer_restart
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d000236bc6d_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d00024e58e7_motion
+          # - platform: state
+      #   entity_id: binary_sensor.0x158d000236bc6d_motion
+      #   from: 'off'
+      #   to: 'on'
+      # - platform: state
+      #   entity_id: binary_sensor.0x158d00024e58e7_motion
+      #   from: 'off'
+      #   to: 'on'
+      - platform: state
+        entity_id: light.mirror_light_b
+        to: "on"
+        from: "off"
+    condition:
+      - condition: state
+        entity_id: binary_sensor.0x158d0002a14c5e_contact
+        state: "on"
+      - condition: state
+        entity_id: group.lights_b
+        state: "on"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: template
+        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.bathroom_timer_restart', 'last_triggered'))|int(0)) > 5 }}"
+    action:
+      - service: timer.cancel
+        entity_id: timer.main_light_b
+      - service: timer.start
+        entity_id: timer.main_light_b
+  
 # ##################################
 # Bathroom - Mirror off
 # ##################################
-- alias: bathroom_mirror_off
-  id: bathroom_mirror_off
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: switch.0x158d0002a36433_channel_2
-      to: "off"
-      from: "on"
-  action:
-    - service: light.turn_off
-      entity_id: light.mirror_light_b
-      data:
-        transition: 5
-
+  - alias: bathroom_mirror_off
+    id: bathroom_mirror_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: switch.0x158d0002a36433_channel_2
+        to: "off"
+        from: "on"
+    action:
+      - service: light.turn_off
+        entity_id: light.mirror_light_b
+        data:
+          transition: 5
+  
 # ##################################
 # Bathroom - Light off auto
 # ##################################
-- alias: bathroom_light_off_auto
-  id: bathroom_light_off_auto
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.motion_b_delay
-      to: "off"
-    - platform: homeassistant
-      event: start
-    - platform: event
-      event_type: automation_reloaded
-  condition:
-    - condition: state
-      entity_id: input_boolean.bathroom_occupancy
-      state: "off"
-    # - condition: state
-    #   entity_id: switch.0x158d0002a36433_channel_2
-    #   state: "off"
-    - condition: template
-      value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d000236bc6d_motion'].last_changed))/60)|int(0) >= 3}}"
-    - condition: template
-      value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d00024e58e7_motion'].last_changed))/60)|int(0) >= 3}}"
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
-    - service: switch.turn_off
-      entity_id: switch.0x158d0002a36433_channel_2
-    - service: light.turn_off
-      entity_id: light.mirror_light_b
-      data:
-        transition: 5
-
+  - alias: bathroom_light_off_auto
+    id: bathroom_light_off_auto
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.motion_b_delay
+        to: "off"
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+    condition:
+      - condition: state
+        entity_id: input_boolean.bathroom_occupancy
+        state: "off"
+      # - condition: state
+      #   entity_id: switch.0x158d0002a36433_channel_2
+      #   state: "off"
+      - condition: template
+        value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d000236bc6d_motion'].last_changed))/60)|int(0) >= 3}}"
+      - condition: template
+        value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d00024e58e7_motion'].last_changed))/60)|int(0) >= 3}}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - service: switch.turn_off
+        entity_id: switch.0x158d0002a36433_channel_2
+      - service: light.turn_off
+        entity_id: light.mirror_light_b
+        data:
+          transition: 5
+  
 # ##################################
 # Bathroom - Timer start on light on
 # ##################################
-- alias: bathroom_timer_on
-  id: bathroom_timer_on
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: switch.0x158d0002a36433_channel_2
-      to: "on"
-      from: "off"
-    - platform: state
-      entity_id: light.mirror_light_b
-      to: "on"
-      from: "off"
-  condition:
-    - condition: state
-      entity_id: timer.main_light_b
-      state: 'idle'
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_b
-    - service: timer.start
-      entity_id: timer.main_light_b
-
+  - alias: bathroom_timer_on
+    id: bathroom_timer_on
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: switch.0x158d0002a36433_channel_2
+        to: "on"
+        from: "off"
+      - platform: state
+        entity_id: light.mirror_light_b
+        to: "on"
+        from: "off"
+    condition:
+      - condition: state
+        entity_id: timer.main_light_b
+        state: 'idle'
+    action:
+      - service: timer.cancel
+        entity_id: timer.main_light_b
+      - service: timer.start
+        entity_id: timer.main_light_b
+  
 # ##################################
 # Bathroom - Timer stop at light off
 # ##################################
-- alias: bathroom_timer_off
-  id: bathroom_timer_off
-  initial_state: true
-  trigger:
-    - platform: template
-      value_template: "{{not is_state('switch.0x158d0002a36433_channel_2','on') and not is_state('light.mirror_light_b','on') }}"
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_b
-
+  - alias: bathroom_timer_off
+    id: bathroom_timer_off
+    initial_state: true
+    trigger:
+      - platform: template
+        value_template: "{{not is_state('switch.0x158d0002a36433_channel_2','on') and not is_state('light.mirror_light_b','on') }}"
+    action:
+      - service: timer.cancel
+        entity_id: timer.main_light_b
+  
 # ##################################
 # Bathroom - Timer pause on
 # ##################################
-- alias: bathroom_timer_pause_on
-  id: bathroom_timer_pause_on
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d000236bc6d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d00024e58e7_motion
-        # - platform: state
-    #   entity_id: binary_sensor.0x158d000236bc6d_motion
-    #   from: 'off'
-    #   to: 'on'
-    # - platform: state
-    #   entity_id: binary_sensor.0x158d00024e58e7_motion
-    #   from: 'off'
-    #   to: 'on'
-  condition:
-    - condition: state
-      entity_id: binary_sensor.0x158d0002a14c5e_contact
-      state: "off"
-    - condition: state
-      entity_id: group.lights_b
-      state: "on"
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: "off"
-    -   condition: not
-        conditions:
-          - condition: state
-            entity_id: timer.main_light_b
-            state: "paused"
-  action:
-    - service: timer.pause
-      entity_id: timer.main_light_b
-    - service: input_boolean.turn_on
-      data:
-        entity_id: input_boolean.bathroom_occupancy
-
+  - alias: bathroom_timer_pause_on
+    id: bathroom_timer_pause_on
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d000236bc6d_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d00024e58e7_motion
+          # - platform: state
+      #   entity_id: binary_sensor.0x158d000236bc6d_motion
+      #   from: 'off'
+      #   to: 'on'
+      # - platform: state
+      #   entity_id: binary_sensor.0x158d00024e58e7_motion
+      #   from: 'off'
+      #   to: 'on'
+    condition:
+      - condition: state
+        entity_id: binary_sensor.0x158d0002a14c5e_contact
+        state: "off"
+      - condition: state
+        entity_id: group.lights_b
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: "off"
+      -   condition: not
+          conditions:
+            - condition: state
+              entity_id: timer.main_light_b
+              state: "paused"
+    action:
+      - service: timer.pause
+        entity_id: timer.main_light_b
+      - service: input_boolean.turn_on
+        data:
+          entity_id: input_boolean.bathroom_occupancy
+  
 # ##################################
 # Bathroom - Timer pause off
 # ##################################
-- alias: bathroom_timer_pause_off
-  id: bathroom_timer_pause_off
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0002a14c5e_contact
-      from: "off"
-      to: "on"
-  condition:
-    - condition: state
-      entity_id: group.lights_b
-      state: "on"
-  action:
-    - service: timer.cancel
-      entity_id: timer.main_light_b
-    - service: timer.start
-      entity_id: timer.main_light_b
-
+  - alias: bathroom_timer_pause_off
+    id: bathroom_timer_pause_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.0x158d0002a14c5e_contact
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: group.lights_b
+        state: "on"
+    action:
+      - service: timer.cancel
+        entity_id: timer.main_light_b
+      - service: timer.start
+        entity_id: timer.main_light_b
+  
 # ##################################
 # Bathroom - Occupancy off
 # ##################################
-- alias: bathroom_occupancy_off
-  id: bathroom_occupancy_off
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0002a14c5e_contact
-      from: "off"
-      to: "on"
-  condition:
-    - condition: state
-      entity_id: input_boolean.bathroom_occupancy
-      state: "on"
-    # - condition: state
-    #   entity_id: binary_sensor.0x158d000236bc6d_motion
-    #   state: 'off'
-    #   for: "00:00:30"
-  action:
-    - service: input_boolean.turn_off
-      data:
+  - alias: bathroom_occupancy_off
+    id: bathroom_occupancy_off
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.0x158d0002a14c5e_contact
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
         entity_id: input_boolean.bathroom_occupancy
-
+        state: "on"
+      # - condition: state
+      #   entity_id: binary_sensor.0x158d000236bc6d_motion
+      #   state: 'off'
+      #   for: "00:00:30"
+    action:
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.bathroom_occupancy
+  
 # ##################################
 # Bathroom - Auto Light On Soft
 # ##################################
-- alias: bathroom_auto_light_on_soft
-  id: bathroom_auto_light_on_soft
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d000236bc6d_motion
-    - platform: event
-      event_type: xiaomi_aqara.motion
-      event_data:
-        entity_id: binary_sensor.0x158d00024e58e7_motion
-        # - platform: state
-    #   entity_id: binary_sensor.0x158d000236bc6d_motion
-    #   from: 'off'
-    #   to: 'on'
-    # - platform: state
-    #   entity_id: binary_sensor.0x158d00024e58e7_motion
-    #   from: 'off'
-    #   to: 'on'
-  condition:
-    - condition: state
-      entity_id: group.lights_b
-      state: "off"
-    - condition: state
-      entity_id: input_boolean.security_mode
-      state: "off"
-  action:
-    - service: xiaomi_miio.light_set_scene
-      data:
-        entity_id: light.mirror_light_b
-        scene: >-
-          {{4 if (is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','on')) else 1}}
-
+  - alias: bathroom_auto_light_on_soft
+    id: bathroom_auto_light_on_soft
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d000236bc6d_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d00024e58e7_motion
+          # - platform: state
+      #   entity_id: binary_sensor.0x158d000236bc6d_motion
+      #   from: 'off'
+      #   to: 'on'
+      # - platform: state
+      #   entity_id: binary_sensor.0x158d00024e58e7_motion
+      #   from: 'off'
+      #   to: 'on'
+    condition:
+      - condition: state
+        entity_id: group.lights_b
+        state: "off"
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: "off"
+    action:
+      - service: xiaomi_miio.light_set_scene
+        data:
+          entity_id: light.mirror_light_b
+          scene: >-
+            {{4 if (is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','on')) else 1}}
+  
 # ##################################
 # Bathroom - Auto Light Off
 # ##################################
-- alias: bathroom_auto_light_off
-  id: bathroom_auto_light_off
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: timer.finished
-      event_data:
-        entity_id: timer.main_light_b
-  action:
-    - service: switch.turn_off
-      entity_id: switch.0x158d0002a36433_channel_2
-    - service: light.turn_off
-      entity_id: light.mirror_light_b
-      data:
-        transition: 5
-
+  - alias: bathroom_auto_light_off
+    id: bathroom_auto_light_off
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.main_light_b
+    action:
+      - service: switch.turn_off
+        entity_id: switch.0x158d0002a36433_channel_2
+      - service: light.turn_off
+        entity_id: light.mirror_light_b
+        data:
+          transition: 5
+  
 # ##################################
 # Bathroom - Light Toggle with Repeater
 # ##################################
-- alias: bathroom_light_toggle_repeater
-  id: bathroom_light_toggle_repeater
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0001e0a622_action
-        click_type: button_1_single
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: group.lights_b
-              state: "on"
-          sequence:
-            - service: homeassistant.turn_off
-              entity_id: switch.0x158d0002a36433_channel_2, light.mirror_light_b
-        - conditions:
-            - condition: state
-              entity_id: group.lights_b
-              state: "off"
-          sequence:
-            - service: switch.turn_on
-              entity_id: switch.0x158d0002a36433_channel_2
-
+  - alias: bathroom_light_toggle_repeater
+    id: bathroom_light_toggle_repeater
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d0001e0a622_action
+          click_type: button_1_single
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: group.lights_b
+                state: "on"
+            sequence:
+              - service: homeassistant.turn_off
+                entity_id: switch.0x158d0002a36433_channel_2, light.mirror_light_b
+          - conditions:
+              - condition: state
+                entity_id: group.lights_b
+                state: "off"
+            sequence:
+              - service: switch.turn_on
+                entity_id: switch.0x158d0002a36433_channel_2
+  
 # ##################################
 # Bathroom - Mirror Light Manual
 # ##################################
-- alias: bathroom_mirror_light_manual
-  id: bathroom_mirror_light_manual
-  initial_state: true
-  trigger:
-    - platform: event
-      event_type: xiaomi_aqara.click
-      event_data:
-        entity_id: sensor.0x158d0001ef6089_action
-  condition:
-    - condition: template
-      value_template: "{{ states('light.mirror_light_b') in ['on','off'] }}"
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: light.mirror_light_b
-              state: "on"
-            - condition: template
-              value_template: "{{ trigger.event.data.click_type == 'single' }}"
-          sequence:
-            - service: light.turn_off
-              entity_id: light.mirror_light_b
-        - conditions:
-            - condition: state
-              entity_id: light.mirror_light_b
-              state: "off"
-            - condition: state
-              entity_id: switch.0x158d0002a36433_channel_2
-              state: "off"
-            - condition: template
-              value_template: "{{ trigger.event.data.click_type == 'single' }}"
-          sequence:
-            - service: xiaomi_miio.light_set_scene
-              data:
+  - alias: bathroom_mirror_light_manual
+    id: bathroom_mirror_light_manual
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d0001ef6089_action
+    condition:
+      - condition: template
+        value_template: "{{ states('light.mirror_light_b') in ['on','off'] }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
                 entity_id: light.mirror_light_b
-                scene: 4
-        - conditions:
-            - condition: state
-              entity_id: light.mirror_light_b
-              state: "off"
-            - condition: state
-              entity_id: switch.0x158d0002a36433_channel_2
-              state: "on"
-            - condition: template
-              value_template: "{{ trigger.event.data.click_type == 'single' }}"
-          sequence:
-            - service: xiaomi_miio.light_set_scene
-              data:
+                state: "on"
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'single' }}"
+            sequence:
+              - service: light.turn_off
                 entity_id: light.mirror_light_b
-                scene: 1
-        - conditions:
-            - condition: template
-              value_template: "{{ trigger.event.data.click_type == 'double' }}"
-          sequence:
-            - service: xiaomi_miio.light_set_scene
-              data:
+          - conditions:
+              - condition: state
                 entity_id: light.mirror_light_b
-                scene: 1
-        - conditions:
-            - condition: template
-              value_template: "{{ trigger.event.data.click_type == 'hold' }}"
-          sequence:
-            - service: xiaomi_miio.light_set_scene
-              data:
+                state: "off"
+              - condition: state
+                entity_id: switch.0x158d0002a36433_channel_2
+                state: "off"
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'single' }}"
+            sequence:
+              - service: xiaomi_miio.light_set_scene
+                data:
+                  entity_id: light.mirror_light_b
+                  scene: 4
+          - conditions:
+              - condition: state
                 entity_id: light.mirror_light_b
-                scene: 4
-
+                state: "off"
+              - condition: state
+                entity_id: switch.0x158d0002a36433_channel_2
+                state: "on"
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'single' }}"
+            sequence:
+              - service: xiaomi_miio.light_set_scene
+                data:
+                  entity_id: light.mirror_light_b
+                  scene: 1
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'double' }}"
+            sequence:
+              - service: xiaomi_miio.light_set_scene
+                data:
+                  entity_id: light.mirror_light_b
+                  scene: 1
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'hold' }}"
+            sequence:
+              - service: xiaomi_miio.light_set_scene
+                data:
+                  entity_id: light.mirror_light_b
+                  scene: 4
+  
 # ##################################
 # Bathroom - Mirror Light Restart
 # ##################################
-- alias: bathroom_mirror_light_restart
-  id: bathroom_mirror_light_restart
-  initial_state: true
-  trigger:
-    - platform: time_pattern
-      minutes: "/1"
-    # - platform: state
-    #   entity_id: light.mirror_light_b
-    #   to: 'unavailable'
-    #   for:
-    #     minutes: 2
-    # - platform: numeric_state
-    #   entity_id: sensor.ha_uptime
-    #   above: 0
-    #   below: 2
-  condition:
-    - condition: state
-      entity_id: light.mirror_light_b
-      state: "unavailable"
-      for:
-        minutes: 2
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    - condition: state
-      entity_id: switch.mirror_light_b_restart_key
-      state: 'on'
-  action:
-    - repeat:
-        while:
-          - condition: state
-            entity_id: light.mirror_light_b
-            state: "unavailable"
-          - condition: template
-            value_template: "{{ repeat.index <= 5 }}"
-        sequence:
-          - service: switch.turn_off
-            entity_id: switch.esp32_node_b_relay_5
-          - delay:
-              seconds: 15
-          - service: switch.turn_on
-            entity_id: switch.esp32_node_b_relay_5
-          - service: notify.telegram
-            data:
-              message: "\U0001f6a8 Mirror LED B restart done({{repeat.index}})!"
-          - delay:
-              seconds: 30
-    - condition: state
-      entity_id: light.mirror_light_b
-      state: 'unavailable'
-    - service: notify.telegram
-      data:
-        message: "\U0001f6a8 Mirror LED B restart unsuccessful!"
-    - service: switch.turn_off
-      entity_id: switch.mirror_light_b_restart_key
-
+  - alias: bathroom_mirror_light_restart
+    id: bathroom_mirror_light_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.mirror_light_b
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.mirror_light_b
+        state: "unavailable"
+        for:
+          minutes: 2
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: switch.mirror_light_b_restart_key
+        state: 'on'
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.mirror_light_b
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.esp32_node_b_relay_5
+            - delay:
+                seconds: 15
+            - service: switch.turn_on
+              entity_id: switch.esp32_node_b_relay_5
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 Mirror LED B restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.mirror_light_b
+        state: 'unavailable'
+      - service: notify.telegram
+        data:
+          message: "\U0001f6a8 Mirror LED B restart unsuccessful!"
+      - service: switch.turn_off
+        entity_id: switch.mirror_light_b_restart_key
+  
 # ##################################
 # Hall Big - Mirror LED Auto Restart Key Toggle
 # ##################################
-- alias: bathroom_mirror_led_restart_key_toggle
-  id: bathroom_mirror_led_restart_key_toggle
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: light.mirror_light_b
-      from: 'unavailable'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.mirror_light_b_restart_key
-
+  - alias: bathroom_mirror_led_restart_key_toggle
+    id: bathroom_mirror_led_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.mirror_light_b
+        from: 'unavailable'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.mirror_light_b_restart_key
+  
 # ##################################
 # Bathroom - Indicator
 # ##################################
-- alias: bathroom_indicator
-  id: bathroom_indicator
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  trigger:
-    - platform: state
-      entity_id: input_boolean.bathroom_occupancy
-  condition:
-    - condition: template
-      value_template: "{{ states('input_boolean.bathroom_occupancy') in ['on','off'] }}"
-  action:
-    - choose:
-        - conditions:
-            - condition: state
-              entity_id: input_boolean.bathroom_occupancy
-              state: "off"
-          sequence:
-            - service: light.turn_off
-              entity_id: light.esp32_node_hs_bathroom
-        - conditions:
-            - condition: state
-              entity_id: input_boolean.bathroom_occupancy
-              state: "on"
-          sequence:
-            - service: light.turn_on
-              data:
+  - alias: bathroom_indicator
+    id: bathroom_indicator
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: input_boolean.bathroom_occupancy
+    condition:
+      - condition: template
+        value_template: "{{ states('input_boolean.bathroom_occupancy') in ['on','off'] }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.bathroom_occupancy
+                state: "off"
+            sequence:
+              - service: light.turn_off
                 entity_id: light.esp32_node_hs_bathroom
-                effect: "Color Wipe"
-                brightness_pct: 40
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.bathroom_occupancy
+                state: "on"
+            sequence:
+              - service: light.turn_on
+                data:
+                  entity_id: light.esp32_node_hs_bathroom
+                  effect: "Color Wipe"
+                  brightness_pct: 40

@@ -5,46 +5,46 @@
 # #####################################################################################
 # Hall Big - Main door not closed for 3 minutes
 # ##################################
-- alias: hall_big_main_door_not_closed_3m
-  id: hall_big_main_door_not_closed_3m
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001e5d6be_contact
-      from: 'off'
-      to: 'on'
-      for:
-        minutes: 3
-  action:
-    # - service: >
-    #     {% if is_state('binary_sensor.tod_day','on') %} script.main_door_not_closed_tts
-    #     {%else%} script.noop
-    #     {%endif%}
-    - service: notify.telegram
-      data:
-        message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
-    - service: script.turn_on
-      entity_id: script.open_door_photo
-
+  - alias: hall_big_main_door_not_closed_3m
+    id: hall_big_main_door_not_closed_3m
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.0x158d0001e5d6be_contact
+        from: 'off'
+        to: 'on'
+        for:
+          minutes: 3
+    action:
+      # - service: >
+      #     {% if is_state('binary_sensor.tod_day','on') %} script.main_door_not_closed_tts
+      #     {%else%} script.noop
+      #     {%endif%}
+      - service: notify.telegram
+        data:
+          message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
+      - service: script.turn_on
+        entity_id: script.open_door_photo
+  
 # ##################################
 # Hall Big - Main Door Closed
 # ##################################
-- alias: hall_big_main_door_closed
-  id: hall_big_main_door_closed
-  initial_state: true
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.0x158d0001e5d6be_contact
-      from: 'on'
-      to: 'off'
-  action:
-    - service: notify.telegram
-      data:
-        title: Doorbell photo
-        message: "\U0001f514 Входная дверь закрыта!"
+  - alias: hall_big_main_door_closed
+    id: hall_big_main_door_closed
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.0x158d0001e5d6be_contact
+        from: 'on'
+        to: 'off'
+    action:
+      - service: notify.telegram
         data:
-          photo:
-          - url: !secret door_snap
-            caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
-    - service: timer.cancel
-      entity_id: timer.main_door_open_hb
+          title: Doorbell photo
+          message: "\U0001f514 Входная дверь закрыта!"
+          data:
+            photo:
+            - url: !secret door_snap
+              caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
+      - service: timer.cancel
+        entity_id: timer.main_door_open_hb
