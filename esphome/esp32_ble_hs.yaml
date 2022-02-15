@@ -1,19 +1,20 @@
 substitutions:
-  board_name: esp32_ble_tracker
-
+  board_name: esp32_ble_hs
+  up_int: 60s
+  
 esphome:
   name: ${board_name}
   platform: ESP32
   board: nodemcu-32s
-  comment: ESP32 BLE Tracker HB
+  comment: ESP32 BLE Tracker HS
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
 
 external_components:
   - source: github://myhomeiot/esphome-components  
-    
+
 wifi:
-  ssid: !secret wifi_ssid_hb
+  ssid: !secret wifi_ssid_k
   password: !secret wifi_pass
   domain: .local
   reboot_timeout: 15min
@@ -21,7 +22,7 @@ wifi:
   fast_connect: true
   #power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.109
+    static_ip: 192.168.1.59
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
@@ -35,41 +36,38 @@ api:
 
 ota:
 
+mdns:
+  disabled: true
+  
+globals:
+  - id: event_count
+    type: unsigned int
+    restore_value: no
+    initial_value: '0'
+
 esp32_ble_tracker:
   scan_parameters:
-    interval: 512ms
-    window: 48ms
-    active: true
-
-#exposure_notifications:
-  #on_exposure_notification:
-   # then:
-      #- homeassistant.service:
-      #    service: notify.telegram
-      #    data:
-      #      message: "Tracker HB - COVID-19 Exposure Notify!"
-     # - lambda: |
-      #    ESP_LOGD("main", "Got notification:");
-       #   ESP_LOGD("main", "  RPI: %s", hexencode(x.rolling_proximity_identifier).c_str());
-        #  ESP_LOGD("main", "  RSSI: %d", x.rssi);
+    #interval: 512ms
+    #window: 48ms
+    # interval: 180ms
+    # window: 60ms
+    active: false
 
 # web_server:
 #   port: 80
 
 ble_gateway:
-  id: esp32_ble_tracker_hb
-  devices:
-    - mac_address: 7E:FE:3E:EC:59:FB
-    - mac_address: 3B:EF:3E:DE:98:6B
-    - mac_address: 2A:BC:3E:DC:57:65
-    - mac_address: 6B:9C:3E:D1:C5:9A
+  id: esp32_ble_gateway_hs
   on_ble_advertise:
     then:
-      homeassistant.event:
-        event: esphome.on_ble_advertise
-        data:
-          packet: !lambda return packet;
-          gateway_id: esp32_ble_gateway_hb
+      - homeassistant.event:
+          event: esphome.on_ble_advertise
+          data:
+            packet: !lambda return packet;
+            gateway_id: esp32_ble_gateway_hs
+      - lambda: |-
+          id(event_count) += 1;
+
 
 myhomeiot_ble_host:
 
@@ -136,25 +134,12 @@ binary_sensor:
     name: ${board_name}_Green
     device_class: presence
 
-#   - platform: ble_presence
-#     mac_address: FF:FF:B0:00:95:1F
-#     name: ${board_name}_iTag_white
-#     device_class: presence
-
-# # FF:FF:B0:00:95:1F white itag
-
 # 7E:FE:3E:EC:59:FB white
 # 6B:9C:3E:D1:C5:9A green
 # 2A:BC:3E:DC:57:65 PINK
 # 3B:EF:3E:DE:98:6B GREY
 
 sensor:
-  # - platform: template
-  #   name: ${board_name}_Last_Boot
-  #   update_interval: never
-  #   device_class: timestamp
-  #   id: id_start
-    
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
@@ -183,6 +168,13 @@ sensor:
     mac_address: 6B:9C:3E:D1:C5:9A
     name: ${board_name}_Green_RSSI
     icon: "mdi:wifi"
+
+  - platform: xiaomi_miscale
+    mac_address: F0:9B:56:1E:E3:2E
+    weight:
+      name: ${board_name}_Scale_Weight
+    impedance:
+      name: ${board_name}_Scale_Impedance
 
   - platform: template
     id: ${board_name}_White_Battery
@@ -216,18 +208,33 @@ sensor:
     state_class: measurement
     accuracy_decimals: 0
 
-  # - platform: ble_rssi
-  #   mac_address: FF:FF:B0:00:95:1F
-  #   name: ${board_name}_iTag_white RSSI
-  #   icon: "mdi:wifi"
+  - platform: template
+    name: ${board_name}_Heap_Free
+    lambda: "return ESP.getFreeHeap();"
+    id: heap_size
+    update_interval: 5s
+    unit_of_measurement: bytes
+    accuracy_decimals: 0
+    entity_category: diagnostic
+    
+  - platform: template
+    name: ${board_name}_Heap_Min
+    icon: mdi:memory
+    lambda: |-
+      return {static_cast<float>(esp_get_minimum_free_heap_size())};
+    unit_of_measurement: B
+    #update_interval: ${update_interval}
+    update_interval: 5s
+    entity_category: diagnostic
 
-  # - platform: template
-  #   name: ${board_name}_free_ram
-  #   lambda: "return ESP.getFreeHeap();"
-  #   id: heap_size
-  #   update_interval: 20s
-  #   unit_of_measurement: bytes
-  #   accuracy_decimals: 0
+  - platform: template
+    name: ${board_name}_Events
+    lambda: |-
+      return id(event_count);
+    update_interval: ${up_int}
+    icon: mdi:cube-send
+    unit_of_measurement: 'event'
+    accuracy_decimals: 0
 
 text_sensor:
   - platform: template
@@ -262,7 +269,7 @@ text_sensor:
     attribute: devices
     on_value:
       then:
-        - lambda: id(esp32_ble_tracker_hb).set_devices(x);
+        - lambda: id(esp32_ble_gateway_hs).set_devices(x);
 
 button:
   - platform: restart
@@ -272,3 +279,19 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow
+
+interval:
+  - interval: ${up_int}
+    then:
+      - lambda: |-
+          static bool flag = false;
+          auto min = id(sntp_time).now().minute;
+          if (min == 59 && !flag)
+          {
+            id(event_count) = 0;
+            flag = true;
+          }
+          else
+          {
+            flag = false;
+          }        

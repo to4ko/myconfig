@@ -9,28 +9,35 @@ esphome:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_pass
-  domain: .localdomain
+  domain: .local
   reboot_timeout: 15min
-  output_power: 17.5dB
+  #output_power: 17.5dB
   fast_connect: true
-  power_save_mode: none
+  #power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.63
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
 
 api:
 
 ota:
-
-web_server:
-  port: 80
+  reboot_timeout: 0s
+  
+# web_server:
+#   port: 80
 
 logger:
   baud_rate: 0
 
-# remove # below to enable ble tracking
-#esp32_ble_tracker:
-
 uart:
-  rx_pin: RX
-  baud_rate: 4800
+  tx_pin: GPIO25
+  rx_pin: GPIO26
+  baud_rate: 38400
+  parity: EVEN
+  stop_bits: 1
 
 sensor:
   - platform: uptime
@@ -42,48 +49,87 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
-#  - platform: cse7766
-#    update_interval: 5s
-#    current:
-#      name: ${board_name}_Current
-#    voltage:
-#      name: ${board_name}_Voltage
-#    power:
-#      name: ${board_name}_Power
-#      id: power
-#      on_value_range:
-#        - above: 1.0
-#          then:
-#            - logger.log: "Power above 1.0A"
-#        - below: 1.0
-#          then:
-#            - logger.log: "Power below 1.0A"
+  - platform: cse7761
+    update_interval: 5s
+    voltage:
+      name: ${board_name}_Voltage
+      accuracy_decimals: 1
+      device_class: voltage
+      id: id_voltage
+    current_1:
+      name: ${board_name}_Current_1
+      accuracy_decimals: 1
+      device_class: current
+      id: id_current_1
+    current_2:
+      name: ${board_name}_Current_2
+      accuracy_decimals: 1
+      device_class: current
+      id: id_current_2
+    active_power_1:
+      name: ${board_name}_Power_1
+      accuracy_decimals: 0
+      id: id_power_1
+      unit_of_measurement: W
+      device_class: power
+    active_power_2:
+      name: ${board_name}_Power_2
+      accuracy_decimals: 0
+      id: id_power_2
+      unit_of_measurement: W
+      device_class: power
+
+  - platform: integration
+    name: ${board_name}_Energy_1
+    sensor: id_power_1
+    time_unit: h
+    accuracy_decimals: 3
+    unit_of_measurement: 'kWh'
+    device_class: energy
+    state_class: total_increasing
+    filters:
+      - multiply: 0.001
+    id: id_energy_1
+    restore: true
+
+  - platform: integration
+    name: ${board_name}_Energy_2
+    sensor: id_power_2
+    time_unit: h
+    accuracy_decimals: 3
+    unit_of_measurement: 'kWh'
+    device_class: energy
+    state_class: total_increasing
+    filters:
+      - multiply: 0.001
+    id: id_energy_2
+    restore: true
+
+switch:
+  - platform: gpio
+    name: ${board_name}_Relay_1
+    id: sw1
+    pin: GPIO27
+    restore_mode: RESTORE_DEFAULT_ON
+
+  - platform: gpio
+    name: ${board_name}_relay_2
+    id: sw2
+    pin: GPIO14
+    restore_mode: RESTORE_DEFAULT_ON
 
 output:
   - platform: gpio
-    pin: GPIO27
-    id: relay1
-  - platform: gpio
-    pin: GPIO14
-    id: relay2
+    id: blue_led
+    pin: GPIO13
+    #inverted: True
 
-switch:
-  - platform: restart
-    name: ${board_name}_Restart
-
-  - platform: output
-    name: ${board_name}_Relay_1
-    output: relay1
-    id: sw1
-  - platform: output
-    name: ${board_name}_relay_2
-    output: relay2
-    id: sw2
-
-status_led:
-  pin:
-    number: GPIO13
-    inverted: yes
+light:
+  - platform: binary
+    name: ${board_name}_StatusLED
+    internal: true
+    output: blue_led
+    id: main_led
 
 binary_sensor:
   - platform: status
@@ -95,27 +141,21 @@ binary_sensor:
       mode: INPUT_PULLUP
       inverted: True
     name: ${board_name}_Button
-    on_press:
-      - logger.log: "button"
-      - switch.toggle: sw1
+
   - platform: gpio
     pin:
       number: GPIO32
       mode: INPUT_PULLUP
       inverted: True
     name: ${board_name}_Switch_1
-    on_press:
-      - logger.log: "switch 1"
-      - switch.toggle: sw1
+
   - platform: gpio
     pin:
       number: GPIO33
       mode: INPUT_PULLUP
       inverted: True
     name: ${board_name}_Switch_2
-    on_press:
-      - logger.log: "switch 2"
-      - switch.toggle: sw2
+
       
 text_sensor:
   - platform: template
@@ -143,19 +183,11 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
-  - platform: wifi_info
-    ip_address:
-      name: ${board_name}_IP
-    ssid:
-      name: ${board_name}_SSID
-    bssid:
-      name: ${board_name}_BSSID
-    mac_address:
-      name: ${board_name}_Mac
+button:
+  - platform: restart
+    name: ${board_name}_Restart
 
 time:
-  - platform: homeassistant
-    id: homeassistant_time
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow      
