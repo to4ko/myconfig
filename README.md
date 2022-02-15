@@ -8,6 +8,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Intel i3-10100T
   - 2*8Gb Sk Hynix DDR4 SODIMM
   - 512Gb Samsung 970 Pro NVME
+  - Buro BU-BT40C
 
 **Main Storage Host:** 
   - Synology DS1621+
@@ -53,7 +54,8 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
   - Yeelight LED Ceiling Lamp 480mm White (YLXD05YL)
   - Yeelight LED Light Strip (YLDD01YL)
-  - Yeelight LED Light Strip Plus (YLDD04YL) 
+  - Yeelight LED Light Strip Plus (YLDD04YL)
+  - Yeelight LED Light Strip 1S (YLDD05YL) (3ea)
   - Yeelight Jiaoyue 260 (YLXD62YI)
   - Xiaomi Yeelight Bedside Lamp 2
   - Yeelight Bedside Lamp D2
@@ -99,15 +101,13 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
   - Blitzwolf LT11
   - not in use - Blitzwolf SS5 dual gang relay
-  - MH-Z19B CO2 sensors on Wemos D1 mini (1ea)
-  - ESP32 - Domofon (Intercom helper) with Non-Envasive Power meter
   - ESP32 - Node K - Kitchen MH-Z19B, BME280, BHI1750, Water Filter Counters, IR controller
   - ESP32 - Node B - Bathroom Relays (Water vales, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
   - ESP32 - Node MB - Master Bedroom MH-Z19B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova Room MH-Z19B, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
-  - ESP32 - BLE Tracker (Nut find 3)
-  - ESP32 - BLE Tracker (Xiaomi Scale 2 and Nut find 3)
+  - ESP32 - BLE Tracker HB
+  - ESP32 - BLE Tracker HS
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP32 PZEM HB - Hall Big Breaker Box PZEM-004T
   - Digma IR Remote (3ea)
@@ -117,6 +117,16 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - D1 Mini S - Sasha Room MH-Z19B, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
   - D1 Mini Air Freshener with Figaro air sensor
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
+
+**BT\BLE Devices:**
+  - CGD1 Cleargrass alarm clock
+  - LYWSD02 Temperature and Humidity sensor
+  - LYWSD03MMC Hygro thermometer
+  - MCCGQ02HL Mijia Window/Door Sensor 2
+  - MJYD02YL Motion Activated Night Light
+  - Mi Body Composition Scale 2
+  - MMC-T201-1 Digital Baby Thermometer
+  - YLAI003 Smart Wireless Switch
 
 **Other Devices:**
   - SLS Gateway
