@@ -1,87 +1,87 @@
-- sensor:
-    - name: Home Status
-      state: >
-        {% if states('binary_sensor.family_home') == "on" %}
-        Occupied
-        {% else %}
-        Empty
-        {% endif %}
-      icon: >
-        {% if states('binary_sensor.family_home') == "on" %}
-        mdi:home-account
-        {% else %}
-        mdi:home-outline
-        {% endif %}
-
-    - name: People Home
-      state: "{{ expand('group.persons') | map(attribute='state') | select('eq','home')| list | length }}"
-      unit_of_measurement: "ea"
-      icon: mdi:account-group
-
-    - name: Last Motion
-      state: >
-        {%- set sensors = expand('group.motioninternal') %}
-        {% for sensor in sensors %}
-          {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max ) %}
-            {{ sensor.name }}
+  - sensor:
+      - name: Home Status
+        state: >
+          {% if states('binary_sensor.family_home') == "on" %}
+          Occupied
+          {% else %}
+          Empty
           {% endif %}
-        {% endfor %}
-
-    # value_template: >-
-    #   {% set x = expand('group.motioninternal')
-    #         | selectattr('state', 'eq', 'on')
-    #         | sort(reverse=true, attribute='last_changed')
-    #         | list %}
-    #   {% if x | count > 0 %}
-    #     {{ x[0].name }}, {{ x[0].last_changed.timestamp() | timestamp_local() }}
-    #   {% else %}
-    #     {{ states('sensor.last_motion') }}
-    #   {% endif %}
-
-    # - name: Last Motion
-    #   state: >
-    #     {%- set sensors = expand('group.motioninternal') %}
-    #     {% for sensor in sensors %}
-    #       {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max ) and is_state(sensor.entity_id,'on')%}
-    #         {{ sensor.name }}
-    #       {% endif %}
-    #     {% endfor %}
-
-    - name: Last Motion Time
-      state: '{{ as_timestamp(states.group.motioninternal.last_changed) | timestamp_custom("%a %d %b %H:%M",true,0) }}'
-
-    - name: Security Devices Last Triggered
-      state: >
-        {%- set sensors = expand('group.securitydevices') %}
-        {% for sensor in sensors %}
-          {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-            {{ sensor.name }}
+        icon: >
+          {% if states('binary_sensor.family_home') == "on" %}
+          mdi:home-account
+          {% else %}
+          mdi:home-outline
           {% endif %}
-        {% endfor %}
 
-    - name: Security Devices Last Triggered Time
-      state: '{{ as_timestamp(states.group.securitydevices.last_changed) | timestamp_custom("%a %d %b %H:%M",true,0) }}'
+      - name: People Home
+        state: "{{ expand('group.persons') | map(attribute='state') | select('eq','home')| list | length }}"
+        unit_of_measurement: "ea"
+        icon: mdi:account-group
 
-    - name: Door Last Change
-      state: >
-        {%- set sensors = expand('group.doors') %}
-        {% for sensor in sensors %}
-          {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-            {{ sensor.name }}
-          {% endif %}
-        {% endfor %}
+      - name: Last Motion
+        state: >
+          {%- set sensors = expand('group.motioninternal') %}
+          {% for sensor in sensors %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max ) %}
+              {{ sensor.name }}
+            {% endif %}
+          {% endfor %}
 
-    - name: Door Last Change Time
-      state: '{{ (as_timestamp(now())-as_timestamp(states.sensor.door_last_change.last_changed))|timestamp_custom("%H:%M:%S",true,0) }}'
+      # value_template: >-
+      #   {% set x = expand('group.motioninternal')
+      #         | selectattr('state', 'eq', 'on')
+      #         | sort(reverse=true, attribute='last_changed')
+      #         | list %}
+      #   {% if x | count > 0 %}
+      #     {{ x[0].name }}, {{ x[0].last_changed.timestamp() | timestamp_local() }}
+      #   {% else %}
+      #     {{ states('sensor.last_motion') }}
+      #   {% endif %}
 
-    - name: Window Last Change
-      state: >
-        {%- set sensors = expand('group.windows') %}
-        {% for sensor in sensors %}
-          {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
-            {{ sensor.name }}
-          {% endif %}
-        {% endfor %}
+      # - name: Last Motion
+      #   state: >
+      #     {%- set sensors = expand('group.motioninternal') %}
+      #     {% for sensor in sensors %}
+      #       {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max ) and is_state(sensor.entity_id,'on')%}
+      #         {{ sensor.name }}
+      #       {% endif %}
+      #     {% endfor %}
 
-    - name: Window Last Chnage Time
-      state: '{{ (as_timestamp(now())-as_timestamp(states.sensor.window_last_change.last_changed))|timestamp_custom("%H:%M:%S",true,0) }}'
+      - name: Last Motion Time
+        state: '{{ as_timestamp(states.group.motioninternal.last_changed) | timestamp_custom("%a %d %b %H:%M",true,0) }}'
+
+      - name: Security Devices Last Triggered
+        state: >
+          {%- set sensors = expand('group.securitydevices') %}
+          {% for sensor in sensors %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+              {{ sensor.name }}
+            {% endif %}
+          {% endfor %}
+
+      - name: Security Devices Last Triggered Time
+        state: '{{ as_timestamp(states.group.securitydevices.last_changed) | timestamp_custom("%a %d %b %H:%M",true,0) }}'
+
+      - name: Door Last Change
+        state: >
+          {%- set sensors = expand('group.doors') %}
+          {% for sensor in sensors %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+              {{ sensor.name }}
+            {% endif %}
+          {% endfor %}
+
+      - name: Door Last Change Time
+        state: '{{ (as_timestamp(now())-as_timestamp(states.sensor.door_last_change.last_changed))|timestamp_custom("%H:%M:%S",true,0) }}'
+
+      - name: Window Last Change
+        state: >
+          {%- set sensors = expand('group.windows') %}
+          {% for sensor in sensors %}
+            {% if as_timestamp(sensor.last_changed) == as_timestamp(sensors | map(attribute='last_changed') | max) %}
+              {{ sensor.name }}
+            {% endif %}
+          {% endfor %}
+
+      - name: Window Last Chnage Time
+        state: '{{ (as_timestamp(now())-as_timestamp(states.sensor.window_last_change.last_changed))|timestamp_custom("%H:%M:%S",true,0) }}'

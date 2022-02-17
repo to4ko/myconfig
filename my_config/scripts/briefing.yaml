@@ -1,145 +1,145 @@
-briefing_telegram:
-  alias: Briefing to Telegram
-  sequence:
-    - service: notify.telegram_family
-      data:
-        message: |-
-          {%- set date = as_timestamp(now()) -%}
-          {%- set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
-          {%- set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
-          {%- set m_ok = date | timestamp_custom("%m",true,0) | int(0) %}
-          {%- set wd_ok = date | timestamp_custom("%w",true,0) | int(0) %}
-          {%- set weekday = weekday_list[wd_ok-1] %} 
-          {%- set month = month_list[m_ok-1] %} 
-          {%- set hour_num = now().hour | int(0) %}          
-          {% if hour_num >=6 and hour_num <12 %}{{"\U00002600"}}Доброе утро! {% elif hour_num>=12 and hour_num<17 %}{{"\U0001f31e"}}Добрый день! {% elif hour_num>=17 and hour_num<22 %}{{"\U0001f31d"}}Добрый вечер! {% else %}{{"\U0001f31a"}}Доброй ночи! {% endif %}
-          {% if hour_num < 17 and hour_num >= 0 %}Сегодня {{ weekday }}, {{ now().day|int(0) }} {{ month_list[now().month-1] }}. {% if state_attr('calendar.fazy_luny','message').split(":")[0] in ['Новолуние','Полнолуние'] -%}{{- state_attr('calendar.fazy_luny','message').split(":")[0]}}{% endif %}
-          {%- if ((now().weekday() + 1 ) <= 5 and is_state('binary_sensor.workday','off')) or ((now().weekday() + 1 ) > 5 and is_state('binary_sensor.workday','on')) %}
-          Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
-          {% endif %}
-          По прогнозу сегодня {{ states('sensor.dark_sky_summary_0d')|lower }}
-          Температура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|int(0)}}°C. 
-          {% if states('sensor.dark_sky_precip_probability_0d')|int(0) == 0 %}Оcадков не ожидается. {%else%}Вероятность осадков {{states('sensor.dark_sky_precip_probability_0d')|int(0)}}%. {%endif%}      
-          {% if states('sensor.dark_sky_precip_probability_0d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_0d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}. Текущая температура {{state_attr('weather.my_weather','temperature')|int(0)}}°C.
-          {% if is_state('binary_sensor.ice_alarm_0d','on')%}Внимание! Возможнен гололед!
-          {% endif%}
-          {%- endif %}
-          {%- if 0 < states('sensor.birthday_0')|int <= 30 %}{{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}} отмечает день рождения через {{states('sensor.birthday_0')|int|format(morph='день',as_text=false)}}.{% elif states('sensor.birthday_0')|int == 0 %}Сегодня отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}!{%endif %}
-          {% if 0 < states('sensor.holiday_0')|int <= 30 %}Ближайший праздник - {{ state_attr('sensor.holiday_0','friendly_name') }} через {{states('sensor.holiday_0')|int|format(morph='день',as_text=false)}}. {% elif event_counter == 0 %}Сегодня праздник {{ state_attr('sensor.holiday_0','friendly_name') }}! Поздравляю!{% endif %}
-          {% endif %}
-          {%if hour_num >= 17 and hour_num <= 23 %}
-          Прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
-          Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|int(0)}}°C. 
-          {%if states('sensor.dark_sky_precip_probability_1d')|int(0) == 0 %}Оcадков не ожидается.{%else%}Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|int(0)}}%.{%endif%}
-          {%if states('sensor.dark_sky_precip_probability_1d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_1d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
-          {%if is_state('binary_sensor.ice_alarm_1d','on')%}Внимание! Возможнен гололед!{%endif%}
-          {% endif %}
-          {%- if ((now().weekday() + 2 ) <= 5 and is_state('binary_sensor.workday_tomorrow','off')) or ((now().weekday() + 2 ) > 5 and is_state('binary_sensor.workday_tomorrow','on')) %}
-          Обратите внимание - завтра {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()|int+1]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.{%endif%}
-          {% endif %}
-          
-briefing_tts:
-  alias: Briefing to TTS
-  sequence:
-    - service: media_player.volume_set
-      data:
-        entity_id: "{{ entity_id }}"
-        volume_level: "{{ volume_level|float(0) }}"
-    - service: media_player.play_media
-      data:
-        media_content_type: dialog
-        entity_id: "{{ entity_id }}"
-        media_content_id: >-
-          {%- set date = as_timestamp(now()) -%}
-          {%- set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
-          {%- set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
-          {%- set day_list = ['первое','второе','третье','четвертое','пятое','шестое','седьмое','восьмое','девятое','десятое','одиннадцатое','двенадцатое','тринадцатое','четырнадцатое','пятнадцатое','шестнадцатое','семнадцатое','восемнадцатое','девятнадцатое','двадцатое','двадцать первое','двадцать второе','двадцать третье','двадцать четвертое','двадцать пятое','двадцать шестое','двадцать седьмое','двадцать восьмое','двадцать девятое','тридцатое','тридцать первое'] %}
-          {%- set m_ok = date | timestamp_custom("%m",true,0) | int(0) %}
-          {%- set wd_ok = date | timestamp_custom("%w",true,0) | int(0) %}
-          {%- set d_ok = date | timestamp_custom("%d",true,0) | int(0) %}
-          {%- set weekday = weekday_list[wd_ok-1] %} 
-          {%- set day = day_list[d_ok-1] %}
-          {%- set month = month_list[m_ok-1] %} 
-          {%- set hour_num = now().hour | int(0) %}
-          {%- if hour_num >=6 and hour_num <12 %}
-          Д+оброе +утро!
-          {%- elif hour_num>=12 and hour_num<17 %}
-          Д+обрый д+ень!
-          {%- elif hour_num>=17 and hour_num<22 %}
-          Д+обрый в+ечер!
-          {%- else %}
-          Д+оброй н+очи!
-          {%- endif %}
-          Сег+одня {{ weekday }} {{ day }} {{ month }}.
-          {%- if ((now().weekday() + 1 ) <= 5 and is_state('binary_sensor.workday','off')) or ((now().weekday() + 1 ) > 5 and is_state('binary_sensor.workday','on')) %}
-          Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
-          {% endif %}
-          {{ states('sensor.dark_sky_summary_0d') }}
-          Температ+ура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|int(0)}} °C. 
-          {% if states('sensor.dark_sky_precip_probability_0d')|int(0) == 0 %}Осадков не ожидается.{%else%}Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_0d')|int(0)}} %. В+ид ос+адков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_0d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{%endif%} 
-          Текущая температура {{state_attr('weather.my_weather','temperature')|int(0)}} °C.
-          {% if is_state('binary_sensor.ice_alarm_0d','on')%}Вним+ание! Возм+ожнен голол+ёд!{%endif%}
-          {% if ((0 < states('sensor.birthday_0')|int <= 30) and (states('sensor.birthday_0')|int % 5 == 0)) or (states('sensor.birthday_0')|int in [3, 5]) %}{{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}} отмечает день рождения через {{states('sensor.birthday_0')|int|format(morph='день')}}.{% elif states('sensor.birthday_0')|int == 0 %}Сегодня отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}{% elif states('sensor.birthday_0')|int == 1 %}Завтра отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}!{%endif %}
-          {% if ((0 < states('sensor.holiday_0')|int <= 30) and (states('sensor.holiday_0')|int % 5 ==0)) or (states('sensor.holiday_0')|int in [3, 5])  %}Ближайший праздник - {{ state_attr('sensor.holiday_0','friendly_name') }} через {{states('sensor.holiday_0')|int|format(morph='день')}}. {% elif states('sensor.holiday_0')|int == 1 %}Завтра - {{ state_attr('sensor.holiday_0','friendly_name') }}{% elif states('sensor.holiday_0')|int == 0 %}Сегодня - {{ state_attr('sensor.holiday_0','friendly_name') }}! Поздравляю!{% endif %}
-          {% if hour_num > 17 and hour_num < 6 %}
-          Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
-          Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|int(0)}} °C. 
-          {% if states('sensor.dark_sky_precip_probability_1d')|int(0) == 0 %}Осадков не ожидается.{%else%}Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_1d')|int(0)}} %. В+ид ос+адков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_1d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{%endif%}
-          {% if is_state('binary_sensor.ice_alarm_1d','on')%}Вним+ание! Возм+ожнен голол+ёд!{%endif%}
-          {% endif %}
-          {{['Пускай принесет день сиянье успеха!','Пусть день сегодня твой будет просто замечательный!','Пусть этот день будет самым добрым, веселым и удачным в череде счастливых дней!','Пусть этот день прекрасным будет и все сбываются мечты!','Мой дорогой, любимый человек — хорошего тебе дня!','Удачного дня!','Пусть все, что есть сегодня в твоих планах, обязательно осуществится!','Пусть везение сегодня так и ходит за тобой!','Хорошего дня тебе!','Пусть солнышко принесет тебе заряд бодрости, придаст уверенности, наполнит радостью.','Пусть этот день порадует чудесными открытиями, приятными встречами и незабываемыми сюрпризами, а успех сегодня сопровождает тебя повсюду!','Желаю дня хорошего, прекрасного, удачным чтобы каждый был момент!','От души желаю приятного, успешного и хорошего дня','Пусть этот день принесет только радость, удачу и добрые эмоции.','Хочу вам пожелать хорошего, удачного, доброго, яркого, весёлого, интересного, удивительного и счастливого дня.','Пусть будет этот день хорошим, распрекрасным и погожим, и пусть начнется полоса удачных дней, любви, добра!','Желаю тебе дня самого классного, во всем сегодня успеха прекрасного!','Желаю тебе отличного дня! Пускай все получается!','Желаю Вам счастливого дня, пусть сегодня всё будет удаваться и гармонично складываться.','Желаю хорошего дня, который вам подарит радость и счастье!','Начни день с улыбки, и все вокруг тебя изменится!','Хорошего дня тебе, добрых новостей и радостных событий.','Желаю тебе отлично провести этот день','Желаю хорошего дня']|random}}
+  briefing_telegram:
+    alias: Briefing to Telegram
+    sequence:
+      - service: notify.telegram_family
+        data:
+          message: |-
+            {%- set date = as_timestamp(now()) -%}
+            {%- set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
+            {%- set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
+            {%- set m_ok = date | timestamp_custom("%m",true,0) | int(0) %}
+            {%- set wd_ok = date | timestamp_custom("%w",true,0) | int(0) %}
+            {%- set weekday = weekday_list[wd_ok-1] %} 
+            {%- set month = month_list[m_ok-1] %} 
+            {%- set hour_num = now().hour | int(0) %}          
+            {% if hour_num >=6 and hour_num <12 %}{{"\U00002600"}}Доброе утро! {% elif hour_num>=12 and hour_num<17 %}{{"\U0001f31e"}}Добрый день! {% elif hour_num>=17 and hour_num<22 %}{{"\U0001f31d"}}Добрый вечер! {% else %}{{"\U0001f31a"}}Доброй ночи! {% endif %}
+            {% if hour_num < 17 and hour_num >= 0 %}Сегодня {{ weekday }}, {{ now().day|int(0) }} {{ month_list[now().month-1] }}. {% if state_attr('calendar.fazy_luny','message').split(":")[0] in ['Новолуние','Полнолуние'] -%}{{- state_attr('calendar.fazy_luny','message').split(":")[0]}}{% endif %}
+            {%- if ((now().weekday() + 1 ) <= 5 and is_state('binary_sensor.workday','off')) or ((now().weekday() + 1 ) > 5 and is_state('binary_sensor.workday','on')) %}
+            Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
+            {% endif %}
+            По прогнозу сегодня {{ states('sensor.dark_sky_summary_0d')|lower }}
+            Температура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|int(0)}}°C. 
+            {% if states('sensor.dark_sky_precip_probability_0d')|int(0) == 0 %}Оcадков не ожидается. {%else%}Вероятность осадков {{states('sensor.dark_sky_precip_probability_0d')|int(0)}}%. {%endif%}      
+            {% if states('sensor.dark_sky_precip_probability_0d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_0d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}. Текущая температура {{state_attr('weather.my_weather','temperature')|int(0)}}°C.
+            {% if is_state('binary_sensor.ice_alarm_0d','on')%}Внимание! Возможнен гололед!
+            {% endif%}
+            {%- endif %}
+            {%- if 0 < states('sensor.birthday_0')|int <= 30 %}{{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}} отмечает день рождения через {{states('sensor.birthday_0')|int|format(morph='день',as_text=false)}}.{% elif states('sensor.birthday_0')|int == 0 %}Сегодня отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}!{%endif %}
+            {% if 0 < states('sensor.holiday_0')|int <= 30 %}Ближайший праздник - {{ state_attr('sensor.holiday_0','friendly_name') }} через {{states('sensor.holiday_0')|int|format(morph='день',as_text=false)}}. {% elif event_counter == 0 %}Сегодня праздник {{ state_attr('sensor.holiday_0','friendly_name') }}! Поздравляю!{% endif %}
+            {% endif %}
+            {%if hour_num >= 17 and hour_num <= 23 %}
+            Прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
+            Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|int(0)}}°C. 
+            {%if states('sensor.dark_sky_precip_probability_1d')|int(0) == 0 %}Оcадков не ожидается.{%else%}Вероятность осадков {{states('sensor.dark_sky_precip_probability_1d')|int(0)}}%.{%endif%}
+            {%if states('sensor.dark_sky_precip_probability_1d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_1d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
+            {%if is_state('binary_sensor.ice_alarm_1d','on')%}Внимание! Возможнен гололед!{%endif%}
+            {% endif %}
+            {%- if ((now().weekday() + 2 ) <= 5 and is_state('binary_sensor.workday_tomorrow','off')) or ((now().weekday() + 2 ) > 5 and is_state('binary_sensor.workday_tomorrow','on')) %}
+            Обратите внимание - завтра {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()|int+1]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.{%endif%}
+            {% endif %}
+            
+  briefing_tts:
+    alias: Briefing to TTS
+    sequence:
+      - service: media_player.volume_set
+        data:
+          entity_id: "{{ entity_id }}"
+          volume_level: "{{ volume_level|float(0) }}"
+      - service: media_player.play_media
+        data:
+          media_content_type: dialog
+          entity_id: "{{ entity_id }}"
+          media_content_id: >-
+            {%- set date = as_timestamp(now()) -%}
+            {%- set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
+            {%- set month_list = ['Января','Февраля','Марта','Апреля','Мая','Июня','Июля','Августа','Сентября','Октября','Ноября','Декабря'] %}
+            {%- set day_list = ['первое','второе','третье','четвертое','пятое','шестое','седьмое','восьмое','девятое','десятое','одиннадцатое','двенадцатое','тринадцатое','четырнадцатое','пятнадцатое','шестнадцатое','семнадцатое','восемнадцатое','девятнадцатое','двадцатое','двадцать первое','двадцать второе','двадцать третье','двадцать четвертое','двадцать пятое','двадцать шестое','двадцать седьмое','двадцать восьмое','двадцать девятое','тридцатое','тридцать первое'] %}
+            {%- set m_ok = date | timestamp_custom("%m",true,0) | int(0) %}
+            {%- set wd_ok = date | timestamp_custom("%w",true,0) | int(0) %}
+            {%- set d_ok = date | timestamp_custom("%d",true,0) | int(0) %}
+            {%- set weekday = weekday_list[wd_ok-1] %} 
+            {%- set day = day_list[d_ok-1] %}
+            {%- set month = month_list[m_ok-1] %} 
+            {%- set hour_num = now().hour | int(0) %}
+            {%- if hour_num >=6 and hour_num <12 %}
+            Д+оброе +утро!
+            {%- elif hour_num>=12 and hour_num<17 %}
+            Д+обрый д+ень!
+            {%- elif hour_num>=17 and hour_num<22 %}
+            Д+обрый в+ечер!
+            {%- else %}
+            Д+оброй н+очи!
+            {%- endif %}
+            Сег+одня {{ weekday }} {{ day }} {{ month }}.
+            {%- if ((now().weekday() + 1 ) <= 5 and is_state('binary_sensor.workday','off')) or ((now().weekday() + 1 ) > 5 and is_state('binary_sensor.workday','on')) %}
+            Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
+            {% endif %}
+            {{ states('sensor.dark_sky_summary_0d') }}
+            Температ+ура днём {{states('sensor.dark_sky_daytime_high_temperature_0d')|int(0)}} °C. 
+            {% if states('sensor.dark_sky_precip_probability_0d')|int(0) == 0 %}Осадков не ожидается.{%else%}Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_0d')|int(0)}} %. В+ид ос+адков - {% if states('sensor.dark_sky_precip_0d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_0d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_0d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{%endif%} 
+            Текущая температура {{state_attr('weather.my_weather','temperature')|int(0)}} °C.
+            {% if is_state('binary_sensor.ice_alarm_0d','on')%}Вним+ание! Возм+ожнен голол+ёд!{%endif%}
+            {% if ((0 < states('sensor.birthday_0')|int <= 30) and (states('sensor.birthday_0')|int % 5 == 0)) or (states('sensor.birthday_0')|int in [3, 5]) %}{{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}} отмечает день рождения через {{states('sensor.birthday_0')|int|format(morph='день')}}.{% elif states('sensor.birthday_0')|int == 0 %}Сегодня отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}{% elif states('sensor.birthday_0')|int == 1 %}Завтра отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}!{%endif %}
+            {% if ((0 < states('sensor.holiday_0')|int <= 30) and (states('sensor.holiday_0')|int % 5 ==0)) or (states('sensor.holiday_0')|int in [3, 5])  %}Ближайший праздник - {{ state_attr('sensor.holiday_0','friendly_name') }} через {{states('sensor.holiday_0')|int|format(morph='день')}}. {% elif states('sensor.holiday_0')|int == 1 %}Завтра - {{ state_attr('sensor.holiday_0','friendly_name') }}{% elif states('sensor.holiday_0')|int == 0 %}Сегодня - {{ state_attr('sensor.holiday_0','friendly_name') }}! Поздравляю!{% endif %}
+            {% if hour_num > 17 and hour_num < 6 %}
+            Краткий прогноз погоды на завтра - {{ states('sensor.dark_sky_summary_1d') }}
+            Максимальная температура днём {{states('sensor.dark_sky_daytime_high_temperature_1d')|int(0)}} °C. 
+            {% if states('sensor.dark_sky_precip_probability_1d')|int(0) == 0 %}Осадков не ожидается.{%else%}Веро+ятность ос+адков {{states('sensor.dark_sky_precip_probability_1d')|int(0)}} %. В+ид ос+адков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}сн+ег.{% elif states('sensor.dark_sky_precip_1d') == "rain" %}д+ождь.{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{%endif%}
+            {% if is_state('binary_sensor.ice_alarm_1d','on')%}Вним+ание! Возм+ожнен голол+ёд!{%endif%}
+            {% endif %}
+            {{['Пускай принесет день сиянье успеха!','Пусть день сегодня твой будет просто замечательный!','Пусть этот день будет самым добрым, веселым и удачным в череде счастливых дней!','Пусть этот день прекрасным будет и все сбываются мечты!','Мой дорогой, любимый человек — хорошего тебе дня!','Удачного дня!','Пусть все, что есть сегодня в твоих планах, обязательно осуществится!','Пусть везение сегодня так и ходит за тобой!','Хорошего дня тебе!','Пусть солнышко принесет тебе заряд бодрости, придаст уверенности, наполнит радостью.','Пусть этот день порадует чудесными открытиями, приятными встречами и незабываемыми сюрпризами, а успех сегодня сопровождает тебя повсюду!','Желаю дня хорошего, прекрасного, удачным чтобы каждый был момент!','От души желаю приятного, успешного и хорошего дня','Пусть этот день принесет только радость, удачу и добрые эмоции.','Хочу вам пожелать хорошего, удачного, доброго, яркого, весёлого, интересного, удивительного и счастливого дня.','Пусть будет этот день хорошим, распрекрасным и погожим, и пусть начнется полоса удачных дней, любви, добра!','Желаю тебе дня самого классного, во всем сегодня успеха прекрасного!','Желаю тебе отличного дня! Пускай все получается!','Желаю Вам счастливого дня, пусть сегодня всё будет удаваться и гармонично складываться.','Желаю хорошего дня, который вам подарит радость и счастье!','Начни день с улыбки, и все вокруг тебя изменится!','Хорошего дня тебе, добрых новостей и радостных событий.','Желаю тебе отлично провести этот день','Желаю хорошего дня']|random}}
 
-# Доброе утро!
-# За окном:
-# {%- set current = states('sensor.openweathermap_weather_code')|int(0) %}
-# {%- set conditions = {
-#     'Туман \U0001F32B': [701, 741],
-#     'Гроза \U0001F329': [210, 211, 212, 221],
-#     'Дождь/Гроза \U000026C8': [200, 201, 202, 230, 231, 232],
-#     'Облачно \U000026C5': [801, 802, 803, 804],
-#     'Дождь \U00002614': [504, 314, 502, 503, 522, 300, 301, 302, 310, 311, 312, 313, 500, 501, 520, 521, 906],
-#     'Снег \U00002744': [600, 601, 602, 611, 612, 620, 621, 622],
-#     'Снег с дождём \U00002614\U00002744': [511, 615, 616],
-#     'Ясно \U00002600': [800],
-#     'Ветер \U0001F4A8': [905, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961],
-#     'Внимание \U000026A0': [711, 721, 731, 751, 761, 762, 771, 900, 901, 962, 903, 904]
-# } %}
-# {%- for condition, value in conditions.items() %}
-# {%- if current in value %}
-# {{- " "+condition}}
-# {%- endif %}
-# {%- endfor %}
-# Температура:
-# {{- " "+state_attr('weather.openweathermap', 'temperature')|string }}
-# Скорость ветра:
-# {{- " "+state_attr('weather.openweathermap', 'wind_speed')|string }}
+  # Доброе утро!
+  # За окном:
+  # {%- set current = states('sensor.openweathermap_weather_code')|int(0) %}
+  # {%- set conditions = {
+  #     'Туман \U0001F32B': [701, 741],
+  #     'Гроза \U0001F329': [210, 211, 212, 221],
+  #     'Дождь/Гроза \U000026C8': [200, 201, 202, 230, 231, 232],
+  #     'Облачно \U000026C5': [801, 802, 803, 804],
+  #     'Дождь \U00002614': [504, 314, 502, 503, 522, 300, 301, 302, 310, 311, 312, 313, 500, 501, 520, 521, 906],
+  #     'Снег \U00002744': [600, 601, 602, 611, 612, 620, 621, 622],
+  #     'Снег с дождём \U00002614\U00002744': [511, 615, 616],
+  #     'Ясно \U00002600': [800],
+  #     'Ветер \U0001F4A8': [905, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961],
+  #     'Внимание \U000026A0': [711, 721, 731, 751, 761, 762, 771, 900, 901, 962, 903, 904]
+  # } %}
+  # {%- for condition, value in conditions.items() %}
+  # {%- if current in value %}
+  # {{- " "+condition}}
+  # {%- endif %}
+  # {%- endfor %}
+  # Температура:
+  # {{- " "+state_attr('weather.openweathermap', 'temperature')|string }}
+  # Скорость ветра:
+  # {{- " "+state_attr('weather.openweathermap', 'wind_speed')|string }}
 
-# Доброе утро! {{'\U0001F618'}}
-# За окном: {{ state_attr('weather.yandex_weather', 'weather_condition')}}
-# {%-set cond = {'Ясно':'\U00002600','Малооблачно':'\U000026C5',
-# 'Облачно с прояснениями':'\U000026C5','Пасмурно':'\U00002601',
-# 'Морось':'\U00002614','Небольшой дождь':'\U00002614',
-# 'Дождь':'\U00002614','Умеренно сильный дождь':'\U00002614',
-# 'Сильный дождь':'\U00002614','Длительный сильный дождь':'\U00002614',
-# 'Ливень':'\U00002614','Дождь со снегом':'\U00002614\U00002744',
-# 'Небольшой снег':'\U00002744','Снег':'\U00002744',
-# 'Снегопад':'\U00002744','Град':'\U00002614',
-# 'Гроза':'\U0001F329','Дождь с грозой':'\U00002614\U0001F329',
-# 'Гроза с градом':'\U00002614\U0001F329'}%}
-# {%-for key, value in cond.items()%}
-# {%-if state_attr('weather.yandex_weather', 'weather_condition') == key%}
-# {{-value}}
-# {%-endif%}
-# {%-endfor%}
-# Температура: {{state_attr('weather.yandex_weather', 'temperature')}}
-# Ощущается как: {{state_attr('weather.yandex_weather', 'feels_like')}}
-# {%-if state_attr('weather.yandex_weather', 'feels_like')|int(0) < -20 %}
-# {{'\n'}}На улице сегодня мороз, нужно одеваться максимально тепло.
-# {%-elif state_attr('weather.yandex_weather', 'feels_like')|int(0) < -10 %}
-# На улице сегодня холодно, нужно одеваться теплее.
-# {%-elif state_attr('weather.yandex_weather', 'feels_like')|int(0) < -5 %}
-# На улице сегодня прохладно.
-# {%-else%}
-# Погода хороша!
-# {%endif%}
-# Хорошего дня!
+  # Доброе утро! {{'\U0001F618'}}
+  # За окном: {{ state_attr('weather.yandex_weather', 'weather_condition')}}
+  # {%-set cond = {'Ясно':'\U00002600','Малооблачно':'\U000026C5',
+  # 'Облачно с прояснениями':'\U000026C5','Пасмурно':'\U00002601',
+  # 'Морось':'\U00002614','Небольшой дождь':'\U00002614',
+  # 'Дождь':'\U00002614','Умеренно сильный дождь':'\U00002614',
+  # 'Сильный дождь':'\U00002614','Длительный сильный дождь':'\U00002614',
+  # 'Ливень':'\U00002614','Дождь со снегом':'\U00002614\U00002744',
+  # 'Небольшой снег':'\U00002744','Снег':'\U00002744',
+  # 'Снегопад':'\U00002744','Град':'\U00002614',
+  # 'Гроза':'\U0001F329','Дождь с грозой':'\U00002614\U0001F329',
+  # 'Гроза с градом':'\U00002614\U0001F329'}%}
+  # {%-for key, value in cond.items()%}
+  # {%-if state_attr('weather.yandex_weather', 'weather_condition') == key%}
+  # {{-value}}
+  # {%-endif%}
+  # {%-endfor%}
+  # Температура: {{state_attr('weather.yandex_weather', 'temperature')}}
+  # Ощущается как: {{state_attr('weather.yandex_weather', 'feels_like')}}
+  # {%-if state_attr('weather.yandex_weather', 'feels_like')|int(0) < -20 %}
+  # {{'\n'}}На улице сегодня мороз, нужно одеваться максимально тепло.
+  # {%-elif state_attr('weather.yandex_weather', 'feels_like')|int(0) < -10 %}
+  # На улице сегодня холодно, нужно одеваться теплее.
+  # {%-elif state_attr('weather.yandex_weather', 'feels_like')|int(0) < -5 %}
+  # На улице сегодня прохладно.
+  # {%-else%}
+  # Погода хороша!
+  # {%endif%}
+  # Хорошего дня!
