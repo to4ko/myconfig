@@ -92,6 +92,8 @@
                 entity_id: input_number.last_action_breather_v
                 data:
                   value: "{{as_timestamp(now())|int(0)}}"
+              - service: input_boolean.turn_on
+                entity_id: input_boolean.hourly_mode_breather_v
           - conditions:
               - condition: trigger
                 id: "to_off"
@@ -122,6 +124,8 @@
                     entity_id: input_number.last_action_breather_v
                     data:
                       value: "0"
+                  - service: input_boolean.turn_off
+                    entity_id: input_boolean.hourly_mode_breather_v
           - conditions:
               - condition: trigger
                 id: "timer_finish"
@@ -130,6 +134,9 @@
                   - conditions:
                       - condition: state
                         entity_id: binary_sensor.breather_v
+                        state: 'on'
+                      - condition: state
+                        entity_id: input_boolean.hourly_mode_breather_v
                         state: 'on'
                     sequence:
                       - service: button.press
@@ -144,6 +151,9 @@
                       - condition: state
                         entity_id: person.sandra
                         state: 'home'
+                      - condition: state
+                        entity_id: input_boolean.hourly_mode_breather_v
+                        state: 'on'
                     sequence:
                       - service: button.press
                         entity_id: button.digma_ir_v_breather_pwr
@@ -161,5 +171,21 @@
                         entity_id: input_number.last_action_breather_v
                         data:
                           value: "0"
-                      - service: button.press
-                        entity_id: button.digma_ir_v_breather_pwr
+                      - service: input_boolean.turn_off
+                        entity_id: input_boolean.hourly_mode_breather_v
+          - conditions:
+              - condition: trigger
+                id: "digma_used"
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: binary_sensor.breather_v
+                        state: 'on'
+                    sequence:
+                      - service: input_number.set_value
+                        entity_id: input_number.last_action_breather_v
+                        data:
+                          value: "0"
+                      - service: input_boolean.turn_off
+                        entity_id: input_boolean.hourly_mode_breather_v 

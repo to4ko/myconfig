@@ -4,11 +4,12 @@ substitutions:
 
 esphome:
   name: ${board_name}
-  platform: ESP32
-  board: nodemcu-32s
   comment: ESP32 BLE Tracker HB
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
+
+esp32:
+  board: nodemcu-32s
 
 external_components:
   - source: github://myhomeiot/esphome-components  
@@ -55,14 +56,14 @@ esp32_ble_tracker:
 #   port: 80
 
 ble_gateway:
-  id: esp32_ble_gateway_hb
+  id: ${board_name}
   on_ble_advertise:
     then:
       - homeassistant.event:
           event: esphome.on_ble_advertise
           data:
             packet: !lambda return packet;
-            gateway_id: esp32_ble_gateway_hb
+            gateway_id: ${board_name}
       - lambda: |-
           id(event_count) += 1;
 
@@ -276,7 +277,7 @@ text_sensor:
     attribute: devices
     on_value:
       then:
-        - lambda: id(esp32_ble_gateway_hb).set_devices(x);
+        - lambda: id(${board_name}).set_devices(x);
 
 button:
   - platform: restart
