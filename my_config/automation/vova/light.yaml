@@ -379,7 +379,7 @@
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - service: light.turn_on
-        entity_id: light.d1mini_bed_leds_strip_sandra,light.d1mini_bed_leds_strip_dima
+        entity_id: light.led_strip_bed_dima_v, light.led_strip_bed_sandra_v
         data:
           brightness_pct: 25
         
@@ -409,3 +409,292 @@
       - service: input_boolean.turn_{{states('binary_sensor.bed_led_enable')}}
         data:
           entity_id: input_boolean.bed_led_enable
+
+# ##################################
+# Vova Bed Strips Control On
+# ##################################
+  - alias: vova_bed_strips_control_on
+    id: vova_bed_strips_control_on
+    mode: parallel
+    max_exceeded: silent
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d00053faae1_motion
+        id: 'on_dima'
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d00044c7971_motion
+        id: 'on_sandra'
+    condition:
+      - condition: state
+        entity_id: binary_sensor.bed_led_enable
+        state: 'on'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'on_sandra'
+              - condition: state
+                entity_id: timer.led_strip_bed_sandra_v
+                state: 'idle'
+            sequence:
+              - service: light.turn_on
+                entity_id: light.led_strip_bed_sandra_v
+                data:
+                  brightness_pct: 30
+                  #kelvin: 3000
+                  rgb_color: [255,255,255]
+          - conditions:
+              - condition: trigger
+                id: 'on_dima'
+              - condition: state
+                entity_id: timer.led_strip_bed_dima_v
+                state: 'idle'
+            sequence:
+              - service: light.turn_on
+                entity_id: light.led_strip_bed_dima_v
+                data:
+                  brightness_pct: 30
+                  #kelvin: 3000
+                  rgb_color: [255,255,255]
+          - conditions:
+              - condition: trigger
+                id: 'on_sandra'
+              - condition: state
+                entity_id: timer.led_strip_bed_sandra_v
+                state: 'active'
+            sequence:
+              - service: timer.cancel
+                entity_id: timer.led_strip_bed_sandra_v
+              - service: timer.start
+                entity_id: timer.led_strip_bed_sandra_v
+          - conditions:
+              - condition: trigger
+                id: 'on_dima'
+              - condition: state
+                entity_id: timer.led_strip_bed_dima_v
+                state: 'active'
+            sequence:
+              - service: timer.cancel
+                entity_id: timer.led_strip_bed_dima_v
+              - service: timer.start
+                entity_id: timer.led_strip_bed_dima_v
+
+# ##################################
+# Vova Bed Strips Sandra
+# ##################################
+  - alias: vova_bed_strips_control
+    id: vova_bed_strips_control
+    mode: parallel
+    max_exceeded: silent
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: light.led_strip_bed_sandra_v
+        to:
+        id: 'is_sandra'
+      - platform: state
+        entity_id: light.led_strip_bed_dima_v
+        to:
+        id: 'is_dima'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'is_sandra'
+            sequence:
+              - service: timer.{{'start' if is_state('light.led_strip_bed_sandra_v','on') else 'cancel'}}
+                entity_id: timer.led_strip_bed_sandra_v
+          - conditions:
+              - condition: trigger
+                id: 'is_dima'
+            sequence:
+              - service: timer.{{'start' if is_state('light.led_strip_bed_dima_v','on') else 'cancel'}}
+                entity_id: timer.led_strip_bed_dima_v
+
+# ##################################
+# Vova Bed Strips Control Off
+# ##################################
+  - alias: vova_bed_strips_control_off
+    id: vova_bed_strips_control_off
+    mode: parallel
+    max_exceeded: silent
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.led_strip_bed_dima_v
+        id: 'off_dima'
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.led_strip_bed_sandra_v
+        id: 'off_sandra'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'off_sandra'
+            sequence:
+              - service: light.turn_off
+                entity_id: light.led_strip_bed_sandra_v
+          - conditions:
+              - condition: trigger
+                id: 'off_dima'
+            sequence:
+              - service: light.turn_off
+                entity_id: light.led_strip_bed_dima_v
+
+# ##################################
+# Vova - LED Strip Bed Dima Restart
+# ##################################
+  - alias: vova_led_strip_bed_dima_restart
+    id: vova_led_strip_bed_dima_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.square_led_v
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.led_strip_bed_dima_v
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: switch.led_strip_bed_dima_v_restart_key
+        state: 'on'
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.led_strip_bed_dima_v
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.digma_shp7_relay_1
+            - delay:
+                seconds: 15
+            - service: switch.turn_on
+              entity_id: switch.digma_shp7_relay_1
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 LED Strip Bed Dima V restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.led_strip_bed_dima_v
+        state: 'unavailable'
+      - service: notify.telegram
+        data:
+          message: "\U0001f6a8 Led Strip Bed Dima V restart unsuccessful!"
+      - service: switch.turn_off
+        entity_id: switch.led_strip_bed_dima_v_restart_key
+  
+# ##################################
+# Vova - Led Strip Bed Dima Auto Restart Key Toggle
+# ##################################
+  - alias: vova_led_strip_bed_dima_restart_key_toggle
+    id: vova_led_strip_bed_dima_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.led_strip_bed_dima_v
+        from: 'unavailable'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.led_strip_bed_dima_v_restart_key
+                
+# ##################################
+# Vova - Led Strip Bed Sandra Restart
+# ##################################
+  - alias: vova_led_strip_bed_sandra_restart
+    id: vova_led_strip_bed_sandra_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.square_led_v
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.led_strip_bed_sandra_v
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: switch.led_strip_bed_sandra_v_restart_key
+        state: 'on'
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.led_strip_bed_sandra_v
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.digma_shp7_relay_2
+            - delay:
+                seconds: 15
+            - service: switch.turn_on
+              entity_id: switch.digma_shp7_relay_2
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 LED Strip Bed Sandra V restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.led_strip_bed_sandra_v
+        state: 'unavailable'
+      - service: notify.telegram
+        data:
+          message: "\U0001f6a8 Led Strip Bed Sandra V restart unsuccessful!"
+      - service: switch.turn_off
+        entity_id: switch.led_strip_bed_Sandra_v_restart_key
+  
+# ##################################
+# Vova - Led Strip Bed Sandra Auto Restart Key Toggle
+# ##################################
+  - alias: vova_led_strip_bed_sandra_restart_key_toggle
+    id: vova_led_strip_bed_sandra_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.led_strip_bed_sandra_v
+        from: 'unavailable'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.led_strip_bed_sandra_v_restart_key
+                                
