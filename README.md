@@ -80,7 +80,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Aqara\Xiaomi Door Sensor (25ea)
   - Aqara Water Leak Sensor (3ea)
   - Aqara Vibration Sensor (3ea)
-  - Aqara\Xiaomi Motion Sensor (14ea)
+  - Aqara\Xiaomi Motion Sensor (17ea)
   - Aqara\Xiaomi Wireless Button (9ea)
   - Aqara\Xiaomi Temp\Himidity sensor (12ea)
   - Xiaomi Plug (26ea)
@@ -111,6 +111,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP32 PZEM HB - Hall Big Breaker Box PZEM-004T
   - Digma IR Remote (3ea)
+  - Digma SHP7
   - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
   - ESP01 Weight Cell
   - D1 Mini LED Bed light

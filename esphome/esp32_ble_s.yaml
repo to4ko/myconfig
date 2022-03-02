@@ -1,21 +1,21 @@
 substitutions:
-  board_name: esp32_ble_hb
+  board_name: esp32_ble_s
   up_int: 60s
-
+  
 esphome:
   name: ${board_name}
-  comment: ESP32 BLE Tracker HB
+  comment: ESP32 BLE Tracker S
   platformio_options:
     board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
 
 esp32:
-  board: nodemcu-32s
+  board: pico32
 
 external_components:
   - source: github://myhomeiot/esphome-components  
-    
+
 wifi:
-  ssid: !secret wifi_ssid_hb
+  ssid: !secret wifi_ssid
   password: !secret wifi_pass
   domain: .local
   reboot_timeout: 15min
@@ -23,7 +23,7 @@ wifi:
   fast_connect: true
   #power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.109
+    static_ip: 192.168.1.110
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
@@ -50,6 +50,8 @@ esp32_ble_tracker:
   scan_parameters:
     #interval: 512ms
     #window: 48ms
+    # interval: 180ms
+    # window: 60ms
     active: false
 
 # web_server:
@@ -66,6 +68,7 @@ ble_gateway:
             gateway_id: ${board_name}
       - lambda: |-
           id(event_count) += 1;
+
 
 myhomeiot_ble_host:
 
@@ -132,25 +135,12 @@ binary_sensor:
     name: ${board_name}_Green
     device_class: presence
 
-#   - platform: ble_presence
-#     mac_address: FF:FF:B0:00:95:1F
-#     name: ${board_name}_iTag_white
-#     device_class: presence
-
-# # FF:FF:B0:00:95:1F white itag
-
 # 7E:FE:3E:EC:59:FB white
 # 6B:9C:3E:D1:C5:9A green
 # 2A:BC:3E:DC:57:65 PINK
 # 3B:EF:3E:DE:98:6B GREY
 
 sensor:
-  # - platform: template
-  #   name: ${board_name}_Last_Boot
-  #   update_interval: never
-  #   device_class: timestamp
-  #   id: id_start
-    
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
@@ -212,11 +202,6 @@ sensor:
     state_class: measurement
     accuracy_decimals: 0
 
-  # - platform: ble_rssi
-  #   mac_address: FF:FF:B0:00:95:1F
-  #   name: ${board_name}_iTag_white RSSI
-  #   icon: "mdi:wifi"
-
   - platform: template
     name: ${board_name}_Heap_Free
     lambda: "return ESP.getFreeHeap();"
@@ -271,6 +256,7 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+  # BLE Devices
   - platform: homeassistant
     id: ble_gateway_devices
     entity_id: binary_sensor.ble_gateway
@@ -302,4 +288,4 @@ interval:
           else
           {
             flag = false;
-          }    
+          }        

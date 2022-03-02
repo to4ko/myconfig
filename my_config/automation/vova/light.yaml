@@ -445,9 +445,15 @@
               - service: light.turn_on
                 entity_id: light.led_strip_bed_sandra_v
                 data:
-                  brightness_pct: 30
+                  brightness_pct: >
+                    {%- if is_state('binary_sensor.tod_day','off') -%}
+                    5
+                    {%- else -%}
+                    15
+                    {% endif %}
                   #kelvin: 3000
                   rgb_color: [255,255,255]
+                  transition: 2
           - conditions:
               - condition: trigger
                 id: 'on_dima'
@@ -458,9 +464,15 @@
               - service: light.turn_on
                 entity_id: light.led_strip_bed_dima_v
                 data:
-                  brightness_pct: 30
+                  brightness_pct: >
+                    {%- if is_state('binary_sensor.tod_day','off') -%}
+                    5
+                    {%- else -%}
+                    15
+                    {% endif %}
                   #kelvin: 3000
                   rgb_color: [255,255,255]
+                  transition: 2
           - conditions:
               - condition: trigger
                 id: 'on_sandra'
@@ -543,12 +555,16 @@
             sequence:
               - service: light.turn_off
                 entity_id: light.led_strip_bed_sandra_v
+                data:
+                  transition: 5
           - conditions:
               - condition: trigger
                 id: 'off_dima'
             sequence:
               - service: light.turn_off
                 entity_id: light.led_strip_bed_dima_v
+                data:
+                  transition: 5
 
 # ##################################
 # Vova - LED Strip Bed Dima Restart
@@ -589,11 +605,11 @@
               value_template: "{{ repeat.index <= 5 }}"
           sequence:
             - service: switch.turn_off
-              entity_id: switch.digma_shp7_relay_1
+              entity_id: switch.0x158d0001a248e3_channel_1
             - delay:
                 seconds: 15
             - service: switch.turn_on
-              entity_id: switch.digma_shp7_relay_1
+              entity_id: switch.0x158d0001a248e3_channel_1
             - service: notify.telegram
               data:
                 message: "\U0001f6a8 LED Strip Bed Dima V restart done({{repeat.index}})!"
@@ -663,11 +679,11 @@
               value_template: "{{ repeat.index <= 5 }}"
           sequence:
             - service: switch.turn_off
-              entity_id: switch.digma_shp7_relay_2
+              entity_id: switch.0x158d0001a248e3_channel_2
             - delay:
                 seconds: 15
             - service: switch.turn_on
-              entity_id: switch.digma_shp7_relay_2
+              entity_id: switch.0x158d0001a248e3_channel_2
             - service: notify.telegram
               data:
                 message: "\U0001f6a8 LED Strip Bed Sandra V restart done({{repeat.index}})!"
@@ -680,7 +696,7 @@
         data:
           message: "\U0001f6a8 Led Strip Bed Sandra V restart unsuccessful!"
       - service: switch.turn_off
-        entity_id: switch.led_strip_bed_Sandra_v_restart_key
+        entity_id: switch.led_strip_bed_sandra_v_restart_key
   
 # ##################################
 # Vova - Led Strip Bed Sandra Auto Restart Key Toggle
