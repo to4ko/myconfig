@@ -4,8 +4,8 @@
 First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy/ha), [Vasilchuk](https://github.com/Anonym-tsk), [S_p_i_r_i_t_u_s](https://github.com/Spirituss), [lapatoc](https://github.com/bastshoes), [Vtel](https://github.com/zvldz), [Enzokot](https://github.com/Enzokot), [AVBor](https://github.com/avbor), [Andrew](https://github.com/andrewjswan) for help and support!
 
 **Main Host:** 
-  - HP Prodesk 400 G6 Mini
-  - Intel i3-10100T
+  - HP Prodesk 600 G6 Mini
+  - Intel i3-10100
   - 2*8Gb Sk Hynix DDR4 SODIMM
   - 512Gb Samsung 970 Pro NVME
   - Buro BU-BT40C
