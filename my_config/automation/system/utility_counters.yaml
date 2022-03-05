@@ -427,22 +427,3 @@
       - service: notify.telegram
         data:
           message: "\U0000274c Внимание! Нет данных от счетчика {% if as_timestamp(now())- as_timestamp(states.binary_sensor['0x158d000232de79_zigbee'].last_updated) > 2*60*60 %}холодной{%else%}горячей{%endif%} воды!"
-  
-# ##################################
-# System - PZEMr sensor outage
-# ##################################
-  - alias: system_pzem_sensor_outage
-    id: system_pzem_sensor_outage
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/15"
-    condition:
-      - condition: template
-        value_template: "{{(as_timestamp(now())-as_timestamp(states.sensor.esp32_pzem_hb_power_kw.last_changed)) > 10*60}}"
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0000274c Внимание! Нет данных от PZEM! Выполняем перузапуск PZEM!"
-      - service: switch.turn_on
-        entity_id: switch.esp32_pzem_hb_restart
