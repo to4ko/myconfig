@@ -3,9 +3,12 @@ substitutions:
  
 esphome:
   name: ${board_name}
-  platform: ESP8266
-  board: d1_mini
   comment: D1 Mini Domofon
+
+esp8266:
+  board: d1_mini
+  framework:
+    version: 2.7.4
 
 wifi:
   ssid: !secret wifi_ssid_hb
@@ -24,6 +27,7 @@ wifi:
     
 logger:
   baud_rate: 0
+  
 
 api:
   reboot_timeout: 0min
@@ -79,7 +83,12 @@ script:
       - delay: 1s
       - switch.turn_off: id_open
       - switch.turn_off: id_phone
-      - switch.turn_off: id_mute
+      - delay: 1s
+      - if:
+          condition:
+            switch.is_off: mute
+          then:
+            switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
       - globals.set:
           id: opening
@@ -106,7 +115,12 @@ script:
       - delay: 1s
       - switch.turn_off: id_open
       - switch.turn_off: id_phone
-      - switch.turn_off: id_mute
+      - delay: 1s
+      - if:
+          condition:
+            switch.is_off: mute
+          then:
+            switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
       - script.execute: state_no_call
 
@@ -119,7 +133,12 @@ script:
       - switch.turn_on: id_phone
       - delay: 3s
       - switch.turn_off: id_phone
-      - switch.turn_off: id_mute
+      - delay: 1s
+      - if:
+          condition:
+            switch.is_off: mute
+          then:
+            switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
 
   # No call state
@@ -314,7 +333,6 @@ binary_sensor:
       - delayed_off: 30ms         
     on_press:
       then:
-        #- switch.turn_on: manual_open
         - script.execute: call_accept_manual
 
 light:
