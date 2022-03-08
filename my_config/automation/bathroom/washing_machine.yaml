@@ -155,6 +155,10 @@
       - service: notify.telegram
         data:
           message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') }}мин."
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.washing_gel_usage
+          value: "{{states('input_number.washing_gel_usage')|float(0) + (0.03 if ((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') < 35 else 0.05)|float(0) }}"
       - condition: state
         entity_id: binary_sensor.tod_day
         state: "on"
