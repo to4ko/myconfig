@@ -38,8 +38,6 @@
       - service: notify.telegram
         data:
           message: "\U000023F3 Стирка начата!"
-      - service: counter.increment
-        entity_id: counter.washing_machine_runs
   
 # ##################################
 # Bathroom - Washing Machine sensors issue
@@ -152,13 +150,22 @@
         data:
           entity_id: input_select.washer_state
           option: Drying
-      - service: notify.telegram
+      - service: counter.increment
+        entity_id: counter.washing_machine_runs
+      - service: input_number.set_value
         data:
-          message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') }}мин."
+          entity_id: input_number.washer_b_run_time
+          value: "{{ (states('input_number.washer_b_run_time') | float(0) + (((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') / 60))|round(2, 'common') }}"
       - service: input_number.set_value
         data:
           entity_id: input_number.washing_gel_usage
-          value: "{{states('input_number.washing_gel_usage')|float(0) + (0.03 if ((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') < 35 else 0.05)|float(0) }}"
+          value: >
+            {% set a = ((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common')|int(0) %}
+            {% set k = (0.02 if 20 < a < 35 else 0.04) | float(0) %}
+            {{ states('input_number.washing_gel_usage')|float(0) + (0 if a <20 else k)|float(0) }}
+      - service: notify.telegram
+        data:
+          message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') }}мин."
       - condition: state
         entity_id: binary_sensor.tod_day
         state: "on"
