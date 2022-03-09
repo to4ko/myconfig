@@ -1367,17 +1367,30 @@
   #         message: "{{trigger.event.data.entity_id}}: {{trigger.event.data.old_state.state}} -> {{trigger.event.data.new_state.state}}"
   
 # ##################################
-# System - Weather Sensors Update
+# System - Briefing Entities Force Update
 # ##################################
-  - alias: system_weather_update
-    id:  system_weather_update
+  - alias: system_briefing_entities_force_update
+    id:  system_briefing_entities_force_update
     initial_state: true
     trigger:
       - platform: time
-        at: "06:55:00"
+        at: "06:50:00"
       - platform: time
-        at: "20:55:00"
-    condition:
+        at: "20:50:00"
+    # condition:
+    #   - condition: template
+    #     value_template: >-
+    #       {%- set sensors = expand('group.weather_fcst_entities') %}
+    #       {%- set act_time = as_timestamp(now()) %} 
+    #       {%- for sensor in sensors %}
+    #         {%- if as_timestamp(sensor.last_updated) == as_timestamp(sensors | map(attribute='last_updated') | min ) %}
+    #         {{ (act_time|int(0)-as_timestamp(sensor.last_updated)|int(0))>30*60 }}
+    #         {%- endif %}
+    #       {%- endfor %}
+    action:
+      - service: hassio.addon_restart
+        data:
+          addon: a0d7b954_appdaemon
       - condition: template
         value_template: >-
           {%- set sensors = expand('group.weather_fcst_entities') %}
@@ -1387,7 +1400,6 @@
             {{ (act_time|int(0)-as_timestamp(sensor.last_updated)|int(0))>30*60 }}
             {%- endif %}
           {%- endfor %}
-    action:
       - service: homeassistant.update_entity
         entity_id:
           - sensor.dark_sky_summary_0d
@@ -1398,7 +1410,7 @@
           - sensor.dark_sky_daytime_high_temperature_1d
           - sensor.dark_sky_precip_probability_1d
           - sensor.dark_sky_precip_1d
-  
+          
 # ##################################
 # System - Hot Water Boolean Change
 # ##################################
