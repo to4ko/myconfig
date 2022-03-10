@@ -115,13 +115,33 @@
   text_to_tts:
     alias: Text To TTS
     sequence:
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-          media_content_id: "{{ states('input_text.text_to_tts') }}"
-          extra:
-            volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+      - choose:
+          - conditions: 
+              - condition: state
+                entity_id: input_select.tts_audio_mode
+                state: 'Текст'
+            sequence:
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+                  media_content_id: "{{ states('input_text.text_to_tts') }}"
+                  extra:
+                    volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+          - conditions: 
+              - condition: state
+                entity_id: input_select.tts_audio_mode
+                state: 'Команда'
+            sequence:
+              - service: media_player.play_media
+                data:
+                  media_content_type: command
+                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+                  media_content_id: "{{ states('input_text.text_to_tts') }}"
+                  extra:
+                    volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+
+
 
   # circadian_lighting_toggle:
   #   alias: Circadian Lightning Toggle All
