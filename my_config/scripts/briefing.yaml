@@ -14,7 +14,7 @@
             {%- set hour_num = now().hour | int(0) %}          
             {% if hour_num >=6 and hour_num <12 %}{{"\U00002600"}}Доброе утро! {% elif hour_num>=12 and hour_num<17 %}{{"\U0001f31e"}}Добрый день! {% elif hour_num>=17 and hour_num<22 %}{{"\U0001f31d"}}Добрый вечер! {% else %}{{"\U0001f31a"}}Доброй ночи! {% endif %}
             {% if hour_num < 17 and hour_num >= 0 %}Сегодня {{ weekday }}, {{ now().day|int(0) }} {{ month_list[now().month-1] }}. {% if state_attr('calendar.fazy_luny','message').split(":")[0] in ['Новолуние','Полнолуние'] -%}{{- state_attr('calendar.fazy_luny','message').split(":")[0]}}{% endif %}
-            {%- if ((now().weekday() + 1 ) <= 5 and is_state('binary_sensor.workday','off')) or ((now().weekday() + 1 ) > 5 and is_state('binary_sensor.workday','on')) %}
+            {%- if (now().weekday() <= 4 and is_state('binary_sensor.workday','off')) or (now().weekday() > 4 and is_state('binary_sensor.workday','on')) %}
             Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
             {% endif %}
             По прогнозу сегодня {{ states('sensor.dark_sky_summary_0d')|lower }}
@@ -34,8 +34,8 @@
             {%if states('sensor.dark_sky_precip_probability_1d')|int(0) > 0 %}Вид осадков - {% if states('sensor.dark_sky_precip_1d') == "snow" %}снег{% elif states('sensor.dark_sky_precip_1d') == "rain" %}дождь{% elif states('sensor.dark_sky_precip_1d') == "sleet" %}снег с дождем{% else %}неизвестно{% endif %}.
             {%if is_state('binary_sensor.ice_alarm_1d','on')%}Внимание! Возможнен гололед!{%endif%}
             {% endif %}
-            {%- if ((now().weekday() + 2 ) <= 5 and is_state('binary_sensor.workday_tomorrow','off')) or ((now().weekday() + 2 ) > 5 and is_state('binary_sensor.workday_tomorrow','on')) %}
-            Обратите внимание - завтра {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()|int+1]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday_tomorrow','on') else 'не рабочий'}} день.{%endif%}
+            {%- if ((now()+timedelta(days=1)).weekday()|int(0) <= 4 and is_state('binary_sensor.workday_tomorrow','off')) or ((now()+timedelta(days=1)).weekday()|int(0) > 4 and is_state('binary_sensor.workday_tomorrow','on')) %}
+            Обратите внимание - завтра {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][(now()+timedelta(days=1)).weekday()|int(0)]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday_tomorrow','on') else 'не рабочий'}} день.{%endif%}
             {% endif %}
             
   briefing_tts:
@@ -71,7 +71,7 @@
             Д+оброй н+очи!
             {%- endif %}
             Сег+одня {{ weekday }} {{ day }} {{ month }}.
-            {%- if ((now().weekday() + 1 ) <= 5 and is_state('binary_sensor.workday','off')) or ((now().weekday() + 1 ) > 5 and is_state('binary_sensor.workday','on')) %}
+            {%- if (now().weekday() <= 4 and is_state('binary_sensor.workday','off')) or (now().weekday() > 4 and is_state('binary_sensor.workday','on')) %}
             Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
             {% endif %}
             {{ states('sensor.dark_sky_summary_0d') }}
