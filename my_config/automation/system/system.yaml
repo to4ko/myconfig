@@ -400,6 +400,21 @@
       - service: notify.telegram
         data:
           message: "\U0001f6e0 Supervisor - доступна новая версия {{ state_attr('sensor.supervisor_updates', 'newest_version') }}!"
+
+# ##################################
+# System - System Check HA Config
+# ##################################
+  - alias: system_check_ha_config
+    id: system_check_ha_config
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.updater_core
+        to: 'on'
+    action:
+      - service: hassio.addon_start
+        data:
+          addon: core_check_config
   
 # ##################################
 # System - Supervisor Updated
@@ -575,15 +590,15 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: sensor.geiger_action
+        entity_id: sensor.radiation_action
         to: "on"
       - platform: numeric_state
-        entity_id: sensor.geiger_radiation_dose_per_hour
+        entity_id: sensor.radiation_dose_per_hour
         above: 100
     action:
       - service: notify.telegram
         data:
-          message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.geiger_radiation_dose_per_hour')|int(0)}}мкР/ч!"
+          message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.radiation_dose_per_hour')|int(0)}}мсв/ч!"
   
 # ##################################
 # System - Silent Mode Toggle
@@ -1899,3 +1914,72 @@
         data:
           packet: "{{ trigger.event.data.packet }}"
           gateway_id: "{{ trigger.event.data.gateway_id }}"
+
+# ##################################
+# System - System Updates Pending
+# ##################################
+  # - alias: system_updates_pending
+  #   id: system_updates_pending
+  #   mode: restart
+  #   trigger:
+  #     - platform: state
+  #       entity_id: sensor.updater_core
+  #     - platform: state
+  #       entity_id: sensor.updater_hassos
+  #     - platform: state
+  #       entity_id: sensor.updater_supervisor
+  #     - platform: state
+  #       entity_id: sensor.hacs
+  #     - platform: homeassistant
+  #       event: start
+  #   action:
+  #     - alias: "Update Persistent Notification"
+  #       choose:
+  #         conditions:
+  #         - condition: or
+  #           conditions:
+  #             - condition: template
+  #               value_template: "{{ states('sensor.updater_core') == 'on' }}"
+  #             - condition: template
+  #               value_template: "{{ states('sensor.updater_hassos') == 'on' }}"
+  #             - condition: template
+  #               value_template: "{{ (states('sensor.updater_supervisor') | float(0)) != 0 }}"
+  #             - condition: template
+  #               value_template: "{{ (states('sensor.hacs') | float(0)) != 0 }}"
+  #         sequence:
+  #         - service: persistent_notification.create
+  #           data_template:
+  #             title: Updates Pending
+  #             message: |
+  #               {% set core_entity_id = 'sensor.updater_core' %}
+  #               {% set os_entity_id = 'sensor.updater_hassos' %}
+  #               {% if states(core_entity_id) == 'on' or states(os_entity_id) == 'on' %}
+  #                 {% if states(core_entity_id) == 'on' %}
+  #               * [**Core**](/hassio/update-available/core) {{ state_attr(core_entity_id,"current_version") }} -> {{ state_attr(core_entity_id,"newest_version") }}  [`PRE-CHECK LOG`](/hassio/addon/core_check_config/logs)  [`SNAPSHOTS`](/hassio/snapshots)
+  #                 {% endif %}
+  #                 {% if states(os_entity_id) == 'on' %}
+  #               * [**OS**](/hassio/update-available/os) {{ state_attr(os_entity_id,"current_version") }} -> {{ state_attr(os_entity_id,"newest_version") }}
+  #                 {% endif %}
+  #               {% endif %}
+
+  #               {% set supervisor_entity_id = 'sensor.updater_supervisor' %}
+  #               {% if (states(supervisor_entity_id) | float(0)) != 0 %}
+  #               [Add-ons](/hassio/dashboard)
+  #                 {% for addon in state_attr(supervisor_entity_id, 'addons') %}
+  #               * [**{{ addon.name }}**](/hassio/addon/{{ addon["slug"] }}/info) {{ addon["version"] }} -> {{ addon["version_latest"] }}
+  #                 {% endfor %}
+  #               {% endif %}
+
+  #               {% set hacs_entity_id = 'sensor.hacs' %}
+  #               {% if (states(hacs_entity_id) | float(0)) != 0 %}
+  #               [HACS](/hacs/entry)
+  #                 {% for repo in state_attr(hacs_entity_id, 'repositories') %}
+  #               * **{{ repo.display_name }}** {{ repo["installed_version"] }} -> {{ repo["available_version"] }}
+  #                 {% endfor %}
+  #               {% endif %}
+                
+  #             notification_id: "updates_pending"
+  #       default:
+  #         - service: persistent_notification.dismiss
+  #           data:
+  #             notification_id: "updates_pending"

@@ -250,7 +250,7 @@
       - sensor.sonoff_pow_r2_2_pressure
   
   - platform: command_line
-    name: Supervisor updates
+    name: Supervisor Updates
     command: 'curl -s http://supervisor/supervisor/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"addons":[.data.addons[] | select(.version != .version_latest)]}'''
     value_template: "{{ value_json.addons | length }}"
     json_attributes:
@@ -259,6 +259,24 @@
       - current_version
       - healthy
       - addons
+  
+  # - platform: command_line
+  #   name: Updater HassOS
+  #   command: 'curl http://supervisor/os/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"update_available":.data.update_available}'''
+  #   value_template: "{% if value_json.update_available or value_json.newest_version != value_json.current_version %}on{% else %}off{% endif %}"
+  #   json_attributes:
+  #   - newest_version
+  #   - current_version
+  #   - update_available
+    
+  # - platform: command_line
+  #   name: Updater Core
+  #   command: 'curl http://supervisor/core/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version}'''
+  #   scan_interval: 600
+  #   value_template: "{% if value_json.newest_version != value_json.current_version %}on{% else %}off{% endif %}"
+  #   json_attributes:
+  #   - newest_version
+  #   - current_version
   
   - platform: rest
     resource: https://www.cbr-xml-daily.ru/daily_json.js
