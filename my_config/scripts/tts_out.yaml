@@ -1,3 +1,53 @@
+  tts_test:
+    alias: Test TTS
+    sequence:
+      # - service: media_player.volume_set
+      #   data:
+      #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+      #     volume_level: '{{states("input_number.main_volume")|float(0)}}'
+      # - service: tts.yandextts_say
+      #   data:
+      #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+      #     message: "Проверка звука!"
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        volume_level: '{{states("input_number.main_volume")|float(0)}}'
+    - service: media_player.play_media
+      data:
+        media_content_type: dialog
+        entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
+        media_content_id: "Проверка звука!"
+
+  text_to_tts:
+    alias: Text To TTS
+    sequence:
+      - choose:
+          - conditions: 
+              - condition: state
+                entity_id: input_select.tts_audio_mode
+                state: 'Текст'
+            sequence:
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+                  media_content_id: "{{ states('input_text.text_to_tts') }}"
+                  extra:
+                    volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+          - conditions: 
+              - condition: state
+                entity_id: input_select.tts_audio_mode
+                state: 'Команда'
+            sequence:
+              - service: media_player.play_media
+                data:
+                  media_content_type: command
+                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+                  media_content_id: "{{ states('input_text.text_to_tts') }}"
+                  extra:
+                    volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+
   tts_out:
     alias: TTS Out script
     mode: queued

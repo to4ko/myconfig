@@ -63,55 +63,75 @@
           message: "\U0001f910 Внимание! Апдейт получен для {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}} спустя {{ trigger.event.data.wait }}."
 
 #  ##################################
-#  System - Dima Location changing
+#  System - Location changing
 #  ##################################
-  - alias: system_location_dima
-    id: system_location_dima
+  - alias: system_location_notify
+    id: system_location_notify
     initial_state: true
+    mode: queued
+    max_exceeded: silent
     trigger:
-      platform: state
-      entity_id: person.dima
-    condition:      
+      - platform: state
+        entity_id: person.dima, person.sandra, person.vova
+    condition:
       - condition: template
         value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
     action:
-      service: notify.telegram
-      data:
-        message: "\U0001f30d Dima: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
+      - service: notify.telegram
+        data:
+          message: >- 
+            {%- set from = trigger.from_state.state %}
+            {%- set to = trigger.to_state.state %}
+            {%- set person = trigger.to_state.attributes.friendly_name %}
+            {%- if from == 'not_home' %}
+              {%- set event = 'прибыл' %}
+            {%- elif to == 'not_home' %}
+              {%- set event = 'покинул' %}
+            {%- else %}
+              {%- set event = 'переместился' %}
+            {%- endif %}
+            {%- if from == "not_home" %}
+            {{'\U0001f30d'}}{{ person + ' ' + event + ' в ' + to }}
+            {%- elif to == "not_home" %}
+            {{'\U0001f30d'}} {{ person + ' ' + event + ' ' + from }}
+            {%- else %}
+            {{'\U0001f30d'}} {{ person + ' ' + event + ' из ' + from + ' в ' + to }}
+            {%- endif %}
+
+
+# #  ##################################
+# #  System - Sandra Location changing
+# #  ##################################
+#   - alias: system_location_sandra
+#     id: system_location_sandra
+#     initial_state: true
+#     trigger:
+#       platform: state
+#       entity_id: person.sandra
+#     condition:      
+#       - condition: template
+#         value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
+#     action:
+#       service: notify.telegram
+#       data:
+#         message: "\U0001f30d Sandra: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
   
-#  ##################################
-#  System - Sandra Location changing
-#  ##################################
-  - alias: system_location_sandra
-    id: system_location_sandra
-    initial_state: true
-    trigger:
-      platform: state
-      entity_id: person.sandra
-    condition:      
-      - condition: template
-        value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
-    action:
-      service: notify.telegram
-      data:
-        message: "\U0001f30d Sandra: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
-  
-#  ##################################
-#  System - Vova Location changing
-#  ##################################
-  - alias: system_location_vova
-    id: system_location_vova
-    initial_state: true
-    trigger:
-      platform: state
-      entity_id: person.vova
-    condition:      
-      - condition: template
-        value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
-    action:
-      service: notify.telegram
-      data:
-        message: "\U0001f30d Vova: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
+# #  ##################################
+# #  System - Vova Location changing
+# #  ##################################
+#   - alias: system_location_vova
+#     id: system_location_vova
+#     initial_state: true
+#     trigger:
+#       platform: state
+#       entity_id: person.vova
+#     condition:      
+#       - condition: template
+#         value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
+#     action:
+#       service: notify.telegram
+#       data:
+#         message: "\U0001f30d Vova: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
   
   # ##################################
   # System - Sasha Location changing
