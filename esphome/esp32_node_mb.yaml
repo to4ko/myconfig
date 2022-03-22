@@ -1,0 +1,185 @@
+substitutions:
+  board_name: esp32_node_mb
+ 
+esphome:
+  name: ${board_name}
+  platform: ESP32
+  board: nodemcu-32s
+  comment: ESP32 CO2 TPH Node MB
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  domain: .local
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  #fast_connect: true
+  #power_save_mode: none
+  # networks:
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     bssid: !secret wifi_bssid_mb_main
+  #     priority: 1
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     priority: 0
+  manual_ip:
+    static_ip: 192.168.1.104
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+logger:
+  
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+  
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    
+uart:
+  rx_pin: GPIO16
+  tx_pin: GPIO17
+  baud_rate: 9600
+
+dallas:
+  - pin: GPIO26
+    update_interval: 15s
+    id: dallas_node_short
+
+  - pin: GPIO27
+    update_interval: 15s
+    id: dallas_node_long
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: True
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+      uint32_t dur = id(uptime_sensor).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 15s
+  
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
+    
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: dallas
+    address: 0x0C0120462D297E28
+    dallas_id: dallas_node_long
+    name: ${board_name}_Outside
+    accuracy_decimals: 2
+    resolution: 12
+    filters:
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1
+      
+  - platform: dallas
+    address: 0xA83C01D607703828
+    dallas_id: dallas_node_short
+    name: ${board_name}_Heating_Pipe
+    accuracy_decimals: 2
+    resolution: 12
+
+  - platform: mhz19
+    co2:
+      name: "Z19 CO2 MB"
+    temperature:
+      name: "Z19 Temp MB"
+    update_interval: 30s
+    id: my_mhz19_id
+    automatic_baseline_calibration: true
+    
+  - platform: bme280
+    temperature:
+      name: ${board_name}_Temperature
+      oversampling: 16x
+      id: bme280_temperature
+    pressure:
+      name: ${board_name}_Pressure
+      id: bme280_pressure
+    humidity:
+      name: ${board_name}_Humidity
+      id: bme280_humidity
+    address: 0x76
+    update_interval: 30s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+    
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+
+switch:
+  - platform: template
+    name: ${board_name}_MH-Z19 ABC
+    optimistic: true
+    on_turn_on:
+      mhz19.abc_enable: my_mhz19_id
+    on_turn_off:
+      mhz19.abc_disable: my_mhz19_id
+
+  - platform: template
+    name: ${board_name}_MH-Z19 Calibrate
+    on_turn_on:
+      mhz19.calibrate_zero: my_mhz19_id
+    turn_off_action:
+      switch.turn_off: mhz19_zero
+    id: mhz19_zero
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
