@@ -190,22 +190,6 @@
                 registry.async_remove_device(data['device_id'])
   
 # ##################################
-# System - Hass.io NEW Version
-# ##################################
-  - alias: system_hassio_new_version
-    id:  system_hassio_new_version
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.updater_core, binary_sensor.home_assistant_website_update_available
-        from: "off"
-        to: "on"
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U00002733 Hass.io {{states('sensor.ha_latest_version')}} доступен!"
-  
-# ##################################
 # System - NEW DAY
 # ##################################
   - alias: system_new_day_telegram
@@ -383,7 +367,7 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U00002b55 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+          message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
   
 # ##################################
 # System - Supervisor Update Available
@@ -399,23 +383,30 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f6e0 Supervisor - доступна новая версия {{ state_attr('sensor.supervisor_updates', 'newest_version') }}!"
+          message: "\U0001f389 Supervisor - доступна новая версия {{ state_attr('sensor.supervisor_updates', 'newest_version') }}!"
 
 # ##################################
-# System - System Check HA Config
+# System - Hass.io NEW Version
 # ##################################
-  - alias: system_check_ha_config
-    id: system_check_ha_config
-    mode: single
+  - alias: system_hassio_new_version
+    id:  system_hassio_new_version
+    initial_state: true
     trigger:
       - platform: state
-        entity_id: sensor.updater_core
-        to: 'on'
+        entity_id: binary_sensor.updater_core #, binary_sensor.home_assistant_website_update_available
+        from: "off"
+        to: "on"
     action:
+      - service: notify.telegram
+        data:
+          message: "\U0001f6e0 Core - доступна новая версия {{states('sensor.ha_latest_version')}}!"
       - service: hassio.addon_start
         data:
           addon: core_check_config
-  
+      - service: notify.telegram
+        data:
+          message: "\U0001f514 Запущена проверка конфига с новой версией HA"
+
 # ##################################
 # System - Supervisor Updated
 # ##################################
@@ -436,7 +427,7 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f6e0 Supervisor обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}"
+          message: "\U0001f38a Supervisor обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}"
   
 # ##################################
 # System - Addons Update Available
@@ -462,7 +453,7 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f530 Addons - доступны обновления {% for addons_updates in state_attr('sensor.supervisor_updates', 'addons') %}{{ addons_updates.name }} ({{ addons_updates.version_latest }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+          message: "\U0001f6e0 Addons - доступны обновления {% for addons_updates in state_attr('sensor.supervisor_updates', 'addons') %}{{ addons_updates.name }} ({{ addons_updates.version_latest }}){%if not loop.last %}, {%endif%}{% endfor %}!"
   
 # ##################################
 # System - System Automation Errors
