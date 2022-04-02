@@ -5,10 +5,11 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
 
 **Main Host:** 
   - HP Prodesk 600 G6 Mini
-  - Intel i3-10100
-  - 2*8Gb Sk Hynix DDR4 SODIMM
-  - 512Gb Samsung 970 Pro NVME
+  - Intel i3-10600
+  - 2*8Gb Samsung DDR4 SODIMM
+  - 512Gb ADATA SX8200 Pro 512Gb NVME
   - Buro BU-BT40C
+  - Google Coral m.2
 
 **Main Storage Host:** 
   - Synology DS1621+
