@@ -3,31 +3,45 @@
 # SYSTEM - General
 #
 # #####################################################################################
-# System - Error\Warning counter
+# System - Errors counter
 # ##################################
-  - alias: system_error_warning_counter
-    id: system_error_warning_counter
-    initial_state: true
-    mode: queued
-    max: 100
+  - alias: system_error_counter
+    id: system_error_counter
+    initial_state: 'true'
+    mode: parallel
+    max: 10
     max_exceeded: silent
     trigger:
       - platform: event
         event_type: system_log_event
         event_data:
           level: ERROR
+    condition:
+      - condition: template
+        value_template: "{{ not 'system_error_counter' in trigger.event.data.message }}"
+    action:
+      - service: counter.increment
+        entity_id: counter.error_counter
+
+# ##################################
+# System - Warning counter
+# ##################################
+  - alias: system_warning_counter
+    id: system_warning_counter
+    mode: parallel
+    max: 10
+    max_exceeded: silent
+    trigger:
       - platform: event
         event_type: system_log_event
         event_data:
           level: WARNING
     condition:
       - condition: template
-        value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}"
+        value_template: "{{ not 'system_warning_counter' in trigger.event.data.message }}"
     action:
       - service: counter.increment
-        data:
-          entity_id: >- 
-              {{ 'counter.' + trigger.event.data.level | lower + '_counter' }}
+        entity_id: counter.warning_counter
   
 # ##################################
 # System - START
