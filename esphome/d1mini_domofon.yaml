@@ -314,7 +314,8 @@ binary_sensor:
         - script.execute: state_call
     on_release:
       then:
-        - script.execute: state_no_call      
+        - script.execute: state_no_call
+    
 
   - platform: template
     name: ${board_name}_Auto_Opening
@@ -433,6 +434,7 @@ sensor:
 button:
   - platform: restart
     name: ${board_name}_Restart
+    id: restart_button
 
 switch:
   - platform: gpio
@@ -539,3 +541,20 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: UTC-3
+    on_time:
+      # Every 5 minutes
+      - seconds: 0
+        minutes: /1
+        then:
+            if:
+              condition:
+                for:
+                  time: 1min
+                  condition:
+                    binary_sensor.is_on: incoming_call
+              then:
+                - homeassistant.service:
+                    service: notify.telegram
+                    data:
+                      message: "Domofon Restart - Incoming stuck!"
+                - button.press: restart_button

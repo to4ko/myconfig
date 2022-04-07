@@ -1,16 +1,21 @@
 substitutions:
-  board_name: d1mini_strip_hb
+  board_name: d1mini_strip_mb
 
 esphome:
   name: ${board_name}
-  platform: ESP8266
+  comment: D1 Mini LED Strip MB
+
+esp8266:
   board: d1_mini
+  framework:
+    version: 2.7.4  
   
 wifi:
-  ssid: !secret wifi_ssid
+  ssid: !secret wifi_ssid_mb
   password: !secret wifi_pass
   domain: .local
   reboot_timeout: 15min
+  fast_connect: true
   manual_ip:
     static_ip: 192.168.1.89
     gateway: 192.168.1.1
@@ -18,9 +23,9 @@ wifi:
     dns1: 192.168.1.1
     dns2: 8.8.8.8
 
-
 # Enable logging
 logger:
+  baud_rate: 0
 
 # Enable Home Assistant API
 api:
@@ -52,7 +57,7 @@ light:
     chipset: WS2812B
     pin: GPIO14
     id: my_light
-    num_leds: 163
+    num_leds: 147
     rgb_order: GRB
     name: ${board_name}_LED
     effects:
@@ -67,44 +72,9 @@ light:
       - addressable_random_twinkle:
       - addressable_fireworks:
       - addressable_flicker:
-  - platform: partition
-    name: first_part
-    segments:
-      - id: my_light
-        from: 0
-        to: 150
-    effects:
-      # Use default parameters:
-      - random:
-      - strobe:
-      - flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-      - addressable_scan:
-      - addressable_twinkle:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:
-  - platform: partition
-    name: second_part
-    segments:
-      - id: my_light
-        from: 100
-        to: 163
-    effects:
-      # Use default parameters:
-      - random:
-      - strobe:
-      - flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-      - addressable_scan:
-      - addressable_twinkle:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:
 
-switch:
+
+button:
   - platform: restart
     name: ${board_name}_Restart
 
@@ -138,6 +108,22 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true    
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -149,5 +135,6 @@ sensor:
     update_interval: 60s
   
 time:
-  - platform: homeassistant
-    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: UTC-3

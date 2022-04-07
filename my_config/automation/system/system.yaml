@@ -221,6 +221,7 @@
         entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb, counter.automation_error_counter, counter.kettle_k
       - service: switch.turn_off
         entity_id: switch.dark_mode
+      - service: tts.clear_cache
   
 # ##################################
 # System - Weather FCST to Telegram
@@ -370,20 +371,51 @@
     trigger:
       - platform: state
         entity_id: sensor.hacs
-    condition:
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ trigger.from_state.state not in ignore and
-            trigger.to_state.state not in ignore and
-            trigger.to_state.state != trigger.from_state.state }}
-      - condition: template
-        value_template: "{{ trigger.to_state.state > trigger.from_state.state }}"
+    # condition:
+    #   - condition: template
+    #     value_template: >
+    #       {% set ignore = ['unknown', 'unavailable', 'none'] %}
+    #       {{ trigger.from_state.state not in ignore and
+    #         trigger.to_state.state not in ignore and
+    #         trigger.to_state.state != trigger.from_state.state }}
+      # - condition: template
+      #   value_template: "{{ trigger.to_state.state|int(0) > trigger.from_state.state|int(0) }}"
     action:
       - service: notify.telegram
         data:
           message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
-  
+      - service: persistent_notification.create
+        data:
+          title: "\U0001f389 Updates available in HACS"
+          message: >-
+            {% for repo in state_attr(trigger.entity_id, 'repositories') %}
+              {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
+            {% endfor %} 
+
+# # ##################################
+# # System - HACS Update Pending
+# # ##################################
+#   - alias: system_hacs_update_pending
+#     id:  system_hacs_update_pending
+#     initial_state: true
+#     trigger:
+#       - platform: state
+#         entity_id: sensor.hacs
+#     condition:
+#       - condition: template
+#         value_template: "{{ states(trigger.entity_id) != 'unknown'}}"
+#       - condition: template
+#         value_template: "{{ (states(trigger.entity_id)|int(0)) != 0}}"
+#     action:
+#       - service: persistent_notification.create
+#         data:
+#           title: Updates pending in HACS
+#           message: >-
+#             {% for repo in state_attr(trigger.entity_id, 'repositories') %}
+#               {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
+#             {% endfor %}
+
+
 # ##################################
 # System - Supervisor Update Available
 # ##################################
@@ -717,29 +749,6 @@
         state: "off"
       - service: switch.turn_off
         entity_id: switch.silent_mode
-  
-# ##################################
-# System - HACS Update Pending
-# ##################################
-  - alias: system_hacs_update_pending
-    id:  system_hacs_update_pending
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.hacs
-    condition:
-      - condition: template
-        value_template: "{{ states(trigger.entity_id) != 'unknown'}}"
-      - condition: template
-        value_template: "{{ (states(trigger.entity_id)|int(0)) != 0}}"
-    action:
-      - service: persistent_notification.create
-        data:
-          title: Updates pending in HACS
-          message: >-
-            {% for repo in state_attr(trigger.entity_id, 'repositories') %}
-              {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
-            {% endfor %}
   
   # ##################################
   # System - HACS New Repo
@@ -1075,7 +1084,7 @@
           - binary_sensor.shp6_socket_1_status
           - binary_sensor.shp6_socket_2_status
           - binary_sensor.sonoff_basic_3_status
-          - binary_sensor.sonoff_basic_4_status
+          #- binary_sensor.sonoff_basic_4_status
           #- binary_sensor.sonoff_mini_2_status
           - binary_sensor.sonoff_pow_r2_1_status
           #- binary_sensor.ss5_hood_status
@@ -1310,7 +1319,7 @@
           - sensor.shp6_socket_1_uptime_s
           - sensor.shp6_socket_2_uptime_s
           - sensor.sonoff_basic_3_uptime_s
-          - sensor.sonoff_basic_4_uptime_s
+          #- sensor.sonoff_basic_4_uptime_s
           #- sensor.sonoff_mini_2_uptime_s
           - sensor.sonoff_pow_r2_1_uptime_s
           - sensor.sonoff_pow_r2_2_uptime_s
