@@ -3,10 +3,10 @@
 # SASHA - breather
 #
 # #####################################################################################
-# Sasha- breather On
+# Sasha- breather auto co2
 # ##################################
-  - alias: sasha_breather_auto
-    id: sasha_breather_auto
+  - alias: sasha_breather_auto_co2
+    id: sasha_breather_auto_co2
     initial_state: true
     trigger:
       - platform: time_pattern
@@ -24,7 +24,7 @@
                 state: 'off'
               - condition: numeric_state
                 entity_id: sensor.z19_co2_s
-                above: 1000
+                above: input_number.co2_high_limit
               - condition: state
                 entity_id: binary_sensor.breather_s
                 state: 'off'
@@ -35,10 +35,27 @@
             conditions:
               - condition: numeric_state
                 entity_id: sensor.z19_co2_s
-                below: 600
+                below: input_number.co2_low_limit
               - condition: state
                 entity_id: binary_sensor.breather_s
                 state: "on"
     action:
-      - service: button.press
-        entity_id: button.digma_ir_s_breather_pwr
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00025370d1_contact
+                state: 'off'
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_s_breather_pwr
+
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00025370d1_contact
+                state: 'on'
+              - condition: state
+                entity_id: binary_sensor.breather_s
+                state: 'on'
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_s_breather_pwr

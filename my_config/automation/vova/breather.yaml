@@ -3,10 +3,10 @@
 # VOVA - Lights
 #
 # #####################################################################################
-# Vova- breather On
+# Vova- breather auto co2
 # ################################## 
-  - alias: vova_breather_on
-    id: vova_breather_on
+  - alias: vova_breather_auto_co2
+    id: vova_breather_auto_co2
     initial_state: true
     trigger:
       - platform: time_pattern
@@ -24,7 +24,7 @@
                 state: 'off'
               - condition: numeric_state
                 entity_id: sensor.z19_co2_v
-                above: 600
+                above: input_number.co2_high_limit
               - condition: state
                 entity_id: binary_sensor.breather_v
                 state: 'off'
@@ -35,19 +35,36 @@
             conditions:
               - condition: numeric_state
                 entity_id: sensor.z19_co2_v
-                below: 450
+                below: input_number.co2_low_limit
               - condition: state
                 entity_id: binary_sensor.breather_v
                 state: "on"
     action:
-      - service: button.press
-        entity_id: button.digma_ir_v_breather_pwr
-  
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00022ccffe_contact
+                state: 'off'
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_v_breather_pwr
+
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00022ccffe_contact
+                state: 'on'
+              - condition: state
+                entity_id: binary_sensor.breather_v
+                state: 'on'
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_v_breather_pwr
+
 # ##################################
-# Vova - Breather on off hourly
+# Vova - Breather Auto Timer
 # ##################################
-  - alias: vova_breather_on_off_hourly
-    id: vova_breather_on_off_hourly
+  - alias: vova_breather_auto_timer
+    id: vova_breather_auto_timer
     initial_state: true
     trigger:
       - platform: event
@@ -68,6 +85,10 @@
         entity_id: binary_sensor.digma_ir_v_breather_self_code
         to: 'on'
         id: 'ir_used_digma'
+      - platform: state
+        entity_id: input_select.breazer_timer
+        to:
+        id: 'input'
     action:
       - choose:
           - conditions:
@@ -77,7 +98,7 @@
               - service: timer.start
                 entity_id: timer.breather_v
                 data:
-                  duration: 01:00:00
+                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
 
               - service: input_number.set_value
                 entity_id: input_number.last_action_breather_v
@@ -106,7 +127,7 @@
               - service: timer.start
                 entity_id: timer.breather_v
                 data:
-                  duration: 01:00:00
+                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
 
               - service: input_number.set_value
                 entity_id: input_number.last_action_breather_v
@@ -135,3 +156,19 @@
 
               - service: input_boolean.turn_off
                 entity_id: input_boolean.hourly_mode_breather_v
+
+          - conditions:
+              - condition: trigger
+                id: "input"
+            sequence:
+              - condition: state
+                entity_id: timer.breather_v
+                state: 'active'
+              - service: timer.start
+                entity_id: timer.breather_v
+                data:
+                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+              - service: input_number.set_value
+                entity_id: input_number.last_action_breather_v
+                data:
+                  value: "{{as_timestamp(now())|int(0)}}"
