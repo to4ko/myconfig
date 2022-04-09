@@ -86,6 +86,8 @@ views:
                     name: USD
                   - entity: sensor.eur_rur
                     name: EUR
+                  - entity: sensor.qiwi_usd_rate
+                    name: QIWI
 
           - type: map
             aspect_ratio: "16x9"
@@ -359,14 +361,12 @@ views:
                       action: call-service
                       service: script.water_off
           - type: glance
-            columns: 7
+            columns: 6
             show_state: false #true
             state_color: true
             entities:
               - entity: input_boolean.hourly_mode_breather_v
                 name: Auto Br V
-              - entity: input_select.breazer_timer
-                name: Time
               - entity: input_boolean.auto_fan_t
                 name: Auto Fan T
                 tap_action:
@@ -2599,9 +2599,9 @@ views:
           - type: glance
             state_color: true
             show_state: false
-            columns: 7
+            columns: 8
             entities:
-              - entity: binary_sensor.breather_v
+              - entity: fan.breather_v
                 name: V
               - entity: binary_sensor.0x158d00022ccffe_contact
                 name: Window
@@ -2623,8 +2623,13 @@ views:
                 name: Auto
                 tap_action:
                   action: toggle
+              - entity: switch.breather_auto_speed_v
+                name: ASp
+                tap_action:
+                  action: toggle
 
-              - entity: binary_sensor.breather_s
+
+              - entity: fan.breather_s
                 name: S
               - entity: binary_sensor.0x158d00025370d1_contact
                 name: Window
@@ -2646,8 +2651,13 @@ views:
                 name: Auto
                 tap_action:
                   action: toggle
+              - entity: switch.breather_auto_speed_s
+                name: ASp
+                tap_action:
+                  action: toggle
 
-              - entity: binary_sensor.breather_mb
+
+              - entity: fan.breather_mb
                 name: MB
               - entity: binary_sensor.0x158d000200ad58_contact
                 name: Window
@@ -2669,11 +2679,21 @@ views:
                 name: Auto
                 tap_action:
                   action: toggle
+              - entity: switch.breather_auto_speed_mb
+                name: ASp
+                tap_action:
+                  action: toggle
           - type: entities
             entities:
               - input_number.co2_low_limit
               - input_number.co2_high_limit
               - input_select.breazer_timer
+              - timer.breather_v
+          - type: glance
+            entities:
+              - sensor.breather_set_speed_v
+              - sensor.breather_set_speed_s
+              - sensor.breather_set_speed_mb
       - type: vertical-stack
         cards:
           - type: history-graph
@@ -3419,7 +3439,7 @@ views:
     icon: mdi:heart-pulse
     cards:
       - type: vertical-stack
-        title: HP 400 G6
+        title: HP 600 G6
         cards:
           - type: custom:bar-card
             columns: 3

@@ -10,7 +10,7 @@
     initial_state: true
     trigger:
       - platform: time_pattern
-        minutes: "/5"
+        minutes: "/3"
     condition:
       - condition: state
         entity_id: switch.breather_auto_mb
@@ -48,6 +48,20 @@
             sequence:
               - service: button.press
                 entity_id: button.digma_ir_mb_breather_pwr
+              # - service: notify.telegram
+              #   data:
+              #     message: "{{breather}} power from auto"
+              - condition: numeric_state
+                entity_id: sensor.z19_co2_mb
+                above: input_number.co2_high_limit
+              - condition: state
+                entity_id: switch.breather_auto_speed_mb
+                state: 'on'
+              - service: fan.set_percentage
+                entity_id: fan.breather_mb
+                data:
+                  percentage: "{{states('sensor.breather_set_speed_mb')|int(0) }}"
+              
 
           - conditions:
               - condition: state

@@ -10,7 +10,7 @@
     initial_state: true
     trigger:
       - platform: time_pattern
-        minutes: "/5"
+        minutes: "/3"
     condition:
       - condition: state
         entity_id: switch.breather_auto_v
@@ -48,6 +48,16 @@
             sequence:
               - service: button.press
                 entity_id: button.digma_ir_v_breather_pwr
+              - condition: numeric_state
+                entity_id: sensor.z19_co2_v
+                above: input_number.co2_high_limit
+              - condition: state
+                entity_id: switch.breather_auto_speed_v
+                state: 'on'
+              - service: fan.set_percentage
+                entity_id: fan.breather_v
+                data:
+                  percentage: "{{states('sensor.breather_set_speed_v')|int(0) }}"
 
           - conditions:
               - condition: state
@@ -164,6 +174,8 @@
               - condition: state
                 entity_id: timer.breather_v
                 state: 'active'
+              # - condition: template
+              #   value_template: "{{ state_attr('timer.breather_v','duration').split(':')[1]|int(0) > states('input_select.breazer_timer')|int(0) }}"
               - service: timer.start
                 entity_id: timer.breather_v
                 data:

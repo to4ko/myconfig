@@ -1,3 +1,4 @@
+
   # - platform: imap_email_content
   #   server: imap.gmail.com
   #   name: DoorCam Motion Sensor
@@ -277,7 +278,29 @@
   #   json_attributes:
   #   - newest_version
   #   - current_version
-  
+
+  - platform: rest
+    resource: https://edge.qiwi.com/sinap/crossRates
+    name: QIWI USD Rate
+    force_update: true
+    headers: 
+      authorization: !secret qiwi_token
+      Content-Type: application/json
+      Accept: application/json
+    value_template: "{{ value_json.result | selectattr('to', 'eq', '840') | selectattr('from', 'eq', '643') | map(attribute='rate') | join('') }}"
+    unit_of_measurement: RUB
+
+#   - platform: scrape
+#     resource: https://qiwi.com/payment/exchange
+#     name: QIWI X Rate
+#     select: ".text-lg:is(span)"
+#     index: 1
+#     value_template: '{{ value | replace (",", ".") | float }}'
+#     unit_of_measurement: "öre/kWh"
+
+# //*[@id="app"]/section/section/div[2]/div/div/div[1]/div/div[3]/div[3]
+
+
   - platform: rest
     resource: https://www.cbr-xml-daily.ru/daily_json.js
     name: USD_RUR
