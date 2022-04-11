@@ -178,10 +178,15 @@
       - condition: template
         value_template: "{{ 'lower' not in trigger.event.data.action }}"
     action:
-      - service: notify.telegram
+      # - service: notify.telegram
+      #   data:
+      #     message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
+      - service: telegram_bot.send_message
         data:
           message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
-  
+          target: !secret tel_chat_id_cam
+          timeout: 10
+
 # ##################################
 # System - Device Deletion
 # ##################################
@@ -277,6 +282,14 @@
             {%-for state in states.sensor if state.entity_id.endswith("_zigbee")%}
             {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
             {%-endfor%}
+      - service: group.set
+        data:
+          object_id: esp_devices_uptime
+          entities: >-
+            {%-for state in states.sensor if state.entity_id.endswith("_uptime_s")%}
+            {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
+            {%-endfor%}
+          
   
 # ##################################
 # System - Sensors Low Battery Notification
@@ -446,13 +459,13 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f6e0 Core - доступна новая версия {{states('sensor.ha_latest_version')}}!"
-      - service: hassio.addon_start
-        data:
-          addon: core_check_config
-      - service: notify.telegram
-        data:
-          message: "\U0001f514 Запущена проверка конфига с новой версией HA"
+          message: "\U0001f6e0 Core - доступна новая версия {{states('sensor.docker_hub')}}. Текущая {{states('sensor.ha_installed_version')}}!"
+      # - service: hassio.addon_start
+      #   data:
+      #     addon: core_check_config
+      # - service: notify.telegram
+      #   data:
+      #     message: "\U0001f514 Запущена проверка конфига с новой версией HA"
 
 # ##################################
 # System - Supervisor Updated
@@ -1291,42 +1304,39 @@
     trigger:
       - platform: state
         entity_id:
-          - sensor.esp32_node_hs_uptime_s
-          - sensor.mono_strip_1_uptime_s
+          - sensor.d1mini_air_freshener_uptime_s
           - sensor.d1mini_co2_s_uptime_s
+          - sensor.d1mini_domofon_uptime_s
+          - sensor.d1mini_light_l_uptime_s
+          - sensor.d1mini_strip_mb_uptime_s
+          - sensor.digma_ir_k_uptime_s
           - sensor.digma_ir_mb_uptime_s
           - sensor.digma_ir_s_uptime_s
           - sensor.digma_ir_v_uptime_s
-          #- sensor.esp01_air_freshener_uptime_s
+          - sensor.digma_strip_hb_uptime_s
           - sensor.esp01_weight_pad_uptime_s
-          - sensor.esp32_node_b_uptime_s
-          - sensor.esp32_ble_hb_uptime_s
           - sensor.esp32_ble_hs_uptime_s
           - sensor.esp32_ble_mb_uptime_s
           - sensor.esp32_ble_s_uptime_s
-          #- sensor.esp32_domofon_uptime_s
-          - sensor.d1mini_domofon_uptime_s
-          - sensor.esp8266_hood_k_uptime_s
+          - sensor.esp32_node_b_uptime_s
+          - sensor.esp32_node_hs_uptime_s
           - sensor.esp32_node_k_uptime_s
           - sensor.esp32_node_mb_uptime_s
           - sensor.esp32_node_v_uptime_s
-          - sensor.esp8266_oven_temp_k_uptime_s
           - sensor.esp32_pzem_hb_uptime_s
+          - sensor.esp8266_hood_k_uptime_s
+          - sensor.esp8266_oven_temp_k_uptime_s
           - sensor.lt11_1_uptime_s
+          - sensor.mono_strip_1_uptime_s
           - sensor.shp2_socket_1_uptime_s
-          #- sensor.shp2_socket_2_uptime_s
-          #- sensor.shp2_socket_server_uptime_s
           - sensor.shp6_socket_1_uptime_s
           - sensor.shp6_socket_2_uptime_s
+          - sensor.sonoff_basic_1_uptime_s
           - sensor.sonoff_basic_3_uptime_s
-          #- sensor.sonoff_basic_4_uptime_s
-          #- sensor.sonoff_mini_2_uptime_s
-          - sensor.sonoff_pow_r2_1_uptime_s
-          - sensor.sonoff_pow_r2_2_uptime_s
           - sensor.sonoff_mini_1_uptime_s
           - sensor.sonoff_mini_4_uptime_s
-          - sensor.d1mini_light_l_uptime_s
-          - sensor.esp32_pzem_hb_uptime_s
+          - sensor.sonoff_pow_r2_1_uptime_s
+          - sensor.sonoff_pow_r2_2_uptime_s
         from: "unavailable"
         for:
           seconds: 10
@@ -1337,7 +1347,7 @@
       - service: notify.telegram
         data:
           message: "\U0001f4cd {{state_attr(trigger.entity_id,'friendly_name').split('_Uptime_s')[0]}} перезапустился, аптайм {{states(trigger.entity_id)}}с!"
-  
+
 # ##################################
 # System - Air Quality pm25
 # ##################################
@@ -1910,15 +1920,14 @@
   #       data:
   #         message: >-
   #           {% if trigger.to_state.attributes.connection_class in ['local_push', 'local_poll'] -%}{{ '\U00002705' }}{%- else -%}{{ '\U000026A0' }}{%- endif -%}{{- trigger.to_state.name -}}: {{- trigger.from_state.attributes.connection_class-}} --> {{- trigger.to_state.attributes.connection_class-}}
-  
-  
+
 # ##################################
 # System - ESPHome BLE Advert
 # ##################################
   - alias: system_esphome_ble_advert
     id:  system_esphome_ble_advert
-    mode: queued
-    max: 100
+    mode: parallel
+    max: 50
     max_exceeded: silent
     initial_state: true
     trigger:
@@ -1929,6 +1938,42 @@
         data:
           packet: "{{ trigger.event.data.packet }}"
           gateway_id: "{{ trigger.event.data.gateway_id }}"
+
+# ##################################
+# System - QIWI X Rate
+# ##################################
+  - alias: system_qiwi_x_rate
+    id:  system_qiwi_x_rate
+    mode: single
+    max_exceeded: silent
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.qiwi_usd_rate
+        to:
+    condition:
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
+          {{ 
+             trigger.from_state.state not in ignore and
+             trigger.to_state.state not in ignore and
+             trigger.to_state.state != trigger.from_state.state
+          }}        
+    action:
+      - service: notify.telegram
+        data:
+          message: >- 
+            {%- set new = trigger.to_state.state |float(0) %}
+            {%- set old = trigger.from_state.state | float(0) %}
+            {%- if new > old %}
+              {%- set change = 'увеличился' %}
+            {%- elif new < old %}
+              {%- set change = 'уменьшился' %}
+            {%- else %}
+              {%- set change = 'изменился' %}
+            {%- endif %}
+            {{"\U0001f4b1"}} QIWI курс {{change}} с {{ new }} на {{ old }} рублей за доллар"
 
 # ##################################
 # System - System Updates Pending

@@ -34,8 +34,8 @@ api:
 
 ota:
 
-web_server:
-  port: 80
+# web_server:
+#   port: 80
 
 globals:
   - id: mute_mode
@@ -140,6 +140,56 @@ script:
           then:
             switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
+
+  # change light with locks
+  - id: locks_lights
+    then:
+      - logger.log: "Lock Lights"
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_on: id_bottom_lock
+              - binary_sensor.is_on: id_top_lock
+          then:
+            light.turn_on:
+              id: id_led1
+              brightness: 25%
+              red: 100%
+              green: 65%
+              blue: 0%
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_on: id_bottom_lock
+              - binary_sensor.is_off: id_top_lock
+          then:
+            light.turn_on:
+              id: id_led1
+              brightness: 25%
+              red: 100%
+              green: 65%
+              blue: 0%          
+              effect: 'Blink'
+      - if:
+          condition:
+            and: 
+              - binary_sensor.is_off: id_bottom_lock
+              - binary_sensor.is_on: id_top_lock
+          then:
+            light.turn_on:
+              id: id_led1
+              brightness: 25%
+              red: 100%
+              green: 65%
+              blue: 0%
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_on: id_bottom_lock
+              - binary_sensor.is_on: id_top_lock
+          then:
+            light.turn_off:
+              id: id_led1
 
   # No call state
   - id: state_no_call
@@ -335,6 +385,28 @@ binary_sensor:
     on_press:
       then:
         - script.execute: call_accept_manual
+
+  - platform: homeassistant
+    name: ${board_name}_bottom_lock
+    internal: true
+    entity_id: binary_sensor.bottom_lock #binary_sensor.0x158d0002a1a4b2_contact
+    id: id_bottom_lock
+    #filters:
+    #  - invert:    
+    on_state:
+      then:
+        - script.execute: locks_lights
+
+  - platform: homeassistant
+    name: ${board_name}_top_lock
+    internal: true
+    entity_id: binary_sensor.top_lock #binary_sensor.0x158d0002b7c2c8_contact
+    id: id_top_lock
+    #filters:
+    #  - invert:    
+    on_state:
+      then:
+        - script.execute: locks_lights
 
 light:
   - platform: fastled_clockless

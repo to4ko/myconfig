@@ -60,26 +60,22 @@ binary_sensor:
     filters:
       - delayed_on: 10ms
       - delayed_off: 10ms
-    on_press:
-      then: 
-        - light.turn_on: id_green_led
+    # on_press:
+    #   then: 
+    #     - light.turn_on: id_green_led
     on_click:
       then:
         - switch.turn_on: spray
         - light.turn_off: id_green_led
     on_multi_click:
-    - timing:
-        - ON for at most 1s
-        - OFF for at most 1s
-        - ON for at most 1s
-        - OFF for at most 1s
-        - ON for 0.5s to 1s
-        - OFF for at least 0.2s
-      then:
-        - homeassistant.service:
-            service: script.toilet_air_freshener_counter_rese
-        - light.turn_off: id_green_led
-    
+      - timing:
+          - ON for 1s to 2s
+          - OFF for at least 0.5s
+        then:
+          - button.press: id_button_reset
+          - light.turn_off: id_green_led
+
+
   - platform: gpio
     pin:
       number: GPIO12
@@ -111,6 +107,9 @@ number:
     max_value: 3000
     step: 1
     optimistic: true
+    on_value:
+      then:
+        - component.update: id_canister_left
 
   - platform: template
     name: ${board_name}_Canister_Resource
@@ -122,6 +121,9 @@ number:
     max_value: 3000
     step: 1
     optimistic: true
+    on_value:
+      then:
+        - component.update: id_canister_left
 
 text_sensor:
   - platform: template
@@ -204,7 +206,7 @@ sensor:
 
   - platform: template
     name: ${board_name}_Canister_Left
-    device_class: battery
+    id: id_canister_left
     lambda: |-
       float raw_value = id(id_counter).state;
       float max_value = id(id_canister_resource).state;
@@ -224,6 +226,14 @@ sensor:
 button:
   - platform: restart
     name: ${board_name}_Restart
+
+  - platform: template
+    name: ${board_name}_New_Canister
+    id: id_button_reset
+    on_press:
+      - number.set:
+          id: id_counter
+          value: 0 
 
 switch:
   - platform: gpio

@@ -444,3 +444,51 @@
                 data:
                   brightness_pct: 5
                   kelvin: 3000
+
+# ##################################
+# Master Bedroom - LED Strip Control with square key
+# ##################################
+  - alias: master_bedroom_led_strip_control
+    id: master_bedroom_led_strip_control
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.28d1273bc2f4_action
+    condition:
+      - condition: template
+        value_template: "{{ states('light.d1mini_strip_mb_led') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}" 
+      - condition: numeric_state
+        entity_id: sensor.ha_uptime
+        above: 0
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'single' }}"
+            sequence:
+              - service: light.turn_on
+                data:
+                  entity_id: light.d1mini_strip_mb_led
+                  effect: '{{ (["Rainbow", "Color Wipe", "Scan", "Twinkle", "Random Twinkle"] | random) }}'
+                  brightness_pct: 75
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'double' }}"
+            sequence:
+              - service: light.turn_on
+                data:
+                  entity_id: light.d1mini_strip_mb_led
+                  effect: 'Color Wipe'
+                  brightness_pct: 75
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'hold' }}"
+            sequence:
+              - service: light.turn_off
+                entity_id: light.d1mini_strip_mb_led
+                data:
+                  transition: 5

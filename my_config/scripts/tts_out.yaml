@@ -50,24 +50,26 @@
 
   tts_out:
     alias: TTS Out script
-    mode: queued
+    mode: parallel
     max: 100
     max_exceeded: silent
+    fields:
+      entity:
+        description: 'entity_id колонки'
+        example: 'media_player.yandex_hb'
+        default: media_player.{{states('input_select.tts_audio_out')|lower}}
+      text:
+        description: 'Текст для воспроизведения'
+        example: 'Внимание! Важное сообщение...'
+      vol_level:
+        description: 'Уровень громкости'
+        example: '0.8'
+        default: "{{states('input_number.tts_volume')|float(0)}}"
     sequence:
-
-#binary_sensor.yandex_speakers    
-      - service: media_player.volume_set
-        data:
-          entity_id: "{{ entity_id }}"
-          volume_level: "{{ volume_level|float(0) }}"
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: "{{ entity_id }}"
-          media_content_id: "{{ tts_text }}"
-          
-# service: script.tts_out
-# data:
-#   entity_id: media_player.yandex_k
-#   volume_level: 0.3
-#   tts_text: hello          
+       - service: media_player.play_media
+         data:
+           entity_id: '{{ entity }}'
+           media_content_id: '{{ text }}'
+           media_content_type: text
+           extra:
+             volume_level: '{{ vol_level }}'
