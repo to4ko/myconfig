@@ -391,12 +391,27 @@
         unit_of_measurement: "ea"
 
   - trigger:
+      - platform: state
+        entity_id: sensor.qiwi_usd_rate
+        for:
+          minutes: 3
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: QIWI USD Rate Filtered
+        state: "{{ states('sensor.qiwi_usd_rate')|float(0) }}"
+        unit_of_measurement: "RUB"
+        icon: mdi:currency-usd
+
+  - trigger:
       - platform: time_pattern
         minutes: "/30"
       - platform: homeassistant
         event: start
       - platform: event
-        event_type: automation_reloaded
+        event_type: event_template_reloaded
     sensor:
       - name: GW3 Zigbee Devices Count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| map(attribute='attributes.name') | unique | list  | count }}"

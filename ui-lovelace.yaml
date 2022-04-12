@@ -2706,13 +2706,13 @@ views:
             entities:
               - sensor.z19_co2_v
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             #title: 'CO2 S'
             entities:
               - sensor.z19_co2_s
               - sensor.cgllc_cgdn1_89d7_co2_density
           - type: history-graph
-            hours_to_show: 6
+            hours_to_show: 24
             #title: 'CO2 MB'
             entities:
               - sensor.z19_co2_mb
@@ -3046,40 +3046,7 @@ views:
                     name: HA Up
                   - entity: sensor.host_uptime_text
                     name: Host Up
-              - type: glance
-                columns: 6
-                state_color: true
-                entities:
-                  - entity: sensor.ha_supervisor_current_version
-                    name: Super
-                    tap_action:
-                      action: call-service
-                      service: script.ha_released_update
-                  - entity: sensor.ha_supervisor_latest_version
-                    name: Latest
-                    tap_action:
-                      action: call-service
-                      service: script.ha_released_update
-                  - entity: sensor.ha_supervisor_latest_beta
-                    name: Beta
-                    tap_action:
-                      action: call-service
-                      service: script.ha_released_update
-                  - entity: sensor.ha_installed_version
-                    name: HA
-                    tap_action:
-                      action: call-service
-                      service: script.ha_released_update
-                  - entity: sensor.ha_latest_version
-                    name: Latest
-                    tap_action:
-                      action: call-service
-                      service: script.ha_released_update
-                  - entity: sensor.ha_latest_beta
-                    name: Beta
-                    tap_action:
-                      action: call-service
-                      service: script.ha_released_update
+
               - type: glance
                 state_color: true
                 columns: 7
@@ -3136,7 +3103,19 @@ views:
                     name: Lead
           - type: glance
             entities:
-              - sensor.watchman_last_updated
+              - entity: sensor.watchman_last_updated
+                name: Updated
+                tap_action:
+                  action: call-service
+                  service: watchman.report
+                  service_data:
+                    create_file: true
+                    send_notification: false
+                    service: notify.telegram
+                    data:
+                      parse_mode: html
+                    parse_config: true
+                    chunk_size: true
               - sensor.watchman_missing_entities
               - sensor.watchman_missing_services
           - type: custom:auto-entities
@@ -3518,7 +3497,7 @@ views:
                 icon: mdi:clock-outline
               - entity: sensor.ha_installed_version
                 name: Installed
-              - entity: sensor.ha_latest_version
+              - entity: sensor.home_assistant_versions
                 name: Latest
                 tap_action:
                   action: call-service
@@ -3770,10 +3749,10 @@ views:
             state_color: true
             entities:
               - sensor.pressure_weather_forecast
-          - type: history-graph
-            hours_to_show: 48
-            entities:
-              - sensor.magnetic_storm
+          # - type: history-graph
+          #   hours_to_show: 48
+          #   entities:
+          #     - sensor.magnetic_storm
           - type: glance
             columns: 6
             state_color: true
@@ -5051,3 +5030,44 @@ views:
           method: false
           numeric: true
           reverse: true
+          
+  - title: Testing
+    icon: mdi:alpha
+    cards:
+      - type: markdown
+        title: Automations Triggered
+        content: |
+          |D|H|M||Time||Name|
+          |---:|----:|----:|:--:|:---:|:--:|:----|
+          {% for state in states.automation
+             |selectattr('attributes.last_triggered')
+             |sort(attribute='attributes.last_triggered', reverse=true) if (now() - state.attributes.last_triggered).days < 1 -%}
+            {%- set t1 = state.attributes.last_triggered.timestamp() | timestamp_custom('%H:%M') -%}
+            {%- set t = now() - state.attributes.last_triggered -%}
+            {%- set days = t.days if t.days > 0 else '&nbsp;' -%}
+            {%- set hrs = t.seconds//3600 %}
+            {%- set hrs = hrs if hrs > 0 else '&nbsp;' -%}
+            |{{days}}|{{hrs}}|{{(t.seconds//60)%60}}||{{t1}}||{{state.name}}|
+          {% endfor %}
+      - type: markdown
+        title: Last changed
+        content: |
+          |D|H|M||Time||Name|  
+          |---:|----:|----:|:--:|:---:|:--:|:----|  
+          {% for state in states 
+             |sort(attribute='last_changed', reverse=true) -%}
+            {%- set t1 = state.last_changed.timestamp() | timestamp_custom('%H:%M') -%}
+            {%- set t = now() - state.last_changed -%}
+            {%- set days = t.days if t.days > 0 else '&nbsp;' -%}
+            {%- set hrs = t.seconds//3600 %}
+            {%- set hrs = hrs if hrs > 0 else '&nbsp;' -%}
+            |{{days}}|{{hrs}}|{{(t.seconds//60)%60}}||{{t1}}||{{state.entity_id}}|
+          {% endfor %}
+      - type: markdown
+        title: Entities
+        content: >
+          Total {{ states | count }}{{'\n'}}
+
+          {%- for d in states | groupby('domain') %}
+          <img src="https://brands.home-assistant.io/_/{{ d[0] }}/logo.png" height="20"></a>&nbsp;{{ d[0] }}&nbsp;{{ states[d[0]] | count }}{{'\n'}}
+          {%- endfor %}

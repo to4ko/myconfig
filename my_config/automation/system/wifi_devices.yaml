@@ -166,3 +166,42 @@
       - service: notify.telegram
         data:
           message: "\U00002705 Включение - {{trigger.to_state.attributes.friendly_name}}"
+
+# ##################################
+# System - CO2 Reconnect
+# ##################################
+  - alias: system_co2_monitors_reconnect
+    id: system_co2_monitors_reconnect
+    initial_state: true
+    max_exceeded: silent
+    mode: queued
+    max: 10
+    trigger:
+      - platform: state
+        entity_id: sensor.cgllc_cgdn1_89d7_co2_density
+        to: 'unavailable'
+        for:
+          minute: 1
+        id: 'air_s'
+      - platform: state
+        entity_id: sensor.cgllc_cgdn1_8ee1_co2_density
+        to: 'unavailable'
+        for:
+          minute: 1
+        id: 'air_mb'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'air_s'
+            sequence:
+              - service: unifi.reconnect_client
+                data:
+                  device_id: 3a4b98a38681bd64484b2a4b45befd6d
+          - conditions:
+              - condition: trigger
+                id: 'air_mb'
+            sequence:
+              - service: unifi.reconnect_client
+                data:
+                  device_id: 3e9239fc946fd8c4190a9c8c8b3b17d3
