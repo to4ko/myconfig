@@ -377,32 +377,33 @@
 # ##################################
 # System - HACS Update Available
 # ##################################
-  - alias: system_hacs_update_available
-    id:  system_hacs_update_available
+  - alias: system_update_hacs_available
+    id:  system_update_hacs_available
     initial_state: true
     trigger:
       - platform: state
         entity_id: sensor.hacs
-    # condition:
-    #   - condition: template
-    #     value_template: >
-    #       {% set ignore = ['unknown', 'unavailable', 'none'] %}
-    #       {{ trigger.from_state.state not in ignore and
-    #         trigger.to_state.state not in ignore and
-    #         trigger.to_state.state != trigger.from_state.state }}
-      # - condition: template
-      #   value_template: "{{ trigger.to_state.state|int(0) > trigger.from_state.state|int(0) }}"
+        attribute: repositories
+    condition:
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ trigger.from_state.state not in ignore and
+              trigger.to_state.state not in ignore and
+              is_state('binary_sensor.new_version_hacs_addons', 'on')
+            }}
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
-      - service: persistent_notification.create
-        data:
-          title: "\U0001f389 Updates available in HACS"
-          message: >-
-            {% for repo in state_attr(trigger.entity_id, 'repositories') %}
-              {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
-            {% endfor %} 
+          #message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+          message: "\U0001f389 HACS - доступно обновлений {{ states('sensor.hacs') | int(0) }}. Список: {% for repo in state_attr('sensor.hacs', 'repositories') %}*{{ repo.display_name }}* (_{{ repo.installed_version }}_ -> _{{ repo.available_version }}_){%if not loop.last %}, {%endif%}{% endfor %}"
+      # - service: persistent_notification.create
+      #   data:
+      #     title: "\U0001f389 Updates available in HACS"
+      #     message: >-
+      #       {% for repo in state_attr(trigger.entity_id, 'repositories') %}
+      #         {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
+      #       {% endfor %} 
 
 # # ##################################
 # # System - HACS Update Pending
@@ -434,7 +435,6 @@
   - alias: system_supervisor_update_available
     id:  system_supervisor_update_available
     initial_state: true
-    trigger:
     trigger:
       - platform: state
         entity_id: update.home_assistant_supervisor_update
@@ -1331,6 +1331,7 @@
           - sensor.digma_ir_v_uptime_s
           - sensor.digma_strip_hb_uptime_s
           - sensor.esp01_weight_pad_uptime_s
+          - sensor.esp32_ble_hb_uptime_s
           - sensor.esp32_ble_hs_uptime_s
           - sensor.esp32_ble_mb_uptime_s
           - sensor.esp32_ble_s_uptime_s
@@ -1977,7 +1978,7 @@
              trigger.from_state.state not in ignore and
              trigger.to_state.state not in ignore and
              trigger.to_state.state != trigger.from_state.state
-          }}        
+          }}
     action:
       - service: notify.telegram
         data:
@@ -1991,7 +1992,51 @@
             {%- else %}
               {%- set change = 'изменился' %}
             {%- endif %}
-            {{"\U0001f4b1"}} QIWI курс {{change}} с {{ old }} на {{ new }} рублей за доллар
+            {{"\U0001f4b1"}} QIWI курс USD\RUR {{change}} с {{ old }} до {{ new }}
+
+# ##################################
+# System - Music Restrictions
+# ##################################
+  - alias: system_music_restrictions
+    id:  system_music_restrictions
+    mode: single
+    max_exceeded: silent
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: media_player.yandex_mb
+        to: 'playing'
+        id: 'by_state'
+      - platform: time
+        at: '23:00:00'
+        id: 'by_time'
+    condition:
+      - condition: state
+        entity_id: switch.music_allowed
+        state: 'off'
+      - condition: template
+        value_template: "{{states('sensor.time').split(':')[0]|int >= 23 or states('sensor.time').split(':')[0]|int < 7}}"
+    action:
+      - service: script.fade_volume
+        data:
+          curve: linear
+          target_player: media_player.yandex_mb
+          duration: 3
+          target_volume: 0.1
+      - service: media_player.turn_off
+        entity_id: media_player.yandex_mb
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'on_state'
+            sequence:
+              - service: media_player.play_media
+                data:
+                  media_content_type: text
+                  entity_id: media_player.yandex_mb
+                  media_content_id: "Сашенька, ночью надо спать, а не сказки слушать! Спокойной ночи!"
+                  extra:
+                    volume_level: '0.2'
 
 # ##################################
 # System - System Updates Pending
