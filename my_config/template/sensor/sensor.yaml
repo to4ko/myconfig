@@ -11,6 +11,18 @@
       # - name: Bus to Home Next
       #   state: "{{((as_timestamp(states('sensor.bus_to_home_from_koptevo')) - as_timestamp(now()))/60)|round(0,'common')}}"
       
+# {%- set datanames = namespace(low_batt=[]) -%}
+# {%- set threshold = states('input_number.battery_low_level')|int(0) -%}
+# {% set domains = ['sensor'] %}
+# {% for domain in domains -%}
+# {% for item in states[domain] if ( ("_battery" in item.entity_id and "gw3" in item.attributes.integration and item.state| int(0) < threshold) )-%}
+#   {%- if (item.state | int(0) < threshold) -%}
+#   {%- set datanames.low_batt = datanames.low_batt + [item.name.replace(' Battery','')] -%}
+#   {% endif -%}
+# {% endfor %}
+# {%- endfor %}
+# {{ datanames.low_batt | length }}
+# {{ datanames.low_batt | join(', ') }}     
       - name: Humidity Delta K
         state: "{{ ( states('sensor.0x158d0006b1c7bc_humidity')|float(0) - states('sensor.0x158d0001e586af_humidity')|float(0) )|round(2) }}"
         device_class: humidity

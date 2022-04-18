@@ -80,8 +80,10 @@
     mode: single
     max_exceeded: silent
     trigger:
-      - platform: event
-        event_type: homeassistant_stop
+      # - platform: event
+      #   event_type: homeassistant_stop
+      - platform: homeassistant
+        event: shutdown
     action:
       - service: switch.turn_off
         entity_id: switch.main_lead
@@ -99,8 +101,10 @@
       - platform: homeassistant
         event: start
         id: "homeassistant_start"
-      - platform: event
-        event_type: homeassistant_stop
+      # - platform: event
+      #   event_type: homeassistant_stop
+      - platform: homeassistant
+        event: shutdown
     action:
       - service: >
           {% if trigger.id == 'homeassistant_start' -%}
@@ -289,26 +293,44 @@
             {%-for state in states.sensor if state.entity_id.endswith("_uptime_s")%}
             {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
             {%-endfor%}
-          
-# ##################################
-# System - Sensors Low Battery Notification
-# ##################################
-  - alias: system_low_battery
-    id:  system_low_battery
-    initial_state: true
-    trigger:
-      - platform: time
-        at: "20:30:00"
-    action:
       - service: group.set
         data:
           object_id: batteries
           entities: >-
             {%-for state in states.sensor if (state.entity_id.endswith("_battery") and 'esp32' not in state.entity_id)%}
             {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
-            {%-endfor%}
-      - service: script.turn_on
-        entity_id: script.battery_level_check
+            {%-endfor%}  
+
+# ##################################
+# System - Sensors Battery Level Check
+# ##################################
+  - alias: system_battery_level_check
+    id:  system_battery_level_check
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "20:30:00"
+    action:
+      - service: notify.telegram
+        data:
+          message: >-
+            {%- set datanames = namespace(low_batt=[]) -%}
+            {%- set threshold = states('input_number.battery_low_level')|int(0) -%}
+            {%- set domains = ['sensor'] %}
+            {%- for domain in domains -%}
+            {%- for item in states[domain] if ( ("_battery" in item.entity_id and "gw3" in item.attributes.integration and item.state| int(0) < threshold) )-%}
+              {%- if (item.state | int(0) < threshold) -%}
+              {%- set datanames.low_batt = datanames.low_batt + [item.name.replace(' Battery','') +' '+item.state+'%'] -%}
+              {% endif -%}
+            {%- endfor %}
+            {%- endfor %}
+            {%- set num_low_bat = datanames.low_batt | length %}
+            {%- set low_bat = datanames.low_batt | join(', ') %}
+            {%- if num_low_bat > 0 %}
+            {{"\U0001f6a8"}} Низкий заряд батарей ({{ num_low_bat}}шт): {{low_bat}}
+            {%- else %}
+            {{"\U0001f50b"}} Батарей с уровнем заряда ниже {{states('input_number.battery_low_level')|int(0)}}% не найдено!
+            {%- endif %}
   
 # ##################################
 # System - Database Purge
@@ -390,7 +412,7 @@
           {% set ignore = ['unknown', 'unavailable', 'none'] %}
           {{ trigger.from_state.state not in ignore and
               trigger.to_state.state not in ignore and
-              is_state('binary_sensor.new_version_hacs_addons', 'on')
+              is_state('binary_sensor.updater_hacs_new_version', 'on')
             }}
     action:
       - service: notify.telegram
@@ -503,7 +525,7 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f38a Supervisor - обновлен с {{ trigger.from_state.state }} на *{{ trigger.to_state.state }}*!"
+          message: "\U0001f38a Supervisor - обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}!"
   
 # ##################################
 # System - Addons Update Available
@@ -2037,6 +2059,21 @@
                   media_content_id: "Сашенька, ночью надо спать, а не сказки слушать! Спокойной ночи!"
                   extra:
                     volume_level: '0.2'
+
+# ##################################
+# System - Supervisor unhealthy
+# ##################################
+  - alias: system_supervisor_unhealthy
+    id: system_supervisor_unhealthyn
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.supervisor_is_healthy
+        to: 'off'
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U000023ed Supevisor перешел в состояние Unhealthy!"
 
 # ##################################
 # System - System Updates Pending

@@ -4,7 +4,17 @@
       - service: script.turn_on
         data:
           entity_id: >
-            {% set num_low_bat = expand('group.batteries') | selectattr('state','<=','50') | map(attribute='attributes.name') | list | count %}
+            {%- set datanames = namespace(low_batt=[]) -%}
+            {%- set threshold = states('input_number.battery_low_level')|int(0) -%}
+            {% set domains = ['sensor'] %}
+            {% for domain in domains -%}
+            {% for item in states[domain] if ( ("_battery" in item.entity_id and "gw3" in item.attributes.integration and item.state| int(0) < threshold) )-%}
+              {%- if (item.state | int(0) < threshold) -%}
+              {%- set datanames.low_batt = datanames.low_batt + [item.name.replace(' Battery','')] -%}
+              {% endif -%}
+            {% endfor %}
+            {%- endfor %}
+            {% set num_low_bat = datanames.low_batt | length %}
             {% if num_low_bat >0 %}
               script.battery_level_low
             {% else %}
@@ -17,12 +27,19 @@
       - service: notify.telegram
         data:
           message: >
-            {% set low_bat = expand('group.batteries') | selectattr('state','<=',states('input_number.battery_low_level')) | map(attribute='attributes.name') | list | join(', ') %}
-          
-            {% set num_low_bat = expand('group.batteries') | selectattr('state','<=',states('input_number.battery_low_level')) | map(attribute='attributes.name') | list | count %}
+            {%- set datanames = namespace(low_batt=[]) -%}
+            {%- set threshold = states('input_number.battery_low_level')|int(0) -%}
+            {% set domains = ['sensor'] %}
+            {% for domain in domains -%}
+            {% for item in states[domain] if ( ("_battery" in item.entity_id and "gw3" in item.attributes.integration and item.state| int(0) < threshold) )-%}
+              {%- if (item.state | int(0) < threshold) -%}
+              {%- set datanames.low_batt = datanames.low_batt + [item.name.replace(' Battery','')] -%}
+              {% endif -%}
+            {% endfor %}
+            {%- endfor %}
+            {% set num_low_bat = datanames.low_batt | length %}
+            {% set low_bat = datanames.low_batt | join(', ') %}
             {{"\U0001f6a8"}} Низкий заряд батарей ({{ num_low_bat}}шт): {{low_bat}}
-
-
   
   battery_level_ok:
     alias: Battery Level Ok
