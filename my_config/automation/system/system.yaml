@@ -318,10 +318,8 @@
             {%- set threshold = states('input_number.battery_low_level')|int(0) -%}
             {%- set domains = ['sensor'] %}
             {%- for domain in domains -%}
-            {%- for item in states[domain] if ( ("_battery" in item.entity_id and "gw3" in item.attributes.integration and item.state| int(0) < threshold) )-%}
-              {%- if (item.state | int(0) < threshold) -%}
+            {%- for item in states[domain] if ( ("_battery" in item.entity_id and item.state| int(0) < threshold and item.attributes.integration is defined and "gw3" in item.attributes.integration) )-%}
               {%- set datanames.low_batt = datanames.low_batt + [item.name.replace(' Battery','') +' '+item.state+'%'] -%}
-              {% endif -%}
             {%- endfor %}
             {%- endfor %}
             {%- set num_low_bat = datanames.low_batt | length %}
@@ -417,8 +415,8 @@
     action:
       - service: notify.telegram
         data:
-          #message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
-          message: "\U0001f389 HACS - доступно обновлений {{ states('sensor.hacs') | int(0) }}. Список: {% for repo in state_attr('sensor.hacs', 'repositories') %}*{{ repo.display_name }}* (_{{ repo.installed_version }}_ -> _{{ repo.available_version }}_){%if not loop.last %}, {%endif%}{% endfor %}"
+          message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+
       # - service: persistent_notification.create
       #   data:
       #     title: "\U0001f389 Updates available in HACS"
@@ -2007,6 +2005,12 @@
           message: >- 
             {%- set new = trigger.to_state.state |float(0) %}
             {%- set old = trigger.from_state.state | float(0) %}
+            {%- set delta = new - old %}
+            {%- if delta > 0 %}
+              {% set delta = '+' + delta|round(2)|string%}
+            {% else %}
+              {% set delta = delta|round(2)|string %}
+            {% endif %}
             {%- if new > old %}
               {%- set change = 'увеличился' %}
             {%- elif new < old %}
@@ -2014,7 +2018,7 @@
             {%- else %}
               {%- set change = 'изменился' %}
             {%- endif %}
-            {{"\U0001f4b1"}} QIWI курс USD\RUR {{change}} с {{ old }} до {{ new }}
+            {{"\U0001f4b1"}} QIWI курс USD\RUR {{change}} с {{ old }} до {{ new }} ({{ delta }})
 
 # ##################################
 # System - Music Restrictions
