@@ -29,7 +29,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
 **Network(WAN 500mb\s):**
   - Unifi Dream Machine Pro
   - Unifi Switch 16-150W
-  - Unifi Switch 8-60W (3ea)
+  - Unifi Switch 8-60W (4ea)
   - Unifi Switch Mini
   - Unifi AC-AP-Lite (2ea)
   - Unifi AC AP Pro (3ea)
@@ -69,6 +69,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Xiaomi Wifi Plugs v2 (4ea)
   - not in use - Xiaomi Wifi Plugs v2 (3ea)
   - not in use - Xiaomi IR controller
+  - Qingping Air Monitor Lite (2ea)
 
 **At the moment, all my Zigbee devices are connected via Xiaomi Gateways, except of DIY Geiger meter (it's sitting on SLS Gateway)**
 
@@ -96,16 +97,16 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Sonoff Basic (2ea)
   - not in use - Sonoff S26 Plugs (3ea)
   - Sonoff Pow R2 (2ea)
-  - Sonoff L1
+  - not in use - Sonoff L1
   - Sonoff Mini (3ea)
   - Sonoff 4ch
   - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
   - Blitzwolf LT11
   - not in use - Blitzwolf SS5 dual gang relay
-  - ESP32 - Node K - Kitchen MH-Z19B, BME280, BHI1750, Water Filter Counters, IR controller
+  - ESP32 - Node K - Kitchen SensAir S8, BME280, BHI1750, Water Filter Counters, IR controller
   - ESP32 - Node B - Bathroom Relays (Water vales, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
-  - ESP32 - Node MB - Master Bedroom MH-Z19B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
-  - ESP32 - Node V - Vova Room MH-Z19B, BME280, BHI1750, Dallas sensor (Heating pipe)
+  - ESP32 - Node MB - Master Bedroom SensAir S8B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
+  - ESP32 - Node V - Vova Room SensAir S8, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
   - ESP32 - BLE Tracker HB
   - ESP32 - BLE Tracker HS
@@ -114,9 +115,9 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - Digma IR Remote (3ea)
   - Digma SHP7
   - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
-  - ESP01 Weight Cell
+  - ESP01 Weight Cell for RO wateer filter tank
   - D1 Mini LED Bed light
-  - D1 Mini S - Sasha Room MH-Z19B, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
+  - D1 Mini S - Sasha Room SensAir S8, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
   - D1 Mini Air Freshener with Figaro air sensor
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
 
@@ -136,7 +137,8 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - not in use - Google Home Mini (6ea)
   - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
   - Shelly EM - energy monitoring (comparing to PZEM...not shure which one os better)
-  - Shelly 1PM
+  - Shelly 1PM (2ea)
+  - Shelly Plug S (3ea)
   
 **Main Host Software:**
   - Debian 11
