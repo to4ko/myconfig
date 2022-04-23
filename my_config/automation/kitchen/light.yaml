@@ -523,3 +523,32 @@
         entity_id: light.mono_strip_1_light
         data:
           brightness_pct: 50
+
+# ##################################
+# Kitchen - Main Light off with no occupancy for 1 hour
+# ##################################
+  - alias: kitchen_main_light_off_with_occupancy
+    id: kitchen_main_light_off_with_occupancy
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupancy_k
+        to: 'off'
+        for: 
+          hours: 1
+    condition:
+      - condition: state
+        entity_id: group.lights_main_k
+        state: 'on'
+    action:
+      - service: switch.turn_off
+        entity_id: switch.d1mini_light_l_relay, switch.sonoff_mini_4_relay, switch.esp8266_hood_k_light
+      - service: light.turn_off
+        entity_id: light.round_led_k
+        data:
+          transition: 15
+          
+          
+          

@@ -124,4 +124,61 @@
           {%-   endif -%}
           {% endfor %}
           {# OUTPUT #}
-          {{ ns.entities | join (',') }}          
+          {{ ns.entities | join (',') }}
+
+  delete_entity_history_status:
+    alias: удаление истории объектов
+    sequence:
+      - service: python_script.exec
+        data:
+          cache: false
+          d_entity: '{{d_entity}}'
+          d_text: '{{d_text}}'
+          d_day: '{{d_day}}'
+          d_del_attr: '{{d_del_attr}}'
+          file: /config/python_scripts/delete_entity_history.py
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_text.delete_entity_history_status
+                state: running
+            sequence:
+              - wait_for_trigger:
+                  - platform: state
+                    from: running
+                    entity_id: input_text.delete_entity_history_status
+                timeout: '06:00:00'
+        default: []
+    mode: queued
+    variables:
+      d_entity: '{{d_entity|default(0)}}'
+      d_text: '{{d_text|default(0)}}'
+      d_day: '{{d_day|default(30)}}'
+      d_del_attr: '{{d_del_attr|default(False)}}'
+    fields:
+      d_entity:
+        description: Объекты для удаления
+        required: false
+        selector:
+          target: null
+      d_text:
+        description: Совпадения имен
+        required: false
+        selector:
+          object: null
+      d_day:
+        description: Старше скольки дней
+        required: false
+        default: 44
+        selector:
+          number:
+            min: 0
+            max: 100
+            unit_of_measurement: дней
+            mode: slider
+      d_del_attr:
+        description: Удалять атрибуты
+        required: false
+        default: false
+        selector:
+          boolean: null          

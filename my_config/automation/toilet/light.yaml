@@ -288,3 +288,27 @@
                   entity_id: light.esp32_node_hs_toilet
                   effect: 'Color Wipe'
                   brightness_pct: 40
+
+# ##################################
+# Toilet - Main Light off with no occupancy for 1 hour
+# ##################################
+  - alias: toilet_main_light_off_with_occupancy
+    id: toilet_main_light_off_with_occupancy
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupancy_t
+        to: 'off'
+        for: 
+          hours: 1
+    condition:
+      - condition: state
+        entity_id: group.lights_t
+        state: 'on'
+    action:
+      - service: light.turn_off
+        entity_id: light.esp32_node_b_light
+      - service: switch.turn_off
+        entity_id: switch.0x158d0002a36f7f_channel_1

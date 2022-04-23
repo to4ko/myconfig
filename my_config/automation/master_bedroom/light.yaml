@@ -492,3 +492,37 @@
                 entity_id: light.d1mini_strip_mb_led
                 data:
                   transition: 5
+
+# ##################################
+# Master Bedroom - Main Light off with no occupancy for 1 hour
+# ##################################
+  - alias: master_bedroom_main_light_off_with_occupancy
+    id: master_bedroom_main_light_off_with_occupancy
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.occupancy_mb
+        to: 'off'
+        for: 
+          hours: 1
+    condition:
+      - condition: state
+        entity_id: group.lights_mb
+        state: 'on'
+    action:
+      - service: light.turn_off
+        entity_id: light.round_led_mb_ambilight, light.led_color_mb, light.led_white_mb, light.lt11_1_led
+        data:
+          transition: 15
+      - condition: state
+        entity_id: binary_sensor.tod_day
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.round_led_mb_nightlight
+        state: 'off'
+      - service: light.turn_off
+        entity_id: light.round_led_mb
+        data:
+          transition: 15
