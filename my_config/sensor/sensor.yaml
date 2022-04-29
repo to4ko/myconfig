@@ -47,19 +47,6 @@
   #     minutes: 1
   #   sampling_size: 20
   
-  # - platform: scrape
-  #   resource: https://helpix.ru/currency/
-  #   name: Ali USR Rate
-  #   select: "#grid-all-page > div.b-gridRowContent > div.b-gridRowContentColCenter > div > table > tbody > tr:nth-child(2) > td:nth-child(3)"
-
-# #grid-all-page > div.b-gridRowContent > div.b-gridRowContentColCenter > div > table > tbody > tr:nth-child(2) > td:nth-child(3)
-
-
-#     index: 1
-#     value_template: '{{ value | replace (",", ".") | float }}'
-#     unit_of_measurement: "öre/kWh"
-
-
   - platform: statistics
     name: airq_adc_toilet_stat
     entity_id: sensor.d1mini_air_freshener_adc
@@ -85,7 +72,13 @@
     command: 'grep -m 1 -o "initialized[[:space:]]in[[:space:]][0-9]\+.[0-9]\+" /config/home-assistant.log | grep -o "[0-9]\+.[0-9]\+$" || echo -1'
     scan_interval: 6000
     unit_of_measurement: "s"
-  
+
+  # - platform: command_line
+  #   name: badlogin
+  #   command: 'grep -v "Timeout" /config/home-assistant.log | grep -c "Login attempt" || true '
+  #   value_template: '{{ value | int }}'
+  #   unit_of_measurement: ea
+
   # - platform: mqtt
   #   state_topic: esp01_air_freshener/sprays_count
   #   name: Air Freshener Counter
@@ -305,6 +298,17 @@
     unit_of_measurement: RUB
 
   - platform: rest
+    resource: https://edge.qiwi.com/sinap/crossRates
+    name: QIWI YEN Rate
+    #force_update: true
+    headers: 
+      authorization: !secret qiwi_token
+      Content-Type: application/json
+      Accept: application/json
+    value_template: "{{ value_json.result | selectattr('to', 'eq', '156') | selectattr('from', 'eq', '643') | map(attribute='rate') | join('') }}"
+    unit_of_measurement: RUB
+
+  - platform: rest
     resource: https://www.cbr-xml-daily.ru/daily_json.js
     name: USD_RUR
     value_template: "{{ value_json.Valute.USD.Value | float(0) | round(2, 'common') }}"
@@ -332,17 +336,17 @@
   
   - platform: mqtt
     name: Config Line Count
-    state_topic: "hp400g6/config_linecount"
+    state_topic: "hp600g6/config_linecount"
     force_update: true
-    value_template: "{{ value }}"
+    value_template: "{{ value|int(0) }}"
     unit_of_measurement: "lines"
     icon: mdi:format-list-bulleted
   
   - platform: mqtt
     name: Config Line Count Code
-    state_topic: "hp400g6/config_linecount_code"
+    state_topic: "hp600g6/config_linecount_code"
     force_update: true
-    value_template: "{{ value }}"
+    value_template: "{{ value|int(0) }}"
     unit_of_measurement: "lines"
     icon: mdi:format-list-numbered
   

@@ -266,7 +266,7 @@
       #   unit_of_measurement: 'ea'
   
       - name: Config Line Count Ratio
-        state: "{{'NA' if states('sensor.config_line_count')==0 else  (states('sensor.config_line_count_code')|int(0) / states('sensor.config_line_count')|int(0) * 100) | round(0, 'common') }}"
+        state: "{{'NA' if states('sensor.config_line_count')==0 else (states('sensor.config_line_count_code')|int(0) / states('sensor.config_line_count')|int(0) * 100) | round(0, 'common') }}"
         unit_of_measurement: "%"
         icon: mdi:brightness-percent
   
@@ -404,6 +404,21 @@
         state: "{{ states('sensor.qiwi_usd_rate')|float(0) }}"
         unit_of_measurement: "RUB"
         icon: mdi:currency-usd
+
+  - trigger:
+      - platform: state
+        entity_id: sensor.qiwi_yen_rate
+        for:
+          minutes: 3
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: QIWI YEN Rate Filtered
+        state: "{{ states('sensor.qiwi_yen_rate')|float(0) }}"
+        unit_of_measurement: "RUB"
+        icon: mdi:currency-cny
 
   - trigger:
       - platform: time_pattern

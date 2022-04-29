@@ -189,7 +189,7 @@
         data:
           message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
           target: !secret tel_chat_id_cam
-          timeout: 10
+          timeout: 180
 
 # ##################################
 # System - Device Deletion
@@ -2080,6 +2080,39 @@
       - service: notify.telegram
         data:
           message: "\U000023ed Supevisor перешел в состояние Unhealthy!"
+
+# ##################################
+# System - Ya speaker state
+# ##################################
+  - alias: system_ya_station_mode
+    id: system_ya_station_mode
+    mode: queued
+    initial_state: true
+    trigger:
+      - platform: state
+        id: 'non_local'
+        entity_id: 
+          - binary_sensor.yandex_k
+          - binary_sensor.yandex_s
+          - binary_sensor.yandex_hs
+          - binary_sensor.yandex_v
+          - binary_sensor.yandex_mb
+        from: 'off'
+        to: 'on'
+      - platform: state
+        entity_id: 
+          - binary_sensor.yandex_k
+          - binary_sensor.yandex_s
+          - binary_sensor.yandex_hs
+          - binary_sensor.yandex_v
+          - binary_sensor.yandex_mb
+        from: 'on'
+        to: 'off'
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0001f50a Станция {{- trigger.to_state.name | e -}} {% if trigger.id == 'non_local' -%} отключила локальный режим управления {%- else -%} перешла в локальный режим управления {%- endif %}"
+
 
 # ##################################
 # System - System Updates Pending

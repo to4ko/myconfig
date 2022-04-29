@@ -184,3 +184,29 @@
                 entity_id: input_number.last_action_breather_v
                 data:
                   value: "{{as_timestamp(now())|int(0)}}"
+
+# ##################################
+# Vova - Breather Plug Toggle
+# ##################################
+  - alias: vova_breather_plug_toggle
+    id: vova_breather_plug_toggle
+    initial_state: true
+    max_exceeded: silent
+    mode: queued
+    max: 10
+    trigger:
+      - platform: state
+        entity_id: switch.0x158d000344998e_switch
+        to: 'off'
+        for:
+          seconds: 30
+    condition:
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.0x158d000344998e_switch
+      # - service: notify.telegram
+      #   data:
+      #     message: "\U00002705 Включение - {{trigger.to_state.attributes.friendly_name}}"
