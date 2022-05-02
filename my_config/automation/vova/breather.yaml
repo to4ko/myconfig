@@ -10,40 +10,25 @@
     initial_state: true
     trigger:
       - platform: time_pattern
-        minutes: "/3"
+        minutes: '/3'
     condition:
       - condition: state
         entity_id: switch.breather_auto_v
-        state: "on"
-      - condition: or
-        conditions:
-          - condition: and
-            conditions:
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+    action:
+      - choose:
+          - conditions:
               - condition: state
-                entity_id: input_boolean.security_mode
+                entity_id: binary_sensor.0x158d00022ccffe_contact
                 state: 'off'
               - condition: numeric_state
                 entity_id: sensor.esp32_node_v_co2
                 above: input_number.co2_high_limit
               - condition: state
                 entity_id: binary_sensor.breather_v
-                state: 'off'
-              # - condition: state
-              #   entity_id: binary_sensor.0x158d00022ccffe_contact
-              #   state: "off"
-          - condition: and
-            conditions:
-              - condition: numeric_state
-                entity_id: sensor.esp32_node_v_co2
-                below: input_number.co2_low_limit
-              - condition: state
-                entity_id: binary_sensor.breather_v
-                state: "on"
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.0x158d00022ccffe_contact
                 state: 'off'
             sequence:
               - service: button.press
@@ -57,8 +42,22 @@
               - service: fan.set_percentage
                 entity_id: fan.breather_v
                 data:
-                  percentage: "{{states('sensor.breather_set_speed_v')|int(0) }}"
+                  percentage: "{{states('sensor.breather_set_speed_s')|int(0) }}"
 
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00022ccffe_contact
+                state: 'off'
+              - condition: numeric_state
+                entity_id: sensor.esp32_node_v_co2
+                below: input_number.co2_low_limit
+              - condition: state
+                entity_id: binary_sensor.breather_v
+                state: 'on'
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_v_breather_pwr
+                
           - conditions:
               - condition: state
                 entity_id: binary_sensor.0x158d00022ccffe_contact

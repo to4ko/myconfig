@@ -10,40 +10,25 @@
     initial_state: true
     trigger:
       - platform: time_pattern
-        minutes: "/3"
+        minutes: '/3'
     condition:
       - condition: state
         entity_id: switch.breather_auto_s
-        state: "on"
-      - condition: or
-        conditions:
-          - condition: and
-            conditions:
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+    action:
+      - choose:
+          - conditions:
               - condition: state
-                entity_id: input_boolean.security_mode
+                entity_id: binary_sensor.0x158d00025370d1_contact
                 state: 'off'
               - condition: numeric_state
                 entity_id: sensor.d1mini_co2_s_co2
                 above: input_number.co2_high_limit
               - condition: state
                 entity_id: binary_sensor.breather_s
-                state: 'off'
-              # - condition: state
-              #   entity_id: binary_sensor.0x158d00025370d1_contact
-              #   state: "off"
-          - condition: and
-            conditions:
-              - condition: numeric_state
-                entity_id: sensor.d1mini_co2_s_co2
-                below: input_number.co2_low_limit
-              - condition: state
-                entity_id: binary_sensor.breather_s
-                state: "on"
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.0x158d00025370d1_contact
                 state: 'off'
             sequence:
               - service: button.press
@@ -59,7 +44,20 @@
                 data:
                   percentage: "{{states('sensor.breather_set_speed_s')|int(0) }}"
 
-
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00025370d1_contact
+                state: 'off'
+              - condition: numeric_state
+                entity_id: sensor.d1mini_co2_s_co2
+                below: input_number.co2_low_limit
+              - condition: state
+                entity_id: binary_sensor.breather_s
+                state: 'on'
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_s_breather_pwr
+                
           - conditions:
               - condition: state
                 entity_id: binary_sensor.0x158d00025370d1_contact

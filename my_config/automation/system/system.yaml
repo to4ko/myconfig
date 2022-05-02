@@ -320,7 +320,7 @@
             {%- set threshold = states('input_number.battery_low_level')|int(0) -%}
             {%- set domains = ['sensor'] %}
             {%- for domain in domains -%}
-            {%- for item in states[domain] if ( ("_battery" in item.entity_id and item.state| int(0) < threshold and item.attributes.integration is defined and "gw3" in item.attributes.integration) )-%}
+            {%- for item in states[domain] if ( ("_battery" in item.entity_id and item.state| int(0) <= threshold and item.entity_id in integration_entities('xiaomi_gateway3')) )-%}
               {%- set datanames.low_batt = datanames.low_batt + [item.name.replace(' Battery','') +' '+item.state+'%'] -%}
             {%- endfor %}
             {%- endfor %}
@@ -678,9 +678,6 @@
     id:  system_radiation_alert
     initial_state: true
     trigger:
-      - platform: state
-        entity_id: sensor.radiation_action
-        to: "on"
       - platform: numeric_state
         entity_id: sensor.radiation_dose_per_hour
         above: 100
@@ -1555,33 +1552,6 @@
         entity_id: input_boolean.central_heating
   
 # ##################################
-# System - Doorcam panel relauch
-# ##################################
-  - alias: system_doorcam_panel_relaunch
-    id:  system_doorcam_panel_relaunch
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/30"
-      - platform: homeassistant
-        event: start
-      - platform: event
-        event_type: automation_reloaded
-      - platform: state
-        entity_id: binary_sensor.wp_digma801_screen, binary_sensor.wp_digma801_motion
-        to: "on"
-    condition:
-      - condition: template
-        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_doorcam_panel_relaunch', 'last_triggered'))|int(0)) > 5 }}"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
-      - service: mqtt.publish
-        data:
-          topic: "wallpanel/digma801/command"
-          payload: '{"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
-  
-# ##################################
 # System - Dark Mode ON action
 # ##################################
   - alias: system_light_dark_mode_on_action
@@ -1706,8 +1676,10 @@
       - platform: state
         entity_id: binary_sensor.wp_digma801_motion
         for:
-          seconds: 5
+          minutes: 1
     condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
       - condition: template
         value_template: >
           {% set ignore = ['unavailable', 'none','0'] %}
@@ -1715,10 +1687,76 @@
             trigger.to_state.state in ignore) and
             trigger.to_state.state != trigger.from_state.state }}
     action:
-      - service: notify.telegram
+      # - service: notify.telegram
+      #   data:
+      #     message: "\U000026a0 Внимание! WallPanel {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+      
+      # - condition: state
+      #   entity_id: binary_sensor.wp_digma801_motion
+      #   state: 'unavailable'
+
+      - service: androidtv.adb_command
         data:
-          message: "\U000026a0 Внимание! WallPanel {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-  
+          command: >-
+            adb shell am force-stop com.thanksmister.iot.wallpanel
+        target:
+          entity_id: media_player.z801
+
+      - service: androidtv.adb_command
+        data:
+          command: >-
+            adb shell content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0
+        target:
+          entity_id: media_player.z801
+
+      - service: androidtv.adb_command
+        data:
+          command: >-
+            adb shell content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1
+        target:
+          entity_id: media_player.z801
+
+      - service: androidtv.adb_command
+        data:
+          command: >-
+            adb shell monkey -p com.thanksmister.iot.wallpanel -c android.intent.category.LAUNCHER 1
+        target:
+          entity_id: media_player.z801
+
+      - service: androidtv.adb_command
+        data:
+          command: >-
+            adb shell content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1
+        target:
+          entity_id: media_player.z801
+
+# ##################################
+# System - Wallpanel panel relauch
+# ##################################
+  - alias: system_wallpanel_relaunch
+    id:  system_wallpanel_relaunch
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/30"
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+      - platform: state
+        entity_id: binary_sensor.wp_digma801_screen, binary_sensor.wp_digma801_motion
+        to: "on"
+    condition:
+      - condition: template
+        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_wallpanel_relaunch', 'last_triggered'))|int(0)) > 5 }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "wallpanel/digma801/command"
+          payload: '{"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+
 # ##################################
 # System - New Device Found
 # ##################################
@@ -2094,7 +2132,7 @@
         entity_id: 
           - binary_sensor.yandex_k
           - binary_sensor.yandex_s
-          - binary_sensor.yandex_hs
+          - binary_sensor.yandex_hb
           - binary_sensor.yandex_v
           - binary_sensor.yandex_mb
         from: 'off'
@@ -2103,7 +2141,7 @@
         entity_id: 
           - binary_sensor.yandex_k
           - binary_sensor.yandex_s
-          - binary_sensor.yandex_hs
+          - binary_sensor.yandex_hb
           - binary_sensor.yandex_v
           - binary_sensor.yandex_mb
         from: 'on'
@@ -2111,7 +2149,7 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f50a Станция {{- trigger.to_state.name | e -}} {% if trigger.id == 'non_local' -%} отключила локальный режим управления {%- else -%} перешла в локальный режим управления {%- endif %}"
+          message: "\U0001f50a Станция {{trigger.to_state.name | e}} {% if trigger.id == 'non_local' -%} отключила локальный режим управления {%- else -%} перешла в локальный режим управления {%- endif %}"
 
 
 # ##################################
