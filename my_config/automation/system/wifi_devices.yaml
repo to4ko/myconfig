@@ -59,7 +59,7 @@
     action:
       - service: notify.telegram
         data:
-          message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+          message: "{%if trigger.to_state.state in ['unavailable','off'] %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
   
 # ##################################
 # System - Critical WiFi Devices state - available
@@ -114,29 +114,7 @@
     action:
       - service: notify.telegram
         data:
-          message: "{%if is_state(trigger.entity_id, 'unavailable') %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.from_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-  
-# ##################################
-# System - BLE Devices tracker restart
-# ##################################
-  - alias: system_ble_device_tracker_restart
-    id: system_ble_device_tracker_restart
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/15"
-    condition:
-      - condition: state
-        entity_id: binary_sensor.esp32_ble_hb_status
-        state: "off"
-        for:
-          minutes: 3
-    action:
-      - service: switch.turn_off
-        entity_id: switch.digma_strip_hb_relay5_usb
-      - delay: "00:00:15"
-      - service: switch.turn_on
-        entity_id: switch.digma_strip_hb_relay5_usb
+          message: "{%if trigger.to_state.state in ['unavailable','off'] %}\U0000274C{%else%}\U00002705{%endif%}{{trigger.to_state.name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
   
 # ##################################
 # System - Critical Switches toggle
@@ -173,7 +151,7 @@
           entity_id: "{{ trigger.entity_id }}"
       - service: notify.telegram
         data:
-          message: "\U00002705 Включение - {{trigger.to_state.attributes.friendly_name}}"
+          message: "\U00002705 Включение - {{trigger.to_state.name}}"
 
 # ##################################
 # System - CO2 Reconnect
