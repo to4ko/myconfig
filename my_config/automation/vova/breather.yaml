@@ -109,40 +109,87 @@
                 data:
                   duration: "{{states('input_select.breazer_timer')|int * 60 }}"
 
-              - service: input_number.set_value
-                entity_id: input_number.last_action_breather_v
-                data:
-                  value: "{{as_timestamp(now())|int(0)}}"
-
-              - service: input_boolean.turn_on
-                entity_id: input_boolean.hourly_mode_breather_v
-                
           - conditions:
               - condition: trigger
                 id: "timer_finish"
             sequence:
-              - service: button.press
-                entity_id: button.digma_ir_v_breather_pwr
+              - choose:
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: sensor.0x158d0001e58714_temperature
+                        below: 20
+                      - condition: state
+                        entity_id: binary_sensor.breather_v
+                        state: 'on'
+                    sequence:
+                      - service: button.press
+                        entity_id: button.digma_ir_v_breather_pwr
+        
+                      - condition: state
+                        entity_id: input_boolean.hourly_mode_breather_v
+                        state: 'on'
+        
+                      - service: timer.start
+                        entity_id: timer.breather_v
+                        data:
+                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+        
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: sensor.0x158d0001e58714_temperature
+                        above: 20
+                      - condition: state
+                        entity_id: binary_sensor.breather_v
+                        state: 'on'
+                      - condition: numeric_state
+                        entity_id: fan.breather_v
+                        attribute: percentage
+                        above: 30
+                    sequence:
+                      - service: fan.set_percentage
+                        entity_id: fan.breather_v
+                        data:
+                          percentage: "25"
 
-              - service: input_number.set_value
-                entity_id: input_number.last_action_breather_v
-                data:
-                  value: "0"
+                      - service: timer.start
+                        entity_id: timer.breather_v
+                        data:
+                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
 
-              - condition: state
-                entity_id: input_boolean.hourly_mode_breather_v
-                state: 'on'
+                  - conditions:
+                      - condition: numeric_state
+                        entity_id: sensor.0x158d0001e58714_temperature
+                        above: 20
+                      - condition: state
+                        entity_id: binary_sensor.breather_v
+                        state: 'on'
+                      - condition: numeric_state
+                        entity_id: fan.breather_v
+                        attribute: percentage
+                        below: 30
+                    sequence:
+                      - service: fan.set_percentage
+                        entity_id: fan.breather_v
+                        data:
+                          percentage: "{{states('input_number.breather_v_speed_for_timer_mode')|int(0) }}"
 
-              - service: timer.start
-                entity_id: timer.breather_v
-                data:
-                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+                      - service: timer.start
+                        entity_id: timer.breather_v
+                        data:
+                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
 
-              - service: input_number.set_value
-                entity_id: input_number.last_action_breather_v
-                data:
-                  value: "{{as_timestamp(now())|int(0)}}"
-
+                  - conditions:
+                      - condition: state
+                        entity_id: binary_sensor.breather_v
+                        state: 'off'
+                    sequence:
+                      - service: button.press
+                        entity_id: button.digma_ir_v_breather_pwr
+                      
+                      - service: fan.set_percentage
+                        entity_id: fan.breather_v
+                        data:
+                          percentage: "{{states('input_number.breather_v_speed_for_timer_mode')|int(0) }}"
           - conditions:
               - condition: trigger
                 id: "ir_used_remote"
@@ -158,11 +205,6 @@
               - service: timer.cancel
                 entity_id: timer.breather_v
 
-              - service: input_number.set_value
-                entity_id: input_number.last_action_breather_v
-                data:
-                  value: "0"
-
               - service: input_boolean.turn_off
                 entity_id: input_boolean.hourly_mode_breather_v
 
@@ -173,16 +215,10 @@
               - condition: state
                 entity_id: timer.breather_v
                 state: 'active'
-              # - condition: template
-              #   value_template: "{{ state_attr('timer.breather_v','duration').split(':')[1]|int(0) > states('input_select.breazer_timer')|int(0) }}"
               - service: timer.start
                 entity_id: timer.breather_v
                 data:
                   duration: "{{states('input_select.breazer_timer')|int * 60 }}"
-              - service: input_number.set_value
-                entity_id: input_number.last_action_breather_v
-                data:
-                  value: "{{as_timestamp(now())|int(0)}}"
 
 # ##################################
 # Vova - Breather Plug Toggle

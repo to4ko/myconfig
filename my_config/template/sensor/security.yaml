@@ -138,9 +138,26 @@
           {% endif %}
 
       - name: People Home
-        state: "{{ expand('group.persons') | map(attribute='state') | select('eq','home')| list | length - (states('input_boolean.guest_mode')|replace('on','0'))|int(0) }}"
-        unit_of_measurement: "ea"
-        icon: mdi:account-group
+        #state: "{{ expand('group.persons') | map(attribute='state') | select('eq','home')| list | length - (states('input_boolean.guest_mode')|replace('on','0'))|int(0) }}"
+        #icon: mdi:account-group
+        state: >
+          {{ expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count }}
+        icon: >
+          {%- set icons = ['account-off', 'account', 'account-multiple'] %}
+          {%- set people = expand('group.persons') %}
+          {%- set cnt = people | selectattr('state', 'in', ['home', 'on'] ) | list | count %}
+          {%- if cnt >= 0 %}
+            mdi:{{ icons[cnt] if cnt in range(icons | count) else 'account-group' }}
+          {%- else %}
+            mdi:account-alert
+          {%- endif %}
+        attributes:
+          people: > 
+            {%- set people = expand('group.persons') | selectattr('state', 'eq', 'home') | map(attribute='name') | list %}
+            {%- set company = expand('group.persons') | selectattr('state', 'eq', 'on') | map(attribute='name') | list %}
+            {%- set people = people + company %}
+            {{ people }}
+          unit_of_measurement: ea
 
       - name: Last Motion
         state: >

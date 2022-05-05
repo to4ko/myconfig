@@ -3,67 +3,64 @@
     mode: queued
     max: 10
     max_exceeded: silent
+    fields:
+      breather:
+        description: 'Идентификатор бризера V, S, MB'
+        example: 'V'
+      speed:
+        description: 'Скорость для установки (25,50,75,100)'
+        example: '25'
     sequence:
-      # - service: notify.telegram
-      #   data:
-      #     message: "name {{breather}}"
+      - service: notify.telegram
+        data:
+          message: "name {{breather}}, speed {{speed}}"
       - delay:
           seconds: 5
       - choose:
           - conditions:
               - condition: template
-                value_template: >
-                  {% if breather == 'V'%}{{is_state('binary_sensor.breather_v','off')}}
-                  {% elif breather == 'S'%}{{is_state('binary_sensor.breather_s','off')}}
-                  {% elif breather == 'MB'%}{{is_state('binary_sensor.breather_mb','off')}}
-                  {%endif%}  
+                value_template: "{{ speed|int(0) == 0 }}"
             sequence:
-              # - service: notify.telegram
-              #   data:
-              #     message: "{{breather}} power from script"
               - service: button.press
                 data:
-                  entity_id: >
-                    {% if breather == "V"%}button.digma_ir_v_breather_pwr
-                    {% elif breather == "S"%}button.digma_ir_s_breather_pwr
-                    {% elif breather == "MB"%}button.digma_ir_mb_breather_pwr
-                    {%endif%}
-              - delay:
-                  seconds: 2
-      - repeat:
-          count: 5
-          sequence:
-            - service: button.press
-              data:
-                entity_id: >
-                  {% if breather == "V"%}button.digma_ir_v_breather_down
-                  {% elif breather == "S"%}button.digma_ir_s_breather_down
-                  {% elif breather == "MB"%}button.digma_ir_mb_breather_down
-                  {%endif%}
-            - delay:
-                milliseconds: 500
-      # - service: notify.telegram
-      #   data:
-      #     message: "speed {{speed}}"
-      - condition: template
-        value_template: "{{ ((speed|int(0)) / 25) > 1 }}"
-      - repeat:
-          count: "{{ ((speed|int(0)) / 25) - 1}}"
-          sequence:
-            - service: button.press
-              data:
-                entity_id: >
-                  {% if breather == "V"%}button.digma_ir_v_breather_up
-                  {% elif breather == "S"%}button.digma_ir_s_breather_up
-                  {% elif breather == "MB"%}button.digma_ir_mb_breather_up
-                  {%endif%}
-            - delay:
-                milliseconds: 500
-      - service: input_number.set_value
-        data:
-          entity_id: >
-            {% if breather == 'V'%}input_number.breather_v_percentage
-            {% elif breather == 'S'%}input_number.breather_s_percentage
-            {% elif breather == 'MB'%}input_number.breather_mb_percentage
-            {%endif%}
-          value: "{{speed}}"
+                  entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
+              - service: notify.telegram
+                data:
+                  message: "name {{breather}}, to off"
+        default:
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ is_state('binary_sensor.breather_' + (breather| lower), 'off') }}"
+                sequence:
+                  - service: notify.telegram
+                    data:
+                      message: "{{breather}} power from script"
+                  - service: button.press
+                    data:
+                      entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
+                  - delay:
+                      seconds: 2
+          - repeat:
+              count: 5
+              sequence:
+                - service: button.press
+                  data:
+                    entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_down' }}"
+                - delay:
+                    milliseconds: 500
+          - service: notify.telegram
+            data:
+              message: "speed set to {{speed}}"
+          - repeat:
+              count: "{{ ((speed|int(0)) / 25) - 1}}"
+              sequence:
+                - service: button.press
+                  data:
+                    entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_up' }}"
+                - delay:
+                    milliseconds: 500
+          - service: input_number.set_value
+            data:
+              entity_id: "{{ 'input_number.breather_' + (breather| lower) + '_percentage' }}"
+              value: "{{speed}}"
