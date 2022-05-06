@@ -98,6 +98,12 @@
         entity_id: input_select.breazer_timer
         to:
         id: 'input'
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
     action:
       - choose:
           - conditions:
@@ -122,6 +128,10 @@
                         entity_id: binary_sensor.breather_v
                         state: 'on'
                     sequence:
+                      # - service: notify.telegram
+                      #   data:
+                      #     message: "timer, <20, breather on"
+                          
                       - service: button.press
                         entity_id: button.digma_ir_v_breather_pwr
         
@@ -141,37 +151,20 @@
                       - condition: state
                         entity_id: binary_sensor.breather_v
                         state: 'on'
-                      - condition: numeric_state
-                        entity_id: fan.breather_v
-                        attribute: percentage
-                        above: 30
                     sequence:
+                      # - service: notify.telegram
+                      #   data:
+                      #     message: "timer, >20, breather on"
+                          
                       - service: fan.set_percentage
                         entity_id: fan.breather_v
                         data:
-                          percentage: "25"
-
-                      - service: timer.start
-                        entity_id: timer.breather_v
-                        data:
-                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
-
-                  - conditions:
-                      - condition: numeric_state
-                        entity_id: sensor.0x158d0001e58714_temperature
-                        above: 20
-                      - condition: state
-                        entity_id: binary_sensor.breather_v
-                        state: 'on'
-                      - condition: numeric_state
-                        entity_id: fan.breather_v
-                        attribute: percentage
-                        below: 30
-                    sequence:
-                      - service: fan.set_percentage
-                        entity_id: fan.breather_v
-                        data:
-                          percentage: "{{states('input_number.breather_v_speed_for_timer_mode')|int(0) }}"
+                          percentage: >
+                            {% if state_attr('fan.breather_v','percentage')|int(0) > states('input_number.low_speed_for_timer_mode_breather_v')|int(0) %}
+                            {{states('input_number.low_speed_for_timer_mode_breather_v')|int(0)}}
+                            {% elif state_attr('fan.breather_v','percentage')|int(0) < states('input_number.high_speed_for_timer_mode_breather_v')|int(0) %}
+                            {{states('input_number.high_speed_for_timer_mode_breather_v')|int(0)}}
+                            {% endif %}
 
                       - service: timer.start
                         entity_id: timer.breather_v
@@ -183,17 +176,30 @@
                         entity_id: binary_sensor.breather_v
                         state: 'off'
                     sequence:
+                      # - service: notify.telegram
+                      #   data:
+                      #     message: "breather off"
+                    
                       - service: button.press
                         entity_id: button.digma_ir_v_breather_pwr
                       
                       - service: fan.set_percentage
                         entity_id: fan.breather_v
                         data:
-                          percentage: "{{states('input_number.breather_v_speed_for_timer_mode')|int(0) }}"
+                          percentage: "{{states('input_number.high_speed_for_timer_mode_breather_v')|int(0) }}"
+
+                      - service: timer.start
+                        entity_id: timer.breather_v
+                        data:
+                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
           - conditions:
               - condition: trigger
                 id: "ir_used_remote"
             sequence:
+              # - service: notify.telegram
+              #   data:
+              #     message: "remote used"
+            
               - condition: state
                 entity_id: binary_sensor.breather_v
                 state: 'on'

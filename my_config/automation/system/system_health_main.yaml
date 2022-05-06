@@ -1,4 +1,33 @@
 # ##################################
+# System - Unifi Controller State change
+# ##################################
+  - alias: system_health_unifi_controller
+    id:  system_health_unifi_controller
+    initial_state: true
+    mode: single
+    max: 10
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.unifi_controller_state
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: template
+        value_template: >
+          {% set ignore = ['unavailable', 'none','0'] %}
+          {{ (trigger.from_state.state in ignore or
+            trigger.to_state.state in ignore) and
+            trigger.to_state.state != trigger.from_state.state }}
+    action:
+      - service: notify.telegram
+        data:
+          message: >-
+              {%- if trigger.to_state.state =='off' %}{{'\U0000274c'}} Unifi controller - OFF!
+              {%- elif trigger.to_state.state =='on' %}{{'\U00002705'}} Unifi controller - ON
+              {%- endif %}
+
+# ##################################
 # System - Main server temp >70
 # ##################################
   - alias: system_health_cpu_temp_70
@@ -25,7 +54,7 @@
               sound:
                 name: "default"
                 critical: 1
-                volume: 1.0        
+                volume: 1.0
           
       - service: notify.telegram
         data:
