@@ -25,7 +25,6 @@ wifi:
 
 logger:
   baud_rate: 0
-  esp8266_store_log_strings_in_flash: false
   
 api:
   reboot_timeout: 0s
@@ -36,14 +35,10 @@ web_server:
   port: 80
 
 # i2c:
-#   sda: D5
-#   scl: D2
+#   sda: GPIO04
+#   scl: GPIO05
 #   scan: True
-
-# bme680_bsec:
-#   address: 0x77
-#   sample_rate: lp
-#   iaq_mode: static
+#   frequency: 10kHz
 
 binary_sensor:
   - platform: status
@@ -52,7 +47,6 @@ binary_sensor:
   - platform: gpio
     pin:
       number: GPIO13
-      #mode: INPUT_PULLDOWN_16
       mode: INPUT_PULLUP
       inverted: true
     name: ${board_name}_Button
@@ -60,9 +54,6 @@ binary_sensor:
     filters:
       - delayed_on: 10ms
       - delayed_off: 10ms
-    # on_press:
-    #   then: 
-    #     - light.turn_on: id_green_led
     on_click:
       then:
         - switch.turn_on: spray
@@ -75,11 +66,9 @@ binary_sensor:
           - button.press: id_button_reset
           - light.turn_off: id_green_led
 
-
   - platform: gpio
     pin:
       number: GPIO12
-      #mode: INPUT_PULLDOWN_16
       mode: INPUT_PULLUP
       inverted: true
     name: ${board_name}_Canister
@@ -95,6 +84,16 @@ binary_sensor:
         - light.turn_on:
               id: id_red_led
               effect: "Blink"
+  
+  # - platform: template
+  #   name: ${board_name}_Occupancy
+  #   device_class: occupancy
+  #   lambda: |-
+  #     if (id(id_distance).state > 0.1) {
+  #       return true;
+  #     } else {
+  #       return false;
+  #     }      
 
 number:
   - platform: template
@@ -177,6 +176,13 @@ sensor:
     name: ${board_name}_WiFi_RSSI
     update_interval: 60s
 
+  # - platform: vl53l0x
+  #   name: ${board_name}_Distance
+  #   address: 0x29
+  #   update_interval: 10s
+  #   long_range: true
+  #   id: id_distance
+
   - platform: adc
     pin: A0
     name: ${board_name}_ADC
@@ -245,7 +251,6 @@ switch:
   - platform: gpio
     pin:
       number: GPIO15
-      #mode: INPUT_PULLDOWN_16
     name: ${board_name}_Spray
     id: spray
     icon: mdi:sprinkler
@@ -253,37 +258,31 @@ switch:
     internal: true
     on_turn_on:
       then:  
-        - delay: 50ms
-        - switch.turn_off: spray
         - number.set:
             id: id_counter
             value: !lambda |-
               return ((id(id_counter).state)+1);
         - component.update: id_counter
-        - light.turn_off: id_green_led
-
+        - delay: 30ms
+        - switch.turn_off: spray
+        
 output:
   - platform: esp8266_pwm
     id: output_led1
-    pin: 
-      number: GPIO00
-      inverted: true
+    pin: GPIO00
+    inverted: true
 
   - platform: esp8266_pwm
     id: output_led2
-    pin: 
-      number: GPIO02
-      inverted: true
+    pin: GPIO02
+    inverted: true
 
 light:
-  - platform: monochromatic #binary #monochromatic
+  - platform: monochromatic
     name: ${board_name}_LED_Green
     output: output_led1
     id: id_green_led
     effects:
-      - pulse:
-          transition_length: 0.0s
-          update_interval: 0.05s
       - automation:
           name: "Blink"
           sequence:
@@ -311,14 +310,11 @@ light:
                 transition_length: 50ms
             - delay: 450ms    
 
-  - platform: monochromatic #binary #monochromatic
+  - platform: monochromatic
     name: ${board_name}_LED_Red
     output: output_led2
     id: id_red_led
     effects:
-      - pulse:
-          transition_length: 0.0s
-          update_interval: 0.05s
       - automation:
           name: "Blink"
           sequence:
