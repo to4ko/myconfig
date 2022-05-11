@@ -100,9 +100,9 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: binary_sensor.d1mini_distance_sensor_occupancy
-        from: 'on'
-        to: 'off'
+        entity_id: binary_sensor.seat_not_closed
+        from: 'off'
+        to: 'on'
     condition:
       - condition: state
         entity_id: binary_sensor.tod_day
@@ -119,9 +119,13 @@
           - platform: state
             entity_id: switch.0x158d0002a36f7f_channel_1
             to: 'off'
+            for:
+              seconds: 3
           - platform: state
             entity_id: light.esp32_node_b_light
             to: 'off'
+            for:
+              seconds: 3
           - platform: state
             entity_id: binary_sensor.0x158d0001ef2ffc_contact
             to: 'on'
@@ -133,13 +137,13 @@
         timeout:
           minutes: 20
         continue_on_timeout: false
-      - condition: state
-        entity_id: binary_sensor.0x158d000232ddd6_contact
-        state: 'on'
       # - service: media_player.volume_set
       #   data:
       #     entity_id: media_player.yandex_k
       #     volume_level: '{{states("input_number.main_volume")|float(0) + 0.1}}'
+      - condition: state
+        entity_id: binary_sensor.seat_not_closed
+        state: 'on'
       - service: media_player.play_media
         data:
           media_content_type: dialog
