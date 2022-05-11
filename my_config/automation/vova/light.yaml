@@ -772,6 +772,96 @@
         state: 'on'
     action:
       - service: light.turn_off
-        entity_id: light.square_led_v, light.square_led_v_nightlight, light.bedside, light.led_strip_bed_dima_v, light.led_strip_bed_sandra_v
+        entity_id: light.square_led_v, light.square_led_v_nightlight, light.bedside, light.led_strip_bed_dima_v, light.led_strip_bed_sandra_v, light.led_color_v
         data:
           transition: 15
+
+# ##################################
+# Vova - LED Color V Restart
+# ##################################
+  - alias: vova_led_color_v_restart
+    id: vova_led_color_v_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.led_color_s
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.led_color_v
+        state: 'unavailable'
+        for:
+          minutes: 2
+    action:
+      - service: script.turn_on
+        entity_id: script.led_color_v_restart
+  
+# ##################################
+# Vova - LED Color V control
+# ##################################
+  - alias: vova_led_color_control
+    id: vova_led_color_control
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x158d00016bdb4a_action
+    condition:
+      - condition: template
+        value_template: "{{ states('light.led_color_v') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'single' }}"
+            sequence:
+              - service: light.toggle
+                entity_id: light.led_color_v
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'double' }}"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.led_color_v
+                data:
+                  brightness_pct: 90
+                  kelvin: 5000
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'hold' }}"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.led_color_v
+                data:
+                  brightness_pct: 5
+                  kelvin: 3000
+                  
+  # ##################################
+  # Sasha - LED Color S Turn Off with chair
+  # ##################################
+  # - alias: sasha_led_color_turn_off_chair
+  #   id: sasha_led_color_turn_off_chair
+  #   initial_state: false
+  #   mode: queued
+  #   trigger:
+  #     - platform: state
+  #       entity_id: binary_sensor.chair_2_s
+  #       to: 'off'
+  #       from: 'on'
+  #   action:
+  #     - service: light.turn_off
+  #       entity_id: light.led_color_s
+          

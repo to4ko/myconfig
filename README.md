@@ -171,7 +171,7 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
 
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
 # Hardware iterations
-![Hardwarez](https://i.ibb.co/GHPBxSP/image.png)
+![Hardwarez](https://i.ibb.co/WBJ50tB/image.png)
 # Main page
 ![Main Page](https://i.ibb.co/BTcVZtt/page1.jpg)
 # Security page
