@@ -16,6 +16,14 @@
       Smart Devices
     </a>
     <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#networking">
+      Networking
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#surveillance">
+      Surveillance
+    </a>
+    <span> | </span>
     <a href="https://github.com/to4ko/myconfig#screenshots">
       Screenshots
     </a>
@@ -55,7 +63,14 @@
   - Synology DS215J
   - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
 
-**Network(WAN 500mb\s):**
+**UPS**
+  - Ippon Smart Power Pro 1200
+  - Ippon Back Basic 1050
+  - Ippon Back Basic 650
+  - CyberPower UT650EG 
+
+# Networking
+  - WAN 500mb\s + LTE Backup
   - Unifi Dream Machine Pro
   - Unifi Switch 16-150W
   - Unifi Switch 8-60W (4ea)
@@ -65,13 +80,7 @@
   - Unifi NanoHD (not in use)
   - Unifi AP AC Mesh with UMA-D
 
-**UPS**
-  - Ippon Smart Power Pro 1200
-  - Ippon Back Basic 1050
-  - Ippon Back Basic 650
-  - CyberPower UT650EG 
-  
-**Surveillance:** 
+# Surveillance
   - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
   - Ubiquiti G3 Flex Cameras (6ea)
   - Digma 100
