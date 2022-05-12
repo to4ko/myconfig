@@ -75,11 +75,10 @@
   - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
   - Ubiquiti G3 Flex Cameras (6ea)
   - Digma 100
-  - Cheap Aliexpress Pinhole cam via iSpyAgent DVR (Docker on DS1621+)
+  - Aliexpress Pinhole camera via iSpyAgent DVR (Docker on DS1621+)
 
 # Smart Devices
-**Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (6ea)
+**Lights**
   - Yeelight LED Ceiling Lamp650 (YLXD02YL) (2ea)
   - Yeelight LED Ceiling Lamp Pro White 960mm (YLXD08YL)
   - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
@@ -87,25 +86,27 @@
   - Yeelight LED Light Strip (YLDD01YL)
   - Yeelight LED Light Strip Plus (YLDD04YL)
   - Yeelight LED Light Strip 1S (YLDD05YL) (3ea)
-  - Yeelight Jiaoyue 260 (YLXD62YI)
-  - Xiaomi Yeelight Bedside Lamp 2
-  - not in use - Yeelight Bedside Lamp D2
-  - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
+  - Yeelight LED Bulb (Color) (YLDP06YL) (2ea)
+  - Yeelight LED Tunable Bulb (White) (YLDP05YL) (2ea)
+  - Yeelight LED Bedside Lamp 2
   - Xiaomi Philips Zhirui Downlight (9290012799)
-  - Yeelight Xiaomi Led Bulb (Color) (YLDP06YL) (2ea)
-  - Yeelight Xiaomi Led Tunable Bulb (White) (YLDP05YL) (2ea)
-  - not in use - Xiaomi Smart WiFi Power Strip (2ea)
+  - not in use - Yeelight Jiaoyue 260 (YLXD62YI)
+  - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
+
+**Xiaomi\Aqara WiFi Devices:**
+  - Xiaomi Gateway v3 (6ea)
   - Xiaomi Air Purifier 2s
   - Xiaomi Wifi Plugs v2 (4ea)
   - not in use - Xiaomi Wifi Plugs v2 (3ea)
   - not in use - Xiaomi IR controller
-  - Qingping Air Monitor Lite (2ea)
+  - not in use - Qingping Air Monitor Lite (2ea)
+  - not in use - Xiaomi Smart WiFi Power Strip (2ea)
 
 **Xiaomi\Aqara Zigbee Devices:**
   - Aqara Wall Socket (21ea)
   - Aqara Wall Switch Double (4ea)
   - Aqara D1 Wall Switch Tripple (1ea)
-  - not in use - Aqara Wall Switch Single (0ea)
+  - Aqara Wall Switch Single (1ea)
   - Aqara Wireless Switch Double (6ea)
   - Aqara\Xiaomi Door Sensor (25ea)
   - Aqara Water Leak Sensor (3ea)
@@ -132,7 +133,7 @@
   - Blitzwolf LT11
   - not in use - Blitzwolf SS5 dual gang relay
   - ESP32 - Node K - Kitchen SensAir S8, BME280, BHI1750, Water Filter Counters, IR controller
-  - ESP32 - Node B - Bathroom Relays (Water vales, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
+  - ESP32 - Node B - Bathroom Relays (Water valves, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
   - ESP32 - Node MB - Master Bedroom SensAir S8B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova Room SensAir S8, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
@@ -172,9 +173,10 @@
   - Shelly EM - energy monitoring (comparing to PZEM...not shure which one is better)
   - Shelly 1PM (2ea)
   - Shelly Plug S (3ea)
-  
+
+# Software configuration
 **Main Host Software:**
-  - Debian 11
+  - Debian 11 (backports)
   - Home Assistant Core Supervised
   - PostgreSQL
 
@@ -193,13 +195,13 @@
   - PostgreSQL
   - InfluxDB
 
-**Scripts:**
+<!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
   - **ha_log_parser.sh**  Backing up HA log to my home directory and splitting it to Error, Warning, Info message type as well as keeping full log. Logs rotated every 5 days.
   - **ya_weather.sh**  Yandex weather fcst ( thanks to [Ivan](https://t.me/configit)  )
   - **root_dev.sh**  Host root device name for monitoring.
   - **gitignore.sh**  bash script to be used after gitigrone file updated
-  - **gitupdate.sh**  git upload
+  - **gitupdate.sh**  git upload -->
 
 # Links
   - [Alexxit](https://github.com/alexxit)
