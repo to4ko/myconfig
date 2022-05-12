@@ -1,5 +1,5 @@
 <h1 align="center">
-  My Smart Home Configuration
+  <a name="logo"><img src="https://github.com/to4ko/myconfig/blob/master/screenshots/air_details.jpg"></a>  My Smart Home Configuration
 </h1>
 
 <div align="center"><a name="menu"></a>
@@ -238,27 +238,26 @@
 # Screenshots
 <details><summary>Few lovelace views</summary>
 
-![main1](screenshots/main_1.jpg)
-![main2](screenshots/main_2.jpg)
-![security](screenshots/security.jpg)
-![devices by room](screenshots/devices_by_room.jpg)
-![sensors by room](screenshots/sensors_by_room.jpg)
-![utility counters](screenshots/utility_counters.jpg)
-![ro filter](screenshots/ro_filter.jpg)
-![power details](screenshots/power_details.jpg)
-![cctv](screenshots/cctv.jpg)
-![air details](screenshots/air_details.jpg)
-![system stats](screenshots/system_stats.jpg)
-![system health](screenshots/system_health.jpg)
-![esp stats](screenshots/esp_stats.jpg)
-![wifi devices](screenshots/wifi_devices.jpg)
-![temperature detials](screenshots/temperature_details.jpg)
-![z switches](screenshots/z_switches.jpg)
-![z sensors](screenshots/z_sensors.jpg)
-![gw3 stats](screenshots/gw3_stats.jpg)
-![zigbee stats](screenshots/zigbee_stats.jpg)
-![testing](screenshots/testing_page.jpg)
-
+![main1](images/main_1.jpg)
+![main2](images/main_2.jpg)
+![security](images/security.jpg)
+![devices by room](images/devices_by_room.jpg)
+![sensors by room](images/sensors_by_room.jpg)
+![utility counters](images/utility_counters.jpg)
+![ro filter](images/ro_filter.jpg)
+![power details](images/power_details.jpg)
+![cctv](images/cctv.jpg)
+![air details](images/air_details.jpg)
+![system stats](images/system_stats.jpg)
+![system health](images/system_health.jpg)
+![esp stats](images/esp_stats.jpg)
+![wifi devices](images/wifi_devices.jpg)
+![temperature detials](images/temperature_details.jpg)
+![z switches](images/z_switches.jpg)
+![z sensors](images/z_sensors.jpg)
+![gw3 stats](images/gw3_stats.jpg)
+![zigbee stats](images/zigbee_stats.jpg)
+![testing](images/testing_page.jpg)
 
 
 </details>
