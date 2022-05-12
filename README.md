@@ -157,6 +157,7 @@
   - D1 Mini LED Bed light
   - D1 Mini S - Sasha Room SensAir S8, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
   - D1 Mini Air Freshener with Figaro air sensor
+  - D1 Mini TOF Distance Sensor
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
 
 **BT\BLE Devices:**
@@ -233,17 +234,23 @@
 ![Hardwarez](https://i.ibb.co/WBJ50tB/image.png)
 
 # Screenshots
-![Main Page](https://i.ibb.co/BTcVZtt/page1.jpg)
-![Security page](https://i.ibb.co/vxyRHD3/page2.jpg)
-![Devices by room](https://i.ibb.co/KV7CD01/page3.jpg)
-![Sensors by room](https://i.ibb.co/vL2M1T1/page4.jpg)
-![Utility counters](https://i.ibb.co/mSYwCjt/page5.jpg)
-![Power loads](https://i.ibb.co/tsCh1sy/page6.jpg)
-![Device trackers](https://i.ibb.co/XWCCyRY/page7.jpg)
-![CCTV](https://i.ibb.co/JnT0sFF/page8.jpg)
-![Climate](https://i.ibb.co/SvPRtrx/page9.jpg)
-![System monitoring](https://i.ibb.co/sy2KdM0/page10.jpg)
-![Main Server Health](https://i.ibb.co/V3rTvPy/page11.jpg)
-![Radio](https://i.ibb.co/wdNPVvz/page12.jpg)
-![Telemetry](https://i.ibb.co/DDnKYWf/page14.jpg)
-![Utility Counters(cross servers)](https://i.ibb.co/Hx6vrTg/page15.jpg)
+!(/screenshots/main_1.jpg)
+!(/screenshots/main_2.jpg)
+!(/screenshots/security.jpg)
+!(/screenshots/devices_by_room.jpg)
+!(/screenshots/sensors_by_room.jpg)
+!(/screenshots/utility_counters.jpg)
+!(/screenshots/ro_filter.jpg)
+!(/screenshots/power_details.jpg)
+!(/screenshots/cctv.jpg)
+!(/screenshots/air_details.jpg)
+!(/screenshots/system_stats.jpg)
+!(/screenshots/system_health.jpg)
+!(/screenshots/esp_stats.jpg)
+!(/screenshots/wifi_devices.jpg)
+!(/screenshots/temperature_details.jpg)
+!(/screenshots/z_switches.jpg)
+!(/screenshots/z_sensors.jpg)
+!(/screenshots/gw3_stats.jpg)
+!(/screenshots/zigbee_stats.jpg)
+!(/screenshots/testing_page.jpg)
