@@ -1,4 +1,4 @@
-<h1 align="center">
+<h1 align="center"><a name="top"></a>
   <a name="logo"><img src="https://raw.githubusercontent.com/to4ko/myconfig/master/images/home.jpg" width="100"></a>
   <br>
   My Smart Home Configuration
@@ -234,7 +234,7 @@
   - [ESPhome RU](https://t.me/esphome)
 
 # Hardware Evolution
-![Hardwarez](https://i.ibb.co/WBJ50tB/image.png)
+![Hardwarez](images/hardware_evolution.jpg)
 
 # Screenshots
 <details><summary>Few lovelace views</summary>
