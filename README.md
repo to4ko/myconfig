@@ -1,14 +1,20 @@
-# to4ko's Home Assistant configuration
+<h1 align="center">
+  Home Assistant Configuration
+</h1>
 
 
 <div align="center"><a name="menu"></a>
   <h4>
-    <a href="https://github.com/to4ko/myconfig#to4kos-home-assistant-configuration">
-      Configuration
+    <a href="https://github.com/to4ko/myconfig#hardware-configuration">
+      Hardware Configuration
     </a>
     <span> | </span>
     <a href="https://github.com/to4ko/myconfig#hardware-iterations">
       Hardware Evolution
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#smart-devices">
+      Smart Devices
     </a>
     <span> | </span>
     <a href="https://github.com/to4ko/myconfig#screenshots">
@@ -25,9 +31,10 @@
   </h4>
 </div>
 
+# Hardware Configuration
 **Main Host:** 
   - HP Prodesk 600 G6 Mini
-  - Intel i3-10600
+  - Intel i5-10600
   - 2*8Gb Samsung DDR4 SODIMM
   - 512Gb ADATA SX8200 Pro 512Gb NVME
   - Buro BU-BT40C
@@ -70,8 +77,9 @@
   - Digma 100
   - Cheap Aliexpress Pinhole cam via iSpyAgent DVR (Docker on DS1621+)
 
+# Smart Devices
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (6ea) via [GW3 by AlexxIT](https://github.com/AlexxIT/XiaomiGateway3)
+  - Xiaomi Gateway v3 (6ea)
   - Yeelight LED Ceiling Lamp650 (YLXD02YL) (2ea)
   - Yeelight LED Ceiling Lamp Pro White 960mm (YLXD08YL)
   - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
@@ -201,13 +209,13 @@
   - [psmqtt](https://github.com/eschava/psmqtt)
 
 # Chats
-[Home Assistant RU](https://t.me/homassistant)
-[Home Assistant - Hardware](https://t.me/homeassistant_hardware)
-[ESPhome RU](https://t.me/esphome)
-
+  - [Home Assistant RU](https://t.me/homassistant)
+  - [Home Assistant - Hardware](https://t.me/homeassistant_hardware)
+  - [ESPhome RU](https://t.me/esphome)
 
 # Hardware iterations
 ![Hardwarez](https://i.ibb.co/WBJ50tB/image.png)
+
 # Screenshots
 ![Main Page](https://i.ibb.co/BTcVZtt/page1.jpg)
 ![Security page](https://i.ibb.co/vxyRHD3/page2.jpg)
