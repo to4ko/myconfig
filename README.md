@@ -1,7 +1,6 @@
 <h1 align="center">
-  Home Assistant Configuration
+  My Smart Home Configuration
 </h1>
-
 
 <div align="center"><a name="menu"></a>
   <h4>
@@ -9,7 +8,7 @@
       Hardware Configuration
     </a>
     <span> | </span>
-    <a href="https://github.com/to4ko/myconfig#hardware-iterations">
+    <a href="https://github.com/to4ko/myconfig#hardware-evolution">
       Hardware Evolution
     </a>
     <span> | </span>
@@ -30,6 +29,7 @@
     </a>
   </h4>
 </div>
+
 
 # Hardware Configuration
 **Main Host:** 
@@ -159,12 +159,17 @@
   - MMC-T201-1 Digital Baby Thermometer
   - YLAI003 Smart Wireless Switch
 
+**Smart Speakers:**
+  - not in use - Google Home Mini (6ea)
+  - Yandex Station Lite (4ea)
+  - Yandex Station Mini 2 (1ea)
+
 **Other Devices:**
+  - Digma z801 Tablet
   - SLS Gateway
   - DIYRuZ_Geiger Sensor via SLS GW
-  - not in use - Google Home Mini (6ea)
-  - not in use - Sonoff Micro via [SonoffLan by AlexxIT](https://github.com/AlexxIT/SonoffLAN) (self powering down)
-  - Shelly EM - energy monitoring (comparing to PZEM...not shure which one os better)
+  - not in use - Sonoff Micro via (self powering down)
+  - Shelly EM - energy monitoring (comparing to PZEM...not shure which one is better)
   - Shelly 1PM (2ea)
   - Shelly Plug S (3ea)
   
@@ -213,7 +218,7 @@
   - [Home Assistant - Hardware](https://t.me/homeassistant_hardware)
   - [ESPhome RU](https://t.me/esphome)
 
-# Hardware iterations
+# Hardware Evolution
 ![Hardwarez](https://i.ibb.co/WBJ50tB/image.png)
 
 # Screenshots
