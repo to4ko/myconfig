@@ -189,16 +189,16 @@
   - **gitupdate.sh**  git upload
 
 # Links
-[Alexxit](https://github.com/alexxit)
-[Omh](https://github.com/omhy)
-[Vasilchuk](https://github.com/Anonym-tsk)
-[S_p_i_r_i_t_u_s](https://github.com/Spirituss)
-[lapatoc](https://github.com/bastshoes)
-[Vtel](https://github.com/zvldz)
-[Enzokot](https://github.com/Enzokot)
-[AVBor](https://github.com/avbor)
-[Andrew](https://github.com/andrewjswan)
-[psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
+  - [Alexxit](https://github.com/alexxit)
+  - [Omh](https://github.com/omhy)
+  - [Vasilchuk](https://github.com/Anonym-tsk)
+  - [S_p_i_r_i_t_u_s](https://github.com/Spirituss)
+  - [lapatoc](https://github.com/bastshoes)
+  - [Vtel](https://github.com/zvldz)
+  - [Enzokot](https://github.com/Enzokot)
+  - [AVBor](https://github.com/avbor)
+  - [Andrew](https://github.com/andrewjswan)
+  - [psmqtt](https://github.com/eschava/psmqtt)
 
 # Chats
 [Home Assistant RU](https://t.me/homassistant)
