@@ -1,7 +1,29 @@
 # to4ko's Home Assistant configuration
 
 
-First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https://github.com/omhy), [Vasilchuk](https://github.com/Anonym-tsk), [S_p_i_r_i_t_u_s](https://github.com/Spirituss), [lapatoc](https://github.com/bastshoes), [Vtel](https://github.com/zvldz), [Enzokot](https://github.com/Enzokot), [AVBor](https://github.com/avbor), [Andrew](https://github.com/andrewjswan) for help and support!
+<div align="center"><a name="menu"></a>
+  <h4>
+    <a href="https://github.com/to4ko/myconfig#to4kos-home-assistant-configuration">
+      Configuration
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#hardware-iterations">
+      Hardware Evolution
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#screenshots">
+      Screenshots
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#links">
+      Links
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#chats">
+      Chats
+    </a>
+  </h4>
+</div>
 
 **Main Host:** 
   - HP Prodesk 600 G6 Mini
@@ -70,8 +92,6 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - not in use - Xiaomi Wifi Plugs v2 (3ea)
   - not in use - Xiaomi IR controller
   - Qingping Air Monitor Lite (2ea)
-
-**At the moment, all my Zigbee devices are connected via Xiaomi Gateways, except of DIY Geiger meter (it's sitting on SLS Gateway)**
 
 **Xiaomi\Aqara Zigbee Devices:**
   - Aqara Wall Socket (21ea)
@@ -168,35 +188,38 @@ First of all - HUGE THANKS to [Alexxit](https://github.com/alexxit), [Omh](https
   - **gitignore.sh**  bash script to be used after gitigrone file updated
   - **gitupdate.sh**  git upload
 
-
+# Links
+[Alexxit](https://github.com/alexxit)
+[Omh](https://github.com/omhy)
+[Vasilchuk](https://github.com/Anonym-tsk)
+[S_p_i_r_i_t_u_s](https://github.com/Spirituss)
+[lapatoc](https://github.com/bastshoes)
+[Vtel](https://github.com/zvldz)
+[Enzokot](https://github.com/Enzokot)
+[AVBor](https://github.com/avbor)
+[Andrew](https://github.com/andrewjswan)
 [psmqtt](https://github.com/eschava/psmqtt) used to publish host machine status.
+
+# Chats
+[Home Assistant RU](https://t.me/homassistant)
+[Home Assistant - Hardware](https://t.me/homeassistant_hardware)
+[ESPhome RU](https://t.me/esphome)
+
+
 # Hardware iterations
 ![Hardwarez](https://i.ibb.co/WBJ50tB/image.png)
-# Main page
+# Screenshots
 ![Main Page](https://i.ibb.co/BTcVZtt/page1.jpg)
-# Security page
 ![Security page](https://i.ibb.co/vxyRHD3/page2.jpg)
-# Devices by room
 ![Devices by room](https://i.ibb.co/KV7CD01/page3.jpg)
-# Sensors by room
 ![Sensors by room](https://i.ibb.co/vL2M1T1/page4.jpg)
-# Utility counters
 ![Utility counters](https://i.ibb.co/mSYwCjt/page5.jpg)
-# Power load
 ![Power loads](https://i.ibb.co/tsCh1sy/page6.jpg)
-# Device trackers
 ![Device trackers](https://i.ibb.co/XWCCyRY/page7.jpg)
-# CCTV
 ![CCTV](https://i.ibb.co/JnT0sFF/page8.jpg)
-# Climate
 ![Climate](https://i.ibb.co/SvPRtrx/page9.jpg)
-# System monitoring
 ![System monitoring](https://i.ibb.co/sy2KdM0/page10.jpg)
-# Main Server Hardware Monitoring
 ![Main Server Health](https://i.ibb.co/V3rTvPy/page11.jpg)
-# Radio
 ![Radio](https://i.ibb.co/wdNPVvz/page12.jpg)
-# Home\Office PCs Telemetry
 ![Telemetry](https://i.ibb.co/DDnKYWf/page14.jpg)
-# Cross Servers Utility Counters
 ![Utility Counters(cross servers)](https://i.ibb.co/Hx6vrTg/page15.jpg)
