@@ -234,6 +234,8 @@
 ![Hardwarez](https://i.ibb.co/WBJ50tB/image.png)
 
 # Screenshots
+<details><summary>Few lovelace views</summary>
+
 ![main1](screenshots/main_1.jpg)
 ![main2](screenshots/main_2.jpg)
 ![security](screenshots/security.jpg)
@@ -254,3 +256,7 @@
 ![gw3 stats](screenshots/gw3_stats.jpg)
 ![zigbee stats](screenshots/zigbee_stats.jpg)
 ![testing](screenshots/testing_page.jpg)
+
+
+
+</details>
