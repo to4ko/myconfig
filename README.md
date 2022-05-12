@@ -52,14 +52,14 @@
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Micron DDR4 SODIMM
   - 8TB WD White as Media Storage
-  - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
+  - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
   - 256Gb Adata SX6000 Lite as NVME read cache
 
 **Backup Storage Unit - Synology DS220J** 
-  - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
+  - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
 
 **Remote Storage Unit - Synology DS215J** 
-  - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
+  - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
 
 **UPS**
   - Ippon Smart Power Pro 1200
@@ -68,8 +68,7 @@
   - CyberPower UT650EG 
 
 # Networking
-  - WAN 500mb\s + LTE Backup
-  - Unifi Dream Machine Pro
+  - Unifi Dream Machine Pro, WAN 500mb\s + LTE Backup
   - Unifi Switch 16-150W
   - Unifi Switch 8-60W (4ea)
   - Unifi Switch Mini
