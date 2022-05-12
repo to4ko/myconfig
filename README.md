@@ -40,27 +40,23 @@
 
 
 # Hardware Configuration
-**Main Host:** 
-  - HP Prodesk 600 G6 Mini
+**Main Unit - HP Prodesk 600 G6 Mini** 
   - Intel i5-10600
   - 2*8Gb Samsung DDR4 SODIMM
   - 512Gb ADATA SX8200 Pro 512Gb NVME
   - Buro BU-BT40C
   - Google Coral m.2
 
-**Main Storage Host:** 
-  - Synology DS1621+
+**Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Micron DDR4 SODIMM
   - 8TB WD White as Media Storage
   - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
   - 256Gb Adata SX6000 Lite as NVME read cache
 
-**Backup Storage Host:** 
-  - Synology DS220J
+**Backup Storage Unit - Synology DS220J** 
   - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
 
-**Remote Storage Host:** 
-  - Synology DS215J
+**Remote Storage Unit - Synology DS215J** 
   - 2ea WD RED 2Tb (Storage section for critital files) in SHR1
 
 **UPS**
@@ -118,29 +114,33 @@
   - Aqara Wall Switch Single (1ea)
   - Aqara Wireless Switch Double (6ea)
   - Aqara\Xiaomi Door Sensor (25ea)
-  - Aqara Water Leak Sensor (3ea)
+  - Aqara Water Leak Sensor (4ea)
   - Aqara Vibration Sensor (3ea)
   - Aqara\Xiaomi Motion Sensor (17ea)
   - Aqara\Xiaomi Wireless Button (9ea)
   - Aqara\Xiaomi Temp\Himidity sensor (12ea)
+  - Aqara Zigbee Relay (1ea)
+  - Aqara Opple Wireless Switch (2ea)
   - Xiaomi Plug (26ea)
   - Xiaomi Smoke Detector (1ea)
   - Xiaomi Natural Gas Detector (1ea)
-  - Aqara Zigbee Relay (1ea)
   - Xiaomi Light Sensor (2ea)
-  - Aqara Opple Wireless Switch (2ea)
   - not in use - Aqara Opple Wireless Switch (4ea)
 
-**ESPHome devices:**
+**ESPHome flashed devices:**
   - Sonoff Basic (2ea)
-  - not in use - Sonoff S26 Plugs (3ea)
   - Sonoff Pow R2 (2ea)
-  - not in use - Sonoff L1
   - Sonoff Mini (3ea)
   - Sonoff 4ch
+  - not in use - Sonoff L1
+  - not in use - Sonoff S26 Plugs (3ea)
+  - not in use - Sonoff Micro via (self powering down)
   - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
   - Blitzwolf LT11
   - not in use - Blitzwolf SS5 dual gang relay
+  - Digma IR Remote (3ea)
+
+**ESPHome DIY devices:**
   - ESP32 - Node K - Kitchen SensAir S8, BME280, BHI1750, Water Filter Counters, IR controller
   - ESP32 - Node B - Bathroom Relays (Water valves, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
   - ESP32 - Node MB - Master Bedroom SensAir S8B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
@@ -148,17 +148,17 @@
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
   - ESP32 - BLE Tracker HB
   - ESP32 - BLE Tracker HS
+  - ESP32 - M5 Stack Pico BLE Tracker S
+  - ESP32 - M5 Stack Pico BLE Tracker MB
+  - ESP32 - Hall Big Breaker Box PZEM-004T
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
-  - ESP32 PZEM HB - Hall Big Breaker Box PZEM-004T
-  - Digma IR Remote (3ea)
-  - Digma SHP7
-  - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
-  - ESP01 Weight Cell for RO wateer filter tank
+  - ESP01 Weight Cell for RO water filter tank
   - D1 Mini LED Bed light
   - D1 Mini S - Sasha Room SensAir S8, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
   - D1 Mini Air Freshener with Figaro air sensor
   - D1 Mini TOF Distance Sensor
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
+  - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
 
 **BT\BLE Devices:**
   - CGD1 Cleargrass alarm clock
@@ -178,32 +178,34 @@
 **Other Devices:**
   - Digma z801 Tablet
   - SLS Gateway
-  - DIYRuZ_Geiger Sensor via SLS GW
-  - not in use - Sonoff Micro via (self powering down)
-  - Shelly EM - energy monitoring (comparing to PZEM...not shure which one is better)
+  - DIYRuZ_Geiger Sensor
+  - Shelly EM
   - Shelly 1PM (2ea)
   - Shelly Plug S (3ea)
+  - Xiaomi Kettle
 
 # Software configuration
-**Main Host Software:**
+**Main Unit Software:**
   - Debian 11 (backports)
   - Home Assistant Core Supervised
   - PostgreSQL
+  - Add-On's: 
+    * File Editor
+    * ESPhome
+    * Grafana
+    * Hass.io Google Drive Backup
+    * IDE
+    * Log Viewer
+    * Portainer
+    * RPC shutdown
 
-**Add-On's:** 
-  - File Editor
-  - Custom deps deployment
-  - ESPhome
-  - Grafana
-  - Hass.io Google Drive Backup
-  - IDE
-  - Log Viewer
-  - Portainer
-  - RPC shutdown
+**Main Storage Unit Software**
+  - DSM 7.0
+  - HA OS instance in VM
+  - Docker containers:
+    * iSpycam Agent
+    * InfluxDB
 
-**DB used:**
-  - PostgreSQL
-  - InfluxDB
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
