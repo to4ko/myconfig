@@ -1,5 +1,5 @@
 <h1 align="center">
-  <a name="logo"><img src="https://github.com/to4ko/myconfig/blob/master/screenshots/air_details.jpg"></a>  My Smart Home Configuration
+  <a name="logo"><img src="https://github.com/to4ko/myconfig/blob/cfdbabdac42925ff6d4da7c62ff07907d4c2d643/images/home.jpg"></a>  My Smart Home Configuration
 </h1>
 
 <div align="center"><a name="menu"></a>
