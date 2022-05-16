@@ -40,6 +40,12 @@
   </h4>
 </div>
 
+<style>
+    table {
+        width: 100%;
+    }
+</style>
+
 # Hardware Configuration
 **Main Unit - HP Prodesk 600 G6 Mini** 
 <table style="border-collapse: collapse; border-style: solid;" border="1">
