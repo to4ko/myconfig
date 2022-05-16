@@ -40,12 +40,11 @@
   </h4>
 </div>
 
-
 # Hardware Configuration
 **Main Unit - HP Prodesk 600 G6 Mini** 
   - Intel i5-10600
   - 2*8Gb Samsung DDR4 SODIMM
-  - 512Gb ADATA SX8200 Pro 512Gb NVME
+  - 512Gb ADATA SX8200 Pro NVME
   - Buro BU-BT40C
   - Google Coral m.2
 
@@ -226,7 +225,6 @@
   - [Enzokot](https://github.com/Enzokot)
   - [AVBor](https://github.com/avbor)
   - [Andrew](https://github.com/andrewjswan)
-  - [psmqtt](https://github.com/eschava/psmqtt)
 
 # Chats
   - [Home Assistant RU](https://t.me/homassistant)
