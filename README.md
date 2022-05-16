@@ -46,7 +46,7 @@
 <tbody>
 <tr>
 <td style="width: 20%; text-align: left;"><img src="https://raw.githubusercontent.com/to4ko/myconfig/master/images/hp_prodesk_600_g6_dm.jpg" alt="hp prodesk 600 g6 dm" width="188" height="188" /></td>
-<td style="width: 69.7443%;">
+<td style="width: 100%;">
 <div style="text-align: left;">Intel i5-10600</div>
 <div style="text-align: left;">2*8Gb Samsung DDR4 SODIMM</div>
 <div style="text-align: left;">512Gb ADATA SX8200 Pro NVME</div>
