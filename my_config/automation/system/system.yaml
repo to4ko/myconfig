@@ -272,10 +272,10 @@
           notification_id: http_login
   
 # ##################################
-# System - Zigbee Group Rebuild
+# System - Groups Rebuild
 # ##################################
-  - alias: system_zigbee_group_rebuild
-    id:  system_zigbee_group_rebuild
+  - alias: system_groups_rebuild
+    id:  system_groups_rebuild
     initial_state: true
     trigger:
       - platform: time_pattern
@@ -301,7 +301,14 @@
           entities: >-
             {%-for state in states.sensor if (state.entity_id.endswith("_battery") and 'esp32' not in state.entity_id)%}
             {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
-            {%-endfor%}  
+            {%-endfor%}
+      - service: group.set
+        data:
+          object_id: lights_all
+          entities: >-
+            {%- for state in states.group if ("lights_" in state.entity_id) %}
+            {{- expand(state.entity_id)|map(attribute='entity_id')|list|join(',') }}{%- if not loop.last -%}, {%- endif -%}
+            {%- endfor %} 
 
 # ##################################
 # System - Sensors Battery Level Check
