@@ -40,18 +40,12 @@
   </h4>
 </div>
 
-<style>
-    table {
-        width: 100%;
-    }
-</style>
-
 # Hardware Configuration
 **Main Unit - HP Prodesk 600 G6 Mini** 
 <table style="border-collapse: collapse; border-style: solid;" border="1">
 <tbody>
 <tr>
-<td style="width: 20%; text-align: left;"><img src="https://raw.githubusercontent.com/to4ko/myconfig/master/images/hp_prodesk_600_g6_dm.jpg" alt="hp prodesk 600 g6 dm" width="188" height="188" /></td>
+<td style="width: 20%; text-align: center;"><img src="https://raw.githubusercontent.com/to4ko/myconfig/master/images/hp_prodesk_600_g6_dm.jpg" alt="hp prodesk 600 g6 dm" width="188" height="188" /></td>
 <td>
 <div style="text-align: left;">Intel i5-10600</div>
 <div style="text-align: left;">2*8Gb Samsung DDR4 SODIMM</div>
