@@ -916,16 +916,17 @@
       - condition: template
         value_template: "{{ trigger.to_state.state != trigger.from_state.state and (trigger.to_state.state in ['unavailable'] or trigger.from_state.state in ['unavailable']) }}"
     action:
-      - choose:
-          - conditions: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
-            sequence:
-              - service: notify.telegram
-                data:
-                  message: >
-                    {% if trigger.to_state.state in ['unavailable'] %}{{'\U0001F4A5'}}
-                    {% elif trigger.from_state.state in ['unavailable'] %}{{'\U00002705'}}
-                    {% else %}{{'\U00002049'}}
-                    {% endif %} ZB: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}
+      - if:
+          - condition: template
+            value_template: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
+        then:
+          - service: notify.telegram
+            data:
+              message: >
+                {% if trigger.to_state.state in ['unavailable'] %}{{'\U0001F4A5'}}
+                {% elif trigger.from_state.state in ['unavailable'] %}{{'\U00002705'}}
+                {% else %}{{'\U00002049'}}
+                {% endif %} ZB: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}
                     
 # ##################################
 # System - ZB Devices Status Normal
@@ -1944,18 +1945,17 @@
           target_volume: 0.1
       - service: media_player.turn_off
         entity_id: media_player.yandex_mb
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: 'on_state'
-            sequence:
-              - service: media_player.play_media
-                data:
-                  media_content_type: text
-                  entity_id: media_player.yandex_mb
-                  media_content_id: "Сашенька, ночью надо спать, а не сказки слушать! Спокойной ночи!"
-                  extra:
-                    volume_level: '0.2'
+      - if:
+          - condition: trigger
+            id: 'on_state'
+        then:
+          - service: media_player.play_media
+            data:
+              media_content_type: text
+              entity_id: media_player.yandex_mb
+              media_content_id: "Сашенька, ночью надо спать, а не сказки слушать! Спокойной ночи!"
+              extra:
+                volume_level: '0.2'
 
 # ##################################
 # System - Supervisor unhealthy

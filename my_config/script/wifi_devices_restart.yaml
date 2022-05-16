@@ -61,22 +61,21 @@
   bedside_restart:
     alias: Bedside Lamp Restart
     sequence:
-      - choose:
-          conditions:
-            - condition: template
-              value_template: >
-                {% set ignore = ['unknown', 'unavailable', 'none'] %}
-                {{ states('switch.0x158d00039bd56d_switch') not in ignore }}
-          sequence:
-            - service: switch.turn_off
-              entity_id: switch.0x158d00039bd56d_switch
-            - delay: 00:00:15
-            - service: switch.turn_on
-              entity_id: switch.0x158d00039bd56d_switch
-            - service: notify.telegram
-              data:
-                message: "\U0001f6a8 Bedside Lamp перезапуск!"
-        default:
+      - if:
+          - condition: template
+            value_template: >
+              {% set ignore = ['unknown', 'unavailable', 'none'] %}
+              {{ states('switch.0x158d00039bd56d_switch') not in ignore }}
+        then:
+          - service: switch.turn_off
+            entity_id: switch.0x158d00039bd56d_switch
+          - delay: 00:00:15
+          - service: switch.turn_on
+            entity_id: switch.0x158d00039bd56d_switch
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Bedside Lamp перезапуск!"
+        else:
           - service: notify.telegram
             data:
               message: "\U0001f6a8 Bedside Lamp розетка недоступна! Перезапуск отменен!"

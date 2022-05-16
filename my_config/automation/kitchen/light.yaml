@@ -245,18 +245,17 @@
                 message: "\U0001f6a8 Round LED K restart done({{repeat.index}})!"
             - delay:
                 seconds: 30
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: light.round_led_k
-                state: 'unavailable'
-            sequence:
-              - service: notify.telegram
-                data:
-                  message: "\U0001f6a8 Round LED K restart unsuccessful!"
-              - service: switch.turn_off
-                entity_id: switch.round_led_k_restart_key
-        default:
+      - if:
+          - condition: state
+            entity_id: light.round_led_k
+            state: 'unavailable'
+        then:
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Round LED K restart unsuccessful!"
+          - service: switch.turn_off
+            entity_id: switch.round_led_k_restart_key
+        else:
           - service: light.turn_{{ states("binary_sensor.round_led_k_prev") | lower }}
             entity_id: light.round_led_k
           - service: switch.turn_on
@@ -394,19 +393,18 @@
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.round_led_k_nightlight
-                state: 'on'
-              - condition: state
-                entity_id: light.round_led_k
-                state: 'off'
-            sequence:
-              - service: yeelight.set_mode
-                data:
-                  entity_id: light.round_led_k
-                  mode: normal  
+      - if:
+          - condition: state
+            entity_id: binary_sensor.round_led_k_nightlight
+            state: 'on'
+          - condition: state
+            entity_id: light.round_led_k
+            state: 'off'
+        then:
+          - service: yeelight.set_mode
+            data:
+              entity_id: light.round_led_k
+              mode: normal  
       - service: light.turn_on
         entity_id: light.round_led_k
         data:

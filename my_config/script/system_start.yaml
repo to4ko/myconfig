@@ -39,14 +39,13 @@
       #       sequence:
       #         - service: timer.start
       #           entity_id: timer.washing_machine_door
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: input_boolean.security_mode
-                state: 'on'
-            sequence:
-              - service: script.turn_on
-                entity_id: script.away_mode_on
+      - if:
+          - condition: state
+            entity_id: input_boolean.security_mode
+            state: 'on'
+        then:
+          - service: script.turn_on
+            entity_id: script.away_mode_on
       # - choose:
       #     - conditions:
       #         - condition: template
@@ -66,28 +65,27 @@
           - sensor.errors_during_boot
           - sensor.warnings_during_boot
           - binary_sensor.bed_led_enable
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: >-
-                  {%- set datanames = namespace(sw_un=[]) -%}
-                  {%- for item in states.switch if ( ( item.state == 'unknown' and '_restart_key' in item.entity_id) )-%}
-                    {%- set datanames.sw_un = datanames.sw_un + [item.entity_id] -%}
-                  {%- endfor %}
-                  {%- set num_sw_un = datanames.sw_un | length %}
-                  {%- set sw_un = datanames.sw_un | join(', ') %}
-                  {{ num_sw_un|int >0 }}
-            sequence:
-              - service: switch.turn_on
-                data:
-                  entity_id: >-
-                    {%- set datanames = namespace(sw_un=[]) -%}
-                    {%- for item in states.switch if ( ( item.state == 'unknown' and '_restart_key' in item.entity_id) )-%}
-                      {%- set datanames.sw_un = datanames.sw_un + [item.entity_id] -%}
-                    {%- endfor %}
-                    {%- set num_sw_un = datanames.sw_un | length %}
-                    {%- set sw_un = datanames.sw_un | join(', ') %}
-                    {{ sw_un }}
+      - if:
+          - condition: template
+            value_template: >-
+              {%- set datanames = namespace(sw_un=[]) -%}
+              {%- for item in states.switch if ( ( item.state == 'unknown' and '_restart_key' in item.entity_id) )-%}
+                {%- set datanames.sw_un = datanames.sw_un + [item.entity_id] -%}
+              {%- endfor %}
+              {%- set num_sw_un = datanames.sw_un | length %}
+              {%- set sw_un = datanames.sw_un | join(', ') %}
+              {{ num_sw_un|int >0 }}
+        then:
+          - service: switch.turn_on
+            data:
+              entity_id: >-
+                {%- set datanames = namespace(sw_un=[]) -%}
+                {%- for item in states.switch if ( ( item.state == 'unknown' and '_restart_key' in item.entity_id) )-%}
+                  {%- set datanames.sw_un = datanames.sw_un + [item.entity_id] -%}
+                {%- endfor %}
+                {%- set num_sw_un = datanames.sw_un | length %}
+                {%- set sw_un = datanames.sw_un | join(', ') %}
+                {{ sw_un }}
       - wait_for_trigger:
           - platform: state
             entity_id: binary_sensor.bottom_lock, binary_sensor.top_lock
