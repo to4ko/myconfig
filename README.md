@@ -42,20 +42,12 @@
 
 # Hardware Configuration
 **Main Unit - HP Prodesk 600 G6 Mini** 
-<table style="width: 100%;" border="1">
-<tbody>
-<tr>
-<td style="width: 20%; text-align: center;"><img src="https://raw.githubusercontent.com/to4ko/myconfig/master/images/hp_prodesk_600_g6_dm.jpg" alt="hp prodesk 600 g6 dm" width="188" height="188" /></td>
-<td style="width: 80%; text-align: left;">
-<div style="text-align: left;">Intel i5-10600</div>
-<div style="text-align: left;">2*8Gb Samsung DDR4 SODIMM</div>
-<div style="text-align: left;">512Gb ADATA SX8200 Pro NVME</div>
-<div style="text-align: left;">Buro BU-BT40C</div>
-<div style="text-align: left;">Google Coral m.2</div>
-</td>
-</tr>
-</tbody>
-</table>
+  - HP Prodesk 600 G6 Mini
+  - Intel i5-10600
+  - 2*8Gb Samsung DDR4 SODIMM
+  - 512Gb ADATA SX8200 Pro 512Gb NVME
+  - Buro BU-BT40C
+  - Google Coral m.2
 
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Micron DDR4 SODIMM
