@@ -42,7 +42,7 @@
 
 # Hardware Configuration
 **Main Unit - HP Prodesk 600 G6 Mini** 
-<table style="width: 100%;border-collapse: collapse; border-style: solid;" border="1">
+<table style="width: 100%;" border="1">
 <tbody>
 <tr>
 <td style="width: 20%; text-align: center;"><img src="https://raw.githubusercontent.com/to4ko/myconfig/master/images/hp_prodesk_600_g6_dm.jpg" alt="hp prodesk 600 g6 dm" width="188" height="188" /></td>
