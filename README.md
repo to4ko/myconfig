@@ -234,6 +234,7 @@
 
 # Hardware Evolution
 <!-- ![Hardwarez](images/hardware_evolution.jpg) -->
+<details><summary>Click me...</summary>
 <table max-width:100%;
 white-space:nowrap;>
 <tbody>
@@ -384,10 +385,10 @@ white-space:nowrap;>
 </tr>
 </tbody>
 </table>
-
+</details>
 
 # Screenshots
-<details><summary>Few lovelace views</summary>
+<details><summary>Click me...</summary>
 
 ![main1](images/main_1.jpg)
 ![main2](images/main_2.jpg)
