@@ -233,7 +233,158 @@
   - [ESPhome RU](https://t.me/esphome)
 
 # Hardware Evolution
-![Hardwarez](images/hardware_evolution.jpg)
+<!-- ![Hardwarez](images/hardware_evolution.jpg) -->
+<table max-width:100%;
+white-space:nowrap;>
+<tbody>
+<tr>
+<td>#</td>
+<td>Year</td>
+<td>Motherboard</td>
+<td>CPU</td>
+<td>RAM</td>
+<td>Storage</td>
+<td>Raid card</td>
+</tr>
+<tr>
+<td rowspan="2">1</td>
+<td rowspan="2">2018</td>
+<td>Asrock H77M-ITX</td>
+<td>i7-3770s</td>
+<td>16gb DDR3</td>
+<td>256GB SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Asrock J3455-ITX</td>
+<td>Celeron j3455</td>
+<td>16gb DDR3</td>
+<td>4 * 2Tb HDD</td>
+<td>&nbsp;</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2019</td>
+<td>Asus P8H77-M PRO</td>
+<td>i7-3770s</td>
+<td>16gb DDR3</td>
+<td>256GB SSD + 7*2Tb HDD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>3</td>
+<td>2019</td>
+<td>Asus Z9PA-D8</td>
+<td>2 * E5-2620 V2</td>
+<td>64gb ECC DDR3</td>
+<td>128GB SSD + 7*2Tb HDD + 256Gb NVME</td>
+<td>Asus Pike 2008</td>
+</tr>
+<tr>
+<td>4</td>
+<td>2019</td>
+<td>Asus Z9PA-D8</td>
+<td>2 * E5-2630L V2</td>
+<td>64gb ECC DDR3</td>
+<td>128GB SSD + 7*2Tb HDD + 3 *2Tb HDD + 1*256Gb NVME</td>
+<td>Asus Pike 2008</td>
+</tr>
+<tr>
+<td>5</td>
+<td>2019</td>
+<td>Asus Z9PA-D8</td>
+<td>E5-1660</td>
+<td>64gb ECC DDR3</td>
+<td>128GB SSD + 7*2Tb HDD + 3 *2Tb HDD + 1*512Gb NVME</td>
+<td>Adaptec 71605</td>
+</tr>
+<tr>
+<td>6</td>
+<td>2020</td>
+<td>Supermicro X10SRL-F</td>
+<td>E5-2620 V3</td>
+<td>64gb ECC DDR4</td>
+<td>128GB SSD + 7*2Tb HDD + 3 *2Tb HDD + 2*512Gb NVME</td>
+<td>Adaptec 71605</td>
+</tr>
+<tr>
+<td>7</td>
+<td>2020</td>
+<td>Supermicro X10SRL-F</td>
+<td>E5-2630L V3</td>
+<td>64gb ECC DDR4</td>
+<td>128GB SSD + 7*2Tb HDD + 3 *2Tb HDD + 2*512Gb NVME</td>
+<td>Adaptec 71605</td>
+</tr>
+<tr>
+<td>8</td>
+<td>2020</td>
+<td>Supermicro X10SRL-F</td>
+<td>E5-2628L V3</td>
+<td>64gb ECC DDR4</td>
+<td>128GB SSD + 7*2Tb HDD + 3 *2Tb HDD + 2*512Gb NVME + 1*256Gb NVME</td>
+<td>Adaptec 71605</td>
+</tr>
+<tr>
+<td>9</td>
+<td>2021</td>
+<td>Asrock Rack x470d4u</td>
+<td>Ryzen 5 3600</td>
+<td>32gb ECC DDR4</td>
+<td>128GB SSD + 3*2Tb HDD + 1*8Tb HDD + 3*512Gb NVME + 1*256Gb NVME</td>
+<td>-</td>
+</tr>
+<tr>
+<td rowspan="2">10</td>
+<td rowspan="2">2022</td>
+<td>HP Prodesk 400 G6 mini</td>
+<td>i3-10100t</td>
+<td>2 * 8Gb DDR4</td>
+<td>512GB NVME</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>8Tb HDD + 3*2Tb HDD + 256Gb SSD + 256Gb NVME (read cache)</td>
+<td>-</td>
+</tr>
+<tr>
+<td rowspan="2">11</td>
+<td rowspan="2">2022</td>
+<td>HP Prodesk 600 G6 mini</td>
+<td>i3-10300</td>
+<td>2 * 8Gb DDR4</td>
+<td>512GB NVME</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>8Tb HDD + 3*2Tb HDD + 256Gb SSD + 256Gb NVME (read cache)</td>
+<td>-</td>
+</tr>
+<tr>
+<td rowspan="2">12</td>
+<td rowspan="2">2022</td>
+<td>HP Prodesk 600 G6 mini</td>
+<td>i5-10600</td>
+<td>2 * 8Gb DDR4</td>
+<td>512GB NVME</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>8Tb HDD + 3*2Tb HDD + 256Gb SSD + 256Gb NVME (read cache)</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+
 
 # Screenshots
 <details><summary>Few lovelace views</summary>

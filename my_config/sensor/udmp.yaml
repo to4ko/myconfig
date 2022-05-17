@@ -20,3 +20,29 @@
     #     #- alerts
     #     #- firmware
     #     - vpn
+
+  - platform: command_line
+    name: UDM UnifiOS
+    command: !secret udmp_unifios
+    value_template: |-
+      {% set json = value_json.data[1] %}
+      {{ json["system-stats"].cpu }}|
+      {{ json.temperatures[0].value | float(0) | round (1) }}|
+      {{ json["system-stats"].mem }}|
+      {{ json.internet }}|
+      {{ json.startup_timestamp | timestamp_custom('%Y-%m-%dT%H:%M:%S') }}|
+      {{ json.displayable_version }}|
+      {{ json.upgradable }}
+    scan_interval: 60
+
+  # - platform: unifi_status
+  #   host: !secret udmp_host
+  #   username: !secret udmp_usr
+  #   password: !secret udmp_passwd
+  #   monitored_conditions:
+  #     - vpn
+  #     - www
+  #     - lan
+  #     - wan
+  #     - wlan
+  #     - firmware
