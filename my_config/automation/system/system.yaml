@@ -280,6 +280,10 @@
     trigger:
       - platform: time_pattern
         hours: "/1"
+      - platform: event
+        event_type: entity_registry_updated
+      - platform: homeassistant
+        event: start
     action:
       - service: group.set
         data:
@@ -927,7 +931,43 @@
                 {% elif trigger.from_state.state in ['unavailable'] %}{{'\U00002705'}}
                 {% else %}{{'\U00002049'}}
                 {% endif %} ZB: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}
-                    
+
+  - alias: system_zb_devices_status_2
+    id:  system_zb_devices_status_2
+    initial_state: true
+    mode: queued
+    max: 100
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: state_changed
+    condition:
+      - condition: state
+        entity_id: input_boolean.ha_shutdown
+        state: 'off'
+      - condition: template
+        value_template: >-
+          {{ trigger.event.data.entity_id in expand('group.zigbee_devices') | map(attribute='entity_id') | list }}
+      - condition: template
+        value_template: >-
+          {{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}
+      - condition: template
+        value_template: >-
+          {{ trigger.event.data.new_state.state in ['unknown', 'unavailable'] or trigger.event.data.old_state.state in ['unknown', 'unavailable'] }}
+    action:
+      - if:
+          - condition: template
+            value_template: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
+        then:
+          - service: notify.telegram
+            data:
+              message: >
+                {% if trigger.to_state.state in ['unavailable'] %}{{'\U0001F4A5'}}
+                {% elif trigger.from_state.state in ['unavailable'] %}{{'\U00002705'}}
+                {% else %}{{'\U00002049'}}
+                {% endif %} ZB_2: {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}
+
+
 # ##################################
 # System - ZB Devices Status Normal
 # ##################################
@@ -1683,152 +1723,33 @@
 # System - GW3 Devices Msg Missed
 # ##################################
   - alias: system_gw3_devices_msg_missed
-    id:  system_gw3_devices_msg_missed
-    mode: single
-    max_exceeded: silent
+    id: system_gw3_devices_msg_missed
     initial_state: true
+    mode: queued
+    max: 70
     trigger:
-      - platform: numeric_state
-        entity_id:
-          - sensor.0x158d00013e6aa5_zigbee
-          - sensor.0x158d00016bdb4a_zigbee
-          - sensor.0x158d0001712d55_zigbee
-          - sensor.0x158d00019c8afd_zigbee
-          - sensor.0x158d0001ae9f61_zigbee
-          - sensor.0x158d0001aea602_zigbee
-          - sensor.0x158d0001b94abe_zigbee
-          - sensor.0x158d0001b97111_zigbee
-          - sensor.0x158d0001d5995e_zigbee
-          - sensor.0x158d0001e05856_zigbee
-          - sensor.0x158d0001e0a622_zigbee
-          - sensor.0x158d0001e53cda_zigbee
-          - sensor.0x158d0001e54280_zigbee
-          - sensor.0x158d0001e586af_zigbee
-          - sensor.0x158d0001e58714_zigbee
-          - sensor.0x158d0001e58754_zigbee
-          - sensor.0x158d0001e5d6be_zigbee
-          - sensor.0x158d0001e6d85a_zigbee
-          - sensor.0x158d0001e85086_zigbee
-          #- sensor.0x158d0001e8995a_zigbee
-          - sensor.0x158d0001ef2ffc_zigbee
-          - sensor.0x158d0001ef6089_zigbee
-          - sensor.0x158d0001ef61be_zigbee
-          - sensor.0x158d0001f2630e_zigbee
-          - sensor.0x158d0001f3627d_zigbee
-          - sensor.0x158d000200ad58_zigbee
-          - sensor.0x158d000205a835_zigbee
-          - sensor.0x158d00020d7c3a_zigbee
-          - sensor.0x158d000222c746_zigbee
-          - sensor.0x158d000223921b_zigbee
-          - sensor.0x158d000224e3e4_zigbee
-          - sensor.0x158d000224f89f_zigbee
-          - sensor.0x158d00022ccffe_zigbee
-          - sensor.0x158d000230fc52_zigbee
-          - sensor.0x158d00023297e7_zigbee
-          - sensor.0x158d000232ddd6_zigbee
-          - sensor.0x158d000232de79_zigbee
-          - sensor.0x158d000233fb72_zigbee
-          - sensor.0x158d00023684c2_zigbee
-          - sensor.0x158d000236bb94_zigbee
-          - sensor.0x158d000236bc6d_zigbee
-          - sensor.0x158d000236fcd5_zigbee
-          - sensor.0x158d000236fdc9_zigbee
-          - sensor.0x158d000237167c_zigbee
-          - sensor.0x158d0002373a67_zigbee
-          - sensor.0x158d000239097a_zigbee
-          - sensor.0x158d0002395d58_zigbee
-          - sensor.0x158d0002395dc9_zigbee
-          - sensor.0x158d00023a657a_zigbee
-          - sensor.0x158d00023d3116_zigbee
-          - sensor.0x158d00023d3206_zigbee
-          - sensor.0x158d00023e5812_zigbee
-          - sensor.0x158d00024517fe_zigbee
-          - sensor.0x158d0002451850_zigbee
-          - sensor.0x158d0002461e5b_zigbee
-          - sensor.0x158d0002464ec0_zigbee
-          - sensor.0x158d000246776f_zigbee
-          - sensor.0x158d0002467773_zigbee
-          - sensor.0x158d0002468fbd_zigbee
-          - sensor.0x158d0002476ed1_zigbee
-          - sensor.0x158d000248bf53_zigbee
-          - sensor.0x158d000249b25b_zigbee
-          - sensor.0x158d000249b26b_zigbee
-          - sensor.0x158d00024bcf85_zigbee
-          - sensor.0x158d0002529b9c_zigbee
-          - sensor.0x158d000252acba_zigbee
-          - sensor.0x158d00025315e9_zigbee
-          - sensor.0x158d0002531749_zigbee
-          - sensor.0x158d00025370d1_zigbee
-          - sensor.0x158d00025371f6_zigbee
-          - sensor.0x158d000253722b_zigbee
-          - sensor.0x158d000253f04a_zigbee
-          - sensor.0x158d00026ea94e_zigbee
-          - sensor.0x158d00026eb820_zigbee
-          - sensor.0x158d00027129ae_zigbee
-          - sensor.0x158d00028a54e4_zigbee
-          - sensor.0x158d00028b4fc3_zigbee
-          - sensor.0x158d00028c9875_zigbee
-          - sensor.0x158d000290a093_zigbee
-          - sensor.0x158d000290a0bc_zigbee
-          - sensor.0x158d0002924790_zigbee
-          - sensor.0x158d0002a14c5e_zigbee
-          - sensor.0x158d0002a1a47a_zigbee
-          - sensor.0x158d0002a1a4b2_zigbee
-          - sensor.0x158d0002a1b0c8_zigbee
-          - sensor.0x158d0002a2412d_zigbee
-          - sensor.0x158d0002a36433_zigbee
-          - sensor.0x158d0002a36f7f_zigbee
-          - sensor.0x158d0002a8ac3c_zigbee
-          - sensor.0x158d0002b43ad4_zigbee
-          - sensor.0x158d0002b4729d_zigbee
-          - sensor.0x158d0002b482e9_zigbee
-          - sensor.0x158d0002b48381_zigbee
-          - sensor.0x158d0002b5fbc1_zigbee
-          - sensor.0x158d0002b7c2c8_zigbee
-          - sensor.0x158d0002c3d86e_zigbee
-          - sensor.0x158d0002c92f31_zigbee
-          - sensor.0x158d0002fa99a8_zigbee
-          - sensor.0x158d0003140824_zigbee
-          - sensor.0x158d000322e30c_zigbee
-          - sensor.0x158d000323c87c_zigbee
-          - sensor.0x158d0003262a35_zigbee
-          - sensor.0x158d0003262acc_zigbee
-          - sensor.0x158d000344998e_zigbee
-          - sensor.0x158d000345119e_zigbee
-          - sensor.0x158d0003535ee5_zigbee
-          - sensor.0x158d0003539447_zigbee
-          - sensor.0x158d000353a2e3_zigbee
-          - sensor.0x158d000358c773_zigbee
-          - sensor.0x158d00035c194f_zigbee
-          - sensor.0x158d00035f44a7_zigbee
-          - sensor.0x158d0003600ea4_zigbee
-          - sensor.0x158d00036148b9_zigbee
-          - sensor.0x158d00039258de_zigbee
-          - sensor.0x158d000392623d_zigbee
-          - sensor.0x158d0003991051_zigbee
-          - sensor.0x158d00039bd56d_zigbee
-          - sensor.0x158d0003f27ce2_zigbee
-          - sensor.0x158d0003fa6cf5_zigbee
-          - sensor.0x158d000423f316_zigbee
-          - sensor.0x158d0006b1c7bc_zigbee
-          - sensor.0x4cf8cdf3c77271d_zigbee
-          - sensor.0x4cf8cdf3c7754a8_zigbee
-          - sensor.0x4cf8cdf3c78d26e_zigbee
-          - sensor.0x4cf8cdf3c7947e4_zigbee
-          - sensor.0x4cf8cdf3c79546c_zigbee
-          - sensor.0x158d00024e58e7_zigbee
-          - sensor.0x158d0001a248e3_zigbee
-        attribute: last_missed
-        above: 9
+      - platform: event
+        event_type: state_changed
     condition:
+      - condition: state
+        entity_id: input_boolean.ha_shutdown
+        state: 'off'
+      - condition: template
+        value_template: >-
+          {{ trigger.event.data.entity_id in expand('group.gw3_zigbee_entities') | map(attribute='entity_id') | list }}
+      - condition: template
+        value_template: >-
+          {{ state_attr(trigger.event.data.entity_id, 'last_missed') |int(0) > 9 }}
       - condition: numeric_state
         entity_id: sensor.ha_uptime
         above: 0
     action:
       - service: notify.telegram
         data:
-          message: "\U000023ed Внимание! {{ trigger.to_state.attributes.name }} пропустил {{ trigger.to_state.attributes.last_missed | format(morph='пакет', as_text=false) }}!"
-  
+          message: "\U000023ed Внимание! {{ state_attr(trigger.event.data.entity_id, 'name') }} пропустил {{ state_attr(trigger.event.data.entity_id, 'last_missed') | format(morph='пакет', as_text=false) }}!"
+
+
+
   # ##################################
   # System - Ya Station Mode
   # ##################################
@@ -2004,6 +1925,31 @@
         data:
           message: "\U0001f50a Станция {{trigger.to_state.name | e}} {% if trigger.id == 'non_local' -%} отключила локальный режим управления {%- else -%} перешла в локальный режим управления {%- endif %}"
 
+# ##################################
+# System - Devices Updates Available
+# ##################################
+  - alias: system_devices_updates_available
+    id:  system_devices_updates_available
+    initial_state: true
+    mode: queued
+    max: 10
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.ds1621plus_plug_hb_firmware_update
+          - binary_sensor.ds220j_plug_mb_firmware_update
+          - binary_sensor.server_plug_hb_firmware_update
+          - binary_sensor.shelly_1pm_led_s_firmware_update
+          - binary_sensor.shelly_1pm_led_v_firmware_update
+          - binary_sensor.shelly_em_firmware_update
+          - binary_sensor.ds1621plus_update_available
+          - binary_sensor.ds220j_update_available
+        to: 'on'
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0001f9f0 Обновление доступно для {{device_attr(trigger.entity_id, 'name')}}"
 
 # ##################################
 # System - System Updates Pending

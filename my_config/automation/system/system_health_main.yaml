@@ -257,3 +257,41 @@
   #     - service: notify.telegram
   #       data:
   #         message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} -> {{ trigger.to_state.state|int(0) }}об!"
+
+# ##################################
+# System - Synology Disks status
+# ##################################
+  - alias: system_health_synology_disks_status
+    id:  system_health_synology_disks_status
+    initial_state: true
+    mode: queued
+    max: 15
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id:
+          - sensor.ds1621plus_disk_1_status
+          - sensor.ds1621plus_disk_2_status
+          - sensor.ds1621plus_disk_4_status
+          - sensor.ds1621plus_disk_5_status
+          - sensor.ds1621plus_disk_6_status
+          - sensor.ds1621plus_nvme_1_status
+          - sensor.ds220j_disk_1_status
+          - sensor.ds220j_disk_2_status
+          - sensor.ds1621plus_disk_1_status_smart
+          - sensor.ds1621plus_disk_2_status_smart
+          - sensor.ds1621plus_disk_4_status_smart
+          - sensor.ds1621plus_disk_5_status_smart
+          - sensor.ds1621plus_disk_6_status_smart
+          - sensor.ds1621plus_nvme_1_status_smart
+          - sensor.ds220j_disk_1_status_smart
+          - sensor.ds220j_disk_2_status_smart
+        for:
+          minutes: 1
+    condition:
+      - condition: template
+        value_template: "{{ trigger.to_state.state != trigger.from_state.state and trigger.to_state.state not in ['unavailable'] }}"
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0001f9f0 Внимание! {{ trigger.to_state.name }}: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}!"

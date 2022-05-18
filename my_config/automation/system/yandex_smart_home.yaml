@@ -1,0 +1,50 @@
+# ##################################
+# System - Ya speakers change mode with day time
+# ##################################
+  - alias: system_ya_mute_activation_sounds
+    id: system_ya_mute_activation_sounds
+    initial_state: true
+    max_exceeded: silent
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id: switch.dark_mode
+        to: 
+      - platform: state
+        entity_id: binary_sensor.tod_day
+        to: 
+    action:
+      - repeat:
+          for_each:
+            - 'media_player.yandex_k'
+            - 'media_player.yandex_hb'
+            - 'media_player.yandex_v'
+            - 'media_player.yandex_s'
+            - 'media_player.yandex_mb'
+          sequence:
+            - variables:
+                command_1: >-
+                  {% if is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','off') %}
+                  без лишних слов: да
+                  {% else %}
+                  без лишних слов: нет
+                  {% endif %}
+                command_2: >-
+                  {% if is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','off') %}
+                  звук активации: нет
+                  {% else %}
+                  звук активации: да
+                  {% endif %}
+            - service: media_player.play_media
+              data:
+                entity_id: '{{ repeat.item }}'
+                media_content_id: '{{command_1}}'
+                media_content_type: settings
+            - delay: 2
+            - service: media_player.play_media
+              data:
+                entity_id: '{{ repeat.item }}'
+                media_content_id: '{{commnad_2}}'
+                media_content_type: settings
+            - delay: 2
