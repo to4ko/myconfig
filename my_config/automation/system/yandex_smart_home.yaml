@@ -25,17 +25,23 @@
           sequence:
             - variables:
                 command_1: >-
-                  {% if is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','off') %}
+                  {%- if is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','on') %}
                   без лишних слов: да
-                  {% else %}
+                  {%- else %}
                   без лишних слов: нет
-                  {% endif %}
+                  {%- endif %}
                 command_2: >-
-                  {% if is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','off') %}
+                  {%- if is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','on') %}
                   звук активации: нет
-                  {% else %}
+                  {%- else %}
                   звук активации: да
-                  {% endif %}
+                  {%- endif %}
+                command_3: >-
+                  {%- if is_state('binary_sensor.tod_day','off') or is_state('switch.dark_mode','on') %}
+                  ответить шепотом: да
+                  {%- else %}
+                  ответить шепотом: нет
+                  {%- endif %}
             - service: media_player.play_media
               data:
                 entity_id: '{{ repeat.item }}'
@@ -46,5 +52,11 @@
               data:
                 entity_id: '{{ repeat.item }}'
                 media_content_id: '{{command_2}}'
+                media_content_type: settings
+            - delay: 2
+            - service: media_player.play_media
+              data:
+                entity_id: '{{ repeat.item }}'
+                media_content_id: '{{command_3}}'
                 media_content_type: settings
             - delay: 2
