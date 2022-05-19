@@ -98,6 +98,48 @@
             {{'\U0001f30d'}} {{ person + ' ' + event + ' из ' + from + ' в ' + to }}
             {%- endif %}
 
+
+  - alias: system_location_home_mode
+    id: system_location_home_mode
+    trigger:
+      - platform: state
+        entity_id: sensor.people_home
+        to: '1'
+        id: 'non_vac'
+      - platform: state
+        entity_id: sensor.people_home
+        to: '0'
+        for:
+          hours: 24
+        id: 'vac'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: "non_vac"
+            sequence:
+              - variables:
+                  txt: >- 
+                    {% if states('sensor.people_home')|int(0) > 0 %}
+                    Home
+                    {% elif states('sensor.people_home')|int(0) == 0 %}
+                    Away
+                    {% endif %}
+              - service: input_select.select_option
+                entity_id: input_select.home_mode
+                data:
+                  option: "{{ txt }}"
+
+          - conditions:
+              - condition: trigger
+                id: "vac"
+            sequence:
+              - service: input_select.select_option
+                entity_id: input_select.home_mode
+                data:
+                  option: Vacation
+
+
 # #  ##################################
 # #  System - Sandra Location changing
 # #  ##################################
