@@ -179,30 +179,32 @@
               - condition: template
                 value_template: "{{ 'OB DISCHRG' in trigger.to_state.state }}"
             sequence:
-              - service: notify.telegram
-                data:
-                  message: "\U0001f50b Внимание! Запущен UPS (1200)!"
-              - service: notify.mobile_app_iphone_12_dtsymbal
-                data:
-                  title: "Внимание!"
-                  message: "Запущен UPS (1200)"
+              - parallel:
+                  - service: notify.telegram
+                    data:
+                      message: "\U0001f50b Внимание! Запущен UPS (1200)!"
+                  - service: notify.mobile_app_iphone_12_dtsymbal
+                    data:
+                      title: "Внимание!"
+                      message: "Запущен UPS (1200)"
           - conditions:
               - condition: template
                 value_template: "{{ trigger.to_state.state == 'LB' }}"
             sequence:
-              - service: notify.telegram
-                data:
-                  message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы!"
-              - service: notify.mobile_app_iphone_12_dtsymbal
-                data:
-                  title: "Внимание!"
-                  message: "UPS полностью разряжен! Завершаем работу!"
-                  data:
-                    push:
-                      sound:
-                        name: "default"
-                        critical: 1
-                        volume: 1.0        
+              - parallel:
+                  - service: notify.telegram
+                    data:
+                      message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы!"
+                  - service: notify.mobile_app_iphone_12_dtsymbal
+                    data:
+                      title: "Внимание!"
+                      message: "UPS полностью разряжен! Завершаем работу!"
+                      data:
+                        push:
+                          sound:
+                            name: "default"
+                            critical: 1
+                            volume: 1.0        
           #    - service: hassio.host_shutdown
           - conditions:
               - condition: template

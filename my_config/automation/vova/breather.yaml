@@ -98,6 +98,11 @@
         entity_id: input_select.breazer_timer
         to:
         id: 'input'
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Выключи вентиляцию
+        id: 'to_off_alice'
     condition:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
@@ -179,14 +184,17 @@
                       # - service: notify.telegram
                       #   data:
                       #     message: "breather off"
-                    
-                      - service: button.press
-                        entity_id: button.digma_ir_v_breather_pwr
-                      
-                      - service: fan.set_percentage
-                        entity_id: fan.breather_v
-                        data:
-                          percentage: "{{states('input_number.high_speed_for_timer_mode_breather_v')|int(0) }}"
+                      - if:
+                          - condition: state
+                            entity_id: input_boolean.hourly_mode_breather_v
+                            state: 'on'
+                        then:
+                          - service: button.press
+                            entity_id: button.digma_ir_v_breather_pwr
+                          - service: fan.set_percentage
+                            entity_id: fan.breather_v
+                            data:
+                              percentage: "{{states('input_number.high_speed_for_timer_mode_breather_v')|int(0) }}"
 
                       - service: timer.start
                         entity_id: timer.breather_v
@@ -213,6 +221,28 @@
 
               - service: input_boolean.turn_off
                 entity_id: input_boolean.hourly_mode_breather_v
+
+          - conditions:
+              - condition: trigger
+                id: "to_off_alice"
+            sequence:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_v' }}"
+
+              - if:
+                  - condition: state
+                    entity_id: binary_sensor.breather_v
+                    state: 'on'
+                then:
+                  - service: button.press
+                    entity_id: button.digma_ir_v_breather_pwr
+
+              - service: timer.cancel
+                entity_id: timer.breather_v
+
+              - service: input_boolean.turn_off
+                entity_id: input_boolean.hourly_mode_breather_v
+
 
           - conditions:
               - condition: trigger

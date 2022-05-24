@@ -16,41 +16,42 @@
         to: 'on'
         from: 'off'
     action:
-      - service: mqtt.publish
-        data:
-          topic: 'wallpanel/digma801/command'
-          payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
-      - service: notify.telegram
-        data:
-          title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-          message: "{{states('sensor.time')}} {{states('sensor.date')}}"
-          data:
-            photo:
-            - url: !secret window_snap
-              caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"  
-      - service: notify.mobile_app_iphone_12_dtsymbal
-        data:
-          message: "Звонок в домофон!"
-          title: Домофон
-          data:
-            actions:
-              - action: Domofon_Open
-                title: Open
-                authenticationRequired: false
-                activationMode: background
-            image: !secret window_snap  
-      - service: notify.telegram_cam
-        data:
-          title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-          message: "{{states('sensor.time')}} {{states('sensor.date')}}"
-          data:
-            photo:
-            - url: !secret window_snap
-              caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-      - service: mqtt.publish
-        data:
-          topic: 'wallpanel/digma801/command'
-          payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'              
+      - parallel:
+          - service: mqtt.publish
+            data:
+              topic: 'wallpanel/digma801/command'
+              payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+          - service: notify.telegram
+            data:
+              title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+              message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+              data:
+                photo:
+                - url: !secret window_snap
+                  caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"  
+          - service: notify.mobile_app_iphone_12_dtsymbal
+            data:
+              message: "Звонок в домофон!"
+              title: Домофон
+              data:
+                actions:
+                  - action: Domofon_Open
+                    title: Open
+                    authenticationRequired: false
+                    activationMode: background
+                image: !secret window_snap  
+          - service: notify.telegram_cam
+            data:
+              title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+              message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+              data:
+                photo:
+                - url: !secret window_snap
+                  caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+          - service: mqtt.publish
+            data:
+              topic: 'wallpanel/digma801/command'
+              payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'              
       - condition: state
         entity_id: switch.silent_mode
         state: 'on'

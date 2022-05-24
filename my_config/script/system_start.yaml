@@ -21,8 +21,13 @@
         entity_id: timer.led_strip_bed_dima_v
       - service: timer.{{'start' if is_state('light.led_strip_bed_sandra_v','on') else 'cancel'}}
         entity_id: timer.led_strip_bed_sandra_v
-      - service: >
-          {% if is_state('binary_sensor.0x158d000232ddd6_contact','off')%}script.toilet_indicator_off{%else%}script.noop{%endif%}
+      - if:
+          - condition: state
+            entity_id: binary_sensor.0x158d000232ddd6_contact
+            state: 'off'
+        then:
+          - service: light.turn_off
+            entity_id: light.esp32_node_hs_toilet
       - service: timer.{{'start' if (is_state('switch.d1mini_domofon_auto_open','on') or is_state('switch.d1mini_domofon_auto_open','on')) else 'cancel'}}
         entity_id: timer.domofon
       - service: light.turn_off
@@ -46,17 +51,6 @@
         then:
           - service: script.turn_on
             entity_id: script.away_mode_on
-      # - choose:
-      #     - conditions:
-      #         - condition: template
-      #           value_template: "{{(as_timestamp(now())|int - states('input_number.last_action_breather_v')|int)/60 < 60 }}"
-      #       sequence:
-      #         - service: timer.cancel
-      #           entity_id: timer.breather_v
-      #         - service: timer.start
-      #           entity_id: timer.breather_v
-      #           data:
-      #             duration: "{{ (as_timestamp(now())|int - states('input_number.last_action_breather_v')|int) }}"
       - service: homeassistant.update_entity
         entity_id:
           - sensor.host_uptime
@@ -103,8 +97,8 @@
           dev_id: sasha
           location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
 
-  toilet_indicator_off:
-    alias: Toilet Indicator Off
-    sequence:
-      - service: light.turn_off
-        entity_id: light.esp32_node_hs_toilet
+  # toilet_indicator_off:
+  #   alias: Toilet Indicator Off
+  #   sequence:
+  #     - service: light.turn_off
+  #       entity_id: light.esp32_node_hs_toilet

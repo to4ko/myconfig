@@ -38,28 +38,29 @@
             - media_player.{{states('input_select.main_audio_out')|lower}}
             - media_player.yandex_k
           volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          media_content_id: >-
-            Вним+ание! Вним+ание! Обнар+ужена ут+ечка вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Обнар+ужена ут+ечка вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Вод+а перекрыв+ается!'
-      - service: notify.telegram
-        data:
-          message: >-
-            {{'\U000026d4'}}Внимание! Обнаружена утечка воды {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}на кухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туалете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Вода перекрывается!
-      - service: notify.mobile_app_iphone_12_dtsymbal
-        data:
-          message: >-
-            {{'\U000026d4'}}Внимание! Обнаружена утечка воды {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}на кухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туалете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Вода перекрывается!
-          data:
-            push:
-              sound:
-                name: "default"
-                critical: 1
-                volume: 1.0        
+      - parallel:
+          - service: media_player.play_media
+            data:
+              media_content_type: dialog
+              entity_id: 
+                - media_player.{{states('input_select.main_audio_out')|lower}}
+                - media_player.yandex_k
+              media_content_id: >-
+                Вним+ание! Вним+ание! Обнар+ужена ут+ечка вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Обнар+ужена ут+ечка вод+ы {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}н+а к+ухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туал+ете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Вод+а перекрыв+ается!'
+          - service: notify.telegram
+            data:
+              message: >-
+                {{'\U000026d4'}}Внимание! Обнаружена утечка воды {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}на кухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туалете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Вода перекрывается!
+          - service: notify.mobile_app_iphone_12_dtsymbal
+            data:
+              message: >-
+                {{'\U000026d4'}}Внимание! Обнаружена утечка воды {% if trigger.entity_id=="binary_sensor.0x158d00023297e7_moisture"%}на кухне{%elif trigger.entity_id=="binary_sensor.0x158d00023684c2_moisture"%}в туалете{%else%}в ванне{%if trigger.entity_id=="binary_sensor.0x158d0002349f5b_moisture"%} за машинкой{%endif%}{%endif%}! Вода перекрывается!
+              data:
+                push:
+                  sound:
+                    name: "default"
+                    critical: 1
+                    volume: 1.0        
       - service: switch.turn_on
         entity_id: switch.esp32_node_b_relay_1
       - delay: '00:00:25'

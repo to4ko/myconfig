@@ -157,8 +157,7 @@
       - platform: time
         at: "00:00:10"
     condition:
-      - condition: template
-        value_template: "{{ strptime(states('sensor.date'), '%Y-%m-%d').day|int(0) == 21 }}"
+      - "{{ now().timestamp() | timestamp_custom('%d') | int(0) == 21 }}"
     action:
       - service: mqtt.publish
         data:
@@ -304,20 +303,20 @@
       - condition: template
         value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'))|int(0)) > 10*60 }}"
     action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f6a8 Внимание! Общий ток более 30А!"
-          data:
-            push:
-              sound:
-                name: "default"
-                critical: 1
-                volume: 1.0
-  
-      - service: notify.mobile_app_iphone_12_dtsymbal
-        data:
-          title: "Внимание!"
-          message: "Внимание! Общий ток более 30А"
+      - parallel:
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Внимание! Общий ток более 30А!"
+              data:
+                push:
+                  sound:
+                    name: "default"
+                    critical: 1
+                    volume: 1.0
+          - service: notify.mobile_app_iphone_12_dtsymbal
+            data:
+              title: "Внимание!"
+              message: "Внимание! Общий ток более 30А"
   
 # ##################################
 # System - Utility meter tariff change
@@ -354,19 +353,20 @@
         entity_id: sensor.esp32_pzem_hb_power
         above: 1200
     action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
-      - service: notify.mobile_app_iphone_12_dtsymbal
-        data:
-          title: "Внимание!"
-          message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
-          data:
-            push:
-              sound:
-                name: "default"
-                critical: 1
-                volume: 1.0
+      - parallel:
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
+          - service: notify.mobile_app_iphone_12_dtsymbal
+            data:
+              title: "Внимание!"
+              message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
+              data:
+                push:
+                  sound:
+                    name: "default"
+                    critical: 1
+                    volume: 1.0
   
 # ##################################
 # System - Water Consumption
@@ -391,19 +391,20 @@
       - condition: template
         value_template: "{{ is_state('input_boolean.security_mode','on') }}"
     action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f6a8 Внимание! Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
-      - service: notify.mobile_app_iphone_12_dtsymbal
-        data:
-          title: "Внимание!"
-          message: "Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
-          data:
-            push:
-              sound:
-                name: "default"
-                critical: 1
-                volume: 1.0
+      - parallel:
+          - service: notify.telegram
+            data:
+              message: "\U0001f6a8 Внимание! Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
+          - service: notify.mobile_app_iphone_12_dtsymbal
+            data:
+              title: "Внимание!"
+              message: "Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
+              data:
+                push:
+                  sound:
+                    name: "default"
+                    critical: 1
+                    volume: 1.0
   
 # ##################################
 # System - Water sensor outage
