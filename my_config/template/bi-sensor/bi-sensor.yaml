@@ -113,16 +113,6 @@
         icon: mdi:water-pump
         state: "{{ is_state('binary_sensor.0x158d000423f316_contact','off') }}"
 
-      - name: Motion 1h
-        state: "{{ is_state('group.motioninternal', 'on') }}"
-        delay_off: "01:00:00"
-        device_class: motion
-  
-      - name: Someone Home 1h
-        state: "{{ is_state('binary_sensor.motion_1h', 'on') or is_state('group.persons', 'home') }}"
-        delay_off: "01:00:00"
-        device_class: occupancy
-
 #{{states('proximity.dima_home')|int(0) < 500 and states('proximity.sandra_home')|int(0) < 500 and states('proximity.vova_home')|int(0) < 500 }}
 
       # - name: Bad AirQ Toilet
@@ -244,57 +234,12 @@
         icon: mdi:battery
         device_class: power
 
-      - name: Family Home
-        device_class: presence
-        state: >
-          {{ states('zone.home')|int(0) > 0 or 
-             is_state('input_boolean.guest_mode','on')}}
-
-      - name: Family Home Extended
-        device_class: presence
-        state: >
-          {{ states('zone.home_extended')|int(0) > 0 }}
-
-      - name: Vacation Mode
-        state: "{{is_state('input_boolean.security_mode','off')}}"
-        delay_on:
-          hours: 24
-        icon: mdi:palm-tree
-          
-      - name: Bottom Lock
-        device_class: lock
-        state: "{{is_state('binary_sensor.0x158d0002a1a4b2_contact','on')}}"
-        delay_off:
-          seconds: 2
-        delay_on:
-          seconds: 2
-        icon: >
-          {% if is_state('binary_sensor.bottom_lock','on') %}
-          mdi:lock-open-variant
-          {% else %}
-          mdi:lock
-          {% endif %}
-
       - name: Chair 2 S
         state: "{{ is_state('sensor.0x158d0002a8ac3c_action','vibration') or is_state('sensor.0x158d0002a8ac3c_action','tilt') }}"
         delay_off:
           minutes: 20
         icon: mdi:chair-rolling
-        
-      - name: Top Lock
-        device_class: lock
-        state: "{{is_state('binary_sensor.0x158d0002b7c2c8_contact','on')}}"
-        delay_off:
-          seconds: 2
-        delay_on:
-          seconds: 2
-        icon: >
-          {% if is_state('binary_sensor.top_lock','on') %}
-          mdi:lock-open-variant-outline
-          {% else %}
-          mdi:lock-outline
-          {% endif %}
-          
+
       - name: Ice Alarm Current
         device_class: cold
         state: "{{ 1 > state_attr('weather.my_weather','temperature')|float(0) > -3}}"

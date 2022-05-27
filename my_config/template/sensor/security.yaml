@@ -14,18 +14,18 @@
           {% endif %}
 
       - name: People Home
-        state: >
+        state: >-
           {{ expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count }}
-        icon: >
-          {%- set icons = ['account-off', 'account', 'account-multiple'] %}
-          {%- set people = expand('group.persons') %}
-          {%- set cnt = people | selectattr('state', 'in', ['home', 'on'] ) | list | count %}
-          {%- if cnt >= 0 %}
-            mdi:{{ icons[cnt] if cnt in range(icons | count) else 'account-group' }}
-          {%- else %}
-            mdi:account-alert
+        icon: >-
+          {%- set cnt = expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count %}
+          {%- if cnt <= 10 %}
+            mdi:numeric-{{cnt}}-box
           {%- endif %}
-          unit_of_measurement: ea
+        unit_of_measurement: ea
+        attributes:
+          names: "{{expand('group.persons') | selectattr('state', 'eq', 'home') | map(attribute='name') | list | join(', ') }}"
+
+#{{ expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count }}
 
       - name: Last Motion
         state: " {{iif(expand('group.motioninternal')|count > 0, (expand('group.motioninternal')|sort(attribute='last_changed'))[-1].name, '' , '')}} "
