@@ -1,0 +1,37 @@
+# ##################################
+# System - Breather Control with intents
+# ##################################
+  - alias: system_breather_control
+    id: system_breather_control
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Выключи вентиляцию
+        id: 'to_off_alice'
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Включи вентиляцию
+        id: 'to_on_alice'
+    condition:
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+      - condition: template
+        value_template: "{{ trigger.event.data.entity_id != 'media_player.yandex_v' }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_mb' }}"
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_mb_breather_pwr
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_s' }}"
+            sequence:
+              - service: button.press
+                entity_id: button.digma_ir_s_breather_pwr
