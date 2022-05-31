@@ -1,0 +1,809 @@
+
+# ##################################
+# System - MQTT Sensors Discovery
+# ##################################
+  - id: mqtt_sensors_discovery  
+    alias: mqtt_sensors_discovery
+    initial_state: true 
+    trigger: 
+      - platform: state 
+        entity_id: binary_sensor.mqtt_server 
+        to: 'on' 
+      - event: start 
+        platform: homeassistant 
+    condition: 
+      - condition: state 
+        entity_id: binary_sensor.mqtt_server 
+        state: 'on' 
+    action: 
+      # Main Instance Broker
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mqtt_broker_uptime/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"MQTT Broker Uptime", 
+              "state_topic":"$SYS/broker/uptime", 
+              "icon":"mdi:timer-outline", 
+              "unit_of_measurement":"s", 
+              "entity_category": "diagnostic", 
+              "unique_id":"mqtt_broker_uptime", 
+              "value_template":"{{ '{{' }} value | regex_replace('[^\\d]','') | trim {{ '}}' }}", 
+              "json_attributes_topic":"$SYS/broker/version", 
+              "json_attributes_template":"{\"version\":\"{{ '{{' }} (value | regex_replace('[\\s\\S]+?\\s(\\d)','\\\\1')) | trim {{ '}}' }}\"}", 
+              "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}","configuration_url":"https://mosquitto.org/"} 
+            }
+ 
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mqtt_broker_store_size/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"MQTT Store Size", 
+              "state_topic":"$SYS/broker/store/messages/bytes", 
+              "icon":"mdi:database-outline", 
+              "unit_of_measurement":"MB", 
+              "unique_id":"mqtt_broker_store_size", 
+              "value_template":"{{ '{{' }} (value | int / 1024 / 1024) | round(2) {{ '}}' }}", 
+              "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}"} 
+            } 
+ 
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mqtt_broker_bytes_sent/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"MQTT Bytes Sent", 
+              "state_topic":"$SYS/broker/bytes/sent", 
+              "icon":"mdi:upload-network-outline", 
+              "unit_of_measurement":"MB", 
+              "unique_id":"mqtt_broker_bytes_sent", 
+              "value_template":"{{ '{{' }} (value | int / 1024 / 1024) | round(2) {{ '}}' }}", 
+              "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}"} 
+            } 
+ 
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mqtt_broker_bytes_received/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"MQTT Bytes Received", 
+              "state_topic":"$SYS/broker/bytes/received", 
+              "icon":"mdi:download-network-outline", 
+              "unit_of_measurement":"MB", 
+              "unique_id":"mqtt_broker_bytes_received", 
+              "value_template":"{{ '{{' }} (value | int / 1024 / 1024) | round(2) {{ '}}' }}", 
+              "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}"} 
+            } 
+ 
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mqtt_broker_load_connection/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"MQTT Load Connection", 
+              "state_topic":"$SYS/broker/load/connections/1min", 
+              "icon":"mdi:account-network-outline", 
+              "unit_of_measurement":"client", 
+              "unique_id":"mqtt_broker_load_connection", 
+              "value_template":"{{ '{{' }} value {{ '}}'
+            }}", 
+              "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}"} 
+            } 
+ 
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mqtt_broker_load_sent/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"MQTT Load Sent", 
+              "state_topic":"$SYS/broker/load/bytes/sent/1min", 
+              "icon":"mdi:upload-network-outline", 
+              "unit_of_measurement":"MB", 
+              "unique_id":"mqtt_broker_load_sent", 
+              "value_template":"{{ '{{' }} (value | int / 1024 / 1024) | round(2) {{ '}}' }}", 
+              "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}"} 
+            } 
+ 
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mqtt_broker_load_received/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"MQTT Load Received", 
+              "state_topic":"$SYS/broker/load/bytes/received/1min", 
+              "icon":"mdi:download-network-outline", 
+              "unit_of_measurement":"MB", 
+              "unique_id":"mqtt_broker_load_received", 
+              "value_template":"{{ '{{' }} (value | int / 1024 / 1024) | round(2) {{ '}}' }}", 
+              "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}"} 
+            }
+      # HP 600 G6 DM
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_telemetry_last_update/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 Telemetry Last Update", 
+              "state_topic":"hp600g6/last_update", 
+              "icon":"mdi:calendar",  
+              "unique_id":"hp_600_G6_telemetry_last_update", 
+              "value_template":"{{ '{{' }} value {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6dm"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6 DM} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_uptime/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 Uptime", 
+              "state_topic":"hp600g6/system_uptime", 
+              "icon":"mdi:clock-digital",  
+              "unit_of_measurement": "h",
+              "unique_id":"hp_600_G6_uptime", 
+              "value_template":"{{ '{{' }} ((value | float(0))/3600) | round(2, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6dm"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6 DM} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_iowait/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 IoWait", 
+              "state_topic":"hp600g6/kernel_stat", 
+              "icon":"mdi:speedometer-medium",  
+              "unit_of_measurement": "%",
+              "unique_id":"hp_600_G6_iowait", 
+              "value_template":"{{ '{{' }} ((value_json.sysstat.hosts[0].statistics[0]['avg-cpu'].iowait) | float(0)) | round(2, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6dm"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6 DM} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_nvme0_usage/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 NVME0 Usage", 
+              "state_topic":"hp600g6/disk_usage/nvme0", 
+              "icon":"mdi:chip",  
+              "unit_of_measurement": "%",
+              "unique_id":"hp_600_G6_nvme0_usage", 
+              "value_template":"{{ '{{' }} value | float(0) | round(0, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6dm"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6 DM"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_nvme0_temp/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 NVME0 Temp", 
+              "state_topic":"hp600g6/disk_temp/nvme0", 
+              "unit_of_measurement":"°C",
+              "device_class":"temperature",
+              "unique_id":"hp_600_G6_nvme0_temp", 
+              "value_template":"{{ '{{' }} value | float(0) | round(0, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_nvme0_tb_written/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 NVME0 TB Written", 
+              "state_topic":"hp600g6/ssd_smart/nvme0_lba_written",
+              "unit_of_measurement":"Tb",
+              "icon":"mdi:chip",
+              "unique_id":"hp_600_G6_nvme0_tb_written", 
+              "value_template":"{{ '{{' }} ( value | float(0) * 512000 / 1024 / 1024 / 1024 / 1024) |round(1, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_nvme0_power_on_hours/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 NVME0 Power On Hours", 
+              "state_topic":"hp600g6/ssd_smart/nvme0_power_on_hours",
+              "unit_of_measurement":"h",
+              "icon":"mdi:clock-alert-outline",
+              "unique_id":"hp_600_G6_nvme0_power_on_hours", 
+              "value_template":"{{ '{{' }} value | int(0) {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_nvme0_life_left_smart/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 NVME0 Life Left Smart", 
+              "state_topic":"hp600g6/ssd_smart/nvme0_life_left",
+              "unit_of_measurement":"%",
+              "icon":"mdi:calendar-heart",
+              "unique_id":"hp_600_G6_nvme0_life_left_smart", 
+              "value_template":"{{ '{{' }} value | int(0) {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_nvme0_gb_write/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 NVME0 Session Write", 
+              "state_topic":"hp600g6/disk_stat/nvme0_gb_write",
+              "unit_of_measurement":"Gb",
+              "icon":"mdi:alpha-w-box",
+              "unique_id":"hp_600_G6_nvme0_session_write", 
+              "value_template":"{{ '{{' }} value| float(0)| round(1, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/hp600g6_nvme0_gb_read/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"HP 600 G6 NVME0 Session Read", 
+              "state_topic":"hp600g6/disk_stat/nvme0_gb_read",
+              "unit_of_measurement":"Gb",
+              "icon":"mdi:alpha-r-box",
+              "unique_id":"hp_600_G6_nvme0_session_read", 
+              "value_template":"{{ '{{' }} value| float(0)| round(1, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["hp600g6"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6"} 
+            }
+      # Pinhole Camera Motion
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/binary_sensor/pinhole_camera_motion/config 
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Pinhole Camera Motion", 
+              "state_topic":"Agent/cameras/pinhole/motion",
+              "device_class":"motion",
+              "payload_on":"true",
+              "payload_off":"false",
+              "unique_id":"pinhole_camera_motion", 
+              "value_template":"{{ '{{' }} value| float(0)| round(1, 'common') {{ '}}' }}", 
+              "device":{"identifiers":["Pinhole"],"manufacturer":"China","model":"Pinhole","name":"PinholeCam"} 
+            }
+
+      # Wallpanel
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/binary_sensor/wp_digma801_charging/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"WP Digma801 Charging", 
+              "state_topic":"wallpanel/digma801/sensor/battery",
+              "device_class":"battery_charging",
+              "payload_on":"true",
+              "payload_off":"false",
+              "unique_id":"wp_digma801_charging", 
+              "value_template":"{{ '{{' }} value_json.charging {{ '}}' }}", 
+              "availability_topic": "wallpanel/digma801/connection",
+              "device":{"identifiers":["wp_digma801"],"manufacturer":"Wallpanel","model":"Digma801","name":"Digma801"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/binary_sensor/wp_digma801_ac_connected/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"WP Digma801 AC Connected", 
+              "state_topic":"wallpanel/digma801/sensor/battery",
+              "device_class":"power",
+              "payload_on":"true",
+              "payload_off":"false",
+              "unique_id":"wp_digma801_ac_connected", 
+              "value_template":"{{ '{{' }} value_json.acPlugged {{ '}}' }}", 
+              "availability_topic": "wallpanel/digma801/connection",
+              "device":{"identifiers":["wp_digma801"],"manufacturer":"Wallpanel","model":"Digma801","name":"Digma801"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/binary_sensor/wp_digma801_motion/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"WP Digma801 Motion", 
+              "state_topic":"wallpanel/digma801/sensor/motion",
+              "device_class":"motion",
+              "payload_on":"true",
+              "payload_off":"false",
+              "unique_id":"wp_digma801_motion", 
+              "value_template":"{{ '{{' }} value_json.value {{ '}}' }}", 
+              "availability_topic": "wallpanel/digma801/connection",
+              "device":{"identifiers":["wp_digma801"],"manufacturer":"Wallpanel","model":"Digma801","name":"Digma801"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/binary_sensor/wp_digma801_screen/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"WP Digma801 Screen", 
+              "state_topic":"wallpanel/digma801/state",
+              "payload_on":"true",
+              "payload_off":"false",
+              "unique_id":"wp_digma801_screen",
+              "icon":"mdi:tablet-dashboard", 
+              "value_template":"{{ '{{' }} value_json.screenOn {{ '}}' }}", 
+              "availability_topic": "wallpanel/digma801/connection",
+              "device":{"identifiers":["wp_digma801"],"manufacturer":"Wallpanel","model":"Digma801","name":"Digma801"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/wp_digma801_battery_level/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"WP Digma801 Battery Level", 
+              "state_topic":"wallpanel/digma801/sensor/battery",
+              "unique_id":"wp_digma801_battery_level",
+              "device_class":"battery",
+              "unit_of_measurement":"%", 
+              "value_template":"{{ '{{' }} value_json.value | int(0) {{ '}}' }}", 
+              "availability_topic": "wallpanel/digma801/connection",
+              "device":{"identifiers":["wp_digma801"],"manufacturer":"Wallpanel","model":"Digma801","name":"Digma801"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/wp_screen_brightness/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"WP Digma801 Screen Brightness", 
+              "state_topic":"wallpanel/digma801/state",
+              "unique_id":"wp_digma801_screen_brightness",
+              "unit_of_measurement":"ea", 
+              "value_template":"{{ '{{' }} value_json.brightness | int(0) {{ '}}' }}", 
+              "availability_topic": "wallpanel/digma801/connection",
+              "device":{"identifiers":["wp_digma801"],"manufacturer":"Wallpanel","model":"Digma801","name":"Digma801"} 
+            }
+
+      # SLS Radiation
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/radiation_dose/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Radiation Dose Per Hour", 
+              "state_topic":"sls_gateway/0x00124B001EC8DC5C/radiation_dose_per_hour",
+              "unique_id":"radiation_dose_per_hour",
+              "icon":"mdi:radioactive",
+              "unit_of_measurement":"mSv/h",
+              "value_template":"{{ '{{' }} value {{ '}}' }}", 
+              "availability_topic": "sls_gateway/bridge/state",
+              "pl_avail":"online",
+              "pl_not_avail":"offline",
+              "device":{"identifiers":["sls_radiation"],"manufacturer":"DIY","model":"Radiation","name":"Radiation Sensor"}
+            }
+
+      # Mi Kettle
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mi_kettle_temp/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Mi Kettle Temperature", 
+              "state_topic":"r4s/b87c6f84aec1/rsp/temp",
+              "unique_id":"mi_kettle_temp",
+              "device_class":"temperature",
+              "value_template":"{{ '{{' }} value|int(0) {{ '}}' }}", 
+              "device":{"identifiers":["mi_kettle"],"manufacturer":"Xiaomi","name":"Kettle","model":"MJDSH01YM"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/mi_kettle_state/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Mi Kettle State", 
+              "state_topic":"r4s/b87c6f84aec1/rsp/state",
+              "unique_id":"mi_kettle_state",
+              "icon":"mdi:kettle",
+              "value_template":"{{ '{{' }} value {{ '}}' }}",
+              "pl_not_avail":"OFFLINE",
+              "device":{"identifiers":["mi_kettle"],"manufacturer":"Xiaomi","name":"Kettle","model":"MJDSH01YM"} 
+            }
+
+      # System Entities
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/config_line_count/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Config Line Count", 
+              "state_topic":"hp600g6/config_linecount",
+              "unique_id":"config_line_count",
+              "icon":"mdi:format-list-bulleted",
+              "unit_of_measurement":"lines",
+              "value_template":"{{ '{{' }} value|int(0) {{ '}}' }}", 
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/config_line_count_code/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Config Line Count Code", 
+              "state_topic":"hp600g6/config_linecount_code",
+              "unique_id":"config_line_count_code",
+              "icon":"mdi:format-list-numbered",
+              "unit_of_measurement":"lines",
+              "value_template":"{{ '{{' }} value|int(0) {{ '}}' }}", 
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/music_allowed/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Music Allowed",
+              "command_topic":"servers/main_states/music_allowed",
+              "state_topic":"servers/main_states/music_allowed",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:volume-high",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/main_lead/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Main Lead",
+              "command_topic":"servers/main_states/main_lead",
+              "state_topic":"servers/main_states/main_lead",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:server-network",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/led_strip_bed_dima_v_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"LED Strip Bed Dima V Restart Key",
+              "command_topic":"servers/main_states/led_strip_bed_dima_v_restart_key",
+              "state_topic":"servers/main_states/led_strip_bed_dima_v_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/led_strip_bed_sandra_v_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"LED Strip Bed Sandra V Restart Key",
+              "command_topic":"servers/main_states/led_strip_bed_sandra_v_restart_key",
+              "state_topic":"servers/main_states/led_strip_bed_sandra_v_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/square_led_v_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Square LED V Restart Key",
+              "command_topic":"servers/main_states/square_led_v_restart_key",
+              "state_topic":"servers/main_states/square_led_v_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/square_led_s_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Square LED S Restart Key",
+              "command_topic":"servers/main_states/square_led_s_restart_key",
+              "state_topic":"servers/main_states/square_led_s_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/round_led_mb_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Round LED MB Restart Key",
+              "command_topic":"servers/main_states/round_led_mb_restart_key",
+              "state_topic":"servers/main_states/round_led_mb_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/round_led_k_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Round LED K Restart Key",
+              "command_topic":"servers/main_states/round_led_k_restart_key",
+              "state_topic":"servers/main_states/round_led_k_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/round_led_hs_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Round LED HS Restart Key",
+              "command_topic":"servers/main_states/round_led_hs_restart_key",
+              "state_topic":"servers/main_states/round_led_hs_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/mirror_light_b_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Mirror Light B Restart Key",
+              "command_topic":"servers/main_states/mirror_light_b_restart_key",
+              "state_topic":"servers/main_states/mirror_light_b_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/led_strip_entrance_hb_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"LED Strip Entrance HB Restart Key",
+              "command_topic":"servers/main_states/led_strip_entrance_hb_restart_key",
+              "state_topic":"servers/main_states/led_strip_entrance_hb_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/led_strip_hb_restart_key/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"LED Strip HB Restart Key",
+              "command_topic":"servers/main_states/led_strip_hb_restart_key",
+              "state_topic":"servers/main_states/led_strip_hb_restart_key",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:restart",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/maintenance_mode/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Maintenance Mode",
+              "command_topic":"servers/main_states/maintenance_mode",
+              "state_topic":"servers/main_states/maintenance_mode",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:hammer-wrench",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/breather_auto_v/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Breather Auto V",
+              "command_topic":"servers/main_states/breather_auto_v",
+              "state_topic":"servers/main_states/breather_auto_v",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:flash-auto",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/breather_auto_mb/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Breather Auto MB",
+              "command_topic":"servers/main_states/breather_auto_mb",
+              "state_topic":"servers/main_states/breather_auto_mb",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:flash-auto",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/breather_auto_s/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Breather Auto S",
+              "command_topic":"servers/main_states/breather_auto_s",
+              "state_topic":"servers/main_states/breather_auto_s",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:flash-auto",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/breather_speed_auto_v/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Breather Auto Speed V",
+              "command_topic":"servers/main_states/breather_speed_auto_v",
+              "state_topic":"servers/main_states/breather_speed_auto_v",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:fan-auto",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/breather_speed_auto_mb/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Breather Auto Speed MB",
+              "command_topic":"servers/main_states/breather_speed_auto_mb",
+              "state_topic":"servers/main_states/breather_speed_auto_mb",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:fan-auto",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/breather_speed_auto_s/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Breather Auto Speed S",
+              "command_topic":"servers/main_states/breather_speed_auto_s",
+              "state_topic":"servers/main_states/breather_speed_auto_s",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:fan-auto",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/silent_mode/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Silent Mode",
+              "command_topic":"servers/main_states/silent_mode",
+              "state_topic":"servers/main_states/silent_mode",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:volume-off",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/dark_mode/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"Dark Mode",
+              "command_topic":"servers/main_states/dark_mode",
+              "state_topic":"servers/main_states/dark_mode",
+              "payload_on":"ON",
+              "payload_off":"OFF",
+              "retain":"true",
+              "icon":"mdi:weather-night",
+              "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
+            }
