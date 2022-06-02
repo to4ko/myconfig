@@ -430,8 +430,30 @@
               "availability_topic": "sls_gateway/bridge/state",
               "pl_avail":"online",
               "pl_not_avail":"offline",
-              "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"} 
+              "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"}
             }
+
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/light/sls_gateway_led/config
+          retain: true 
+          payload: | 
+            { 
+              "name":"SLS Gateway LED", 
+              "icon":"mdi:lighthouse-on", 
+              "uniq_id":"sls_gateway_led", 
+              "avty_t": "sls_gateway/bridge/state",
+              "cmd_t": "sls_gateway/bridge/state/led",
+              "rgb_cmd_t": "sls_gateway/bridge/state/led",
+              "rgb_cmd_tpl": "{ \"mode\": \"manual\", \"hex\": \"#{{'{{'}}'%02x%02x%02x' | format(red, green, blue){{'}}'}}\" }",
+              "on_cmd_type": "brightness",
+              "pl_on": "ON",
+              "pl_off": "{\"mode\": \"off\"}",
+              "stat_t": "sls_gateway/bridge/state/led",
+              "stat_val_tpl": "{{ '{%' }} if value_json.mode == \"off\" {{ '%}{' }}\"mode\": \"off\"{{ '}{%' }} else {{ '%}' }}ON{{ '{%' }} endif {{ '%}' }}",
+              "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"}
+              }
 
       # Mi Kettle
       - service: mqtt.publish 
@@ -936,41 +958,3 @@
               "entity_category": "config",
               "device":{"identifiers":["sys_info"],"manufacturer":"DTsymbal","name":"System Entities"} 
             }
-            
-            
-  # - id: mqtt_sensors_discovery_2
-  #   alias: mqtt_sensors_discovery_2
-  #   initial_state: true 
-  #   trigger: 
-  #     - platform: state 
-  #       entity_id: binary_sensor.mqtt_broker_hp
-  #       to: 'on' 
-  #     - event: start 
-  #       platform: homeassistant
-  #     - platform: event
-  #       event_type: automation_reloaded
-  #   condition: 
-  #     - condition: state 
-  #       entity_id: binary_sensor.mqtt_broker_hp
-  #       state: 'on' 
-  #   action: 
-  #     # SLS Light
-  #     - service: mqtt.publish 
-  #       data: 
-  #         topic: homeassistant/light/sls_gateway_led/config
-  #         retain: true 
-  #         payload: >- 
-  #           { 
-  #             "name":"SLS Gateway LED", 
-  #             "state_topic":"sls_gateway/led",
-  #             "unique_id":"sls_gateway_led",
-  #             "availability_topic":"sls_gateway/bridge/state",
-  #             "command_topic":"sls_gateway/led",
-  #             "rgb_command_topic": "sls_gateway/led",
-  #             "on_command_type": "brightness",
-  #             "payload_off":{"mode": "auto"},
-  #             "payload_on": "ON", 
-  #             "pl_avail":"online",
-  #             "pl_not_avail":"offline",
-  #             "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"} 
-  #           }
