@@ -11,6 +11,8 @@
         to: 'on' 
       - event: start 
         platform: homeassistant 
+      - platform: event
+        event_type: automation_reloaded
     condition: 
       - condition: state 
         entity_id: binary_sensor.mqtt_broker_hp
@@ -413,8 +415,69 @@
               "payload_on":"online",
               "payload_off":"offline",
               "unique_id":"sls_gateway_state",
+              "json_attributes_topic":"sls_gateway/bridge/config",
               "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"} 
             }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/switch/sls_gateway_permit_join/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"SLS Gateway Permit Join",
+              "command_topic":"sls_gateway/bridge/config/permit_join",
+              "payload_on":"true",
+              "payload_off":"false",
+              "state_topic":"sls_gateway/bridge/config",
+              "value_template": "{{ '{{' }} value_json.permit_join {{ '}}' }}",
+              "state_on": true,
+              "state_off": false,
+              "optimistic":"false",
+              "unique_id":"sls_gateway_permit_join",
+              "icon":"mdi:hammer-wrench",
+              "availability_topic": "sls_gateway/bridge/state",
+              "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"}
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/sls_gateway_freemem/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"SLS Gateway FreeMem", 
+              "state_topic":"sls_gateway/bridge/config",
+              "value_template":"{{ '{{' }} (value_json.FreeMem | int(0) / 1024) | round(0, 'common') {{ '}}' }}", 
+              "unique_id":"sls_gateway_freemem",
+              "entity_category": "diagnostic",
+              "unit_of_measurement":"kB",
+              "icon":"mdi:memory",
+              "availability_topic": "sls_gateway/bridge/state",
+              "pl_avail":"online",
+              "pl_not_avail":"offline",
+              "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"} 
+            }
+
+      - service: mqtt.publish 
+        data: 
+          topic: homeassistant/sensor/sls_gateway_uptime/config
+          retain: true 
+          payload: >- 
+            { 
+              "name":"SLS Gateway Uptime", 
+              "state_topic":"sls_gateway/bridge/config",
+              "value_template":"{{ '{{' }} value_json.Uptime {{ '}}' }}", 
+              "unique_id":"sls_gateway_uptime",
+              "entity_category": "diagnostic",
+              "unit_of_measurement":"s",
+              "icon":"mdi:timer-outline",
+              "availability_topic": "sls_gateway/bridge/state",
+              "pl_avail":"online",
+              "pl_not_avail":"offline",
+              "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"} 
+            }
+
       - service: mqtt.publish 
         data: 
           topic: homeassistant/sensor/radiation_dose/config
@@ -433,7 +496,6 @@
               "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"}
             }
 
-
       - service: mqtt.publish 
         data: 
           topic: homeassistant/light/sls_gateway_led/config
@@ -442,16 +504,17 @@
             { 
               "name":"SLS Gateway LED", 
               "icon":"mdi:lighthouse-on", 
-              "uniq_id":"sls_gateway_led", 
-              "avty_t": "sls_gateway/bridge/state",
-              "cmd_t": "sls_gateway/bridge/state/led",
-              "rgb_cmd_t": "sls_gateway/bridge/state/led",
-              "rgb_cmd_tpl": "{ \"mode\": \"manual\", \"hex\": \"#{{'{{'}}'%02x%02x%02x' | format(red, green, blue){{'}}'}}\" }",
+              "unique_id":"sls_gateway_led", 
+              "availability_topic": "sls_gateway/bridge/state",
+              "command_topic": "sls_gateway/led",
+              "rgb_command_topic": "sls_gateway/led",
+              "rgb_command_template": "{ \"mode\": \"manual\", \"hex\": \"#{{'{{'}}'%02x%02x%02x' | format(red, green, blue){{'}}'}}\" }",
               "on_cmd_type": "brightness",
-              "pl_on": "ON",
-              "pl_off": "{\"mode\": \"off\"}",
-              "stat_t": "sls_gateway/bridge/state/led",
-              "stat_val_tpl": "{{ '{%' }} if value_json.mode == \"off\" {{ '%}{' }}\"mode\": \"off\"{{ '}{%' }} else {{ '%}' }}ON{{ '{%' }} endif {{ '%}' }}",
+              "payload_on": "ON",
+              "payload_off": "{\"mode\": \"off\"}",
+              "retain":"true",
+              "state_topic": "sls_gateway/led",
+              "stat_value_template": "{{ '{%' }} if value_json.mode == \"off\" {{ '%}{' }}\"mode\": \"off\"{{ '}{%' }} else {{ '%}' }}ON{{ '{%' }} endif {{ '%}' }}",
               "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"}
               }
 
