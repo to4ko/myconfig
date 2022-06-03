@@ -52,11 +52,17 @@
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Micron DDR4 SODIMM
   - 8TB WD White as Media Storage
-  - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
+  - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
   - 256Gb Adata SX6000 Lite as NVME read cache
+  - 256GGb Samsung 840 Pro as Fast "Docker" Storage
 
-**Backup Storage Unit - Synology DS220J** 
-  - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
+**Backup Storage Unit - Xpenology DS918+ UPG**
+  - Asrock J5040-ITX
+  - 2*4Gb Samsung DDR4 SODIMM
+  - 2ea Seagate Skyhawk 4Tb (Storage section for critical files) in SHR1 
+
+**2nd Backup Storage Unit - Synology DS220J** 
+  - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
 
 **Remote Storage Unit - Synology DS215J** 
   - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
