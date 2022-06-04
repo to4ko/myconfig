@@ -18,7 +18,9 @@
         entity_id: binary_sensor.mqtt_broker_hp
         state: 'on' 
     action: 
-      # Main Instance Broker
+      # ##################################
+      # Main Instance Broker Stats Discovery
+      # ##################################
       - service: mqtt.publish 
         data: 
           topic: homeassistant/sensor/mqtt_broker_uptime/config 
@@ -126,7 +128,9 @@
               "value_template":"{{ '{{' }} (value | int / 1024 / 1024) | round(2) {{ '}}' }}", 
               "device":{"identifiers":["mosquito_broker"],"manufacturer":"Eclipse","model":"Mosquitto","name":"Eclipse Mosquitto","sw_version":"{{ state_attr('sensor.mqtt_broker_uptime','version') }}"} 
             }
-      # HP 600 G6 DM
+      # ##################################
+      # HP 600 G6 DM Stats Discovery
+      # ##################################
       - service: mqtt.publish 
         data: 
           topic: homeassistant/sensor/hp600g6_telemetry_last_update/config 
@@ -286,7 +290,9 @@
               "value_template":"{{ '{{' }} value| float(0)| round(1, 'common') {{ '}}' }}", 
               "device":{"identifiers":["hp600g6"],"manufacturer":"HP","model":"Prodesk 600 G6 DM","name":"HP 600 G6"} 
             }
-      # Pinhole Camera Motion
+      # ##################################
+      # Pinhole Camera Motion Discovery
+      # ##################################
       - service: mqtt.publish 
         data: 
           topic: homeassistant/binary_sensor/pinhole_camera_motion/config 
@@ -301,8 +307,9 @@
               "unique_id":"pinhole_camera_motion",
               "device":{"identifiers":["Pinhole"],"manufacturer":"China","model":"Pinhole","name":"PinholeCam"} 
             }
-
-      # Wallpanel
+      # ##################################
+      # Wallpanel Stats Discovery
+      # ##################################
       - service: mqtt.publish 
         data: 
           topic: homeassistant/binary_sensor/wp_digma801_charging/config
@@ -402,7 +409,47 @@
               "device":{"identifiers":["wp_digma801"],"manufacturer":"Digma","model":"Optima Z801","name":"WallPanel"} 
             }
 
-      # SLS state
+      # - service: mqtt.publish 
+      #   data: 
+      #     topic: homeassistant/light/wp_screen/config
+      #     retain: true 
+      #     payload: | 
+      #       { 
+      #         "name":"Digma801 Screen", 
+      #         "icon":"mdi:lighthouse-on", 
+      #         "unique_id":"digma801_screen", 
+      #         "command_topic": "sls_gateway/led",
+      #         "rgb_command_topic": "sls_gateway/led",
+      #         "rgb_command_template": "{ \"mode\": \"manual\", \"hex\": \"#{{'{{'}}'%02x%02x%02x' | format(red, green, blue){{'}}'}}\" }",
+      #         "on_cmd_type": "brightness",
+      #         "payload_on": "ON",
+      #         "payload_off": "{\"mode\": \"off\"}",
+      #         "retain":"true",
+      #         "state_topic": "wallpanel/digma801/state",
+      #         "stat_value_template": "{{ '{%' }} if value_json.mode == \"off\" {{ '%}{' }}\"mode\": \"off\"{{ '}{%' }} else {{ '%}' }}ON{{ '{%' }} endif {{ '%}' }}",
+      #         "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"}
+      #         }
+
+  # - platform: mqtt
+  #   schema: template
+  #   name: Digma801 Screen
+  #   state_topic: 'wallpanel/digma801/state'
+  #   state_template: '{% if value_json.screenOn == true %}on{% else %}off{% endif %}'
+  #   brightness_template: '{{ value_json.brightness }}'
+  #   command_topic: 'wallpanel/digma801/command'
+  #   command_on_template: >
+  #     { "wake": true
+  #     {%- if brightness is defined -%}
+  #     ,"brightness": {{ brightness }}
+  #     {%- endif -%}}
+  #   command_off_template: '{ "wake": false }'
+  #   json_attributes_topic: 'wallpanel/digma801/state'
+
+
+
+      # ##################################
+      # SLS Gateway Stats Discovery
+      # ##################################
       - service: mqtt.publish 
         data: 
           topic: homeassistant/binary_sensor/sls_gateway_state/config
@@ -518,7 +565,9 @@
               "device":{"identifiers":["sls_gateway"],"manufacturer":"SLS","name":"SLS Gateway","model":"Gateway 1"}
               }
 
-      # Mi Kettle
+      # ##################################
+      # Mi Kettle Discovery
+      # ##################################
       - service: mqtt.publish 
         data: 
           topic: homeassistant/sensor/mi_kettle_temp/config
@@ -548,7 +597,9 @@
               "device":{"identifiers":["mi_kettle"],"manufacturer":"Xiaomi","name":"Kettle","model":"MJDSH01YM"} 
             }
 
-      # System Entities
+      # ##################################
+      # System Entities Discovery
+      # ##################################
       - service: mqtt.publish 
         data: 
           topic: homeassistant/sensor/config_line_count/config
