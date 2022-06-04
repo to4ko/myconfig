@@ -42,7 +42,42 @@
     action:
       - service: counter.increment
         entity_id: counter.warning_counter
-  
+
+# ##################################
+# System - Triggered Automations counter
+# ##################################
+  - alias: system_triggered_automations_counter
+    id: system_triggered_automations_counter
+    mode: parallel
+    max: 25
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: automation_triggered
+    condition:
+      - condition: template
+        value_template: "{{ not 'system_triggered_automations_counter' in trigger.event.data.name }}"
+      - condition: template
+        value_template: "{{ not 'system_esphome_ble_advert' in trigger.event.data.name }}"
+    action:
+      - service: counter.increment
+        entity_id: counter.triggered_automations
+
+# ##################################
+# System - Executed Scripts
+# ##################################
+  - alias: system_executed_scripts
+    id: system_executed_scripts
+    mode: parallel
+    max: 25
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: script_started
+    action:
+      - service: counter.increment
+        entity_id: counter.executed_scripts
+
 # ##################################
 # System - START
 # ##################################
@@ -225,9 +260,18 @@
     action:
       - service: notify.telegram
         data:
-          message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int(0) }}, ошибок - {{states('counter.error_counter')|int(0) }}, предупреждений - {{states('counter.warning_counter')|int(0)}}, ошибок входа - {{states('counter.badlogin_counter')|int(0)}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int(0)}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int(0)}}раз(а). Чайник включали - {{states('counter.kettle_k')|int(0)}}раз(а)"
+          message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int(0) }}, ошибок - {{states('counter.error_counter')|int(0) }}, предупреждений - {{states('counter.warning_counter')|int(0)}}, ошибок входа - {{states('counter.badlogin_counter')|int(0)}},  cработало автоматизаций - {{states('counter.triggered_automations')|int(0)}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int(0)}}, запущенно скриптов - {{states('counter.executed_scripts')|int(0)}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int(0)}}раз(а). Чайник включали - {{states('counter.kettle_k')|int(0)}}раз(а)"
       - service: counter.reset
-        entity_id: counter.warning_counter, counter.error_counter, counter.restart_counter, counter.badlogin_counter, counter.main_door_hb, counter.automation_error_counter, counter.kettle_k
+        entity_id: 
+          - counter.warning_counter
+          - counter.error_counter
+          - counter.restart_counter
+          - counter.badlogin_counter
+          - counter.main_door_hb
+          - counter.automation_error_counter
+          - counter.kettle_k
+          - counter.triggered_automations
+          - counter.executed_scripts
       - service: switch.turn_off
         entity_id: switch.dark_mode
       - service: tts.clear_cache
