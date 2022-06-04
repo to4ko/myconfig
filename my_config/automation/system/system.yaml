@@ -222,7 +222,26 @@
       #     message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
       - service: telegram_bot.send_message
         data:
-          message: "\U00002747 {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
+          message: "\U00002747 Entity - {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
+          target: !secret tel_chat_id
+          timeout: 180
+
+# ##################################
+# System - Device registry Change
+# ##################################
+  - alias: system_device_regestry_change
+    id:  system_device_regestry_change
+    initial_state: true
+    mode: queued
+    max: 20
+    max_exceeded: silent
+    trigger:
+      - platform: event
+        event_type: device_registry_updated
+    action:
+      - service: telegram_bot.send_message
+        data:
+          message: "\U0001f4a1 Device - {{ trigger.event.data.action | capitalize }}: {{ device_attr(trigger.event.data.device_id, 'name') | capitalize }}"
           target: !secret tel_chat_id
           timeout: 180
 
