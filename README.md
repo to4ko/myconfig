@@ -389,6 +389,23 @@ white-space:nowrap;>
 <td>8Tb HDD + 3*2Tb HDD + 256Gb SSD + 256Gb NVME (read cache)</td>
 <td>-</td>
 </tr>
+<tr>
+<td rowspan="2">13</td>
+<td rowspan="2">2022</td>
+<td>HP Prodesk 600 G6 mini</td>
+<td>i5-10600</td>
+<td>2 * 8Gb DDR4</td>
+<td>512GB NVME</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>8Tb HDD + 2*4Tb HDD + 256Gb SSD + 256Gb NVME (read cache)</td>
+<td>-</td>
+</tr>
+
 </tbody>
 </table>
 </details>
