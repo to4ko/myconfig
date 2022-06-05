@@ -18,7 +18,7 @@
           level: ERROR
     condition:
       - condition: template
-        value_template: "{{ not 'system_error_counter' in trigger.event.data.message }}"
+        value_template: "{{ not 'system_error_counter' in trigger.event.data.message | join }}"
     action:
       - service: counter.increment
         entity_id: counter.error_counter
@@ -38,7 +38,7 @@
           level: WARNING
     condition:
       - condition: template
-        value_template: "{{ not 'system_warning_counter' in trigger.event.data.message }}"
+        value_template: "{{ not 'system_warning_counter' in trigger.event.data.message  | join }}"
     action:
       - service: counter.increment
         entity_id: counter.warning_counter
@@ -1039,7 +1039,7 @@
           level: ERROR
     condition:
       - condition: template
-        value_template: '{{ "xiaomi_gateway3" in trigger.event.data.message[0] or "xiaomi_gateway3" in trigger.event.data.source[0] }}'
+        value_template: '{{ "xiaomi_gateway3" in trigger.event.data.message|join or "xiaomi_gateway3" in trigger.event.data.source|join }}'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
@@ -1063,11 +1063,11 @@
           level: WARNING
     condition:
       - condition: template
-        value_template: '{{ "Already running" in trigger.event.data.message[0] }}'
+        value_template: '{{ "Already running" in trigger.event.data.message|join }}'
     action:
       - service: notify.telegram
         data:
-          message: "\U000026d4 Warning! {{trigger.event.data.message[0] | e}}"
+          message: "\U000026d4 Warning! {{ trigger.event.data.message | join | e }}"
   
 # ##################################
 # System - Automation Reload
