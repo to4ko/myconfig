@@ -18,7 +18,7 @@
           level: ERROR
     condition:
       - condition: template
-        value_template: "{{ not 'system_error_counter' in trigger.event.data.message|join }}"
+        value_template: "{{ not 'system_error_counter' in (trigger.event.data.message|string) }}"
     action:
       - service: counter.increment
         entity_id: counter.error_counter
@@ -38,7 +38,7 @@
           level: WARNING
     condition:
       - condition: template
-        value_template: "{{ not 'system_warning_counter' in trigger.event.data.message|join }}"
+        value_template: "{{ not 'system_warning_counter' in (trigger.event.data.message|string) }}"
     action:
       - service: counter.increment
         entity_id: counter.warning_counter
@@ -56,9 +56,9 @@
         event_type: automation_triggered
     condition:
       - condition: template
-        value_template: "{{ not 'system_triggered_automations_counter' in trigger.event.data.name|join }}"
+        value_template: "{{ not 'system_triggered_automations_counter' in (trigger.event.data.name|string) }}"
       - condition: template
-        value_template: "{{ not 'system_esphome_ble_advert' in trigger.event.data.name|join }}"
+        value_template: "{{ not 'system_esphome_ble_advert' in (trigger.event.data.name|string) }}"
     action:
       - service: counter.increment
         entity_id: counter.triggered_automations
@@ -229,21 +229,21 @@
 # ##################################
 # System - Device registry Change
 # ##################################
-  - alias: system_device_regestry_change
-    id:  system_device_regestry_change
-    initial_state: true
-    mode: queued
-    max: 20
-    max_exceeded: silent
-    trigger:
-      - platform: event
-        event_type: device_registry_updated
-    action:
-      - service: telegram_bot.send_message
-        data:
-          message: "\U0001f4a1 Device - {{ trigger.event.data.action | capitalize }}: {{ device_attr(trigger.event.data.device_id, 'name') | capitalize }}"
-          target: !secret tel_chat_id
-          timeout: 180
+  # - alias: system_device_regestry_change
+  #   id:  system_device_regestry_change
+  #   initial_state: true
+  #   mode: queued
+  #   max: 20
+  #   max_exceeded: silent
+  #   trigger:
+  #     - platform: event
+  #       event_type: device_registry_updated
+  #   action:
+  #     - service: telegram_bot.send_message
+  #       data:
+  #         message: "\U0001f4a1 Device - {{ trigger.event.data.action | capitalize }}: {{ device_attr(trigger.event.data.device_id, 'name') | capitalize }}"
+  #         target: !secret tel_chat_id
+  #         timeout: 180
 
 # ##################################
 # System - Device Deletion
@@ -329,11 +329,32 @@
         entity_id: counter.badlogin_counter
       - service: notify.telegram
         data:
-          message: "\U0000274C Неудачная попытка подлючения. Неверно введен пароль! {{ state_attr('persistent_notification.http_login','message') }}"
+          message: >-
+            {% set ipadress = trigger.to_state.attributes.message.split('from ')[1] | regex_replace('\s+.*') %}
+            {{"\U0000274C"}} Неудачная попытка входа с адреса {{ ipadress }}
       - service: persistent_notification.dismiss
         data:
           notification_id: http_login
-  
+
+# ##################################
+# System - IP Blocked
+# ##################################
+  - alias: system_blocked_ip
+    id:  system_blocked_ip
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: persistent_notification.ip_ban
+    action:
+      - service: notify.telegram
+        data:
+          message: >
+            {% set ipadress = trigger.to_state.attributes.message.split('from ')[1] | regex_replace('\s+.*') %}
+            {{"\U000026d4"}} Заблокирован IP: {{ ipadress }}
+      - service: persistent_notification.dismiss
+        data:
+          notification_id: ip_ban
+
 # ##################################
 # System - Groups Rebuild
 # ##################################
@@ -550,25 +571,6 @@
       - service: notify.telegram
         data:
           message: "\U000026a0 Внимание! Количество предупреждений в час выросло до {{states('sensor.warning_counter_hourly')|int(0)}}"
-  
-# ##################################
-# System - IP Blocked
-# ##################################
-  - alias: system_blocked_ip
-    id:  system_blocked_ip
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: persistent_notification.ip_ban
-    action:
-      - service: input_text.set_value
-        data:
-          entity_id: input_text.ip_ban
-          value: "{{ state_attr('persistent_notification.ip_ban', 'message').split('Too many login attempts from ')[1] }}"
-      - delay: "00:00:01"
-      - service: notify.telegram
-        data:
-          message: "\U000026d4 Слишком много попыток некорректного входа. Заблокирован IP: http://whatismyipaddress.com/ip/{{ states('input_text.ip_ban') }}."
   
 # ##################################
 # System - Critical Error notification
@@ -1039,7 +1041,7 @@
           level: ERROR
     condition:
       - condition: template
-        value_template: '{{ "xiaomi_gateway3" in trigger.event.data.message|join or "xiaomi_gateway3" in trigger.event.data.source|join }}'
+        value_template: '{{ "xiaomi_gateway3" in (trigger.event.data.message|string) or "xiaomi_gateway3" in (trigger.event.data.message|string) }}'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
@@ -1063,7 +1065,7 @@
           level: WARNING
     condition:
       - condition: template
-        value_template: '{{ "Already running" in trigger.event.data.message|join }}'
+        value_template: '{{ "Already running" in (trigger.event.data.message|string) }}'
     action:
       - service: notify.telegram
         data:
