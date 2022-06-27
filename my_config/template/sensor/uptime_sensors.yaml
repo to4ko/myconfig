@@ -1,3 +1,24 @@
+  - trigger:
+      - platform: time_pattern
+        seconds: "/30"
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+      - platform: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: HA Uptime 
+        icon: mdi:clock
+        state: "{{ ((as_timestamp(now())|int(0)-as_timestamp(states('sensor.ha_start'))|int(0)) / 60 )|int(0) }}"
+        unit_of_measurement: minutes
+
+      - name: Host Uptime
+        icon: mdi:clock
+        unit_of_measurement: minutes
+        state: "{{ ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60) ) | int(0) }}"
+
+
   - sensor:
       - name: MQTT Broker Uptime Text
         icon: mdi:av-timer
@@ -13,11 +34,6 @@
           minutes: "{{ ((states('sensor.mqtt_broker_uptime')|int(0) % 3600) / 60) | int(0) }}"
           raw: "{{ states('sensor.mqtt_broker_uptime')|int(0) }}"
 
-      - name: HA Uptime 
-        icon: mdi:clock
-        state: "{{ ((as_timestamp(now())|int(0)-as_timestamp(states('sensor.ha_start'))|int(0)) / 60 )|int(0) }}"
-        unit_of_measurement: minutes
-
       - name: HA Uptime Text
         icon: mdi:clock
         state: >-
@@ -31,12 +47,6 @@
           hours: "{{ ((states('sensor.ha_uptime')|int(0) % 1440) /60) | int(0) }}"
           minutes: "{{ (states('sensor.ha_uptime')|int(0) % 60) | int(0) }}"
           raw: "{{ states('sensor.ha_uptime')|int(0) }}"
-
-      - name: Host Uptime
-        icon: mdi:clock
-        unit_of_measurement: minutes
-        state: "{{ ( ( as_timestamp(now()) - as_timestamp(states('sensor.last_boot')) ) / (60) ) | int(0) }}"
-          
         
       - name: Host Uptime Text
         icon: mdi:clock-outline
