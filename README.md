@@ -56,9 +56,8 @@
   - 256Gb Adata SX6000 Lite as NVME read cache
   - 256GGb Samsung 840 Pro as Fast "Docker" Storage
 
-**Backup Storage Unit - Xpenology DS918+ UPG**
-  - Asrock J5040-ITX
-  - 2*4Gb Samsung DDR4 SODIMM
+**Backup Storage Unit - Synology DS220+**
+  - 4Gb Hynix DDR4 SODIMM
   - 2ea Seagate Skyhawk 4Tb (Storage section for critical files) in SHR1 
 
 **2nd Backup Storage Unit - Synology DS220J** 
