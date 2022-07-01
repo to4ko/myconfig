@@ -1603,7 +1603,10 @@
       - platform: event
         event_type: automation_reloaded
       - platform: state
-        entity_id: binary_sensor.wp_digma801_screen, binary_sensor.wp_digma801_motion
+        entity_id: binary_sensor.wp_digma801_screen
+        to: "on"
+      - platform: state
+        entity_id: binary_sensor.wp_digma801_motion
         to: "on"
     condition:
       - condition: template
@@ -1916,6 +1919,26 @@
       - service: notify.telegram
         data:
           message: "\U0001f9f0 Обновление доступно для {{device_attr(trigger.entity_id, 'name')}}"
+
+# ##################################
+# System - Wallpanel panel offline
+# ##################################
+  - alias: system_wallpanel_offline
+    id:  system_wallpanel_offline
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.pinhole_camera_motion
+        to: 'unavailable'
+        for:
+          seconds: 30
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U000026d4 Wallpanel отвалилась"
+
+
+
 
 # ##################################
 # System - System Updates Pending
