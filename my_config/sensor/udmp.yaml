@@ -22,7 +22,7 @@
     #     - vpn
 
   # - platform: command_line
-  #   name: UDM UnifiOS
+  #   name: UnifiOS UDMP
   #   command: !secret udmp_unifios
   #   value_template: |-
   #     {% set json = value_json.data[1] %}
@@ -31,9 +31,38 @@
   #     {{ json["system-stats"].mem }}|
   #     {{ json.internet }}|
   #     {{ json.startup_timestamp | timestamp_custom('%Y-%m-%dT%H:%M:%S') }}|
-  #     {{ json.displayable_version }}|
-  #     {{ json.upgradable }}
   #   scan_interval: 60
+
+  # - platform: command_line
+  #   name: UnifiOS USW16
+  #   command: !secret udmp_unifios
+  #   value_template: |-
+  #     {% set json = value_json.data[0] %}
+  #     {{ json["system-stats"].cpu }}|
+  #     {{ json["system-stats"].mem }}|
+  #     {{ json.fan_level }}|
+  #     {{ json.general_temperature }}|
+  #     {{ json.startup_timestamp | timestamp_custom('%Y-%m-%dT%H:%M:%S') }}
+  #     {{ json.overheating }}
+  #   scan_interval: 60
+
+  - platform: command_line
+    name: UnifiOS State
+    command: !secret udmp_unifios
+    unique_id: unifios_state
+    value_template: |-
+      {{ value_json.data[1]["system-stats"].cpu }}|
+      {{ value_json.data[1].temperatures[0].value | float(0) | round (1) }}|
+      {{ value_json.data[1]["system-stats"].mem }}|
+      {{ value_json.data[1].internet }}|
+      {{ value_json.data[1].startup_timestamp | timestamp_custom('%Y-%m-%dT%H:%M:%S') }}|
+      {{ value_json.data[0]["system-stats"].cpu }}|
+      {{ value_json.data[0]["system-stats"].mem }}|
+      {{ value_json.data[0].fan_level }}|
+      {{ value_json.data[0].general_temperature }}|
+      {{ value_json.data[0].startup_timestamp | timestamp_custom('%Y-%m-%dT%H:%M:%S') }}|
+      {{ value_json.data[0].overheating }}
+    scan_interval: 30
 
   # - platform: unifi_status
   #   host: !secret udmp_host

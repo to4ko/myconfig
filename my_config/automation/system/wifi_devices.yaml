@@ -190,3 +190,42 @@
   #             - service: unifi.reconnect_client
   #               data:
   #                 device_id: 3e9239fc946fd8c4190a9c8c8b3b17d3
+  
+  
+# ##################################
+# System - Bed Strips restart
+# ##################################
+  - alias: system_bed_strips_restart
+    id: system_bed_strips_restart
+    initial_state: false
+    trigger:
+      - platform: time_pattern
+        hours: '/1'
+    action:
+      - if:
+          - condition: state
+            entity_id: switch.led_strip_bed_sandra_v_restart_key
+            state: 'on'
+        then:
+          - service: switch.turn_off
+            entity_id: switch.0x158d0001a248e3_channel_2
+          - delay: 00:00:15
+          - service: switch.turn_on
+            entity_id: switch.0x158d0001a248e3_channel_2
+      - if:
+          - condition: state
+            entity_id: switch.led_strip_bed_dima_v_restart_key
+            state: 'on'
+        then:
+          - service: switch.turn_off
+            entity_id: switch.0x158d0001a248e3_channel_1
+          - delay: 00:00:15
+          - service: switch.turn_on
+            entity_id: switch.0x158d0001a248e3_channel_1
+      - delay: 00:00:15
+      - service: homeassistant.reload_config_entry
+        data:
+          entry_id: 3db3d77cd2392c85523b6d212d5cf107
+      - service: homeassistant.reload_config_entry
+        data:
+          entry_id: a3add87af9575143575396fd33e4f0a2

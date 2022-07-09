@@ -1,6 +1,5 @@
   - platform: darksky
     api_key: !secret darksky_api_key
-    units: si
     mode: daily
 
 #   - platform: pirateweather
@@ -11,7 +10,7 @@
   - platform: template
     name: My Weather
     condition_template: "{{ states('weather.dark_sky') }}"
-    temperature_template: "{{ states('sensor.esp32_node_mb_outside')|float(0) if states('sensor.esp32_node_mb_outside') != 'unavailable' else states('sensor.dark_sky_temperature') | float(0) }}"
+    temperature_template: "{{iif(states('sensor.esp32_node_mb_outside')|is_number,states('sensor.esp32_node_mb_outside')|float(0),states('sensor.dark_sky_temperature') | float(0))}}"
     humidity_template: "{{ states('sensor.dark_sky_humidity')| float(0) }}"
     pressure_template: "{{ states('sensor.esp32_node_k_pressure')|float(0) }}"
     forecast_template: "{{ state_attr('weather.dark_sky','forecast') }}"
