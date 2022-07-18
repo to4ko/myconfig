@@ -229,3 +229,58 @@
       - service: homeassistant.reload_config_entry
         data:
           entry_id: a3add87af9575143575396fd33e4f0a2
+          
+
+# ##################################
+# System - Bed Strips restart (WH)
+# ##################################
+  - alias: system_bed_strips_restart_wh
+    id: system_bed_strips_restart_wh
+    initial_state: true
+    trigger:
+      - platform: webhook
+        webhook_id: 'led_strip_bed_dima'
+        id: 'id_dima'
+      - platform: webhook
+        webhook_id: 'led_strip_bed_sandra'
+        id: 'id_sandra'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'id_dima'
+            sequence:
+              - condition: state
+                entity_id: switch.led_strip_bed_dima_v_restart_key
+                state: 'on'
+              - service: switch.turn_off
+                entity_id: switch.0x158d0001a248e3_channel_1
+              - delay: 00:00:15
+              - service: switch.turn_on
+                entity_id: switch.0x158d0001a248e3_channel_1
+              - delay: 00:00:15
+              - service: homeassistant.reload_config_entry
+                data:
+                  entry_id: a3add87af9575143575396fd33e4f0a2
+              - service: notify.telegram
+                data:
+                  message: "\U00002705 Перезапуск Ленты Дима (вебхук)"
+          - conditions:
+              - condition: trigger
+                id: 'id_sandra'
+            sequence:
+              - condition: state
+                entity_id: switch.led_strip_bed_sandra_v_restart_key
+                state: 'on'
+              - service: switch.turn_off
+                entity_id: switch.0x158d0001a248e3_channel_2
+              - delay: 00:00:15
+              - service: switch.turn_on
+                entity_id: switch.0x158d0001a248e3_channel_2
+              - delay: 00:00:15
+              - service: homeassistant.reload_config_entry
+                data:
+                  entry_id: 3db3d77cd2392c85523b6d212d5cf107
+              - service: notify.telegram
+                data:
+                  message: "\U00002705 Перезапуск Ленты Сандра (вебхук)"

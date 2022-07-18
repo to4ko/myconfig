@@ -31,8 +31,8 @@
                 entity_id: binary_sensor.breather_v
                 state: 'off'
             sequence:
-              - service: button.press
-                entity_id: button.digma_ir_v_breather_pwr
+              - service: fan.turn_on
+                entity_id: fan.breather_v
               - condition: numeric_state
                 entity_id: sensor.esp32_node_v_co2
                 above: input_number.co2_high_limit
@@ -55,8 +55,8 @@
                 entity_id: binary_sensor.breather_v
                 state: 'on'
             sequence:
-              - service: button.press
-                entity_id: button.digma_ir_v_breather_pwr
+              - service: fan.turn_off
+                entity_id: fan.breather_v
                 
           - conditions:
               - condition: state
@@ -66,8 +66,8 @@
                 entity_id: binary_sensor.breather_v
                 state: 'on'
             sequence:
-              - service: button.press
-                entity_id: button.digma_ir_v_breather_pwr
+              - service: fan.turn_off
+                entity_id: fan.breather_v
 
 # ##################################
 # Vova - Breather Auto Timer
@@ -142,9 +142,9 @@
                       #   data:
                       #     message: "timer, <20, breather on"
                           
-                      - service: button.press
-                        entity_id: button.digma_ir_v_breather_pwr
-        
+                      - service: fan.turn_off
+                        entity_id: fan.breather_v
+                        
                       - condition: state
                         entity_id: input_boolean.hourly_mode_breather_v
                         state: 'on'
@@ -172,7 +172,7 @@
                           percentage: >
                             {% if state_attr('fan.breather_v','percentage')|int(0) > states('input_number.low_speed_for_timer_mode_breather_v')|int(0) %}
                             {{states('input_number.low_speed_for_timer_mode_breather_v')|int(0)}}
-                            {% elif state_attr('fan.breather_v','percentage')|int(0) < states('input_number.high_speed_for_timer_mode_breather_v')|int(0) %}
+                            {% elif state_attr('fan.breather_v','percentage')|int(0) <= states('input_number.high_speed_for_timer_mode_breather_v')|int(0) %}
                             {{states('input_number.high_speed_for_timer_mode_breather_v')|int(0)}}
                             {% endif %}
 
@@ -194,8 +194,8 @@
                             entity_id: input_boolean.hourly_mode_breather_v
                             state: 'on'
                         then:
-                          - service: button.press
-                            entity_id: button.digma_ir_v_breather_pwr
+                          # - service: button.press
+                          #   entity_id: button.digma_ir_v_breather_pwr
                           - service: fan.set_percentage
                             entity_id: fan.breather_v
                             data:
@@ -239,8 +239,9 @@
                     entity_id: binary_sensor.breather_v
                     state: 'on'
                 then:
-                  - service: button.press
-                    entity_id: button.digma_ir_v_breather_pwr
+                  - service: fan.turn_off
+                    entity_id: fan.breather_v
+
 
               - service: timer.cancel
                 entity_id: timer.breather_v
@@ -260,9 +261,9 @@
                     entity_id: binary_sensor.breather_v
                     state: 'off'
                 then:
-                  - service: button.press
-                    entity_id: button.digma_ir_v_breather_pwr
-
+                  - service: fan.turn_on
+                    entity_id: fan.breather_v
+                    
                   - service: timer.cancel
                     entity_id: timer.breather_v
 
