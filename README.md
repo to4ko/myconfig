@@ -60,10 +60,10 @@
   - 4Gb Hynix DDR4 SODIMM
   - 2ea Seagate Skyhawk 4Tb (Storage section for critical files) in SHR1 
 
-**2nd Backup Storage Unit - Synology DS220J** 
+**Remote Storage Unit - Synology DS220J** 
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
 
-**Remote Storage Unit - Synology DS215J** 
+**2nd Backup Storage Unit - Synology DS215J** 
   - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
 
 **UPS**

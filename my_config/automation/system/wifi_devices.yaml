@@ -198,6 +198,7 @@
   - alias: system_bed_strips_restart
     id: system_bed_strips_restart
     initial_state: false
+    max_exceeded: silent
     trigger:
       - platform: time_pattern
         hours: '/1'
@@ -237,6 +238,7 @@
   - alias: system_bed_strips_restart_wh
     id: system_bed_strips_restart_wh
     initial_state: true
+    max_exceeded: silent
     trigger:
       - platform: webhook
         webhook_id: 'led_strip_bed_dima'
@@ -245,6 +247,11 @@
         webhook_id: 'led_strip_bed_sandra'
         id: 'id_sandra'
     action:
+      - variables:
+          status_from: >- 
+              {{ iif(trigger.json.heartbeat is not none and trigger.json.heartbeat.status | int(0) == 1, 'online', 'offline', 'offline') }}
+      - condition: template
+        value_template: "{{ status_from == 'offline'}}"
       - choose:
           - conditions:
               - condition: trigger
@@ -284,3 +291,4 @@
               - service: notify.telegram
                 data:
                   message: "\U00002705 Перезапуск Ленты Сандра (вебхук)"
+                  
