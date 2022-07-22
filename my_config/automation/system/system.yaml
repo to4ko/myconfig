@@ -417,10 +417,11 @@
         data:
           message: >-
             {%- set datanames = namespace(low_batt=[]) -%}
-            {%- set threshold = states('input_number.battery_low_level')|int(0) -%}
+            {%- set threshold_zb = states('input_number.battery_low_level_zb')|int(0) -%}
+            {%- set threshold_bt = states('input_number.battery_low_level_bt')|int(0) -%}
             {%- set domains = ['sensor'] %}
             {%- for domain in domains -%}
-            {%- for item in states[domain] if ( ("_battery" in item.entity_id and item.state| int(0) <= threshold and item.entity_id in integration_entities('xiaomi_gateway3')) )-%}
+            {%- for item in states[domain] if(("_battery" in item.entity_id and (("0x" in item.entity_id and item.state|int(0) <= threshold_zb) or ("0x" not in item.entity_id and item.state|int(0) <= threshold_bt)) and item.entity_id in integration_entities('xiaomi_gateway3')))-%}
               {%- set datanames.low_batt = datanames.low_batt + [item.name.replace(' Battery','') +' '+item.state+'%'] -%}
             {%- endfor %}
             {%- endfor %}
@@ -429,7 +430,7 @@
             {%- if num_low_bat > 0 %}
             {{"\U0001f6a8"}} Низкий заряд батарей ({{ num_low_bat}}шт): {{low_bat}}
             {%- else %}
-            {{"\U0001f50b"}} Батарей с уровнем заряда ниже {{states('input_number.battery_low_level')|int(0)}}% не найдено!
+            {{"\U0001f50b"}} Батарей с низким уровнем заряда не найдено!
             {%- endif %}
   
 # ##################################
