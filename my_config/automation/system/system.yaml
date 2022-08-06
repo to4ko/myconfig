@@ -187,8 +187,8 @@
 # ##################################
 # System - Hass.io NEW Device
 # ##################################
-  - alias: system_new_device_found
-    id:  system_new_device_found
+  - alias: system_new_device_tracker_found
+    id:  system_new_device_tracker_found
     initial_state: true
     mode: queued
     trigger:
@@ -1960,15 +1960,51 @@
     id:  system_wallpanel_offline
     initial_state: true
     trigger:
+      # - platform: state
+      #   entity_id: binary_sensor.wp_digma801_motion
+      #   to: 'unavailable'
+      #   for:
+      #     seconds: 30
+      
       - platform: state
-        entity_id: binary_sensor.wp_digma801_motion
-        to: 'unavailable'
+        entity_id: binary_sensor.wp_digma801_connection
+        to: 'off'
+        from: 'on'
+        for:
+          seconds: 30
+      - platform: state
+        entity_id: binary_sensor.wp_digma801_connection
+        to: 'on'
+        from: 'off'
         for:
           seconds: 30
     action:
       - service: notify.telegram
         data:
-          message: "\U000026d4 Wallpanel: потеря связи"
+          message: "\U0001f4fa Wallpanel: {% if is_state('binary_sensor.wp_digma801_connection','off')%}потеря связи{%else%}связь восстановлена{%endif%}"
+
+# ##################################
+# System - Wallpanel panel offline
+# ##################################
+  - alias: system_wallpanel_offline
+    id:  system_wallpanel_offline
+    initial_state: true
+    trigger:
+      # - platform: state
+      #   entity_id: binary_sensor.wp_digma801_motion
+      #   to: 'unavailable'
+      #   for:
+      #     seconds: 30
+      
+      - platform: state
+        entity_id: binary_sensor.pinhole_state
+        to:
+        for:
+          seconds: 5
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0001f4f7 Pinhole: {% if is_state('binary_sensor.pinhole_state','off')%}потеря связи{%else%}связь восстановлена{%endif%}"
 
 # ##################################
 # System - System Updates Pending
