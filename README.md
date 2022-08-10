@@ -50,21 +50,22 @@
   - Google Coral m.2
 
 **Main Storage Unit - Synology DS1621+** 
-  - 2*16Gb Micron DDR4 SODIMM
+  - 2*16Gb Crucial DDR4 SODIMM
   - 8TB WD White as Media Storage
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
-  - 256Gb Adata SX6000 Lite as NVME read cache
-  - 256GGb Samsung 840 Pro as Fast "Docker" Storage
+  - Adata SX6000 Lite 256Gbas NVME read cache
+  - 2ea Samsung 840 Pro 256Gb as Fast "Docker" Storage
 
-**Backup Storage Unit - Synology DS220+**
-  - 4Gb Hynix DDR4 SODIMM
+**Backup Storage Unit - Synology DS920+**
+  - 16Gb Kingston DDR4 SODIMM
   - 2ea Seagate Skyhawk 4Tb (Storage section for critical files) in SHR1 
+  - 2ea Samsung 860 EVO 250Gb in SHR1
 
 **Remote Storage Unit - Synology DS220J** 
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
 
-**2nd Backup Storage Unit - Synology DS215J** 
-  - 2ea WD RED 2Tb (Storage section for critical files) in SHR1
+**2nd Backup Storage Unit - Synology DS220+** 
+  - not in use at the moment
 
 **UPS**
   - Ippon Smart Power Pro 1200
@@ -401,7 +402,7 @@ white-space:nowrap;>
 <td>Synology DS1621+</td>
 <td>Ryzen V1500B</td>
 <td>2 * 16Gb DDR4</td>
-<td>8Tb HDD + 2*4Tb HDD + 256Gb SSD + 256Gb NVME (read cache)</td>
+<td>8Tb HDD + 2*4Tb HDD + 2*256Gb SSD + 256Gb NVME (read cache)</td>
 <td>-</td>
 </tr>
 

@@ -43,6 +43,12 @@
     condition:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+          {{ trigger.from_state.state not in ignore and
+            trigger.to_state.state not in ignore and
+            trigger.to_state.state != trigger.from_state.state }}
     action:
       - choose:
           - conditions:
@@ -51,14 +57,8 @@
                 state: 'home'
             sequence:
               - service: fan.turn_on
-                entity_id: fan.purifier2s
-            #   - condition: state
-            #     entity_id: binary_sensor.breather_v
-            #     state: 'off'
-            #   - condition: state
-            #     entity_id: input_boolean
-            #   - service: button.press
-            #     entity_id: button.digma_ir_v_breather_pwr
+                entity_id: fan.purifier2s, fan.breather_v
+
           - conditions:
               - condition: not
                 conditions:
@@ -67,12 +67,7 @@
                     state: 'home'
             sequence:
               - service: fan.turn_off
-                entity_id: fan.purifier2s
-              - condition: state
-                entity_id: binary_sensor.breather_v
-                state: 'on'
-              - service: button.press
-                entity_id: button.digma_ir_v_breather_pwr
+                entity_id: fan.purifier2s, fan.breather_V
   
 # ##################################
 # Vova - Purifier Favorite at night

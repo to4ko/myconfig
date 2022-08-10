@@ -1,0 +1,220 @@
+substitutions:
+  board_name: esp32_hood_k
+  
+esphome:
+  name: ${board_name}
+  comment: ESP32 Hood K
+  # platformio_options:
+  #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
+
+esp32:
+  board: nodemcu-32s
+  
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .local
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  fast_connect: true
+  #power_save_mode: none
+  # manual_ip:
+  #   static_ip: 192.168.1.107
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+logger:
+  baud_rate: 0
+  
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+  
+spi:
+  - id: spi_hood
+    clk_pin: GPIO14
+    miso_pin: GPIO12
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    id: id_status
+
+  - platform: template
+    name: ${board_name}_Stove_State
+    lambda: |-
+      if ( 
+      (id(hood_temp).state > id(median_temp).state) ) {
+        return true;
+      } else {
+        return false;
+      }
+    device_class: heat
+    filters:
+      - delayed_off: 5min
+    on_press:
+      then:
+        - if:
+            condition:
+              and:
+                - binary_sensor.is_on: id_status
+            then:
+              - switch.turn_on: relay2
+
+    on_release:
+      then:
+        - switch.turn_off: relay2        
+
+  - platform: gpio
+    name: "${board_name}_Fan_Button"
+    pin: 
+      number: GPIO18
+      mode: INPUT_PULLUP
+      inverted: true
+    id: sw1
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - switch.toggle: relay2      
+    # on_click:
+    #   min_length: 50ms
+    #   max_length: 350ms
+    #   then:
+    #     - switch.toggle: relay2
+    
+  - platform: gpio
+    name: "${board_name}_Light_Button"
+    pin: 
+      number: GPIO17
+      mode: INPUT_PULLUP
+      inverted: true
+    id: sw2   
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - switch.toggle: relay1
+    # on_click:
+    #   min_length: 50ms
+    #   max_length: 350ms
+    #   then:
+    #     - switch.toggle: relay1
+    
+    on_multi_click:
+      - timing:
+          - ON for at least 0.75s
+        then:
+          - logger.log: "---------> Long press"
+          - switch.toggle: relay3
+        
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
+    
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: max6675
+    name: ${board_name}_TCouple
+    cs_pin: GPIO15
+    update_interval: 15s
+    id: hood_temp
+    spi_id: spi_hood
+
+  - platform: homeassistant
+    name: ${board_name}_median_ha
+    entity_id: sensor.stove_temperature_median
+    id: median_temp
+    internal: false
+    filters:
+      - lambda: |-
+          if (id(id_status).state && x > 20 && x < 40) {
+            return x+5;
+          } else {
+            return 32;
+          }
+    unit_of_measurement: '°C'
+    device_class: temperature
+    state_class: measurement
+
+switch:
+  - platform: gpio
+    pin: GPIO32
+    name: ${board_name}_Light
+    id: relay1
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:car-light-fog
+    
+  - platform: gpio
+    pin: GPIO33
+    name: ${board_name}_Fan
+    id: relay2
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:fan
+    
+  - platform: gpio
+    pin: GPIO25
+    name: ${board_name}_Button_LED
+    id: relay3
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:led-off
+    
+  - platform: gpio
+    pin: GPIO26
+    name: ${board_name}_Relay4
+    id: relay4
+
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+    
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
