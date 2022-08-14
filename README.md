@@ -138,11 +138,11 @@
   - Sonoff Basic (2ea)
   - Sonoff Pow R2 (2ea)
   - Sonoff Mini (3ea)
-  - Sonoff 4ch
+  - not in use - Sonoff 4ch
   - not in use - Sonoff L1
   - not in use - Sonoff S26 Plugs (3ea)
   - not in use - Sonoff Micro via (self powering down)
-  - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
+  - not in use - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
   - Blitzwolf LT11
   - not in use - Blitzwolf SS5 dual gang relay
   - Digma IR Remote (3ea)
@@ -153,10 +153,10 @@
   - ESP32 - Node MB - Master Bedroom SensAir S8B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova Room SensAir S8, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
-  - ESP32 - BLE Tracker HB
-  - ESP32 - BLE Tracker HS
-  - ESP32 - M5 Stack Pico BLE Tracker S
-  - ESP32 - M5 Stack Pico BLE Tracker MB
+  - not in use - ESP32 - BLE Tracker HB
+  - not in use - ESP32 - BLE Tracker HS
+  - not in use - ESP32 - M5 Stack Pico BLE Tracker S
+  - not in use - ESP32 - M5 Stack Pico BLE Tracker MB
   - ESP32 - Hall Big Breaker Box PZEM-004T
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP01 Weight Cell for RO water filter tank
@@ -189,7 +189,7 @@
   - Shelly EM
   - Shelly 1PM (2ea)
   - Shelly Plug S (3ea)
-  - Xiaomi Kettle
+  - not in use - Xiaomi Kettle
 
 # Software configuration
 **Main Unit Software:**
@@ -212,7 +212,6 @@
   - Docker containers:
     * iSpycam Agent
     * InfluxDB
-
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
