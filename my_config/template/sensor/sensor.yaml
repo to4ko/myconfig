@@ -175,11 +175,27 @@
           {% set t = states('sensor.0x158d0001e58754_temperature') | float(0) %}
           {% set gamma = log(rh / 100) + b * t / (c + t) %}
           {{ (c * gamma / (b - gamma)) | round(1, 'common') }}
-  
+
+      - name: Zigbee Gateways Unavailable
+        state: "{{ expand('group.gateways') | selectattr('state','in',['off','unavailable']) | map(attribute='name') | list | count }}"
+        icon: >
+          {% if states('sensor.zigbee_gateways_unavailable')|int(0) > 0 %}
+          mdi:cloud-alert
+          {% else %}
+          mdi:cloud-check
+          {% endif %}
+        attributes:
+          list: >-
+            {%-for state in expand('group.gateways')|list
+              if state.state in ['off','unavailable'] %}
+              {{state.name}}{%- if not loop.last -%}, {%-endif%}
+            {%-endfor-%}
+        unit_of_measurement: "ea"
+
       - name: Zigbee Devices Unavailable
         state: "{{ expand('group.zigbee_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count }}"
         icon: >
-          {% if states('sensor.zigbee_devices_unavailable') == "on" %}
+          {% if states('sensor.zigbee_devices_unavailable')|int(0) > 0 %}
           mdi:signal-off
           {% else %}
           mdi:signal

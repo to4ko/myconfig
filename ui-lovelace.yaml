@@ -48,12 +48,14 @@ views:
                 state_color: true
                 columns: 5
                 entities:
+                  - entity: sensor.zigbee_gateways_unavailable
+                    name: Z GW Off
                   - entity: sensor.zigbee_devices_unavailable
-                    name: Z Offline
+                    name: Z Off
                   - entity: sensor.wifi_devices_unavailable
-                    name: WF Offline
-                  - entity: sensor.esp32_node_mb_outside
-                    name: Dallas
+                    name: WF Off
+                  # - entity: sensor.esp32_node_mb_outside
+                  #   name: Dallas
                   - entity: binary_sensor.bed_led_enable
                     name: Bed LED
                   - entity: switch.music_allowed
@@ -4786,17 +4788,21 @@ views:
               - data: uptime
                 name: Gateway Uptime
                 modify: x+''
-              - data: last_changed
-                name: Connected Since
+              - name: Connected Since
+                data: last_changed, state
+                multi_delimiter: ","
                 modify: >
-                  var dt = new Date(x);
-                  var hrs = parseInt((Date.now()-Date.parse(x)) / 3600000);
-                  var min = parseInt(((Date.now()-Date.parse(x)) / 60000) % 60);
-                  var sec = parseInt(((Date.now()-Date.parse(x)) / 1000) % 60);
+                  if (x.split(",")[1] == 'on') {
+                  var dr = x.split(",")[0];
+                  var dt = new Date(dr);
+                  var hrs = parseInt((Date.now()-Date.parse(dr)) / 3600000);
+                  var min = parseInt(((Date.now()-Date.parse(dr)) / 60000) % 60);
+                  var sec = parseInt(((Date.now()-Date.parse(dr)) / 1000) % 60);
                   hrs = (hrs < 10) ? "0" + hrs : hrs;
                   min = (min < 10) ? "0" + min : min;
                   sec = (sec < 10) ? "0" + sec : sec;
-                  isFinite(dt) ? "" + hrs + ":" + min + ":" + sec + "" : ""
+                  isFinite(dt) ? "" + hrs + ":" + min + ":" + sec + "" : ""}
+                  else "off"                  
             css:
               table+: "padding-top: 15px;"
               "tbody tr:nth-child(even)": "background-color: #a2542f6;"
@@ -4989,8 +4995,13 @@ views:
     cards:
       - type: entities
         entities:
-          - binary_sensor.pinhole_motion
-          - binary_sensor.pinhole_camera_motion
+          - binary_sensor.wasp_b
+          - binary_sensor.wasp_b_template
+          - binary_sensor.wasp_t
+          - binary_sensor.wasp_mb
+          - binary_sensor.wasp_s
+          - binary_sensor.wasp_v
+          - binary_sensor.wasp_v_template
       - type: entities
         entities:
           - binary_sensor.seat_not_closed
