@@ -3,6 +3,8 @@
       - name: Lullaby
         state: "{{ (states.media_player | selectattr('state', 'eq', 'playing') | selectattr('attributes.media_title', 'defined') | selectattr('attributes.media_title', 'search', 'Колыбельная Брамс|Спят усталые', ignorecase=True) | map(attribute = 'name') | join(',') | count) > 0 }}"
         icon: mdi:bed
+        delay_off:
+          seconds: 15
 
       - name: Seat not closed
         state: "{{ is_state('binary_sensor.d1mini_distance_sensor_occupancy','off') and is_state('binary_sensor.0x158d000232ddd6_contact','on') }}"
@@ -510,3 +512,13 @@
       - name: Pinhole State
         state: "{{ trigger.id }}"
         device_class: connectivity
+
+  - trigger:
+      - platform: event
+        event_type: event_template_reloaded
+    binary_sensor:
+      - name: Templates reload
+        state: "{{ true }}"
+        device_class: problem
+        auto_off:
+          seconds: 10
