@@ -3,12 +3,38 @@
     sequence:
       - service: homeassistant.turn_off
         entity_id: group.devices_to_turnoff
-      - condition: state
-        entity_id: binary_sensor.washer_b
-        state: 'on'
-      - service: notify.telegram
-        data:
-          message: "\U00002757 Стиральная машина включена!"
+      - if:
+          - condition: state
+            entity_id: fan.breather_mb
+            state: 'on'
+        then:
+          - service: fan.turn_off
+            data:
+              entity_id: fan.breather_mb
+      - if:
+          - condition: state
+            entity_id: fan.breather_v
+            state: 'on'
+        then:
+          - service: fan.turn_off
+            data:
+              entity_id: fan.breather_v
+      - if:
+          - condition: state
+            entity_id: fan.breather_s
+            state: 'on'
+        then:
+          - service: fan.turn_off
+            data:
+              entity_id: fan.breather_s
+      - if: 
+          - condition: state
+            entity_id: binary_sensor.washer_b
+            state: 'on'
+        then:
+        - service: notify.telegram
+          data:
+            message: "\U00002757 Стиральная машина включена!"
 
   away_mode_off:
     alias: Away mode off
