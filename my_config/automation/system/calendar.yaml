@@ -1,8 +1,8 @@
 # ##################################
-# System - Calendar Events to List
+# System - Calendar Events to List (Dni Rozhdeniya)
 # ##################################
-  - alias: system_calendar_events_to_list
-    id: system_calendar_events_to_list
+  - alias: system_calendar_events_to_list_dni_rozhdeniia
+    id: system_calendar_events_to_list_dni_rozhdeniia
     initial_state: true
     mode: queued
     trigger:
@@ -12,7 +12,67 @@
       - platform: calendar
         event: end
         entity_id: calendar.dni_rozhdeniia
+    action:
+      - variables:
+          calendar_event: >-
+            {{ trigger.calendar_event.summary }}
+      - if:
+          - "{{ trigger.event == 'start' }}"
+        then:
+          - service: input_select.set_options
+            target:
+              entity_id: input_select.calendar_events_list
+            data:
+              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
 
+        else:
+          - service: input_select.set_options
+            target:
+              entity_id: input_select.calendar_events_list
+            data:
+              options: >-
+                {% if state_attr('input_select.calendar_events_list', 'options') | count <= 1 %}
+                  ["Нет событий"]
+                {% else %}
+                  {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }}
+                {% endif %}
+
+      - event: calendar_event_list_updated
+
+# ##################################
+# System - Calendar Events to List (Dni Rozhdeniya) at start
+# ##################################
+  - alias: system_calendar_events_to_list_dni_rozhdeniia_at_start
+    id: system_calendar_events_to_list_dni_rozhdeniia_at_start
+    trigger:
+      - event: start
+        platform: homeassistant
+    condition:
+      - condition: state
+        entity_id: sensor.calendar_events
+        state: '0'
+    action:
+      - if:
+          - condition: state
+            entity_id: calendar.dni_rozhdeniia
+            state: "on"
+        then:
+          - service: input_select.set_options
+            target:
+              entity_id: input_select.calendar_events_list
+            data:
+              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+          
+          - event: calendar_event_list_updated
+
+# ##################################
+# System - Calendar Events to List (Prazdniki)
+# ##################################
+  - alias: system_calendar_events_to_list_prazdniki
+    id: system_calendar_events_to_list_prazdniki
+    initial_state: true
+    mode: queued
+    trigger:
       - platform: calendar
         event: start
         entity_id: calendar.prazdniki_rossii_polnyi
@@ -20,26 +80,51 @@
         event: end
         entity_id: calendar.prazdniki_rossii_polnyi
     action:
-      - service: notify.telegram
-        data:
-            message: "{{trigger.calendar_event}}  {{trigger.calendar_event.summary}}"
+      - variables:
+          calendar_event: >-
+            {{ trigger.calendar_event.summary }}
       - if:
           - "{{ trigger.event == 'start' }}"
         then:
           - service: input_select.set_options
             data:
               entity_id: input_select.calendar_events_list
-              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + trigger.calendar_event.summary ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+              options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
 
         else:
           - service: input_select.set_options
             data:
               entity_id: input_select.calendar_events_list
               options: >-
-                {% if state_attr('input_select.calendar_events_list', 'options') | count <= 1 %}
+                {% if state_attr('input_select.calendar_holiday_events_list', 'options') | count <= 1 %}
                   ["Нет событий"]
                 {% else %}
-                  {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace (trigger.calendar_event.summary,'')).split('|') | select('ne', '') | unique | list }}
+                  {{ (state_attr('input_select.calendar_holyday_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }}
                 {% endif %}
 
-      - event: calendar_event_list_updated
+      - event: calendar_holiday_event_list_updated
+
+# ##################################
+# System - Calendar Events to List (Prazdniki) at start
+# ##################################
+  - alias: system_calendar_events_to_list_prazdniki_at_start
+    id: system_calendar_events_to_list_prazdniki_at_start
+    trigger:
+      - event: start
+        platform: homeassistant
+    condition:
+      - condition: state
+        entity_id: sensor.calendar_holiday_events
+        state: '0'
+    action:
+      - if:
+          - condition: state
+            entity_id: calendar.prazdniki_rossii_polnyi
+            state: "on"
+        then:
+          - service: input_select.set_options
+            data:
+              entity_id: input_select.calendar_holiday_events_list
+              options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+              
+          - event: calendar_holiday_event_list_updated
