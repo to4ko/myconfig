@@ -514,3 +514,23 @@
       #   state: "{{ state_attr('sensor.0xbc33acfffe537cf5_gateway','zigbee_oe')|int(0) }}"
       #   icon: mdi:wifi-alert
       #   unit_of_measurement: "ea"
+
+  - trigger:
+      - platform: event
+        event_type: calendar_event_list_updated
+    sensor:
+      - name: calendar_events
+        state: "{{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+        icon: mdi:calendar
+        attributes:
+          events: "{{ state_attr('input_select.calendar_events_list', 'options') | list }}"
+
+  - trigger:
+      - platform: event
+        event_type: calendar_event_list_updated_holiday
+    sensor:
+      - name: calendar_events
+        state: "{{ (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+        icon: mdi:calendar
+        attributes:
+          events: "{{ state_attr('input_select.calendar_holiday_events_list', 'options') | list }}"

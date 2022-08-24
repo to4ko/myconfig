@@ -1,0 +1,45 @@
+# ##################################
+# System - Calendar Events to List
+# ##################################
+  - alias: system_calendar_events_to_list
+    id: system_calendar_events_to_list
+    initial_state: true
+    mode: queued
+    trigger:
+      - platform: calendar
+        event: start
+        entity_id: calendar.dni_rozhdeniia
+      - platform: calendar
+        event: end
+        entity_id: calendar.dni_rozhdeniia
+
+      - platform: calendar
+        event: start
+        entity_id: calendar.prazdniki_rossii_polnyi
+      - platform: calendar
+        event: end
+        entity_id: calendar.prazdniki_rossii_polnyi
+    action:
+      - service: notify.telegram
+        data:
+            message: "{{trigger.calendar_event}}  {{trigger.calendar_event.summary}}"
+      - if:
+          - "{{ trigger.event == 'start' }}"
+        then:
+          - service: input_select.set_options
+            data:
+              entity_id: input_select.calendar_events_list
+              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + trigger.calendar_event.summary ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+
+        else:
+          - service: input_select.set_options
+            data:
+              entity_id: input_select.calendar_events_list
+              options: >-
+                {% if state_attr('input_select.calendar_events_list', 'options') | count <= 1 %}
+                  ["Нет событий"]
+                {% else %}
+                  {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace (trigger.calendar_event.summary,'')).split('|') | select('ne', '') | unique | list }}
+                {% endif %}
+
+      - event: calendar_event_list_updated
