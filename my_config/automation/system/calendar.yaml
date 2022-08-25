@@ -45,12 +45,11 @@
   - alias: system_calendar_events_to_list_dni_rozhdeniia_at_start
     id: system_calendar_events_to_list_dni_rozhdeniia_at_start
     trigger:
-      - event: start
-        platform: homeassistant
+      - platform: homeassistant
+        event: start
     condition:
-      - condition: state
-        entity_id: sensor.calendar_events
-        state: '0'
+      - condition: template
+        value_template: "{{ states('sensor.calendar_events')|int(0) == 0 }}"
     action:
       - if:
           - condition: state
@@ -61,7 +60,7 @@
             target:
               entity_id: input_select.calendar_events_list
             data:
-              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + state_attr('calendar.dni_rozhdeniia', 'message') ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
           
           - event: calendar_event_list_updated
 
@@ -110,12 +109,11 @@
   - alias: system_calendar_events_to_list_prazdniki_at_start
     id: system_calendar_events_to_list_prazdniki_at_start
     trigger:
-      - event: start
-        platform: homeassistant
+      - platform: homeassistant
+        event: start
     condition:
-      - condition: state
-        entity_id: sensor.calendar_holiday_events
-        state: '0'
+      - condition: template
+        value_template: "{{ states('sensor.calendar_holiday_events')|int(0) == 0 }}"
     action:
       - if:
           - condition: state
@@ -125,6 +123,8 @@
           - service: input_select.set_options
             data:
               entity_id: input_select.calendar_holiday_events_list
-              options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+              options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + state_attr('calendar.prazdniki_rossii_polnyi', 'message') ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
               
           - event: calendar_holiday_event_list_updated
+          
+          
