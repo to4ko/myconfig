@@ -106,7 +106,7 @@
   - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
 
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (6ea)
+  - Xiaomi Gateway v3 (6ea) 
   - Xiaomi Air Purifier 2s
   - Xiaomi Wifi Plugs v2 (4ea)
   - not in use - Xiaomi Wifi Plugs v2 (3ea)
