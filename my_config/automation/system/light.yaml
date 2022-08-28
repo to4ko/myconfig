@@ -24,3 +24,76 @@
 #       data:
 #         entity_id: > 
 #           {{ states.light | map(attribute='entity_id') | select('ne',trigger.entity_id) | join(', ') }}
+
+
+
+# ##################################
+# System - Light Control with intents
+# ##################################
+  - alias: system_light_control
+    id: system_light_control
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Включи свет
+        id: 'to_on_alice'
+      # - platform: event
+      #   event_type: yandex_intent
+      #   event_data:
+      #     text: Выключи свет
+      #   id: 'to_off_alice'
+    condition:
+      - condition: state
+        entity_id: input_boolean.security_mode
+        state: 'off'
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_mb' }}"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.round_led_mb
+                data:
+                  brightness_pct: 90
+                  kelvin: 5000
+
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_s' }}"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.square_led_s
+                data:
+                  brightness_pct: 90
+                  kelvin: 5000
+
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_v' }}"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.square_led_v
+                data:
+                  brightness_pct: 90
+                  kelvin: 5000
+                
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_k' }}"
+            sequence:
+              - service: light.turn_on
+                entity_id: light.round_led_k
+                data:
+                  brightness_pct: 90
+                  kelvin: 5000
+
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_hb' }}"
+            sequence:
+              - service: switch.turn_on
+                entity_id: switch.0x158d000223921b_channel_1
+                

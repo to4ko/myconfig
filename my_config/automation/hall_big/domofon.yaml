@@ -17,10 +17,12 @@
         from: 'off'
     action:
       - parallel:
-          - service: mqtt.publish
-            data:
-              topic: 'wallpanel/digma801/command'
-              payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+          # - service: mqtt.publish
+          #   data:
+          #     topic: 'wallpanel/digma801/command'
+          #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+          - service: light.turn_on
+            entity_id: light.optima_8_z801_4g_screen
           - service: notify.telegram
             data:
               title: "{{states('sensor.time')}} {{states('sensor.date')}}"
@@ -48,10 +50,10 @@
                 photo:
                 - url: !secret window_snap
                   caption: "Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-          - service: mqtt.publish
-            data:
-              topic: 'wallpanel/digma801/command'
-              payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'              
+          # - service: mqtt.publish
+          #   data:
+          #     topic: 'wallpanel/digma801/command'
+          #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'              
       - condition: state
         entity_id: switch.silent_mode
         state: 'on'
@@ -147,6 +149,7 @@
     trigger:
       - platform: state
         entity_id: switch.d1mini_domofon_auto_open, switch.d1mini_domofon_auto_open_once
+        to:
     condition:
       - condition: template
         value_template: >-
@@ -251,16 +254,18 @@
     action:
       # - service: switch.turn_on
       #   entity_id: switch.d1mini_domofon_open_manual
-      - service: mqtt.publish
-        data:
-          topic: 'wallpanel/digma801/command'
-          payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+      # - service: mqtt.publish
+      #   data:
+      #     topic: 'wallpanel/digma801/command'
+      #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
       # - service: notify.telegram
       #   data:
       #     message: "\U0001f518 Домофон открыт вручную!"
       #     data:
       #       photo:
       #         - url: !secret entrance_snap
+      - service: light.turn_on
+        entity_id: light.optima_8_z801_4g_screen      
       - service: telegram_bot.send_photo
         data:
           url: !secret entrance_snap

@@ -323,6 +323,7 @@
     trigger:
       - platform: state
         entity_id: persistent_notification.http_login
+        to:
     condition:
       - condition: template
         value_template: "{{ trigger.to_state.state != off }}"
@@ -347,6 +348,7 @@
     trigger:
       - platform: state
         entity_id: persistent_notification.ip_ban
+        to:
     action:
       - service: notify.telegram
         data:
@@ -1356,6 +1358,7 @@
     trigger:
       - platform: state
         entity_id: binary_sensor.hot_water
+        to:
       - platform: homeassistant
         event: start
       - platform: event
@@ -1378,6 +1381,7 @@
     trigger:
       - platform: state
         entity_id: binary_sensor.cold_water
+        to:
       - platform: homeassistant
         event: start
       - platform: event
@@ -1400,6 +1404,7 @@
     trigger:
       - platform: state
         entity_id: binary_sensor.central_heating
+        to:
       - platform: homeassistant
         event: start
       - platform: event
@@ -1512,6 +1517,7 @@
     trigger:
       - platform: state
         entity_id: binary_sensor.sls_gateway_state
+        to:
         for:
           seconds: 5
     condition:
@@ -1594,32 +1600,32 @@
 # ##################################
 # System - Wallpanel panel relauch
 # ##################################
-  - alias: system_wallpanel_relaunch
-    id:  system_wallpanel_relaunch
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/30"
-      - platform: homeassistant
-        event: start
-      - platform: event
-        event_type: automation_reloaded
-      - platform: state
-        entity_id: binary_sensor.wp_digma801_screen
-        to: "on"
-      - platform: state
-        entity_id: binary_sensor.wp_digma801_motion
-        to: "on"
-    condition:
-      - condition: template
-        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_wallpanel_relaunch', 'last_triggered'))|int(0)) > 5 }}"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
-      - service: mqtt.publish
-        data:
-          topic: "wallpanel/digma801/command"
-          payload: '{"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+  # - alias: system_wallpanel_relaunch
+  #   id:  system_wallpanel_relaunch
+  #   initial_state: true
+  #   trigger:
+  #     - platform: time_pattern
+  #       minutes: "/30"
+  #     - platform: homeassistant
+  #       event: start
+  #     - platform: event
+  #       event_type: automation_reloaded
+  #     - platform: state
+  #       entity_id: binary_sensor.wp_digma801_screen
+  #       to: "on"
+  #     - platform: state
+  #       entity_id: binary_sensor.wp_digma801_motion
+  #       to: "on"
+  #   condition:
+  #     - condition: template
+  #       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_wallpanel_relaunch', 'last_triggered'))|int(0)) > 5 }}"
+  #     - condition: template
+  #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  #   action:
+  #     - service: mqtt.publish
+  #       data:
+  #         topic: "wallpanel/digma801/command"
+  #         payload: '{"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
 
 # ##################################
 # System - New Device Found
@@ -1957,32 +1963,32 @@
 # ##################################
 # System - Wallpanel panel status
 # ##################################
-  - alias: system_wallpanel_status
-    id:  system_wallpanel_status
-    initial_state: true
-    trigger:
-      # - platform: state
-      #   entity_id: binary_sensor.wp_digma801_motion
-      #   to: 'unavailable'
-      #   for:
-      #     seconds: 30
+  # - alias: system_wallpanel_status
+  #   id:  system_wallpanel_status
+  #   initial_state: true
+  #   trigger:
+  #     # - platform: state
+  #     #   entity_id: binary_sensor.wp_digma801_motion
+  #     #   to: 'unavailable'
+  #     #   for:
+  #     #     seconds: 30
       
-      - platform: state
-        entity_id: binary_sensor.wp_digma801_connection
-        to: 'off'
-        from: 'on'
-        for:
-          seconds: 30
-      - platform: state
-        entity_id: binary_sensor.wp_digma801_connection
-        to: 'on'
-        from: 'off'
-        for:
-          seconds: 30
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f4fa Wallpanel: {% if is_state('binary_sensor.wp_digma801_connection','on')%}связь восстановлена{%else%}потеря связи{%endif%}"
+  #     - platform: state
+  #       entity_id: binary_sensor.wp_digma801_connection
+  #       to: 'off'
+  #       from: 'on'
+  #       for:
+  #         seconds: 30
+  #     - platform: state
+  #       entity_id: binary_sensor.wp_digma801_connection
+  #       to: 'on'
+  #       from: 'off'
+  #       for:
+  #         seconds: 30
+  #   action:
+  #     - service: notify.telegram
+  #       data:
+  #         message: "\U0001f4fa Wallpanel: {% if is_state('binary_sensor.wp_digma801_connection','on')%}связь восстановлена{%else%}потеря связи{%endif%}"
 
 # ##################################
 # System - Pinhole Cam Status
@@ -2075,3 +2081,16 @@
   #         - service: persistent_notification.dismiss
   #           data:
   #             notification_id: "updates_pending"
+  
+  # - alias: system_wallpanel_status_url
+  #   id: system_wallpanel_status_url
+  #   trigger:
+  #     - platform: state
+  #       entity_id: binary_sensor.wp_digma801_connection
+  #       attribute: currentUrl
+  #   action:
+  #     - service: notify.telegram
+  #       data:
+  #         message: "{{ trigger.from_state.attribute.currentUrl }} -> {{ trigger.to_state.attribute.currentUrl }}"
+          
+# {{'error' in state_attr('binary_sensor.wp_digma801_connection','currentUrl')}}
