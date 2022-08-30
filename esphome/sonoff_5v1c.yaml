@@ -81,6 +81,13 @@ binary_sensor:
     name: ${board_name}_auto_mode
     id: id_auto_mode
 
+  - platform: homeassistant
+    name: ${board_name}_security
+    entity_id: input_boolean.security_mode
+    id: id_security
+    internal: false
+    publish_initial_state: true
+    
 switch:
   - platform: gpio
     name: ${board_name}_Relay
@@ -111,10 +118,18 @@ sensor:
     update_interval: 60s
 
   - platform: homeassistant
+    name: ${board_name}_people
+    entity_id: sensor.people_home
+    id: id_people_home
+    internal: false
+
+  - platform: homeassistant
     name: ${board_name}_bat_level
     entity_id: sensor.optima_8_z801_4g_battery_level
     id: battery
-    internal: false    
+    internal: false
+    device_class: battery
+    unit_of_measurement: '%'
     filters:
       - heartbeat: 10s
     on_value:
@@ -126,7 +141,7 @@ sensor:
                 condition:
                   and:
                     - lambda: "return id(battery).state < 50;"
-                    - switch.is_on: relay
+                    - switch.is_off: relay
                 then:
                   - switch.turn_on: relay
                 else:
@@ -134,7 +149,7 @@ sensor:
                       condition:
                         and:
                           - lambda: "return id(battery).state > 80 ;"
-                          - switch.is_off: relay
+                          - switch.is_on: relay
                       then:
                         - switch.turn_off: relay
           else:
@@ -194,10 +209,13 @@ interval:
     then:
       - if:
           condition:
-            or:
+            and:
               - not:
-                  - binary_sensor.is_on: id_tod
-              - switch.is_on: id_always_on
+                  - binary_sensor.is_on: id_security
+              - or:
+                  - not:
+                      - binary_sensor.is_on: id_tod
+                  - switch.is_on: id_always_on
           then:
             - binary_sensor.template.publish:
                 id: id_auto_mode
