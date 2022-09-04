@@ -207,6 +207,27 @@
               {{state.name}}{%- if not loop.last -%}, {%-endif%}
             {%-endfor-%}
         unit_of_measurement: "ea"
+
+      - name: Zigbee Devices Last Resets
+        state: >-
+          {%- set devices = namespace(device_name=[]) -%}
+          {%- set threshold = 10 -%}
+          {%- for item in states['sensor'] -%}
+          {%- if ('_zigbee' in item.entity_id) -%}
+          {%- if item.attributes.new_resets is defined -%}
+          {%- if item.attributes.new_resets | int(default=0) > threshold -%}
+          {%- set devices.device_name = devices.device_name + [item.entity_id ~ ': ' ~ item.attributes.new_resets | format(morph=['раз','раза','раз'], as_text=false)] -%}
+          {%- endif -%}
+          {%- endif -%}
+          {%- endif -%}
+          {% endfor %}
+          {{ devices.device_name | list | unique | join (', ') | truncate(254, true) }}
+        icon: >
+          {% if states('sensor.zigbee_devices_last_resets') != '' %}
+            mdi:signal
+          {% else %}
+            mdi:signal-off
+          {% endif %}
   
       - name: WiFi Devices Unavailable
         state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count + expand('group.esp_devices') | selectattr('state','in',['unavailable','off']) | map(attribute='name') | list | count }}"
@@ -221,7 +242,7 @@
             {%-for state in expand('group.wifi_devices')|list
               if state.state in ['unavailable'] %}
               {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
-            {%-endfor-%}{%-if expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count >0 %}, {%endif%}
+            {%-endfor-%}{%-if expand('group.esp_devices') | selectattr('state','in',['unavailable','off']) | map(attribute='name') | list | count >0 %}, {%endif%}
             {%-for state in expand('group.esp_devices')|list
               if state.state in ['unavailable','off'] %}
               {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}

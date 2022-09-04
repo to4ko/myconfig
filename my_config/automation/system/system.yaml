@@ -374,13 +374,20 @@
         event: start
     condition:
       - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"        
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - service: group.set
         data:
           object_id: gw3_zigbee_entities
           entities: >-
             {%-for state in states.sensor if state.entity_id.endswith("_zigbee")%}
+            {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
+            {%-endfor%}
+      - service: group.set
+        data:
+          object_id: gw3_zigbee_battery_low
+          entities: >-
+            {%-for state in states.binary_sensor if state.entity_id.endswith("_battery_low")%}
             {{ state.entity_id}}{%- if not loop.last -%}, {%- endif -%}
             {%-endfor%}
       - service: group.set
@@ -1036,7 +1043,7 @@
 # System - GW3 Error
 # ##################################
   - alias: system_xiaomi_gw3_error
-    id:  system_xiaomi_gw3_error
+    id: system_xiaomi_gw3_error
     initial_state: true
     mode: single
     max_exceeded: silent
@@ -1054,7 +1061,56 @@
       - service: notify.telegram
         data:
           message: "\U000026d4 GW3 Ошибка обнаружена в логе!"
-  
+
+# ##################################
+# System - Fully Kiosk Connection
+# ##################################
+  - alias: system_fully_kiosk_connection
+    id: system_fully_kiosk_connection
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      # - platform: event
+      #   event_type: system_log_event
+      #   event_data:
+      #     level: ERROR
+      - platform: state
+        entity_id: light.optima_8_z801_4g_screen
+        to: 'unavailable'
+        id: 'to_unavail'
+        for:
+          minute: 1
+      - platform: state
+        entity_id: light.optima_8_z801_4g_screen
+        from: 'unavailable'
+        id: 'from_unavail'
+        for:
+          minute: 1
+    condition:
+      # - condition: template
+      #   value_template: "{{ 'custom_components.fullykiosk.coordinator' in (trigger.event.data.name|string) or 'custom_components.fullykiosk.coordinator' in (trigger.event.data.name|string) }}"
+      # - condition: template
+      #   value_template: "{{ 'Cannot connect to host' in (trigger.event.data.message|string) or 'Cannot connect to host' in (trigger.event.data.message|string)}}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'to_unavail'
+            sequence:
+              - service: notify.telegram
+                data:
+                  message: "\U000026d4 Fully: связь потеряна!"
+          - conditions:
+              - condition: trigger
+                id: 'from_unavail'
+            sequence:
+              - service: notify.telegram
+                data:
+                  message: "\U00002705 Fully: связь восстановлена!"
+
 # ##################################
 # System - Already running log
 # ##################################
@@ -1747,15 +1803,30 @@
           {{ trigger.event.data.entity_id in expand('group.gw3_zigbee_entities') | map(attribute='entity_id') | list }}
       - condition: template
         value_template: >-
-          {{ trigger.event.data.new_state.attributes.reset_cnt is defined and trigger.event.data.old_state.attributes.reset_cnt is defined }}          
+          {{ trigger.event.data.new_state.attributes.new_resets is defined and trigger.event.data.old_state.attributes.new_resets is defined }}          
       - condition: template
         value_template: >-
-          {{ trigger.event.data.new_state.attributes.reset_cnt |int(0) > trigger.event.data.old_state.attributes.reset_cnt |int(0) }}
+          {{ trigger.event.data.new_state.attributes.new_resets |int(0) > trigger.event.data.old_state.attributes.new_resets |int(0) }}
     action:
       - service: notify.telegram
         data:
-          message: "\U0001f501 Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} перезапустился ({{ trigger.event.data.old_state.attributes.reset_cnt |int(0)}} -> {{trigger.event.data.new_state.attributes.reset_cnt |int(0) }})!"
+          message: "\U0001f501 Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} перезапустился ({{ trigger.event.data.old_state.attributes.new_resets |int(0)}} -> {{trigger.event.data.new_state.attributes.new_resets |int(0) }})!"
 
+# ##################################
+# System - GW3 Devices Reset Notify
+# ##################################
+  - alias: system_gw3_devices_rst_sensor
+    id: system_gw3_devices_rst_sensor
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: sensor.zigbee_devices_last_resets
+    condition: 
+      - "{{ (states('sensor.zigbee_devices_last_resets') not in ['unknown', 'unavailable', 'none']) and (states('sensor.zigbee_devices_last_resets') != '')  }}"
+    action:
+      - service: notify.me
+        data:
+          message: "\U0001f578️ Внимание! Обнаружены перезагрузки zigbee устройств: {{ states('sensor.zigbee_devices_last_resets') }}."
 
 
   # ##################################

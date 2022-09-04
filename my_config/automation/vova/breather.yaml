@@ -87,6 +87,11 @@
         to: 'on'
         id: 'to_on'
       - platform: state
+        entity_id: binary_sensor.breather_v
+        from: 'on'
+        to: 'off'
+        id: 'to_off'
+      - platform: state
         entity_id: binary_sensor.digma_ir_v_breather_remote_used
         to: 'on'
         id: 'ir_used_remote'
@@ -122,6 +127,14 @@
                 data:
                   duration: "{{states('input_select.breazer_timer')|int * 60 }}"
               - service: input_boolean.turn_on
+                entity_id: input_boolean.hourly_mode_breather_v
+          - conditions:
+              - condition: trigger
+                id: "to_off"
+            sequence:
+              - service: timer.cancel
+                entity_id: timer.breather_v
+              - service: input_boolean.turn_off
                 entity_id: input_boolean.hourly_mode_breather_v
           - conditions:
               - condition: trigger
