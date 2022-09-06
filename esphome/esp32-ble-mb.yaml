@@ -1,12 +1,13 @@
 substitutions:
-  board_name: esp32_ble_s
+  board_name: esp32_ble_mb
+  node_name: esp32-ble-mb
   up_int: 60s
   
 esphome:
-  name: ${board_name}
-  comment: ESP32 BLE Tracker S
-  platformio_options:
-    board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
+  name: ${node_name}
+  comment: ESP32 BLE Tracker MB
+  # platformio_options:
+  #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
 
 esp32:
   board: pico32
@@ -15,7 +16,7 @@ external_components:
   - source: github://myhomeiot/esphome-components  
 
 wifi:
-  ssid: !secret wifi_ssid
+  ssid: !secret wifi_ssid_mb
   password: !secret wifi_pass
   domain: .local
   reboot_timeout: 15min
@@ -23,7 +24,7 @@ wifi:
   fast_connect: true
   #power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.110
+    static_ip: 192.168.1.92
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
@@ -37,8 +38,8 @@ api:
 
 ota:
 
-mdns:
-  disabled: true
+# mdns:
+#   disabled: true
   
 globals:
   - id: event_count
@@ -46,16 +47,19 @@ globals:
     restore_value: no
     initial_value: '0'
 
+bluetooth_proxy:
+
 esp32_ble_tracker:
   scan_parameters:
     #interval: 512ms
     #window: 48ms
-    # interval: 180ms
-    # window: 60ms
-    active: false
+    active: true
 
-# web_server:
-#   port: 80
+dashboard_import:
+  package_import_url: github://esphome/bluetooth-proxies/esp32-generic.yaml@main
+
+web_server:
+  port: 80
 
 ble_gateway:
   id: ${board_name}
@@ -115,25 +119,25 @@ binary_sensor:
   - platform: status
     name: ${board_name}_Status
 
-  - platform: ble_presence
-    mac_address: 7E:FE:3E:EC:59:FB
-    name: ${board_name}_White
-    device_class: presence
+  # - platform: ble_presence
+  #   mac_address: 7E:FE:3E:EC:59:FB
+  #   name: ${board_name}_White
+  #   device_class: presence
 
-  - platform: ble_presence
-    mac_address: 3B:EF:3E:DE:98:6B
-    name: ${board_name}_Grey
-    device_class: presence
+  # - platform: ble_presence
+  #   mac_address: 3B:EF:3E:DE:98:6B
+  #   name: ${board_name}_Grey
+  #   device_class: presence
 
-  - platform: ble_presence
-    mac_address: 2A:BC:3E:DC:57:65
-    name: ${board_name}_Pink
-    device_class: presence
+  # - platform: ble_presence
+  #   mac_address: 2A:BC:3E:DC:57:65
+  #   name: ${board_name}_Pink
+  #   device_class: presence
 
-  - platform: ble_presence
-    mac_address: 6B:9C:3E:D1:C5:9A
-    name: ${board_name}_Green
-    device_class: presence
+  # - platform: ble_presence
+  #   mac_address: 6B:9C:3E:D1:C5:9A
+  #   name: ${board_name}_Green
+  #   device_class: presence
 
 # 7E:FE:3E:EC:59:FB white
 # 6B:9C:3E:D1:C5:9A green
@@ -146,29 +150,29 @@ sensor:
     id: uptime_sensor
     update_interval: 15s
 
-  - platform: wifi_signal
-    name: ${board_name}_WiFi_RSSI
-    update_interval: 60s
+  # - platform: wifi_signal
+  #   name: ${board_name}_WiFi_RSSI
+  #   update_interval: 60s
     
-  - platform: ble_rssi
-    mac_address: 7E:FE:3E:EC:59:FB
-    name: ${board_name}_White_RSSI
-    icon: "mdi:wifi"
+  # - platform: ble_rssi
+  #   mac_address: 7E:FE:3E:EC:59:FB
+  #   name: ${board_name}_White_RSSI
+  #   icon: "mdi:wifi"
 
-  - platform: ble_rssi
-    mac_address: 3B:EF:3E:DE:98:6B
-    name: ${board_name}_Grey_RSSI
-    icon: "mdi:wifi"
+  # - platform: ble_rssi
+  #   mac_address: 3B:EF:3E:DE:98:6B
+  #   name: ${board_name}_Grey_RSSI
+  #   icon: "mdi:wifi"
 
-  - platform: ble_rssi
-    mac_address: 2A:BC:3E:DC:57:65
-    name: ${board_name}_Pink_RSSI
-    icon: "mdi:wifi"
+  # - platform: ble_rssi
+  #   mac_address: 2A:BC:3E:DC:57:65
+  #   name: ${board_name}_Pink_RSSI
+  #   icon: "mdi:wifi"
 
-  - platform: ble_rssi
-    mac_address: 6B:9C:3E:D1:C5:9A
-    name: ${board_name}_Green_RSSI
-    icon: "mdi:wifi"
+  # - platform: ble_rssi
+  #   mac_address: 6B:9C:3E:D1:C5:9A
+  #   name: ${board_name}_Green_RSSI
+  #   icon: "mdi:wifi"
 
   # - platform: template
   #   id: ${board_name}_White_Battery
@@ -250,7 +254,7 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
-  # BLE Devices
+  #BLE Devices
   - platform: homeassistant
     id: ble_gateway_devices
     entity_id: binary_sensor.ble_gateway

@@ -360,7 +360,7 @@ white-space:nowrap;>
 <td rowspan="2">11</td>
 <td rowspan="2">2022</td>
 <td>HP Prodesk 600 G6 mini</td>
-<td>i3-10300</td>
+<td>i3-10100</td>
 <td>2 * 8Gb DDR4</td>
 <td>512GB NVME</td>
 <td>-</td>
