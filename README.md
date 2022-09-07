@@ -65,7 +65,8 @@
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
 
 **2nd Backup Storage Unit - Synology DS220+** 
-  - not in use at the moment
+  - 2ea 128Gb SSD
+  - Acting as NUT server :)
 
 **UPS**
   - Ippon Smart Power Pro 1200
@@ -87,7 +88,7 @@
   - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
   - Ubiquiti G3 Flex Cameras (6ea)
   - Digma 100
-  - Aliexpress Pinhole camera via iSpyAgent DVR (Docker on DS1621+)
+  - Aliexpress Pinhole camera via Synology Surveillance Station on DS1621+
 
 # Smart Devices
 **Lights**
