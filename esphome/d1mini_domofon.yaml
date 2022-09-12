@@ -8,8 +8,8 @@ esphome:
 
 esp8266:
   board: d1_mini
-  framework:
-    version: 2.7.4
+  # framework:
+  #   version: 2.7.4
 
 wifi:
   ssid: !secret wifi_ssid_hb
@@ -28,7 +28,6 @@ wifi:
     
 logger:
   baud_rate: 0
-  
 
 api:
   reboot_timeout: 0min
@@ -39,8 +38,9 @@ ota:
 #   port: 80
 
 globals:
-  - id: mute_mode
+  - id: mode_mute
     type: bool
+    restore_value: yes
     initial_value: 'false'
   - id: opening
     type: bool
@@ -54,7 +54,7 @@ script:
           id: opening
           value: 'true'      
       - logger.log: "Accept call"
-      - script.execute: state_no_call
+      - script.execute: state_standby
       - switch.turn_on: id_phone
       - delay: 1s
       - switch.turn_on: id_open
@@ -66,6 +66,7 @@ script:
       - globals.set:
           id: opening
           value: 'false'
+      - script.execute: state_standby
 
   - id: call_accept_mute
     then:
@@ -73,7 +74,7 @@ script:
           id: opening
           value: 'true'      
       - logger.log: "Accept call_mute"
-      - script.execute: state_no_call
+      - script.execute: state_standby
       - switch.turn_on: id_mute
       - switch.turn_on: id_phone
       - switch.turn_on: id_headset_mute
@@ -94,14 +95,15 @@ script:
       - globals.set:
           id: opening
           value: 'false'
+      - script.execute: state_standby
           
   - id: call_accept_manual
     then:
       - logger.log: "Accept call_manual"
-      - script.execute: state_no_call
+      - script.execute: state_standby
       - light.turn_on:
           id: id_led1
-          brightness: 30%
+          brightness: 20%
           red: 0%
           green: 100%
           blue: 0%
@@ -123,12 +125,12 @@ script:
           then:
             switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
-      - script.execute: state_no_call
+      - script.execute: state_standby
 
   - id: call_reject
     then:
       - logger.log: "Reject call"
-      - script.execute: state_no_call
+      - script.execute: state_standby
       - switch.turn_on: id_mute
       - switch.turn_on: id_headset_mute
       - switch.turn_on: id_phone
@@ -192,16 +194,16 @@ script:
   #           light.turn_off:
   #             id: id_led1
 
-  # No call state
-  - id: state_no_call
+  # State - Standby
+  - id: state_standby
     then:
-      - logger.log: "Set state 'No call'"
+      - logger.log: "Set state 'Standby'"
       - script.execute: led_off
       - if:
           condition:
             switch.is_on: auto_open_once
           then:
-            script.execute: led_green_soft
+            script.execute: led_green_blink
       - if:
           condition:
             switch.is_on: auto_open
@@ -211,7 +213,7 @@ script:
           condition:
             switch.is_on: auto_reject
           then:
-            script.execute: led_red_on_soft
+            script.execute: led_red_blink
       - if:
           condition:
             and:
@@ -219,7 +221,7 @@ script:
               - switch.is_off: auto_open_once
               - switch.is_off: auto_open
           then:
-            script.execute: led_blue_on_soft
+            script.execute: led_blue_blink
       - if:
           condition:
             and:
@@ -275,72 +277,98 @@ script:
           condition:
             switch.is_on: mute
           then:
-            light.turn_on: 
-              id: id_led1
-              brightness: 50%
-              red: 0%
-              green: 0%
-              blue: 100%
+            - logger.log: "Blue ON from led off"
+            - light.turn_on: 
+                id: id_led1
+                brightness: 20%
+                red: 0%
+                green: 0%
+                blue: 100%
+                effect: "Blink"
 
-  # blink green led
-  - id: led_green_soft
+  - id: led_green_blink_double
     then:
       light.turn_on:
         id: id_led1
-        brightness: 30%
+        brightness: 20%
+        red: 0%
+        green: 100%
+        blue: 0%
+        effect: "Blink Double"
+
+  - id: led_red_blink_double
+    then:
+      light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 100%
+          green: 0%
+          blue: 0%
+          effect: "Blink Double"
+
+  - id: led_blue_blink_double
+    then:
+      - light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 0%
+          green: 0%
+          blue: 100%
+          effect: "Blink Double"
+
+  - id: led_green_blink
+    then:
+      light.turn_on:
+        id: id_led1
+        brightness: 20%
         red: 0%
         green: 100%
         blue: 0%
         effect: "Blink"
 
-  # blink red led
-  - id: led_red_on_soft
+  - id: led_red_blink
     then:
       light.turn_on:
           id: id_led1
-          brightness: 30%
+          brightness: 20%
           red: 100%
           green: 0%
           blue: 0%
           effect: "Blink"
 
-  # blink blue led
-  - id: led_blue_on_soft
+  - id: led_blue_blink
     then:
-      light.turn_on:
-        id: id_led1
-        brightness: 30%
-        red: 0%
-        green: 0%
-        blue: 100%
-        effect: "Blink"
+      - light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 0%
+          green: 0%
+          blue: 100%
+          effect: "Blink"
 
-  # blue led on
   - id: led_blue_on
     then:
-      light.turn_on:
-        id: id_led1
-        brightness: 50%
-        red: 0%
-        green: 0%
-        blue: 100%
+      - light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 0%
+          green: 0%
+          blue: 100%
 
-  # green led on
   - id: led_green_on
     then:
       light.turn_on:
         id: id_led1
-        brightness: 50%
+        brightness: 20%
         red: 0%
         green: 100%
         blue: 0%
 
-  # red led on
   - id: led_red_on
     then:
       light.turn_on:
         id: id_led1
-        brightness: 50%
+        brightness: 20%
         red: 100%
         green: 0%
         blue: 0%
@@ -365,7 +393,7 @@ binary_sensor:
         - script.execute: state_call
     on_release:
       then:
-        - script.execute: state_no_call
+        - script.execute: state_standby
     
 
   - platform: template
@@ -381,8 +409,8 @@ binary_sensor:
       number: GPIO15
       #inverted: true
     filters:
-      - delayed_on: 100ms
-      - delayed_off: 100ms         
+      - delayed_on: 25ms
+      # - delayed_off: 25ms   
     on_press:
       then:
         - script.execute: call_accept_manual
@@ -410,11 +438,16 @@ binary_sensor:
   #       - script.execute: locks_lights
 
 light:
-  - platform: fastled_clockless
-    chipset: WS2812B
+  # - platform: fastled_clockless
+  #   chipset: WS2812B
+  #   pin: GPIO13
+  #   num_leds: 1
+  #   rgb_order: GRB
+  - platform: neopixelbus
+    type: GRB
+    variant: WS2812
     pin: GPIO13
     num_leds: 1
-    rgb_order: GRB
     name: ${board_name}_LED
     id: id_led1
     effects:
@@ -423,7 +456,7 @@ light:
           sequence:
             - light.turn_on:
                 id: id_led1
-                brightness: 50%
+                brightness: 20%
                 transition_length: 500ms
             - delay: 1000ms
             - light.turn_on:
@@ -432,11 +465,34 @@ light:
                 transition_length: 300ms
             - delay: 500ms
       - automation:
+          name: "Blink Double"
+          sequence:
+            - light.turn_on:
+                id: id_led1
+                brightness: 20%
+                transition_length: 50ms
+            - delay: 100ms
+            - light.turn_on:
+                id: id_led1
+                brightness: 1%
+                transition_length: 30ms
+            - delay: 50ms
+            - light.turn_on:
+                id: id_led1
+                brightness: 20%
+                transition_length: 50ms
+            - delay: 100ms
+            - light.turn_on:
+                id: id_led1
+                brightness: 1%
+                transition_length: 30ms
+            - delay: 500ms            
+      - automation:
           name: "Blink Fast"
           sequence:
             - light.turn_on:
                 id: id_led1
-                brightness: 50%
+                brightness: 20%
                 transition_length: 50ms
             - delay: 450ms
             - light.turn_on:
@@ -449,7 +505,7 @@ light:
           sequence:
             - light.turn_on:
                 id: id_led1
-                brightness: 50%
+                brightness: 20%
                 transition_length: 50ms    
 
 text_sensor:
@@ -506,18 +562,21 @@ button:
 switch:
   - platform: gpio
     pin: GPIO12
+    internal: true
     name: ${board_name}_Mute_Pin
     icon: mdi:volume-off
     id: id_mute
 
   - platform: gpio
     pin: GPIO05
+    internal: true
     name: ${board_name}_Phone_Pin
     icon: mdi:phone
     id: id_phone
 
   - platform: gpio
     pin: GPIO04
+    internal: true
     name: ${board_name}_Open_Pin
     icon: mdi:door-open
     id: id_open
@@ -527,6 +586,7 @@ switch:
 
   - platform: gpio
     pin: GPIO00
+    internal: true
     name: ${board_name}_Headset_Mute_Pin
     icon: mdi:headset-off
     id: id_headset_mute
@@ -553,11 +613,10 @@ switch:
     on_turn_on:
       - switch.turn_off: auto_open_once
       - switch.turn_off: auto_reject
-      - script.execute: state_no_call
+      - script.execute: state_standby
     on_turn_off:
-      script.execute: state_no_call
+      - script.execute: state_standby
 
-  # Automatically open door once switch
   - platform: template
     name: ${board_name}_Auto_Open_Once
     id: auto_open_once
@@ -567,11 +626,10 @@ switch:
     on_turn_on:
       - switch.turn_off: auto_open
       - switch.turn_off: auto_reject
-      - script.execute: state_no_call
+      - script.execute: state_standby
     on_turn_off:
-      script.execute: state_no_call
+      - script.execute: state_standby
 
-  # Automatically reject call switch
   - platform: template
     name: ${board_name}_Reject
     id: auto_reject
@@ -581,9 +639,9 @@ switch:
     on_turn_on:
       - switch.turn_off: auto_open
       - switch.turn_off: auto_open_once
-      - script.execute: state_no_call
+      - script.execute: state_standby
     on_turn_off:
-      script.execute: state_no_call
+      - script.execute: state_standby
       
   - platform: template
     name: ${board_name}_Mute
@@ -593,16 +651,29 @@ switch:
     restore_state: true
     on_turn_on:
       - globals.set:
-          id: mute_mode
+          id: mode_mute
           value: 'true'
       - switch.turn_on: id_mute
+      - script.execute: state_standby
     on_turn_off:
       - globals.set:
-          id: mute_mode
+          id: mode_mute
           value: 'false'
       - switch.turn_off: id_mute
-      - light.turn_off: 
-          id: id_led1
+      - script.execute: state_standby
+      
+number:
+  - platform: template
+    name: ${board_name}_LED_Brightness
+    icon: "mdi:led-on"
+    id: led_brightness
+    optimistic: true
+    restore_value: true
+    entity_category: "config"
+    initial_value: 20
+    min_value: 0
+    max_value: 100
+    step: 1
 
 time:
   - platform: sntp
