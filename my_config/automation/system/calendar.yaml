@@ -51,6 +51,9 @@
       - condition: template
         value_template: "{{ states('sensor.calendar_events')|int(0) == 0 }}"
     action:
+      - variables:
+          calendar_event: >-
+            {{ trigger.calendar_event.summary }}      
       - if:
           - condition: state
             entity_id: calendar.dni_rozhdeniia
@@ -63,6 +66,23 @@
               options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + state_attr('calendar.dni_rozhdeniia', 'message') ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
           
           - event: calendar_event_list_updated
+        else: 
+          - service: input_select.set_options 
+            target: 
+              entity_id: input_select.calendar_events_list 
+            data: 
+              options: >- 
+                {% if (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list | count == 0 %} 
+                  ["Нет событий"] 
+                {% else %} 
+                  {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }} 
+                {% endif %}
+
+                
+
+#  2022-09-12 17:04:28.548 ERROR (MainThread) [homeassistant.components.automation.system_calendar_events_to_list_dni_rozhdeniia_at_start] Error while executing automation automation.system_calendar_events_to_list_dni_rozhdeniia_at_start: UndefinedError: 'dict object' has no attribute 'calendar_event'
+
+
 
 # ##################################
 # System - Calendar Events to List (Prazdniki)
@@ -115,6 +135,9 @@
       - condition: template
         value_template: "{{ states('sensor.calendar_holiday_events')|int(0) == 0 }}"
     action:
+      - variables:
+          calendar_event: >-
+            {{ trigger.calendar_event.summary }}      
       - if:
           - condition: state
             entity_id: calendar.prazdniki_rossii_polnyi
@@ -126,5 +149,16 @@
               options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + state_attr('calendar.prazdniki_rossii_polnyi', 'message') ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
               
           - event: calendar_holiday_event_list_updated
+        else: 
+          - service: input_select.set_options 
+            target: 
+              entity_id: input_select.calendar_holiday_events_list 
+            data: 
+              options: >- 
+                {% if (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list | count == 0 %} 
+                  ["Нет событий"] 
+                {% else %} 
+                  {{ (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }} 
+                {% endif %}
           
-          
+

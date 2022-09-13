@@ -60,8 +60,7 @@ binary_sensor:
     filters:
       - invert:
     on_press:
-      - switch.toggle: 
-          id: relay
+      - switch.toggle: relay
 
   - platform: gpio
     name: ${board_name}_Switch
@@ -78,18 +77,30 @@ binary_sensor:
             condition:
               not:
                 - switch.is_on: id_mute
+                - binary_sensor.is_on: id_delay_flag
             then:
-              - switch.turn_on:
-                  id: relay
+              - switch.turn_on: relay
+              - binary_sensor.template.publish:
+                  id: id_delay_flag
+                  state: ON
     on_release:
       then:
-        - switch.turn_off:
-            id: relay
+        - switch.turn_off: relay
         - light.turn_off: wifi_led
               
   - platform: status
     name: ${board_name}_Status
 
+  - platform: template
+    name: ${board_name}_Delay_Flag
+    id: id_delay_flag
+    on_press:
+      then:
+        - delay: 2s
+        - binary_sensor.template.publish:
+            id: id_delay_flag
+            state: OFF
+            
 switch:
   - platform: gpio
     name: ${board_name}_Relay

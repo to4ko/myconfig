@@ -1783,34 +1783,34 @@
 # ##################################
 # System - GW3 Devices Reset
 # ##################################
-  - alias: system_gw3_devices_rst
-    id: system_gw3_devices_rst
-    initial_state: true
-    mode: queued
-    max: 70
-    trigger:
-      - platform: event
-        event_type: state_changed
-    condition:
-      - condition: state
-        entity_id: input_boolean.ha_shutdown
-        state: 'off'
-      - condition: numeric_state
-        entity_id: sensor.ha_uptime
-        above: 0        
-      - condition: template
-        value_template: >-
-          {{ trigger.event.data.entity_id in expand('group.gw3_zigbee_entities') | map(attribute='entity_id') | list }}
-      - condition: template
-        value_template: >-
-          {{ trigger.event.data.new_state.attributes.new_resets is defined and trigger.event.data.old_state.attributes.new_resets is defined }}          
-      - condition: template
-        value_template: >-
-          {{ trigger.event.data.new_state.attributes.new_resets |int(0) > trigger.event.data.old_state.attributes.new_resets |int(0) }}
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f501 Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} перезапустился ({{ trigger.event.data.old_state.attributes.new_resets |int(0)}} -> {{trigger.event.data.new_state.attributes.new_resets |int(0) }})!"
+  # - alias: system_gw3_devices_rst
+  #   id: system_gw3_devices_rst
+  #   initial_state: true
+  #   mode: queued
+  #   max: 70
+  #   trigger:
+  #     - platform: event
+  #       event_type: state_changed
+  #   condition:
+  #     - condition: state
+  #       entity_id: input_boolean.ha_shutdown
+  #       state: 'off'
+  #     - condition: numeric_state
+  #       entity_id: sensor.ha_uptime
+  #       above: 0        
+  #     - condition: template
+  #       value_template: >-
+  #         {{ trigger.event.data.entity_id in expand('group.gw3_zigbee_entities') | map(attribute='entity_id') | list }}
+  #     - condition: template
+  #       value_template: >-
+  #         {{ trigger.event.data.new_state.attributes.new_resets is defined and trigger.event.data.old_state.attributes.new_resets is defined }}          
+  #     - condition: template
+  #       value_template: >-
+  #         {{ trigger.event.data.new_state.attributes.new_resets |int(0) > trigger.event.data.old_state.attributes.new_resets |int(0) }}
+  #   action:
+  #     - service: notify.telegram
+  #       data:
+  #         message: "\U0001f501 Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} перезапустился ({{ trigger.event.data.old_state.attributes.new_resets |int(0)}} -> {{trigger.event.data.new_state.attributes.new_resets |int(0) }})!"
 
 # ##################################
 # System - GW3 Devices Reset Notify
@@ -1824,7 +1824,7 @@
     condition: 
       - "{{ (states('sensor.zigbee_devices_last_resets') not in ['unknown', 'unavailable', 'none']) and (states('sensor.zigbee_devices_last_resets') != '')  }}"
     action:
-      - service: notify.me
+      - service: notify.telegram
         data:
           message: "\U0001f578️ Внимание! Обнаружены перезагрузки zigbee устройств: {{ states('sensor.zigbee_devices_last_resets') }}."
 
