@@ -1,5 +1,6 @@
   - binary_sensor:
       - name: NUT3 Green Presence
+        unique_id: nut3_green_presence
         state: >
           {{is_state('binary_sensor.esp32_ble_hb_green','on') or 
             is_state('binary_sensor.esp32_ble_hs_green','on') or 
@@ -8,6 +9,7 @@
         device_class: presence
 
       - name: NUT3 Pink Presence
+        unique_id: nut3_pink_presence
         state: >
           {{is_state('binary_sensor.esp32_ble_hb_pink','on') or 
             is_state('binary_sensor.esp32_ble_hs_pink','on') or 
@@ -16,6 +18,7 @@
         device_class: presence
 
       - name: NUT3 Grey Presence
+        unique_id: nut3_grey_presence
         state: >
           {{is_state('binary_sensor.esp32_ble_hb_grey','on') or 
             is_state('binary_sensor.esp32_ble_hs_grey','on') or 
@@ -24,6 +27,7 @@
         device_class: presence
 
       - name: NUT3 White Presence
+        unique_id: nut3_white_presence
         state: >
           {{is_state('binary_sensor.esp32_ble_hb_white','on') or 
             is_state('binary_sensor.esp32_ble_hs_white','on') or 
@@ -32,12 +36,14 @@
         device_class: presence
 
       - name: Lullaby
+        unique_id: lullaby
         state: "{{ (states.media_player | selectattr('state', 'eq', 'playing') | selectattr('attributes.media_title', 'defined') | selectattr('attributes.media_title', 'search', 'Колыбельная Брамс|Спят усталые', ignorecase=True) | map(attribute = 'name') | join(',') | count) > 0 }}"
         icon: mdi:bed
         delay_off:
           seconds: 15
 
       - name: Seat not closed
+        unique_id: seat_not_closed
         state: "{{ is_state('binary_sensor.d1mini_distance_sensor_occupancy','off') and is_state('binary_sensor.0x158d000232ddd6_contact','on') }}"
         device_class: problem
         delay_on:
@@ -46,6 +52,7 @@
           seconds: 3
           
       - name: Supervisor Is Healthy
+        unique_id: supervisor_is_healthy
         state: "{{ state_attr('sensor.supervisor_updates', 'healthy') }}"
         availability: "{{ state_attr('sensor.supervisor_updates', 'healthy') != 'unknown' }}"
 
@@ -59,6 +66,7 @@
       #   device_class: problem
 
       - name: BLE Gateway
+        unique_id: ble_gateway
         icon: mdi:bluetooth
         state: "{{ is_state('input_boolean.settings_ble_gateway', 'on') }}"
         attributes:
@@ -67,6 +75,7 @@
       
       - name: High Humidity B
         device_class: moisture
+        unique_id: high_humidity_b
         #state: "{{ states('sensor.humidity_average_b')|float(0) > states('sensor.humidity_average')|float(0) + 10 }}"
         state: "{{ states('sensor.humidity_average_b')|float(0) > 65 }}"
         delay_off:
@@ -96,6 +105,7 @@
       #   device_class: problem
         
       - name: Central Heating
+        unique_id: central_heating
         state: "{{states('sensor.esp32_node_v_heating_pipe')|int(0) > 30 and states('sensor.esp32_node_mb_heating_pipe')|int(0) > 30 }}"
         device_class: heat
         delay_off:
@@ -104,10 +114,12 @@
         #   hours: 3
 
       - name: Hot Water
+        unique_id: hot_water
         state: "{{ states('sensor.esp32_node_b_hot_pipe')|int(0) > 45 }}"
         device_class: heat
 
       - name: Cold Water
+        unique_id: cold_Water
         state: "{{ states('sensor.esp32_node_b_cold_pipe')|int(0) <= states('sensor.0x158d0001e58754_temperature')|float(0) - 2 }}"
         device_class: cold
 
@@ -116,6 +128,7 @@
       #   device_class: moisture
         
       - name: Light Outside Mi
+        unique_id: light_outside_mi
         state: "{{[states('sensor.0x4cf8cdf3c7754a8_illuminance')|int(-1),states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max > states('input_number.outside_light_level')|int(250)}}"
         icon: >
           {% if is_state('binary_sensor.light_outside_mi','on') %}
@@ -125,6 +138,7 @@
           {% endif %}
 
       - name: Dark Outside Mi
+        unique_id: dark_outside_mi
         state: "{{[states('sensor.0x4cf8cdf3c7754a8_illuminance')|int(-1),states('sensor.0x4cf8cdf3c77271d_illuminance')|int(-1),states('sensor.0x4cf8cdf3c78d26e_illuminance')|int(-1)]|max < states('input_number.outside_light_level')|int(250)}}"
         icon: >
           {% if is_state('binary_sensor.dark_outside_mi','on') %}
@@ -134,6 +148,7 @@
           {% endif %}
 
       - name: Bed Led Enable
+        unique_id: bed_led_enable
         state: "{{ states('sensor.0x4cf8cdf3c772824_illuminance')|int(0) <= states('input_number.inside_light_level')|int(5) and is_state('input_boolean.security_mode','off') }}"
         icon: mdi:bed-king
         delay_off:
@@ -158,6 +173,7 @@
       #     {% endif %}
 
       - name: RO Pump Status
+        unique_id: ro_pump_status
         icon: mdi:water-pump
         state: "{{ is_state('binary_sensor.0x158d000423f316_contact','off') }}"
 
@@ -168,43 +184,53 @@
       #   state: "{{ states('sensor.bad_airq_toilet') | float(0) < -10 }}"
 
       - name: Toilet Usage
+        unique_id: toilet_usage
         icon: mdi:toilet
         state: "{{ is_state('binary_sensor.0x158d000232ddd6_contact','on') or is_state('sensor.d1mini_distance_sensor_occupancy_text','Sitting') }}"
         device_class: occupancy
 
       - name: Monitor Dell
+        unique_id: monitor_dell
         icon: mdi:monitor
         state: "{{ states('sensor.0x158d0003600ea4_power')|float(0) > 5 }}"
 
       - name: TV V
+        unique_id: tv_V
         icon: mdi:television
         state: "{{ is_state('binary_sensor.0x158d000236fdc9_contact','on') }}"
 
       - name: Mi Box V
+        unique_id: mi_box_v
         icon: mdi:play-network
         state: "{{ is_state_attr('device_tracker.mi_box_v','vlan',0)}}"
 
       - name: TV K
+        unique_id: tv_k
         icon: mdi:television-box
         state: "{{ is_state('binary_sensor.0x158d0002a1a47a_contact','on') }}"
 
       - name: Mi Stick K
+        unique_id: mi_stick_k
         icon: mdi:youtube-tv
         state: "{{ is_state_attr('device_tracker.mi_stick_k','vlan',0)}}"
 
       - name: Breather V
+        unique_id: breather_v
         icon: mdi:power
         state: "{{ states('sensor.0x158d000344998e_power')|float(0) > 5 }}"
 
       - name: Breather S
+        unique_id: breather_s
         icon: mdi:power
         state: "{{ states('sensor.0x158d00036148b9_power')|float(0) > 5 }}"
 
       - name: Breather MB
+        unique_id: breather_mb
         icon: mdi:power
         state: "{{ states('sensor.0x158d000345119e_power')|float(0) > 5 }}"
 
       - name: Washer B
+        unique_id: binary_sensor_washer_b
         delay_off:
           minutes: 2
         state: "{{ states('sensor.sonoff_pow_r2_1_power')|float(0) > 5 }}"
@@ -238,10 +264,12 @@
       #   icon: mdi:lightbulb-group
 
       - name: Fridge HB
+        unique_id: fridge_hb
         icon: mdi:fridge
         state: "{{ states('sensor.0x158d0003539447_power')|float(0) > 5 }}"
       
       - name: Kettle K
+        unique_id: kettle_k
         state: "{{ states('sensor.0x158d00028c9875_power')|float(0) > 50 }}"
         icon: >
           {% if states('sensor.0x158d00028c9875_power')|float(0) > 500 %}
@@ -253,50 +281,60 @@
           {% endif %}
 
       - name: Kettle Boil K
+        unique_id: kettle_boil_k
         icon: mdi:kettle-steam
         state: "{{ states('sensor.0x158d00028c9875_power')|float(0) > 500 }}"
         delay_off:
           minutes: 1
 
       - name: Microwave K
+        unique_id: microwave_k
         icon: mdi:microwave
         state: "{{ states('sensor.0x158d00028a54e4_power')|float(0) > 10 }}"
 
       - name: Ippon 1200 Status
+        unique_id: ippon_1200_status
         state: "{{ states('sensor.ippon_1200_status_data') not in ['none','unknown','unavailable'] }}"
         icon: mdi:battery
         device_class: power
       
       - name: Ippon 1050 Status
+        unique_id: ippon_1500_status
         state: "{{ states('sensor.ippon_1050_status_data') not in ['none','unknown','unavailable'] }}"
         icon: mdi:battery
         device_class: power
 
       - name: Cyber 650 Status
+        unique_id: cyber_650_status
         state: "{{ states('sensor.cyber_650_status_data') not in ['none','unknown','unavailable'] }}"
         icon: mdi:battery
         device_class: power
 
       - name: Ippon 650 Status
+        unique_id: ippon_650_Status
         state: "{{ states('sensor.ippon_650_status_data') not in ['none','unknown','unavailable'] }}"
         icon: mdi:battery
         device_class: power
 
       - name: Chair 2 S
+        unique_id: chair_2_s
         state: "{{ is_state('sensor.0x158d0002a8ac3c_action','vibration') or is_state('sensor.0x158d0002a8ac3c_action','tilt') }}"
         delay_off:
           minutes: 20
         icon: mdi:chair-rolling
 
       - name: Ice Alarm Current
+        unique_id: ice_alarm_current
         device_class: cold
         state: "{{ 1 > state_attr('weather.my_weather','temperature')|float(0) > -3}}"
 
       - name: Ice Alarm 0d
+        unique_id: ice_alarm_0d
         device_class: cold
         state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_0d')|float(0) > -3}}"
 
       - name: Ice Alarm 1d
+        unique_id: ice_alarm_1d
         device_class: cold
         state: "{{ 1 > states('sensor.dark_sky_daytime_high_temperature_1d')|float(0) > -3}}"
 
@@ -424,6 +462,7 @@
         above: 1        
     binary_sensor:
       - name: Round LED K Prev
+        unique_id: round_led_k_prev
         state: >-
           {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
           {{ states('light.round_led_k') if states('light.round_led_k') not in ignore else states('binary_sensor.round_led_k_prev') }}
@@ -450,6 +489,7 @@
         above: 1
     binary_sensor:
       - name: Round LED HS Prev
+        unique_id: round_led_hs_prev
         state: >-
           {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
           {{ states('light.round_led_hs') if states('light.round_led_hs') not in ignore else states('binary_sensor.round_led_hs_prev') }}
@@ -476,6 +516,7 @@
         above: 1        
     binary_sensor:
       - name: Round LED MB Prev
+        unique_id: round_led_mb_prev
         state: >-
           {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
           {{ states('light.round_led_mb') if states('light.round_led_mb') not in ignore else states('binary_sensor.round_led_mb_prev') }}
@@ -502,6 +543,7 @@
         above: 1        
     binary_sensor:
       - name: Square LED S Prev
+        unique_id: square_led_s_prev
         state: >-
           {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
           {{ states('light.square_led_s') if states('light.square_led_s') not in ignore else states('binary_sensor.square_led_s_prev') }}
@@ -528,6 +570,7 @@
         above: 1        
     binary_sensor:
       - name: Square LED V Prev
+        unique_id: square_led_v_prev
         state: >-
           {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
           {{ states('light.square_led_v') if states('light.square_led_v') not in ignore else states('binary_sensor.square_led_v_prev') }}
@@ -541,6 +584,7 @@
         id: "false"
     binary_sensor:
       - name: Pinhole State
+        unique_id: pinhole_state
         state: "{{ trigger.id }}"
         device_class: connectivity
 
@@ -549,6 +593,7 @@
         event_type: event_template_reloaded
     binary_sensor:
       - name: Templates reload
+        unique_id: templates_reload
         state: "{{ true }}"
         device_class: problem
         auto_off:
@@ -563,5 +608,6 @@
         id: "true"
     binary_sensor:
       - name: HA Shutdown
+        unique_id: ha_shutdown
         state: "{{ trigger.id }}"
         device_class: connectivity

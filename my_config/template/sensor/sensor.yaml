@@ -12,11 +12,13 @@
       #   state: "{{((as_timestamp(states('sensor.bus_to_home_from_koptevo')) - as_timestamp(now()))/60)|round(0,'common')}}"
       
       - name: Humidity Delta K
+        unique_id: humidity_delta_k
         state: "{{ ( states('sensor.0x158d0006b1c7bc_humidity')|float(0) - states('sensor.0x158d0001e586af_humidity')|float(0) )|round(2) }}"
         device_class: humidity
         unit_of_measurement: '%'
 
       - name: Breather Set Speed V
+        unique_id: breather_set_speed_v
         state: >
           {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
           {% set cur_co2 = states('sensor.esp32_node_v_co2')|int(0) %}
@@ -37,6 +39,7 @@
           {% endif %}
           
       - name: Breather Set Speed MB
+        unique_id: breather_set_speed_mb
         state: >-
           {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
           {% set cur_co2 = states('sensor.esp32_node_mb_co2')|int(0) %}
@@ -57,6 +60,7 @@
           {% endif %}
           
       - name: Breather Set Speed S
+        unique_id: breather_set_speed_s
         state: >-
           {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
           {% set cur_co2 = states('sensor.d1mini_co2_s_co2')|int(0) %}
@@ -77,38 +81,43 @@
           {% endif %}
           
       - name: LUMI OTA List
+        unique_id: lumi_ota_list
         state: "OK"
         
-      - name: Washer B
-        state: >-
-          {% if states('sensor.sonoff_pow_r2_1_power')|float(0) == 0 %}
-            Off
-          {% elif (states('sensor.sonoff_pow_r2_1_power')|float(0) > 0 and states('sensor.sonoff_pow_r2_1_power')|float(0) <= 0 ) %}
-            Standby
-          {% else %}
-            On
-          {% endif %}
-        icon: >
-          {% if states('sensor.sonoff_pow_r2_1_power')|float(0) == 0 %}
-            mdi:washing-machine-off
-          {% elif (states('sensor.sonoff_pow_r2_1_power')|float(0) > 0 and states('sensor.sonoff_pow_r2_1_power')|float(0) <= 0 ) %}
-            mdi:washing-machine-alert
-          {% else %}
-            mdi:washing-machine
-          {% endif %}
+      # - name: Washer B
+      #   unique_id: sensor_washer_b
+      #   state: >-
+      #     {% if states('sensor.sonoff_pow_r2_1_power')|float(0) == 0 %}
+      #       Off
+      #     {% elif (states('sensor.sonoff_pow_r2_1_power')|float(0) > 0 and states('sensor.sonoff_pow_r2_1_power')|float(0) <= 0 ) %}
+      #       Standby
+      #     {% else %}
+      #       On
+      #     {% endif %}
+      #   icon: >
+      #     {% if states('sensor.sonoff_pow_r2_1_power')|float(0) == 0 %}
+      #       mdi:washing-machine-off
+      #     {% elif (states('sensor.sonoff_pow_r2_1_power')|float(0) > 0 and states('sensor.sonoff_pow_r2_1_power')|float(0) <= 0 ) %}
+      #       mdi:washing-machine-alert
+      #     {% else %}
+      #       mdi:washing-machine
+      #     {% endif %}
 
 
       - name: Active Lights
+        unique_id: active_lights
         icon: mdi:lightbulb-on
         unit_of_measurement: 'ea'
         state: "{{ states.light | selectattr ('state', 'equalto', 'on') | list | count }}"
 
       - name: Active Switches
+        unique_id: active_switches
         icon: mdi:toggle-switch
         unit_of_measurement: 'ea'
         state: "{{ states.switch | selectattr ('state', 'equalto', 'on') | list | count }}"
 
       - name: Washing Machine Stopwatch
+        unique_id: washing_machine_stopwatch
         icon: mdi:timer-outline
         unit_of_measurement: "min"
         state: >
@@ -126,6 +135,7 @@
       #     {% endif %}
   
       - name: PC S Usage
+        unique_id: pc_s_usage
         state: "{{(states('sensor.pc_s_stats')|float(0)*3600)|timestamp_custom('%H:%M:%S',false, 0)}}"
         icon: mdi:progress-clock
   
@@ -135,10 +145,12 @@
       #   device_class: temperature
   
       - name: Next Sunrise
+        unique_id: next_sunrise
         state: "{{ as_timestamp(states.sun.sun.attributes.next_rising) | timestamp_custom('%H:%M:%S',true,0) }}"
         icon: mdi:weather-sunset-up
   
       - name: Next Sunset
+        unique_id: next_sunset
         state: "{{ as_timestamp(states.sun.sun.attributes.next_setting) | timestamp_custom('%H:%M:%S',true,0) }}"
         icon: mdi:weather-sunset-down
   
@@ -153,6 +165,7 @@
       #   device_class: temperature
   
       - name: Dewpoint B
+        unique_id: dewpoint_b
         unit_of_measurement: "°C"
         device_class: temperature
         state: >
@@ -165,6 +178,7 @@
           {{ (c * gamma / (b - gamma)) | round(1, 'common') }}
   
       - name: Dewpoint T
+        unique_id: dewpoint_t
         unit_of_measurement: "°C"
         device_class: temperature
         state: >
@@ -177,6 +191,7 @@
           {{ (c * gamma / (b - gamma)) | round(1, 'common') }}
 
       - name: Zigbee Gateways Unavailable
+        unique_id: zigbee_gateways_unavailable
         state: "{{ expand('group.gateways') | selectattr('state','in',['off','unavailable']) | map(attribute='name') | list | count }}"
         icon: >
           {% if states('sensor.zigbee_gateways_unavailable')|int(0) > 0 %}
@@ -193,6 +208,7 @@
         unit_of_measurement: "ea"
 
       - name: Zigbee Devices Unavailable
+        unique_id: zigbee_devices_unavailable
         state: "{{ expand('group.zigbee_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count }}"
         icon: >
           {% if states('sensor.zigbee_devices_unavailable')|int(0) > 0 %}
@@ -209,6 +225,7 @@
         unit_of_measurement: "ea"
 
       - name: Zigbee Devices Last Resets
+        unique_id: zigbee_devices_last_resets
         state: >-
           {%- set devices = namespace(device_name=[]) -%}
           {%- set threshold = 10 -%}
@@ -230,6 +247,7 @@
           {% endif %}
   
       - name: WiFi Devices Unavailable
+        unique_id: wifi_devices_unavailable
         state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count + expand('group.esp_devices') | selectattr('state','in',['unavailable','off']) | map(attribute='name') | list | count }}"
         icon: >
           {% if states('sensor.wifi_devices_unavailable')|int(0) >  0 %}
@@ -251,6 +269,7 @@
       #{{state.name}}{%- if not loop.last -%}, {%-endif%}
 
       - name: Abs Humidity B
+        unique_id: abs_humidity_b
         state: >-
           {% set h, t = states('sensor.0x158d00020d7c3a_humidity') | float(0), states('sensor.0x158d00020d7c3a_temperature') %}
           {% if not h or t == 'unknown' -%}
@@ -263,6 +282,7 @@
         icon: mdi:water-percent
 
       - name: Abs Humidity T
+        unique_id: abs_humidity_t
         state: >-
           {% set h, t = states('sensor.0x158d0001e58754_humidity') | float(0), states('sensor.0x158d0001e58754_temperature') %}
           {% if not h or t == 'unknown' -%}
@@ -275,6 +295,7 @@
         icon: mdi:water-percent
   
       - name: Abs Humidity H
+        unique_id: abs_humidity_h
         state: >-
           {% set h, t = states('sensor.humidity_average') | float(0), states('sensor.temperature_average') %}
           {% if not h or t == 'unknown' -%}
@@ -303,28 +324,34 @@
       #   unit_of_measurement: 'ea'
   
       - name: Config Line Count Ratio
+        unique_id: config_line_count_ratio
         state: "{{'NA' if states('sensor.config_line_count')==0 else (states('sensor.config_line_count_code')|int(0) / states('sensor.config_line_count')|int(0) * 100) | round(0, 'common') }}"
         unit_of_measurement: "%"
         icon: mdi:brightness-percent
   
       - name: Oven Target Temperature
+        unique_id: oven_target_temperature
         state: "{{ states('input_select.oven_target_temperature')|int(0)}}"
         device_class: temperature
         unit_of_measurement: "°C"
   
       - name: GDrive Last Backup
+        unique_id: gdrive_last_backup
         icon: mdi:clock
         state: "{{(as_timestamp(state_attr('sensor.backup_state','last_backup'), 0) )|timestamp_custom('%H:%M %d.%m.%Y',true,0)}}"
   
       - name: GDrive Backup State
+        unique_id: gdrive_backup_state
         icon: mdi:backup-restore
         state: "{{states('sensor.backup_state')|capitalize|replace('_',' ')}}"
   
       - name: GDrive Backup Size in HA
+        unique_id: gdrive_backup_size_in_ha
         icon: mdi:file-eye
         state: "{{state_attr('sensor.backup_state','size_in_home_assistant')}}"
   
       - name: GDrive Backup Size
+        unique_id: gdrive_backup_size
         icon: mdi:file-eye-outline
         state: "{{state_attr('sensor.backup_state','size_in_google_drive')}}"
   
@@ -406,6 +433,7 @@
       #   unit_of_measurement: "ea"
   
       - name: Addons Update Available
+        unique_id: addons_update_available
         state: >-
           {%- macro dev_list() -%}
           {%- for state in states.binary_sensor -%}
@@ -438,6 +466,7 @@
         event_type: event_template_reloaded
     sensor:
       - name: QIWI USD Rate Filtered
+        unique_id: qiwi_usd_rate_filtered
         state: "{{ states('sensor.qiwi_usd_rate')|float(0) }}"
         unit_of_measurement: "RUB"
         icon: mdi:currency-usd
@@ -466,41 +495,49 @@
         event_type: event_template_reloaded
     sensor:
       - name: GW3 Zigbee Devices Count
+        unique_id: gw3_zigbee_devices_count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| map(attribute='attributes.name') | unique | list  | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
   
       - name: GW3 HB Zigbee Devices Count
+        unique_id: gw3_hb_zigbee_devices_count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| selectattr('attributes.gate', 'eq','Gateway3 HB') |map(attribute='attributes.name') | unique | list  | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
   
       - name: GW3 S Zigbee Devices Count
+        unique_id: gw3_s_zigbee_devices_count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| selectattr('attributes.gate', 'eq','Gateway3 S') |map(attribute='attributes.name') | unique | list  | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
   
       - name: GW3 V Zigbee Devices Count
+        unique_id: gw3_v_zigbee_devices_count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| selectattr('attributes.gate', 'eq','Gateway3 V') |map(attribute='attributes.name') | unique | list  | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
   
       - name: GW3 K Zigbee Devices Count
+        unique_id: gw3_k_zigbee_devices_count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| selectattr('attributes.gate', 'eq','Gateway3 K') |map(attribute='attributes.name') | unique | list  | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
   
       - name: GW3 HS Zigbee Devices Count
+        unique_id: gw3_hs_zigbee_devices_count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| selectattr('attributes.gate', 'eq','Gateway3 HS') |map(attribute='attributes.name') | unique | list  | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
   
       - name: GW3 MB Zigbee Devices Count
+        unique_id: gw3_mb_zigbee_devices_count
         state: "{{ states.sensor|selectattr('attributes.ieee', 'defined')| selectattr('attributes.gate', 'eq','Gateway3 MB') |map(attribute='attributes.name') | unique | list  | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
   
       - name: GW3 BT Devices Count
+        unique_id: gw3_bt_devices_count
         state: "{{ states.sensor|selectattr('attributes.mac', 'defined')| map(attribute='attributes.name') | list | count }}"
         icon: mdi:bluetooth
         unit_of_measurement: "ea"
@@ -541,6 +578,7 @@
         event_type: calendar_event_list_updated
     sensor:
       - name: calendar_events
+        unique_id: calendar_events
         state: "{{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
         icon: mdi:calendar
         attributes:
@@ -551,6 +589,7 @@
         event_type: calendar_holiday_event_list_updated
     sensor:
       - name: calendar_holiday_events
+        unique_id: calendar_holiday_events
         state: "{{ (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
         icon: mdi:calendar
         attributes:

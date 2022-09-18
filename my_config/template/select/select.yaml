@@ -1,0 +1,25 @@
+  - select:
+      - name: Breather V Auto Mode
+        unique_id: breather_v_auto_mode
+        state: "{{ states('input_select.breather_v_auto_mode') }}"
+        options: "{{ ['Idle','Auto','Fixed'] }}"
+        optimistic: true
+        icon: >-
+          {% if is_state('select.breather_v_auto_mode', 'Idle') %}
+            mdi:fan-off
+          {% elif is_state('select.breather_v_auto_mode', 'Auto') %}
+            mdi:fan-auto
+          {% elif is_state('select.breather_v_auto_mode', 'Fixed') and is_state_attr('fan.breather_v','percentage',25) %}
+            mdi:fan-speed-1
+          {% elif is_state('select.breather_v_auto_mode', 'Fixed') and is_state_attr('fan.breather_v','percentage',50) %}
+            mdi:fan-speed-2
+          {% elif is_state('select.breather_v_auto_mode', 'Fixed') and is_state_attr('fan.breather_v','percentage',75) %}
+            mdi:fan-speed-3
+          {% elif is_state('select.breather_v_auto_mode', 'Fixed') and is_state_attr('fan.breather_v','percentage',10) %}
+            mdi:fan-plus
+            {% endif %}
+        select_option:
+          service: input_select.select_option
+          entity_id: input_select.breather_v_auto_mode
+          data:
+            option: "{{ states('select.breather_v_auto_mode')}}"

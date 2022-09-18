@@ -76,6 +76,9 @@
     id: vova_breather_auto_timer
     initial_state: true
     trigger:
+      - platform: time_pattern
+        minutes: "/5"
+        id: 'time_pattern' 
       - platform: event
         event_type: timer.finished
         event_data:
@@ -118,6 +121,22 @@
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - choose:
+          - conditions:
+              - condition: trigger
+                id: "time_pattern"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: input_boolean.hourly_mode_breather_v
+                    state: 'on'
+                then:
+                  - service: fan.turn_on
+                    entity_id: fan.breather_v
+                else:
+                  - service: fan.turn_off
+                    entity_id: fan.breather_v 
+                  - service: timer.cancel
+                    entity_id: timer.breather_v
           - conditions:
               - condition: trigger
                 id: "to_on"
@@ -174,7 +193,7 @@
                         state: 'on'
                       - condition: state
                         entity_id: input_boolean.security_mode
-                        state: 'off'                        
+                        state: 'off'
                     sequence:
                       # - service: notify.telegram
                       #   data:

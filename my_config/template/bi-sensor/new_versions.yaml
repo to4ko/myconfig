@@ -12,23 +12,28 @@
         #   state: "{{ states('sensor.supervisor_versions') | int(0) > 0 }}"
         
         - name: Updater HACS New Version
+          unique_id: updater_hacs_new_version
           state: "{{ states('sensor.hacs') | int(0) > 0 }}"
         
         - name: Updater Supervisor
+          unique_id: updater_supervisor
           device_class: problem
           state: "{{ state_attr('sensor.home_assistant_versions', 'supervisor') != 'unknown' and state_attr('sensor.supervisor_updates', 'current_version') != 'unknown' 
                     and state_attr('sensor.home_assistant_versions', 'supervisor') != state_attr('sensor.supervisor_updates', 'current_version') 
                     and state_attr('sensor.supervisor_updates', 'current_version') is not none}}"
 
         - name: Updater Addons
+          unique_id: updater_addons
           device_class: problem
           state: "{{ states('sensor.supervisor_updates') | int(0) > 0 }}"
   
         - name: Updater Hacs
+          unique_id: updater_hacs
           state: "{{ states('sensor.hacs') | int(0) > 0 }}"
           
         - name: Updater Core
+          unique_id: updater_core
           device_class: problem
-          state: "{{ states('sensor.ha_installed_version') != states('sensor.docker_hub') and
-                     states('sensor.ha_installed_version') not in ['unavailable', 'unknown', 'none'] and
-                     states('sensor.docker_hub') not in ['unavailable', 'unknown', 'none'] }}"
+          state: "{{ states('sensor.ha_installed_version') != states('sensor.docker_hub')
+                    and states('sensor.ha_installed_version') not in ['unavailable', 'unknown', 'none'] 
+                    and states('sensor.docker_hub') not in ['unavailable', 'unknown', 'none'] }}"
