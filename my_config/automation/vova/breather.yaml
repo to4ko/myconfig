@@ -15,6 +15,11 @@
       - condition: state
         entity_id: switch.breather_auto_v
         state: 'on'
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: switch.breather_v_last_toggle_by_user
+            state: 'on'
     action:
       - choose:
           - conditions:
@@ -116,6 +121,9 @@
         event_data:
           text: Включи вентиляцию
         id: 'to_on_alice'
+      - platform: time
+        at: "20:15:00"
+        id: 'time_trigger'
     condition:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
@@ -306,7 +314,6 @@
                   - service: input_boolean.turn_on
                     entity_id: input_boolean.hourly_mode_breather_v
 
-
           - conditions:
               - condition: trigger
                 id: "input"
@@ -318,6 +325,25 @@
                 entity_id: timer.breather_v
                 data:
                   duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+          - conditions:
+              - condition: trigger
+                id: "time_trigger"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: binary_sensor.breather_v
+                    state: 'off'
+                then:
+                  - service: fan.turn_on
+                    entity_id: fan.breather_v
+                    
+                  - service: timer.cancel
+                    entity_id: timer.breather_v
+                  - service: timer.start
+                    entity_id: timer.breather_v
+
+                  - service: input_boolean.turn_on
+                    entity_id: input_boolean.hourly_mode_breather_v
 
 # ##################################
 # Vova - Breather Plug Toggle
