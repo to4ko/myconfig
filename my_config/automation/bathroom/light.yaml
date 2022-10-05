@@ -13,22 +13,10 @@
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x158d000236bc6d_motion
-      # - platform: event
-      #   event_type: xiaomi_aqara.motion
-      #   event_data:
-      #     entity_id: binary_sensor.0x158d00024e58e7_motion
       - platform: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.582d34609600_motion
-          # - platform: state
-      #   entity_id: binary_sensor.0x158d000236bc6d_motion
-      #   from: 'off'
-      #   to: 'on'
-      # - platform: state
-      #   entity_id: binary_sensor.0x158d00024e58e7_motion
-      #   from: 'off'
-      #   to: 'on'
       - platform: state
         entity_id: light.mirror_light_b
         to: "on"
@@ -51,21 +39,41 @@
         entity_id: timer.main_light_b
   
 # ##################################
-# Bathroom - Mirror off
+# Bathroom - Mirror light sync
 # ##################################
-  - alias: bathroom_mirror_off
-    id: bathroom_mirror_off
+  - alias: bathroom_mirror_light_sync
+    id: bathroom_mirror_light_sync
     initial_state: true
+    mode: queued
     trigger:
       - platform: state
         entity_id: switch.0x158d0002a36433_channel_2
         to: "off"
         from: "on"
+        id: "to_off"
+      - platform: state
+        entity_id: switch.0x158d0002a36433_channel_2
+        to: "on"
+        from: "off"
+        id: "to_on"
     action:
-      - service: light.turn_off
-        entity_id: light.mirror_light_b
-        data:
-          transition: 5
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: "to_off"
+            sequence:
+              - service: light.turn_off
+                entity_id: light.mirror_light_b
+                data:
+                  transition: 5
+          - conditions:
+              - condition: trigger
+                id: "to_on"
+            sequence:
+              - service: xiaomi_miio.light_set_scene
+                data:
+                  entity_id: light.mirror_light_b
+                  scene: 1
   
 # ##################################
 # Bathroom - Light off auto
@@ -123,6 +131,8 @@
       - condition: state
         entity_id: timer.main_light_b
         state: 'idle'
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - service: timer.cancel
         entity_id: timer.main_light_b
@@ -149,30 +159,21 @@
     id: bathroom_timer_pause_on
     initial_state: true
     trigger:
-      - platform: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x158d000236bc6d_motion
       # - platform: event
       #   event_type: xiaomi_aqara.motion
       #   event_data:
-      #     entity_id: binary_sensor.0x158d00024e58e7_motion
-      - platform: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.582d34609600_motion
-          # - platform: state
-      #   entity_id: binary_sensor.0x158d000236bc6d_motion
-      #   from: 'off'
-      #   to: 'on'
-      # - platform: state
-      #   entity_id: binary_sensor.0x158d00024e58e7_motion
-      #   from: 'off'
-      #   to: 'on'
+      #     entity_id: binary_sensor.0x158d000236bc6d_motion
+      # - platform: event
+      #   event_type: xiaomi_aqara.motion
+      #   event_data:
+      #     entity_id: binary_sensor.582d34609600_motion
+      - platform: state
+        entity_id: binary_sensor.wasp_b
+        to: 'on'
     condition:
-      - condition: state
-        entity_id: binary_sensor.0x158d0002a14c5e_contact
-        state: "off"
+      # - condition: state
+      #   entity_id: binary_sensor.0x158d0002a14c5e_contact
+      #   state: "off"
       - condition: state
         entity_id: group.lights_b
         state: "on"
@@ -200,10 +201,13 @@
     id: bathroom_timer_pause_off
     initial_state: true
     trigger:
+      # - platform: state
+      #   entity_id: binary_sensor.0x158d0002a14c5e_contact
+      #   from: "off"
+      #   to: "on"
       - platform: state
-        entity_id: binary_sensor.0x158d0002a14c5e_contact
-        from: "off"
-        to: "on"
+        entity_id: binary_sensor.wasp_b
+        to: 'off'
     condition:
       - condition: state
         entity_id: group.lights_b
@@ -213,7 +217,7 @@
         entity_id: timer.main_light_b
       - service: timer.start
         entity_id: timer.main_light_b
-  
+      
 # ##################################
 # Bathroom - Occupancy off
 # ##################################
@@ -221,10 +225,13 @@
     id: bathroom_occupancy_off
     initial_state: true
     trigger:
+      # - platform: state
+      #   entity_id: binary_sensor.0x158d0002a14c5e_contact
+      #   from: "off"
+      #   to: "on"
       - platform: state
-        entity_id: binary_sensor.0x158d0002a14c5e_contact
-        from: "off"
-        to: "on"
+        entity_id: binary_sensor.wasp_b
+        to: 'off'
     condition:
       - condition: state
         entity_id: input_boolean.bathroom_occupancy
@@ -249,22 +256,6 @@
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x158d000236bc6d_motion
-      # - platform: event
-      #   event_type: xiaomi_aqara.motion
-      #   event_data:
-      #     entity_id: binary_sensor.0x158d00024e58e7_motion
-      # - platform: event
-      #   event_type: xiaomi_aqara.motion
-      #   event_data:
-      #     entity_id: binary_sensor.582d34609600_motion
-          # - platform: state
-      #   entity_id: binary_sensor.0x158d000236bc6d_motion
-      #   from: 'off'
-      #   to: 'on'
-      # - platform: state
-      #   entity_id: binary_sensor.0x158d00024e58e7_motion
-      #   from: 'off'
-      #   to: 'on'
     condition:
       - condition: state
         entity_id: group.lights_b

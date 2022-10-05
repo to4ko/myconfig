@@ -129,63 +129,75 @@
         entity_id: binary_sensor.washer_b
         to: "off"
         from: "on"
-    condition:
-      - condition: state
-        entity_id: binary_sensor.0x158d0003fa6cf5_contact
-        state: "off"
-      - condition: state
-        entity_id: input_select.washer_state
-        state:
-          - "Washing"
-          - "Pause"
-      - condition: state
-        entity_id: input_boolean.washer_door_issue
-        state: "off"
     action:
-      - service: timer.cancel
-        entity_id: timer.washing_machine_door, timer.washer_working
-      - service: timer.start
-        entity_id: timer.washing_machine_door
-      - service: input_select.select_option
-        data:
-          entity_id: input_select.washer_state
-          option: Drying
-      - service: counter.increment
-        entity_id: counter.washing_machine_runs
-      - service: input_number.set_value
-        data:
-          entity_id: input_number.washer_b_run_time
-          value: "{{ (states('input_number.washer_b_run_time') | float(0) + (((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') / 60))|round(2, 'common') }}"
-      - service: input_number.set_value
-        data:
-          entity_id: input_number.washing_gel_usage
-          value: >
-            {% set a = ((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common')|int(0) %}
-            {% set k = (0.02 if 20 < a < 35 else 0.04) | float(0) %}
-            {{ states('input_number.washing_gel_usage')|float(0) + (0 if a <20 else k)|float(0) }}
-      - service: notify.telegram
-        data:
-          message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') }}мин."
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: "on"
-      - condition: state
-        entity_id: switch.dark_mode
-        state: "off"
-      - service: media_player.volume_set
-        data:
-          entity_id: media_player.yandex_k
-          volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      # - service: tts.yandextts_say
-      #   data:
-      #     entity_id: media_player.home_mini_k
-      #     message: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: media_player.yandex_k
-          media_content_id: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
-  
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d0003fa6cf5_contact
+                state: "off"
+              - condition: state
+                entity_id: input_select.washer_state
+                state:
+                  - "Washing"
+                  - "Pause"
+              - condition: state
+                entity_id: input_boolean.washer_door_issue
+                state: "off"
+            sequence:
+              - service: timer.cancel
+                entity_id: timer.washing_machine_door, timer.washer_working
+              - service: timer.start
+                entity_id: timer.washing_machine_door
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.washer_state
+                  option: Drying
+              - service: counter.increment
+                entity_id: counter.washing_machine_runs
+              - service: input_number.set_value
+                data:
+                  entity_id: input_number.washer_b_run_time
+                  value: "{{ (states('input_number.washer_b_run_time') | float(0) + (((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') / 60))|round(2, 'common') }}"
+              - service: input_number.set_value
+                data:
+                  entity_id: input_number.washing_gel_usage
+                  value: >
+                    {% set a = ((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common')|int(0) %}
+                    {% set k = (0.02 if 20 < a < 35 else 0.04) | float(0) %}
+                    {{ states('input_number.washing_gel_usage')|float(0) + (0 if a <20 else k)|float(0) }}
+              - service: notify.telegram
+                data:
+                  message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') }}мин."
+              - condition: state
+                entity_id: binary_sensor.tod_day
+                state: "on"
+              - condition: state
+                entity_id: switch.dark_mode
+                state: "off"
+              - service: media_player.volume_set
+                data:
+                  entity_id: media_player.yandex_k
+                  volume_level: '{{states("input_number.main_volume")|float(0)}}'
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: media_player.yandex_k
+                  media_content_id: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
+          
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.washer_door_issue
+                state: "on"
+            sequence:
+              - service: input_select.select_option
+                data:
+                  entity_id: input_select.washer_state
+                  option: Drying
+              - service: timer.cancel
+                entity_id: timer.washing_machine_door
+              - service: timer.start
+                entity_id: timer.washing_machine_door
+
 # ##################################
 # Bathroom - Washing Machine Extract
 # ##################################
@@ -255,31 +267,6 @@
 #     - service: input_boolean.turn_off
 #       entity_id: input_boolean.washer_door_issue
 
-# ##################################
-# Bathroom - Washing Machine Drying from Washing
-# ##################################
-  - alias: bathroom_washing_machine_drying_from_washing
-    id: bathroom_washing_machine_drying_from_washing
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.washer_b
-        to: "off"
-        from: "on"
-    condition:
-      - condition: state
-        entity_id: input_boolean.washer_door_issue
-        state: "on"
-    action:
-      - service: input_select.select_option
-        data:
-          entity_id: input_select.washer_state
-          option: Drying
-      - service: timer.cancel
-        entity_id: timer.washing_machine_door
-      - service: timer.start
-        entity_id: timer.washing_machine_door
-  
 # ##################################
 # Bathroom - Washing Machine Idle
 # ##################################
@@ -361,14 +348,22 @@
     id: bathroom_washing_machine_ready_notification
     initial_state: true
     trigger:
-      - platform: state
-        entity_id:
-          - binary_sensor.0x158d0002b43ad4_motion
-          - binary_sensor.0x158d0001ae9f61_motion
-          - binary_sensor.0x158d0002b48381_motion
-          - binary_sensor.0x158d0002b4729d_motion
-        from: "off"
-        to: "on"
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0002b43ad4_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0001ae9f61_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0002b48381_motion
+      - platform: event
+        event_type: xiaomi_aqara.motion
+        event_data:
+          entity_id: binary_sensor.0x158d0002b4729d_motion
     condition:
       - condition: numeric_state
         entity_id: sensor.ha_uptime
