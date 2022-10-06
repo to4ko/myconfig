@@ -133,14 +133,14 @@
     id: system_water_leak_turn_water_off
     initial_state: true
     trigger:
-      # - platform: state
-      #   entity_id: sensor.0x158d00026ea94e_action
-      #   to: 'button_1_single'
       - platform: event
         event_type: xiaomi_aqara.click
         event_data:
-          entity_id: sensor.0x158d00026ea94e_action
-          click_type: button_1_single
+          entity_id: sensor.0x00158d0001ef609b_action
+          click_type: single
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - service: media_player.volume_set
         data:
@@ -177,7 +177,7 @@
             - media_player.{{states('input_select.main_audio_out')|lower}}
             - media_player.yandex_k
           media_content_id: >-
-            'Вним+ание! Вод+а в+ыключена!'
+            'Внимание! Вода выключена!'
       - service: notify.notify
         data:
           title: "Внимание!"
@@ -193,26 +193,17 @@
     id: system_water_leak_turn_water_on
     initial_state: true
     trigger:
-      # - platform: state
-      #   entity_id: sensor.0x158d00026ea94e_action
-      #   to: 'button_2_single'
       - platform: event
         event_type: xiaomi_aqara.click
         event_data:
-          entity_id: sensor.0x158d00026ea94e_action
-          click_type: button_2_single
+          entity_id: sensor.0x00158d0001ef609b_action
+          click_type: double
     condition:
-      condition: and
-      conditions:
-        - condition: state
-          entity_id: binary_sensor.0x158d00023684c2_moisture
-          state: 'off'
-        - condition: state
-          entity_id: binary_sensor.0x158d0002373a67_moisture
-          state: 'off'
-        - condition: state
-          entity_id: binary_sensor.0x158d00023297e7_moisture
-          state: 'off'      
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: group.leak_detected
+        state: 'off'
     action:
       - service: media_player.volume_set
         data:
@@ -227,7 +218,7 @@
             - media_player.{{states('input_select.main_audio_out')|lower}}
             - media_player.yandex_k
           media_content_id: >-
-            'Вним+ание! Зап+ущена процедура включ+ения вод+ы!'
+            'Вним+ание! Запущена процедура включ+ения вод+ы!'
       - service: notify.telegram
         data:
           message: 'Внимание! Запущена процедура принудительного включения воды!'
@@ -249,7 +240,7 @@
             - media_player.{{states('input_select.main_audio_out')|lower}}
             - media_player.yandex_k
           media_content_id: >-
-            'Вним+ание! Вод+а включен+а!'
+            'Вним+ание! Вода включена!'
       - service: notify.telegram
         data:
           message: 'Внимание! Вода принидительно открыта!'
@@ -261,26 +252,17 @@
     id: system_water_leak_turn_water_on_leak_detected
     initial_state: true
     trigger:
-      # - platform: state
-      #   entity_id: sensor.0x158d00026ea94e_action
-      #   to: 'button_2_single'
       - platform: event
         event_type: xiaomi_aqara.click
         event_data:
-          entity_id: sensor.0x158d00026ea94e_action
-          click_type: button_2_single      
+          entity_id: sensor.0x00158d0001ef609b_action
+          click_type: double
     condition:
-      condition: or
-      conditions:
-        - condition: state
-          entity_id: binary_sensor.0x158d00023684c2_moisture
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.0x158d0002373a67_moisture
-          state: 'on'
-        - condition: state
-          entity_id: binary_sensor.0x158d00023297e7_moisture
-          state: 'on' 
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: group.leak_detected
+        state: 'on'
     action:
       - service: media_player.volume_set
         data:
@@ -295,7 +277,7 @@
             - media_player.{{states('input_select.main_audio_out')|lower}}
             - media_player.yandex_k
           media_content_id: >-
-            'Вним+ание! Включ+ение вод+ы невозм+ожно! Прот+ечка н+е устранен+а! Дл+я принуд+ительного включ+ения вод+ы нажм+ите кл+авиши Включ+ения и Выключ+ения одноврем+енно!'
+            'Вним+ание! Включ+ение вод+ы невозм+ожно! Прот+ечка н+е устранен+а! Дл+я принуд+ительного включ+ения вод+ы нажм+ите и удерживайте кнопку!'
       - service: notify.telegram
         data:
           message: 'Внимание! Попытка открыть воду, протечка НЕ устранена!'
@@ -307,14 +289,14 @@
     id: system_water_leak_turn_water_on_force
     initial_state: true
     trigger:
-      # - platform: state
-      #   entity_id: sensor.0x158d00026ea94e_action
-      #   to: 'button_3_single'
       - platform: event
         event_type: xiaomi_aqara.click
         event_data:
-          entity_id: sensor.0x158d00026ea94e_action
-          click_type: button_3_single
+          entity_id: sensor.0x00158d0001ef609b_action
+          click_type: hold
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - service: media_player.volume_set
         data:
