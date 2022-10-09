@@ -553,18 +553,85 @@
               - condition: trigger
                 id: 'off_sandra'
             sequence:
-              - service: light.turn_off
-                entity_id: light.led_strip_bed_sandra_v_hk
-                data:
-                  transition: 5
+              - repeat:
+                  sequence:
+                    - service: light.turn_off
+                      entity_id: light.led_strip_bed_sandra_v_hk
+                      data:
+                        transition: 10
+                    - delay:
+                        seconds: 1
+                  until:
+                    - condition: not
+                      conditions:
+                        - condition: state
+                          entity_id: light.led_strip_bed_sandra_v_hk
+                          state: 'on'
+                      
           - conditions:
               - condition: trigger
                 id: 'off_dima'
             sequence:
-              - service: light.turn_off
-                entity_id: light.led_strip_bed_dima_v_hk
-                data:
-                  transition: 5
+              - repeat:
+                  sequence:
+                    - service: light.turn_off
+                      entity_id: light.led_strip_bed_dima_v_hk
+                      data:
+                        transition: 10
+                    - delay:
+                        seconds: 1
+                  until:
+                    - condition: not
+                      conditions:
+                        - condition: state
+                          entity_id: light.led_strip_bed_dima_v_hk
+                          state: 'on'
+
+# ##################################
+# Vova Bed Strips Control - From unavailable
+# ##################################
+  - alias: vova_led_strip_bed_control_unavailable
+    id: vova_led_strip_bed_control_unavailable
+    mode: parallel
+    max_exceeded: silent
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: light.led_strip_bed_dima_v_hk
+        from: 'unavailable'
+        to: 'on'
+        id: 'un_dima'
+      - platform: state
+        entity_id: light.led_strip_bed_sandra_v_hk
+        from: 'unavailable'
+        to: 'on'
+        id: 'un_sandra'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'un_sandra'
+            sequence:
+              - not:
+                  - condition: state
+                    entity_id: timer.led_strip_bed_sandra_v
+                    state: 'active'
+              - service: timer.cancel
+                entity_id: timer.led_strip_bed_sandra_v
+              - service: timer.start
+                entity_id: timer.led_strip_bed_sandra_v
+          - conditions:
+              - condition: trigger
+                id: 'un_dima'
+            sequence:
+              - not:
+                  - condition: state
+                    entity_id: timer.led_strip_bed_sandra_v
+                    state: 'active'
+              - service: timer.cancel
+                entity_id: timer.led_strip_bed_dima_v
+              - service: timer.start
+                entity_id: timer.led_strip_bed_dima_v
 
 # ##################################
 # Vova - LED Strip Bed Dima Restart
@@ -751,7 +818,7 @@
     action:
       - service: switch.turn_on
         entity_id: switch.led_strip_bed_sandra_v_restart_key
-                                
+
 # ##################################
 # Vova - Main Light off with no occupancy for 1 hour
 # ##################################
