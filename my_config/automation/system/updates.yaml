@@ -33,104 +33,153 @@
       #       {% endfor %} 
 
 # ##################################
-# System - Supervisor Update Available
+# System - Update - All from Update domain
 # ##################################
-  - alias: system_update_supervisor
-    id:  system_update_supervisor
+  - alias: system_update_available_and_installed_notification
+    id: system_update_available_and_installed_notification
     initial_state: true
+    mode: queued
     trigger:
-      - platform: state
-        entity_id: update.home_assistant_supervisor_update
-        attribute: latest_version
+      - platform: event
+        event_type: state_changed
     condition:
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
-          {{ 
-             is_state(trigger.entity_id, 'on') and
-             trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
-             trigger.to_state.attributes.latest_version not in ignore
-          }}
+      - "{{ trigger.event.data.entity_id.startswith('update.') }}"
+      - or:
+          - condition: template
+            value_template: >
+              {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
+              {{ 
+                trigger.event.data.new_state.state == 'on' and
+                version(trigger.event.data.new_state.attributes.latest_version) > version(trigger.event.data.old_state.attributes.latest_version) and
+                trigger.event.data.new_state.attributes.latest_version not in ignore and
+                trigger.event.data.new_state.attributes.latest_version is not none
+              }}
+          - condition: template
+            value_template: >
+              {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
+              {{ 
+                trigger.event.data.old_state.state == 'on' and trigger.event.data.new_state.state == 'off' and
+                version(trigger.event.data.new_state.attributes.installed_version) > version(trigger.event.data.old_state.attributes.installed_version) and
+                trigger.event.data.new_state.attributes.installed_version not in ignore and
+                trigger.event.data.new_state.attributes.installed_version is not none
+              }}
     action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f389 Supervisor - доступна новая версия {{ state_attr('update.home_assistant_supervisor_update', 'latest_version') }}. Текущая {{ state_attr('update.home_assistant_supervisor_update', 'installed_version') }}"
+      - variables:
+          latest_version: "{{ trigger.event.data.new_state.attributes.latest_version }}"
+          installed_version: "{{ state_attr(trigger.event.data.entity_id, 'installed_version') }}"
+          old_installed_version: "{{ trigger.event.data.old_state.attributes.installed_version }}"
+          friendlyname: "{{- trigger.event.data.new_state.name | replace(' Update', '') -}}"
+      - if:
+          - condition: template
+            value_template: "{{ trigger.event.data.new_state.attributes.installed_version != trigger.event.data.old_state.attributes.installed_version }}"
+        then:
+          - service: notify.telegram
+            data:
+              message: "{{ friendlyname }} обновлен с {{ old_installed_version }} на {{ latest_version }}"
+        else:
+          - service: notify.telegram
+            data:
+              message: "{{ friendlyname }} доступна новая версия {{ latest_version }}. Текущая {{ installed_version }}"
 
-# ##################################
-# System - Hass.io NEW Version
-# ##################################
-  - alias: system_update_core
-    id:  system_update_core
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: update.home_assistant_core_update
-        attribute: latest_version
-    condition:
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
-          {{ 
-             is_state(trigger.entity_id, 'on') and
-             trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
-             trigger.to_state.attributes.latest_version not in ignore
-          }}
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f6e0 Core - доступна новая версия {{trigger.to_state.attributes.latest_version}}. Текущая {{state_attr(trigger.entity_id, 'installed_version')}}"
-      # - service: hassio.addon_start
-      #   data:
-      #     addon: core_check_config
-      # - service: notify.telegram
-      #   data:
-      #     message: "\U0001f514 Запущена проверка конфига с новой версией HA"
+# # ##################################
+# # System - Supervisor Update Available
+# # ##################################
+#   - alias: system_update_supervisor
+#     id:  system_update_supervisor
+#     initial_state: true
+#     trigger:
+#       - platform: state
+#         entity_id: update.home_assistant_supervisor_update
+#         attribute: latest_version
+#     condition:
+#       - condition: template
+#         value_template: >
+#           {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
+#           {{ 
+#              is_state(trigger.entity_id, 'on') and
+#              trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
+#              trigger.to_state.attributes.latest_version not in ignore
+#           }}
+#     action:
+#       - service: notify.telegram
+#         data:
+#           message: "\U0001f389 Supervisor - доступна новая версия {{ state_attr('update.home_assistant_supervisor_update', 'latest_version') }}. Текущая {{ state_attr('update.home_assistant_supervisor_update', 'installed_version') }}"
 
-# ##################################
-# System - Addons Update Available
-# ##################################
-  - alias: system_update_addons
-    id:  system_update_addons
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.updater_addons
-        from: "off"
-        to: "on"
-    condition:
-      - condition: template
-        value_template: "{{ states('sensor.supervisor_updates')|int(0) >0 }}"
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ trigger.from_state.state not in ignore and
-            trigger.to_state.state not in ignore and
-            trigger.to_state.state != trigger.from_state.state
-          }}
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f6e0 Addons - доступны обновления {% for addons_updates in state_attr('sensor.supervisor_updates', 'addons') %}{{ addons_updates.name }} ({{ addons_updates.version_latest }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+# # ##################################
+# # System - Hass.io NEW Version
+# # ##################################
+#   - alias: system_update_core
+#     id:  system_update_core
+#     initial_state: true
+#     trigger:
+#       - platform: state
+#         entity_id: update.home_assistant_core_update
+#         attribute: latest_version
+#     condition:
+#       - condition: template
+#         value_template: >
+#           {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
+#           {{ 
+#              is_state(trigger.entity_id, 'on') and
+#              trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
+#              trigger.to_state.attributes.latest_version not in ignore
+#           }}
+#     action:
+#       - service: notify.telegram
+#         data:
+#           message: "\U0001f6e0 Core - доступна новая версия {{trigger.to_state.attributes.latest_version}}. Текущая {{state_attr(trigger.entity_id, 'installed_version')}}"
+#       # - service: hassio.addon_start
+#       #   data:
+#       #     addon: core_check_config
+#       # - service: notify.telegram
+#       #   data:
+#       #     message: "\U0001f514 Запущена проверка конфига с новой версией HA"
 
-# ##################################
-# System - Supervisor Updated
-# ##################################
-  - alias: system_supervisor_updated
-    id:  system_supervisor_updated
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: sensor.ha_supervisor_current_version
-        to:
-    condition:
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ trigger.from_state.state not in ignore and
-            trigger.to_state.state not in ignore and
-            trigger.to_state.state != trigger.from_state.state
-          }}
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f38a Supervisor - обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}!"
+# # ##################################
+# # System - Addons Update Available
+# # ##################################
+#   - alias: system_update_addons
+#     id:  system_update_addons
+#     initial_state: true
+#     trigger:
+#       - platform: state
+#         entity_id: binary_sensor.updater_addons
+#         from: "off"
+#         to: "on"
+#     condition:
+#       - condition: template
+#         value_template: "{{ states('sensor.supervisor_updates')|int(0) >0 }}"
+#       - condition: template
+#         value_template: >
+#           {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#           {{ trigger.from_state.state not in ignore and
+#             trigger.to_state.state not in ignore and
+#             trigger.to_state.state != trigger.from_state.state
+#           }}
+#     action:
+#       - service: notify.telegram
+#         data:
+#           message: "\U0001f6e0 Addons - доступны обновления {% for addons_updates in state_attr('sensor.supervisor_updates', 'addons') %}{{ addons_updates.name }} ({{ addons_updates.version_latest }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+
+# # ##################################
+# # System - Supervisor Updated
+# # ##################################
+#   - alias: system_supervisor_updated
+#     id:  system_supervisor_updated
+#     initial_state: true
+#     trigger:
+#       - platform: state
+#         entity_id: sensor.ha_supervisor_current_version
+#         to:
+#     condition:
+#       - condition: template
+#         value_template: >
+#           {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#           {{ trigger.from_state.state not in ignore and
+#             trigger.to_state.state not in ignore and
+#             trigger.to_state.state != trigger.from_state.state
+#           }}
+#     action:
+#       - service: notify.telegram
+#         data:
+#           message: "\U0001f38a Supervisor - обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}!"
