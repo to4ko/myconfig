@@ -98,7 +98,7 @@
           - binary_sensor.bed_led_enable
       - service: notify.telegram
         data:
-          message: "\U0001F603 Сервер({{states('sensor.ha_installed_version')}}) запущен за {{states('sensor.start_time')|int(0)}}сек! {{states('sensor.errors_during_boot')|int(0) | format(morph='ошибка', as_text=false) }}, {{states('sensor.warnings_during_boot')|int(0)| format(morph='предупреждение', as_text=false) }}"
+          message: "\U0001F603 Сервер({{state_attr('update.home_assistant_core_update','installed_version')}}) запущен за {{states('sensor.start_time')|int(0)}}сек! {{states('sensor.errors_during_boot')|int(0) | format(morph='ошибка', as_text=false) }}, {{states('sensor.warnings_during_boot')|int(0)| format(morph='предупреждение', as_text=false) }}"
       - service: script.turn_on
         entity_id: script.system_start
       - service: counter.increment
@@ -124,7 +124,7 @@
         entity_id: switch.main_lead
       - service: notify.telegram
         data:
-          message: "\U0001F621 Сервер({{states('sensor.ha_installed_version')}}) остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
+          message: "\U0001F621 Сервер({{state_attr('update.home_assistant_core_update','installed_version')}}) остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
 
 # ##################################
 # System - STOP flag set
@@ -521,6 +521,11 @@
         event_data:
           level: ERROR
     condition:
+      # - condition: template
+      #   value_template: >-
+      #     {{ not
+      #       trigger.event.data.message | regex_search('websocket_api_script')
+      #     }} 
       - condition: template
         value_template: >-
           {{ 
@@ -528,9 +533,7 @@
             trigger.event.data.message | regex_search('Error executing script')
           }}
       - condition: template
-        value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}" #"{{ not trigger.event.data.message | regex_search('system_automation_error') }}"
-      # - condition: template
-      #   value_template: "{{ not trigger.event.data.message | regex_search(this.entity_id) }}"
+        value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}"
     action:
       - service: notify.telegram
         data:

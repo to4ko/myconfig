@@ -88,9 +88,18 @@
     id: bathroom_light_off_auto
     initial_state: true
     trigger:
+      # - platform: state
+      #   entity_id: binary_sensor.motion_b_delay
+      #   to: "off"
       - platform: state
-        entity_id: binary_sensor.motion_b_delay
-        to: "off"
+        entity_id: binary_sensor.occupancy_b
+        to: 'off'
+        for:
+          minutes: 1
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.main_light_b
       - platform: homeassistant
         event: start
       - platform: event
@@ -102,10 +111,19 @@
       # - condition: state
       #   entity_id: switch.0x158d0002a36433_channel_2
       #   state: "off"
-      - condition: template
-        value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d000236bc6d_motion'].last_changed))/60)|int(0) >= 3}}"
-      - condition: template
-        value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['582d34609600_motion'].last_changed))/60)|int(0) >= 3}}"
+      # - condition: template
+      #   value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['0x158d000236bc6d_motion'].last_changed))/60)|int(0) >= 3}}"
+      # - condition: template
+      #   value_template: "{{((as_timestamp(now())-as_timestamp(states.binary_sensor['582d34609600_motion'].last_changed))/60)|int(0) >= 3}}"
+      # - condition: template
+      - condition: state
+        entity_id: binary_sensor.wasp_b
+        state: 'off'
+      - condition: state
+        entity_id: binary_sensor.occupancy_b
+        state: 'off'
+        for:
+          minutes: 1
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
@@ -223,33 +241,36 @@
         entity_id: timer.main_light_b
       - service: timer.start
         entity_id: timer.main_light_b
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.bathroom_occupancy
       
 # ##################################
 # Bathroom - Occupancy off
 # ##################################
-  - alias: bathroom_occupancy_off
-    id: bathroom_occupancy_off
-    initial_state: true
-    trigger:
-      # - platform: state
-      #   entity_id: binary_sensor.0x158d0002a14c5e_contact
-      #   from: "off"
-      #   to: "on"
-      - platform: state
-        entity_id: binary_sensor.wasp_b
-        to: 'off'
-    condition:
-      - condition: state
-        entity_id: input_boolean.bathroom_occupancy
-        state: "on"
-      # - condition: state
-      #   entity_id: binary_sensor.0x158d000236bc6d_motion
-      #   state: 'off'
-      #   for: "00:00:30"
-    action:
-      - service: input_boolean.turn_off
-        data:
-          entity_id: input_boolean.bathroom_occupancy
+  # - alias: bathroom_occupancy_off
+  #   id: bathroom_occupancy_off
+  #   initial_state: true
+  #   trigger:
+  #     # - platform: state
+  #     #   entity_id: binary_sensor.0x158d0002a14c5e_contact
+  #     #   from: "off"
+  #     #   to: "on"
+  #     - platform: state
+  #       entity_id: binary_sensor.wasp_b
+  #       to: 'off'
+  #   condition:
+  #     - condition: state
+  #       entity_id: input_boolean.bathroom_occupancy
+  #       state: "on"
+  #     # - condition: state
+  #     #   entity_id: binary_sensor.0x158d000236bc6d_motion
+  #     #   state: 'off'
+  #     #   for: "00:00:30"
+  #   action:
+  #     - service: input_boolean.turn_off
+  #       data:
+  #         entity_id: input_boolean.bathroom_occupancy
   
 # ##################################
 # Bathroom - Auto Light On Soft
@@ -281,21 +302,21 @@
 # ##################################
 # Bathroom - Auto Light Off
 # ##################################
-  - alias: bathroom_auto_light_off
-    id: bathroom_auto_light_off
-    initial_state: true
-    trigger:
-      - platform: event
-        event_type: timer.finished
-        event_data:
-          entity_id: timer.main_light_b
-    action:
-      - service: switch.turn_off
-        entity_id: switch.0x158d0002a36433_channel_2
-      - service: light.turn_off
-        entity_id: light.mirror_light_b
-        data:
-          transition: 5
+  # - alias: bathroom_auto_light_off
+  #   id: bathroom_auto_light_off
+  #   initial_state: true
+  #   trigger:
+  #     - platform: event
+  #       event_type: timer.finished
+  #       event_data:
+  #         entity_id: timer.main_light_b
+  #   action:
+  #     - service: switch.turn_off
+  #       entity_id: switch.0x158d0002a36433_channel_2
+  #     - service: light.turn_off
+  #       entity_id: light.mirror_light_b
+  #       data:
+  #         transition: 5
   
 # ##################################
 # Bathroom - Light Toggle with Repeater

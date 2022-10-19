@@ -12,14 +12,14 @@
       - variables: 
           who_could_weigh: >- 
             {%- macro weight_person() -%}  
-              {%- for person in states.person if
-                (person.state == 'home' and 'input_number.weight_' + person.name | lower in
+              {%- for item in states.person if
+                (item.state == 'home' and 'input_number.weight_' + item.name | lower in
                 states.input_number | selectattr('entity_id', 'search', '^input_number.weight_')
                 | map(attribute='entity_id') | list ) -%} 
-                  {%- set x = states('input_number.weight_' + person.name | lower) | float(0) | round(1) -%} 
+                  {%- set x = states('input_number.weight_' + item.name | lower) | float(0) | round(1) -%} 
                   {%- set y = (x * 3 / 100) -%} 
                   {%- if (x > 0) and ((x - y) < (states('sensor.ble_weight_ble_scale2') | float(0) | round(1)) < (x + y)) -%} 
-                    {{ person.name | lower }}, 
+                    {{ item.name | lower }}, 
                   {%- endif -%} 
                 {%- endfor -%}
             {%- endmacro -%}

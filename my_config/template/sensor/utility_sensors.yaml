@@ -145,6 +145,79 @@
       #   unit_of_measurement: "rub"
       #   state: "{{ (states('sensor.esp32_pzem_hb_energy_monthly_night')|float(0)*states('input_number.tariff_energy_night')|float(0)) |round(2, 'common') }}"
 
+
+
+
+
+      - name: All Lights Power
+        unique_id: all_lights_power
+        state: >
+          {{
+          (iif(is_state('light.round_led_k', 'on'), 32, 0) + 
+          iif(is_state('switch.esp8266_hood_k_light', 'on'), 32, 0) + 
+          iif(is_state('switch.d1mini_light_l_relay', 'on'), 32, 0) + 
+          iif(is_state('switch.sonoff_mini_4_relay', 'on'), 32, 0) + 
+          
+          iif(is_state('switch.0x158d0002a36f7f_channel_1', 'on'), 10, 0) + 
+          
+          iif(is_state('switch.0x158d0002a36433_channel_2', 'on'), 20, 0) + 
+          iif(is_state('light.mirror_light_b', 'on'), 7, 0) + 
+          iif(is_state('light.esp32_node_b_light', 'on'), 5, 0) + 
+          
+          iif(is_state('light.round_led_hs', 'on'), 20, 0) + 
+          iif(is_state('light.mono_strip_1_light', 'on'), 2, 0) +
+          
+          iif(is_state('switch.0x158d000248bf53_switch', 'on'), 16, 0) + 
+          iif(is_state('switch.sonoff_basic_1_relay', 'on'), 16, 0) + 
+          
+          states('sensor.1pm_led_mb_power')|float(0) + 
+          iif(is_state('light.light.lt11_1_led', 'on'), 15, 0) + 
+          iif(is_state('light.light.d1mini_strip_mb_led', 'on'), 30, 0) + 
+          iif(is_state('light.led_color_mb', 'on'), 10, 0) +
+          iif(is_state('light.led_white_mb', 'on'), 10, 0) + 
+          
+          iif(is_state('switch.0x158d000223921b_channel_1', 'on'), 33, 0) + 
+          iif(is_state('switch.0x158d000253f04a_channel_2', 'on'), 33, 0) + 
+          iif(is_state('light.led_strip_entrance_hb', 'on'), 15, 0) + 
+          iif(is_state('light.led_strip_hb', 'on'), 15, 0) + 
+          iif(is_state('light.bedside', 'on'), 15, 0) + 
+          
+          states('sensor.shelly_1pm_led_v_power')|float(0) + 
+          iif(is_state('light.led_strip_bed_dima_v', 'on'), 15, 0) + 
+          iif(is_state('light.led_strip_bed_sandra_v', 'on'), 15, 0) + 
+          iif(is_state('light.led_color_v', 'on'), 10, 0) +
+
+          states('sensor.shelly_1pm_led_s_power')|float(0) + 
+          iif(is_state('light.d1mini_co2_s_led', 'on'), 30, 0) + 
+          iif(is_state('light.led_white_s', 'on'), 10, 0))|round(2)
+          }}
+        unit_of_measurement: W
+        icon: mdi:gauge
+
+      - name: All IoT Power
+        unique_id: all_iot_power
+        state: >
+          {{(
+          states('sensor.0x158d000230fc52_power')|float(0) - states('sensor.0x158d0003539447_power')|float(0) +
+          states('sensor.0x158d00035f44a7_power')|float(0) +
+          states('sensor.0x158d0002924790_power')|float(0) +
+          states('sensor.0x158d0002467773_power')|float(0) - states('sensor.0x158d00035c194f_power')|float(0) - iif(is_state('switch.pc_s','on'),15,0)
+          )|round(2)}}
+        unit_of_measurement: W
+        icon: mdi:gauge
+
+      - name: All PC Power
+        unique_id: all_pc_power
+        state: >
+          {{(
+          states('sensor.0x158d0003535ee5_power')|float(0) +
+          states('sensor.0x158d0003600ea4_power')|float(0) +
+          states('sensor.0x158d00035c194f_power')|float(0) +
+          iif(is_state('switch.pc_s','on'),15,0)
+          )|round(2)}}
+        unit_of_measurement: W
+        icon: mdi:gauge
+
       # ############################################################################
       # Water monitoring sensors
       # ############################################################################
