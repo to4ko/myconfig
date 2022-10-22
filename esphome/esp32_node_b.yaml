@@ -35,6 +35,11 @@ ota:
 web_server:
   port: 80
 
+i2c:
+  sda: GPIO32
+  scl: GPIO33
+  scan: True
+
 dallas:
   - pin: GPIO26
     update_interval: 15s
@@ -57,6 +62,17 @@ output:
     pin: GPIO04
     frequency: 1000 Hz
 
+number:
+  - platform: template
+    name: ${board_name}_Humidity_Set
+    id: id_humidity_set
+    restore_value: true
+    #update_interval: 5s
+    min_value: 0
+    max_value: 99
+    step: 1
+    optimistic: true
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -78,16 +94,34 @@ sensor:
     name: ${board_name}_Hot_Pipe
     accuracy_decimals: 2
     resolution: 12
-    
-  # - platform: dht
-  #   pin: GPIO13
-  #   temperature:
-  #     name: ${board_name}_Temperature
-  #     unit_of_measurement: "°C"
-  #   humidity:
-  #     name: ${board_name}_Humidity
-  #     unit_of_measurement: "%"
-  #   update_interval: 60s
+
+  - platform: sht3xd
+    temperature:
+      name: ${board_name}_Temperature
+    humidity:
+      name: ${board_name}_Humidity
+      id: id_humidity_sensor
+      on_value:
+        then:
+          - if:
+              condition:
+                and:
+                  - lambda: 'return id(id_humidity_sensor).state > id(id_humidity_set).state;'
+                  - switch.is_off: relay4
+                  - switch.is_on: id_fan_b_allowed
+              then:
+                - logger.log: "The Dehumidifier has switched on!"
+                - switch.turn_on: relay3
+                - delay: 2s
+              else:
+                - if:
+                    condition:
+                      - switch.is_on: relay3
+                    then:
+                      - logger.log: "The Dehumidifier is under the Setpoint. Now off!"
+                      - switch.turn_off: relay3
+    address: 0x44
+    update_interval: 5s
 
 button:
   - platform: restart
@@ -139,6 +173,10 @@ switch:
     id: relay4
     restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:fan
+    # on_turn_on:
+    #   - switch.turn_off: id_fan_b_allowed
+    # on_turn_off:
+    #   - switch.turn_on: id_fan_b_allowed
   
   - platform: gpio
     pin: 
@@ -156,7 +194,13 @@ switch:
     name: ${board_name}_Relay_6
     id: relay6
     restore_mode: RESTORE_DEFAULT_ON
-    
+
+  - platform: template
+    name: ${board_name}_Fan_B_Allowed
+    id: id_fan_b_allowed
+    optimistic: true
+    restore_state: true
+
 text_sensor:
   - platform: template
     name: ${board_name}_Uptime
