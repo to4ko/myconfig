@@ -101,6 +101,8 @@ sensor:
     humidity:
       name: ${board_name}_Humidity
       id: id_humidity_sensor
+      filters:
+        - offset: 7.0
       on_value:
         then:
           - if:
@@ -108,7 +110,7 @@ sensor:
                 and:
                   - lambda: 'return id(id_humidity_sensor).state > id(id_humidity_set).state;'
                   - switch.is_off: relay4
-                  - switch.is_on: id_fan_b_allowed
+                  - switch.is_on: id_fan_b_auto_mode
               then:
                 - logger.log: "The Dehumidifier has switched on!"
                 - switch.turn_on: relay3
@@ -116,7 +118,9 @@ sensor:
               else:
                 - if:
                     condition:
-                      - switch.is_on: relay3
+                      and:
+                        - switch.is_on: relay3
+                        - switch.is_on: id_fan_b_auto_mode
                     then:
                       - logger.log: "The Dehumidifier is under the Setpoint. Now off!"
                       - switch.turn_off: relay3
@@ -173,10 +177,6 @@ switch:
     id: relay4
     restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:fan
-    # on_turn_on:
-    #   - switch.turn_off: id_fan_b_allowed
-    # on_turn_off:
-    #   - switch.turn_on: id_fan_b_allowed
   
   - platform: gpio
     pin: 
@@ -196,8 +196,8 @@ switch:
     restore_mode: RESTORE_DEFAULT_ON
 
   - platform: template
-    name: ${board_name}_Fan_B_Allowed
-    id: id_fan_b_allowed
+    name: ${board_name}_Fan_B_Auto_Mode
+    id: id_fan_b_auto_mode
     optimistic: true
     restore_state: true
 
