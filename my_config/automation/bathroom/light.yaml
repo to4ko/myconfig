@@ -179,8 +179,9 @@
 # ##################################
 # Bathroom - Timer pause on
 # ##################################
-  - alias: bathroom_timer_pause_on
+  - alias: bathroom_timer_pause_on_off
     id: bathroom_timer_pause_on
+    mode: queued
     initial_state: true
     trigger:
       # - platform: event
@@ -194,56 +195,81 @@
       - platform: state
         entity_id: binary_sensor.wasp_b
         to: 'on'
-    condition:
-      # - condition: state
-      #   entity_id: binary_sensor.0x158d0002a14c5e_contact
-      #   state: "off"
-      - condition: state
-        entity_id: group.lights_b
-        state: "on"
-      - condition: state
-        entity_id: input_boolean.security_mode
-        state: "off"
-      -   condition: not
-          conditions:
-            - condition: state
-              entity_id: timer.main_light_b
-              state: "paused"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
-      - service: timer.pause
-        entity_id: timer.main_light_b
-      - service: input_boolean.turn_on
-        data:
-          entity_id: input_boolean.bathroom_occupancy
-  
-# ##################################
-# Bathroom - Timer pause off
-# ##################################
-  - alias: bathroom_timer_pause_off
-    id: bathroom_timer_pause_off
-    initial_state: true
-    trigger:
-      # - platform: state
-      #   entity_id: binary_sensor.0x158d0002a14c5e_contact
-      #   from: "off"
-      #   to: "on"
+        id: 'id_to_on'
       - platform: state
         entity_id: binary_sensor.wasp_b
         to: 'off'
-    condition:
-      - condition: state
-        entity_id: group.lights_b
-        state: "on"
+        id: 'id_to_off'
+    # condition:
+    #   # - condition: state
+    #   #   entity_id: binary_sensor.0x158d0002a14c5e_contact
+    #   #   state: "off"
+    #   - condition: template
+    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - service: timer.cancel
-        entity_id: timer.main_light_b
-      - service: timer.start
-        entity_id: timer.main_light_b
-      - service: input_boolean.turn_off
-        data:
-          entity_id: input_boolean.bathroom_occupancy
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'id_to_on'
+              - condition: state
+                entity_id: group.lights_b
+                state: "on"
+              - condition: state
+                entity_id: input_boolean.security_mode
+                state: "off"
+              -   condition: not
+                  conditions:
+                    - condition: state
+                      entity_id: timer.main_light_b
+                      state: "paused"
+            sequence:
+              - service: timer.pause
+                entity_id: timer.main_light_b
+              - service: input_boolean.turn_on
+                data:
+                  entity_id: input_boolean.bathroom_occupancy
+          - conditions:
+              - condition: trigger
+                id: 'id_to_off'
+              - condition: state
+                entity_id: group.lights_b
+                state: "on"
+            sequence:
+              - service: timer.cancel
+                entity_id: timer.main_light_b
+              - service: timer.start
+                entity_id: timer.main_light_b
+              - service: input_boolean.turn_off
+                data:
+                  entity_id: input_boolean.bathroom_occupancy
+
+                  
+# # ##################################
+# # Bathroom - Timer pause off
+# # ##################################
+#   - alias: bathroom_timer_pause_off
+#     id: bathroom_timer_pause_off
+#     initial_state: true
+#     trigger:
+#       # - platform: state
+#       #   entity_id: binary_sensor.0x158d0002a14c5e_contact
+#       #   from: "off"
+#       #   to: "on"
+#       - platform: state
+#         entity_id: binary_sensor.wasp_b
+#         to: 'off'
+#     condition:
+#       - condition: state
+#         entity_id: group.lights_b
+#         state: "on"
+#     action:
+#       - service: timer.cancel
+#         entity_id: timer.main_light_b
+#       - service: timer.start
+#         entity_id: timer.main_light_b
+#       - service: input_boolean.turn_off
+#         data:
+#           entity_id: input_boolean.bathroom_occupancy
       
 # ##################################
 # Bathroom - Occupancy off
