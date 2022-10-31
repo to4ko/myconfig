@@ -486,3 +486,43 @@
         entity_id: light.square_led_s, light.led_white_s, light.d1mini_co2_s_led
         data:
           transition: 15
+
+# ##################################
+# Sasha - Main Light Control with Alice
+# ##################################
+  - alias: sasha_main_light_control_with_alice
+    id: sasha_main_light_control_with_alice
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Выключи свет в Сашиной комнате
+        id: 'to_off_alice'
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Включи свет в Сашиной комнате
+        id: 'to_on_alice'
+    condition:
+      - condition: template
+        value_template: "{{ states('light.square_led_s') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'to_off_alice'
+            sequence:
+              - service: light.turn_off
+                entity_id: light.square_led_s
+          - conditions:
+              - condition: trigger
+                id: 'to_on_alice'
+            sequence:
+              - service: light.turn_on
+                entity_id: light.square_led_s
+                data:
+                  brightness_pct: 90
+                  kelvin: 5000

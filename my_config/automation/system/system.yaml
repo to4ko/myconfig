@@ -2219,8 +2219,28 @@
     id:  system_fully_browser_restart
     initial_state: true
     trigger:
-      - platform: time
-        at: "06:30:00"
+      - platform: time_pattern
+        minutes: "/30"
+        #at: "06:30:00"
     action:
+      # - wait_for_trigger: 
+      #   condition:
+      # - condition: state
+      #   entity_id: switch.optima_8_z801_4g_screensaver
       - service: button.press
         entity_id: button.optima_8_z801_4g_restart_browser
+
+# ##################################
+# System - System Repair Event Notify
+# ##################################
+  - alias: system_repair_event_notify
+    id: system_repair_event_notify
+    trigger:
+      - platform: event
+        event_type: repairs_issue_registry_updated
+        event_data:
+          action: create
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0001F41B Проблема в <b>{{ trigger.event.data.domain | e }}</b>, детали: <b>{{ trigger.event.data.issue_id | e }}</b>"

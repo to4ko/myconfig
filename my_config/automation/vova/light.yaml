@@ -931,4 +931,43 @@
   #   action:
   #     - service: light.turn_off
   #       entity_id: light.led_color_s
-          
+
+# ##################################
+# Vova - Main Light Control with Alice
+# ##################################
+  - alias: vova_main_light_control_with_alice
+    id: vova_main_light_control_with_alice
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Выключи свет в Вовиной комнате
+        id: 'to_off_alice'
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Включи свет в Вовиной комнате
+        id: 'to_on_alice'
+    condition:
+      - condition: template
+        value_template: "{{ states('light.square_led_v') in ['on','off'] and states('light.square_led_v_nightlight') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'to_off_alice'
+            sequence:
+              - service: light.turn_off
+                entity_id: light.square_led_v
+          - conditions:
+              - condition: trigger
+                id: 'to_on_alice'
+            sequence:
+              - service: light.turn_on
+                entity_id: light.square_led_v
+                data:
+                  brightness_pct: 90
+                  kelvin: 5000
