@@ -142,49 +142,75 @@
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - service: media_player.volume_set
-        data:
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          media_content_id: >-
-            'Вним+ание! Зап+ущена процедура выключ+ения вод+ы!'
-      - service: notify.telegram
-        data:
-          message: 'Внимание! Запущена процедура принудительного закрытия воды!'
-      - service: switch.turn_on
-        entity_id: switch.esp32_node_b_relay_1
-      - delay: '00:00:25'
-      - service: switch.turn_off
-        entity_id: switch.esp32_node_b_relay_1
-      - service: media_player.volume_set
-        data:
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          media_content_id: >-
-            'Внимание! Вода выключена!'
-      # - service: notify.notify
-      #   data:
-      #     title: "Внимание!"
-      #     message: "Принудительное закрытие воды!"
-      - service: notify.telegram
-        data:
-          message: 'Внимание! Вода принидительно закрыта!'
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.esp32_node_b_valve_status
+                state: 'off'
+            sequence:
+              - service: media_player.volume_set
+                data:
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  volume_level: '{{states("input_number.main_volume")|float(0)}}'
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  media_content_id: >-
+                    'Действие не трубуется - краны уже закрыты!'
+          - conditions:
+              - not:
+                  - condition: state
+                    entity_id: binary_sensor.esp32_node_b_valve_status
+                    state: 'off'
+            sequence:
+              - service: media_player.volume_set
+                data:
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  volume_level: '{{states("input_number.main_volume")|float(0)}}'
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  media_content_id: >-
+                    'Вним+ание! Зап+ущена процедура выключ+ения вод+ы!'
+              - service: notify.telegram
+                data:
+                  message: 'Внимание! Запущена процедура принудительного закрытия воды!'
+              - service: switch.turn_on
+                entity_id: switch.esp32_node_b_relay_1
+              - delay: '00:00:25'
+              - service: switch.turn_off
+                entity_id: switch.esp32_node_b_relay_1
+              - service: media_player.volume_set
+                data:
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  volume_level: '{{states("input_number.main_volume")|float(0)}}'
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  media_content_id: >-
+                    'Внимание! Вода выключена!'
+              # - service: notify.notify
+              #   data:
+              #     title: "Внимание!"
+              #     message: "Принудительное закрытие воды!"
+              - service: notify.telegram
+                data:
+                  message: 'Внимание! Вода принидительно закрыта!'
   
 # ##################################
 # System - Turn Water On
@@ -205,45 +231,71 @@
         entity_id: group.leak_detected
         state: 'off'
     action:
-      - service: media_player.volume_set
-        data:
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          media_content_id: >-
-            'Вним+ание! Запущена процедура включ+ения вод+ы!'
-      - service: notify.telegram
-        data:
-          message: 'Внимание! Запущена процедура принудительного включения воды!'
-      - service: switch.turn_on
-        entity_id: switch.esp32_node_b_relay_2
-      - delay: '00:00:25'
-      - service: switch.turn_off
-        entity_id: switch.esp32_node_b_relay_2
-      - service: media_player.volume_set
-        data:
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: 
-            - media_player.{{states('input_select.main_audio_out')|lower}}
-            - media_player.yandex_k
-          media_content_id: >-
-            'Вним+ание! Вода включена!'
-      - service: notify.telegram
-        data:
-          message: 'Внимание! Вода принидительно открыта!'
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.esp32_node_b_valve_status
+                state: 'on'
+            sequence:
+              - service: media_player.volume_set
+                data:
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  volume_level: '{{states("input_number.main_volume")|float(0)}}'
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  media_content_id: >-
+                    'Действие не трубуется - краны уже открыты!'
+          - conditions:
+              - not:
+                  - condition: state
+                    entity_id: binary_sensor.esp32_node_b_valve_status
+                    state: 'on'
+            sequence:
+              - service: media_player.volume_set
+                data:
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  volume_level: '{{states("input_number.main_volume")|float(0)}}'
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  media_content_id: >-
+                    'Вним+ание! Запущена процедура включ+ения вод+ы!'
+              - service: notify.telegram
+                data:
+                  message: 'Внимание! Запущена процедура принудительного включения воды!'
+              - service: switch.turn_on
+                entity_id: switch.esp32_node_b_relay_2
+              - delay: '00:00:25'
+              - service: switch.turn_off
+                entity_id: switch.esp32_node_b_relay_2
+              - service: media_player.volume_set
+                data:
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  volume_level: '{{states("input_number.main_volume")|float(0)}}'
+              - service: media_player.play_media
+                data:
+                  media_content_type: dialog
+                  entity_id: 
+                    - media_player.{{states('input_select.main_audio_out')|lower}}
+                    - media_player.yandex_k
+                  media_content_id: >-
+                    'Вним+ание! Вода включена!'
+              - service: notify.telegram
+                data:
+                  message: 'Внимание! Вода принидительно открыта!'
           
 # ##################################
 # System - Turn Water On_Leak detected
@@ -347,7 +399,14 @@
     trigger:
       - platform: state
         entity_id: switch.esp32_node_b_relay_1, switch.esp32_node_b_relay_2
-        to: 
+        to:
+    condition:
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+          {{ trigger.from_state.state not in ignore and
+            trigger.to_state.state not in ignore and
+            trigger.to_state.state != trigger.from_state.state }}
     action:
       - service: notify.telegram
         data:

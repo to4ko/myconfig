@@ -188,25 +188,29 @@
                     data:
                       title: "Внимание!"
                       message: "Запущен UPS (1200)"
+
           - conditions:
               - condition: template
-                value_template: "{{ trigger.to_state.state == 'LB' }}"
+                value_template: "{{ trigger.to_state.state == 'LB' or trigger.to_state.state == 'FSD OB DISCHRG LB'}}"
             sequence:
               - parallel:
                   - service: notify.telegram
                     data:
-                      message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы!"
+                      message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы через 10сек!"
                   - service: notify.mobile_app_iphone_14_pro_dtsymbal
                     data:
                       title: "Внимание!"
-                      message: "UPS полностью разряжен! Завершаем работу!"
+                      message: "UPS полностью разряжен! Завершаем работу через 10сек!"
                       data:
                         push:
                           sound:
                             name: "default"
                             critical: 1
-                            volume: 1.0        
-          #    - service: hassio.host_shutdown
+                            volume: 1.0
+              - delay:
+                  seconds: 10
+              - service: hassio.host_shutdown
+
           - conditions:
               - condition: template
                 value_template: "{{ 'OL CHRG' in trigger.to_state.state }}"
