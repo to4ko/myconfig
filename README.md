@@ -58,15 +58,15 @@
 
 **Backup Storage Unit - Synology DS920+**
   - 16Gb Kingston DDR4 SODIMM
-  - 2ea Seagate Skyhawk 4Tb (Storage section for critical files) in SHR1 
+  - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1 
   - 2ea Samsung 860 EVO 250Gb in SHR1
 
-**Remote Storage Unit - Synology DS220J** 
-  - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
+**TBA - Synology DS220J** 
+  - not in use
 
-**2nd Backup Storage Unit - Synology DS220+** 
-  - 2ea 128Gb SSD
-  - Acting as NUT server :)
+**Remote Storage Unit - Synology DS220+** 
+  - 2ea Seagate Skyhawk 4Tb in SHR1
+  - Upcoming remote HA server
 
 **UPS**
   - Ippon Smart Power Pro 1200
@@ -76,12 +76,11 @@
 
 # Networking
   - Unifi Dream Machine Pro, WAN 500mb\s + LTE Backup
-  - Unifi Switch 16-150W
+  - Unifi Enterprise Switch 24 PoE
   - Unifi Switch 8-60W (4ea)
   - Unifi Switch Mini
   - Unifi AC-AP-Lite (2ea)
   - Unifi AC AP Pro (3ea)
-  - Unifi NanoHD (not in use)
   - Unifi AP AC Mesh with UMA-D
 
 # Surveillance
