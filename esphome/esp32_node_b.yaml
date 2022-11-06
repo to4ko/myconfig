@@ -45,6 +45,16 @@ dallas:
     update_interval: 15s
     id: dallas_node
 
+globals:
+  - id: id_global_valve_bool
+    type: bool
+    restore_value: true
+  
+  - id: id_global_valve_active
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
@@ -52,7 +62,14 @@ binary_sensor:
   - platform: template
     name: ${board_name}_Valve_Status
     id: id_valve_status
-
+    #restore: true
+    lambda: return id(id_global_valve_bool);
+  
+  - platform: template
+    name: ${board_name}_Valve_Active
+    id: id_valve_active
+    #restore: true
+    lambda: return id(id_global_valve_active);    
 
 light:
   - platform: monochromatic
@@ -115,11 +132,12 @@ sensor:
                 and:
                   - lambda: 'return id(id_humidity_sensor).state > id(id_humidity_set).state;'
                   - switch.is_off: relay4
+                  - switch.is_off: relay3
                   - switch.is_on: id_fan_b_auto_mode
               then:
                 - logger.log: "The Dehumidifier has switched on!"
                 - switch.turn_on: relay3
-                - delay: 2s
+                #- delay: 2s
               else:
                 - if:
                     condition:
@@ -148,11 +166,17 @@ switch:
     icon: mdi:valve-closed
     on_turn_on:
       then:  
-        - delay: 1min
+        - globals.set:
+            id: id_global_valve_active
+            value: 'true'
+        - delay: 30s
         - switch.turn_off: relay1
-        - binary_sensor.template.publish:
-            id: id_valve_status
-            state: OFF
+        - globals.set:
+            id: id_global_valve_bool
+            value: 'false'
+        - globals.set:
+            id: id_global_valve_active
+            value: 'false'
 
   - platform: gpio
     pin: 
@@ -164,12 +188,18 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:valve-open
     on_turn_on:
-      then:  
-        - delay: 1min
+      then:
+        - globals.set:
+            id: id_global_valve_active
+            value: 'true'        
+        - delay: 30s
         - switch.turn_off: relay2    
-        - binary_sensor.template.publish:
-            id: id_valve_status
-            state: ON
+        - globals.set:
+            id: id_global_valve_bool
+            value: 'true'
+        - globals.set:
+            id: id_global_valve_active
+            value: 'false'
 
   - platform: gpio
     pin: 

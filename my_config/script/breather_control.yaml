@@ -44,9 +44,6 @@
             entity_id: button.digma_ir_v_breather_pwr
       - variables:
           breather_ent: "{{ 'binary_sensor.breather_' + (breather| lower) }}"
-      # - service: notify.telegram
-      #   data:
-      #     message: "name {{breather}}, {{breather_ent}} {{states(breather_ent)}}"
       - if:
           - condition: template
             value_template: "{{ is_state(breather_ent,'off') }}"
@@ -54,6 +51,10 @@
           - service: button.press
             data:
               entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
+      - service: fan.set_percentage
+        data:
+          entity_id: "{{ 'fan.breather_' + (breather | lower ) }}"
+          percentage: "{{ state_attr('fan.breather_' + (breather | lower ),'percentage') }}"
 
   breather_turn_off:
     alias: Breather Turn Off

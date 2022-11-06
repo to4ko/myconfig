@@ -37,8 +37,11 @@ logger:
 
 ota:
 
-web_server:
-  port: 80
+http_request:
+  id: http_request_data
+
+# web_server:
+#   port: 80
 
 # status_led:
 #   pin:
@@ -59,6 +62,9 @@ light:
     internal: true
 
 binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
   - platform: gpio
     pin:
       number: GPIO0
@@ -68,19 +74,21 @@ binary_sensor:
     on_press:
       - switch.toggle: relay
       
-  - platform: status
-    name: ${board_name}_Status
-
-  - platform: homeassistant
-    name: ${board_name}_tod
-    id: id_tod
-    entity_id: binary_sensor.tod_day
-    internal: false
-    publish_initial_state: true
-    
   - platform: template
     name: ${board_name}_auto_mode
     id: id_auto_mode
+
+  # - platform: homeassistant
+  #   name: ${board_name}_tod
+  #   id: id_tod
+  #   entity_id: binary_sensor.tod_day
+  #   internal: false
+  #   publish_initial_state: true
+
+  - platform: template
+    name: ${board_name}_ToD
+    id: id_tod
+    icon: mdi:chart-timeline
 
   - platform: homeassistant
     name: ${board_name}_security
@@ -108,7 +116,6 @@ switch:
           id: id_auto_mode
           state: OFF    
 
-
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -124,15 +131,11 @@ sensor:
     id: id_people_home
     internal: false
 
-  - platform: homeassistant
-    name: ${board_name}_bat_level
-    entity_id: sensor.optima_8_z801_4g_battery
-    id: battery
-    internal: false
+  - platform: template
+    name: ${board_name}_Battery_Level
+    id: id_battery
     device_class: battery
     unit_of_measurement: '%'
-    filters:
-      - heartbeat: 10s
     on_value:
       - if:
           condition:
@@ -141,7 +144,7 @@ sensor:
             - if:
                 condition:
                   and:
-                    - lambda: "return id(battery).state < 50;"
+                    - lambda: "return id(id_battery).state < 50;"
                     - switch.is_off: relay
                 then:
                   - switch.turn_on: relay
@@ -149,7 +152,7 @@ sensor:
                   - if:
                       condition:
                         and:
-                          - lambda: "return id(battery).state > 70 ;"
+                          - lambda: "return id(id_battery).state > 70 ;"
                           - switch.is_on: relay
                       then:
                         - switch.turn_off: relay
@@ -159,6 +162,42 @@ sensor:
                   - switch.is_off: relay
                 then:
                   - switch.turn_on: relay            
+
+  # - platform: homeassistant
+  #   name: ${board_name}_bat_level
+  #   entity_id: sensor.optima_8_z801_4g_battery
+  #   id: battery
+  #   internal: false
+  #   device_class: battery
+  #   unit_of_measurement: '%'
+  #   filters:
+  #     - heartbeat: 10s
+  #   on_value:
+  #     - if:
+  #         condition:
+  #             - binary_sensor.is_on: id_auto_mode
+  #         then:
+  #           - if:
+  #               condition:
+  #                 and:
+  #                   - lambda: "return id(battery).state < 50;"
+  #                   - switch.is_off: relay
+  #               then:
+  #                 - switch.turn_on: relay
+  #               else:
+  #                 - if:
+  #                     condition:
+  #                       and:
+  #                         - lambda: "return id(battery).state > 70 ;"
+  #                         - switch.is_on: relay
+  #                     then:
+  #                       - switch.turn_off: relay
+  #         else:
+  #           - if: 
+  #               condition:
+  #                 - switch.is_off: relay
+  #               then:
+  #                 - switch.turn_on: relay            
 
 text_sensor:
   - platform: template
@@ -224,4 +263,36 @@ interval:
           else:
             - binary_sensor.template.publish:
                 id: id_auto_mode
+                state: ON
+
+  - interval: 30s
+    then:
+      - http_request.get:
+          url: !secret kiosk_url
+          headers:
+            Content-Type: application/json
+          verify_ssl: false
+          on_response:
+            then:
+              - lambda: |-
+                  json::parse_json(id(http_request_data).get_string(), [](JsonObject root) {
+                      id(id_battery).publish_state(root["batteryLevel"]);
+                  });
+
+  - interval: 30s
+    then:
+      - if:
+          condition:
+            or:
+              - lambda: |-
+                  return id(sntp_time).now().hour >= 21;
+              - lambda: |-
+                  return (id(sntp_time).now().hour >= 0 && id(sntp_time).now().hour < 7) ;
+          then:
+            - binary_sensor.template.publish:
+                id: id_tod
+                state: OFF
+          else:
+            - binary_sensor.template.publish:
+                id: id_tod
                 state: ON

@@ -398,7 +398,7 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.esp32_node_b_relay_1, switch.esp32_node_b_relay_2
+        entity_id: binary_sensor.esp32_node_b_valve_status, binary_sensor.esp32_node_b_valve_active
         to:
     condition:
       - condition: template
@@ -410,9 +410,11 @@
     action:
       - service: notify.telegram
         data:
-          message: >
-            {% if trigger.to_state.state == 'on' and 'relay_1' in trigger.to_state.entity_id %}{{'\U000026d4'}} Внимание! Закрытие кранов!
-            {% elif trigger.to_state.state == 'off' and 'relay_1' in trigger.to_state.entity_id %}{{'\U00002705'}} Краны закрыты!
-            {% elif trigger.to_state.state == 'on' and 'relay_2' in trigger.to_state.entity_id %}{{'\U000026d4'}} Внимание! Открытие кранов!
-            {% elif trigger.to_state.state == 'off' and 'relay_2' in trigger.to_state.entity_id %}{{'\U00002705'}} Краны открыты!
-            {%endif%}
+          message: >-
+            {%- set current_state = states('binary_sensor.esp32_node_b_valve_status') %}
+            {%- set current_status = states('binary_sensor.esp32_node_b_valve_active') %}
+            {%- if current_state == 'on' and current_status == 'on' %}{{'\U000026d4'}} Внимание! Закрытие кранов!
+            {%- elif current_state == 'off' and current_status == 'off' %}{{'\U00002705'}} Краны закрыты!
+            {%- elif current_state == 'off' and current_status == 'on' %}{{'\U000026d4'}} Внимание! Открытие кранов!
+            {%- elif current_state == 'on' and current_status == 'off' %}{{'\U00002705'}} Краны открыты!
+            {%- endif %}
