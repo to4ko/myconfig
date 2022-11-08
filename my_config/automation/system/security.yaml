@@ -13,10 +13,10 @@
     action:
       - service: input_boolean.turn_{{'off' if is_state('binary_sensor.family_home','on') else  'on' }}
         data:
-          entity_id: input_boolean.security_mode
+          entity_id: switch.security_mode
       - service: notify.telegram
         data:
-          message: "\U0001f46e Режим охраны {{ iif(is_state('input_boolean.security_mode','off'), 'выключен!', 'включен!', '')}}"
+          message: "\U0001f46e Режим охраны {{ iif(is_state('switch.security_mode','off'), 'выключен!', 'включен!', '')}}"
 
 # ##################################
 # Security - Turn  On
@@ -26,7 +26,7 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: input_boolean.security_mode
+        entity_id: switch.security_mode
         to:
         for:
           seconds: 15
@@ -34,7 +34,7 @@
       - choose:
           - conditions:
               - condition: state 
-                entity_id: input_boolean.security_mode
+                entity_id: switch.security_mode
                 state: 'on'
             sequence:
               - service: notify.telegram
@@ -47,12 +47,12 @@
                   message: "\U0001f514 Освещение выключено!"
           - conditions:
               - condition: state 
-                entity_id: input_boolean.security_mode
+                entity_id: switch.security_mode
                 state: 'off'
             sequence:
               - service: input_boolean.turn_off
                 data:
-                  entity_id: input_boolean.security_mode
+                  entity_id: switch.security_mode
               - service: script.turn_on
                 entity_id: script.away_mode_off
 
@@ -104,7 +104,7 @@
         to: "on"
     condition:
       - condition: state
-        entity_id: input_boolean.security_mode
+        entity_id: switch.security_mode
         state: "on"
       - condition: state
         entity_id: timer.security_delay
@@ -132,7 +132,7 @@
         to: "on"
     condition:
       - condition: state
-        entity_id: input_boolean.security_mode
+        entity_id: switch.security_mode
         state: "on"
     action:
       - service: timer.cancel
@@ -191,7 +191,7 @@
         to: "vibration"
     condition:
       - condition: state
-        entity_id: input_boolean.security_mode
+        entity_id: switch.security_mode
         state: "on"
     action:
       - service: notify.telegram
@@ -223,7 +223,7 @@
         entity_id: binary_sensor.tod_day
         state: "off"
       - condition: state
-        entity_id: input_boolean.security_mode
+        entity_id: switch.security_mode
         state: "off"
     action:
       - service: notify.telegram
