@@ -7,11 +7,17 @@
     trigger:
       - platform: state
         entity_id: binary_sensor.family_home
-        to:
         for:
           seconds: 15
+    condition:
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ trigger.from_state.state not in ignore and
+            trigger.to_state.state not in ignore and
+            trigger.to_state.state != trigger.from_state.state }}
     action:
-      - service: input_boolean.turn_{{'off' if is_state('binary_sensor.family_home','on') else  'on' }}
+      - service: switch.turn_{{'off' if is_state('binary_sensor.family_home','on') else  'on' }}
         data:
           entity_id: switch.security_mode
       - service: notify.telegram

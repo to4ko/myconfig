@@ -66,6 +66,43 @@
           friendly_name: UDM eMMC Used
           icon: mdi:usb-flash-drive
           unit_of_measurement: '%'
+
+      - name: UDM WAN1 IP
+        unique_id: udm_wan1_ip
+        state: >
+          {{ states('sensor.unifios_state').split('|\n')[22] }}
+        attributes:
+          friendly_name: UDM WAN1 IP
+          icon: mdi:numeric-1-circle
+
+      - name: UDM WAN2 IP
+        unique_id: udm_wan2_ip
+        state: >
+          {{ states('sensor.unifios_state').split('|\n')[23] }}
+        attributes:
+          friendly_name: UDM WAN2 IP
+          icon: mdi:numeric-2-circle
+
+      - name: UDM Active WAN
+        unique_id: udm_active_wan
+        state: >
+          {% if is_state('binary_sensor.udm_wan1_uplink','on') %}
+            WAN1
+          {% elif is_state('binary_sensor.udm_wan2_uplink','on') %}
+            WAN2
+          {% else %}
+            Unknown
+          {% endif %}
+        icon: >
+          {% if is_state('binary_sensor.udm_wan1_uplink','on') %}
+            mdi:numeric-1-box-outline
+          {% elif is_state('binary_sensor.udm_wan2_uplink','on') %}
+            mdi:numeric-2-box-outline
+          {% else %}
+            mdi:progress-question
+          {% endif %}
+        attributes:
+          friendly_name: UDM Active WAN
            
       # - name: UDM eMMC Used Gb
       #   unique_id: udm_emmc_used_gb
