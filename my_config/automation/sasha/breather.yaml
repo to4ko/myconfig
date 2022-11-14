@@ -55,6 +55,31 @@
                 state: 'off'
               - condition: numeric_state
                 entity_id: sensor.d1mini_co2_s_co2
+                above: input_number.co2_high_limit
+              - condition: state
+                entity_id: binary_sensor.breather_s
+                state: 'on'
+              - condition: state
+                entity_id: switch.security_mode
+                state: 'off'
+              - condition: state
+                entity_id: switch.breather_auto_speed_s
+                state: 'on'
+              - condition: numeric_state
+                entity_id: sensor.breather_set_speed_s
+                above: 0
+            sequence:
+              - service: fan.set_percentage
+                entity_id: fan.breather_s
+                data:
+                  percentage: "{{states('sensor.breather_set_speed_s')|int(0) }}"
+
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00025370d1_contact
+                state: 'off'
+              - condition: numeric_state
+                entity_id: sensor.d1mini_co2_s_co2
                 below: input_number.co2_low_limit
               - condition: state
                 entity_id: binary_sensor.breather_s

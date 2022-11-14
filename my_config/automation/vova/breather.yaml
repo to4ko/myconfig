@@ -47,7 +47,32 @@
               - service: fan.set_percentage
                 entity_id: fan.breather_v
                 data:
-                  percentage: "{{states('sensor.breather_set_speed_s')|int(0) }}"
+                  percentage: "{{states('sensor.breather_set_speed_v')|int(0) }}"
+
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x158d00022ccffe_contact
+                state: 'off'
+              - condition: numeric_state
+                entity_id: sensor.esp32_node_v_co2
+                above: input_number.co2_high_limit
+              - condition: state
+                entity_id: binary_sensor.breather_v
+                state: 'on'
+              - condition: state
+                entity_id: switch.security_mode
+                state: 'off'
+              - condition: state
+                entity_id: switch.breather_auto_speed_v
+                state: 'on'
+              - condition: numeric_state
+                entity_id: sensor.breather_set_speed_v
+                above: 0
+            sequence:
+              - service: fan.set_percentage
+                entity_id: fan.breather_v
+                data:
+                  percentage: "{{states('sensor.breather_set_speed_v')|int(0) }}"
 
           - conditions:
               - condition: state

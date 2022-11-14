@@ -13,29 +13,64 @@
         event: end
         entity_id: calendar.dni_rozhdeniia
     action:
-      - variables:
-          calendar_event: >-
-            {{ trigger.calendar_event.summary }}
-      - if:
-          - "{{ trigger.event == 'start' }}"
-        then:
-          - service: input_select.set_options
-            target:
-              entity_id: input_select.calendar_events_list
-            data:
-              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+      # - variables:
+      #     calendar_event: >-
+      #       {{ trigger.calendar_event.summary }}
+      # - if:
+      #     - "{{ trigger.event == 'start' }}"
+      #   then:
+      #     - service: input_select.set_options
+      #       target:
+      #         entity_id: input_select.calendar_events_list
+      #       data:
+      #         options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+              
+      #   else:
+      #     - service: input_select.set_options
+      #       target:
+      #         entity_id: input_select.calendar_events_list
+      #       data:
+      #         options: >-
+      #           {% if state_attr('input_select.calendar_events_list', 'options') | count <= 1 %}
+      #             ["Нет событий"]
+      #           {% else %}
+      #             {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }}
+      #           {% endif %}
 
-        else:
-          - service: input_select.set_options
-            target:
-              entity_id: input_select.calendar_events_list
-            data:
-              options: >-
-                {% if state_attr('input_select.calendar_events_list', 'options') | count <= 1 %}
-                  ["Нет событий"]
-                {% else %}
-                  {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }}
-                {% endif %}
+      # {% set list_calendar = namespace(option=[]) %}
+      # {%- set is_in = False -%}
+      # {%- for option in state_attr('input_select.calendar_events_list','options') -%}
+      #   {% if trigger.event == 'end' and trigger.calendar_event.summary != option %}
+      #     {%- set list_calendar.option = list_calendar.option + [option] -%}
+      #   {% endif %}
+      #   {% if trigger.event == 'start' and trigger.calendar_event.summary == option %}
+      #     {%- set is_in = True -%}
+      #   {% endif %}
+      # {%- endfor -%}
+      # {% if trigger.event == 'start' and is_in == False %}
+      #   {%- set list_calendar.option = list_calendar.option + [trigger.calendar_event.summary] -%}
+      # {% endif %}
+      # {{ list_calendar.option | list }}
+
+
+
+      - service: input_select.set_options
+        data:
+          entity_id: input_select.calendar_events_list
+          options: >-
+            {% set list_calendar = namespace(option=[]) %}
+            {%- for option in state_attr('input_select.calendar_events_list','options') -%}
+                {%- set list_calendar.option = list_calendar.option + [option] -%}
+            {%- endfor -%}
+            {%- set list_calendar.option = list_calendar.option + [trigger.calendar_event.summary] -%}
+
+            {% if trigger.event == 'start' %}
+              {{ list_calendar.option | unique | list }}
+            {% endif %}
+            
+            {% if trigger.event == 'end' %}
+              {{ list_calendar.option | select('ne', trigger.calendar_event.summary) | unique | list }}
+            {% endif %}
 
       - event: calendar_event_list_updated
 
@@ -61,9 +96,10 @@
             target:
               entity_id: input_select.calendar_events_list
             data:
-              options: "{{ ((state_attr('input_select.calendar_events_list', 'options') | join('|') + '|' + state_attr('calendar.dni_rozhdeniia', 'message') ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+              options: "{{ state_attr('calendar.dni_rozhdeniia', 'message') }}"
           
           - event: calendar_event_list_updated
+
 
 # ##################################
 # System - Calendar Events to List (Prazdniki)
@@ -80,28 +116,44 @@
         event: end
         entity_id: calendar.prazdniki_rossii_polnyi
     action:
-      - variables:
-          calendar_event: >-
-            {{ trigger.calendar_event.summary }}
-      - if:
-          - "{{ trigger.event == 'start' }}"
-        then:
-          - service: input_select.set_options
-            data:
-              entity_id: input_select.calendar_events_list
-              options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+      # - variables:
+      #     calendar_event: >-
+      #       {{ trigger.calendar_event.summary }}
+      # - if:
+      #     - "{{ trigger.event == 'start' }}"
+      #   then:
+      #     - service: input_select.set_options
+      #       data:
+      #         entity_id: input_select.calendar_events_list
+      #         options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + calendar_event ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
 
-        else:
-          - service: input_select.set_options
-            data:
-              entity_id: input_select.calendar_events_list
-              options: >-
-                {% if state_attr('input_select.calendar_holiday_events_list', 'options') | count <= 1 %}
-                  ["Нет событий"]
-                {% else %}
-                  {{ (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }}
-                {% endif %}
+      #   else:
+      #     - service: input_select.set_options
+      #       data:
+      #         entity_id: input_select.calendar_events_list
+      #         options: >-
+      #           {% if state_attr('input_select.calendar_holiday_events_list', 'options') | count <= 1 %}
+      #             ["Нет событий"]
+      #           {% else %}
+      #             {{ (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace (calendar_event,'')).split('|') | select('ne', '') | unique | list }}
+      #           {% endif %}
+      - service: input_select.set_options
+        data:
+          entity_id: input_select.calendar_holiday_events_list
+          options: >-
+            {% set list_calendar = namespace(option=[]) %}
+            {%- for option in state_attr('input_select.calendar_events_list','options') -%}
+                {%- set list_calendar.option = list_calendar.option + [option] -%}
+            {%- endfor -%}
+            {%- set list_calendar.option = list_calendar.option + [trigger.calendar_event.summary] -%}
 
+            {% if trigger.event == 'start' %}
+              {{ list_calendar.option | unique | list }}
+            {% endif %}
+            
+            {% if trigger.event == 'end' %}
+              {{ list_calendar.option | select('ne', trigger.calendar_event.summary) | unique | list }}
+            {% endif %}
       - event: calendar_holiday_event_list_updated
 
 # ##################################
@@ -125,6 +177,6 @@
           - service: input_select.set_options
             data:
               entity_id: input_select.calendar_holiday_events_list
-              options: "{{ ((state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') + '|' + state_attr('calendar.prazdniki_rossii_polnyi', 'message') ) | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}"
+              options: "{{ state_attr('calendar.prazdniki_rossii_polnyi', 'message') }}"
               
           - event: calendar_holiday_event_list_updated
