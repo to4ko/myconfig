@@ -78,7 +78,7 @@
   - Unifi Dream Machine Pro, WAN 500mb\s + LTE Backup
   - Unifi Enterprise Switch 24 PoE
   - Unifi Switch 8-60W (4ea)
-  - Unifi Switch Mini
+  - not in use - Unifi Switch Mini
   - Unifi AC-AP-Lite (2ea)
   - Unifi AC AP Pro (3ea)
   - Unifi AP AC Mesh with UMA-D
@@ -134,7 +134,7 @@
   - Xiaomi Light Sensor (4ea)
   - not in use - Aqara Opple Wireless Switch (4ea)
 
-**ESPHome flashed devices:**
+**ESPHome devices:**
   - Sonoff Basic (2ea)
   - Sonoff Pow R2 (2ea)
   - Sonoff Mini (3ea)
@@ -207,11 +207,12 @@
     * RPC shutdown
 
 **Main Storage Unit Software**
-  - DSM 7.0
+  - DSM 7.1
   - HA OS instance in VM
   - Docker containers:
-    * iSpycam Agent
+    * Mosquitto
     * InfluxDB
+    * Transmission
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
