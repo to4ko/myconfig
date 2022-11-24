@@ -172,7 +172,7 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: sensor.ippon_1200_status_data
+        entity_id: sensor.ippon_1500_status_data
         to:
     action:
       - choose:
@@ -230,3 +230,13 @@
               - service: notify.telegram
                 data:
                   message: "\U0001f6a8 Внимание! Связь с UPS(1200) потеряна!"
+
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.from_state.state in ['unknown','unavailable'] }}"
+              - condition: template
+                value_template: "{{ trigger.to_state.state not in ['unknown','unavailable','none'] }}"
+            sequence:
+              - service: notify.telegram
+                data:
+                  message: "\U0001f6a8 Внимание! Связь с UPS(1200) восстановлена!"
