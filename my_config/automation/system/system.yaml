@@ -1944,18 +1944,20 @@
       - condition: template
         value_template: "{{states('sensor.time').split(':')[0]|int >= 23 or states('sensor.time').split(':')[0]|int < 7}}"
     action:
-      - service: script.fade_volume
-        data:
-          curve: linear
-          target_player: media_player.yandex_mb
-          duration: 3
-          target_volume: 0.1
-      - service: media_player.turn_off
-        entity_id: media_player.yandex_mb
+      - if:
+          - condition: trigger
+            id: 'by_time'
+        then:
+          - service: media_player.turn_off
+            entity_id: media_player.yandex_mb
+          - service: media_player.turn_off
+            entity_id: media_player.yandex_v
       - if:
           - condition: trigger
             id: 'on_state'
         then:
+          - service: media_player.turn_off
+            entity_id: media_player.yandex_mb
           - service: media_player.play_media
             data:
               media_content_type: text
