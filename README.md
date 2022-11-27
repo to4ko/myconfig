@@ -61,25 +61,24 @@
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1 
   - 2ea Samsung 860 EVO 250Gb in SHR1
 
-**TBA - Synology DS220J** 
-  - not in use
-
 **Remote Storage Unit - Synology DS220+** 
   - 2ea Seagate Skyhawk 4Tb in SHR1
   - Upcoming remote HA server
 
 **UPS**
+  - Ippon Back Basic 1500
   - Ippon Smart Power Pro 1200
   - Ippon Back Basic 1050
   - Ippon Back Basic 650
   - CyberPower UT650EG 
 
 # Networking
-  - Unifi Dream Machine Pro, WAN 500mb\s + LTE Backup
+  - Unifi Dream Machine Pro, WAN1 500mb\s + WAN2 500mb\s + LTE Backup
   - Unifi Enterprise Switch 24 PoE
   - Unifi Switch 8-60W (4ea)
   - not in use - Unifi Switch Mini
-  - Unifi AC-AP-Lite (2ea)
+  - not in use - Unifi Switch Light 8 PoE
+  - Unifi AC AP Lite (2ea)
   - Unifi AC AP Pro (3ea)
   - Unifi AP AC Mesh with UMA-D
 
