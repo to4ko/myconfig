@@ -35,6 +35,9 @@
               - condition: state
                 entity_id: switch.security_mode
                 state: 'off'
+              - condition: numeric_state
+                entity_id: sensor.0x158d000222c746_temperature
+                above: 20
             sequence:
               - service: fan.turn_on
                 entity_id: fan.breather_mb
@@ -75,29 +78,32 @@
                   percentage: "{{states('sensor.breather_set_speed_mb')|int(0) }}"
 
           - conditions:
-              - condition: state
-                entity_id: binary_sensor.0x158d000200ad58_contact
-                state: 'off'
-              - condition: numeric_state
-                entity_id: sensor.esp32_node_mb_co2
-                below: input_number.co2_low_limit
-              - condition: state
-                entity_id: binary_sensor.breather_mb
-                state: 'on'
+              - or: 
+                  - and: 
+                      - condition: state
+                        entity_id: binary_sensor.0x158d000200ad58_contact
+                        state: 'off'
+                      - condition: numeric_state
+                        entity_id: sensor.esp32_node_mb_co2
+                        below: input_number.co2_low_limit
+                      - condition: state
+                        entity_id: binary_sensor.breather_mb
+                        state: 'on'
+                  - and:
+                      - or: 
+                          - condition: numeric_state
+                            entity_id: sensor.0x158d000222c746_temperature
+                            below: 20
+                          - condition: state
+                            entity_id: binary_sensor.0x158d000200ad58_contact
+                            state: 'on'
+                      - condition: state
+                        entity_id: binary_sensor.breather_mb
+                        state: 'on'
             sequence:
               - service: fan.turn_off
                 entity_id: fan.breather_mb
-                
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.0x158d000200ad58_contact
-                state: 'on'
-              - condition: state
-                entity_id: binary_sensor.breather_mb
-                state: 'on'
-            sequence:
-              - service: fan.turn_off
-                entity_id: fan.breather_mb
+
 
 # ##################################
 # Master Bedroom- breather auto by alica
