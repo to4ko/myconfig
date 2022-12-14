@@ -49,6 +49,20 @@
   # - platform: seventeentrack
   #   username: !secret 17track_user
   #   password: !secret 17track_pass
+
+  - platform: python_script
+    name: repairs state
+    scan_interval: '01:00:00'
+    source: |
+        from homeassistant.helpers.issue_registry import async_get as async_get_issue_registry 
+        issue_registry = async_get_issue_registry(self.hass)
+        issues = [
+            issue.to_json()
+            for issue in issue_registry.issues.values()
+            if issue.active
+        ]
+        self.state = len(issues)
+        self.attributes = { "issues" : issues }
     
   - platform: python_script
     name: Devices Count
