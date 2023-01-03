@@ -234,12 +234,19 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: input_boolean.guest_mode
+        entity_id: switch.guest_mode
+    condition:
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ trigger.from_state.state not in ignore and
+            trigger.to_state.state not in ignore and
+            trigger.to_state.state != trigger.from_state.state }}
     action:
       - service: device_tracker.see
         data:
           dev_id: guest
-          location_name: "{% if is_state('input_boolean.guest_mode','on')%}home{%else%}not_home{%endif%}"
+          location_name: "{% if is_state('switch.guest_mode','on')%}home{%else%}not_home{%endif%}"
 
 # ##################################
 # System - Sasha tracker - Audio

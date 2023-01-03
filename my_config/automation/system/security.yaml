@@ -1,25 +1,83 @@
 # ##################################
-# Security - Input State Change
+# Security - Everybody Out 1min
 # ##################################
-  - alias: security_input_state_change
-    id: security_input_state_change
+  - alias: security_everybody_out_1min
+    id: security_everybody_out_1min
     initial_state: true
     trigger:
       - platform: state
         entity_id: binary_sensor.family_home
+        to: 'off'
+        for:
+          minutes: 1
+    # condition:
+    #   - condition: state
+    #     entity_id: switch.guestmode
+    #     state: 'off'
+    action:
+      - service: notify.mobile_app_iphone_14_pro_dtsymbal
+        data:
+          message: Включение режима охраны через 1 минуту!
+          title: Никого нет дома!
+          data:
+            actions: 
+              - action: guestmode
+                title: Включить гостя
+                authenticationRequired: false
+                activationMode: background
+
+# ##################################
+# Security - Everybody Out 1min - Mobile App Reply
+# ##################################
+  - alias: security_everybody_out_reply_from_app
+    id: security_everybody_out_reply_from_app
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: mobile_app_notification_cleared
+        event_data:
+          action: "guestmode"
+    action:
+      - service: switch.turn_on
+        entity_id: switch.guestmode
+
+# ##################################
+# Security - Wrapper
+# ##################################
+  - alias: security_wrapper
+    id: security_wrapper
+    initial_state: true
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.family_home
+        to: 'off'
+        for:
+          minutes: 2
+        id: 'to_on'
+      - platform: state
+        entity_id: binary_sensor.family_home
+        to: 'on'
         for:
           seconds: 15
+        id: 'to_off'
     condition:
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ trigger.from_state.state not in ignore and
-            trigger.to_state.state not in ignore and
-            trigger.to_state.state != trigger.from_state.state }}
+      - condition: state
+        entity_id: switch.guestmode
+        state: 'off'
     action:
-      - service: switch.turn_{{'off' if is_state('binary_sensor.family_home','on') else  'on' }}
-        data:
-          entity_id: switch.security_mode
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: 'to_on'
+            sequence:
+              - service: switch.turn_on
+                entity_id: switch.security_mode
+          - conditions:
+              - condition: trigger
+                id: 'to_off'
+            sequence:
+              - service: switch.turn_off
+                entity_id: switch.security_mode, switch.guestmode
       - service: notify.telegram
         data:
           message: "\U0001f46e Режим охраны {{ iif(is_state('switch.security_mode','off'), 'выключен!', 'включен!', '')}}"

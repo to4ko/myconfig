@@ -5,9 +5,17 @@ substitutions:
 esphome:
   name: ${node_name}
   comment: ESP32 TH Relay6ch LED Node V
-
+  platformio_options:
+    board_build.f_cpu: 81000000L
+    
 esp32:
   board: nodemcu-32s
+  framework:
+    type: arduino
+
+external_components:
+  - source: github://pr#4216
+    components: esp32
 
 wifi:
   ssid: !secret wifi_ssid_k
@@ -41,9 +49,14 @@ i2c:
   scan: True
 
 dallas:
-  - pin: GPIO26
-    update_interval: 60s
+  - pin:
+      number: GPIO26
+      mode:
+          input: true
+          pullup: true  
+    update_interval: 10s
     id: dallas_node
+
 
 globals:
   - id: id_global_valve_bool
@@ -89,7 +102,7 @@ number:
     name: ${board_name}_Humidity_Set
     id: id_humidity_set
     restore_value: true
-    #update_interval: 5s
+    update_interval: 30s
     min_value: 0
     max_value: 99
     step: 1
@@ -265,7 +278,7 @@ switch:
     restore_state: true
 
   - platform: template
-    name: ${board_name}_Fan_B_Forcec_Mode
+    name: ${board_name}_Fan_B_Force_Mode
     id: id_fan_b_force_mode
     optimistic: true
     restore_state: true
