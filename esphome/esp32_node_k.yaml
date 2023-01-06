@@ -215,6 +215,7 @@ sensor:
     co2:
       name: ${board_name}_CO2
     update_interval: 60s
+    id: id_my_co2
   
   - platform: wifi_signal
     name: ${board_name}_WiFi_RSSI
@@ -280,21 +281,6 @@ sensor:
     type: azimuth
 
 # switch:
-#   - platform: template
-#     name: ${board_name}_MH-Z19 ABC
-#     optimistic: true
-#     on_turn_on:
-#       mhz19.abc_enable: my_mhz19_id
-#     on_turn_off:
-#       mhz19.abc_disable: my_mhz19_id
-
-#   - platform: template
-#     name: ${board_name}_MH-Z19 Calibrate
-#     on_turn_on:
-#       mhz19.calibrate_zero: my_mhz19_id
-#     turn_off_action:
-#       switch.turn_off: mhz19_zero
-#     id: mhz19_zero
 
   # - platform: template
   #   name: ${board_name}_TV_PWR
@@ -309,6 +295,16 @@ sensor:
   #         address: 0x807F
   #         command: 0x02FD
 
+switch:
+  - platform: template
+    name: ${board_name}_ABC
+    restore_state: true
+    optimistic: true
+    on_turn_on:
+      - senseair.abc_enable: id_my_co2
+    on_turn_off:
+      - senseair.abc_disable: id_my_co2
+
 sun:
   latitude: !secret my_lat
   longitude: !secret my_long
@@ -316,6 +312,11 @@ sun:
 button:
   - platform: restart
     name: ${board_name}_Restart
+
+  - platform: template
+    name: ${board_name}_CO2_Calibtrate
+    on_press:
+      - senseair.background_calibration: id_my_co2
     
 time:
   - platform: sntp

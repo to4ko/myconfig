@@ -1,31 +1,23 @@
 # ##################################
-# System - Unifi Controller State change
+# System - UDM MEM Over
 # ##################################
-  # - alias: system_health_unifi_controller
-  #   id:  system_health_unifi_controller
-  #   initial_state: true
-  #   mode: single
-  #   max: 10
-  #   max_exceeded: silent
-  #   trigger:
-  #     - platform: state
-  #       entity_id: binary_sensor.unifi_controller_state
-  #   condition:
-  #     - condition: template
-  #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  #     - condition: template
-  #       value_template: >
-  #         {% set ignore = ['unavailable', 'none','0'] %}
-  #         {{ (trigger.from_state.state in ignore or
-  #           trigger.to_state.state in ignore) and
-  #           trigger.to_state.state != trigger.from_state.state }}
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: >-
-  #             {%- if trigger.to_state.state =='off' %}{{'\U0000274c'}} Unifi controller - OFF!
-  #             {%- elif trigger.to_state.state =='on' %}{{'\U00002705'}} Unifi controller - ON
-  #             {%- endif %}
+  - alias: system_udm_mem_over
+    id:  system_udm_mem_over
+    initial_state: true
+    mode: single
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.udm_mem_used
+        above: 90
+        for:
+          minutes: 5
+    condition:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0000274c UDM: памяти менее 5%. Необходим рестарт!"
 
 # ##################################
 # System - Main server temp >70
