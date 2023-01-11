@@ -152,8 +152,10 @@
   - ESP32 - Node MB - Master Bedroom SensAir S8B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova Room SensAir S8, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
-  - not in use - ESP32 - BLE Tracker HB
-  - not in use - ESP32 - BLE Tracker HS
+  - ESP32 - BLE Tracker HB
+  - ESP32 - BLE Tracker HS
+  - ESP32 - BLE Tracker S
+  - ESP32 - BLE Tracker MB
   - not in use - ESP32 - M5 Stack Pico BLE Tracker S
   - not in use - ESP32 - M5 Stack Pico BLE Tracker MB
   - ESP32 - Hall Big Breaker Box PZEM-004T
