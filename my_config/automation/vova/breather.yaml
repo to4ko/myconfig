@@ -148,7 +148,10 @@
         id: 'to_on_alice'
       - platform: time
         at: "20:15:00"
-        id: 'time_trigger'
+        id: 'time_trigger_night'
+      - platform: time
+        at: "08:30:00"
+        id: 'time_trigger_day'
     condition:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
@@ -355,9 +358,10 @@
                 entity_id: timer.breather_v
                 data:
                   duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+                  
           - conditions:
               - condition: trigger
-                id: "time_trigger"
+                id: "time_trigger_night"
             sequence:
               - if:
                   - condition: state
@@ -373,6 +377,24 @@
                     entity_id: timer.breather_v
 
                   - service: switch.turn_on
+                    entity_id: switch.hourly_mode_breather_v
+
+          - conditions:
+              - condition: trigger
+                id: "time_trigger_day"
+            sequence:
+              - if:
+                  - condition: state
+                    entity_id: binary_sensor.breather_v
+                    state: 'on'
+                then:
+                  - service: fan.turn_off
+                    entity_id: fan.breather_v
+                    
+                  - service: timer.cancel
+                    entity_id: timer.breather_v
+
+                  - service: switch.turn_off
                     entity_id: switch.hourly_mode_breather_v
 
 # ##################################
