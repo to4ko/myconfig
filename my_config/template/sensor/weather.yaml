@@ -1,4 +1,32 @@
   - sensor:
+      - name: Sun Window Angular Simularity
+        unique_id: sun_window_angular_simularity
+        unit_of_measurement: 'degrees'
+        state: >
+          {% set deg2rad = pi/180 %}
+
+          {% set sun_azi = state_attr('sun.sun', 'azimuth') | int %}
+          {% set sun_ele = state_attr('sun.sun', 'elevation') | int %}
+
+          {% set sun_x = cos(sun_azi*deg2rad)*cos(sun_ele*deg2rad) %}
+          {% set sun_y = sin(sun_azi*deg2rad)*cos(sun_ele*deg2rad) %}
+          {% set sun_z = sin(sun_ele*deg2rad) %}
+
+          {% set win_azi = 343 %}
+          {% set win_ele = 0 %}
+
+          {% set win_x = cos(win_azi*deg2rad)*cos(win_ele*deg2rad) %}
+          {% set win_y = sin(win_azi*deg2rad)*cos(win_ele*deg2rad) %}
+          {% set win_z = sin(win_ele*deg2rad) %}
+
+          {% set dot = sun_x*win_x + sun_y*win_y + sun_z*win_z %}
+          {% set norm_win = sqrt(win_x**2 + win_y**2 + win_z**2) %}
+          {% set norm_sun = sqrt(sun_x**2 + sun_y**2 + sun_z**2) %}
+          {% set cos_sim = dot/(norm_win*norm_sun) %}
+
+          {% set ang_sim = 1 - acos(cos_sim)/pi %}
+          {{ ang_sim | round(3) }}
+
       - name: Dewpoint
         unique_id: dewpoint
         device_class: temperature
