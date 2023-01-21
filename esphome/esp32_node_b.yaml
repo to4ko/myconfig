@@ -75,14 +75,24 @@ binary_sensor:
   - platform: template
     name: ${board_name}_Valve_Status
     id: id_valve_status
-    #restore: true
     lambda: return id(id_global_valve_bool);
   
   - platform: template
     name: ${board_name}_Valve_Active
     id: id_valve_active
-    #restore: true
-    lambda: return id(id_global_valve_active);    
+    lambda: return id(id_global_valve_active);
+  
+  - platform: template
+    name: ${board_name}_Max_Humidity
+    id: id_max_humidity
+    device_class: moisture
+    lambda: return id(id_humidity_sensor).state > 97;
+
+  - platform: template
+    name: ${board_name}_High_Humidity
+    id: id_high_humidity
+    device_class: moisture
+    lambda: return id(id_humidity_sensor).state > id(id_humidity_set).state;
 
 light:
   - platform: monochromatic
@@ -139,29 +149,7 @@ sensor:
       name: ${board_name}_Humidity
       id: id_humidity_sensor
       filters:
-        - offset: 7.0
-      on_value:
-        then:
-          - if:
-              condition:
-                and:
-                  - lambda: 'return id(id_humidity_sensor).state > id(id_humidity_set).state;'
-                  - switch.is_off: relay4
-                  - switch.is_off: relay3
-                  - switch.is_on: id_fan_b_auto_mode
-              then:
-                - logger.log: "The Dehumidifier has switched on!"
-                - switch.turn_on: relay3
-                #- delay: 2s
-              else:
-                - if:
-                    condition:
-                      and:
-                        - switch.is_on: relay3
-                        - switch.is_on: id_fan_b_auto_mode
-                    then:
-                      - logger.log: "The Dehumidifier is under the Setpoint. Now off!"
-                      - switch.turn_off: relay3
+        - offset: 11.0
     address: 0x44
     update_interval: 5s
 
@@ -278,10 +266,46 @@ switch:
     restore_state: true
 
   - platform: template
+    name: ${board_name}_Fan_B_Manual_Mode
+    id: id_fan_b_manual_mode
+    optimistic: true
+    restore_state: true
+    on_turn_on:
+      - logger.log: "Manual Mode - switched on!"
+      - if:
+          condition:
+            - switch.is_on: id_fan_b_auto_mode
+          then:
+            - switch.turn_on: id_auto_mode_prev
+          else:       
+            - switch.turn_off: id_auto_mode_prev
+      - switch.turn_off: id_fan_b_auto_mode
+      - switch.turn_on: relay3
+    on_turn_off:
+      - logger.log: "Manual Mode - switched off!"
+      - switch.turn_off: relay3
+      - if:
+          condition:
+            - switch.is_on: id_auto_mode_prev
+          then:
+            - switch.turn_on: id_fan_b_auto_mode
+
+  - platform: template
     name: ${board_name}_Fan_B_Force_Mode
     id: id_fan_b_force_mode
     optimistic: true
     restore_state: true
+    on_turn_on:
+      - logger.log: "Force Mode - switched on!"
+      - switch.turn_on: relay3
+    on_turn_off:
+      - switch.turn_off: relay3
+
+  - platform: template
+    name: ${board_name}_Auto_Mode_Prev
+    id: id_auto_mode_prev
+    optimistic: true
+    internal: true
 
 text_sensor:
   - platform: template
@@ -342,3 +366,76 @@ time:
                       switch.is_on: relay3
               then:
                 - switch.turn_off: relay3 
+
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            - and:
+              - for:
+                  time: 10s
+                  condition:
+                    binary_sensor.is_on: id_high_humidity
+              - binary_sensor.is_off: id_max_humidity
+              - switch.is_off: relay4
+              - switch.is_off: relay3
+              - switch.is_on: id_fan_b_auto_mode
+              - switch.is_off: id_fan_b_manual_mode
+              - switch.is_off: id_fan_b_force_mode
+          then:
+              - logger.log: "Auto Mode - fan has switched on!"
+              - switch.turn_on: relay3
+ 
+      - if:
+          condition:
+            - and:
+              - for:
+                  time: 10s
+                  condition:
+                    binary_sensor.is_off: id_high_humidity
+              - binary_sensor.is_off: id_max_humidity
+              - switch.is_on: relay3
+              - switch.is_on: id_fan_b_auto_mode
+              - switch.is_off: id_fan_b_manual_mode
+              - switch.is_off: id_fan_b_force_mode
+          then:
+              - logger.log: "Auto mode - fan has switched off!"
+              - switch.turn_off: relay3
+
+      - if:
+          condition:
+            - and:
+              - for:
+                  time: 10min
+                  condition:
+                    binary_sensor.is_on: id_max_humidity
+              - switch.is_off: relay3
+              - switch.is_off: relay4
+          then:
+              - logger.log: "Force Mode - switched on!"
+              - switch.turn_on: id_fan_b_force_mode
+
+      - if:
+          condition:
+            - and:
+              - for:
+                  time: 10s
+                  condition:
+                    binary_sensor.is_off: id_high_humidity
+              - switch.is_on: id_fan_b_force_mode
+          then:
+              - logger.log: "Force Mode - switched off!"
+              - switch.turn_off: id_fan_b_force_mode
+
+      - if:
+          condition:
+            - and:
+              - for:
+                  time: 10min
+                  condition:
+                    switch.is_on: relay3
+              - switch.is_on: id_fan_b_manual_mode
+          then:
+              - logger.log: "Manual Mode - switched off!"
+              - switch.turn_off: id_fan_b_manual_mode
