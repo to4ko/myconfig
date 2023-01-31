@@ -2912,6 +2912,9 @@ views:
                   - entity: sensor.0x4cf8cdf3c78d26e_illuminance
                   - entity: sensor.0x4cf8cdf3c7754a8_illuminance
           - type: entities
+            entities:
+              - script.addons_start
+          - type: entities
             state_color: true
             entities:
               - entity: input_number.battery_low_level_zb
@@ -5379,25 +5382,47 @@ views:
           numeric: true
           reverse: true
 
-      - type: markdown
-        content: >-
-          <h3>Missing Entities: {{ states.sensor.watchman_missing_entities.state }}
-          </h3> {%- for item in state_attr("sensor.watchman_missing_entities",
-          "entities") %} <hr> <table><tr> <td> <ha-icon icon='mdi: {%- if
-          item.state=="missing"-%}cloud-alert' {%- elif item.state=="unavail"
-          -%}cloud-off-outline' {%- else-%}cloud-question' {%- endif -%} ></ha-icon> {{
-          item.id }} [{{item.state}}] <a title="{{item.occurrences}}">
-          {{item.occurrences.split('/')[-1].split(':')[0]}}</a> </td></tr></table> {%-
-          endfor %}
-        title: Watchman report
-        card_mod:
-          style:
-            ha-markdown:
-              $: |
-                ha-markdown-element:first-of-type hr{
-                  border-color: #303030;
-                }
-        
+
+      - type: custom:stack-in-card
+        mode: vertical
+        cards:
+          - type: glance
+            entities:
+              - entity: sensor.watchman_last_updated
+                name: Updated
+                tap_action:
+                  action: call-service
+                  service: watchman.report
+                  service_data:
+                    create_file: true
+                    send_notification: false
+                    service: notify.telegram
+                    data:
+                      parse_mode: html
+                    parse_config: true
+                    chunk_size: true
+              - entity: sensor.watchman_missing_entities
+                name: Entities
+              - entity: sensor.watchman_missing_services
+                name: Services
+          - type: markdown
+            content: >-
+              {%- for item in state_attr("sensor.watchman_missing_entities",
+              "entities") %} <hr> <table><tr> <td> <ha-icon icon='mdi: {%- if
+              item.state=="missing"-%}cloud-alert' {%- elif item.state=="unavail"
+              -%}cloud-off-outline' {%- else-%}cloud-question' {%- endif -%} ></ha-icon> {{
+              item.id }} [{{item.state}}] <a title="{{item.occurrences}}">
+              {{item.occurrences.split('/')[-1].split(':')[0]}}</a> </td></tr></table> {%-
+              endfor %}
+            # title: Watchman report
+            card_mod:
+              style:
+                ha-markdown:
+                  $: |
+                    ha-markdown-element:first-of-type hr{
+                      border-color: #303030;
+                    }
+            
   # - title: Stats
   #   icon: mdi:ruler
   #   cards:
