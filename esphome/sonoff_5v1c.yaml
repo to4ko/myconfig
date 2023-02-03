@@ -61,6 +61,29 @@ light:
     id: id_green_led
     internal: true
 
+number:
+  - platform: template
+    name: ${board_name}_MaxLevel
+    icon: mdi:arrow-collapse-up
+    id: id_max_level
+    restore_value: true
+    update_interval: 30s
+    min_value: 0
+    max_value: 100
+    step: 1
+    optimistic: true
+
+  - platform: template
+    name: ${board_name}_MinLevel
+    icon: mdi:arrow-collapse-down
+    id: id_min_level
+    restore_value: true
+    update_interval: 30s
+    min_value: 0
+    max_value: 100
+    step: 1
+    optimistic: true
+
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
@@ -144,7 +167,7 @@ sensor:
             - if:
                 condition:
                   and:
-                    - lambda: "return id(id_battery).state < 50;"
+                    - lambda: "return id(id_battery).state < id(id_min_level).state;"
                     - switch.is_off: relay
                 then:
                   - switch.turn_on: relay
@@ -152,7 +175,7 @@ sensor:
                   - if:
                       condition:
                         and:
-                          - lambda: "return id(id_battery).state > 70 ;"
+                          - lambda: "return id(id_battery).state > id(id_max_level).state ;"
                           - switch.is_on: relay
                       then:
                         - switch.turn_off: relay
@@ -296,3 +319,7 @@ interval:
             - binary_sensor.template.publish:
                 id: id_tod
                 state: ON
+
+syslog:
+    ip_address: "192.168.1.26"
+    port: 514
