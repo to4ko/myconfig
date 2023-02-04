@@ -100,7 +100,8 @@ script:
   - id: call_accept_manual
     then:
       - logger.log: "Accept call_manual"
-      - script.execute: state_standby
+      #- script.execute: state_standby
+      - script.execute: led_off
       - light.turn_on:
           id: id_led1
           brightness: 100%
@@ -412,8 +413,12 @@ binary_sensor:
       - delayed_on: 25ms
       # - delayed_off: 25ms   
     on_press:
-      then:
-        - script.execute: call_accept_manual
+      if:
+        condition:
+          - not:
+              script.is_running: call_accept_manual
+        then:
+          - script.execute: call_accept_manual
 
   # - platform: homeassistant
   #   name: ${board_name}_bottom_lock
