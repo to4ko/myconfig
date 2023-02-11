@@ -24,7 +24,44 @@
   #     - delay: "00:00:05"
   #     - service: switch.turn_on
   #       entity_id: switch.0x158d000290a0bc_switch
-  
+
+# ##################################
+# Vova - TV OnOff by timer
+# ##################################
+  - alias: vova_tv_on_off_by_timer
+    id: vova_tv_on_off_by_timer
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.tv_delay_off
+        id: 'timer_tv_off'
+      - platform: event
+        event_type: timer.finished
+        event_data:
+          entity_id: timer.tv_delay_on
+        id: 'timer_tv_on'
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: "timer_tv_off"
+            sequence:
+              - service: media_player.turn_off
+                entity_id: media_player.tv_v
+              - service: switch.turn_off
+                entity_id: switch.0x158d000290a093_switch
+              - service: timer.start
+                entity_id: timer.tv_delay_on
+          - conditions:
+              - condition: trigger
+                id: "timer_tv_on"
+            sequence:
+              - service: switch.turn_on
+                entity_id: switch.0x158d000290a093_switch
+
+
 # ##################################
 # Vova - Purifier on\off
 # ##################################

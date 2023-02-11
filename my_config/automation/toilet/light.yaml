@@ -4,379 +4,379 @@
 #
 # #####################################################################################
 # Toilet - Timer restart with movement
-# ################################## 
-  - alias: toilet_timer_restart
-    id: toilet_timer_restart
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.0x158d000232ddd6_contact #binary_sensor.0x158d0001e54280_motion
-        from: 'off'
-        to: 'on'
-    condition:
-      - condition: state
-        entity_id: group.lights_t
-        state: 'on'
-      - condition: state
-        entity_id: switch.security_mode
-        state: 'off'
-    action:
-      - service: timer.cancel
-        entity_id: timer.main_light_t
-      - service: timer.start
-        entity_id: timer.main_light_t
-  
+# ##################################
+- alias: toilet_timer_restart
+  id: toilet_timer_restart
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d000232ddd6_contact #binary_sensor.0x00158d0001e54280_motion
+      from: "off"
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: group.lights_t
+      state: "on"
+    - condition: state
+      entity_id: switch.security_mode
+      state: "off"
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_t
+    - service: timer.start
+      entity_id: timer.main_light_t
+
 # ##################################
 # Toilet - Timer start
-# ################################## 
-  - alias: toilet_timer_on
-    id: toilet_timer_on
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: switch.0x158d0002a36f7f_channel_1
-        to: 'on'
-        from: 'off'
-      - platform: state
-        entity_id: light.esp32_node_b_light
-        from: 'off'
-        to: 'on'
-    condition:
-      - condition: state
-        entity_id: switch.security_mode
-        state: 'off'
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
-      - service: timer.cancel
-        entity_id: timer.main_light_t  
-      - service: timer.start
-        entity_id: timer.main_light_t
+# ##################################
+- alias: toilet_timer_on
+  id: toilet_timer_on
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: switch.0x158d0002a36f7f_channel_1
+      to: "on"
+      from: "off"
+    - platform: state
+      entity_id: light.esp32_node_b_light
+      from: "off"
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: switch.security_mode
+      state: "off"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_t
+    - service: timer.start
+      entity_id: timer.main_light_t
 
 # ##################################
 # Toilet - Timer pause on
 # ##################################
-  - alias: toilet_timer_pause_on_off
-    id: toilet_timer_pause_on_off
-    initial_state: true
-    trigger:
-      # - platform: event
-      #   event_type: xiaomi_aqara.motion
-      #   event_data:
-      #     entity_id: binary_sensor.0x158d000236bc6d_motion
-      # - platform: event
-      #   event_type: xiaomi_aqara.motion
-      #   event_data:
-      #     entity_id: binary_sensor.582d34609600_motion
-      - platform: state
-        entity_id: binary_sensor.wasp_t
-        to: 'on'
-        id: 'id_to_on'
-      - platform: state
-        entity_id: binary_sensor.wasp_t
-        to: 'off'
-        id: 'id_to_off'        
-    # condition:
-    #   # - condition: state
-    #   #   entity_id: binary_sensor.0x158d0002a14c5e_contact
-    #   #   state: "off"
-    #   - condition: state
-    #     entity_id: group.lights_t
-    #     state: "on"
-    #   - condition: state
-    #     entity_id: switch.security_mode
-    #     state: "off"
-    #   -   condition: not
-    #       conditions:
-    #         - condition: state
-    #           entity_id: timer.main_light_t
-    #           state: "paused"
-    #   - condition: template
-    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
-      - choose:
-          - conditions:
-              - condition: trigger
-                id: 'id_to_on'
-              - condition: state
-                entity_id: group.lights_t
-                state: "on"
-              - condition: state
-                entity_id: switch.security_mode
-                state: "off"
-              -   condition: not
-                  conditions:
-                    - condition: state
-                      entity_id: timer.main_light_t
-                      state: "paused"
-            sequence:
-              - service: timer.pause
-                entity_id: timer.main_light_t
-          - conditions:
-              - condition: trigger
-                id: 'id_to_off'
-              - condition: state
-                entity_id: group.lights_t
-                state: "on"
-            sequence:
-              - service: timer.cancel
-                entity_id: timer.main_light_t
-              - service: timer.start
-                entity_id: timer.main_light_t
+- alias: toilet_timer_pause_on_off
+  id: toilet_timer_pause_on_off
+  initial_state: true
+  trigger:
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.0x158d000236bc6d_motion
+    # - platform: event
+    #   event_type: xiaomi_aqara.motion
+    #   event_data:
+    #     entity_id: binary_sensor.582d34609600_motion
+    - platform: state
+      entity_id: binary_sensor.wasp_t
+      to: "on"
+      id: "id_to_on"
+    - platform: state
+      entity_id: binary_sensor.wasp_t
+      to: "off"
+      id: "id_to_off"
+  # condition:
+  #   # - condition: state
+  #   #   entity_id: binary_sensor.0x00158d0002a14c5e_contact
+  #   #   state: "off"
+  #   - condition: state
+  #     entity_id: group.lights_t
+  #     state: "on"
+  #   - condition: state
+  #     entity_id: switch.security_mode
+  #     state: "off"
+  #   -   condition: not
+  #       conditions:
+  #         - condition: state
+  #           entity_id: timer.main_light_t
+  #           state: "paused"
+  #   - condition: template
+  #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: "id_to_on"
+            - condition: state
+              entity_id: group.lights_t
+              state: "on"
+            - condition: state
+              entity_id: switch.security_mode
+              state: "off"
+            - condition: not
+              conditions:
+                - condition: state
+                  entity_id: timer.main_light_t
+                  state: "paused"
+          sequence:
+            - service: timer.pause
+              entity_id: timer.main_light_t
+        - conditions:
+            - condition: trigger
+              id: "id_to_off"
+            - condition: state
+              entity_id: group.lights_t
+              state: "on"
+          sequence:
+            - service: timer.cancel
+              entity_id: timer.main_light_t
+            - service: timer.start
+              entity_id: timer.main_light_t
 
 # ##################################
 # Toilet - Timer stop at light off
-# ################################## 
-  - alias: toilet_timer_off
-    id: toilet_timer_off
-    initial_state: true
-    trigger:
-      - platform: template
-        value_template: "{{not is_state('switch.0x158d0002a36f7f_channel_1','on') and not is_state('light.esp32_node_b_light','on') }}"
-    action:
-      - service: timer.cancel
-        entity_id: timer.main_light_t
-  
-  # ##################################
-  # Toilet - Timer pause on
-  # ################################## 
-  # - alias: toilet_timer_pause_on
-  #   initial_state: false
-  #   trigger:
-  #     - platform: state
-  #       entity_id: binary_sensor.0x00158d0001e54280_occupancy
-  #       from: 'off'
-  #       to: 'on'
-  #     - platform: state
-  #       entity_id: binary_sensor.0x158d000232ddd6_contact
-  #       to: 'on'
-  #   condition:
-  #     - condition: state
-  #       entity_id: binary_sensor.0x158d0001ef2ffc_contact
-  #       state: 'off'
-  #   action:
-  #     # - service: timer.pause
-  #     #   entity_id: timer.main_light_t
-  #     # - service: input_boolean.turn_on
-  #     #   data:
-  #     #     entity_id: input_boolean.toilet_occupancy
-  
+# ##################################
+- alias: toilet_timer_off
+  id: toilet_timer_off
+  initial_state: true
+  trigger:
+    - platform: template
+      value_template: "{{not is_state('switch.0x158d0002a36f7f_channel_1','on') and not is_state('light.esp32_node_b_light','on') }}"
+  action:
+    - service: timer.cancel
+      entity_id: timer.main_light_t
+
+# ##################################
+# Toilet - Timer pause on
+# ##################################
+# - alias: toilet_timer_pause_on
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d0001e54280_occupancy
+#       from: 'off'
+#       to: 'on'
+#     - platform: state
+#       entity_id: binary_sensor.0x00158d000232ddd6_contact
+#       to: 'on'
+#   condition:
+#     - condition: state
+#       entity_id: binary_sensor.0x158d0001ef2ffc_contact
+#       state: 'off'
+#   action:
+#     # - service: timer.pause
+#     #   entity_id: timer.main_light_t
+#     # - service: input_boolean.turn_on
+#     #   data:
+#     #     entity_id: input_boolean.toilet_occupancy
+
 # ##################################
 # Toilet - Auto Light On
 # ##################################
-  - alias: toilet_auto_light_on
-    id: toilet_auto_light_on
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    trigger:
-      - platform: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x158d0001e54280_motion
-      - platform: state
-        entity_id: binary_sensor.0x158d000232ddd6_contact
-        to: 'on'
-        from: 'off'
-    condition:
-      - condition: state
-        entity_id: group.lights_t
-        state: 'off'
-      - condition: state
-        entity_id: switch.security_mode
-        state: 'off'
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.tod_day
-                state: 'on'
-            sequence:
-              - service: switch.turn_on
-                entity_id: switch.0x158d0002a36f7f_channel_1
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.tod_day
-                state: 'off'
-            sequence:
-              - service: light.turn_on
-                entity_id: light.esp32_node_b_light
-      # - service: homeassistant.turn_on
-      #   data:
-      #     entity_id: >
-      #       {% if is_state('binary_sensor.tod_day','on') %}switch.0x158d0002a36f7f_channel_1{%else%}light.esp32_node_b_light{%endif%}
-  
+- alias: toilet_auto_light_on
+  id: toilet_auto_light_on
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0001e54280_motion
+    - platform: state
+      entity_id: binary_sensor.0x00158d000232ddd6_contact
+      to: "on"
+      from: "off"
+  condition:
+    - condition: state
+      entity_id: group.lights_t
+      state: "off"
+    - condition: state
+      entity_id: switch.security_mode
+      state: "off"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.tod_day
+              state: "on"
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.0x158d0002a36f7f_channel_1
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.tod_day
+              state: "off"
+          sequence:
+            - service: light.turn_on
+              entity_id: light.esp32_node_b_light
+    # - service: homeassistant.turn_on
+    #   data:
+    #     entity_id: >
+    #       {% if is_state('binary_sensor.tod_day','on') %}switch.0x158d0002a36f7f_channel_1{%else%}light.esp32_node_b_light{%endif%}
+
 # ##################################
 # Toilet - Light On
 # ##################################
-  - alias: toilet_light_on
-    id: toilet_light_on
-    initial_state: true
-    trigger:
-      - platform: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x158d0001b97111_action
-          click_type: single
-    condition:
-      - condition: state
-        entity_id: group.lights_t
-        state: 'off'
-      - condition: state
-        entity_id: switch.security_mode
-        state: 'off'
-    action:
-      - service: switch.turn_on
-        entity_id: switch.0x158d0002a36f7f_channel_1
-  
+- alias: toilet_light_on
+  id: toilet_light_on
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d0001b97111_action
+        click_type: single
+  condition:
+    - condition: state
+      entity_id: group.lights_t
+      state: "off"
+    - condition: state
+      entity_id: switch.security_mode
+      state: "off"
+  action:
+    - service: switch.turn_on
+      entity_id: switch.0x158d0002a36f7f_channel_1
+
 # ##################################
 # Toilet - Auto Light Off
 # ##################################
-  - alias: toilet_auto_light_off
-    id: toilet_auto_light_off
-    initial_state: true
-    trigger:
-      - platform: event
-        event_type: timer.finished
-        event_data:
-          entity_id: timer.main_light_t
-    condition:
-      - condition: state
-        entity_id: group.lights_t
-        state: 'on'
-    action:
-      - service: switch.turn_off
-        entity_id: switch.0x158d0002a36f7f_channel_1
-      - service: light.turn_off
-        entity_id: light.esp32_node_b_light
-        data:
-          transition: 5
-  
+- alias: toilet_auto_light_off
+  id: toilet_auto_light_off
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.main_light_t
+  condition:
+    - condition: state
+      entity_id: group.lights_t
+      state: "on"
+  action:
+    - service: switch.turn_off
+      entity_id: switch.0x158d0002a36f7f_channel_1
+    - service: light.turn_off
+      entity_id: light.esp32_node_b_light
+      data:
+        transition: 5
+
 # ##################################
 # Toilet - Auto Light off - No Motion 5m with Closed Cover
 # ##################################
-  - alias: toilet_auto_light_off_no_motion_cover_closed
-    id: toilet_auto_light_off_no_motion_cover_closed
-    initial_state: true
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.0x158d0001e54280_motion
-        to: 'off'
-        for:
-          minutes: 5
-    condition:
-      - condition: state
-        entity_id: binary_sensor.0x158d000232ddd6_contact
-        state: 'off'
-      - condition: state
-        entity_id: group.lights_t
-        state: 'on'
-    action:
-      - service: timer.finish
-        entity_id: timer.main_light_t
-  
+- alias: toilet_auto_light_off_no_motion_cover_closed
+  id: toilet_auto_light_off_no_motion_cover_closed
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d0001e54280_motion
+      to: "off"
+      for:
+        minutes: 5
+  condition:
+    - condition: state
+      entity_id: binary_sensor.0x00158d000232ddd6_contact
+      state: "off"
+    - condition: state
+      entity_id: group.lights_t
+      state: "on"
+  action:
+    - service: timer.finish
+      entity_id: timer.main_light_t
+
 # ##################################
 # Toilet - Light Toggle with Repeater
 # ##################################
-  - alias: toilet_light_toggle
-    id: toilet_light_toggle
-    initial_state: true
-    trigger:
-      - platform: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x158d0001e0a622_action
-          click_type: button_2_single
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: group.lights_t
-                state: 'on'
-            sequence:
-              - service: homeassistant.turn_off
-                entity_id: switch.0x158d0002a36f7f_channel_1, light.esp32_node_b_light
-          - conditions:
-              - condition: state
-                entity_id: group.lights_t
-                state: 'off'
-            sequence:
-              - service: switch.turn_on
-                entity_id: switch.0x158d0002a36f7f_channel_1
-    
-      # - service: homeassistant.turn_{% if is_state('switch.0x158d0002a36f7f_channel_1','on') or is_state('light.esp32_node_b_light','on')%}off{%else%}on{%endif%}
-      #   data:
-      #     entity_id: >
-      #       {% if is_state('switch.0x158d0002a36f7f_channel_1','off') and is_state('light.esp32_node_b_light','off') %}
-      #         switch.0x158d0002a36f7f_channel_1
-      #       {% else %}
-      #         switch.0x158d0002a36f7f_channel_1, light.esp32_node_b_light
-      #       {% endif %}
-  
+- alias: toilet_light_toggle
+  id: toilet_light_toggle
+  initial_state: true
+  trigger:
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x158d0001e0a622_action
+        click_type: button_2_single
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: group.lights_t
+              state: "on"
+          sequence:
+            - service: homeassistant.turn_off
+              entity_id: switch.0x158d0002a36f7f_channel_1, light.esp32_node_b_light
+        - conditions:
+            - condition: state
+              entity_id: group.lights_t
+              state: "off"
+          sequence:
+            - service: switch.turn_on
+              entity_id: switch.0x158d0002a36f7f_channel_1
+
+    # - service: homeassistant.turn_{% if is_state('switch.0x158d0002a36f7f_channel_1','on') or is_state('light.esp32_node_b_light','on')%}off{%else%}on{%endif%}
+    #   data:
+    #     entity_id: >
+    #       {% if is_state('switch.0x158d0002a36f7f_channel_1','off') and is_state('light.esp32_node_b_light','off') %}
+    #         switch.0x158d0002a36f7f_channel_1
+    #       {% else %}
+    #         switch.0x158d0002a36f7f_channel_1, light.esp32_node_b_light
+    #       {% endif %}
+
 # ##################################
 # Toilet - Indicator
 # ##################################
-  - alias: toilet_indicator
-    id: toilet_indicator
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.0x158d000232ddd6_contact
-        to:
-    condition:
-      - condition: template
-        value_template: >-
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ trigger.from_state.state not in ignore and
-             trigger.to_state.state not in ignore and
-             trigger.to_state.state != trigger.from_state.state
-          }}
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"      
-    action:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.0x158d000232ddd6_contact
-                state: 'off'
-            sequence:
-              - service: light.turn_off
+- alias: toilet_indicator
+  id: toilet_indicator
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d000232ddd6_contact
+      to:
+  condition:
+    - condition: template
+      value_template: >-
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state
+        }}
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x00158d000232ddd6_contact
+              state: "off"
+          sequence:
+            - service: light.turn_off
+              entity_id: light.esp32_node_hs_toilet
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x00158d000232ddd6_contact
+              state: "on"
+          sequence:
+            - service: light.turn_on
+              data:
                 entity_id: light.esp32_node_hs_toilet
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.0x158d000232ddd6_contact
-                state: 'on'
-            sequence:
-              - service: light.turn_on
-                data:
-                  entity_id: light.esp32_node_hs_toilet
-                  effect: 'Color Wipe'
-                  brightness_pct: 40
+                effect: "Color Wipe"
+                brightness_pct: 40
 
 # ##################################
 # Toilet - Main Light off with no occupancy for 1 hour
 # ##################################
-  - alias: toilet_main_light_off_with_occupancy
-    id: toilet_main_light_off_with_occupancy
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.occupancy_t
-        to: 'off'
-        for: 
-          hours: 1
-    condition:
-      - condition: state
-        entity_id: group.lights_t
-        state: 'on'
-    action:
-      - service: light.turn_off
-        entity_id: light.esp32_node_b_light
-      - service: switch.turn_off
-        entity_id: switch.0x158d0002a36f7f_channel_1
+- alias: toilet_main_light_off_with_occupancy
+  id: toilet_main_light_off_with_occupancy
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.occupancy_t
+      to: "off"
+      for:
+        hours: 1
+  condition:
+    - condition: state
+      entity_id: group.lights_t
+      state: "on"
+  action:
+    - service: light.turn_off
+      entity_id: light.esp32_node_b_light
+    - service: switch.turn_off
+      entity_id: switch.0x158d0002a36f7f_channel_1

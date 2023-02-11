@@ -5,9 +5,16 @@ substitutions:
   
 esphome:
   name: ${node_name}
-  comment: ESP32 BLE Tracker HS
+  comment: ESP32 BLE Tracker HS with Geiger Sensor
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
+  libraries:
+    - Wire
+    - "climateguard/ClimateGuard RadSens"
+  includes:
+    - radsense/_CG_RadSens.h
+    - radsense/CountsPerMinute.h
+
 
 esp32:
   board: nodemcu-32s
@@ -60,6 +67,11 @@ esp32_ble_tracker:
 
 web_server:
   port: 80
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: True
 
 ble_gateway:
   id: ${board_name}
@@ -233,6 +245,27 @@ sensor:
     icon: mdi:cube-send
     unit_of_measurement: 'event'
     accuracy_decimals: 0
+
+  - platform: custom
+    lambda: |-
+      auto rad_sens = new MyRadSens();
+      App.register_component(rad_sens);
+      return {rad_sens->IntensityDynamic_Sensor, rad_sens->IntensityStatic_Sensor, rad_sens->CurrentCPM_Sensor, rad_sens->MaxCPM_Sensor};
+    sensors:
+      - name: ${board_name}_Dynamic intensity
+        id: dynamic_intensity
+        accuracy_decimals: 1
+        unit_of_measurement: μR/h
+      - name: ${board_name}_Static intensity
+        accuracy_decimals: 1
+        unit_of_measurement: μR/h
+      - name: ${board_name}_Current CPM
+        accuracy_decimals: 1
+        unit_of_measurement: CPM
+      - name: ${board_name}_Max CPM
+        accuracy_decimals: 1
+        unit_of_measurement: CPM
+
 
 text_sensor:
   - platform: template
