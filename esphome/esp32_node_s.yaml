@@ -1,0 +1,186 @@
+substitutions:
+  board_name: esp32_node_s
+  node_name: esp32-node-s
+ 
+esphome:
+  name: ${node_name}
+  comment: ESP32 Node S CO2\LED\Api Monitor\TH Node S
+
+esp32:
+  board: nodemcu-32s
+    
+wifi:
+  ssid: !secret wifi_ssid_s
+  password: !secret wifi_pass
+  domain: .local
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  fast_connect: true
+  #power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.106
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+    
+logger:
+  baud_rate: 0
+
+api:
+  reboot_timeout: 0min
+
+ota:
+
+# web_server:
+#   port: 80
+  
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    id: id_status
+    on_state:
+      then:
+        - if:
+            condition:
+              - binary_sensor.is_on: id_templ_status
+            then:
+              - logger.log: "The sensor value is below 30!"
+              - switch.turn_on: id_ha_status
+              - delay: 5s
+            else:
+              - switch.turn_off: id_ha_status
+
+  - platform: template
+    name: ${board_name}_HA_Connect_Status
+    id: id_templ_status
+    lambda: |-
+      return id(id_status).state;
+    filters:
+      - delayed_on: 5s
+      - delayed_off: 5s
+    on_state:
+      then:
+        - if:
+            condition:
+              - binary_sensor.is_on: id_templ_status
+            then:
+              - logger.log: "The sensor value is below 30!"
+              - switch.turn_on: id_ha_status
+              - delay: 5s
+            else:
+              - switch.turn_off: id_ha_status
+
+switch:
+  - platform: gpio
+    pin: GPIO13
+    id: id_ha_status
+    name: ${board_name}_HA_Status
+
+  - platform: template
+    name: ${board_name}_ABC
+    restore_state: true
+    optimistic: true
+    on_turn_on:
+      - senseair.abc_enable: id_my_co2
+    on_turn_off:
+      - senseair.abc_disable: id_my_co2
+
+uart:
+  rx_pin: GPIO03
+  tx_pin: GPIO01
+  baud_rate: 9600
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: True
+
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B
+    pin: GPIO25
+    num_leds: 75
+    rgb_order: GRB
+    name: ${board_name}_LED
+    effects:
+      - random:
+      - strobe:
+      - flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: senseair
+    co2:
+      name: ${board_name}_CO2
+    update_interval: 60s
+    id: id_my_co2
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s    
+
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+
+  - platform: template
+    name: ${board_name}_CO2_Calibrate
+    on_press:
+      - senseair.background_calibration: id_my_co2
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
+
+syslog:
+    ip_address: "192.168.1.26"
+    port: 514
