@@ -133,6 +133,19 @@
   - Xiaomi Light Sensor (4ea)
   - not in use - Aqara Opple Wireless Switch (4ea)
 
+**Xiaomi BT\BLE Devices:**
+  - CGD1 Cleargrass alarm clock
+  - LYWSD02 Temperature and Humidity sensor
+  - LYWSD03MMC Hygro thermometer
+  - MCCGQ02HL Mijia Window/Door Sensor 2
+  - MJYD02YL Motion Activated Night Light
+  - Mi Body Composition Scale 2
+  - MMC-T201-1 Digital Baby Thermometer
+  - YLAI003 Smart Wireless Switch
+  - HB01 Linptech ES1 Presence Sensor
+  - RTCGQ02LM Mi Motion Sensor 2
+  - CGPR1 Qingping Motion Sensor
+
 **ESPHome devices:**
   - Sonoff Basic (2ea)
   - Sonoff Pow R2 (2ea)
@@ -151,35 +164,23 @@
   - ESP32 - Node B - Bathroom Relays (Water valves, Exhaust Fans), Night LED Strip, Dallas sensors on water pipes (Hot and Cold)
   - ESP32 - Node MB - Master Bedroom SensAir S8B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova Room SensAir S8, BME280, BHI1750, Dallas sensor (Heating pipe)
+  - ESP32 - Node S - Sasha Room SensAir S8, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
   - ESP32 - BLE Tracker HB
   - ESP32 - BLE Tracker HS
   - ESP32 - BLE Tracker S
   - ESP32 - BLE Tracker MB
-  - not in use - ESP32 - M5 Stack Pico BLE Tracker S
-  - not in use - ESP32 - M5 Stack Pico BLE Tracker MB
   - ESP32 - Hall Big Breaker Box PZEM-004T
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP01 Weight Cell for RO water filter tank
-  - D1 Mini LED Bed light
-  - D1 Mini S - Sasha Room SensAir S8, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
+  - not in use - D1 Mini LED Bed light
   - D1 Mini Air Freshener with Figaro air sensor
   - D1 Mini TOF Distance Sensor
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
   - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
 
-**BT\BLE Devices:**
-  - CGD1 Cleargrass alarm clock
-  - LYWSD02 Temperature and Humidity sensor
-  - LYWSD03MMC Hygro thermometer
-  - MCCGQ02HL Mijia Window/Door Sensor 2
-  - MJYD02YL Motion Activated Night Light
-  - Mi Body Composition Scale 2
-  - MMC-T201-1 Digital Baby Thermometer
-  - YLAI003 Smart Wireless Switch
-
 **Smart Speakers:**
-  - not in use - Google Home Mini (6ea)
+  - not in use - Google Home Mini (5ea)
   - Yandex Station Lite (4ea)
   - Yandex Station Mini 2 (1ea)
 
@@ -188,8 +189,8 @@
   - SLS Gateway
   - DIYRuZ_Geiger Sensor
   - Shelly EM
-  - Shelly 1PM (2ea)
-  - Shelly Plug S (3ea)
+  - Shelly 1PM (3ea)
+  - Shelly Plug S (2ea)
   - not in use - Xiaomi Kettle
 
 # Software configuration

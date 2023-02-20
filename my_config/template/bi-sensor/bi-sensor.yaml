@@ -433,6 +433,22 @@
 #   state: "{{ states('sensor.0x00158d0002a36433_action') in ['button_1_single','button_1_double'] }}"
 
 - trigger:
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: event_template_reloaded
+    - platform: time_pattern
+      hours: "/1"
+  binary_sensor:
+    - name: REW Day
+      unique_id: rew_day
+      icon: mdi:calendar-check
+      state: >-
+        {{ (now().isocalendar().week is odd and now().isoweekday() in [4,5]) or 
+        (now().isocalendar().week is even and now().isoweekday() in [1,2,3]) 
+        }}
+
+- trigger:
     - platform: state
       entity_id: light.round_led_k
       to: "on"
