@@ -73,10 +73,10 @@
   - CyberPower UT650EG 
 
 # Networking
-  - Unifi Dream Machine Pro, WAN1 500mb\s + WAN2 500mb\s + LTE Backup
+  - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
   - Unifi Enterprise Switch 24 PoE
-  - Unifi Switch 8-60W (4ea)
-  - not in use - Unifi Switch Mini
+  - Unifi Switch 8-60W (3ea)
+  - Unifi Switch Flex Mini
   - not in use - Unifi Switch Light 8 PoE
   - Unifi AC AP Lite (2ea)
   - Unifi AC AP Pro (3ea)
@@ -105,7 +105,8 @@
   - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
 
 **Xiaomi\Aqara WiFi Devices:**
-  - Xiaomi Gateway v3 (6ea) 
+  - Xiaomi Multimode Gateway CN (3ea)
+  - Xiaomi Multimode Gateway 2 CN (3ea)
   - Xiaomi Air Purifier 2s
   - Xiaomi Wifi Plugs v2 (4ea)
   - not in use - Xiaomi Wifi Plugs v2 (3ea)
