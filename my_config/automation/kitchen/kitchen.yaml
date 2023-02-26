@@ -271,22 +271,27 @@
       - service: notify.telegram
         data:
           message: "\U0001f321 Духовка нагрелась до {{states('sensor.esp8266_oven_temp_k')|int(0)}}°C!"
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: "on"
-      - service: media_player.volume_set
-        data:
-          entity_id: media_player.yandex_k
-          volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      # - service: tts.yandextts_say
-      #   data:
-      #     entity_id: media_player.home_mini_k
-      #     message: "Температура духовки ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
-      - service: media_player.play_media
-        data:
-          media_content_type: dialog
-          entity_id: media_player.yandex_k
-          media_content_id: "Температура духовки ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
+      - if:
+          - condition: state
+            entity_id: binary_sensor.tod_day
+            state: "on"
+          - condition: state
+            entity_id: switch.dark_mode
+            state: "off" 
+        then:
+          - service: media_player.volume_set
+            data:
+              entity_id: media_player.yandex_k
+              volume_level: '{{states("input_number.main_volume")|float(0)}}'
+          # - service: tts.yandextts_say
+          #   data:
+          #     entity_id: media_player.home_mini_k
+          #     message: "Температура духовки ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
+          - service: media_player.play_media
+            data:
+              media_content_type: dialog
+              entity_id: media_player.yandex_k
+              media_content_id: "Температура духовки ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
           
 # ##################################
 # Kitchen - Dishwasher state
