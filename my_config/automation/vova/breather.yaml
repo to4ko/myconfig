@@ -128,10 +128,10 @@
         entity_id: binary_sensor.digma_ir_v_breather_remote_used
         to: 'on'
         id: 'ir_used_remote'
-      - platform: state
-        entity_id: binary_sensor.digma_ir_v_breather_self_code
-        to: 'on'
-        id: 'ir_used_digma'
+      # - platform: state
+      #   entity_id: binary_sensor.digma_ir_v_breather_self_code
+      #   to: 'on'
+      #   id: 'ir_used_digma'
       - platform: state
         entity_id: input_select.breazer_timer
         to:
@@ -165,17 +165,28 @@
                   - condition: state
                     entity_id: switch.hourly_mode_breather_v
                     state: 'on'
+                  - condition: state
+                    entity_id: fan.breather_v
+                    state: 'off'
+                  - condition: state
+                    entity_id: switch.breather_auto_v
+                    state: 'off'
                 then:
-                  - if:
-                      - condition: state
-                        entity_id: fan.breather_v
-                        state: 'off'
-                    then:
-                      - service: fan.turn_on
-                        entity_id: fan.breather_v
-                else:
+                  - service: fan.turn_on
+                    entity_id: fan.breather_v
+              - if:
+                  - condition: state
+                    entity_id: switch.hourly_mode_breather_v
+                    state: 'off'
+                  - condition: state
+                    entity_id: fan.breather_v
+                    state: 'off'
+                  - condition: state
+                    entity_id: switch.breather_auto_v
+                    state: 'off'
+                then:
                   - service: fan.turn_off
-                    entity_id: fan.breather_v 
+                    entity_id: fan.breather_v
                   - service: timer.cancel
                     entity_id: timer.breather_v
           
@@ -322,8 +333,7 @@
                 then:
                   - service: fan.turn_off
                     entity_id: fan.breather_v
-
-
+                    
               - service: timer.cancel
                 entity_id: timer.breather_v
 
@@ -344,10 +354,8 @@
                 then:
                   - service: fan.turn_on
                     entity_id: fan.breather_v
-                    
                   - service: timer.cancel
                     entity_id: timer.breather_v
-
                   - service: switch.turn_on
                     entity_id: switch.hourly_mode_breather_v
 
@@ -374,7 +382,8 @@
                 then:
                   - service: switch.turn_off
                     entity_id: switch.breather_auto_v
-
+                  - service: switch.turn_on
+                    entity_id: switch.hourly_mode_breather_v
                   - service: fan.turn_on
                     entity_id: fan.breather_v
                     
@@ -389,13 +398,10 @@
                 then:
                   - service: fan.turn_off
                     entity_id: fan.breather_v
-                    
                   - service: timer.cancel
                     entity_id: timer.breather_v
-
                   - service: switch.turn_off
                     entity_id: switch.hourly_mode_breather_v
-
                   - service: switch.turn_on
                     entity_id: switch.breather_auto_v
 
