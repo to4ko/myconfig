@@ -303,8 +303,7 @@ views:
                 name: K
               - entity: binary_sensor.occupancy_st
                 name: St
-              - entity: binary_sensor.dced838db04e_occupancy
-                name: Pr K
+
               # - entity: binary_sensor.wp_digma801_motion
               #   name: 801 Motion
           - type: glance
@@ -323,6 +322,20 @@ views:
                 name: B
               - entity: binary_sensor.wasp_t
                 name: T
+          - type: glance
+            show_name: true
+            show_state: false
+            state_color: true
+            columns: 5
+            entities:
+              - entity: binary_sensor.649e314ce325_occupancy
+                name: MB
+              - entity: binary_sensor.dced838e593e_occupancy
+                name: S
+              - entity: binary_sensor.dced838ea6c7_occupancy
+                name: V
+              - entity: binary_sensor.dced838db04e_occupancy
+                name: K
           - type: horizontal-stack
             cards:
               - type: glance
@@ -5020,6 +5033,40 @@ views:
               - data: msg_received
                 name: Received
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: last_msg
+                name: Last Message
+              - data: state
+                name: Last Seen
+                modify: >
+                  var dt = new Date(0,0,0,0,0,0,(Date.now()-Date.parse(x)));
+                  isFinite(dt) ? dt.toTimeString().split(" ")[0] : ""
+            css:
+              table+: "padding-top: 15px;"
+              "tbody tr:nth-child(even)": "background-color: #a2542f6;"
+              td.left: "padding: 10px 10px 10px 10px"
+              th.left: "padding: 0px 0px 10px 10px"
+
+          # Mesh
+          - type: markdown
+            content: "### <center> Mesh </center>"
+          - type: "custom:flex-table-card"
+            clickable: false
+            entities:
+              include:
+                - sensor.*_mesh
+            sort_by: mac
+            columns:
+              - data: friendly_name
+                name: Friendly Name
+                modify: 'x.replace(/ Ble$/,"")'
+              - data: mac
+                name: MAC
+                modify: (x+'').replace(/(.{2}(?!$))/g,"$1:")
+              - data: msg_received
+                name: Received
+                modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
+              - data: last_msg
+                name: Last Message
               - data: state
                 name: Last Seen
                 modify: >
