@@ -245,7 +245,9 @@
   - [ESPhome RU](https://t.me/esphome)
 
 # Small Tips
-  - List of integrations in use
+  <details>
+    <summary>List of integrations in use</summary>
+    <p>
     ```yaml
     {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
     {%- set ns = namespace(integrations = []) %}
@@ -260,6 +262,9 @@
     {%- endfor %}
     {{ ns.integrations }}
     ```
+    </p>
+  </details>
+
   - SQL Query to get top contributors in DB
     ```
     SELECT entity_id, COUNT(*) as count FROM states GROUP BY entity_id ORDER BY count DESC LIMIT 100;
