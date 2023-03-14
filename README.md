@@ -241,8 +241,8 @@
   - [ESPhome RU](https://t.me/esphome)
 
 # Small Tips
-<details><summary>Click me...</summary>
-  - List of integrations in use
+  - <details><summary>List of integrations in use</summary>
+```
       {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
       {%- set ns = namespace(integrations = []) %}
       {%- for device in devices %}
@@ -255,6 +255,7 @@
         {%- endif %}
       {%- endfor %}
       {{ ns.integrations }}
+```
 </details>
 
 # Hardware Evolution
