@@ -245,25 +245,27 @@
   - [ESPhome RU](https://t.me/esphome)
 
 # Small Tips
-  <details>
-    <summary>List of integrations in use</summary>
-    <p>
-    ```yaml
-    {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
-    {%- set ns = namespace(integrations = []) %}
-    {%- for device in devices %}
-      {%- set ids = device_attr(device, 'identifiers') | list | first | default('unknown') %}
-      {%- if ids and ids | length == 2 %}
-        {%- set integration, something_unique = ids %}
-        {%- if integration not in ns.integrations %}
-          {%- set ns.integrations = ns.integrations + [ integration ] %}
-        {%- endif %}
+<details>
+  <summary>List of integrations in use</summary>
+
+  ```yaml
+  {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
+  {%- set ns = namespace(integrations = []) %}
+  {%- for device in devices %}
+    {%- set ids = device_attr(device, 'identifiers') | list | first | default('unknown') %}
+    {%- if ids and ids | length == 2 %}
+      {%- set integration, something_unique = ids %}
+      {%- if integration not in ns.integrations %}
+        {%- set ns.integrations = ns.integrations + [ integration ] %}
       {%- endif %}
-    {%- endfor %}
-    {{ ns.integrations }}
-    ```
-    </p>
-  </details>
+    {%- endif %}
+  {%- endfor %}
+  {{ ns.integrations }}
+  ```
+</details>
+
+
+
 
   - SQL Query to get top contributors in DB
     ```
