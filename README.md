@@ -34,6 +34,10 @@
       Links
     </a>
     <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#small-tips">
+      Small tips
+    </a>
+    <span> | </span>
     <a href="https://github.com/to4ko/myconfig#chats">
       Chats
     </a>
@@ -243,28 +247,28 @@
 # Small Tips
   - List of integrations in use
     ```yaml
-        {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
-        {%- set ns = namespace(integrations = []) %}
-        {%- for device in devices %}
-          {%- set ids = device_attr(device, 'identifiers') | list | first | default('unknown') %}
-          {%- if ids and ids | length == 2 %}
-            {%- set integration, something_unique = ids %}
-            {%- if integration not in ns.integrations %}
-              {%- set ns.integrations = ns.integrations + [ integration ] %}
-            {%- endif %}
-          {%- endif %}
-        {%- endfor %}
-        {{ ns.integrations }}
+    {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
+    {%- set ns = namespace(integrations = []) %}
+    {%- for device in devices %}
+      {%- set ids = device_attr(device, 'identifiers') | list | first | default('unknown') %}
+      {%- if ids and ids | length == 2 %}
+        {%- set integration, something_unique = ids %}
+        {%- if integration not in ns.integrations %}
+          {%- set ns.integrations = ns.integrations + [ integration ] %}
+        {%- endif %}
+      {%- endif %}
+    {%- endfor %}
+    {{ ns.integrations }}
     ```
   - SQL Query to get top contributors in DB
     ```
-        SELECT entity_id, COUNT(*) as count FROM states GROUP BY entity_id ORDER BY count DESC LIMIT 100;
+    SELECT entity_id, COUNT(*) as count FROM states GROUP BY entity_id ORDER BY count DESC LIMIT 100;
     ```
   - List of all used domains
     ```yaml
-        {%- for d in states | groupby('domain') %}
-        {{ d[0] }}
-        {%- endfor %}
+    {%- for d in states | groupby('domain') %}
+    {{ d[0] }}
+    {%- endfor %}
     ```
 
 
