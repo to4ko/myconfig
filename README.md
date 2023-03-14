@@ -240,6 +240,23 @@
   - [Home Assistant - Hardware](https://t.me/homeassistant_hardware)
   - [ESPhome RU](https://t.me/esphome)
 
+# Small Tips
+<details><summary>Click me...</summary>
+  - List of integrations in use
+      {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
+      {%- set ns = namespace(integrations = []) %}
+      {%- for device in devices %}
+        {%- set ids = device_attr(device, 'identifiers') | list | first | default('unknown') %}
+        {%- if ids and ids | length == 2 %}
+          {%- set integration, something_unique = ids %}
+          {%- if integration not in ns.integrations %}
+            {%- set ns.integrations = ns.integrations + [ integration ] %}
+          {%- endif %}
+        {%- endif %}
+      {%- endfor %}
+      {{ ns.integrations }}
+</details>
+
 # Hardware Evolution
 <!-- ![Hardwarez](images/hardware_evolution.jpg) -->
 <details><summary>Click me...</summary>
