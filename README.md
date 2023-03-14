@@ -264,21 +264,31 @@
   ```
 </details>
 
+<details>
+  <summary>SQL Query to get top contributors in DB</summary>
 
+  ```
+  SELECT entity_id, COUNT(*) as count FROM states GROUP BY entity_id ORDER BY count DESC LIMIT 100;
+  ```
+</details>
 
+<details>
+  <summary>List of all used domains</summary>
 
-  - SQL Query to get top contributors in DB
-    ```
-    SELECT entity_id, COUNT(*) as count FROM states GROUP BY entity_id ORDER BY count DESC LIMIT 100;
-    ```
-  - List of all used domains
-    ```yaml
-    {%- for d in states | groupby('domain') %}
+  ```yaml
+  {%- for d in states | groupby('domain') %}
     {{ d[0] }}
-    {%- endfor %}
-    ```
+  {%- endfor %}
+  ```
+</details>
 
+<details>
+  <summary>List of all devices(IDs) per integration</summary>
 
+  ```yaml
+  {{ integration_entities('yeelight') |  map('device_id') | unique | list }}
+  ```
+</details>
 
 # Hardware Evolution
 <!-- ![Hardwarez](images/hardware_evolution.jpg) -->
