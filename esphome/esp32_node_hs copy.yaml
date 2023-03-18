@@ -1,30 +1,56 @@
 substitutions:
-  board_name: esp32_node_hs
-  node_name: esp32-node-hs
+  board_name: esp32_node_hs_new
+  node_name: esp32-node-hs-new
+  up_int: 60s
  
 esphome:
   name: ${node_name}
-  comment: ESP32 TPH Node HS
+  comment: ESP32 TPH/LED/BLE/RA Node HS
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
+  libraries:
+    - Wire
+    - "climateguard/ClimateGuard RadSens"
+  includes:
+    - radsense/_CG_RadSens.h
+    - radsense/CountsPerMinute.h
 
-  esp32:
-  board: nodemcu-32s
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
 
-wifi:
-  ssid: !secret wifi_ssid_k
-  password: !secret wifi_pass
+# wifi:
+#   ssid: !secret wifi_ssid_k
+#   password: !secret wifi_pass
+#   domain: .local
+#   reboot_timeout: 15min
+#   #output_power: 10dB
+#   fast_connect: true
+#   #power_save_mode: none
+#   manual_ip:
+#     static_ip: 192.168.1.38
+#     gateway: 192.168.1.1
+#     subnet: 255.255.255.0
+#     dns1: 192.168.1.1
+#     dns2: 8.8.8.8
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk_mode: GPIO17_OUT
+  phy_addr: 0
   domain: .local
-  reboot_timeout: 15min
-  #output_power: 10dB
-  fast_connect: true
-  #power_save_mode: none
   manual_ip:
-    static_ip: 192.168.1.38
+    static_ip: 192.168.1.39
     gateway: 192.168.1.1
     subnet: 255.255.255.0
     dns1: 192.168.1.1
     dns2: 8.8.8.8
+
+external_components:
+  - source: github://myhomeiot/esphome-components  
 
 logger:
   baud_rate: 0
@@ -34,26 +60,72 @@ api:
 
 ota:
 
-web_server:
-  port: 80
-  
+globals:
+  - id: event_count
+    type: unsigned int
+    restore_value: no
+    initial_value: '0'
+
+bluetooth_proxy:
+
+esp32_ble_tracker:
+  scan_parameters:
+    #interval: 512ms
+    #window: 48ms
+    active: false
+
+ble_gateway:
+  id: ${board_name}
+  on_ble_advertise:
+    then:
+      - homeassistant.event:
+          event: esphome.on_ble_advertise
+          data:
+            packet: !lambda return packet;
+            gateway_id: ${board_name}
+      - lambda: |-
+          id(event_count) += 1;
+
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
-    
+
+  - platform: ble_presence
+    mac_address: 7E:FE:3E:EC:59:FB
+    name: ${board_name}_White
+    device_class: presence
+
+  - platform: ble_presence
+    mac_address: 3B:EF:3E:DE:98:6B
+    name: ${board_name}_Grey
+    device_class: presence
+
+  - platform: ble_presence
+    mac_address: 2A:BC:3E:DC:57:65
+    name: ${board_name}_Pink
+    device_class: presence
+
+  - platform: ble_presence
+    mac_address: 6B:9C:3E:D1:C5:9A
+    name: ${board_name}_Green
+    device_class: presence
+
 i2c:
-  sda: GPIO21
-  scl: GPIO22
+  sda: GPIO04
+  scl: GPIO16
   scan: True
 
 light:
-  - platform: fastled_clockless
-    chipset: WS2812B
-    pin: GPIO25
+  - platform: neopixelbus
+    variant: WS2812
+    pin: GPIO19
     num_leds: 174
-    rgb_order: GRB
+    type: GRB
     name: ${board_name}_LED
     id: light1
+    method:
+      type: esp32_rmt
+      channel: 2
     effects:
       - addressable_rainbow:
       - addressable_color_wipe:
@@ -326,22 +398,22 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
-  - platform: wifi_info
+  - platform: ethernet_info
     ip_address:
       name: ${board_name}_IP
-    ssid:
-      name: ${board_name}_SSID
-    bssid:
-      name: ${board_name}_BSSID
-    mac_address:
-      name: ${board_name}_Mac
-    scan_results:
-      name: ${board_name}_Latest_Scan_Results
 
   - platform: version
     name: ${board_name}_ESPHome_Version
     hide_timestamp: true
-    
+
+  - platform: homeassistant
+    id: ble_gateway_devices
+    entity_id: binary_sensor.ble_gateway
+    attribute: devices
+    on_value:
+      then:
+        - lambda: id(${board_name}).set_devices(x);
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
@@ -362,16 +434,34 @@ sensor:
     address: 0x76
     update_interval: 30s
 
-  - platform: bh1750
-    name: ${board_name}_Illuminance
-    address: 0x23
-    #measurement_duration: 254
-    update_interval: 15s
+  - platform: template
+    name: ${board_name}_Events
+    lambda: |-
+      return id(event_count);
+    update_interval: ${up_int}
+    icon: mdi:cube-send
+    unit_of_measurement: 'event'
     accuracy_decimals: 0
-    
-  - platform: wifi_signal
-    name: ${board_name}_WiFi_RSSI
-    update_interval: 60s
+
+  - platform: custom
+    lambda: |-
+      auto rad_sens = new MyRadSens();
+      App.register_component(rad_sens);
+      return {rad_sens->IntensityDynamic_Sensor, rad_sens->IntensityStatic_Sensor, rad_sens->CurrentCPM_Sensor, rad_sens->MaxCPM_Sensor};
+    sensors:
+      - name: ${board_name}_Dynamic intensity
+        id: dynamic_intensity
+        accuracy_decimals: 1
+        unit_of_measurement: μR/h
+      - name: ${board_name}_Static intensity
+        accuracy_decimals: 1
+        unit_of_measurement: μR/h
+      - name: ${board_name}_Current CPM
+        accuracy_decimals: 1
+        unit_of_measurement: CPM
+      - name: ${board_name}_Max CPM
+        accuracy_decimals: 1
+        unit_of_measurement: CPM
 
 button:
   - platform: restart
@@ -381,6 +471,22 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow
+
+interval:
+  - interval: ${up_int}
+    then:
+      - lambda: |-
+          static bool flag = false;
+          auto min = id(sntp_time).now().minute;
+          if (min == 59 && !flag)
+          {
+            id(event_count) = 0;
+            flag = true;
+          }
+          else
+          {
+            flag = false;
+          }
 
 syslog:
     ip_address: "192.168.1.26"
