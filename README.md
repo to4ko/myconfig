@@ -58,7 +58,7 @@
   - 8TB WD White as Media Storage
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
   - Adata SX6000 Lite 256Gbas NVME read cache
-  - 2ea Samsung 840 Pro 256Gb as Fast "Docker" Storage
+  - 2ea Samsung 870 Evo 500Gb in SHR1 as Fast "Docker" Storage
 
 **Backup Storage Unit - Synology DS920+**
   - 16Gb Kingston DDR4 SODIMM
@@ -77,10 +77,12 @@
   - CyberPower UT650EG 
 
 # Networking
+  - Ufiber Loco
   - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
   - Unifi Enterprise Switch 24 PoE
-  - Unifi Switch 8-60W (3ea)
+  - Unifi Switch 8-60W (4ea)
   - Unifi Switch Flex Mini
+  - Unifi Switch Flex
   - not in use - Unifi Switch Light 8 PoE
   - Unifi AC AP Lite (2ea)
   - Unifi AC AP Pro (3ea)
@@ -102,9 +104,10 @@
   - Yeelight LED Light Strip Plus (YLDD04YL)
   - Yeelight LED Light Strip 1S (YLDD05YL) (3ea)
   - Yeelight LED Bulb (Color) (YLDP06YL) (2ea)
+  - Yeelight Smart LED Bubl W3 (YLDP005) (1ea)
   - Yeelight LED Tunable Bulb (White) (YLDP05YL) (2ea)
-  - Yeelight LED Bedside Lamp 2
-  - Xiaomi Philips Zhirui Downlight (9290012799)
+  - Yeelight Display Light Lamp Pro (YLTD003) (1ea)
+  - Xiaomi Philips Zhirui Downlight (9290012799) (1ea)
   - not in use - Yeelight Jiaoyue 260 (YLXD62YI)
   - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
 
@@ -118,24 +121,29 @@
   - not in use - Xiaomi Smart WiFi Power Strip (2ea)
 
 **Xiaomi\Aqara Zigbee Devices:**
-  - Aqara Wall Socket (14ea)
-  - Aqara Wall Switch Double (4ea)
-  - not in use - Aqara D1 Wall Switch Tripple (1ea)
-  - Aqara Wall Switch Single (1ea)
-  - Aqara Wireless Switch Double (6ea)
-  - Aqara\Xiaomi Door Sensor (26ea)
-  - Aqara Water Leak Sensor (4ea)
-  - Aqara Vibration Sensor (3ea)
-  - Aqara\Xiaomi Motion Sensor (18ea)
-  - Aqara\Xiaomi Wireless Button (9ea)
-  - Aqara\Xiaomi Temp\Himidity sensor (11ea)
-  - Aqara Zigbee Relay (1ea)
-  - Aqara Opple Wireless Switch (2ea)
-  - Xiaomi Plug (26ea)
-  - Xiaomi Smoke Detector (1ea)
-  - Xiaomi Natural Gas Detector (1ea)
-  - Xiaomi Light Sensor (4ea)
-  - not in use - Aqara Opple Wireless Switch (4ea)
+  - Aqara Vibration sensor DJT11LM (4ea)
+  - Xiaomi Light Detection Sensor GZCGQ01LM (4ea)
+  - Xiaomi Honeywell Natural Gas Sensor JTQJ-BF-01LM/BW (1ea)
+  - Xiaomi Honeywell Smoke JTYJ-GD-01LM/BW (1ea)
+  - Aqara Relay LLKZMK11LM (1ea)
+  - Xiaomi Door Sensor MCCGQ01LM (15ea)
+  - Aqara Door Sensor MCCGQ11LM (11ea)
+  - Aqara Wall Outlet QBCZ11LM (14ea)
+  - Aqara Wall Switch (No Neutral, Double Rocker) QBKG03LM (4ea)
+  - Aqara E1 Wall Switch (With Neutral, Double Rocker) QBKG41LM (1ea)
+  - Xiaomi Motion Sensor RTCGQ01LM (4ea)
+  - Aqara Motion Sensor RTCGQ11LM (13ea)
+  - Aqara Water Leak Sensor SJCGQ11LM (4ea)
+  - Xiaomi Temperature Humidity sensor WSDCGQ01LM (8ea)
+  - Aqara Temperature Humidity Pressure Sensor WSDCGQ11LM (4ea)
+  - Aqara Opple Wireless Scene Switch 2 Button WXCJKG11LM (2ea)
+  - Aqara Opple Wireless Scene Switch 4 Button WXCJKG12LM (1ea)
+  - Xiaomi Mijia Wireless Switch WXKG01LM (2ea)
+  - Aqara Wireless Remote Switch (Double Rocker) (2016 version) WXKG02LM (3ea)
+  - Aqara Wireless Mini Switch WXKG11LM (2ea)
+  - Aqara Wireless Mini Switch with Gyroscope WXKG12LM (2ea)
+  - Aqara E1 Wireless Remote Switch (Double Rocker) WXKG17LM (1ea)
+  - Xiaomi Mi Power Plug ZigBee ZNCZ02LM (24ea)
 
 **Xiaomi BT\BLE Devices:**
   - CGD1 Cleargrass alarm clock
@@ -151,7 +159,6 @@
   - CGPR1 Qingping Motion Sensor
 
 **ESPHome devices:**
-  - Sonoff Basic (2ea)
   - Sonoff Pow R2 (2ea)
   - Sonoff Mini (3ea)
   - not in use - Sonoff 4ch
@@ -161,7 +168,7 @@
   - not in use - Blitzwolf SHP2 (10ea) and SHP6 (4ea)
   - Blitzwolf LT11
   - not in use - Blitzwolf SS5 dual gang relay
-  - Digma IR Remote (3ea)
+  - Digma IR Remote (4ea)
 
 **ESPHome DIY devices:**
   - ESP32 - Node K - Kitchen SensAir S8, BME280, BHI1750, Water Filter Counters, IR controller
@@ -169,7 +176,8 @@
   - ESP32 - Node MB - Master Bedroom SensAir S8B, BME280, BHI1750, Dallas sensors (Heating pipe and Outside)
   - ESP32 - Node V - Vova Room SensAir S8, BME280, BHI1750, Dallas sensor (Heating pipe)
   - ESP32 - Node S - Sasha Room SensAir S8, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
-  - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675 
+  - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675
+  - ESP32 - Node HS - Hall Small adressable LED controller with BME280 and ClimateGuard Geiger sensor 
   - ESP32 - BLE Tracker HB
   - ESP32 - BLE Tracker HS
   - ESP32 - BLE Tracker S
@@ -179,7 +187,7 @@
   - ESP01 Weight Cell for RO water filter tank
   - not in use - D1 Mini LED Bed light
   - D1 Mini Air Freshener with Figaro air sensor
-  - D1 Mini TOF Distance Sensor
+  - D1 Mini TOF Distance and LD2410 Radar
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
   - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
 
@@ -190,8 +198,8 @@
 
 **Other Devices:**
   - Digma z801 Tablet
-  - SLS Gateway
-  - DIYRuZ_Geiger Sensor
+  - not in use - SLS Gateway
+  - not in use - DIYRuZ_Geiger Sensor
   - Shelly EM
   - Shelly 1PM (3ea)
   - Shelly Plug S (2ea)
@@ -206,11 +214,12 @@
     * File Editor
     * ESPhome
     * Grafana
-    * Hass.io Google Drive Backup
+    * Home Assistant Google Drive Backup
     * IDE
     * Log Viewer
     * Portainer
     * RPC shutdown
+    * Visual Studio Code
 
 **Main Storage Unit Software**
   - DSM 7.1
