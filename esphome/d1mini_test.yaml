@@ -1,0 +1,134 @@
+substitutions:
+  board_name: d1mini_test
+  node_name: d1mini-test
+  
+esphome:
+  name: ${node_name}
+  comment: D1 Mini Test
+
+esp8266:
+  board: d1_mini
+  restore_from_flash: true
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  domain: .local
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: 192.168.1.247
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+    dns2: 8.8.8.8
+
+logger:
+  baud_rate: 0
+  
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+i2c:
+  sda: GPIO04
+  scl: GPIO05
+  scan: True
+
+pcf8574:
+  - id: 'pcf8574_hub'
+    address: 0x22
+    pcf8575: false
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+  - platform: gpio
+    pin: GPIO14
+    name: ${board_name}_Radar
+    device_class: occupancy
+
+  - platform: gpio
+    name: PIR
+    pin:
+      pcf8574: pcf8574_hub
+      number: 0
+      mode:
+        input: true
+      inverted: false
+
+  - platform: gpio
+    name: Radar
+    pin:
+      pcf8574: pcf8574_hub
+      number: 1
+      mode:
+        input: true
+      inverted: false
+
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
+
+syslog:
+    ip_address: "192.168.1.26"
+    port: 514

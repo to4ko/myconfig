@@ -291,8 +291,35 @@
             data:
               media_content_type: dialog
               entity_id: media_player.yandex_k
-              media_content_id: "Температура духовки ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
-          
+              media_content_id: "Температура в духовке ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
+
+# ##################################
+# Kitchen - Oven Target Temp to Alice
+# ##################################
+  - alias: kitchen_oven_notify_to_alice
+    id: kitchen_oven_notify_to_alice
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Какая температура в духовке
+    action:
+      - service: media_player.volume_set
+        data:
+          entity_id: media_player.yandex_k
+          volume_level: '{{states("input_number.main_volume")|float(0)}}'
+      # - service: tts.yandextts_say
+      #   data:
+      #     entity_id: media_player.home_mini_k
+      #     message: "Температура духовки ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
+      - service: media_player.play_media
+        data:
+          media_content_type: dialog
+          entity_id: media_player.yandex_k
+          media_content_id: "Температура в духовке ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C"
+
+
 # ##################################
 # Kitchen - Dishwasher state
 # ##################################

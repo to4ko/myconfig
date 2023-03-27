@@ -48,15 +48,19 @@ i2c:
   scl: GPIO33
   scan: True
 
+pcf8574:
+  - id: 'pcf8574_hub'
+    address: 0x22
+    pcf8575: false
+
 dallas:
   - pin:
       number: GPIO26
       mode:
           input: true
           pullup: true  
-    update_interval: 10s
+    update_interval: 15s
     id: dallas_node
-
 
 globals:
   - id: id_global_valve_bool
@@ -93,6 +97,25 @@ binary_sensor:
     id: id_high_humidity
     device_class: moisture
     lambda: return id(id_humidity_sensor).state > id(id_humidity_set).state;
+
+  # - platform: gpio
+  #   name: ${board_name}_PIR
+  #   pin:
+  #     pcf8574: pcf8574_hub
+  #     number: 0
+  #     mode:
+  #       input: true
+  #     inverted: false
+
+  - platform: gpio
+    name: ${board_name}_Radar
+    device_class: occupancy
+    pin:
+      pcf8574: pcf8574_hub
+      number: 1
+      mode:
+        input: true
+      inverted: false
 
 light:
   - platform: monochromatic

@@ -5,16 +5,15 @@ substitutions:
 esphome:
   name: ${node_name}
   comment: D1 Mini Toilet Distance Sensor
-  includes:
-    - ld2410_uart.h
-  on_boot:
-    priority: 600
-    # ...
-    then:
-      - lambda: |-
-          auto uart_component = static_cast<LD2410 *>(ld2410);
-          uart_component->setNumbers(maxMovingDistanceRange, maxStillDistanceRange, noneDuration);
-
+  # includes:
+  #   - ld2410_uart.h
+  # on_boot:
+  #   priority: 600
+  #   # ...
+  #   then:
+  #     - lambda: |-
+  #         auto uart_component = static_cast<LD2410 *>(ld2410);
+  #         uart_component->setNumbers(maxMovingDistanceRange, maxStillDistanceRange, noneDuration);
 
 esp8266:
   board: d1_mini
@@ -51,24 +50,24 @@ i2c:
   scl: GPIO05
   scan: True
 
-uart:
-  id: uart1
-  tx_pin: GPIO01
-  rx_pin: GPIO03
-  baud_rate: 256000 # Change this according to your setting
-  parity: NONE
-  stop_bits: 1
+# uart:
+#   id: uart1
+#   tx_pin: GPIO01
+#   rx_pin: GPIO03
+#   baud_rate: 256000 # Change this according to your setting
+#   parity: NONE
+#   stop_bits: 1
   # debug:
   #   direction: BOTH
   #   dummy_receiver: false
   #   after:
   #     delimiter: [0xF8,0xF7,0xF6,0xF5]
 
-custom_component:
-  - lambda: |-
-      return {new LD2410(id(uart1))};
-    components:
-      - id: ld2410
+# custom_component:
+#   - lambda: |-
+#       return {new LD2410(id(uart1))};
+#     components:
+#       - id: ld2410
 
 binary_sensor:
   - platform: status
@@ -88,15 +87,15 @@ binary_sensor:
         return false;
       }
 
-  - platform: custom
-    lambda: |-
-      auto uart_component = static_cast<LD2410 *>(ld2410);
-      return {uart_component->hasTarget,uart_component->hasMovingTarget,uart_component->hasStillTarget,uart_component->lastCommandSuccess};
-    binary_sensors:
-      - name: ${board_name}_Has Target
-      - name: ${board_name}_Has Moving Target
-      - name: ${board_name}_Has Still Target
-      - name: ${board_name}_Last Command Success
+  # - platform: custom
+  #   lambda: |-
+  #     auto uart_component = static_cast<LD2410 *>(ld2410);
+  #     return {uart_component->hasTarget,uart_component->hasMovingTarget,uart_component->hasStillTarget,uart_component->lastCommandSuccess};
+  #   binary_sensors:
+  #     - name: ${board_name}_Has Target
+  #     - name: ${board_name}_Has Moving Target
+  #     - name: ${board_name}_Has Still Target
+  #     - name: ${board_name}_Last Command Success
 
   - platform: gpio
     pin: GPIO14
@@ -175,98 +174,99 @@ sensor:
       then:
         - component.update: occupancy_text
 
-  - platform: custom
-    lambda: |-
-      auto uart_component = static_cast<LD2410 *>(ld2410);
-      return {uart_component->movingTargetDistance,uart_component->movingTargetEnergy,uart_component->stillTargetDistance,uart_component->stillTargetEnergy,uart_component->detectDistance};
-    sensors:
-      - name: ${board_name}_Moving Target Distance
-        unit_of_measurement: "cm"
-        accuracy_decimals: 0
-      - name: ${board_name}_Moving Target Energy
-        unit_of_measurement: "%"
-        accuracy_decimals: 0
-      - name: ${board_name}_Still Target Distance
-        unit_of_measurement: "cm"
-        accuracy_decimals: 0
-      - name: ${board_name}_Still Target Energy
-        unit_of_measurement: "%"
-        accuracy_decimals: 0
-      - name: ${board_name}_Detect Distance
-        unit_of_measurement: "cm"
-        accuracy_decimals: 0
+  # - platform: custom
+  #   internal: true
+  #   lambda: |-
+  #     auto uart_component = static_cast<LD2410 *>(ld2410);
+  #     return {uart_component->movingTargetDistance,uart_component->movingTargetEnergy,uart_component->stillTargetDistance,uart_component->stillTargetEnergy,uart_component->detectDistance};
+  #   sensors:
+  #     - name: ${board_name}_Moving Target Distance
+  #       unit_of_measurement: "cm"
+  #       accuracy_decimals: 0
+  #     - name: ${board_name}_Moving Target Energy
+  #       unit_of_measurement: "%"
+  #       accuracy_decimals: 0
+  #     - name: ${board_name}_Still Target Distance
+  #       unit_of_measurement: "cm"
+  #       accuracy_decimals: 0
+  #     - name: ${board_name}_Still Target Energy
+  #       unit_of_measurement: "%"
+  #       accuracy_decimals: 0
+  #     - name: ${board_name}_Detect Distance
+  #       unit_of_measurement: "cm"
+  #       accuracy_decimals: 0
 
-number:        
-  - platform: template
-    name: ${board_name}_Max Moving Distance Range
-    id: maxMovingDistanceRange
-    min_value: 1
-    max_value: 8
-    step: 1
-    update_interval: never
-    optimistic: true
-    set_action:
-      - lambda: |-
-          auto uart_component = static_cast<LD2410 *>(ld2410);
-          uart_component->setMaxDistancesAndNoneDuration(x,id(maxStillDistanceRange).state,id(noneDuration).state);
-  - platform: template
-    name: ${board_name}_Max Still Distance Range
-    id: maxStillDistanceRange
-    min_value: 1
-    max_value: 8
-    step: 1
-    update_interval: never
-    optimistic: true
-    set_action:
-      - lambda: |-
-          auto uart_component = static_cast<LD2410 *>(ld2410);
-          uart_component->setMaxDistancesAndNoneDuration(id(maxMovingDistanceRange).state,x,id(noneDuration).state);
-  - platform: template
-    name: ${board_name}_None Duration
-    id: noneDuration
-    min_value: 0
-    max_value: 32767
-    step: 1
-    mode: box
-    update_interval: never
-    optimistic: true
-    set_action:
-      - lambda: |-
-          auto uart_component = static_cast<LD2410 *>(ld2410);
-          uart_component->setMaxDistancesAndNoneDuration(id(maxMovingDistanceRange).state,id(maxStillDistanceRange).state,x);
+# number:        
+#   - platform: template
+#     name: ${board_name}_Max Moving Distance Range
+#     id: maxMovingDistanceRange
+#     min_value: 1
+#     max_value: 8
+#     step: 1
+#     update_interval: never
+#     optimistic: true
+#     set_action:
+#       - lambda: |-
+#           auto uart_component = static_cast<LD2410 *>(ld2410);
+#           uart_component->setMaxDistancesAndNoneDuration(x,id(maxStillDistanceRange).state,id(noneDuration).state);
+#   - platform: template
+#     name: ${board_name}_Max Still Distance Range
+#     id: maxStillDistanceRange
+#     min_value: 1
+#     max_value: 8
+#     step: 1
+#     update_interval: never
+#     optimistic: true
+#     set_action:
+#       - lambda: |-
+#           auto uart_component = static_cast<LD2410 *>(ld2410);
+#           uart_component->setMaxDistancesAndNoneDuration(id(maxMovingDistanceRange).state,x,id(noneDuration).state);
+#   - platform: template
+#     name: ${board_name}_None Duration
+#     id: noneDuration
+#     min_value: 0
+#     max_value: 32767
+#     step: 1
+#     mode: box
+#     update_interval: never
+#     optimistic: true
+#     set_action:
+#       - lambda: |-
+#           auto uart_component = static_cast<LD2410 *>(ld2410);
+#           uart_component->setMaxDistancesAndNoneDuration(id(maxMovingDistanceRange).state,id(maxStillDistanceRange).state,x);
 
 button:
   - platform: restart
     name: ${board_name}_Restart
 
-  - platform: template
-    name: ${board_name}_Reboot LD2410
-    on_press:
-      lambda: 'static_cast<LD2410 *>(ld2410)->reboot();'
-  - platform: template
-    name: ${board_name}_Turn on config mode
-    on_press:
-      - lambda: 'static_cast<LD2410 *>(ld2410)->setConfigMode(true);'
-  - platform: template
-    name: ${board_name}_Turn off config mode
-    on_press:
-      - lambda: 'static_cast<LD2410 *>(ld2410)->setConfigMode(false);'
-  - platform: template
-    name: ${board_name}_Get config
-    on_press:
-      - lambda: 'static_cast<LD2410 *>(ld2410)->queryParameters();'
-  - platform: template
-    name: ${board_name}_Set baud rate to 256000
-    on_press:
-      - lambda: 'static_cast<LD2410 *>(ld2410)->setBaudrate(7);'
-  - platform: template
-    name: ${board_name}_Set baud rate to 115200
-    on_press:
-      - lambda: 'static_cast<LD2410 *>(ld2410)->setBaudrate(5);'
-  - platform: template
-    name: ${board_name}_Set baud rate to 9600
-    on_press:
-      - lambda: 'static_cast<LD2410 *>(ld2410)->setBaudrate(1);'
+  # - platform: template
+  #   name: ${board_name}_Reboot LD2410
+  #   on_press:
+  #     lambda: 'static_cast<LD2410 *>(ld2410)->reboot();'
+  # - platform: template
+  #   name: ${board_name}_Turn on config mode
+  #   on_press:
+  #     - lambda: 'static_cast<LD2410 *>(ld2410)->setConfigMode(true);'
+  # - platform: template
+  #   name: ${board_name}_Turn off config mode
+  #   on_press:
+  #     - lambda: 'static_cast<LD2410 *>(ld2410)->setConfigMode(false);'
+  # - platform: template
+  #   name: ${board_name}_Get config
+  #   on_press:
+  #     - lambda: 'static_cast<LD2410 *>(ld2410)->queryParameters();'
+  # - platform: template
+  #   name: ${board_name}_Set baud rate to 256000
+  #   on_press:
+  #     - lambda: 'static_cast<LD2410 *>(ld2410)->setBaudrate(7);'
+  # - platform: template
+  #   name: ${board_name}_Set baud rate to 115200
+  #   on_press:
+  #     - lambda: 'static_cast<LD2410 *>(ld2410)->setBaudrate(5);'
+  # - platform: template
+  #   name: ${board_name}_Set baud rate to 9600
+  #   on_press:
+  #     - lambda: 'static_cast<LD2410 *>(ld2410)->setBaudrate(1);'
 
 time:
   - platform: sntp

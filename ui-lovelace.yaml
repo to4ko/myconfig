@@ -250,6 +250,32 @@ views:
                 entity: camera.g3_flex_window
                 show_name: false
                 show_state: false
+          # - type: horizontal-stack
+          #   cards:
+          #     - type: custom:webrtc-camera
+          #       camera_view: live
+          #       aspect_ratio: "16x9"
+          #       entity: camera.ds1621plus_pinhole_stream #camera.door_hb
+          #       show_name: false
+          #       show_state: false
+          #     - type: custom:webrtc-camera
+          #       camera_view: live
+          #       aspect_ratio: "16x9"
+          #       entity: camera.g3_flex_entrance
+          #       show_name: false
+          #       show_state: false
+          #     - type: custom:webrtc-camera
+          #       camera_view: live
+          #       aspect_ratio: "16x9"
+          #       entity: camera.g3_flex_dixy
+          #       show_name: false
+          #       show_state: false
+          #     - type: custom:webrtc-camera
+          #       camera_view: live
+          #       aspect_ratio: "16x9"
+          #       entity: camera.g3_flex_window
+          #       show_name: false
+          #       show_state: false
 
           - type: glance
             show_name: true
@@ -330,16 +356,17 @@ views:
             entities:
               - entity: binary_sensor.649e314ce325_occupancy
                 name: MB
-              - entity: binary_sensor.dced838e593e_occupancy
+              - entity: binary_sensor.radar_s
                 name: S
               - entity: binary_sensor.dced838ea6c7_occupancy
                 name: V
+
+              - entity: binary_sensor.esp32_node_b_radar
+                name: B
+              - entity: binary_sensor.d1mini_distance_sensor_radar
+                name: T
               - entity: binary_sensor.dced838db04e_occupancy
                 name: K
-              - entity: binary_sensor.d1mini_distance_sensor_has_target
-                name: T Target
-              - entity: binary_sensor.d1mini_distance_sensor_radar
-                name: T Radar
               
           - type: horizontal-stack
             cards:
@@ -1352,7 +1379,7 @@ views:
         state_color: true
         entities:
           - light.square_led_s
-          - light.light.led_white_s
+          - light.led_white_s
           - type: divider
           - switch.0x00158d000239097a_outlet
           - switch.0x00158d0002395d58_outlet
@@ -5216,18 +5243,18 @@ views:
     icon: mdi:alpha
     cards:
       - type: history-graph
-        hours_to_show: 3
-        entities:
-          - entity: sensor.0x04cf8cdf3c772824_illuminance
-            name: ZB
-          - entity: sensor.dced838ea6c7_illuminance
-            name: BT
-      - type: history-graph
         hours_to_show: 6
         entities:
-          - binary_sensor.0x00158d0002b4729d_motion
-          - binary_sensor.0x00158d0002b48381_motion
-          - binary_sensor.dced838db04e_occupancy
+          - entity: binary_sensor.0x00158d000224f89f_motion
+            name: S
+          - entity: binary_sensor.dced838e593e_occupancy
+            name: ES1
+          - entity: binary_sensor.0x00158d0003140824_motion
+            name: W S
+          - entity: binary_sensor.esp32_node_s_radar
+            name: LD2410
+          - entity: binary_sensor.radar_s
+            name: Radar S
       - type: entities
         entities:
           - sensor.esp32_ble_hs_current_cpm
@@ -5305,40 +5332,52 @@ views:
             name: Grey
           - entity: binary_sensor.nut3_white_presence
             name: White
-
-      - type: "custom:mini-graph-card"
-        color_thresholds_transition: hard
-        entities:
-          - color: "#ff1000"
-            entity: sensor.sonoff_5v1c_battery_level
-            name: Batt
-            show_line: true
-          - color: "rgba(0,255,100,1)"
-            entity: switch.sonoff_5v1c_relay
-            show_line: false
-            y_axis: secondary
-        group: false
-        #group_by: hour
-        hour24: true
-        hours_to_show: 48
-        line_width: 2
-        points_per_hour: 60
-        show:
-          extrema: true
-          fill: fade
-          icon: true
-          labels: false
-          name: true
-          state: true
-        state_map:
-          - label: "Off"
-            value: "off"
-          - label: "On"
-            value: "on"
-        style: |
-          ha-card {
-            border: solid 2px var(--primary-color);
-          }
+      - type: custom:stack-in-card
+        mode: vertical
+        cards:
+          - type: "custom:mini-graph-card"
+            color_thresholds_transition: hard
+            entities:
+              - color: "#ff1000"
+                entity: sensor.sonoff_5v1c_battery_level
+                name: Batt
+                show_line: true
+              - color: "rgba(0,255,100,1)"
+                entity: switch.sonoff_5v1c_relay
+                show_line: false
+                y_axis: secondary
+            group: false
+            #group_by: hour
+            hour24: true
+            hours_to_show: 48
+            line_width: 2
+            points_per_hour: 60
+            show:
+              extrema: true
+              fill: fade
+              icon: true
+              labels: false
+              name: true
+              state: true
+            state_map:
+              - label: "Off"
+                value: "off"
+              - label: "On"
+                value: "on"
+            style: |
+              ha-card {
+                border: solid 2px var(--primary-color);
+              }
+          - type: entities
+            state_color: true
+            entities:
+              - switch.sonoff_5v1c_relay
+              - switch.sonoff_5v1c_always_on
+              - binary_sensor.sonoff_5v1c_auto_mode
+              - sensor.sonoff_5v1c_battery_level
+              - sensor.sonoff_5v1c_people
+              - binary_sensor.sonoff_5v1c_security
+              - binary_sensor.sonoff_5v1c_tod
 
       - type: "custom:mini-graph-card"
         color_thresholds_transition: hard
@@ -5373,37 +5412,6 @@ views:
           ha-card {
             border: solid 2px var(--primary-color);
           }
-
-      - type: entities
-        state_color: true
-        entities:
-          - switch.sonoff_5v1c_relay
-          - switch.sonoff_5v1c_always_on
-          - binary_sensor.sonoff_5v1c_auto_mode
-          - sensor.sonoff_5v1c_battery_level
-          - sensor.sonoff_5v1c_people
-          - binary_sensor.sonoff_5v1c_security
-          - binary_sensor.sonoff_5v1c_tod
-      - type: entities
-        entities:
-          - binary_sensor.seat_not_closed
-          - type: divider
-          - sensor.d1mini_distance_sensor_distance
-          - binary_sensor.d1mini_distance_sensor_occupancy
-          - sensor.d1mini_distance_sensor_occupancy_text
-      - type: history-graph
-        hours_to_show: 24
-        entities:
-          - entity: sensor.0x00158d0006b1c7bc_humidity
-            name: Sink
-          - entity: sensor.0x00158d0001e586af_humidity
-            name: K
-      - type: history-graph
-        hours_to_show: 24
-        entities:
-          - sensor.0x04cf8cdf3c772824_illuminance
-          #- sensor.esp32_node_v_illuminance
-          - input_number.inside_light_level
 
       - type: "custom:mini-graph-card"
         name: BLE Events
@@ -5448,42 +5456,6 @@ views:
             name: S
           - entity: binary_sensor.square_led_v_prev
             name: V
-      # - type: glance
-      #   columns: 8
-      #   entities:
-      #     - entity: sensor.thermal_pad_ambient_temperature
-      #       name: T amb
-      #     - entity: sensor.0x158d0001e8995a_temperature
-      #       name: T ext
-      #     - entity: sensor.thermal_pad_pad_temperture
-      #       name: T int
-      #     - entity: sensor.0x00158d000392623d_power
-      #       name: P
-      #     - entity: sensor.thermal_pad_daily_energy
-      #       name: E
-      #     - entity: switch.thermal_pad_relay
-      #       name: Relay
-      #     - entity: sensor.thermo_pad_on_rate
-      #       name: Rate
-      #     - entity: sensor.thermo_pad_monthly_cost
-      #       name: "$"
-      # - type: history-graph
-      #   hours_to_show: 6
-      #   entities:
-      #     - entity: sensor.0x158d0001e8995a_temperature
-      #       name: T ext
-      #     - entity: sensor.thermal_pad_pad_temperture
-      #       name: T int
-      #     - entity: sensor.thermal_pad_ambient_temperature
-      #       name: Ambi
-      #     - entity: sensor.thermal_pad_power
-      #       name: Power
-      #     - entity: sensor.0x00158d000392623d_power
-      #       name: P
-
-      # - type: thermostat
-      #   entity: climate.thermal_pad_thermo_pad
-      #   name: Thermal Pad
 
       - type: glance
         columns: 4
@@ -5520,15 +5492,6 @@ views:
             name: Vova(grey)
           - entity: binary_sensor.esp32_ble_s_white
             name: Dima(white)
-      # - type: history-graph
-      #   hours_to_show: 48
-      #   entities:
-      #     - entity: sensor.esp32_node_mb_outside
-      #       name: T
-      #     - entity: sensor.out_temperature_max_24h
-      #       name: Tmax
-      #     - entity: sensor.out_temperature_min_24h
-      #       name: Tmin
 
       - type: custom:auto-entities
         card:
