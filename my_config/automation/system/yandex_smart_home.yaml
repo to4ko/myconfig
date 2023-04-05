@@ -57,3 +57,33 @@
   #               media_content_id: '{{command_3}}'
   #               media_content_type: settings
   #           - delay: 2
+
+
+
+# ##################################
+# System - Ya speakers volume set
+# ##################################
+  - alias: system_ya_speakers_volume_set
+    id: system_ya_speakers_volume_set
+    initial_state: true
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.tod_day
+        to: 'on'
+      - platform: state
+        entity_id: switch.dark_mode
+        to: 'off'
+    action:
+      - repeat:
+          for_each:
+            - 'media_player.yandex_k'
+            - 'media_player.yandex_hb'
+            - 'media_player.yandex_v'
+            - 'media_player.yandex_s'
+            - 'media_player.yandex_mb'
+          sequence:
+            - service: media_player.volume_set
+              data:
+                entity_id: '{{ repeat.item }}'
+                volume_level: '{{states("input_number.main_volume")|float(0)}}'
