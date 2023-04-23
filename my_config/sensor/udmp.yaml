@@ -51,8 +51,20 @@
     command: !secret udmp_unifios
     unique_id: unifios_state
     value_template: |-
-      {% set udm = value_json.data[2] %}
-      {% set usw = value_json.data[12] %}
+      {% set ns = namespace(lowest = 0) %}
+      {% for x in range(0,value_json["data"]|count) %}
+        {% if value_json["data"][x].model == "UDMPRO" %}
+          {% set ns.lowest = x %}
+        {% endif %}
+      {% endfor %}
+      {% set udm = value_json["data"][ns.lowest] %}
+      {% set ns = namespace(lowest = 0) %}
+      {% for x in range(0,value_json["data"]|count) %}
+        {% if value_json["data"][x].model == "US624P" %}
+          {% set ns.lowest = x %}
+        {% endif %}
+      {% endfor %}
+      {% set usw = value_json["data"][ns.lowest] %}
       {{ udm["system-stats"].cpu }}|
       {{ udm.temperatures[0].value | float(0) | round (1) }}|
       {{ udm["system-stats"].mem }}|

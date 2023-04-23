@@ -396,11 +396,11 @@ views:
                     name: ""
                   - entity: binary_sensor.0x00158d000253722b_contact
                     name: Frdg
-                  - entity: sensor.0x00158d0002461e5b_temperature
+                  - entity: sensor.ble_temperature_ble_fridge #sensor.0x00158d0002461e5b_temperature
                     name: ""
                   - entity: binary_sensor.0x00158d000252acba_contact
                     name: Friz
-                  - entity: sensor.0x00158d000237167c_temperature
+                  - entity: sensor.ble_temperature_ble_freezer #sensor.0x00158d000237167c_temperature
                     name: ""
 
           - type: horizontal-stack
@@ -629,7 +629,7 @@ views:
                   - entity: binary_sensor.sonoff_mini_1_switch #binary_sensor.doorbell
                     name: Doorbell
                     icon: mdi:doorbell
-                  - entity: binary_sensor.d1mini_domofon_incomingcall
+                  - entity: binary_sensor.esp32_domofon_incomingcall
                     name: Intercom
                     icon: mdi:phone-log
                   - entity: script.domofon_open_door
@@ -638,19 +638,19 @@ views:
                     tap_action:
                       action: call-service
                       service: script.domofon_open_door
-                  - entity: switch.d1mini_domofon_mute #input_boolean.domofon_mute
+                  - entity: switch.esp32_domofon_mute #input_boolean.domofon_mute
                     name: Mute
                     tap_action:
                       action: toggle
-                  - entity: switch.d1mini_domofon_auto_open_once
+                  - entity: switch.esp32_domofon_auto_open_once
                     name: AOpen 1
                     tap_action:
                       action: toggle
-                  - entity: switch.d1mini_domofon_auto_open
+                  - entity: switch.esp32_domofon_auto_open
                     name: AOpen
                     tap_action:
                       action: toggle
-                  - entity: switch.d1mini_domofon_reject
+                  - entity: switch.esp32_domofon_reject
                     name: Reject
                     tap_action:
                       action: toggle
@@ -1535,9 +1535,8 @@ views:
           - binary_sensor.0x00158d0001e05856_motion
           - binary_sensor.0x00158d0002b482e9_motion
           #- sensor.0x158d00023d3206_action
-          - sensor.0x00158d000237167c_temperature
-          - sensor.0x00158d000237167c_pressure
-          - sensor.0x00158d000237167c_humidity
+          - sensor.ble_temperature_ble_freezer
+          - sensor.ble_humidity_ble_freezer
           - sensor.0x00158d0002461e5b_temperature
           - sensor.0x00158d0002461e5b_humidity
           #- binary_sensor.vibration_158d0002b5fbc1
@@ -4162,8 +4161,6 @@ views:
                 name: St
               # - entity: sensor.sonoff_basic_1_bme280_pressure
               #   name: BME St
-              - entity: sensor.0x00158d000237167c_pressure
-                name: Freezer
               - entity: sensor.esp32_node_k_pressure
                 name: K
               - entity: sensor.esp32_node_mb_pressure
@@ -4274,7 +4271,7 @@ views:
           #- binary_sensor.shp2_socket_server_status
           #- binary_sensor.esp32_ble_hb_status
           #- binary_sensor.esp32_domofon_status
-          - binary_sensor.d1mini_domofon_status
+          - binary_sensor.esp32_domofon_status
           #- binary_sensor.esp32_domofon_status
           - binary_sensor.sonoff_mini_1_status
           #- binary_sensor.sonoff_basic_1_status
@@ -4330,7 +4327,7 @@ views:
           #- sensor.shp2_socket_server_wifi_rssi
           #- sensor.esp32_ble_hb_wifi_rssi
           #- sensor.esp32_domofon_wifi_rssi
-          - sensor.d1mini_domofon_wifi_rssi
+          - sensor.esp32_domofon_wifi_rssi
           #- sensor.esp32_domofon_wifi_rssi
           - sensor.sonoff_mini_1_wifi_rssi
           #- sensor.sonoff_basic_1_wifi_rssi
@@ -4386,7 +4383,7 @@ views:
           #- sensor.shp2_socket_server_uptime
           #- sensor.esp32_ble_hb_uptime
           #- sensor.esp32_domofon_uptime
-          - sensor.d1mini_domofon_uptime
+          - sensor.esp32_domofon_uptime
           #- sensor.esp32_domofon_uptime
           - sensor.sonoff_mini_1_uptime
           #- sensor.sonoff_basic_1_uptime
@@ -4646,8 +4643,6 @@ views:
                 name: Z Fridge
               - entity: sensor.ble_temperature_ble_fridge
                 name: BLE Fridge
-              - entity: sensor.0x00158d000237167c_temperature
-                name: Z Freezer
               - entity: sensor.ble_temperature_ble_freezer
                 name: BLE Freezer
           # Hood
@@ -4728,9 +4723,7 @@ views:
           - type: history-graph
             hours_to_show: 48
             entities:
-              - sensor.0x00158d000237167c_humidity
-              - sensor.0x00158d0002461e5b_humidity
-              - sensor.a4c138f0a65b_humidity
+              - sensor.ble_humidity_ble_freezer
 
   - title: All GW3 Switches
     icon: mdi:electric-switch
@@ -5301,6 +5294,13 @@ views:
   - title: Testing
     icon: mdi:alpha
     cards:
+      - type: history-graph
+        hours_to_show: 12
+        entities:
+          - sensor.plex_cpu_temp
+          - sensor.plex_cpu_load
+          - sensor.plex_plug_hb_power
+          - sensor.plex_plex
       - type: entities
         entities:
           - binary_sensor.0x00158d000236bc6d_motion
@@ -5308,19 +5308,19 @@ views:
           - binary_sensor.0x00158d0002a14c5e_contact
           - type: divider
           - binary_sensor.wasp_b
-      - type: history-graph
-        hours_to_show: 6
-        entities:
-          - entity: binary_sensor.0x00158d000224f89f_motion
-            name: S
-          - entity: binary_sensor.dced838e593e_occupancy
-            name: ES1
-          - entity: binary_sensor.0x00158d0003140824_motion
-            name: W S
-          - entity: binary_sensor.esp32_node_s_radar
-            name: LD2410
-          - entity: binary_sensor.radar_s
-            name: Radar S
+      # - type: history-graph
+      #   hours_to_show: 6
+      #   entities:
+      #     - entity: binary_sensor.0x00158d000224f89f_motion
+      #       name: S
+      #     - entity: binary_sensor.dced838e593e_occupancy
+      #       name: ES1
+      #     - entity: binary_sensor.0x00158d0003140824_motion
+      #       name: W S
+      #     - entity: binary_sensor.esp32_node_s_radar
+      #       name: LD2410
+      #     - entity: binary_sensor.radar_s
+      #       name: Radar S
       - type: entities
         entities:
           - sensor.esp32_ble_hs_current_cpm
@@ -5451,8 +5451,12 @@ views:
         color_thresholds_transition: hard
         entities:
           - color: "#ff1000"
-            entity: sensor.0x00158d000237167c_temperature
-            name: T
+            entity: sensor.ble_temperature_ble_fridge
+            name: T Fridge
+            show_line: true
+          - color: "#0010ff"
+            entity: sensor.ble_temperature_ble_freezer
+            name: T Freezer
             show_line: true
           - color: "rgba(0,255,100,1)"
             entity: binary_sensor.fridge_hb
