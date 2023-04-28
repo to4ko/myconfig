@@ -1,38 +1,7 @@
-  #- sensor:
-  #    - name: UDMP WAN
-  #      state: >-
-  #        {%- set line = states('sensor.udmp_wan_state').split('wanFailover')[2].split(" ") -%}
-  #        {%- if line | count > 4 %}
-  #          {%- if line[2]=='eth9' -%}
- #             {{ "Main" | string }}
-  #          {%- elif line[2]=='eth8' -%}
-  #            {{ "Backup" | string }}
-   #         {%- else -%}
-   #           {{ "Unknown" | string }}
-   #         {%- endif -%}
-   #       {%- else %}
-   #         off
-  #        {%- endif %}
-   #     icon: >-
-    #      {% if is_state("sensor.udmp_wan", "Main") %}
-    #        mdi:ethernet
-   #       {% elif is_state("sensor.udmp_wan", "Backup") %}
-    #        icon: mdi:signal-cellular-2
-    #      {% else %}
-    #        icon: mdi:wan
-     #     {% endif %}
-        #unit_of_measurement: "provider"
-        #state_class: measurement
-        
-  # [2] - active
-  # [7] - eth8 state - WAN RJ45 Socket (LTE Modem)
-  # [11] - eth9 state - WAN2 SFP+ Socket (ISP cable)
-
-  
-
     - sensor:
       - name: UDM CPU Use
         unique_id: udm_cpu_use
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[0] | default }}
         attributes:
@@ -42,6 +11,7 @@
 
       - name: UDM CPU Temp
         unique_id: udm_cpu_temp
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[1] | default }}
         attributes:
@@ -51,6 +21,7 @@
 
       - name: UDM Board Temp
         unique_id: udm_board_temp
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[24] | default }}
         attributes:
@@ -60,6 +31,7 @@
 
       - name: UDM MEM Used
         unique_id: udm_mem_used
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[2] | default }}
         attributes:
@@ -69,6 +41,7 @@
 
       - name: UDM eMMC Used
         unique_id: udm_emmc_used
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ ((states('sensor.unifios_state').split('|')[17]|int(0) / 13097209856 ) * 100) | round(2) }}
         attributes:
@@ -78,6 +51,7 @@
 
       - name: UDM Last Active IP
         unique_id: udm_last_active_ip
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[23] }}
         attributes:
@@ -86,6 +60,7 @@
 
       - name: UDM WAN Name 
         unique_id: udm_wan_name
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[22] }}
         attributes:
@@ -95,6 +70,7 @@
 
       - name: UDM Active WAN
         unique_id: udm_active_wan
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {% if is_state('binary_sensor.udm_wan1_uplink','on') %}
             WAN1
@@ -113,27 +89,10 @@
           {% endif %}
         attributes:
           friendly_name: UDM Active WAN
-           
-      # - name: UDM eMMC Used Gb
-      #   unique_id: udm_emmc_used_gb
-      #   state: >
-      #     {{ (states('sensor.unifios_state').split('|')[17]|int(0) / 1024 / 1024 / 1024 ) | round(3) }}
-      #   attributes:
-      #     friendly_name: UDM eMMC Used Gb
-      #     icon: mdi:usb-flash-drive-outline
-      #     unit_of_measurement: Gb
-    
-      # - name: USW16 CPU Use
-      #   unique_id: usw16_cpu_use
-      #   state: >
-      #     {{ states('sensor.unifios_state').split('|\n')[5] | default }}
-      #   attributes:
-      #     friendly_name: USW16 CPU Use
-      #     icon: mdi:chip
-      #     unit_of_measurement: '%'
 
       - name: USW24 Temp
         unique_id: usw24_temp
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[8] | default }}
         attributes:
@@ -143,31 +102,10 @@
           
       - name: USW24 Fan Speed
         unique_id: usw24_fan_speed
+        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
         state: >
           {{ states('sensor.unifios_state').split('|\n')[7] | default }}
         attributes:
           friendly_name: USW24 Fan Speed
           icon: mdi:fan
           unit_of_measurement: '%'
-
-    #   - name: UDM Memory use
-    #     state: >
-    #       {{ states('sensor.udm_unifios').split('|\n')[2] | default }}
-    #     attributes:
-    #       friendly_name: UDM Memory Use
-    #       icon: mdi:memory
-    #       unit_of_measurement: '%'
-
-    #   - name: UDM Uptime
-    #     state: >
-    #       {{ states('sensor.udm_unifios').split('|\n')[4] | default }}
-    #     attributes:
-    #       friendly_name: UDM Uptime
-    #       device_class: timestamp
-
-    #   - name: UDM Version
-    #     state: >
-    #       {{ states('sensor.udm_unifios').split('|\n')[5] | default }}
-    #     attributes:
-    #       friendly_name: UDM Version
-    #       icon: mdi:router-wireless
