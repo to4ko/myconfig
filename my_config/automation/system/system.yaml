@@ -974,7 +974,7 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f534 {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        message: "\U0001f534 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 
 # ##################################
 # System - ESP Devices Status to On
@@ -1031,7 +1031,7 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0001f7e2 {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        message: "\U0001f7e2 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 
 # ##################################
 # System - Weather Geomagnetic
@@ -1315,7 +1315,7 @@
   action:
     - service: notify.telegram
       data:
-        message: "\U0000267b {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}} перезапустился, аптайм {{states(trigger.entity_id)}}с!"
+        message: "\U0000267b ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}} перезапустился, аптайм {{states(trigger.entity_id)}}с!"
 
 # ##################################
 # System - Air Quality pm25
@@ -1384,8 +1384,10 @@
   trigger:
     - platform: time
       at: "06:50:00"
+      id: "id_morning"
     - platform: time
       at: "20:50:00"
+      id: "id_evening"
   # condition:
   #   - condition: template
   #     value_template: >-
@@ -1419,6 +1421,51 @@
         - sensor.pirateweather_daytime_high_temperature_1d
         - sensor.pirateweather_precip_probability_1d
         - sensor.pirateweather_precip_1d
+    - service: input_number.set_value
+      data:
+        entity_id: input_number.temp_volume
+        value: >
+          {% set ent_id = 'media_player.' + states('input_select.tts_audio_out')|lower %}
+          {% set vol = state_attr(ent_id,'volume_level') %}
+          {{ vol }}
+    - service: input_number.set_value
+      data:
+        entity_id: input_number.tts_volume
+        value: 0
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+        volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+    - if:
+        - condition: trigger
+          id: "id_morning"
+      then:
+        - service: media_player.play_media
+          data:
+            entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+            media_content_id: "какая сегодня погода"
+            media_content_type: "question:tts_reply"
+      else:
+        - service: media_player.play_media
+          data:
+            entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+            media_content_id: "какая завтра погода"
+            media_content_type: "question:tts_reply"
+    - delay:
+        seconds: 3
+    - wait_template: >
+        {% set ent_id = 'sensor.' + states('input_select.tts_audio_out')|lower + '_alice_state' %}
+        {{ is_state(ent_id,'idle') }}
+    - delay:
+        seconds: 2
+    - service: input_number.set_value
+      data:
+        entity_id: input_number.tts_volume
+        value: '{{states("input_number.temp_volume")|float(0)}}'
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+        volume_level: '{{states("input_number.tts_volume")|float(0)}}'
 
 # ##################################
 # System - Hot Water Boolean Change
@@ -2253,7 +2300,6 @@
     - service: switch.turn_on
       entity_id: switch.sonoff_5v1c_relay, switch.sonoff_5v1c_relay
 
-
 # ##################################
 # System - Fully App restart
 # ##################################
@@ -2264,6 +2310,11 @@
     - platform: time_pattern
       hours: "/1"
       #at: "06:30:00"
+    - platform: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.28d1273bc2f4_action
+        click_type: single
   action:
     # - wait_for_trigger:
     #   condition:
