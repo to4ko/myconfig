@@ -298,6 +298,8 @@
     - service: tts.clear_cache
     - service: input_select.select_next
       entity_id: input_select.dishwasher
+    - service: automation.turn_on
+      entity_id: automation.vova_tv_control
 
 # ##################################
 # System - Weather FCST to Telegram
@@ -2359,3 +2361,32 @@
     - service: homeassistant.update_entity
       data:
         entity_id: sensor.repairs_state
+
+
+# ##################################
+# System - Digma100 Cam Restart
+# ##################################
+- alias: system_digma100_camera_restart
+  id: system_digma100_camera_restart
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: camera.digma100
+      to: 'unavailable'
+      for:
+        seconds: 15
+    - platform: homeassistant
+      event: start
+    - platform: event
+      event_type: automation_reloaded
+  condition:
+    - condition: state
+      entity_id: camera.digma100
+      state: 'unavailable'
+  action:
+    - service: switch.turn_off
+      entity_id: switch.digma_strip_hb_relay2
+    - delay:
+        seconds: 15
+    - service: switch.turn_on
+      entity_id: switch.digma_strip_hb_relay2
