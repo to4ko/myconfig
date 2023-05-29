@@ -107,7 +107,7 @@
 
       - name: Power Consumption S
         unique_id: power_consumption_s
-        state: "{{ ( states('sensor.shelly_1pm_led_s_power')|float(0) + states('sensor.0x00158d00035f44a7_power')|float(0)+ states('sensor.0x00158d000239097a_power')|float(0) + states('sensor.0x00158d0002395d58_power')|float(0) ) | round(0, 'common')}}"
+        state: "{{ ( iif(is_state('light.square_led_s', 'on') and is_state('binary_sensor.square_led_s_nightlight','off'), 90, 0) + iif(is_state('light.square_led_s', 'on') and is_state('binary_sensor.square_led_s_nightlight','on'), 5, 0) + states('sensor.0x00158d00035f44a7_power')|float(0)+ states('sensor.0x00158d000239097a_power')|float(0) + states('sensor.0x00158d0002395d58_power')|float(0) ) | round(0, 'common')}}"
         unit_of_measurement: W
         icon: mdi:gauge
 
@@ -170,7 +170,8 @@
           iif(is_state('switch.0x54ef441000680083_channel_2', 'on'), 16, 0) + 
           iif(is_state('switch.0x54ef441000680083_channel_1', 'on'), 16, 0) + 
           
-          states('sensor.1pm_led_mb_power')|float(0) + 
+          iif(is_state('light.round_led_mb', 'on') and is_state('binary_sensor.round_led_mb_nightlight','off'), 32, 0) +
+          iif(is_state('light.round_led_mb', 'on') and is_state('binary_sensor.round_led_mb_nightlight','on'), 5, 0) +
           iif(is_state('light.lt11_1_led', 'on'), 15, 0) + 
           iif(is_state('light.d1mini_strip_mb_led', 'on'), 30, 0) + 
           iif(is_state('light.led_color_mb', 'on'), 10, 0) +
@@ -187,7 +188,8 @@
           iif(is_state('light.led_strip_bed_sandra_v', 'on'), 15, 0) + 
           iif(is_state('light.led_color_v', 'on'), 10, 0) +
 
-          states('sensor.shelly_1pm_led_s_power')|float(0) + 
+          iif(is_state('light.square_led_s', 'on') and is_state('binary_sensor.square_led_s_nightlight','off'), 90, 0) +
+          iif(is_state('light.square_led_s', 'on') and is_state('binary_sensor.square_led_s_nightlight','on'), 5, 0) +
           iif(is_state('light.esp32_node_s_led', 'on'), 30, 0) + 
           iif(is_state('light.led_white_s', 'on'), 10, 0))|round(2)
           }}
