@@ -1111,6 +1111,8 @@
     #   value_template: "{{ 'Cannot connect to host' in (trigger.event.data.message|string) or 'Cannot connect to host' in (trigger.event.data.message|string)}}"
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: template
+      value_template: "{{(as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_fully_browser_restart', 'last_triggered'))|int(0)) > 5*60 }}"
   action:
     - choose:
         - conditions:
@@ -2324,6 +2326,8 @@
     #   entity_id: switch.optima_8_z801_4g_screensaver
     - service: button.press
       entity_id: button.optima_8_z801_4g_restart_browser
+    - service: timer.start
+      entity_id: timer.kiosk_restart_manual
 
 # ##################################
 # System - System Repair Event Notify
