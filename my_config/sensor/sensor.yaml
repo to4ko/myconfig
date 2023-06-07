@@ -99,30 +99,6 @@
   sampling_size: 432000
   precision: 1
 
-- platform: command_line
-  name: ERRORS during Boot
-  command: 'grep -c -E "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3} ERROR .*$" /config/home-assistant.log || true'
-  scan_interval: 6000
-  unit_of_measurement: ea
-
-- platform: command_line
-  name: WARNINGS during Boot
-  command: 'grep -c -E "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3} WARNING .*$" /config/home-assistant.log || true'
-  scan_interval: 6000
-  unit_of_measurement: ea
-
-- platform: command_line
-  name: Start Time
-  command: 'grep -m 1 -o "initialized[[:space:]]in[[:space:]][0-9]\+.[0-9]\+" /config/home-assistant.log | grep -o "[0-9]\+.[0-9]\+$" || echo -1'
-  scan_interval: 6000
-  unit_of_measurement: "s"
-
-# - platform: command_line
-#   name: badlogin
-#   command: 'grep -v "Timeout" /config/home-assistant.log | grep -c "Login attempt" || true '
-#   value_template: '{{ value | int }}'
-#   unit_of_measurement: ea
-
 # - platform: mqtt
 #   state_topic: esp01_air_freshener/sprays_count
 #   name: Air Freshener Counter
@@ -299,36 +275,6 @@
     - sensor.esp32_node_v_pressure
     - sensor.sonoff_pow_r2_2_pressure
 
-- platform: command_line
-  name: Supervisor Updates
-  command: 'curl http://supervisor/supervisor/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"update_available":.data.update_available,"healthy":.data.healthy,"addons":[.data.addons[] | select(.update_available)]}'''
-  value_template: "{{ value_json.addons | length }}"
-  unit_of_measurement: pending update(s)
-  json_attributes:
-    - update_available
-    - newest_version
-    - current_version
-    - healthy
-    - addons
-
-# - platform: command_line
-#   name: Updater HassOS
-#   command: 'curl http://supervisor/os/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version,"update_available":.data.update_available}'''
-#   value_template: "{% if value_json.update_available or value_json.newest_version != value_json.current_version %}on{% else %}off{% endif %}"
-#   json_attributes:
-#   - newest_version
-#   - current_version
-#   - update_available
-
-# - platform: command_line
-#   name: Updater Core
-#   command: 'curl http://supervisor/core/info -H "Authorization: Bearer $(printenv SUPERVISOR_TOKEN)" | jq ''{"newest_version":.data.version_latest,"current_version":.data.version}'''
-#   scan_interval: 600
-#   value_template: "{% if value_json.newest_version != value_json.current_version %}on{% else %}off{% endif %}"
-#   json_attributes:
-#   - newest_version
-#   - current_version
-
 # - platform: rest
 #   resource: https://edge.qiwi.com/sinap/crossRates
 #   name: QIWI USD Rate
@@ -353,69 +299,6 @@
   value_template: "{{ value_json.Valute.EUR.Value | float(0) | round(2, 'common') }}"
   unit_of_measurement: "RUR"
   scan_interval: 1200
-
-# - platform: command_line
-#   name: config_line_count_sh
-#   command: 'bash /config/line_count.sh'
-#   unit_of_measurement: 'lines'
-#   scan_interval: 1800
-
-# - platform: command_line
-#   name: config_line_count_sh_code
-#   unit_of_measurement: 'lines'
-#   command: 'bash /config/line_count_code.sh'
-#   scan_interval: 1800
-
-#  - platform: command_line
-#    name: ya_weather_city
-#    command: 'bash /config/ya_weather.sh'
-#    scan_interval: 120
-
-#  - platform: command_line
-#    name: ya_weather_work
-#    command: 'bash /config/ya_weather_work.sh'
-#    scan_interval: 120
-
-- platform: command_line
-  name: ya_weather_home
-  command: 'bash /config/ya_weather_home.sh'
-  scan_interval: 120
-
-# - platform: command_line
-#   name: Dima Yandex Rain
-#   command: >
-#     wget -q --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36' "https://yandex.ru/pogoda/maps/nowcast?lat={{state_attr('device_tracker.life360_dima_tsymbal','latitude')}}&lon={{state_attr('device_tracker.life360_dima_tsymbal','longitude')}}" -O /dev/stdout | sed 's/>/>\n/g' | grep "weather-maps-fact__nowcast-alert" -A1 | tail -1 | sed 's/<\/div>//g' | sed 's|.*\. ||'
-#   scan_interval: 120
-#   value_template: >
-#     {% if value == "unknown" or value == "" -%}
-#       unavailable
-#     {%- else -%}
-#       {{value}}
-#     {%- endif %}
-
-# - platform: command_line
-#   name: Sandra Yandex Rain
-#   command: >
-#     wget -q --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36' "https://yandex.ru/pogoda/maps/nowcast?lat={{state_attr('device_tracker.life360_sandra_tsymbal','latitude')}}&lon={{state_attr('device_tracker.life360_sandra_tsymbal','longitude')}}" -O /dev/stdout | sed 's/>/>\n/g' | grep "weather-maps-fact__nowcast-alert" -A1 | tail -1 | sed 's/<\/div>//g' | sed 's|.*\. ||'
-#   scan_interval: 120
-#   value_template: >
-#     {% if value == "unknown" or value == "" -%}
-#       unavailable
-#     {%- else -%}
-#       {{value}}
-#     {%- endif %}
-
-# - platform: command_line
-#   name: Vova Yandex Rain
-#   command: >
-#     wget -q --user-agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36' "https://yandex.ru/pogoda/maps/nowcast?lat={{state_attr('device_tracker.life360_vova_tsymbal','latitude')}}&lon={{state_attr('device_tracker.life360_vova_tsymbal','longitude')}}" -O /dev/stdout | sed 's/>/>\n/g' | grep "weather-maps-fact__nowcast-alert" -A1 | tail -1 | sed 's/<\/div>//g' | sed 's|.*\. ||'
-#   scan_interval: 120
-#   value_template: >
-#     {% if value == "unknown" or value == "" -%}
-#       unavailable
-#     {%- else -%}
-#       {{value}}
-#     {%- endif %}
 
 # - platform: github
 #   access_token: !secret github_access_token
@@ -603,11 +486,11 @@
 #     {% endif %}
 #   scan_interval: 300
 
-- platform: waqi
-  token: !secret aqicn_api_key
-  scan_interval: 900
-  locations:
-    - Ostankino, Moscow
+# - platform: waqi
+#   token: !secret aqicn_api_key
+#   scan_interval: 900
+#   locations:
+#     - Ostankino, Moscow
 # - platform: history_stats
 #   name: Canister T Stats
 #   entity_id: binary_sensor.0x00158d0003262a35_contact
@@ -632,4 +515,3 @@
 #   duration:
 #     hours: 1
 #   type: ratio
-
