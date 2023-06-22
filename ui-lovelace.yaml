@@ -5063,45 +5063,41 @@ views:
               - data: load_avg
                 name: Load Avg (1m, 5m, 15m)
                 modify: '(x+"").split("|").slice(0, 3).join(", ")'
-              - data: zigbee_tx
+              - data: serial
                 name: ZB Tx
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: zigbee_rx
+                modify: 'isNaN(parseInt(x.zigbee_tx, 10)) ? 0 : parseInt(x.zigbee_tx, 10)'
+              - data: serial
                 name: ZB Rx
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: zigbee_oe
+                modify: 'isNaN(parseInt(x.zigbee_rx, 10)) ? 0 : parseInt(x.zigbee_rx, 10)'
+              - data: serial
                 name: ZB Err
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: bluetooth_tx
+                modify: 'isNaN(parseInt(x.zigbee_oe, 10)) ? 0 : parseInt(x.zigbee_oe, 10)'
+              - data: serial
                 name: BT Tx
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: bluetooth_rx
+                modify: 'isNaN(parseInt(x.bluetooth_tx, 10)) ? 0 : parseInt(x.bluetooth_tx, 10)'
+              - data: serial
                 name: BT Rx
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: bluetooth_oe
+                modify: 'isNaN(parseInt(x.bluetooth_rx, 10)) ? 0 : parseInt(x.bluetooth_rx, 10)'
+              - data: serial
                 name: BT Err
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
+                modify: 'isNaN(parseInt(x.bluetooth_oe, 10)) ? 0 : parseInt(x.bluetooth_oe, 10)'
               - data: rssi
                 name: RSSI
-                modify: 'isNaN(parseInt(x, 10)) ? "" : (100 + parseInt(x, 10)) * -1'
               - data: uptime
                 name: Gateway Uptime
                 modify: x+''
-              - name: Connected Since
-                data: last_changed, state
-                multi_delimiter: ","
+              - data: last_changed
+                name: Connected Since
                 modify: >
-                  if (x.split(",")[1] == 'on') {
-                  var dr = x.split(",")[0];
-                  var dt = new Date(dr);
-                  var hrs = parseInt((Date.now()-Date.parse(dr)) / 3600000);
-                  var min = parseInt(((Date.now()-Date.parse(dr)) / 60000) % 60);
-                  var sec = parseInt(((Date.now()-Date.parse(dr)) / 1000) % 60);
+                  var dt = new Date(x);
+                  var hrs = parseInt((Date.now()-Date.parse(x)) / 3600000);
+                  var min = parseInt(((Date.now()-Date.parse(x)) / 60000) % 60);
+                  var sec = parseInt(((Date.now()-Date.parse(x)) / 1000) % 60);
                   hrs = (hrs < 10) ? "0" + hrs : hrs;
                   min = (min < 10) ? "0" + min : min;
                   sec = (sec < 10) ? "0" + sec : sec;
-                  isFinite(dt) ? "" + hrs + ":" + min + ":" + sec + "" : ""}
-                  else "off"
+                  isFinite(dt) ? dt.toLocaleString(['ru-RU', 'en-US']) +
+                  " (Up: " + hrs + ":" + min + ":" + sec + ")" : ""
             css:
               table+: "padding-top: 15px;"
               "tbody tr:nth-child(even)": "background-color: #a2542f6;"
@@ -5135,22 +5131,22 @@ views:
               - data: type
                 name: Type
                 modify: 'x == "" ? "-" : (x+"").replace(/^-$/, "device")'
+              - data: device_fw_ver
+                name: FW
+                modify: 'x == "" ? "-" : x+""'
               - data: msg_received
                 name: Received
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
               - data: msg_missed
-                name: Missed (Total)
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: last_missed
-                name: Missed (Last)
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
+                name: Missed
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
               - data: unresponsive
                 name: Unresponsive
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
               - data: new_resets
                 name: Resets
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: link_quality
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: linkquality
                 name: LQI
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
               - data: rssi
@@ -5159,6 +5155,9 @@ views:
               - data: last_msg
                 name: Last Message
                 modify: x+''
+              - data: available
+                name: Available
+                modify: 'x === true ? "✓" : x+""'
               - data: state
                 name: Last Seen
                 # modify: >
@@ -5273,22 +5272,22 @@ views:
               - data: type
                 name: Type
                 modify: 'x == "" ? "-" : (x+"").replace(/^-$/, "device")'
+              - data: device_fw_ver
+                name: FW
+                modify: 'x == "" ? "-" : x+""'
               - data: msg_received
                 name: Received
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
               - data: msg_missed
-                name: Missed (Total)
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: last_missed
-                name: Missed (Last)
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
+                name: Missed
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
               - data: unresponsive
                 name: Unresponsive
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
               - data: new_resets
                 name: Resets
-                modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: link_quality
+                modify: 'isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)'
+              - data: linkquality
                 name: LQI
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
               - data: rssi
@@ -5297,6 +5296,9 @@ views:
               - data: last_msg
                 name: Last Message
                 modify: x+''
+              - data: available
+                name: Available
+                modify: 'x === true ? "✓" : x+""'
               - data: state
                 name: Last Seen
                 # modify: >
