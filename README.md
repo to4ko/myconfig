@@ -57,13 +57,14 @@
   - 2*16Gb Crucial DDR4 SODIMM
   - 8TB WD White as Media Storage
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
-  - Adata SX6000 Lite 256Gbas NVME read cache
+  - 2ea Adata SX6000 Lite 512Gb as NVME read\write cache
   - 2ea Samsung 870 Evo 500Gb in SHR1 as Fast "Docker" Storage
 
 **Backup Storage Unit - Synology DS920+**
   - 16Gb Kingston DDR4 SODIMM
   - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1 
   - 2ea Samsung 860 EVO 250Gb in SHR1
+  - 2ea Adata SX6000 Lite 256Gb as NVME read\write cache
 
 **Remote Storage Unit - Synology DS220+** 
   - 2ea Seagate Skyhawk 4Tb in SHR1
@@ -80,12 +81,11 @@
   - Ufiber Loco
   - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
   - Unifi Enterprise Switch 24 PoE
-  - Unifi Switch 8-60W (4ea)
-  - Unifi Switch Flex Mini
-  - Unifi Switch Flex
-  - not in use - Unifi Switch Light 8 PoE
+  - Unifi Switch Flex Mini (2ea)
+  - Unifi Switch Flex (2ea)
+  - Unifi Switch Light 8 PoE (3ea)
   - Unifi AC AP Lite (2ea)
-  - Unifi AC AP Pro (3ea)
+  - Unifi U6 Pro (3ea)
   - Unifi AP AC Mesh with UMA-D
 
 # Surveillance
@@ -222,7 +222,7 @@
     * Visual Studio Code
 
 **Main Storage Unit Software**
-  - DSM 7.1
+  - DSM 7.2
   - HA OS instance in VM
   - Docker containers:
     * Mosquitto
@@ -274,10 +274,19 @@
 </details>
 
 <details>
-  <summary>SQL Query to get top contributors in DB</summary>
+  <summary>some usefull SQL tips</summary>
 
   ```
-  SELECT entity_id, COUNT(*) as count FROM states GROUP BY entity_id ORDER BY count DESC LIMIT 100;
+  SELECT m.entity_id, COUNT(*) as count FROM states as s JOIN states_meta AS m ON s.metadata_id = m.metadata_id GROUP BY m.metadata_id ORDER BY count DESC LIMIT 100;
+  ```
+  ```
+  SELECT SUM(pgsize) bytes, name FROM dbstat GROUP BY name ORDER BY bytes DESC;
+  ```
+  ```
+  SELECT m.statistic_id, COUNT(*) as count FROM statistics as s JOIN statistics_meta AS m ON s.metadata_id = m.id GROUP BY m.statistic_id ORDER BY count DESC LIMIT 100;
+  ```
+  ```
+  DELETE FROM states WHERE metadata_id IN (SELECT metadata_id FROM states_meta WHERE entity_id = 'sensor.your_sensor');
   ```
 </details>
 
@@ -463,7 +472,7 @@ white-space:nowrap;>
 <td>Synology DS1621+</td>
 <td>Ryzen V1500B</td>
 <td>2 * 16Gb DDR4</td>
-<td>8Tb HDD + 2*4Tb HDD + 2*256Gb SSD + 256Gb NVME (read cache)</td>
+<td>8Tb HDD + 2*4Tb HDD + 2*256Gb SSD + 2*512Gb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
 
