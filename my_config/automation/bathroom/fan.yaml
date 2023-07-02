@@ -271,10 +271,69 @@
                 entity_id: switch.esp32_node_b_fan_b_auto_mode
 
 # ##################################
+# Bathroom - Fan Night mode (door closed)
+# ##################################
+  - alias: bathroom_fan_night_mode_door_close_control
+    id: bathroom_fan_night_mode_door_close_control
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: '/5'
+      # - platform: time
+      #   at: "07:00:00"
+      # - platform: time
+      #   at: "21:00:00"
+    condition:
+      - condition: state
+        entity_id: switch.security_mode
+        state: 'off'
+      - condition: template
+        value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{ 1 < now().hour < 6 }}"
+      - condition: template
+        value_template: "{{states('number.esp32_node_b_humidity_set')|int(0) != 30 }}"
+      - condition: state
+        entity_id: binary_sensor.0x00158d0002a14c5e_contact
+        state: 'off'
+    action:
+      - service: number.set_value
+        data:
+          value: "30"
+        target:
+          entity_id: number.esp32_node_b_humidity_set
+
+# ##################################
+# Bathroom - Fan to normal mode
+# ##################################
+  - alias: bathroom_fan_to_normal_mode
+    id: bathroom_fan_to_normal_mode
+    initial_state: true
+    trigger:
+      - platform: time
+        at: "06:20:00"
+      # - platform: time
+      #   at: "21:00:00"
+    condition:
+      - condition: state
+        entity_id: switch.security_mode
+        state: 'off'
+      - condition: template
+        value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{states('number.esp32_node_b_humidity_set')|int(0) < 50 }}"
+    action:
+      - service: number.set_value
+        data:
+          value: "65"
+        target:
+          entity_id: number.esp32_node_b_humidity_set
+
+# ##################################
 # Bathroom - Bottom Fan On with Fan
 # ##################################
   - alias: bathroom_bottom_fan_with_fan
-    id: bathroom_bottom_fan_with_Fan
+    id: bathroom_bottom_fan_with_fan
     initial_state: true
     trigger:
       - platform: state

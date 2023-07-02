@@ -1,11 +1,11 @@
 substitutions:
-  board_name: esp32_ble_hs
-  node_name: esp32-ble-hs
+  board_name: esp32_poe_ble_hs
+  node_name: esp32-poe-ble-hs
   up_int: 60s
   
 esphome:
   name: ${node_name}
-  comment: ESP32 BLE Tracker HS with Geiger Sensor
+  comment: ESP32 POE BLE Tracker HS with Geiger Sensor
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
   libraries:
@@ -17,21 +17,23 @@ esphome:
 
 
 esp32:
-  board: nodemcu-32s
+  board: esp32doit-devkit-v1
+  framework:
+    type: arduino
 
 external_components:
   - source: github://myhomeiot/esphome-components  
 
-wifi:
-  ssid: !secret wifi_ssid_k
-  password: !secret wifi_pass
-  domain: .local
-  reboot_timeout: 15min
-  #output_power: 17.5dB
-  fast_connect: true
-  #power_save_mode: none
+ethernet:
+  type: IP101
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  #clk_mode: GPIO17_OUT
+  clk_mode: GPIO0_IN
+  phy_addr: 1
+  power_pin: GPIO5
   # manual_ip:
-  #   static_ip: 192.168.1.59
+  #   static_ip: 192.168.1.110
   #   gateway: 192.168.1.1
   #   subnet: 255.255.255.0
   #   dns1: 192.168.1.1
@@ -44,9 +46,6 @@ api:
   reboot_timeout: 0s
 
 ota:
-
-# mdns:
-#   disabled: true
   
 globals:
   - id: event_count
@@ -54,29 +53,24 @@ globals:
     restore_value: no
     initial_value: '0'
 
-#bluetooth_proxy:
-#  active: true
+i2c:
+  sda: GPIO15
+  scl: GPIO13
+  scan: true
+
+bluetooth_proxy:
+
 esp32_ble_tracker:
   scan_parameters:
-     #interval: 512ms
-     #window: 48ms
-    active: false
-#esp32_ble_tracker:
-#  scan_parameters:
-#    interval: 1100ms
-#    window: 1100ms
-#    active: true
+    interval: 1100ms
+    window: 1100ms
+    active: true
 
 # dashboard_import:
 #   package_import_url: github://esphome/bluetooth-proxies/esp32-generic.yaml@main
 
 # web_server:
 #   port: 80
-
-i2c:
-  sda: GPIO21
-  scl: GPIO22
-  scan: True
 
 ble_gateway:
   id: ${board_name}
@@ -89,48 +83,6 @@ ble_gateway:
             gateway_id: ${board_name}
       - lambda: |-
           id(event_count) += 1;
-
-
-# myhomeiot_ble_host:
-
-# myhomeiot_ble_client:
-#   - mac_address: 7E:FE:3E:EC:59:FB
-#     service_uuid: '180F'
-#     characteristic_uuid: '2A19'
-#     update_interval: 24h
-#     on_value:
-#       then:
-#         lambda: |-
-#           id(${board_name}_White_Battery).publish_state(x[0]);
-
-
-#   - mac_address: 2A:BC:3E:DC:57:65
-#     service_uuid: '180F'
-#     characteristic_uuid: '2A19'
-#     update_interval: 24h
-#     on_value:
-#       then:
-#         lambda: |-
-#           id(${board_name}_Pink_Battery).publish_state(x[0]);
-
-#   - mac_address: 6B:9C:3E:D1:C5:9A
-#     service_uuid: '180F'
-#     characteristic_uuid: '2A19'
-#     update_interval: 24h
-#     on_value:
-#       then:
-#         lambda: |-
-#           id(${board_name}_Green_Battery).publish_state(x[0]);
-
-
-#   - mac_address: 2A:BC:3E:DC:57:65
-#     service_uuid: '180F'
-#     characteristic_uuid: '2A19'
-#     update_interval: 24h
-#     on_value:
-#       then:
-#         lambda: |-
-#           id(${board_name}_Grey_Battery).publish_state(x[0]);
 
 binary_sensor:
   - platform: status
@@ -156,91 +108,33 @@ binary_sensor:
     name: ${board_name}_Green
     device_class: presence
 
-# 7E:FE:3E:EC:59:FB white
-# 6B:9C:3E:D1:C5:9A green
-# 2A:BC:3E:DC:57:65 PINK
-# 3B:EF:3E:DE:98:6B GREY
+  - platform: gpio
+    pin: 
+      number: GPIO33
+      inverted: true
+    name: ${board_name}_Reset Button
+
+output:
+  - platform: gpio
+    pin: GPIO14
+    inverted: true
+    id: power_led
+    
+  - platform: gpio
+    pin: GPIO12
+    inverted: true
+    id: bluetooth_led
+
+  - platform: gpio
+    pin: GPIO32
+    inverted: true
+    id: status_led
 
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
     id: uptime_sensor
     update_interval: 15s
-
-  # - platform: wifi_signal
-  #   name: ${board_name}_WiFi_RSSI
-  #   update_interval: 60s
-    
-  # - platform: ble_rssi
-  #   mac_address: 7E:FE:3E:EC:59:FB
-  #   name: ${board_name}_White_RSSI
-  #   icon: "mdi:wifi"
-
-  # - platform: ble_rssi
-  #   mac_address: 3B:EF:3E:DE:98:6B
-  #   name: ${board_name}_Grey_RSSI
-  #   icon: "mdi:wifi"
-
-  # - platform: ble_rssi
-  #   mac_address: 2A:BC:3E:DC:57:65
-  #   name: ${board_name}_Pink_RSSI
-  #   icon: "mdi:wifi"
-
-  # - platform: ble_rssi
-  #   mac_address: 6B:9C:3E:D1:C5:9A
-  #   name: ${board_name}_Green_RSSI
-  #   icon: "mdi:wifi"
-
-  # - platform: template
-  #   id: ${board_name}_White_Battery
-  #   name: ${board_name}_White_Battery
-  #   device_class: battery
-  #   unit_of_measurement: '%'
-  #   state_class: measurement
-  #   accuracy_decimals: 0
-
-  # - platform: template
-  #   id: ${board_name}_Pink_Battery
-  #   name: ${board_name}_Pink_Battery
-  #   device_class: battery
-  #   unit_of_measurement: '%'
-  #   state_class: measurement
-  #   accuracy_decimals: 0
-
-  # - platform: template
-  #   id: ${board_name}_Green_Battery
-  #   name: ${board_name}_Green_Battery
-  #   device_class: battery
-  #   unit_of_measurement: '%'
-  #   state_class: measurement
-  #   accuracy_decimals: 0
-    
-  # - platform: template
-  #   id: ${board_name}_Grey_Battery
-  #   name: ${board_name}_Grey_Battery
-  #   device_class: battery
-  #   unit_of_measurement: '%'
-  #   state_class: measurement
-  #   accuracy_decimals: 0
-
-  # - platform: template
-  #   name: ${board_name}_Heap_Free
-  #   lambda: "return ESP.getFreeHeap();"
-  #   id: heap_size
-  #   update_interval: 5s
-  #   unit_of_measurement: bytes
-  #   accuracy_decimals: 0
-  #   entity_category: diagnostic
-    
-  # - platform: template
-  #   name: ${board_name}_Heap_Min
-  #   icon: mdi:memory
-  #   lambda: |-
-  #     return {static_cast<float>(esp_get_minimum_free_heap_size())};
-  #   unit_of_measurement: B
-  #   #update_interval: ${update_interval}
-  #   update_interval: 5s
-  #   entity_category: diagnostic
 
   - platform: template
     name: ${board_name}_Events
@@ -296,7 +190,6 @@ text_sensor:
     icon: mdi:clock-start
     update_interval: 15s
 
-  #BLE Devices
   - platform: homeassistant
     id: ble_gateway_devices
     entity_id: binary_sensor.ble_gateway
@@ -305,17 +198,9 @@ text_sensor:
       then:
         - lambda: id(${board_name}).set_devices(x);
 
-  - platform: wifi_info
+  - platform: ethernet_info
     ip_address:
       name: ${board_name}_IP
-    ssid:
-      name: ${board_name}_SSID
-    bssid:
-      name: ${board_name}_BSSID
-    mac_address:
-      name: ${board_name}_Mac
-    scan_results:
-      name: ${board_name}_Latest_Scan_Results
 
   - platform: version
     name: ${board_name}_ESPHome_Version
