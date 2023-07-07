@@ -45,8 +45,7 @@
 </div>
 
 # Hardware Configuration
-**Main Unit - HP Prodesk 600 G6 Mini** 
-  - HP Prodesk 600 G6 Mini
+**Main Unit - HP Prodesk 600 G6 Mini**
   - Intel i5-10600
   - 2*8Gb Samsung DDR4 SODIMM
   - 512Gb ADATA SX8200 Pro 512Gb NVME
@@ -55,19 +54,23 @@
 
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Crucial DDR4 SODIMM
-  - 8TB WD White as Media Storage
-  - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1
+  - 16TB WD HC550 as Media Storage
+  - 2ea WD Purple 4Tb in SHR1 as Main Storage section
   - 2ea Adata SX6000 Lite 512Gb as NVME read\write cache
-  - 2ea Samsung 870 Evo 500Gb in SHR1 as Fast "Docker" Storage
+  - 2ea Samsung 870 Evo 2Tb in SHR1 as Fast Storage for Docker\VMM
+
+**Plex Unit - Intel Nuc 12 Pro** 
+  - 2*8Gb Crucial DDR4 SODIMM
+  - Samsung PM9A1 1Tb
 
 **Backup Storage Unit - Synology DS920+**
   - 16Gb Kingston DDR4 SODIMM
-  - 2ea WD Purple 4Tb (Storage section for critical files) in SHR1 
-  - 2ea Samsung 860 EVO 250Gb in SHR1
+  - 2ea WD Purple 4Tb in SHR1 as Main Storage section 
+  - 2ea Samsung 860 EVO 500Gb in SHR1
   - 2ea Adata SX6000 Lite 256Gb as NVME read\write cache
 
 **Remote Storage Unit - Synology DS220+** 
-  - 2ea Seagate Skyhawk 4Tb in SHR1
+  - 2ea Seagate Skyhawk 4Tb in SHR1 as Main Storage section
   - Upcoming remote HA server
 
 **UPS**
@@ -81,12 +84,12 @@
   - Ufiber Loco
   - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
   - Unifi Enterprise Switch 24 PoE
-  - Unifi Switch Flex Mini (2ea)
-  - Unifi Switch Flex (2ea)
   - Unifi Switch Light 8 PoE (3ea)
+  - Unifi Switch Flex (2ea)
+  - Unifi Switch Flex Mini (2ea)
   - Unifi AC AP Lite (2ea)
   - Unifi U6 Pro (3ea)
-  - Unifi AP AC Mesh with UMA-D
+  - Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
   - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
@@ -178,10 +181,8 @@
   - ESP32 - Node S - Sasha Room SensAir S8, BME280, BHI1750, WS2812 LES Strip, HA API Watchdog
   - ESP32 - Hood K - Kitchen Hood Fan\Light Control, BME280, Dallas and max6675
   - ESP32 - Node HS - Hall Small adressable LED controller with BME280 and ClimateGuard Geiger sensor 
-  - ESP32 - BLE Tracker HB
-  - ESP32 - BLE Tracker HS
-  - ESP32 - BLE Tracker S
-  - ESP32 - BLE Tracker MB
+  - ESP32 - BLE Gateway HB
+  - ESP32 - GL.iNET GL-S10 POE powered BLE Gateway (3ea)
   - ESP32 - Hall Big Breaker Box PZEM-004T
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP01 Weight Cell for RO water filter tank
@@ -201,13 +202,14 @@
   - not in use - SLS Gateway
   - not in use - DIYRuZ_Geiger Sensor
   - Shelly EM
-  - Shelly 1PM (3ea)
+  - Shelly 1PM (2ea)
+  - Shelly 1 (2ea)
   - Shelly Plug S (2ea)
   - not in use - Xiaomi Kettle
 
 # Software configuration
 **Main Unit Software:**
-  - Debian 11 (backports)
+  - Debian 11
   - Home Assistant Core Supervised
   - PostgreSQL
   - Add-On's: 
@@ -472,7 +474,30 @@ white-space:nowrap;>
 <td>Synology DS1621+</td>
 <td>Ryzen V1500B</td>
 <td>2 * 16Gb DDR4</td>
-<td>8Tb HDD + 2*4Tb HDD + 2*256Gb SSD + 2*512Gb NVME (read\write cache)</td>
+<td>16Tb HDD + 2*4Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
+<tr>
+<td rowspan="3">14</td>
+<td rowspan="3">2023</td>
+<td>HP Prodesk 600 G6 mini</td>
+<td>i5-10600</td>
+<td>2 * 8Gb DDR4</td>
+<td>512GB NVME</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>16Tb HDD + 2*4Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Intel Nuc 12 Pro</td>
+<td>i3-1220p</td>
+<td>2 * 8Gb DDR4</td>
+<td>1Tb NVME</td>
 <td>-</td>
 </tr>
 

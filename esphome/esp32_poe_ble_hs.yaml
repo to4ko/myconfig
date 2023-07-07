@@ -5,48 +5,43 @@ substitutions:
   
 esphome:
   name: ${node_name}
-  comment: ESP32 POE BLE Tracker HS with Geiger Sensor
+  comment: ESP32 POE BLE Tracker HS
+  project:
+    name: esphome.bluetooth-proxy
+    version: "1.0"
   # platformio_options:
   #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
-  libraries:
-    - Wire
-    - "climateguard/ClimateGuard RadSens"
-  includes:
-    - radsense/_CG_RadSens.h
-    - radsense/CountsPerMinute.h
+  # on_boot:
+  #   then:
+  #     - output.turn_on: power_led
+      
+external_components:
+  - source: github://myhomeiot/esphome-components  
 
+dashboard_import:
+  package_import_url: github://esphome/bluetooth-proxies/gl-s10.yaml@main
 
 esp32:
   board: esp32doit-devkit-v1
   framework:
-    type: arduino
-
-external_components:
-  - source: github://myhomeiot/esphome-components  
+    type: esp-idf
 
 ethernet:
   type: IP101
   mdc_pin: GPIO23
   mdio_pin: GPIO18
-  #clk_mode: GPIO17_OUT
   clk_mode: GPIO0_IN
   phy_addr: 1
   power_pin: GPIO5
-  # manual_ip:
-  #   static_ip: 192.168.1.110
-  #   gateway: 192.168.1.1
-  #   subnet: 255.255.255.0
-  #   dns1: 192.168.1.1
-  #   dns2: 8.8.8.8
 
 logger:
-#  baud_rate: 0
+  baud_rate: 0
 
 api:
   reboot_timeout: 0s
 
 ota:
-  
+
 globals:
   - id: event_count
     type: unsigned int
@@ -59,15 +54,14 @@ i2c:
   scan: true
 
 bluetooth_proxy:
+  active: true
+
 
 esp32_ble_tracker:
   scan_parameters:
     interval: 1100ms
     window: 1100ms
     active: true
-
-# dashboard_import:
-#   package_import_url: github://esphome/bluetooth-proxies/esp32-generic.yaml@main
 
 # web_server:
 #   port: 80
@@ -84,9 +78,18 @@ ble_gateway:
       - lambda: |-
           id(event_count) += 1;
 
+# status_led:
+#   pin:
+#     number: GPIO32
+#     inverted: true
+
 binary_sensor:
   - platform: status
     name: ${board_name}_Status
+    # on_press:
+    #   - output.turn_on: bluetooth_led
+    # on_release:
+    #   - output.turn_off: bluetooth_led
 
   - platform: ble_presence
     mac_address: 7E:FE:3E:EC:59:FB
@@ -113,6 +116,7 @@ binary_sensor:
       number: GPIO33
       inverted: true
     name: ${board_name}_Reset Button
+
 
 output:
   - platform: gpio
@@ -144,31 +148,6 @@ sensor:
     icon: mdi:cube-send
     unit_of_measurement: 'event'
     accuracy_decimals: 0
-
-  - platform: custom
-    lambda: |-
-      auto rad_sens = new MyRadSens();
-      App.register_component(rad_sens);
-      return {rad_sens->IntensityDynamic_Sensor,rad_sens->IntensityStatic_Sensor, rad_sens->CurrentCPM_Sensor, rad_sens->MaxCPM_Sensor,rad_sens->Sensivity_Sensor};
-    sensors:
-      - name: ${board_name}_Dynamic intensity
-        id: dynamic_intensity
-        accuracy_decimals: 1
-        unit_of_measurement: μR/h
-      - name: ${board_name}_Static intensity
-        accuracy_decimals: 1
-        unit_of_measurement: μR/h
-      - name: ${board_name}_Current CPM
-        accuracy_decimals: 1
-        unit_of_measurement: CPM
-      - name: ${board_name}_Max CPM
-        accuracy_decimals: 1
-        unit_of_measurement: CPM
-      - name: ${board_name}_Sensivity
-        id: sensivity
-        state_class: measurement
-        entity_category: diagnostic
-
 
 text_sensor:
   - platform: template
@@ -205,7 +184,7 @@ text_sensor:
   - platform: version
     name: ${board_name}_ESPHome_Version
     hide_timestamp: true
-
+    
 button:
   - platform: restart
     name: ${board_name}_Restart
