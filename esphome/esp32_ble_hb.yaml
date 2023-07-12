@@ -37,9 +37,6 @@ api:
   reboot_timeout: 0s
 
 ota:
-
-# mdns:
-#   disabled: true
   
 globals:
   - id: event_count
@@ -65,14 +62,23 @@ ble_gateway:
   id: ${board_name}
   on_ble_advertise:
     then:
-      - homeassistant.event:
-          event: esphome.on_ble_advertise
-          data:
-            packet: !lambda return packet;
-            gateway_id: ${board_name}
-      - lambda: |-
-          id(event_count) += 1;
+        - homeassistant.service:
+            service: ble_monitor.parse_data
+            data:
+              packet: !lambda return packet;
+              gateway_id: ${board_name}
+        - lambda: |-
+            id(event_count) += 1;
 
+  # on_ble_advertise:
+  #   then:
+  #     - homeassistant.event:
+  #         event: esphome.on_ble_advertise
+  #         data:
+  #           packet: !lambda return packet;
+  #           gateway_id: ${board_name}
+  #     - lambda: |-
+  #         id(event_count) += 1;
 
 # myhomeiot_ble_host:
 
