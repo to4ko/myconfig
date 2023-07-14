@@ -45,12 +45,12 @@
 </div>
 
 # Hardware Configuration
-**Main Unit - HP Prodesk 600 G6 Mini**
-  - Intel i5-10600
-  - 2*8Gb Samsung DDR4 SODIMM
-  - 512Gb ADATA SX8200 Pro 512Gb NVME
-  - Buro BU-BT40C
-  - Google Coral m.2
+**Main Unit - Minisforum NPB7**
+  - Intel i7-13700H
+  - 2*8Gb Samsung DDR5 SODIMM
+  - 250Gb Samsung 860 EVO
+  - 1Tb Samsung PM9A1
+  - [BLIKVM v3 HAT](https://wiki.blicube.com/blikvm/en/)
 
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Crucial DDR4 SODIMM
@@ -59,11 +59,7 @@
   - 2ea Adata SX6000 Lite 512Gb as NVME read\write cache
   - 2ea Samsung 870 Evo 2Tb in SHR1 as Fast Storage for Docker\VMM
 
-**Plex Unit - Intel Nuc 12 Pro** 
-  - 2*8Gb Crucial DDR4 SODIMM
-  - Samsung PM9A1 1Tb
-
-**Backup Storage Unit - Synology DS920+**
+**Backup Storage Unit \ Plex Media Server Unit - Synology DS920+**
   - 16Gb Kingston DDR4 SODIMM
   - 2ea WD Purple 4Tb in SHR1 as Main Storage section 
   - 2ea Samsung 860 EVO 500Gb in SHR1
@@ -209,27 +205,20 @@
 
 # Software configuration
 **Main Unit Software:**
-  - Debian 11
-  - Home Assistant Core Supervised
-  - PostgreSQL
-  - Add-On's: 
-    * File Editor
-    * ESPhome
-    * Grafana
-    * Home Assistant Google Drive Backup
-    * IDE
-    * Log Viewer
-    * Portainer
-    * RPC shutdown
-    * Visual Studio Code
+  - Proxmox VE 8
+      * VM - Home Assistant OS
+      * VM - Ubuntu Server 23.04
+          * PostgreSQL
+          * MQTT
 
 **Main Storage Unit Software**
   - DSM 7.2
   - HA OS instance in VM
   - Docker containers:
-    * Mosquitto
+    * MQTT
     * InfluxDB
     * Transmission
+    * qBitTorrent
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
@@ -478,12 +467,12 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="3">14</td>
-<td rowspan="3">2023</td>
-<td>HP Prodesk 600 G6 mini</td>
-<td>i5-10600</td>
-<td>2 * 8Gb DDR4</td>
-<td>512GB NVME</td>
+<td rowspan="2">14</td>
+<td rowspan="2">2023</td>
+<td>Minisforum NPB7</td>
+<td>i7-13700H</td>
+<td>2 * 8Gb DDR5</td>
+<td>250Gb SATA + 1Tb NVME</td>
 <td>-</td>
 </tr>
 <tr>
@@ -491,13 +480,6 @@ white-space:nowrap;>
 <td>Ryzen V1500B</td>
 <td>2 * 16Gb DDR4</td>
 <td>16Tb HDD + 2*4Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
-<td>-</td>
-</tr>
-<tr>
-<td>Intel Nuc 12 Pro</td>
-<td>i3-1220p</td>
-<td>2 * 8Gb DDR4</td>
-<td>1Tb NVME</td>
 <td>-</td>
 </tr>
 
