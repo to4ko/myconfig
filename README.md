@@ -68,7 +68,7 @@
 **Remote Storage Unit - Synology DS220+** 
   - 2ea Seagate Skyhawk 4Tb in SHR1 as Main Storage section
   - Upcoming remote HA server
-
+ 
 **UPS**
   - Ippon Back Basic 1500
   - Ippon Smart Power Pro 1200
