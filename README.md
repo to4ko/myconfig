@@ -206,10 +206,8 @@
 # Software configuration
 **Main Unit Software:**
   - Proxmox VE 8
-      * VM - Home Assistant OS
-      * VM - Ubuntu Server 23.04
-          * PostgreSQL
-          * MQTT
+      * Debian 11 with HA Supervised
+      * Zabbix Server
 
 **Main Storage Unit Software**
   - DSM 7.2
