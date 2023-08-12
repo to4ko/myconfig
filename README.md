@@ -47,7 +47,7 @@
 # Hardware Configuration
 **Main Unit - Minisforum NPB7**
   - Intel i7-13700H
-  - 2*8Gb Samsung DDR5 SODIMM
+  - 2*16Gb Samsung DDR5 SODIMM
   - 250Gb Samsung 860 EVO
   - 1Tb Samsung PM9A1
   - [BLIKVM v3 HAT](https://wiki.blicube.com/blikvm/en/)
