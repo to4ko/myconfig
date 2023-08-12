@@ -54,18 +54,17 @@
 
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Crucial DDR4 SODIMM
-  - 16TB WD HC550 as Media Storage
-  - 2ea WD Purple 4Tb in SHR1 as Main Storage section
-  - 2ea Adata SX6000 Lite 512Gb as NVME read\write cache
+  - 3ea WD HC550 16Tb as Main Storage
   - 2ea Samsung 870 Evo 2Tb in SHR1 as Fast Storage for Docker\VMM
+  - 2ea Adata SX6000 Lite 512Gb as NVME read\write cache
 
 **Backup Storage Unit \ Plex Media Server Unit - Synology DS920+**
-  - 16Gb Kingston DDR4 SODIMM
+  - 4Gb onboard + 16Gb Kingston DDR4 SODIMM
   - 2ea WD Purple 4Tb in SHR1 as Main Storage section 
-  - 2ea Samsung 860 EVO 500Gb in SHR1
+  - 2ea Samsung 860 EVO 1Tb in SHR1
   - 2ea Adata SX6000 Lite 256Gb as NVME read\write cache
 
-**Remote Storage Unit - Synology DS220+** 
+**Remote Storage Unit - Synology DS220+**
   - 2ea Seagate Skyhawk 4Tb in SHR1 as Main Storage section
   - Upcoming remote HA server
 
@@ -212,11 +211,19 @@
 **Main Storage Unit Software**
   - DSM 7.2
   - HA OS instance in VM
+  - Proxmox Bakcup Server in VM
   - Docker containers:
     * MQTT
     * InfluxDB
     * Transmission
     * qBitTorrent
+    * Adguard home
+
+**Backup Storage Unit Software**
+  - DSM 7.2
+  - Docker containers:
+    * Plex Media Server
+    * Adguard Home
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
