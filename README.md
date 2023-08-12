@@ -269,22 +269,22 @@
   ```
 </details>
 
-<details>
-  <summary>some usefull SQL tips</summary>
+<!--<details>-->
+<!--  <summary>some usefull SQL tips</summary>-->
 
-  ```
-  SELECT m.entity_id, COUNT(*) as count FROM states as s JOIN states_meta AS m ON s.metadata_id = m.metadata_id GROUP BY m.metadata_id ORDER BY count DESC LIMIT 100;
-  ```
-  ```
-  SELECT SUM(pgsize) bytes, name FROM dbstat GROUP BY name ORDER BY bytes DESC;
-  ```
-  ```
-  SELECT m.statistic_id, COUNT(*) as count FROM statistics as s JOIN statistics_meta AS m ON s.metadata_id = m.id GROUP BY m.statistic_id ORDER BY count DESC LIMIT 100;
-  ```
-  ```
-  DELETE FROM states WHERE metadata_id IN (SELECT metadata_id FROM states_meta WHERE entity_id = 'sensor.your_sensor');
-  ```
-</details>
+<!--  ```-->
+<!--  SELECT m.entity_id, COUNT(*) as count FROM states as s JOIN states_meta AS m ON s.metadata_id = m.metadata_id GROUP BY m.metadata_id ORDER BY count DESC LIMIT 100;-->
+<!--  ```-->
+<!--  ```-->
+<!--  SELECT SUM(pgsize) bytes, name FROM dbstat GROUP BY name ORDER BY bytes DESC;-->
+<!--  ```-->
+<!--  ```-->
+<!--  SELECT m.statistic_id, COUNT(*) as count FROM statistics as s JOIN statistics_meta AS m ON s.metadata_id = m.id GROUP BY m.statistic_id ORDER BY count DESC LIMIT 100;-->
+<!--  ```-->
+<!--  ```-->
+<!--  DELETE FROM states WHERE metadata_id IN (SELECT metadata_id FROM states_meta WHERE entity_id = 'sensor.your_sensor');-->
+<!--  ```-->
+<!--</details>-->
 
 <details>
   <summary>List of all used domains</summary>
