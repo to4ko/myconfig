@@ -488,7 +488,7 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="2">14</td>
+<td rowspan="2">15</td>
 <td rowspan="2">2023</td>
 <td>Intel NUC 12 Pro</td>
 <td>i3-1220p</td>
