@@ -500,7 +500,7 @@ white-space:nowrap;>
 <td>Synology DS1621+</td>
 <td>Ryzen V1500B</td>
 <td>2 * 16Gb DDR4</td>
-<td>3*16Tb HDD 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
+<td>3*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
 
