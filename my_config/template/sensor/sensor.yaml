@@ -434,16 +434,6 @@
 #       unit_of_measurement: "RUB"
 #       icon: mdi:currency-cny
 
-- trigger:
-    - platform: event
-      event_type: calendar_event_list_updated
-  sensor:
-    - name: calendar_events
-      unique_id: calendar_events
-      state: "{{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
-      icon: mdi:calendar
-      attributes:
-        events: "{{ state_attr('input_select.calendar_events_list', 'options') | list }}"
 
 - trigger:
     - platform: event
@@ -455,3 +445,23 @@
       icon: mdi:calendar
       attributes:
         events: "{{ state_attr('input_select.calendar_holiday_events_list', 'options') | list }}"
+
+
+
+- trigger:
+    - platform: event
+      event_type: calendar_event_list_updated
+    - platform: state
+      entity_id: sensor.calendar_events
+  sensor:
+    - name: calendar_events
+      unique_id: calendar_events
+      state: "{{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
+      attributes:
+        events: >-
+          {% if this.state | int(0) > 0 %}
+            {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}
+          {% else %}
+            ['Нет событий']
+          {% endif %}
+      icon: "{{ (this.state | int(0) > 0) | iif('mdi:calendar-star', 'mdi:calendar-blank') }}"

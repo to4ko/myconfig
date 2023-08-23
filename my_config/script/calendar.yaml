@@ -1,0 +1,64 @@
+  calendar_events:
+    alias: Calendar Events
+    description: "Returns all of today's calendar events"
+    fields:
+      calendar:
+        name: "Target"
+        description: "Calendar from which we receive events."
+        example: "calendar.contacts"
+        required: true
+        selector:
+          entity:
+            filter:
+              domain: calendar
+      remove:
+        name: "Text to be removed"
+        description: "Text to be removed from calendar events."
+        example: "some text"
+        default: ""
+        selector:
+          text:
+      make_choice:
+        name: "Make a choice"
+        description: "If selected, then parse by the word of choice."
+        default: false
+        selector:
+          boolean:
+      choice_word:
+        name: "Сhoice word"
+        description: "Сhoice word, if empty, then return the summary of the event. If it is specified and the summary starts with the given Choice Word, then return the summary of the event, otherwise the description of the event."
+        example: "some text"
+        default: ""
+        selector:
+          text:
+    sequence:
+      - service: calendar.list_events
+        data:
+          start_date_time: "{{ today_at().strftime('%Y-%m-%d %H:%M:%S') }}"
+          duration:
+            hours: 24
+            minutes: 0
+            seconds: 0
+        target:
+          entity_id: "{{ calendar }}"
+        response_variable: calendar_events
+      - variables:
+          result: |-
+            {% set ns = namespace(events={}) %}
+            {% for event in calendar_events.events %}
+              {% set index = loop.index | string %}
+              {% if not make_choice | default(false) %}
+                {% set value = event.summary %}
+              {% else %}
+                {% set value = event.summary if event.summary.startswith(choice_word) else event.description %}
+              {% endif %}
+              {% set value = value | replace(remove | default(''), '') %}
+              {% set ns.events = dict(ns.events, **{ index : value }) %}
+            {% endfor %}
+            {{ ns.events }}
+      - stop: Success
+        response_variable: result
+    icon: mdi:calendar-alert-outline
+    mode: single
+    
+    
