@@ -1,6 +1,6 @@
   calendar_events:
     alias: Calendar Events
-    description: "Returns all of today's calendar events"
+    description: "Returns calendar events within a day of the specified date."
     fields:
       calendar:
         name: "Target"
@@ -11,6 +11,12 @@
           entity:
             filter:
               domain: calendar
+      date_start:
+        name: "Start Date"
+        description: "The date or date time the event starts."
+        example: "2023-08-24 00:00:00"
+        selector:
+          datetime:
       remove:
         name: "Text to be removed"
         description: "Text to be removed from calendar events."
@@ -34,7 +40,7 @@
     sequence:
       - service: calendar.list_events
         data:
-          start_date_time: "{{ today_at().strftime('%Y-%m-%d %H:%M:%S') }}"
+          start_date_time: "{{ date_start | default( today_at().strftime('%Y-%m-%d %H:%M:%S') ) }}"
           duration:
             hours: 24
             minutes: 0
@@ -60,5 +66,3 @@
         response_variable: result
     icon: mdi:calendar-alert-outline
     mode: single
-    
-    

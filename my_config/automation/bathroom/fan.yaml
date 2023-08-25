@@ -290,7 +290,7 @@
       - condition: template
         value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
       - condition: template
-        value_template: "{{ 1 < now().hour < 6 }}"
+        value_template: "{{ 1 <= now().hour < 6 }}"
       - condition: template
         value_template: "{{states('number.esp32_node_b_humidity_set')|int(0) != 30 }}"
       - condition: state
@@ -302,6 +302,8 @@
           value: "30"
         target:
           entity_id: number.esp32_node_b_humidity_set
+      - service: switch.turn_on
+        entity_id: switch.esp32_node_b_fan_b_force_mode
 
 # ##################################
 # Bathroom - Fan to normal mode
@@ -328,6 +330,9 @@
           value: "65"
         target:
           entity_id: number.esp32_node_b_humidity_set
+      - service: switch.turn_off
+        entity_id: switch.esp32_node_b_fan_b_force_mode
+
 
 # ##################################
 # Bathroom - Bottom Fan On with Fan
@@ -444,8 +449,6 @@
         entity_id: switch.esp32_node_b_fan_b_force_mode
         state: 'off'
     action:
-      - service: timer.cancel
-        entity_id: timer.fan_b
       - if:
           - condition: state
             entity_id: switch.esp32_node_b_relay_3
