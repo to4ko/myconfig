@@ -45,9 +45,9 @@
 </div>
 
 # Hardware Configuration
-**Main Unit - Intel NUC 12 Pro**
-  - Intel i3-1220p
-  - 2*8Gb Samsung DDR4 SODIMM
+**Main Unit - Intel NUC 13 Pro**
+  - Intel i5-1340p
+  - 2*32Gb Samsung DDR4 SODIMM
   - 500Gb Samsung 870 EVO
   - 1Tb Samsung PM9A1
   - [BLIKVM v3 HAT](https://wiki.blicube.com/blikvm/en/)
@@ -503,7 +503,22 @@ white-space:nowrap;>
 <td>3*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
-
+<tr>
+<td rowspan="2">16</td>
+<td rowspan="2">2023</td>
+<td>Intel NUC 13 Pro</td>
+<td>i5-1340p</td>
+<td>2 * 32Gb DDR4</td>
+<td>500Gb SATA + 1Tb NVME</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>3*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
 
 </tbody>
 </table>
