@@ -413,7 +413,7 @@ white-space:nowrap;>
 <td>HP Prodesk 400 G6 mini</td>
 <td>i3-10100t</td>
 <td>2 * 8Gb DDR4</td>
-<td>512GB NVME</td>
+<td>512GB NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
@@ -429,7 +429,7 @@ white-space:nowrap;>
 <td>HP Prodesk 600 G6 mini</td>
 <td>i3-10100</td>
 <td>2 * 8Gb DDR4</td>
-<td>512GB NVME</td>
+<td>512GB NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
@@ -445,7 +445,7 @@ white-space:nowrap;>
 <td>HP Prodesk 600 G6 mini</td>
 <td>i5-10600</td>
 <td>2 * 8Gb DDR4</td>
-<td>512GB NVME</td>
+<td>512GB NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
@@ -461,7 +461,7 @@ white-space:nowrap;>
 <td>HP Prodesk 600 G6 mini</td>
 <td>i5-10600</td>
 <td>2 * 8Gb DDR4</td>
-<td>512GB NVME</td>
+<td>512GB NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
@@ -477,7 +477,7 @@ white-space:nowrap;>
 <td>Minisforum NPB7</td>
 <td>i7-13700H</td>
 <td>2 * 8Gb DDR5</td>
-<td>250Gb SATA + 1Tb NVME</td>
+<td>250Gb SATA SSD + 1Tb NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
@@ -493,7 +493,7 @@ white-space:nowrap;>
 <td>Intel NUC 12 Pro</td>
 <td>i3-1220p</td>
 <td>2 * 8Gb DDR4</td>
-<td>500Gb SATA + 1Tb NVME</td>
+<td>500Gb SATA SSD + 1Tb NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
@@ -509,7 +509,7 @@ white-space:nowrap;>
 <td>Intel NUC 13 Pro</td>
 <td>i5-1340p</td>
 <td>2 * 32Gb DDR4</td>
-<td>500Gb SATA + 1Tb NVME</td>
+<td>500Gb SATA SSD + 1Tb NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
