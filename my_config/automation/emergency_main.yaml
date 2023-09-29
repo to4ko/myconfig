@@ -1,37 +1,37 @@
 # ##################################
-# Emergency - ds1621 connection
+# Emergency - backup connection
 # ##################################
-  - alias: emergency_ds1621
-    id: emergency_ds1621
+  - alias: emergency_backup
+    id: emergency_backup
     initial_state: true
     mode: queued
     max: 10
     max_exceeded: silent
     trigger:
       - platform: state
-        entity_id: binary_sensor.ds1621
+        entity_id: binary_sensor.hass_backup_ping
         to: 'off'
         from: 'on'
       - platform: state
-        entity_id: binary_sensor.ds1621
+        entity_id: binary_sensor.hass_backup_ping
         from: 'off'
         to: 'on'
       - platform: state
-        entity_id: binary_sensor.ds1621_state
+        entity_id: binary_sensor.hass_backup_state
         to: 'off'
         from: 'on'
       - platform: state
-        entity_id: binary_sensor.ds1621_state
+        entity_id: binary_sensor.hass_backup_state
         to: 'on'
         from: 'off'
     action:
       - service: notify.telegram
         data:
           message: >-
-            {% if is_state('binary_sensor.ds1621','on') and is_state('binary_sensor.ds1621_state','on') %}{{'\U00002705'}}
-            {% elif is_state('binary_sensor.ds1621','on') or is_state('binary_sensor.ds1621_state','on') %}{{'\U000026a0'}}
+            {% if is_state('binary_sensor.hass_backup_ping','on') and is_state('binary_sensor.hass_backup_state','on') %}{{'\U00002705'}}
+            {% elif is_state('binary_sensor.hass_backup_ping','on') or is_state('binary_sensor.hass_backup_state','on') %}{{'\U000026a0'}}
             {% else %}{{'\U0000274C'}}
-            {% endif %} DS1621: HA - {{states('binary_sensor.ds1621_state')|upper}}, host - {{states('binary_sensor.ds1621')|upper}}!
+            {% endif %} Backup: HA - {{states('binary_sensor.hass_backup_state')|upper}}, host - {{states('binary_sensor.hass_backup_ping')|upper}}!
   
   # # ##################################
   # # Emergency - NUC connection
