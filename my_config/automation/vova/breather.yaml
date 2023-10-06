@@ -153,6 +153,9 @@
         at: "08:30:00"
         id: 'time_trigger_day'
     condition:
+      - condition: state
+        entity_id: switch.breather_auto_v
+        state: 'off'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
@@ -180,7 +183,7 @@
                     state: 'off'
                   - condition: state
                     entity_id: fan.breather_v
-                    state: 'off'
+                    state: 'on'
                   - condition: state
                     entity_id: switch.breather_auto_v
                     state: 'off'
@@ -216,67 +219,45 @@
             sequence:
               - choose:
                   - conditions:
-                      - condition: numeric_state
-                        entity_id: sensor.0x00158d0001e58714_temperature
-                        below: 20
                       - condition: state
                         entity_id: binary_sensor.breather_v
                         state: 'on'
                     sequence:
-                      # - service: notify.telegram
-                      #   data:
-                      #     message: "timer, <20, breather on"
-                          
-                      - service: fan.turn_off
-                        entity_id: fan.breather_v
-                        
-                      - condition: state
-                        entity_id: switch.hourly_mode_breather_v
-                        state: 'on'
-        
-                      - service: timer.start
-                        entity_id: timer.breather_v
-                        data:
-                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
-        
-                  - conditions:
-                      - condition: numeric_state
-                        entity_id: sensor.0x00158d0001e58714_temperature
-                        above: 20
-                      - condition: state
-                        entity_id: binary_sensor.breather_v
-                        state: 'on'
-                      - condition: state
-                        entity_id: switch.security_mode
-                        state: 'off'
-                    sequence:
-                      # - service: notify.telegram
-                      #   data:
-                      #     message: "timer, >20, breather on"
-                          
-                      - service: fan.set_percentage
-                        entity_id: fan.breather_v
-                        data:
-                          percentage: >
-                            {% if state_attr('fan.breather_v','percentage')|int(0) > states('input_number.low_speed_for_timer_mode_breather_v')|int(0) %}
-                            {{states('input_number.low_speed_for_timer_mode_breather_v')|int(0)}}
-                            {% elif state_attr('fan.breather_v','percentage')|int(0) <= states('input_number.high_speed_for_timer_mode_breather_v')|int(0) %}
-                            {{states('input_number.high_speed_for_timer_mode_breather_v')|int(0)}}
-                            {% endif %}
-
-                      - service: timer.start
-                        entity_id: timer.breather_v
-                        data:
-                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+                      - choose: 
+                          - conditions:
+                              - condition: numeric_state
+                                entity_id: sensor.0x00158d0001e58714_temperature
+                                below: 18
+                            sequence:
+                              - service: fan.turn_off
+                                entity_id: fan.breather_v
+                              - condition: state
+                                entity_id: switch.hourly_mode_breather_v
+                                state: 'on'
+                
+                          - conditions:
+                              - condition: numeric_state
+                                entity_id: sensor.0x00158d0001e58714_temperature
+                                above: 18
+                              - condition: state
+                                entity_id: switch.security_mode
+                                state: 'off'
+                            sequence:
+                              - service: fan.set_percentage
+                                entity_id: fan.breather_v
+                                data:
+                                  percentage: >
+                                    {% if state_attr('fan.breather_v','percentage')|int(0) > states('input_number.low_speed_for_timer_mode_breather_v')|int(0) %}
+                                    {{states('input_number.low_speed_for_timer_mode_breather_v')|int(0)}}
+                                    {% elif state_attr('fan.breather_v','percentage')|int(0) <= states('input_number.high_speed_for_timer_mode_breather_v')|int(0) %}
+                                    {{states('input_number.high_speed_for_timer_mode_breather_v')|int(0)}}
+                                    {% endif %}
 
                   - conditions:
                       - condition: state
                         entity_id: binary_sensor.breather_v
                         state: 'off'
                     sequence:
-                      # - service: notify.telegram
-                      #   data:
-                      #     message: "breather off"
                       - if:
                           - condition: state
                             entity_id: switch.hourly_mode_breather_v
@@ -285,18 +266,15 @@
                             entity_id: switch.security_mode
                             state: 'off'  
                         then:
-                          # - service: button.press
-                          #   entity_id: button.digma_ir_v_breather_pwr
                           - service: fan.set_percentage
                             entity_id: fan.breather_v
                             data:
                               percentage: "{{states('input_number.high_speed_for_timer_mode_breather_v')|int(0) }}"
+              - service: timer.start
+                entity_id: timer.breather_v
+                data:
+                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
 
-                      - service: timer.start
-                        entity_id: timer.breather_v
-                        data:
-                          duration: "{{states('input_select.breazer_timer')|int * 60 }}"
-          
           - conditions: # choice 4
               - condition: trigger
                 id: "ir_used_remote"
@@ -375,47 +353,37 @@
               - condition: trigger
                 id: "time_trigger_night"
             sequence:
-              - if:
-                  - condition: state
-                    entity_id: binary_sensor.breather_v
-                    state: 'off'
-                then:
-                  - service: switch.turn_off
-                    entity_id: switch.breather_auto_v
-                  - service: switch.turn_on
-                    entity_id: switch.hourly_mode_breather_v
-                  - service: fan.set_percentage
-                    entity_id: fan.breather_v
-                    data:
-                      percentage: 50
-                  - service: fan.turn_on
-                    entity_id: fan.breather_v
-                  - service: fan.set_preset_mode
-                    data:
-                      entity_id: fan.purifier2s
-                      preset_mode: Favorite
+              - service: switch.turn_off
+                entity_id: switch.breather_auto_v
+              - service: switch.turn_on
+                entity_id: switch.hourly_mode_breather_v
+              - service: fan.set_percentage
+                entity_id: fan.breather_v
+                data:
+                  percentage: 50
+              # - service: fan.turn_on
+              #   entity_id: fan.breather_v
+              - service: fan.set_preset_mode
+                data:
+                  entity_id: fan.purifier2s
+                  preset_mode: Favorite
                     
           - conditions: # choice 9
               - condition: trigger
                 id: "time_trigger_day"
             sequence:
-              - if:
-                  - condition: state
-                    entity_id: binary_sensor.breather_v
-                    state: 'on'
-                then:
-                  - service: fan.turn_off
-                    entity_id: fan.breather_v
-                  - service: timer.cancel
-                    entity_id: timer.breather_v
-                  - service: switch.turn_off
-                    entity_id: switch.hourly_mode_breather_v
-                  - service: switch.turn_on
-                    entity_id: switch.breather_auto_v
-                  - service: fan.set_preset_mode
-                    data:
-                      entity_id: fan.purifier2s
-                      preset_mode: Auto
+              - service: fan.turn_off
+                entity_id: fan.breather_v
+              - service: timer.cancel
+                entity_id: timer.breather_v
+              - service: switch.turn_off
+                entity_id: switch.hourly_mode_breather_v
+              - service: switch.turn_on
+                entity_id: switch.breather_auto_v
+              - service: fan.set_preset_mode
+                data:
+                  entity_id: fan.purifier2s
+                  preset_mode: Auto
 
 # ##################################
 # Vova - Breather Plug Toggle
@@ -439,6 +407,3 @@
     action:
       - service: switch.turn_on
         entity_id: switch.0x00158d000344998e_plug
-      # - service: notify.telegram
-      #   data:
-      #     message: "\U00002705 Включение - {{trigger.to_state.attributes.friendly_name}}"
