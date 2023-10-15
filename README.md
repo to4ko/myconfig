@@ -52,7 +52,7 @@
   - 1Tb Samsung PM9A1
 
 **Proxmox Node 2 - Intel NUC 12 Pro**
-  - Intel i2-1220p
+  - Intel i3-1220p
   - 2*8Gb Samsung DDR4 SODIMM
   - 500Gb Samsung 870 EVO
   - 1Tb Samsung PM9A1
