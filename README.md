@@ -522,8 +522,8 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="3">16</td>
-<td rowspan="3">2023</td>
+<td rowspan="2">16</td>
+<td rowspan="2">2023</td>
 <td>Intel NUC 13 Pro</td>
 <td>i5-1340p</td>
 <td>2 * 32Gb DDR4</td>
@@ -537,6 +537,7 @@ white-space:nowrap;>
 <td>3*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
+
 <tr>
 <td rowspan="3">16</td>
 <td rowspan="3">2023</td>
@@ -546,6 +547,7 @@ white-space:nowrap;>
 <td>500Gb SATA SSD + 1Tb NVME SSD</td>
 <td>-</td>
 </tr>
+
 <tr>
 <td>Intel NUC 12 Pro</td>
 <td>i3-1220p</td>
@@ -553,6 +555,7 @@ white-space:nowrap;>
 <td>500Gb SATA SSD + 1Tb NVME SSD</td>
 <td>-</td>
 </tr>
+
 <tr>
 <td>Synology DS1621+</td>
 <td>Ryzen V1500B</td>
