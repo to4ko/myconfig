@@ -103,6 +103,14 @@
   - Digma 100
   - Aliexpress Pinhole camera via Synology Surveillance Station on DS1621+
 
+# Network map
+<details><summary>Click me...</summary>
+
+![map](images/networkmap.png)
+
+</details>
+
+
 # Smart Devices
 **Lights**
   - Yeelight LED Ceiling Lamp650 (YLXD02YL) (2ea)
