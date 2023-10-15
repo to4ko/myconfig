@@ -537,7 +537,6 @@ white-space:nowrap;>
 <td>3*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
-
 <tr>
 <td rowspan="3">16</td>
 <td rowspan="3">2023</td>
@@ -547,7 +546,6 @@ white-space:nowrap;>
 <td>500Gb SATA SSD + 1Tb NVME SSD</td>
 <td>-</td>
 </tr>
-
 <tr>
 <td>Intel NUC 12 Pro</td>
 <td>i3-1220p</td>
@@ -555,12 +553,11 @@ white-space:nowrap;>
 <td>500Gb SATA SSD + 1Tb NVME SSD</td>
 <td>-</td>
 </tr>
-
 <tr>
 <td>Synology DS1621+</td>
 <td>Ryzen V1500B</td>
 <td>2 * 16Gb DDR4</td>
-<td>3*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
+<td>4*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
 
