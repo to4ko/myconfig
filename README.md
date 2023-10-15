@@ -45,16 +45,26 @@
 </div>
 
 # Hardware Configuration
-**Main Unit - Intel NUC 13 Pro**
+**Proxmox Node 1  - Intel NUC 13 Pro**
   - Intel i5-1340p
   - 2*32Gb Samsung DDR4 SODIMM
   - 500Gb Samsung 870 EVO
   - 1Tb Samsung PM9A1
-  - [BLIKVM v3 HAT](https://wiki.blicube.com/blikvm/en/)
+
+**Proxmox Node 2 - Intel NUC 12 Pro**
+  - Intel i2-1220p
+  - 2*8Gb Samsung DDR4 SODIMM
+  - 500Gb Samsung 870 EVO
+  - 1Tb Samsung PM9A1
+
+**KVM setup**
+  - BLIKVM v3 HAT running PiKVM
+  - XH-HK4401 4-port HDMI USB KVM Switch
 
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Crucial DDR4 SODIMM
-  - 3ea WD HC550 16Tb as Main Storage
+  - Synology E10G18-T1 Addon Card
+  - 4ea WD HC550 16Tb as Main Storage
   - 2ea Samsung 870 EVO 2Tb in SHR1 as Fast Storage
   - 2ea Adata SX6000 Lite 512Gb as NVME read\write cache
 
@@ -79,6 +89,7 @@
   - Ufiber Loco
   - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
   - Unifi Enterprise Switch 24 PoE
+  - Unifi Switch XG
   - Unifi Switch Light 8 PoE (3ea)
   - Unifi Switch Flex (2ea)
   - Unifi Switch Flex Mini (2ea)
@@ -203,27 +214,34 @@
   - not in use - Xiaomi Kettle
 
 # Software configuration
-**Main Unit Software:**
+**Proxmox Node 1 Software:**
   - Proxmox VE 8
-      * Debian 11 with HA Supervised
+      * Debian 11 with HA Supervised (mian instance)
       * Zabbix Server
+      * NGINX Proxy Manager
+      * Bitwarden
+
+**Proxmox Node 2 Software:**
+  - Proxmox VE 8
+      * Debian 11 with HA Supervised (backup instance)
+      * Plex
+
 
 **Main Storage Unit Software**
   - DSM 7.2
-  - HA OS instance in VM
-  - Proxmox Bakcup Server in VM
+  - Proxmox Backup Server VM
   - Docker containers:
     * MQTT
     * InfluxDB
     * Transmission
     * qBitTorrent
-    * Adguard home
+    * Adguard home (not in use)
 
 **Backup Storage Unit Software**
   - DSM 7.2
   - Docker containers:
     * Plex Media Server
-    * Adguard Home
+    * Adguard Home (not in use)
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
