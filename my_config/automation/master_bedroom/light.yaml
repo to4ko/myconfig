@@ -477,51 +477,51 @@
 # ##################################
 # Master Bedroom Table Lamp (Yeelight Color E27)
 # ##################################
-  - alias: master_bedroom_color_table_lamp
-    id: master_bedroom_color_table_lamp
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    trigger:
-      # - platform: event
-      #   event_type: xiaomi_aqara.click
-      #   event_data:
-      #     entity_id: sensor.0x158d0001ef61be_action
-      - platform: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x04cf8cdf3c77cc5f_action
-    condition:
-      - condition: template
-        value_template: "{{ states('light.led_color_mb') in ['on','off'] }}"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_2_single' }}"
-            sequence:
-              - service: light.toggle
-                entity_id: light.led_color_mb
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_2_double'  }}"
-            sequence:
-              - service: light.turn_on
-                entity_id: light.led_color_mb
-                data:
-                  brightness_pct: 100
-                  kelvin: 5000
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_2_hold'  }}"
-            sequence:
-              - service: light.turn_on
-                entity_id: light.led_color_mb
-                data:
-                  brightness_pct: 5
-                  kelvin: 3000
+  # - alias: master_bedroom_color_table_lamp
+  #   id: master_bedroom_color_table_lamp
+  #   initial_state: true
+  #   mode: single
+  #   max_exceeded: silent
+  #   trigger:
+  #     # - platform: event
+  #     #   event_type: xiaomi_aqara.click
+  #     #   event_data:
+  #     #     entity_id: sensor.0x158d0001ef61be_action
+  #     - platform: event
+  #       event_type: xiaomi_aqara.click
+  #       event_data:
+  #         entity_id: sensor.0x04cf8cdf3c77cc5f_action
+  #   condition:
+  #     - condition: template
+  #       value_template: "{{ states('light.led_color_mb') in ['on','off'] }}"
+  #     - condition: template
+  #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  #   action:
+  #     - choose:
+  #         - conditions:
+  #             - condition: template
+  #               value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_2_single' }}"
+  #           sequence:
+  #             - service: light.toggle
+  #               entity_id: light.led_color_mb
+  #         - conditions:
+  #             - condition: template
+  #               value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_2_double'  }}"
+  #           sequence:
+  #             - service: light.turn_on
+  #               entity_id: light.led_color_mb
+  #               data:
+  #                 brightness_pct: 100
+  #                 kelvin: 5000
+  #         - conditions:
+  #             - condition: template
+  #               value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_2_hold'  }}"
+  #           sequence:
+  #             - service: light.turn_on
+  #               entity_id: light.led_color_mb
+  #               data:
+  #                 brightness_pct: 5
+  #                 kelvin: 3000
 
 # ##################################
 # Master Bedroom - LED Strip Control with square key
@@ -548,11 +548,26 @@
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_4_single' }}"
             sequence:
-              - service: light.turn_on
-                data:
-                  entity_id: light.d1mini_strip_mb_led
-                  effect: '{{ (["Rainbow", "Color Wipe", "Scan", "Twinkle", "Random Twinkle"] | random) }}'
-                  brightness_pct: 75
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: light.d1mini_strip_mb_led
+                        state: 'off'
+                    sequence:
+                      - service: light.turn_on
+                        data:
+                          entity_id: light.d1mini_strip_mb_led
+                          #rgb_color: 255, 255, 255
+                          brightness_pct: 75
+                  - conditions:
+                      - condition: state
+                        entity_id: light.d1mini_strip_mb_led
+                        state: 'on'
+                    sequence:
+                      - service: light.turn_off
+                        entity_id: light.d1mini_strip_mb_led
+                        data:
+                          transition: 5
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_4_double' }}"
@@ -568,6 +583,60 @@
             sequence:
               - service: light.turn_off
                 entity_id: light.d1mini_strip_mb_led
+                data:
+                  transition: 5
+
+# ##################################
+# Master Bedroom - LED Strip lt11 Control with square key
+# ##################################
+  - alias: master_bedroom_led_strip_lt11_control
+    id: master_bedroom_led_strip_lt11_control
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x04cf8cdf3c77cc5f_action
+    condition:
+      - condition: template
+        value_template: "{{ states('light.lt11_1_led') in ['on','off'] }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}" 
+      - condition: numeric_state
+        entity_id: sensor.ha_uptime
+        above: 0
+    action:
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_2_single' }}"
+            sequence:
+              - choose:
+                  - conditions:
+                      - condition: state
+                        entity_id: light.lt11_1_led
+                        state: 'off'
+                    sequence:
+                      - service: light.turn_on
+                        data:
+                          entity_id: light.lt11_1_led
+                          #rgb_color: 255, 255, 255
+                          brightness_pct: 75
+                  - conditions:
+                      - condition: state
+                        entity_id: light.lt11_1_led
+                        state: 'on'
+                    sequence:
+                      - service: light.turn_off
+                        entity_id: light.lt11_1_led
+                        data:
+                          transition: 5
+          - conditions:
+              - condition: template
+                value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_2_hold' }}"
+            sequence:
+              - service: light.turn_off
+                entity_id: light.lt11_1_led
                 data:
                   transition: 5
 
@@ -591,7 +660,7 @@
         state: 'on'
     action:
       - service: light.turn_off
-        entity_id: light.round_led_mb_ambilight, light.led_color_mb, light.led_white_mb, light.lt11_1_led
+        entity_id: light.round_led_mb_ambilight, light.led_white_mb, light.lt11_1_led
         data:
           transition: 15
       - condition: state
