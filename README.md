@@ -106,7 +106,7 @@
 # Network map
 <details><summary>Click me...</summary>
 
-![map](images/networkmap.png)
+![map](images/networkmap.jpg)
 
 </details>
 

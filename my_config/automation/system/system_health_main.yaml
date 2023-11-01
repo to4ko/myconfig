@@ -1,295 +1,293 @@
 # ##################################
 # System - UDM MEM Over
 # ##################################
-  # - alias: system_udm_mem_over
-  #   id:  system_udm_mem_over
-  #   initial_state: true
-  #   mode: single
-  #   trigger:
-  #     - platform: numeric_state
-  #       entity_id: sensor.udm_mem_used
-  #       above: 95
-  #       for:
-  #         minutes: 10
-  #   condition:
-  #     - condition: template
-  #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: "\U0000274c UDM: памяти менее 5%. Необходим рестарт!"
-
+# - alias: system_udm_mem_over
+#   id:  system_udm_mem_over
+#   initial_state: true
+#   mode: single
+#   trigger:
+#     - platform: numeric_state
+#       entity_id: sensor.udm_mem_used
+#       above: 95
+#       for:
+#         minutes: 10
+#   condition:
+#     - condition: template
+#       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0000274c UDM: памяти менее 5%. Необходим рестарт!"
 
 ## {{ 75 | round(-1, "floor") }}
 
 # ##################################
 # System - CPU temp >70
 # ##################################
-  - alias: system_health_cpu_temp_70
-    id:  system_health_cpu_temp_70
-    initial_state: true
-    mode: queued
-    max: 2
-    max_exceeded: silent
-    trigger:
-      - platform: numeric_state
-        entity_id: sensor.pmox01_cpu_temp
-        above: 80
-        for:
-          minutes: 5
-    action:
-      - parallel:
-          - service: notify.mobile_app_iphone_14_pro_dtsymbal
+- alias: system_health_cpu_temp_70
+  id: system_health_cpu_temp_70
+  initial_state: true
+  mode: queued
+  max: 2
+  max_exceeded: silent
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.pmox01_cpu_temp
+      above: 80
+      for:
+        minutes: 5
+  action:
+    - parallel:
+        - service: notify.mobile_app_iphone_14_pro_dtsymbal
+          data:
+            title: "Внимание!"
+            message: "{{ trigger.to_state.attributes.friendly_name }} >70°"
             data:
-              title: "Внимание!"
-              message: "{{ trigger.to_state.attributes.friendly_name }} >70°"
-              data:
-                push:
-                  sound:
-                    name: "default"
-                    critical: 1
-                    volume: 1.0
-              
-          - service: notify.telegram
-            data:
-              message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >80°"
-  
+              push:
+                sound:
+                  name: "default"
+                  critical: 1
+                  volume: 1.0
+
+        - service: notify.telegram
+          data:
+            message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >80°"
+
 # ##################################
 # System - CPU temp >80
 # ##################################
-  - alias: system_health_cpu_temp_80
-    id:  system_health_cpu_temp_80
-    initial_state: true
-    mode: queued
-    max: 2
-    max_exceeded: silent
-    trigger:
-      - platform: numeric_state
-        entity_id: sensor.pmox01_cpu_temp
-        above: 90
-        for:
-          minutes: 5
-    action:
-      - parallel:
-          - service: notify.mobile_app_iphone_14_pro_dtsymbal
+- alias: system_health_cpu_temp_80
+  id: system_health_cpu_temp_80
+  initial_state: true
+  mode: queued
+  max: 2
+  max_exceeded: silent
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.pmox01_cpu_temp
+      above: 90
+      for:
+        minutes: 5
+  action:
+    - parallel:
+        - service: notify.mobile_app_iphone_14_pro_dtsymbal
+          data:
+            title: "Внимание!"
+            message: "{{ trigger.to_state.attributes.friendly_name }} >80°"
             data:
-              title: "Внимание!"
-              message: "{{ trigger.to_state.attributes.friendly_name }} >80°"
-              data:
-                push:
-                  sound:
-                    name: "default"
-                    critical: 1
-                    volume: 1.0        
-              
-          - service: notify.telegram
-            data:
-              message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >90°"
-  
-  # ##################################
-  # System - MDADM status change
-  # ##################################
-  # - alias: system_health_mdadm_monitor
-  #   id:  system_health_mdadm_monitor
-  #   initial_state: true
-  #   mode: queued
-  #   max: 2
-  #   max_exceeded: silent
-  #   trigger:
-  #     - platform: state
-  #       entity_id:
-  #         - sensor.md0_status
-  #         - sensor.md1_status
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}"
-          
-  # ##################################
-  # System - Server HDD Disks Temp
-  # ##################################
-  # - alias: system_health_hdd_temp_53
-  #   id:  system_health_hdd_temp_53
-  #   initial_state: true
-  #   mode: queued
-  #   max: 5
-  #   max_exceeded: silent
-  #   trigger:
-  #     - platform: numeric_state
-  #       entity_id:
-  #         - sensor.main0_temp
-  #         - sensor.main1_temp
-  #         - sensor.main2_temp
-  #         #- sensor.media_temp
-  #         - sensor.temp_temp
-  #       above: 53
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >53°!"
-  
-  
-  # ##################################
-  # System - Server HDD Disks Temp
-  # ##################################
-  # - alias: system_health_hdd_temp
-  #   initial_state: false
-  #   trigger:
-  #     - platform: state
-  #       entity_id:
-  #         - sensor.main0_temp
-  #         - sensor.main1_temp
-  #         - sensor.main2_temp
-  #         - sensor.media_temp
-  #         - sensor.temp_temp
-  #   condition:
-  #     - condition: template
-  #       value_template: "{{ trigger.to_state.state|int(0) % 5 == 0 }}"
-  #     - condition: template
-  #       value_template: "{{ trigger.to_state.state|int(0) > 50 }}"
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} {{ trigger.to_state.state }}°!"
-  
-  # ##################################
-  # System - Server SSD Disks Temp
-  # ##################################
-  # - alias: system_health_ssd_temp_50
-  #   id:  system_health_ssd_temp_50
-  #   initial_state: true
-  #   mode: queued
-  #   max: 5
-  #   max_exceeded: silent
-  #   trigger:
-  #     - platform: numeric_state
-  #       entity_id:
-  #         - sensor.hp_600_g6_nvme0_temp
-  #         # - sensor.nvme1_temp
-  #         # - sensor.nvme2_temp
-  #         # - sensor.nvme3_temp
-  #         # - sensor.boot_temp
-  #       above: 50
-  #       for:
-  #         minutes: 3
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >50°!"
-  
+              push:
+                sound:
+                  name: "default"
+                  critical: 1
+                  volume: 1.0
+
+        - service: notify.telegram
+          data:
+            message: "\U0001F525 Внимание! {{ trigger.to_state.attributes.friendly_name }} >90°"
+
+# ##################################
+# System - MDADM status change
+# ##################################
+# - alias: system_health_mdadm_monitor
+#   id:  system_health_mdadm_monitor
+#   initial_state: true
+#   mode: queued
+#   max: 2
+#   max_exceeded: silent
+#   trigger:
+#     - platform: state
+#       entity_id:
+#         - sensor.md0_status
+#         - sensor.md1_status
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f4ab {{ trigger.from_state.attributes.friendly_name }} from {{trigger.from_state.state}} to {{trigger.to_state.state}}"
+
+# ##################################
+# System - Server HDD Disks Temp
+# ##################################
+# - alias: system_health_hdd_temp_53
+#   id:  system_health_hdd_temp_53
+#   initial_state: true
+#   mode: queued
+#   max: 5
+#   max_exceeded: silent
+#   trigger:
+#     - platform: numeric_state
+#       entity_id:
+#         - sensor.main0_temp
+#         - sensor.main1_temp
+#         - sensor.main2_temp
+#         #- sensor.media_temp
+#         - sensor.temp_temp
+#       above: 53
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >53°!"
+
+# ##################################
+# System - Server HDD Disks Temp
+# ##################################
+# - alias: system_health_hdd_temp
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id:
+#         - sensor.main0_temp
+#         - sensor.main1_temp
+#         - sensor.main2_temp
+#         - sensor.media_temp
+#         - sensor.temp_temp
+#   condition:
+#     - condition: template
+#       value_template: "{{ trigger.to_state.state|int(0) % 5 == 0 }}"
+#     - condition: template
+#       value_template: "{{ trigger.to_state.state|int(0) > 50 }}"
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} {{ trigger.to_state.state }}°!"
+
 # ##################################
 # System - Server SSD Disks Temp
 # ##################################
-  - alias: system_health_ssd_temp_70
-    id:  system_health_ssd_temp_70
-    initial_state: true
-    mode: queued
-    max: 5
-    max_exceeded: silent
-    trigger:
-      - platform: numeric_state
-        entity_id:
-          - sensor.pmox01_nvme0_temp
-          - sensor.pmox01_sda_temp
-        above: 70
-        for:
-          minutes: 3
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >70°!"
-          
+# - alias: system_health_ssd_temp_50
+#   id:  system_health_ssd_temp_50
+#   initial_state: true
+#   mode: queued
+#   max: 5
+#   max_exceeded: silent
+#   trigger:
+#     - platform: numeric_state
+#       entity_id:
+#         - sensor.hp_600_g6_nvme0_temp
+#         # - sensor.nvme1_temp
+#         # - sensor.nvme2_temp
+#         # - sensor.nvme3_temp
+#         # - sensor.boot_temp
+#       above: 50
+#       for:
+#         minutes: 3
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >50°!"
+
 # ##################################
 # System - Server SSD Disks Temp
 # ##################################
-  # - alias: system_health_ssd_temp_65
-  #   id:  system_health_ssd_temp_65
-  #   initial_state: true
-  #   mode: queued
-  #   max: 5
-  #   max_exceeded: silent
-  #   trigger:
-  #     - platform: numeric_state
-  #       entity_id:
-  #         - sensor.pmox01_nvme0_temp
-  #         - sensor.pmox01_sda_temp
-  #       above: 65
-  #       for:
-  #         minutes: 1
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >65°!"
-  
-  # ##################################
-  # System - Server Fans stats
-  # ##################################
-  # - alias: system_health_fans
-  #   id:  system_health_fans
-  #   initial_state: true
-  #   mode: queued
-  #   max: 6
-  #   max_exceeded: silent
-  #   trigger:
-  #     - platform: numeric_state
-  #       entity_id:
-  #         - sensor.ipmi_fan1
-  #         - sensor.ipmi_fan2
-  #         - sensor.ipmi_fan3
-  #         - sensor.ipmi_fan4
-  #         - sensor.ipmi_fan5
-  #         - sensor.ipmi_fan6
-  #       below: 250
-  #   action:
-  #     - service: notify.telegram
-  #       data:
-  #         message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} -> {{ trigger.to_state.state|int(0) }}об!"
+- alias: system_health_ssd_temp_70
+  id: system_health_ssd_temp_70
+  initial_state: true
+  mode: queued
+  max: 5
+  max_exceeded: silent
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.pmox01_nvme0_temp
+        - sensor.pmox01_sda_temp
+      above: 70
+      for:
+        minutes: 3
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >70°!"
+
+# ##################################
+# System - Server SSD Disks Temp
+# ##################################
+# - alias: system_health_ssd_temp_65
+#   id:  system_health_ssd_temp_65
+#   initial_state: true
+#   mode: queued
+#   max: 5
+#   max_exceeded: silent
+#   trigger:
+#     - platform: numeric_state
+#       entity_id:
+#         - sensor.pmox01_nvme0_temp
+#         - sensor.pmox01_sda_temp
+#       above: 65
+#       for:
+#         minutes: 1
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f321 Внимание! {{ trigger.to_state.attributes.friendly_name }} >65°!"
+
+# ##################################
+# System - Server Fans stats
+# ##################################
+# - alias: system_health_fans
+#   id:  system_health_fans
+#   initial_state: true
+#   mode: queued
+#   max: 6
+#   max_exceeded: silent
+#   trigger:
+#     - platform: numeric_state
+#       entity_id:
+#         - sensor.ipmi_fan1
+#         - sensor.ipmi_fan2
+#         - sensor.ipmi_fan3
+#         - sensor.ipmi_fan4
+#         - sensor.ipmi_fan5
+#         - sensor.ipmi_fan6
+#       below: 250
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f300 Внимание! {{ trigger.to_state.attributes.friendly_name }} -> {{ trigger.to_state.state|int(0) }}об!"
 
 # ##################################
 # System - Synology Disks status
 # ##################################
-  - alias: system_health_synology_disks_status
-    id:  system_health_synology_disks_status
-    initial_state: true
-    mode: queued
-    max: 15
-    max_exceeded: silent
-    trigger:
-      - platform: state
-        entity_id:
-          - sensor.ds1621plus_drive_1_status
-          - sensor.ds1621plus_drive_2_status
-          - sensor.ds1621plus_drive_3_status
-          - sensor.ds1621plus_drive_5_status
-          - sensor.ds1621plus_drive_6_status
-          - sensor.ds1621plus_cache_device_1_status
-          - sensor.ds1621plus_cache_device_2_status
-          - sensor.ds1621plus_drive_1_status_smart
-          - sensor.ds1621plus_drive_2_status_smart
-          - sensor.ds1621plus_drive_3_status_smart
-          - sensor.ds1621plus_drive_5_status_smart
-          - sensor.ds1621plus_drive_6_status_smart
-          - sensor.ds1621plus_cache_device_1_status_smart
-          - sensor.ds1621plus_cache_device_2_status_smart
-          - sensor.ds920plus_drive_1_status
-          - sensor.ds920plus_drive_2_status
-          - sensor.ds920plus_drive_3_status
-          - sensor.ds920plus_drive_4_status
-          - sensor.ds920plus_cache_device_1_status
-          - sensor.ds920plus_cache_device_2_status
-          - sensor.ds920plus_drive_1_status_smart
-          - sensor.ds920plus_drive_2_status_smart
-          - sensor.ds920plus_drive_3_status_smart
-          - sensor.ds920plus_drive_4_status_smart
-          - sensor.ds920plus_cache_device_1_status_smart
-          - sensor.ds920plus_cache_device_2_status_smart
-        to:
-        for:
-          minutes: 1
-    condition:
-      - condition: template
-        value_template: "{{ trigger.to_state.state != trigger.from_state.state and trigger.to_state.state not in ['unavailable'] and trigger.from_state.state not in ['unavailable'] }}"
-    action:
-      - service: notify.telegram
-        data:
-          message: "\U0001f9f0 Внимание! {{ trigger.to_state.name }}: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}!"
+- alias: system_health_synology_disks_status
+  id: system_health_synology_disks_status
+  initial_state: true
+  mode: queued
+  max: 15
+  max_exceeded: silent
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.ds1621plus_drive_1_status
+        - sensor.ds1621plus_drive_2_status
+        - sensor.ds1621plus_drive_3_status
+        - sensor.ds1621plus_drive_5_status
+        - sensor.ds1621plus_drive_6_status
+        - sensor.ds1621plus_m_2_drive_1_status
+        - sensor.ds1621plus_m_2_drive_2_status
+        - sensor.ds1621plus_drive_1_status_smart
+        - sensor.ds1621plus_drive_2_status_smart
+        - sensor.ds1621plus_drive_3_status_smart
+        - sensor.ds1621plus_drive_5_status_smart
+        - sensor.ds1621plus_drive_6_status_smart
+        - sensor.ds1621plus_m_2_drive_1_status_smart
+        - sensor.ds1621plus_m_2_drive_2_status_smart
+        - sensor.ds920plus_drive_1_status
+        - sensor.ds920plus_drive_2_status
+        - sensor.ds920plus_drive_3_status
+        - sensor.ds920plus_drive_4_status
+        - sensor.ds920plus_cache_device_1_status
+        - sensor.ds920plus_cache_device_2_status
+        - sensor.ds920plus_drive_1_status_smart
+        - sensor.ds920plus_drive_2_status_smart
+        - sensor.ds920plus_drive_3_status_smart
+        - sensor.ds920plus_drive_4_status_smart
+        - sensor.ds920plus_cache_device_1_status_smart
+        - sensor.ds920plus_cache_device_2_status_smart
+      to:
+      for:
+        minutes: 1
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state != trigger.from_state.state and trigger.to_state.state not in ['unavailable'] and trigger.from_state.state not in ['unavailable'] }}"
+  action:
+    - service: notify.telegram
+      data:
+        message: "\U0001f9f0 Внимание! {{ trigger.to_state.name }}: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}!"
