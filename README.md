@@ -88,10 +88,11 @@
 # Networking
   - Ufiber Loco
   - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
+  - Unifi Aggregation Switch
   - Unifi Enterprise Switch 24 PoE
   - Unifi Switch XG
   - Unifi Switch Light 8 PoE (3ea)
-  - Unifi Switch Flex (2ea)
+  - Unifi Switch Flex (3ea)
   - Unifi Switch Flex Mini (2ea)
   - Unifi AC AP Lite (2ea)
   - Unifi U6 Pro (3ea)
