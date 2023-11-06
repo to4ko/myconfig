@@ -699,3 +699,35 @@
   #   action:
   #     - service: 'switch.turn_{{ trigger.id }}'
   #       entity_id: switch.gosund_strip_p1_relay1, switch.gosund_strip_p1_relay2, switch.gosund_strip_p1_relay3
+  
+# ##################################
+# Master Bedroom - Light Bar Restart
+# ##################################
+  - alias: master_bedroom_light_bar_restart
+    id: master_bedroom_light_bar_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.bedside_mb
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.light_bar_mb
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.sonoff_1000d03987_1') not in ignore }}
+    action:
+      - service: script.turn_on
+        entity_id: script.light_bar_mb_restart
