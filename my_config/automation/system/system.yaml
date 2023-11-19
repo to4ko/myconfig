@@ -293,6 +293,7 @@
         - counter.kettle_k
         - counter.triggered_automations
         - counter.executed_scripts
+        - counter.toilet_tank
     - service: switch.turn_off
       entity_id: switch.dark_mode
     - service: tts.clear_cache
@@ -2053,12 +2054,22 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.supervisor_is_healthy
-      to: "off"
+      to:
   action:
-    - service: notify.telegram
-      data:
-        message: "\U000023ed Supevisor перешел в состояние Unhealthy!"
-
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.supervisor_is_healthy
+              state: 'off'
+          sequence:
+            - service: notify.telegram
+              data:
+                message: "\U00002705 Supevisor перешел в состояние Healthy!"
+      default:
+        - service: notify.telegram
+          data:
+            message: "\U0000274C Supevisor перешел в состояние Unhealthy!"
+      
 # ##################################
 # System - Ya speaker state
 # ##################################
@@ -2387,17 +2398,17 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: camera.digma100
+      entity_id: camera.digma100_digma100
       to: 'unavailable'
       for:
-        seconds: 15
+        minutes: 5
     - platform: homeassistant
       event: start
     - platform: event
       event_type: automation_reloaded
   condition:
     - condition: state
-      entity_id: camera.digma100
+      entity_id: camera.digma100_digma100
       state: 'unavailable'
   action:
     - service: switch.turn_off

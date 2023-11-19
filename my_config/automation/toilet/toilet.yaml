@@ -1,4 +1,32 @@
 # ##################################
+# Toilet - Tank Counter
+# ##################################
+- alias: toilet_tank_counter
+  id: toilet_tank_counter
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.0x00158d0003262a35_contact
+      from: 'off'
+      to: 'on'
+  condition:
+    # - condition: template
+    #   value_template: "{{ trigger.to_state.state|int(0) > trigger.from_state.state|int(0) }}"
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state
+        }}
+    # - condition: template
+    #   value_template: "{{ (states('sensor.d1mini_air_freshener_canister_left')|int(0) < 10) and (states('number.d1mini_air_freshener_counter')|int(0) % 25) == 0 }}"
+  action:
+    - service: counter.increment
+      entity_id: counter.toilet_tank
+
+
+# ##################################
 # Toilet - Air Freshener Counter
 # ##################################
 - alias: toilet_air_freshener_counter
@@ -49,14 +77,16 @@
     - condition: state
       entity_id: switch.esp32_node_b_relay_4
       state: "off"
-    - condition: state
-      entity_id: switch.esp32_node_b_fan_b_manual_mode
-      state: "off"
   action:
     # - service: button.press
     #   entity_id: button.d1mini_air_freshener_spray
-    - service: switch.turn_on
-      entity_id: switch.esp32_node_b_relay_4
+    - if:
+        - condition: state
+          entity_id: switch.esp32_node_b_fan_b_manual_mode
+          state: 'off'
+      then:
+        - service: switch.turn_on
+          entity_id: switch.esp32_node_b_relay_4
     - wait_for_trigger:
         - platform: state
           entity_id: binary_sensor.0x00158d000232ddd6_contact
@@ -66,14 +96,15 @@
       timeout:
         minutes: 30
       continue_on_timeout: false
-    # - service: switch.turn_on
-    #   entity_id: switch.esp32_node_b_relay_4
     - service: timer.cancel
       entity_id: timer.fan_t
     - service: timer.start
       entity_id: timer.short_fan_t
     - condition: template
       value_template: "{{(as_timestamp(now()) - as_timestamp(states.button.d1mini_air_freshener_spray.last_changed)|int(0)) > 60 }}"
+    - wait_template: "{{ is_state('binary_sensor.d1mini_distance_sensor_radar', 'off') }}"
+      timeout:
+        minutes: 1
     - service: button.press
       entity_id: button.d1mini_air_freshener_spray
 
