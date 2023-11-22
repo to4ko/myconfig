@@ -267,14 +267,53 @@
 #                   message: "\U00002705 Перезапуск Ленты Сандра (вебхук)"
 
 
-# service: unifi.reconnect_client
-# data:
-#   device_id: 0ccf80f8032611eb8b1e838dde8aecfd
+ ##################################
+# System - Critical WiFi Devices reconnecting
+# ##################################
+  - alias: system_critical_yeelight_devices_reconnecting
+    id: system_critical_yeelight_devices_reconnecting
+    initial_state: true
+    mode: queued
+    max_exceeded: silent
+    max: 25
+    trigger:
+      - platform: state
+        entity_id:
+          - light.led_strip_entrance_hb
+          - light.led_color_v
+          - light.led_color_s
+          - light.led_white_s
+        to: "unavailable"
+        for:
+          seconds: 30
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0000274C {{trigger.to_state.friendly_name}}: reconnecting client"
+      - service: unifi.reconnect_client
+        data:
+          device_id: >-
+            {% set qwe = 'trigger.to_state.entity_id' %}
+            {% set abc = 'switch.' + qwe.split('.')[1] %}
+            {{device_id(abc)}}
 
-# service: unifi.reconnect_client
-# data:
-#   device_id: fc556a50fb7b11eaaa0de1e127246e09
 
+# led color s
 # service: unifi.reconnect_client
 # data:
-#   device_id: eaff6e4680c5bcfded7fcc095026efff
+#   device_id: e660a9507bd87caa935e5bc2f66339e3
+
+#led color v
+# service: unifi.reconnect_client
+# data:
+#   device_id: a9b06d9688eaffa1423b0b88ec232e12
+
+#led white s
+# service: unifi.reconnect_client
+# data:
+#   device_id: b889d682007168081a70f8cd5d0dd0cb
+
+#led entrance hb
+# service: unifi.reconnect_client
+# data:
+#   device_id: c910b03bfa195cf4576b22cd2330e409
