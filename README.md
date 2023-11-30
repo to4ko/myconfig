@@ -53,7 +53,7 @@
 
 **Proxmox Node 2 - Intel NUC 12 Pro**
   - Intel i3-1220p
-  - 2*8Gb Samsung DDR4 SODIMM
+  - 2*32Gb Samsung DDR4 SODIMM
   - 500Gb Samsung 870 EVO
   - 1Tb Samsung PM9A1
 
@@ -66,7 +66,7 @@
   - Synology E10G18-T1 Addon Card
   - 4ea WD HC550 16Tb as Main Storage
   - 2ea Samsung 870 EVO 2Tb in SHR1 as Fast Storage
-  - 2ea Adata SX6000 Lite 512Gb as NVME read\write cache
+  - 2ea SP A38 1Tb as NVME read\write cache
 
 **Backup Storage Unit \ Plex Media Server Unit - Synology DS920+**
   - 4Gb onboard + 16Gb Kingston DDR4 SODIMM
@@ -76,7 +76,6 @@
 
 **Remote Storage Unit - Synology DS220+**
   - 2ea Seagate Skyhawk 4Tb in SHR1 as Main Storage section
-  - Upcoming remote HA server
 
 **UPS**
   - Ippon Back Basic 1500
