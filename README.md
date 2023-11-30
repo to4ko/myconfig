@@ -68,13 +68,13 @@
   - 2ea Samsung 870 EVO 2Tb in SHR1 as Fast Storage
   - 2ea SP A38 1Tb as NVME read\write cache
 
-**Backup Storage Unit \ Plex Media Server Unit - Synology DS920+**
+**Backup Storage Unit - Synology DS920+**
   - 4Gb onboard + 16Gb Kingston DDR4 SODIMM
   - 2ea WD Purple 4Tb in SHR1 as Main Storage section 
   - 2ea Samsung 870 EVO 1Tb in SHR1 as Fast Storage
   - 2ea Adata SX6000 Lite 256Gb as NVME read\write cache
 
-**Remote Storage Unit - Synology DS220+**
+**Remote Backup Storage Unit - Synology DS220+**
   - 2ea Seagate Skyhawk 4Tb in SHR1 as Main Storage section
 
 **UPS**
