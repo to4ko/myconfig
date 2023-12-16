@@ -324,23 +324,58 @@
   id: system_login_failure
   initial_state: true
   trigger:
-    - platform: state
-      entity_id: persistent_notification.http_login
-      to:
+    - platform: persistent_notification
+      id: 'http-login'
+      update_type:
+        - added
+        - updated
+      notification_id: http-login
+    - platform: persistent_notification
+      id: 'ip-ban'
+      update_type:
+        - added
+        - updated
+      notification_id: ip-ban
   condition:
     - condition: template
       value_template: "{{ trigger.to_state.state != off }}"
   action:
     - service: counter.increment
       entity_id: counter.badlogin_counter
-    - service: notify.telegram
-      data:
-        message: >-
-          {% set ipadress = trigger.to_state.attributes.message.split('Login attempt or request with invalid authentication from ')[1] | replace('. See the log for details.','') %}
-          {{"\U0000274C"}} Неудачная попытка входа с адреса {{ ipadress }}
-    - service: persistent_notification.dismiss
-      data:
-        notification_id: http_login
+    # - service: notify.telegram
+    #   data:
+    #     message: >-
+    #       {% set ipadress = trigger.to_state.attributes.message.split('Login attempt or request with invalid authentication from ')[1] | replace('. See the log for details.','') %}
+    #       {{"\U0000274C"}} Неудачная попытка входа с адреса {{ ipadress }}
+    # - service: persistent_notification.dismiss
+    #   data:
+    #     notification_id: http_login
+    - parallel:
+        - service: telegram_bot.send_message
+          data:
+            target: !secret tel_chat_id
+            title: >-
+                {%- if trigger.id == 'http-login' %}
+                    {{- '\U0001F6AB' -}}
+                {% else %}
+                    {{- '\U000026D4' -}}
+                {% endif %} *Вход в систему*
+            message: >
+                {% set ipadress = trigger.notification.message | replace('\n', ' ') | regex_replace('.*\((?=\d+\.\d+\.\d+\.\d+)') | regex_replace('\).*')
+                    | replace('Too many login attempts from ', '') %}
+                
+                {% if trigger.id == 'http-login' -%}
+                    Неудачная попытка входа в систему с адреса [{{ ipadress }}](https://whatismyipaddress.com/ip/{{- ipadress }})
+                {%- else -%}
+                    Заблокирован IP адрес [{{ ipadress }}](https://whatismyipaddress.com/ip/{{- ipadress }}), 5 попыток входа
+                {%- endif %}, [логи]({{- states('sensor.instance_external_url_config') -}}/config/logs)
+            disable_web_page_preview: true
+        - service: persistent_notification.dismiss
+          data:
+            notification_id: "{{ trigger.id }}"
+
+
+
 
 # ##################################
 # System - IP Blocked

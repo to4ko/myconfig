@@ -1,28 +1,18 @@
 substitutions:
-  board_name: d1mini_air_freshener
-  node_name: d1mini-air-freshener
+  board_name: esp32_pico_air_freshener
+  node_name: esp32-pico-air-freshener
   
 esphome:
   name: ${node_name}
-  comment: D1 Mini Air Freshener
-  # on_boot:
-  #   then:
-  #   - sensor.template.publish:
-  #       id: id_new_canister_sensor
-  #       state: !lambda 'return id(id_canister_replace);'
-  #   - text_sensor.template.publish:
-  #       id: id_new_canister_time_text
-  #       state: !lambda |-
-  #                   char str[30];
-  #                   time_t currTime = id(id_canister_replace);
-  #                   strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&currTime));
-  #                   return  { str };
-  #   - component.update: id_refill_remaining
-  #   - component.update: id_days_in_use
-      
-esp8266:
-  board: d1_mini
-  restore_from_flash: true
+  comment: ESP32 Pico Air Freshener
+  on_boot:
+    then:
+      - binary_sensor.template.publish:
+          id: spray_allowed
+          state: OFF
+
+esp32:
+  board: pico32
 
 wifi:
   ssid: !secret wifi_ssid_k
@@ -30,6 +20,7 @@ wifi:
   #domain: .local
   reboot_timeout: 15min
   fast_connect: true
+  #use_address: 192.168.1.246 
   #output_power: 17.5dB
   #power_save_mode: none
   # manual_ip:
@@ -41,7 +32,6 @@ wifi:
 
 logger:
   baud_rate: 0
-  esp8266_store_log_strings_in_flash: false
   
 api:
   reboot_timeout: 0s
@@ -57,7 +47,7 @@ binary_sensor:
 
   - platform: gpio
     pin:
-      number: GPIO13
+      number: GPIO21
       mode: INPUT_PULLUP
       inverted: true
     name: ${board_name}_Button
@@ -76,6 +66,27 @@ binary_sensor:
         then:
           - button.press: id_button_reset
           - light.turn_off: id_green_led
+
+  - platform: template
+    name: ${board_name}_Spray_Allowed
+    id: spray_allowed
+    on_release:
+      then:
+        - light.turn_on:    
+            id: id_red_led
+            effect: "Blink"
+        - delay:
+            seconds: 30
+        - binary_sensor.template.publish:
+            id: spray_allowed
+            state: ON
+        - light.turn_off: id_red_led
+        - light.turn_on:    
+            id: id_green_led
+            effect: "Blink Fast"
+        - delay:
+            seconds: 2
+        - light.turn_off: id_green_led
 
   # - platform: gpio
   #   pin:
@@ -114,7 +125,7 @@ number:
     restore_value: true
     update_interval: 30s
     min_value: 0
-    max_value: 3000
+    max_value: 1000
     step: 1
     optimistic: true
     on_value:
@@ -128,7 +139,7 @@ number:
     restore_value: true
     update_interval: 30s
     min_value: 0
-    max_value: 3000
+    max_value: 1000
     step: 1
     optimistic: true
     on_value:
@@ -334,31 +345,37 @@ button:
 switch:
   - platform: gpio
     pin:
-      number: GPIO15
+      number: GPIO22
     name: ${board_name}_Spray
     id: spray
     icon: mdi:sprinkler
     restore_mode: ALWAYS_OFF
     internal: true
     on_turn_on:
-      then:  
-        - number.set:
-            id: id_counter
-            value: !lambda |-
-              return ((id(id_counter).state)+1);
-        - component.update: id_counter
-        - delay: 1s
-        - switch.turn_off: spray
+        - if:
+            condition:
+              - binary_sensor.is_on: spray_allowed
+            then:
+              - binary_sensor.template.publish:
+                  id: spray_allowed
+                  state: OFF
+              - number.set:
+                  id: id_counter
+                  value: !lambda |-
+                    return ((id(id_counter).state)+1);
+              - component.update: id_counter
+              - delay: 20ms
+              - switch.turn_off: spray
         
 output:
-  - platform: esp8266_pwm
+  - platform: ledc
     id: output_led1
-    pin: GPIO00
+    pin: GPIO18
     inverted: true
 
-  - platform: esp8266_pwm
+  - platform: ledc
     id: output_led2
-    pin: GPIO02
+    pin: GPIO25
     inverted: true
 
 light:
