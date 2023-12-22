@@ -1,6 +1,7 @@
 substitutions:
   board_name: esp32_node_hs
   node_name: esp32-node-hs
+  num_leds: "174"
  
 esphome:
   name: ${node_name}
@@ -50,7 +51,7 @@ light:
   - platform: neopixelbus
     variant: WS2812
     pin: GPIO25
-    num_leds: 174
+    num_leds: ${num_leds}
     type: GRB
     name: ${board_name}_LED
     method:
@@ -65,6 +66,659 @@ light:
       - addressable_random_twinkle:
       - addressable_fireworks:
       - addressable_flicker:
+      - addressable_lambda:
+          name: "Rise R2L"
+          update_interval: 10ms
+          lambda: |-
+            static Color led[${num_leds}];
+            static uint16_t progress = 0;
+            static int middle = ${num_leds} / 2;
+
+            const uint8_t speed = 1;
+            const uint8_t steps = 100;
+
+            const bool revers = false;
+            const bool twoside = false;
+            const bool fade = false;
+
+            if (initial_run) 
+            {
+              ESP_LOGD("effect", "Rise and Fade x%i / %i", speed, steps);
+
+              for (int i = 0; i < it.size(); i++)
+              {
+                led[i] = fade ? current_color : Color::BLACK;
+              }
+              progress = 0;
+            }
+
+            uint8_t r = max(1, current_color.r / steps);
+            uint8_t g = max(1, current_color.g / steps);
+            uint8_t b = max(1, current_color.b / steps);
+            
+            // Let's light up the ones who got their turn.
+            for (int i = 0; i < speed; i++)
+            {
+              Color color = fade ? Color(current_color.r - r, current_color.g - g, current_color.b - b) : Color(r, g, b);
+
+              if (twoside)
+              {
+                if (progress < middle)
+                {
+                  if ((revers && progress == middle - 1) || (progress == 0 && !revers))
+                  {
+                    led[middle] = color;
+                  }
+                  led[revers ? max(0, (int) progress) : min((int) (middle + progress + 1), (int) it.size())] = color;
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : max(0, (int) (middle - progress - 1))] = color;
+                }
+              }
+              else
+              {
+                if (progress < it.size())
+                {
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : min((int) progress, (int) it.size())] = color;
+                }
+              }
+
+              progress++;
+            }
+
+            bool complete = true;
+
+            // Increase or Decrease the brightness of those already in action.
+            for (int i = 0; i < it.size(); i++)
+            {
+              if ( !(led[i].r == 0 && led[i].g == 0 && led[i].b == 0) &&
+                  !(led[i].r == current_color.r && led[i].g == current_color.g && led[i].b == current_color.b) )
+              {
+                if (fade)
+                {
+                  led[i].r = max(0, led[i].r - r);
+                  led[i].g = max(0, led[i].g - g);
+                  led[i].b = max(0, led[i].b - b);
+                }
+                else
+                {
+                  led[i].r = min(led[i].r + r, (int) current_color.r);
+                  led[i].g = min(led[i].g + g, (int) current_color.g);
+                  led[i].b = min(led[i].b + b, (int) current_color.b);
+                }
+
+                complete = false;
+              }
+            }
+
+            // Everyone's already on burn, mission over 
+            if (complete)
+            {
+              if (fade)
+              {
+                auto call = id(light1).turn_off();
+                call.perform();
+              }
+              else
+              {
+                it.all() = current_color;
+                auto call = id(light1).turn_on();
+                call.set_effect("None");
+                call.perform();
+              }
+
+              ESP_LOGD("effect", "Rise and Fade x%i / %i - Complete", speed, steps);
+            }
+            else // Transfer the current state to the led strip
+            {
+              for (int i = 0; i < it.size(); i++)
+              {
+                it[i] = led[i];
+              }
+            }
+
+      - addressable_lambda:
+          name: "Rise L2R"
+          update_interval: 10ms
+          lambda: |-
+            static Color led[${num_leds}];
+            static uint16_t progress = 0;
+            static int middle = ${num_leds} / 2;
+
+            const uint8_t speed = 1;
+            const uint8_t steps = 100;
+
+            const bool revers = true;
+            const bool twoside = false;
+            const bool fade = false;
+
+            if (initial_run) 
+            {
+              ESP_LOGD("effect", "Rise and Fade x%i / %i", speed, steps);
+
+              for (int i = 0; i < it.size(); i++)
+              {
+                led[i] = fade ? current_color : Color::BLACK;
+              }
+              progress = 0;
+            }
+
+            uint8_t r = max(1, current_color.r / steps);
+            uint8_t g = max(1, current_color.g / steps);
+            uint8_t b = max(1, current_color.b / steps);
+            
+            // Let's light up the ones who got their turn.
+            for (int i = 0; i < speed; i++)
+            {
+              Color color = fade ? Color(current_color.r - r, current_color.g - g, current_color.b - b) : Color(r, g, b);
+
+              if (twoside)
+              {
+                if (progress < middle)
+                {
+                  if ((revers && progress == middle - 1) || (progress == 0 && !revers))
+                  {
+                    led[middle] = color;
+                  }
+                  led[revers ? max(0, (int) progress) : min((int) (middle + progress + 1), (int) it.size())] = color;
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : max(0, (int) (middle - progress - 1))] = color;
+                }
+              }
+              else
+              {
+                if (progress < it.size())
+                {
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : min((int) progress, (int) it.size())] = color;
+                }
+              }
+
+              progress++;
+            }
+
+            bool complete = true;
+
+            // Increase or Decrease the brightness of those already in action.
+            for (int i = 0; i < it.size(); i++)
+            {
+              if ( !(led[i].r == 0 && led[i].g == 0 && led[i].b == 0) &&
+                  !(led[i].r == current_color.r && led[i].g == current_color.g && led[i].b == current_color.b) )
+              {
+                if (fade)
+                {
+                  led[i].r = max(0, led[i].r - r);
+                  led[i].g = max(0, led[i].g - g);
+                  led[i].b = max(0, led[i].b - b);
+                }
+                else
+                {
+                  led[i].r = min(led[i].r + r, (int) current_color.r);
+                  led[i].g = min(led[i].g + g, (int) current_color.g);
+                  led[i].b = min(led[i].b + b, (int) current_color.b);
+                }
+
+                complete = false;
+              }
+            }
+
+            // Everyone's already on burn, mission over 
+            if (complete)
+            {
+              if (fade)
+              {
+                auto call = id(light1).turn_off();
+                call.perform();
+              }
+              else
+              {
+                it.all() = current_color;
+                auto call = id(light1).turn_on();
+                call.set_effect("None");
+                call.perform();
+              }
+
+              ESP_LOGD("effect", "Rise and Fade x%i / %i - Complete", speed, steps);
+            }
+            else // Transfer the current state to the led strip
+            {
+              for (int i = 0; i < it.size(); i++)
+              {
+                it[i] = led[i];
+              }
+            }
+
+      - addressable_lambda:
+          name: "Fase R2L"
+          update_interval: 10ms
+          lambda: |-
+            static Color led[${num_leds}];
+            static uint16_t progress = 0;
+            static int middle = ${num_leds} / 2;
+
+            const uint8_t speed = 1;
+            const uint8_t steps = 100;
+
+            const bool revers = false;
+            const bool twoside = false;
+            const bool fade = true;
+
+            if (initial_run) 
+            {
+              ESP_LOGD("effect", "Rise and Fade x%i / %i", speed, steps);
+
+              for (int i = 0; i < it.size(); i++)
+              {
+                led[i] = fade ? current_color : Color::BLACK;
+              }
+              progress = 0;
+            }
+
+            uint8_t r = max(1, current_color.r / steps);
+            uint8_t g = max(1, current_color.g / steps);
+            uint8_t b = max(1, current_color.b / steps);
+            
+            // Let's light up the ones who got their turn.
+            for (int i = 0; i < speed; i++)
+            {
+              Color color = fade ? Color(current_color.r - r, current_color.g - g, current_color.b - b) : Color(r, g, b);
+
+              if (twoside)
+              {
+                if (progress < middle)
+                {
+                  if ((revers && progress == middle - 1) || (progress == 0 && !revers))
+                  {
+                    led[middle] = color;
+                  }
+                  led[revers ? max(0, (int) progress) : min((int) (middle + progress + 1), (int) it.size())] = color;
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : max(0, (int) (middle - progress - 1))] = color;
+                }
+              }
+              else
+              {
+                if (progress < it.size())
+                {
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : min((int) progress, (int) it.size())] = color;
+                }
+              }
+
+              progress++;
+            }
+
+            bool complete = true;
+
+            // Increase or Decrease the brightness of those already in action.
+            for (int i = 0; i < it.size(); i++)
+            {
+              if ( !(led[i].r == 0 && led[i].g == 0 && led[i].b == 0) &&
+                  !(led[i].r == current_color.r && led[i].g == current_color.g && led[i].b == current_color.b) )
+              {
+                if (fade)
+                {
+                  led[i].r = max(0, led[i].r - r);
+                  led[i].g = max(0, led[i].g - g);
+                  led[i].b = max(0, led[i].b - b);
+                }
+                else
+                {
+                  led[i].r = min(led[i].r + r, (int) current_color.r);
+                  led[i].g = min(led[i].g + g, (int) current_color.g);
+                  led[i].b = min(led[i].b + b, (int) current_color.b);
+                }
+
+                complete = false;
+              }
+            }
+
+            // Everyone's already on burn, mission over 
+            if (complete)
+            {
+              if (fade)
+              {
+                auto call = id(light1).turn_off();
+                call.perform();
+              }
+              else
+              {
+                it.all() = current_color;
+                auto call = id(light1).turn_on();
+                call.set_effect("None");
+                call.perform();
+              }
+
+              ESP_LOGD("effect", "Rise and Fade x%i / %i - Complete", speed, steps);
+            }
+            else // Transfer the current state to the led strip
+            {
+              for (int i = 0; i < it.size(); i++)
+              {
+                it[i] = led[i];
+              }
+            }
+
+      - addressable_lambda:
+          name: "Fade L2R"
+          update_interval: 10ms
+          lambda: |-
+            static Color led[${num_leds}];
+            static uint16_t progress = 0;
+            static int middle = ${num_leds} / 2;
+
+            const uint8_t speed = 1;
+            const uint8_t steps = 100;
+
+            const bool revers = true;
+            const bool twoside = false;
+            const bool fade = true;
+
+            if (initial_run) 
+            {
+              ESP_LOGD("effect", "Rise and Fade x%i / %i", speed, steps);
+
+              for (int i = 0; i < it.size(); i++)
+              {
+                led[i] = fade ? current_color : Color::BLACK;
+              }
+              progress = 0;
+            }
+
+            uint8_t r = max(1, current_color.r / steps);
+            uint8_t g = max(1, current_color.g / steps);
+            uint8_t b = max(1, current_color.b / steps);
+            
+            // Let's light up the ones who got their turn.
+            for (int i = 0; i < speed; i++)
+            {
+              Color color = fade ? Color(current_color.r - r, current_color.g - g, current_color.b - b) : Color(r, g, b);
+
+              if (twoside)
+              {
+                if (progress < middle)
+                {
+                  if ((revers && progress == middle - 1) || (progress == 0 && !revers))
+                  {
+                    led[middle] = color;
+                  }
+                  led[revers ? max(0, (int) progress) : min((int) (middle + progress + 1), (int) it.size())] = color;
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : max(0, (int) (middle - progress - 1))] = color;
+                }
+              }
+              else
+              {
+                if (progress < it.size())
+                {
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : min((int) progress, (int) it.size())] = color;
+                }
+              }
+
+              progress++;
+            }
+
+            bool complete = true;
+
+            // Increase or Decrease the brightness of those already in action.
+            for (int i = 0; i < it.size(); i++)
+            {
+              if ( !(led[i].r == 0 && led[i].g == 0 && led[i].b == 0) &&
+                  !(led[i].r == current_color.r && led[i].g == current_color.g && led[i].b == current_color.b) )
+              {
+                if (fade)
+                {
+                  led[i].r = max(0, led[i].r - r);
+                  led[i].g = max(0, led[i].g - g);
+                  led[i].b = max(0, led[i].b - b);
+                }
+                else
+                {
+                  led[i].r = min(led[i].r + r, (int) current_color.r);
+                  led[i].g = min(led[i].g + g, (int) current_color.g);
+                  led[i].b = min(led[i].b + b, (int) current_color.b);
+                }
+
+                complete = false;
+              }
+            }
+
+            // Everyone's already on burn, mission over 
+            if (complete)
+            {
+              if (fade)
+              {
+                auto call = id(light1).turn_off();
+                call.perform();
+              }
+              else
+              {
+                it.all() = current_color;
+                auto call = id(light1).turn_on();
+                call.set_effect("None");
+                call.perform();
+              }
+
+              ESP_LOGD("effect", "Rise and Fade x%i / %i - Complete", speed, steps);
+            }
+            else // Transfer the current state to the led strip
+            {
+              for (int i = 0; i < it.size(); i++)
+              {
+                it[i] = led[i];
+              }
+            }
+
+      - addressable_lambda:
+          name: "Rise Double"
+          update_interval: 10ms
+          lambda: |-
+            static Color led[${num_leds}];
+            static uint16_t progress = 0;
+            static int middle = ${num_leds} / 2;
+
+            const uint8_t speed = 1;
+            const uint8_t steps = 100;
+
+            const bool revers = true;
+            const bool twoside = true;
+            const bool fade = false;
+
+            if (initial_run) 
+            {
+              ESP_LOGD("effect", "Rise and Fade x%i / %i", speed, steps);
+
+              for (int i = 0; i < it.size(); i++)
+              {
+                led[i] = fade ? current_color : Color::BLACK;
+              }
+              progress = 0;
+            }
+
+            uint8_t r = max(1, current_color.r / steps);
+            uint8_t g = max(1, current_color.g / steps);
+            uint8_t b = max(1, current_color.b / steps);
+            
+            // Let's light up the ones who got their turn.
+            for (int i = 0; i < speed; i++)
+            {
+              Color color = fade ? Color(current_color.r - r, current_color.g - g, current_color.b - b) : Color(r, g, b);
+
+              if (twoside)
+              {
+                if (progress < middle)
+                {
+                  if ((revers && progress == middle - 1) || (progress == 0 && !revers))
+                  {
+                    led[middle] = color;
+                  }
+                  led[revers ? max(0, (int) progress) : min((int) (middle + progress + 1), (int) it.size())] = color;
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : max(0, (int) (middle - progress - 1))] = color;
+                }
+              }
+              else
+              {
+                if (progress < it.size())
+                {
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : min((int) progress, (int) it.size())] = color;
+                }
+              }
+
+              progress++;
+            }
+
+            bool complete = true;
+
+            // Increase or Decrease the brightness of those already in action.
+            for (int i = 0; i < it.size(); i++)
+            {
+              if ( !(led[i].r == 0 && led[i].g == 0 && led[i].b == 0) &&
+                  !(led[i].r == current_color.r && led[i].g == current_color.g && led[i].b == current_color.b) )
+              {
+                if (fade)
+                {
+                  led[i].r = max(0, led[i].r - r);
+                  led[i].g = max(0, led[i].g - g);
+                  led[i].b = max(0, led[i].b - b);
+                }
+                else
+                {
+                  led[i].r = min(led[i].r + r, (int) current_color.r);
+                  led[i].g = min(led[i].g + g, (int) current_color.g);
+                  led[i].b = min(led[i].b + b, (int) current_color.b);
+                }
+
+                complete = false;
+              }
+            }
+
+            // Everyone's already on burn, mission over 
+            if (complete)
+            {
+              if (fade)
+              {
+                auto call = id(light1).turn_off();
+                call.perform();
+              }
+              else
+              {
+                it.all() = current_color;
+                auto call = id(light1).turn_on();
+                call.set_effect("None");
+                call.perform();
+              }
+
+              ESP_LOGD("effect", "Rise and Fade x%i / %i - Complete", speed, steps);
+            }
+            else // Transfer the current state to the led strip
+            {
+              for (int i = 0; i < it.size(); i++)
+              {
+                it[i] = led[i];
+              }
+            }
+
+      - addressable_lambda:
+          name: "Fade Double"
+          update_interval: 10ms
+          lambda: |-
+            static Color led[${num_leds}];
+            static uint16_t progress = 0;
+            static int middle = ${num_leds} / 2;
+
+            const uint8_t speed = 1;
+            const uint8_t steps = 100;
+
+            const bool revers = false;
+            const bool twoside = true;
+            const bool fade = true;
+
+            if (initial_run) 
+            {
+              ESP_LOGD("effect", "Rise and Fade x%i / %i", speed, steps);
+
+              for (int i = 0; i < it.size(); i++)
+              {
+                led[i] = fade ? current_color : Color::BLACK;
+              }
+              progress = 0;
+            }
+
+            uint8_t r = max(1, current_color.r / steps);
+            uint8_t g = max(1, current_color.g / steps);
+            uint8_t b = max(1, current_color.b / steps);
+            
+            // Let's light up the ones who got their turn.
+            for (int i = 0; i < speed; i++)
+            {
+              Color color = fade ? Color(current_color.r - r, current_color.g - g, current_color.b - b) : Color(r, g, b);
+
+              if (twoside)
+              {
+                if (progress < middle)
+                {
+                  if ((revers && progress == middle - 1) || (progress == 0 && !revers))
+                  {
+                    led[middle] = color;
+                  }
+                  led[revers ? max(0, (int) progress) : min((int) (middle + progress + 1), (int) it.size())] = color;
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : max(0, (int) (middle - progress - 1))] = color;
+                }
+              }
+              else
+              {
+                if (progress < it.size())
+                {
+                  led[revers ? max(0, (int) (it.size() - progress - 1)) : min((int) progress, (int) it.size())] = color;
+                }
+              }
+
+              progress++;
+            }
+
+            bool complete = true;
+
+            // Increase or Decrease the brightness of those already in action.
+            for (int i = 0; i < it.size(); i++)
+            {
+              if ( !(led[i].r == 0 && led[i].g == 0 && led[i].b == 0) &&
+                  !(led[i].r == current_color.r && led[i].g == current_color.g && led[i].b == current_color.b) )
+              {
+                if (fade)
+                {
+                  led[i].r = max(0, led[i].r - r);
+                  led[i].g = max(0, led[i].g - g);
+                  led[i].b = max(0, led[i].b - b);
+                }
+                else
+                {
+                  led[i].r = min(led[i].r + r, (int) current_color.r);
+                  led[i].g = min(led[i].g + g, (int) current_color.g);
+                  led[i].b = min(led[i].b + b, (int) current_color.b);
+                }
+
+                complete = false;
+              }
+            }
+
+            // Everyone's already on burn, mission over 
+            if (complete)
+            {
+              if (fade)
+              {
+                auto call = id(light1).turn_off();
+                call.perform();
+              }
+              else
+              {
+                it.all() = current_color;
+                auto call = id(light1).turn_on();
+                call.set_effect("None");
+                call.perform();
+              }
+
+              ESP_LOGD("effect", "Rise and Fade x%i / %i - Complete", speed, steps);
+            }
+            else // Transfer the current state to the led strip
+            {
+              for (int i = 0; i < it.size(); i++)
+              {
+                it[i] = led[i];
+              }
+            }
 
   - platform: partition
     name: ${board_name}_toilet

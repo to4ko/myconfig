@@ -1,35 +1,35 @@
 substitutions:
   board_name: gosund_strip_p1
+  node_name: gosund-strip-p1
 
 esphome:
-  name: ${board_name}
-  platform: ESP8266
-  board: esp01_1m
+  name: ${node_name}
   comment: Gosund Strip P1
-  esp8266_restore_from_flash: true
-  on_boot:
-    priority: -10
-    then:
-      - switch.turn_on: relay1
-      - switch.turn_on: relay2
-      - switch.turn_on: relay3
-      - switch.turn_on: relay4
-      
+
+esp8266:
+  board: esp01_1m
+  restore_from_flash: true
+
+
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_pass
   #domain: .local
   reboot_timeout: 15min
   fast_connect: true
-  manual_ip:
-    static_ip: 192.168.1.180
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
-    dns1: 192.168.1.1
-    dns2: 8.8.8.8
+  #use_address: 192.168.1.180
+  #output_power: 17.5dB
+  #power_save_mode: none
+  # manual_ip:
+    # static_ip: 192.168.1.180
+    # gateway: 192.168.1.1
+    # subnet: 255.255.255.0
+    # dns1: 192.168.1.1
+    # dns2: 8.8.8.8
 
 logger:
   baud_rate: 0
+  esp8266_store_log_strings_in_flash: false
   logs:
     adc: INFO
 
@@ -53,12 +53,12 @@ binary_sensor:
     name: ${board_name}_Status
 
   - platform: gpio
-    id: button
+    id: id_button
     internal: true
     pin:
       number: GPIO16
-      mode: INPUT_PULLUP
       inverted: true
+      mode: INPUT
     on_press:
       - switch.toggle: relay4
 
@@ -86,37 +86,33 @@ binary_sensor:
     filters:
       - delayed_off: 100ms
 
-
 switch:
-  - platform: restart
-    name: ${board_name}_Restart
-
   - platform: gpio
     pin: GPIO14
     id: relay1
     restore_mode: RESTORE_DEFAULT_ON
-    name: ${board_name} Relay1
+    name: ${board_name}_Relay1
     icon: mdi:power-socket-eu
 
   - platform: gpio
     pin: GPIO12
     id: relay2
     restore_mode: RESTORE_DEFAULT_ON
-    name: ${board_name} Relay2
+    name: ${board_name}_Relay2
     icon: mdi:power-socket-eu
 
   - platform: gpio
     pin: GPIO13
     id: relay3
     restore_mode: RESTORE_DEFAULT_ON
-    name: ${board_name} Relay3
+    name: ${board_name}_Relay3
     icon: mdi:power-socket-eu
 
   - platform: gpio
     pin: GPIO05
     id: relay4
     restore_mode: RESTORE_DEFAULT_ON
-    name: ${board_name} Relay_USB
+    name: ${board_name}_Relay_USB
     icon: mdi:power-socket-eu
     inverted: yes
 
@@ -139,6 +135,22 @@ text_sensor:
         );
     icon: mdi:clock-start
     update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
 
 sensor:
   - platform: uptime
@@ -196,9 +208,12 @@ sensor:
           }
           return{};
 
-
+button:
+  - platform: restart
+    name: ${board_name}_Restart
     
 time:
-  - platform: homeassistant
-    id: homeassistant_time
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
 

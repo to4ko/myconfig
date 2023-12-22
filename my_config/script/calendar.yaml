@@ -1,4 +1,4 @@
-  calendar_events:
+calendar_events:
     alias: Calendar Events
     description: "Returns calendar events within a day of the specified date."
     fields:
@@ -38,7 +38,7 @@
         selector:
           text:
     sequence:
-      - service: calendar.list_events
+      - service: calendar.get_events
         data:
           start_date_time: "{{ date_start | default( today_at().strftime('%Y-%m-%d %H:%M:%S') ) }}"
           duration:
@@ -51,15 +51,21 @@
       - variables:
           result: |-
             {% set ns = namespace(events={}) %}
-            {% for event in calendar_events.events %}
-              {% set index = loop.index | string %}
-              {% if not make_choice | default(false) %}
-                {% set value = event.summary %}
-              {% else %}
-                {% set value = event.summary if event.summary.startswith(choice_word) else event.description %}
-              {% endif %}
-              {% set value = value | replace(remove | default(''), '') %}
-              {% set ns.events = dict(ns.events, **{ index : value }) %}
+            {% for calendar in calendar_events.values() %}
+              {% for event in calendar.events %}
+                {% set index = loop.index | string %}
+                {% if not make_choice | default(false) %}
+                  {% set value = event.summary %}
+                {% else %}
+                  {% set cns = namespace(choice=false) -%}
+                  {% for word in choice_word.split("|") %}
+                    {% set cns.choice = cns.choice or event.summary.startswith(word) %}
+                  {% endfor %}
+                  {% set value = event.summary if cns.choice else event.description %}
+                {% endif %}
+                {% set value = value | replace(remove | default(''), '') %}
+                {% set ns.events = dict(ns.events, **{ index : value }) %}
+              {% endfor %}
             {% endfor %}
             {{ ns.events }}
       - stop: Success
