@@ -345,7 +345,7 @@
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - service: light.turn_on
-        entity_id: light.bed_led_dima_v, light.bed_led_sandra_v
+        entity_id: light.d1mini_bed_leds_strip_dima, light.d1mini_bed_leds_strip_sandra
         data:
           brightness_pct: 10
         
@@ -405,17 +405,17 @@
               - condition: trigger
                 id: 'on_sandra'
               - condition: state
-                entity_id: light.bed_led_sandra_v
+                entity_id: light.d1mini_bed_leds_strip_sandra
                 state: 'off'
             sequence:
               - service: light.turn_on
-                entity_id: light.bed_led_sandra_v
+                entity_id: light.d1mini_bed_leds_strip_sandra
                 data:
                   brightness_pct: >
                     {%- if is_state('binary_sensor.tod_day','off') -%}
-                    2
+                    20
                     {%- else -%}
-                    10
+                    40
                     {% endif %}
                   #kelvin: 3000
                   rgb_color: [255,255,255]
@@ -424,17 +424,17 @@
               - condition: trigger
                 id: 'on_dima'
               - condition: state
-                entity_id: light.bed_led_dima_v
+                entity_id: light.d1mini_bed_leds_strip_dima
                 state: 'off'
             sequence:
               - service: light.turn_on
-                entity_id: light.bed_led_dima_v
+                entity_id: light.d1mini_bed_leds_strip_dima
                 data:
                   brightness_pct: >
                     {%- if is_state('binary_sensor.tod_day','off') -%}
-                    2
+                    40
                     {%- else -%}
-                    10
+                    60
                     {% endif %}
                   #kelvin: 3000
                   rgb_color: [255,255,255]
@@ -443,7 +443,7 @@
               - condition: trigger
                 id: 'on_sandra'
               - condition: state
-                entity_id: light.bed_led_sandra_v
+                entity_id: light.d1mini_bed_leds_strip_sandra
                 state: 'on'
             sequence:
               - service: timer.cancel
@@ -454,7 +454,7 @@
               - condition: trigger
                 id: 'on_dima'
               - condition: state
-                entity_id: light.bed_led_dima_v
+                entity_id: light.d1mini_bed_leds_strip_dima
                 state: 'on'
             sequence:
               - service: timer.cancel
@@ -472,11 +472,11 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: light.bed_led_sandra_v
+        entity_id: light.d1mini_bed_leds_strip_sandra
         to:
         id: 'is_sandra'
       - platform: state
-        entity_id: light.bed_led_dima_v
+        entity_id: light.d1mini_bed_leds_strip_dima
         to:
         id: 'is_dima'
     action:
@@ -485,13 +485,13 @@
               - condition: trigger
                 id: 'is_sandra'
             sequence:
-              - service: timer.{{'start' if is_state('light.bed_led_sandra_v','on') else 'cancel'}}
+              - service: timer.{{'start' if is_state('light.d1mini_bed_leds_strip_sandra','on') else 'cancel'}}
                 entity_id: timer.led_strip_bed_sandra_v
           - conditions:
               - condition: trigger
                 id: 'is_dima'
             sequence:
-              - service: timer.{{'start' if is_state('light.bed_led_dima_v','on') else 'cancel'}}
+              - service: timer.{{'start' if is_state('light.d1mini_bed_leds_strip_dima','on') else 'cancel'}}
                 entity_id: timer.led_strip_bed_dima_v
 
 # ##################################
@@ -519,11 +519,11 @@
               - condition: trigger
                 id: 'off_sandra'
             sequence:
-              - wait_template: "{{states('light.bed_led_sandra_v') in ['on','off']}}"
+              - wait_template: "{{states('light.d1mini_bed_leds_strip_sandra') in ['on','off']}}"
               - repeat:
                   sequence:
                     - service: light.turn_off
-                      entity_id: light.bed_led_sandra_v
+                      entity_id: light.d1mini_bed_leds_strip_sandra
                       data:
                         transition: 10
                     - delay:
@@ -532,18 +532,18 @@
                     - condition: not
                       conditions:
                         - condition: state
-                          entity_id: light.bed_led_sandra_v
+                          entity_id: light.d1mini_bed_leds_strip_sandra
                           state: 'on'
                       
           - conditions:
               - condition: trigger
                 id: 'off_dima'
             sequence:
-              - wait_template: "{{states('light.bed_led_dima_v') in ['on','off']}}"
+              - wait_template: "{{states('light.d1mini_bed_leds_strip_dima') in ['on','off']}}"
               - repeat:
                   sequence:
                     - service: light.turn_off
-                      entity_id: light.bed_led_dima_v
+                      entity_id: light.d1mini_bed_leds_strip_dima
                       data:
                         transition: 10
                     - delay:
@@ -552,7 +552,7 @@
                     - condition: not
                       conditions:
                         - condition: state
-                          entity_id: light.bed_led_dima_v
+                          entity_id: light.d1mini_bed_leds_strip_dima
                           state: 'on'
 
 # ##################################
@@ -565,12 +565,12 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: light.bed_led_dima_v
+        entity_id: light.d1mini_bed_leds_strip_dima
         from: 'unavailable'
         to: 'on'
         id: 'un_dima'
       - platform: state
-        entity_id: light.bed_led_sandra_v
+        entity_id: light.d1mini_bed_leds_strip_sandra
         from: 'unavailable'
         to: 'on'
         id: 'un_sandra'
@@ -612,7 +612,7 @@
         minutes: "/1"
     condition:
       - condition: state
-        entity_id: light.bed_led_dima_v, light.bed_led_sandra_v
+        entity_id: light.d1mini_bed_leds_strip_dima, light.d1mini_bed_leds_strip_sandra
         state: 'unavailable'
         for:
           minutes: 1
@@ -625,7 +625,7 @@
       - repeat:
           while:
             - condition: state
-              entity_id: light.bed_led_dima_v
+              entity_id: light.d1mini_bed_leds_strip_dima
               state: 'unavailable'
             - condition: template
               value_template: "{{ repeat.index <= 5 }}"
@@ -642,7 +642,7 @@
             - delay:
                 seconds: 30
       - condition: state
-        entity_id: light.bed_led_dima_v
+        entity_id: light.d1mini_bed_leds_strip_dima
         state: 'unavailable'
       - service: notify.telegram
         data:
@@ -660,7 +660,7 @@
     max_exceeded: silent
     trigger:
       - platform: state
-        entity_id: light.bed_led_dima_v
+        entity_id: light.d1mini_bed_leds_strip_dima
         from: 'unavailable'
     action:
       - service: switch.turn_on
@@ -686,7 +686,7 @@
         state: 'on'
     action:
       - service: light.turn_off
-        entity_id: light.square_led_v, light.square_led_v_nightlight, light.bed_led_dima_v, light.bed_led_sandra_v, light.led_color_v
+        entity_id: light.square_led_v, light.square_led_v_nightlight, light.d1mini_bed_leds_strip_dima, light.d1mini_bed_leds_strip_sandra, light.led_color_v
         data:
           transition: 15
 

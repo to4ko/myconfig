@@ -1,0 +1,204 @@
+substitutions:
+  board_name: d1mini_bed_leds
+  host_name: d1mini-bed-leds
+  
+esphome:
+  name: ${host_name}
+  comment: D1 Mini Bed Led Strips with Motion sensors
+
+esp8266:
+  board: d1_mini
+  # framework:
+  #   version: 2.7.4  
+
+wifi:
+  ssid: !secret wifi_ssid_k
+  password: !secret wifi_pass
+  #domain: .local
+  reboot_timeout: 15min
+  # output_power: 17.5dB
+  fast_connect: true
+  use_address: 192.168.1.140
+  # power_save_mode: none
+  # manual_ip:
+  #   static_ip: 192.168.1.140
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+logger:
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+output:
+  - platform: esp8266_pwm
+    id: left_strip
+    pin: GPIO4
+
+  - platform: esp8266_pwm
+    id: right_strip
+    pin: GPIO5
+
+light:
+  - platform: monochromatic
+    name: ${board_name}_Strip_Dima
+    output: left_strip
+    id: light_d
+
+  - platform: monochromatic
+    name: ${board_name}_Strip_Sandra
+    output: right_strip
+    id: light_s
+  
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+  - platform: homeassistant
+    name: ${board_name}_ha_bed_led_enabled
+    id: ha_led
+    entity_id: binary_sensor.bed_led_enable
+
+  - platform: gpio
+    pin:
+      number: GPIO14
+      inverted: false
+    name: ${board_name}_Motion_Sandra
+    device_class: motion
+    id: motion_s
+    on_press:
+      then:
+        - if:
+            condition:
+              and: 
+                - or:
+                    - sun.is_below_horizon: 
+                    - sensor.in_range:
+                        id: sun_elevation
+                        below: 5.0     
+                - not:
+                    binary_sensor.is_off: ha_led
+                #- light.is_off: light_s
+            then:
+              - light.turn_on: 
+                  id: light_s
+                  brightness: 40%
+
+  - platform: gpio
+    pin:
+      number: GPIO12
+      inverted: false
+    name: ${board_name}_Motion_Dima
+    device_class: motion
+    id: motion_d
+    on_press:
+      then:
+        - if:
+            condition:
+              and:
+                - or:
+                    - sun.is_below_horizon: 
+                    - sensor.in_range:
+                        id: sun_elevation
+                        below: 5.0                
+                - not:
+                    binary_sensor.is_off: ha_led
+                #- light.is_off: light_d
+            then:
+              - light.turn_on: 
+                  id: light_d
+                  brightness: 60%
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  # - platform: adc
+  #   pin: A0
+  #   name: ${board_name}_Light
+  #   update_interval: 15s
+  #   filters:
+  #     - multiply: 3.3
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: sun
+    name: ${board_name}_Sun_Elevation
+    type: elevation
+    id: sun_elevation
+  - platform: sun
+    name: ${board_name}_Sun_Azimuth
+    type: azimuth  
+    id: sun_azimuth
+
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+
+sun:
+  latitude: !secret my_lat
+  longitude: !secret my_long
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
+    # on_time:
+    #   - seconds: 15
+    #     then:
+    #       - if:
+    #           condition:
+    #             and: 
+    #               - for:
+    #                   time: 20s
+    #                   condition:
+    #                     binary_sensor.is_off: motion_d
+    #               - light.is_on: light_d
+    #           then:
+    #             - light.turn_off: 
+    #                 id: light_d
+    #                 transition_length: 5s
+    #   - seconds: 15
+    #     then:
+    #       - if:
+    #           condition:
+    #               - for:
+    #                   time: 20s
+    #                   condition:
+    #                     binary_sensor.is_off: motion_s
+    #               - light.is_on: light_s      
+    #           then:
+    #             - light.turn_off:
+    #                 id: light_s
+    #                 transition_length: 5s
