@@ -5,26 +5,16 @@ substitutions:
 esphome:
   name: ${node_name}
   comment: Micro USB Switch
-  # on_boot:
-  #   then:
-  #   - sensor.template.publish:
-  #       id: id_new_canister_sensor
-  #       state: !lambda 'return id(id_canister_replace);'
-  #   - text_sensor.template.publish:
-  #       id: id_new_canister_time_text
-  #       state: !lambda |-
-  #                   char str[30];
-  #                   time_t currTime = id(id_canister_replace);
-  #                   strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&currTime));
-  #                   return  { str };
-  #   - component.update: id_refill_remaining
-  #   - component.update: id_days_in_use
+  on_boot:
+    priority: 600
+    then:
+      - switch.turn_on: relay_1
       
 bk72xx:
   board: generic-bk7231n-qfn32-tuya
 
 wifi:
-  ssid: !secret wifi_ssid
+  ssid: !secret wifi_ssid_s
   password: !secret wifi_pass
   #domain: .local
   reboot_timeout: 15min
@@ -117,6 +107,7 @@ switch:
     name: ${board_name}_Relay_USB
     pin: P7 
     id: relay_1
+    restore_mode: ALWAYS_ON 
         
 time:
   - platform: sntp
