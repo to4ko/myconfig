@@ -261,6 +261,10 @@
       - condition: state
         entity_id: switch.square_led_s_restart_key
         state: 'on'
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.shelly_1_led_s') not in ignore }}
     action:
       - repeat:
           while:
@@ -526,3 +530,81 @@
                 data:
                   brightness_pct: 90
                   kelvin: 5000
+                  
+# ##################################
+# Sasha - Light Bar Restart
+# ##################################
+  - alias: sasha_light_bar_restart
+    id: sasha_light_bar_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.bedside_mb
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.light_bar_s
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: state
+        entity_id: switch.light_bar_s_restart_key
+        state: 'on'
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.micro_usb_1_relay_usb') not in ignore }}
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.light_bar_s
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.micro_usb_1_relay_usb
+            - delay:
+                seconds: 15
+            - service: switch.turn_on
+              entity_id: switch.micro_usb_1_relay_usb
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 Light Bar S restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.light_bar_s
+        state: 'unavailable'
+      - service: notify.telegram
+        data:
+          message: "\U0001f6a8 Light Bar S restart unsuccessful!"
+      - service: switch.turn_off
+        entity_id: switch.light_bar_s_restart_key
+
+# ##################################
+# Sasha - Light Bar S Auto Restart Key Toggle
+# ##################################
+  - alias: sasha_light_bar_s_restart_key_toggle
+    id: sasha_light_bar_s_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.light_bar_s
+        from: 'unavailable'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.light_bar_s_restart_key

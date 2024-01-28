@@ -4,15 +4,16 @@ substitutions:
   ip_address: 192.168.1.127
   current_res: '0.00290'
   voltage_div: '760'
+  max_power: "2300"
 
 esphome:
   name: ${host_name}
-  on_boot:
-    priority: -10
-    then:
-    # on affter boot
-    - switch.turn_on: switch1
-  comment: Socket SHP6_1
+  # on_boot:
+  #   priority: -10
+    # then:
+    # # on affter boot
+    # - switch.turn_on: switch1
+  comment: Socket SHP6_1 Heater Control
 
 esp8266:
   board: esp8285
@@ -55,12 +56,9 @@ binary_sensor:
       inverted: True
     name: "${board_name}_button"
     on_press:
-      - switch.toggle: switch1
+      - switch.toggle: relay
 
 output:
-  - platform: gpio
-    pin: GPIO15
-    id: relay
   - platform: gpio
     pin: GPIO00
     inverted: True
@@ -72,16 +70,15 @@ status_led:
     inverted: True
 
 switch:
-  - platform: template
-    id: switch1
+  - platform: gpio
+    pin: GPIO15
+    restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:power-socket-eu
-    optimistic: true
-    name: "${board_name}_Relay"
-    turn_on_action:
-      - output.turn_on: relay
+    id: relay
+    name: "${board_name} Relay"
+    on_turn_on:
       - output.turn_on: led1
-    turn_off_action:
-      - output.turn_off: relay
+    on_turn_off:
       - output.turn_off: led1
 
 sensor:
@@ -95,39 +92,32 @@ sensor:
     voltage_divider: ${voltage_div}
     current:
       name: ${board_name}_A
-      icon: mdi:current-ac
       unit_of_measurement: A
+      accuracy_decimals: 3
       device_class: current
     voltage:
       name: ${board_name}_V
-      icon: mdi:flash-circle
       unit_of_measurement: V
       device_class: voltage
     power:
       name: ${board_name}_W
-      icon: mdi:flash
       unit_of_measurement: W
       device_class: power
       id: id_power
+      on_value_range:
+        - above: ${max_power}
+          then:
+            - output.turn_off: led1
+            - switch.turn_off: relay      
     energy:
       name: ${board_name}_E
-      icon: mdi:lightning-bolt
       unit_of_measurement: kWh
       device_class: energy
       filters:
         - multiply: 0.001
-    change_mode_every: 3
+    change_mode_every: 4
     update_interval: 10s
-    
-  - platform: total_daily_energy
-    name: "${board_name}_Total Daily Energy"
-    power_id: id_power
-    filters:
-        # Multiplication factor from W to kW is 0.001
-        - multiply: 0.001
-    unit_of_measurement: kWh
-    icon: mdi:clock-alert
-      
+   
   - platform: uptime
     name: ${board_name}_Uptime_s
     icon: mdi:clock-outline

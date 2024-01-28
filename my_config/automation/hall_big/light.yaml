@@ -329,6 +329,10 @@
       - condition: state
         entity_id: switch.led_strip_hb_restart_key
         state: "on"
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.0x00158d00023e5812_outlet') not in ignore }}        
     action:
       - repeat:
           while:
@@ -405,6 +409,10 @@
       - condition: state
         entity_id: switch.led_strip_entrance_hb_restart_key
         state: "on"
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.digma_strip_hb_relay1') not in ignore }}                
     action:
       - repeat:
           while:
@@ -686,3 +694,81 @@
     action:
       - service: script.turn_on
         entity_id: script.bedside_restart
+
+# ##################################
+# Hall Big - Bedside Lamp Restart
+# ##################################
+  - alias: hall_big_bedside_lamp_restart
+    id: hall_big_bedside_lamp_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.bedside_mb
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.bedside
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: state
+        entity_id: switch.bedside_restart_key
+        state: 'on'
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.0x00158d00039bd56d_plug') not in ignore }}
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.bedside
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.0x00158d00039bd56d_plug
+            - delay:
+                seconds: 15
+            - service: switch.turn_on
+              entity_id: switch.0x00158d00039bd56d_plug
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 Bedside restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.bedside
+        state: 'unavailable'
+      - service: notify.telegram
+        data:
+          message: "\U0001f6a8 Bedside restart unsuccessful!"
+      - service: switch.turn_off
+        entity_id: switch.bedside_restart_key
+
+# ##################################
+# Hall Big - Bedside Auto Restart Key Toggle
+# ##################################
+  - alias: hall_big_bedside_restart_key_toggle
+    id: hall_big_bedside_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.bedside
+        from: 'unavailable'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.bedside_restart_key
