@@ -231,6 +231,8 @@
     condition:
       - condition: time
         after: "06:00:00"
+      - condition: time
+        before: "08:00:00"
       - condition: state
         entity_id: switch.0x00158d0001e85086_plug
         state: "off"
@@ -381,4 +383,28 @@
       - delay:
           seconds: 5
       - service: switch.turn_on
+        entity_id: switch.0x00158d00039258de_plug
+
+# ##################################
+# Kitchen - TV plug On by ALice
+# ##################################
+  - alias: kitchen_tv_plug_on_alice
+    id: kitchen_tv_plug_on_alice
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Включи розетку телевизора
+        id: 'on'
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Выключи розетку телевизора
+        id: 'off'
+    condition:
+      - condition: template
+        value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_k' }}"
+    action:
+      - service: 'switch.turn_{{ trigger.id }}'
         entity_id: switch.0x00158d00039258de_plug
