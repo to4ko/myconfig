@@ -1,0 +1,38 @@
+#Сенсор external_url для чтения данных с конфига
+  - platform: python_script
+    name: instance external url config
+    scan_interval: '00:05:00'
+    source: |
+        from homeassistant.helpers import network
+        try:
+            self.state = network.get_url(
+                self.hass,
+                allow_internal=False,
+            )
+        except network.NoURLAvailableError:
+            raise MyInvalidValueError("Failed to find suitable URL for my integration")
+
+#Сенсор internal_url для чтения данных с конфига
+  - platform: python_script
+    name: instance internal url config
+    scan_interval: '00:05:00'
+    source: |
+        from homeassistant.helpers.network import get_url
+        self.state = get_url(self.hass)
+
+#Сенсор по issues для repairs
+  - platform: python_script
+    name: repairs state
+    scan_interval: '12:00:00'
+    source: |
+        from homeassistant.helpers.issue_registry import async_get as async_get_issue_registry 
+
+        issue_registry = async_get_issue_registry(self.hass)
+        issues = [
+            issue.to_json()
+            for issue in issue_registry.issues.values()
+            if issue.active
+        ]
+
+        self.state = len(issues)
+        self.attributes = { "issues" : issues }

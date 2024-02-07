@@ -367,7 +367,7 @@
                     Неудачная попытка входа в систему с адреса [{{ ipadress }}](https://whatismyipaddress.com/ip/{{- ipadress }})
                 {%- else -%}
                     Заблокирован IP адрес [{{ ipadress }}](https://whatismyipaddress.com/ip/{{- ipadress }}), 5 попыток входа
-                {%- endif %}, [логи]({{- states('sensor.instance_external_url_config') -}}/config/logs)
+                {%- endif %}, [логи]({{- states('sensor.myip') -}}/config/logs)
             disable_web_page_preview: true
         - service: persistent_notification.dismiss
           data:
@@ -994,7 +994,7 @@
         - binary_sensor.esp8266_hood_k_status
         - binary_sensor.lt11_1_status
         - binary_sensor.sonoff_mini_1_status
-        - binary_sensor.sonoff_5v1c_status
+        - binary_sensor.sonoff_minir4_kiosk_charger_status
         - binary_sensor.mono_strip_1_status
         - binary_sensor.sonoff_mini_4_status
         - binary_sensor.sonoff_pow_r2_1_status
@@ -1052,7 +1052,7 @@
         - binary_sensor.esp8266_hood_k_status
         - binary_sensor.lt11_1_status
         - binary_sensor.sonoff_mini_1_status
-        - binary_sensor.sonoff_5v1c_status
+        - binary_sensor.sonoff_minir4_kiosk_charger_status
         - binary_sensor.mono_strip_1_status
         - binary_sensor.sonoff_mini_4_status
         - binary_sensor.sonoff_pow_r2_1_status
@@ -1346,7 +1346,7 @@
         - sensor.esp8266_hood_k_uptime_s
         - sensor.lt11_1_uptime_s
         - sensor.sonoff_mini_1_uptime_s
-        - sensor.sonoff_5v1c_uptime_s
+        - sensor.sonoff_minir4_kiosk_charger_uptime_s
         - sensor.mono_strip_1_uptime_s
         - sensor.sonoff_mini_4_uptime_s
         - sensor.sonoff_pow_r2_1_uptime_s
@@ -2367,19 +2367,15 @@
     - platform: time_pattern
       minutes: "/15"
   condition:
-    - or:
-      - condition: numeric_state
-        entity_id: sensor.digma_z801_battery_level
-        below: 25
-      - condition: numeric_state
-        entity_id: sensor.kiosk_battery
-        below: 25
+    - condition: numeric_state
+      entity_id: sensor.kiosk_battery
+      below: 20
   action:
     - service: notify.telegram
       data:
         message: "\U0001f50c Fully: Принудительное включение зарядки"
     - service: switch.turn_on
-      entity_id: switch.sonoff_5v1c_relay, switch.sonoff_5v1c_relay
+      entity_id: switch.sonoff_minir4_kiosk_charger_relay
 
 # ##################################
 # System - Fully App restart

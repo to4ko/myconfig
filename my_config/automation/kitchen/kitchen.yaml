@@ -26,6 +26,10 @@
     #   - service: notify.telegram
     #     data:
     #       message: "Ждем триггер для брифинга"
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.main_volume
+          value: "0.4"
       - wait_for_trigger:
           - platform: event
             event_type: xiaomi_aqara.motion
@@ -408,3 +412,19 @@
     action:
       - service: 'switch.turn_{{ trigger.id }}'
         entity_id: switch.0x00158d00039258de_plug
+        
+# ##################################
+# Kitchen - TV plug On by button
+# ##################################
+  - alias: kitchen_tv_plug_toggle_button
+    id: kitchen_tv_plug_toggle_button
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x00158d0001ef61be_action
+          click_type: single
+    action:
+      - service: switch.toggle
+        entity_id: switch.0x00158d0001e85086_plug

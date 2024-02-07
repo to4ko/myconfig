@@ -265,7 +265,7 @@
 #                   message: "\U00002705 Перезапуск Ленты Сандра (вебхук)"
 
 
- ##################################
+# ##################################
 # System - Critical WiFi Devices reconnecting
 # ##################################
   - alias: system_critical_yeelight_devices_reconnecting
@@ -332,3 +332,41 @@
       - service: unifi.reconnect_client
         data:
           device_id: c910b03bfa195cf4576b22cd2330e409
+
+
+# ##################################
+# System - Critical Micro USB WiFi Devices reconnecting
+# ##################################
+  - alias: system_critical_micro_usb_reconnect
+    id: system_critical_micro_usb_reconnect
+    initial_state: true
+    mode: queued
+    max_exceeded: silent
+    max: 25
+    trigger:
+      - platform: state
+        entity_id:
+          - switch.micro_usb_1_relay_usb
+          - switch.micro_usb_2_relay_usb
+        to: "unavailable"
+        for:
+          seconds: 30
+    action:
+      - service: notify.telegram
+        data:
+          message: "\U0000274C {{trigger.to_state.name|title}}: reconnecting client"
+      - service: unifi.reconnect_client
+        data:
+          device_id: '{{device_id(trigger.entity_id)}}'
+          
+          
+          
+      # - service: notify.telegram
+      #   data:
+      #     message: "\U0000274C {{trigger.to_state.name|title}}: reconnecting client"
+      # - service: unifi.reconnect_client
+      #   data:
+      #     device_id: >-
+      #       {% set qwe = trigger.to_state.entity_id %}
+      #       {% set abc = 'switch.' + qwe.split('.')[1] %}
+      #       {{device_id(abc)}}          
