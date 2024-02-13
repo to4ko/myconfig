@@ -1541,6 +1541,13 @@
       data:
         entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
         volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+    - if: 
+        - condition: template
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) ) > 10 }}"
+      then:
+        - service: notify.telegram
+          data:
+            message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{state_attr('sensor.yandex_response','time_fired')}}"
 
 # ##################################
 # System - Hot Water Boolean Change
