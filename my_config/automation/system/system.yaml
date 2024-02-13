@@ -1488,43 +1488,49 @@
       data:
         entity_id: input_number.temp_volume
         value: >
-          {% set ent_id = 'media_player.' + states('input_select.tts_audio_out')|lower %}
+          {% set ent_id = 'media_player.yandex_k' %}          
           {% set vol = state_attr(ent_id,'volume_level') %}
           {{ vol }}
+#{% set ent_id = 'media_player.' + states('input_select.tts_audio_out')|lower %}          
     - service: input_number.set_value
       data:
         entity_id: input_number.tts_volume
         value: 0
     - service: media_player.volume_set
       data:
-        entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+        #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+        entity_id: media_player.yandex_k
         volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-    - if:
-        - condition: trigger
-          id: "id_morning"
-      then:
-        - service: media_player.play_media
-          data:
-            entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-            media_content_id: "какая сегодня погода"
-            media_content_type: "question:tts_reply"
-            extra:
-              volume_level: 0
-      else:
-        - service: media_player.play_media
-          data:
-            entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-            media_content_id: "какая завтра погода"
-            media_content_type: "question:tts_reply"
-            extra:
-              volume_level: 0
-    - delay:
-        seconds: 3
-    - wait_template: >
-        {% set ent_id = 'sensor.' + states('input_select.tts_audio_out')|lower + '_alice_state' %}
-        {{ is_state(ent_id,'idle') }}
-      timeout:
-        minutes: 5
+    - repeat:
+        white:
+            - condition: template
+              value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) ) > 10 }}"
+            - condition: template
+              value_template: "{{ repeat.index <= 10 }}"
+        sequence:
+            - if:
+                - condition: trigger
+                  id: "id_morning"
+              then:
+                - service: media_player.play_media
+                  data:
+                    #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+                    entity_id: media_player.yandex_k
+                    media_content_id: "какая сегодня погода"
+                    media_content_type: "question:tts_reply"
+                    extra:
+                      volume_level: 0
+              else:
+                - service: media_player.play_media
+                  data:
+                    #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+                    entity_id: media_player.yandex_k
+                    media_content_id: "какая завтра погода"
+                    media_content_type: "question:tts_reply"
+                    extra:
+                      volume_level: 0
+            - delay:
+                seconds: 3
     - delay:
         seconds: 2
     - service: input_number.set_value
