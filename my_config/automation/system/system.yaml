@@ -1533,6 +1533,18 @@
                 seconds: 3
     - delay:
         seconds: 2
+    - if: 
+        - condition: template
+          value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) ) > 10 }}"
+      then:
+        - service: notify.telegram
+          data:
+            message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{as_timestamp(state_attr('sensor.yandex_response','time_fired'))  | timestamp_custom('%d-%m-%Y %H:%M:%S',true,0)}} "
+    - wait_template: >
+        {% set ent_id = 'sensor.yandex_k' + '_alice_state' %}
+        {{ is_state(ent_id,'idle') }}
+      timeout:
+        minutes: 5
     - service: input_number.set_value
       data:
         entity_id: input_number.tts_volume
