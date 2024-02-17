@@ -697,30 +697,30 @@
 # ##################################
 # Vova - LED Color V Restart
 # ##################################
-  - alias: vova_led_color_v_restart
-    id: vova_led_color_v_restart
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/1"
-      # - platform: state
-      #   entity_id: light.led_color_s
-      #   to: 'unavailable'
-      #   for:
-      #     minutes: 2
-      # - platform: numeric_state
-      #   entity_id: sensor.ha_uptime
-      #   above: 0
-      #   below: 2
-    condition:
-      - condition: state
-        entity_id: light.led_color_v
-        state: 'unavailable'
-        for:
-          minutes: 2
-    action:
-      - service: script.turn_on
-        entity_id: script.led_color_v_restart
+  # - alias: vova_led_color_v_restart
+  #   id: vova_led_color_v_restart
+  #   initial_state: true
+  #   trigger:
+  #     - platform: time_pattern
+  #       minutes: "/1"
+  #     # - platform: state
+  #     #   entity_id: light.led_color_s
+  #     #   to: 'unavailable'
+  #     #   for:
+  #     #     minutes: 2
+  #     # - platform: numeric_state
+  #     #   entity_id: sensor.ha_uptime
+  #     #   above: 0
+  #     #   below: 2
+  #   condition:
+  #     - condition: state
+  #       entity_id: light.led_color_v
+  #       state: 'unavailable'
+  #       for:
+  #         minutes: 2
+  #   action:
+  #     - service: script.turn_on
+  #       entity_id: script.led_color_v_restart
   
 # ##################################
 # Vova - LED Color V control
@@ -822,3 +822,81 @@
                 data:
                   brightness_pct: 90
                   kelvin: 5000
+
+# ##################################
+# Vova - LED Color Restart
+# ##################################
+  - alias: vova_led_color_restart
+    id: vova_led_color_restart
+    initial_state: true
+    trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.square_led_v
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    condition:
+      - condition: state
+        entity_id: light.led_color_v
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: switch.system_led_color_v_restart_key
+        state: 'on'
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.0x00158d00023a657a_plug') not in ignore }}
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.led_color_v
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - service: switch.turn_off
+              entity_id: switch.0x00158d00023a657a_plug
+            - delay:
+                seconds: 15
+            - service: switch.turn_on
+              entity_id: switch.0x00158d00023a657a_plug
+            - service: notify.telegram
+              data:
+                message: "\U0001f6a8 LED Color V restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.led_color_v
+        state: 'unavailable'
+      - service: notify.telegram
+        data:
+          message: "\U0001f6a8 LED Color V restart unsuccessful!"
+      - service: switch.turn_off
+        entity_id: switch.system_led_color_v_restart_key
+  
+# ##################################
+# Vova - LED Color V Auto Restart Key Toggle
+# ##################################
+  - alias: vova_led_color_restart_key_toggle
+    id: vova_led_color_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: light.led_color_v
+        from: 'unavailable'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.system_led_color_v_restart_key
