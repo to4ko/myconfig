@@ -138,3 +138,45 @@
   #         seconds: 5
   #     - service: button.press
   #       entity_id: button.d1mini_air_freshener_spray
+
+
+# ##################################
+# Master Bedroom - Breather Switches Interlock
+# ##################################
+  - alias: master_bedroom_breather_switches_interlock
+    id: master_bedroom_breather_switches_interlock
+    trigger:
+      - platform: state
+        entity_id:
+          - switch.breather_auto_mb
+          - switch.breather_mb_last_toggle_by_user
+    condition: 
+      - condition: template
+        value_template: "{{ trigger.to_state.state == 'on' }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+    - service: homeassistant.turn_off
+      target:
+        entity_id: >-
+          {% if trigger.from_state.entity_id == 'switch.breather_auto_mb' %}
+          {{ 'switch.breather_mb_last_toggle_by_user' }}
+          {% else %}
+          {{ 'switch.breather_auto_mb' }}
+          {% endif %}
+
+# ##################################
+# Master Bedroom - Breather Switches to default
+# ##################################
+  - alias: master_bedroom_breather_switches_default
+    id: master_bedroom_breather_switches_default
+    trigger:
+      - platform: template
+        value_template: "{{ is_state('switch.breather_auto_mb','off') and
+                            is_state('switch.breather_mb_last_toggle_by_user','off') }}"
+    condition: 
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+    - service: switch.turn_on
+      entity_id: switch.breather_auto_mb

@@ -106,24 +106,24 @@
     id: vova_breather_auto_timer
     initial_state: true
     trigger:
-      - platform: time_pattern
-        minutes: "/5"
-        id: 'time_pattern' 
-      - platform: event
-        event_type: timer.finished
-        event_data:
-          entity_id: timer.breather_v
-        id: 'timer_finish'
-      - platform: state
-        entity_id: binary_sensor.breather_v
-        from: 'off'
-        to: 'on'
-        id: 'to_on'
-      - platform: state
-        entity_id: binary_sensor.breather_v
-        from: 'on'
-        to: 'off'
-        id: 'to_off'
+      # - platform: time_pattern
+      #   minutes: "/5"
+      #   id: 'time_pattern' 
+      # - platform: event
+      #   event_type: timer.finished
+      #   event_data:
+      #     entity_id: timer.breather_v
+      #   id: 'timer_finish'
+      # - platform: state
+      #   entity_id: binary_sensor.breather_v
+      #   from: 'off'
+      #   to: 'on'
+      #   id: 'to_on'
+      # - platform: state
+      #   entity_id: binary_sensor.breather_v
+      #   from: 'on'
+      #   to: 'off'
+      #   id: 'to_off'
       - platform: state
         entity_id: binary_sensor.digma_ir_v_breather_remote_used
         to: 'on'
@@ -132,10 +132,10 @@
       #   entity_id: binary_sensor.digma_ir_v_breather_self_code
       #   to: 'on'
       #   id: 'ir_used_digma'
-      - platform: state
-        entity_id: input_select.breazer_timer
-        to:
-        id: 'input'
+      # - platform: state
+      #   entity_id: input_select.breazer_timer
+      #   to:
+      #   id: 'input'
       - platform: event
         event_type: yandex_intent
         event_data:
@@ -147,155 +147,155 @@
           text: Включи вентиляцию
         id: 'to_on_alice'
       - platform: time
-        at: "20:15:00"
+        at: "22:00:00"
         id: 'time_trigger_night'
       - platform: time
-        at: "08:30:00"
+        at: "07:00:00"
         id: 'time_trigger_day'
     condition:
-      - condition: state
-        entity_id: switch.breather_auto_v
-        state: 'off'
+      # - condition: state
+      #   entity_id: switch.breather_auto_v
+      #   state: 'off'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
       - choose:
-          - conditions: # choice 0
-              - condition: trigger
-                id: "time_pattern"
-            sequence:
-              - if:
-                  - condition: state
-                    entity_id: switch.hourly_mode_breather_v
-                    state: 'on'
-                  - condition: state
-                    entity_id: fan.breather_v
-                    state: 'off'
-                  - condition: state
-                    entity_id: switch.breather_auto_v
-                    state: 'off'
-                then:
-                  - service: fan.turn_on
-                    entity_id: fan.breather_v
-              - if:
-                  - condition: state
-                    entity_id: switch.hourly_mode_breather_v
-                    state: 'off'
-                  - condition: state
-                    entity_id: fan.breather_v
-                    state: 'on'
-                  - condition: state
-                    entity_id: switch.breather_auto_v
-                    state: 'off'
-                then:
-                  - service: fan.turn_off
-                    entity_id: fan.breather_v
-                  - service: timer.cancel
-                    entity_id: timer.breather_v
+          # - conditions: # choice 0
+          #     - condition: trigger
+          #       id: "time_pattern"
+          #   sequence:
+          #     - if:
+          #         - condition: state
+          #           entity_id: switch.hourly_mode_breather_v
+          #           state: 'on'
+          #         - condition: state
+          #           entity_id: fan.breather_v
+          #           state: 'off'
+          #         - condition: state
+          #           entity_id: switch.breather_auto_v
+          #           state: 'off'
+          #       then:
+          #         - service: fan.turn_on
+          #           entity_id: fan.breather_v
+          #     - if:
+          #         - condition: state
+          #           entity_id: switch.hourly_mode_breather_v
+          #           state: 'off'
+          #         - condition: state
+          #           entity_id: fan.breather_v
+          #           state: 'on'
+          #         - condition: state
+          #           entity_id: switch.breather_auto_v
+          #           state: 'off'
+          #       then:
+          #         - service: fan.turn_off
+          #           entity_id: fan.breather_v
+          #         - service: timer.cancel
+          #           entity_id: timer.breather_v
           
-          - conditions: # choice 1
-              - condition: trigger
-                id: "to_on"
-            sequence:
-              - service: timer.start
-                entity_id: timer.breather_v
-                data:
-                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
-              - service: switch.turn_on
-                entity_id: switch.hourly_mode_breather_v
+          # - conditions: # choice 1
+          #     - condition: trigger
+          #       id: "to_on"
+          #   sequence:
+          #     - service: timer.start
+          #       entity_id: timer.breather_v
+          #       data:
+          #         duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+          #     - service: switch.turn_on
+          #       entity_id: switch.hourly_mode_breather_v
           
-          - conditions: # choice 2
-              - condition: trigger
-                id: "to_off"
-            sequence:
-              - service: timer.cancel
-                entity_id: timer.breather_v
-              - service: switch.turn_off
-                entity_id: switch.hourly_mode_breather_v
+          # - conditions: # choice 2
+          #     - condition: trigger
+          #       id: "to_off"
+          #   sequence:
+          #     - service: timer.cancel
+          #       entity_id: timer.breather_v
+          #     - service: switch.turn_off
+          #       entity_id: switch.hourly_mode_breather_v
           
-          - conditions: # choice 3
-              - condition: trigger
-                id: "timer_finish"
-            sequence:
-              - choose:
-                  - conditions:
-                      - condition: state
-                        entity_id: binary_sensor.breather_v
-                        state: 'on'
-                    sequence:
-                      - choose: 
-                          - conditions:
-                              - condition: numeric_state
-                                entity_id: sensor.0x00158d0001e58714_temperature
-                                below: 18
-                            sequence:
-                              - service: fan.turn_off
-                                entity_id: fan.breather_v
-                              - condition: state
-                                entity_id: switch.hourly_mode_breather_v
-                                state: 'on'
+          # - conditions: # choice 3
+          #     - condition: trigger
+          #       id: "timer_finish"
+          #   sequence:
+          #     - choose:
+          #         - conditions:
+          #             - condition: state
+          #               entity_id: binary_sensor.breather_v
+          #               state: 'on'
+          #           sequence:
+          #             - choose: 
+          #                 - conditions:
+          #                     - condition: numeric_state
+          #                       entity_id: sensor.0x00158d0001e58714_temperature
+          #                       below: 18
+          #                   sequence:
+          #                     - service: fan.turn_off
+          #                       entity_id: fan.breather_v
+          #                     - condition: state
+          #                       entity_id: switch.hourly_mode_breather_v
+          #                       state: 'on'
                 
-                          - conditions:
-                              - condition: numeric_state
-                                entity_id: sensor.0x00158d0001e58714_temperature
-                                above: 18
-                              - condition: state
-                                entity_id: switch.security_mode
-                                state: 'off'
-                            sequence:
-                              - service: fan.set_percentage
-                                entity_id: fan.breather_v
-                                data:
-                                  percentage: >
-                                    {% if state_attr('fan.breather_v','percentage')|int(0) > states('input_number.low_speed_for_timer_mode_breather_v')|int(0) %}
-                                    {{states('input_number.low_speed_for_timer_mode_breather_v')|int(0)}}
-                                    {% elif state_attr('fan.breather_v','percentage')|int(0) <= states('input_number.high_speed_for_timer_mode_breather_v')|int(0) %}
-                                    {{states('input_number.high_speed_for_timer_mode_breather_v')|int(0)}}
-                                    {% endif %}
+          #                 - conditions:
+          #                     - condition: numeric_state
+          #                       entity_id: sensor.0x00158d0001e58714_temperature
+          #                       above: 18
+          #                     - condition: state
+          #                       entity_id: switch.security_mode
+          #                       state: 'off'
+          #                   sequence:
+          #                     - service: fan.set_percentage
+          #                       entity_id: fan.breather_v
+          #                       data:
+          #                         percentage: >
+          #                           {% if state_attr('fan.breather_v','percentage')|int(0) > states('input_number.low_speed_for_timer_mode_breather_v')|int(0) %}
+          #                           {{states('input_number.low_speed_for_timer_mode_breather_v')|int(0)}}
+          #                           {% elif state_attr('fan.breather_v','percentage')|int(0) <= states('input_number.high_speed_for_timer_mode_breather_v')|int(0) %}
+          #                           {{states('input_number.high_speed_for_timer_mode_breather_v')|int(0)}}
+          #                           {% endif %}
 
-                  - conditions:
-                      - condition: state
-                        entity_id: binary_sensor.breather_v
-                        state: 'off'
-                    sequence:
-                      - if:
-                          - condition: state
-                            entity_id: switch.hourly_mode_breather_v
-                            state: 'on'
-                          - condition: state
-                            entity_id: switch.security_mode
-                            state: 'off'  
-                        then:
-                          - service: fan.set_percentage
-                            entity_id: fan.breather_v
-                            data:
-                              percentage: "{{states('input_number.high_speed_for_timer_mode_breather_v')|int(0) }}"
-              - service: timer.start
-                entity_id: timer.breather_v
-                data:
-                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+          #         - conditions:
+          #             - condition: state
+          #               entity_id: binary_sensor.breather_v
+          #               state: 'off'
+          #           sequence:
+          #             - if:
+          #                 - condition: state
+          #                   entity_id: switch.hourly_mode_breather_v
+          #                   state: 'on'
+          #                 - condition: state
+          #                   entity_id: switch.security_mode
+          #                   state: 'off'  
+          #               then:
+          #                 - service: fan.set_percentage
+          #                   entity_id: fan.breather_v
+          #                   data:
+          #                     percentage: "{{states('input_number.high_speed_for_timer_mode_breather_v')|int(0) }}"
+          #     - service: timer.start
+          #       entity_id: timer.breather_v
+          #       data:
+          #         duration: "{{states('input_select.breazer_timer')|int * 60 }}"
 
-          - conditions: # choice 4
-              - condition: trigger
-                id: "ir_used_remote"
-            sequence:
-              # - service: notify.telegram
-              #   data:
-              #     message: "remote used"
+          # - conditions: # choice 4
+          #     - condition: trigger
+          #       id: "ir_used_remote"
+          #   sequence:
+          #     # - service: notify.telegram
+          #     #   data:
+          #     #     message: "remote used"
             
-              - condition: state
-                entity_id: binary_sensor.breather_v
-                state: 'on'
+          #     - condition: state
+          #       entity_id: binary_sensor.breather_v
+          #       state: 'on'
 
-              - condition: state
-                entity_id: timer.breather_v
-                state: 'active'
+          #     - condition: state
+          #       entity_id: timer.breather_v
+          #       state: 'active'
 
-              - service: timer.cancel
-                entity_id: timer.breather_v
+          #     - service: timer.cancel
+          #       entity_id: timer.breather_v
 
-              - service: switch.turn_off
-                entity_id: switch.hourly_mode_breather_v
+          #     - service: switch.turn_off
+          #       entity_id: switch.hourly_mode_breather_v
 
           - conditions: # choice 5
               - condition: trigger
@@ -312,8 +312,8 @@
                   - service: fan.turn_off
                     entity_id: fan.breather_v
                     
-              - service: timer.cancel
-                entity_id: timer.breather_v
+              # - service: timer.cancel
+              #   entity_id: timer.breather_v
 
               - service: switch.turn_off
                 entity_id: switch.hourly_mode_breather_v
@@ -332,22 +332,22 @@
                 then:
                   - service: fan.turn_on
                     entity_id: fan.breather_v
-                  - service: timer.cancel
-                    entity_id: timer.breather_v
-                  - service: switch.turn_on
-                    entity_id: switch.hourly_mode_breather_v
+                  # - service: timer.cancel
+                  #   entity_id: timer.breather_v
+                  # - service: switch.turn_on
+                  #   entity_id: switch.hourly_mode_breather_v
 
-          - conditions: # choice 7
-              - condition: trigger
-                id: "input"
-            sequence:
-              - condition: state
-                entity_id: timer.breather_v
-                state: 'active'
-              - service: timer.start
-                entity_id: timer.breather_v
-                data:
-                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+          # - conditions: # choice 7
+          #     - condition: trigger
+          #       id: "input"
+          #   sequence:
+          #     - condition: state
+          #       entity_id: timer.breather_v
+          #       state: 'active'
+          #     - service: timer.start
+          #       entity_id: timer.breather_v
+          #       data:
+          #         duration: "{{states('input_select.breazer_timer')|int * 60 }}"
                   
           - conditions: # choice 8
               - condition: trigger
@@ -361,10 +361,10 @@
                 entity_id: fan.breather_v
                 data:
                   percentage: 50
-              - service: timer.start
-                entity_id: timer.breather_v
-                data:
-                  duration: "{{states('input_select.breazer_timer')|int * 60 }}"
+              # - service: timer.start
+              #   entity_id: timer.breather_v
+              #   data:
+              #     duration: "{{states('input_select.breazer_timer')|int * 60 }}"
               # - service: fan.turn_on
               #   entity_id: fan.breather_v
               - service: fan.set_preset_mode
@@ -411,3 +411,48 @@
     action:
       - service: switch.turn_on
         entity_id: switch.0x00158d000344998e_plug
+
+# ##################################
+# Vova - Breather Switches Interlock
+# ##################################
+  - alias: vova_breather_switches_interlock
+    id: vova_breather_switches_interlock
+    trigger:
+      - platform: state
+        entity_id:
+          - switch.hourly_mode_breather_v
+          - switch.breather_auto_v
+          - switch.breather_v_last_toggle_by_user
+    condition: 
+      - condition: template
+        value_template: "{{ trigger.to_state.state == 'on' }}"
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+    - service: homeassistant.turn_off
+      target:
+        entity_id: >-
+          {% if trigger.from_state.entity_id == 'switch.hourly_mode_breather_v' %}
+          {{ 'switch.breather_auto_v', 'switch.breather_v_last_toggle_by_user' }}
+          {% elif trigger.from_state.entity_id == 'switch.breather_auto_v' %}
+          {{ 'switch.hourly_mode_breather_v', 'switch.breather_v_last_toggle_by_user' }}
+          {% else %}
+          {{ 'switch.hourly_mode_breather_v', 'switch.breather_auto_v' }}
+          {% endif %}
+
+# ##################################
+# Vova - Breather Switches to default
+# ##################################
+  - alias: vova_breather_switches_default
+    id: vova_breather_switches_default
+    trigger:
+      - platform: template
+        value_template: "{{ is_state('switch.hourly_mode_breather_v','off') and 
+                            is_state('switch.breather_auto_v','off') and
+                            is_state('switch.breather_v_last_toggle_by_user','off') }}"
+    condition: 
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    action:
+    - service: switch.turn_on
+      entity_id: switch.breather_auto_v
