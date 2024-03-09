@@ -85,23 +85,25 @@
   - CyberPower UT650EG 
 
 # Networking
-  - Ufiber Loco
+  - Ubiquiti U-fiber Loco
   - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
-  - Unifi Aggregation Switch
+  - Unifi Aggregation Switch (2ea)
   - Unifi Enterprise Switch 24 PoE
   - Unifi Switch XG
   - Unifi Switch Light 8 PoE (3ea)
   - Unifi Switch Flex (3ea)
   - Unifi Switch Flex Mini (2ea)
-  - Unifi AC AP Lite (2ea)
-  - Unifi U6 Pro (3ea)
+  - Unifi U6 Pro (4ea)
   - Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
   - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
-  - Ubiquiti G3 Flex Cameras (6ea)
-  - Digma 100
-  - Aliexpress Pinhole camera via Synology Surveillance Station on DS1621+
+  - Ubiquiti Unifi G3 Flex Cameras (6ea)
+  - Ubiquiti Unifi G3 Instant
+  - Ubiquiti Unifi G4 Instant
+  - Ubiquiti Unifi G4 Doorbell Pro POE Kit
+  - not in use - Digma 100
+  - Aliexpress Pinhole camera via Synology Surveillance Station on DS1621+ 
 
 # Network map
 <details><summary>Click me...</summary>
