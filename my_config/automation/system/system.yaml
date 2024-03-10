@@ -104,7 +104,7 @@
     - service: counter.increment
       entity_id: counter.restart_counter
     - service: switch.turn_on
-      entity_id: switch.main_lead
+      entity_id: switch.system_main_lead
 
 # ##################################
 # System - STOP
@@ -121,7 +121,7 @@
       event: shutdown
   action:
     - service: switch.turn_off
-      entity_id: switch.main_lead
+      entity_id: switch.system_main_lead
     - service: notify.telegram
       data:
         message: "\U0001F621 Сервер({{state_attr('update.home_assistant_core_update','installed_version')}}) остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
@@ -294,7 +294,7 @@
         - counter.executed_scripts
         - counter.toilet_tank
     - service: switch.turn_off
-      entity_id: switch.dark_mode
+      entity_id: switch.system_dark_mode
     - service: tts.clear_cache
     - service: input_select.select_next
       entity_id: input_select.dishwasher
@@ -672,24 +672,24 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: switch.silent_mode
+      entity_id: switch.system_silent_mode
       from: "on"
       to: "off"
     - platform: state
-      entity_id: switch.silent_mode
+      entity_id: switch.system_silent_mode
       from: "off"
       to: "on"
   action:
-    - service: switch.turn_{{states('switch.silent_mode')}}
+    - service: switch.turn_{{states('switch.system_silent_mode')}}
       entity_id: switch.esp32_domofon_mute, switch.sonoff_mini_1_mute
     - service: input_number.set_value
       data:
         entity_id: input_number.main_volume
-        value: "{% if is_state('switch.silent_mode','on') %}0{%else%}0.5{%endif%}"
+        value: "{% if is_state('switch.system_silent_mode','on') %}0{%else%}0.5{%endif%}"
     - service: notify.telegram
       data:
         message: >
-          {% if is_state('switch.silent_mode','on') %}
+          {% if is_state('switch.system_silent_mode','on') %}
             {{'\U0001f515'}} Режим тишины включен!
           {%else%}
             {{'\U0001f514'}} Режим тишины выключен!
@@ -778,21 +778,21 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: switch.dark_mode
+      entity_id: switch.system_dark_mode
   action:
     - service: notify.telegram
       data:
         message: >
-          {% if is_state('switch.dark_mode','on') %}
+          {% if is_state('switch.system_dark_mode','on') %}
             {{'\U0001f318'}} Режим темноты включен
           {%else%}
             {{'\U00002600'}} Режим темноты выключен
           {%endif%}
     - condition: state
-      entity_id: switch.dark_mode
+      entity_id: switch.system_dark_mode
       state: "off"
     - service: switch.turn_off
-      entity_id: switch.silent_mode
+      entity_id: switch.system_silent_mode
 
 # ##################################
 # System - HACS New Repo
@@ -1010,7 +1010,7 @@
         - binary_sensor.d1mini_air_freshener_status
         - binary_sensor.micro_usb_2_status
         - binary_sensor.micro_usb_1_status
-        - binary_sensor.shp6_socket_1_status
+        #- binary_sensor.shp6_socket_1_status
       from: "on"
       to: "off"
       for:
@@ -1068,7 +1068,7 @@
         - binary_sensor.d1mini_air_freshener_status
         - binary_sensor.micro_usb_2_status
         - binary_sensor.micro_usb_1_status
-        - binary_sensor.shp6_socket_1_status
+        #- binary_sensor.shp6_socket_1_status
       from: "off"
       to: "on"
       for:
@@ -1360,7 +1360,7 @@
         - sensor.d1mini_air_freshener_uptime_s
         - sensor.micro_usb_2_uptime_s
         - sensor.micro_usb_1_uptime_s
-        - sensor.shp6_socket_1_uptime_s
+        #- sensor.shp6_socket_1_uptime_s
       from: "unavailable"
       for:
         seconds: 10
@@ -1658,7 +1658,7 @@
   initial_state: true
   trigger:
     - platform: state
-      entity_id: switch.dark_mode
+      entity_id: switch.system_dark_mode
       from: "off"
       to: "on"
   action:
@@ -2112,7 +2112,7 @@
       id: "by_time"
   condition:
     - condition: state
-      entity_id: switch.music_allowed
+      entity_id: switch.system_music_allowed
       state: "off"
     - condition: template
       value_template: "{{states('sensor.time').split(':')[0]|int >= 23 or states('sensor.time').split(':')[0]|int < 7}}"
@@ -2495,30 +2495,30 @@
 # ##################################
 # System - Digma100 Cam Restart
 # ##################################
-- alias: system_digma100_camera_restart
-  id: system_digma100_camera_restart
-  initial_state: false
-  trigger:
-    - platform: state
-      entity_id: camera.digma100_digma100
-      to: 'unavailable'
-      for:
-        minutes: 5
-    - platform: homeassistant
-      event: start
-    - platform: event
-      event_type: automation_reloaded
-  condition:
-    - condition: state
-      entity_id: camera.digma100_digma100
-      state: 'unavailable'
-  action:
-    - service: switch.turn_off
-      entity_id: switch.digma_strip_hb_relay2
-    - delay:
-        seconds: 15
-    - service: switch.turn_on
-      entity_id: switch.digma_strip_hb_relay2
+# - alias: system_digma100_camera_restart
+#   id: system_digma100_camera_restart
+#   initial_state: false
+#   trigger:
+#     - platform: state
+#       entity_id: camera.digma100_digma100
+#       to: 'unavailable'
+#       for:
+#         minutes: 5
+#     - platform: homeassistant
+#       event: start
+#     - platform: event
+#       event_type: automation_reloaded
+#   condition:
+#     - condition: state
+#       entity_id: camera.digma100_digma100
+#       state: 'unavailable'
+#   action:
+#     - service: switch.turn_off
+#       entity_id: switch.digma_strip_hb_relay2
+#     - delay:
+#         seconds: 15
+#     - service: switch.turn_on
+#       entity_id: switch.digma_strip_hb_relay2
 
 # ##################################
 # System - DAy\Night toggle
@@ -2532,8 +2532,8 @@
       to: 'on'
   condition:
     - condition: state
-      entity_id: switch.security_mode
+      entity_id: switch.system_security_mode
       state: 'off'
   action:
     - service: switch.turn_off
-      entity_id: switch.silent_mode
+      entity_id: switch.system_silent_mode

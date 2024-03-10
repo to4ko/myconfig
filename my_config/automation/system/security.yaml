@@ -41,7 +41,7 @@
           action: "guestmode"
     action:
       - service: switch.turn_on
-        entity_id: switch.guest_mode
+        entity_id: switch.system_guest_mode
 
 # ##################################
 # Security - Wrapper
@@ -64,7 +64,7 @@
         id: 'to_off'
     condition:
       - condition: state
-        entity_id: switch.guest_mode
+        entity_id: switch.system_guest_mode
         state: 'off'
     action:
       - choose:
@@ -73,18 +73,18 @@
                 id: 'to_on'
             sequence:
               - service: switch.turn_on
-                entity_id: switch.security_mode
+                entity_id: switch.system_security_mode
           - conditions:
               - condition: trigger
                 id: 'to_off'
             sequence:
               - service: switch.turn_off
-                entity_id: switch.security_mode, switch.guest_mode
+                entity_id: switch.system_security_mode, switch.system_guest_mode
       - delay:
           seconds: 3
       - service: notify.telegram
         data:
-          message: "\U0001f46e Режим охраны {{ iif(is_state('switch.security_mode','off'), 'выключен!', 'включен!', '')}}"
+          message: "\U0001f46e Режим охраны {{ iif(is_state('switch.system_security_mode','off'), 'выключен!', 'включен!', '')}}"
 
 # ##################################
 # Security - Turn  On
@@ -94,7 +94,7 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.security_mode
+        entity_id: switch.system_security_mode
         to:
         for:
           seconds: 15
@@ -102,7 +102,7 @@
       - choose:
           - conditions:
               - condition: state 
-                entity_id: switch.security_mode
+                entity_id: switch.system_security_mode
                 state: 'on'
             sequence:
               - service: notify.telegram
@@ -115,12 +115,12 @@
                   message: "\U0001f514 Освещение выключено!"
           - conditions:
               - condition: state 
-                entity_id: switch.security_mode
+                entity_id: switch.system_security_mode
                 state: 'off'
             sequence:
               - service: input_boolean.turn_off
                 data:
-                  entity_id: switch.security_mode
+                  entity_id: switch.system_security_mode
               - service: script.turn_on
                 entity_id: script.away_mode_off
 
@@ -167,12 +167,12 @@
           - binary_sensor.0x00158d0001d5995e_motion
           - binary_sensor.0x00158d00044c7971_motion
           - binary_sensor.0x00158d00053faae1_motion
-          - binary_sensor.motion_g3_flex_entrance
-          #- binary_sensor.motion_g3_flex_hall
+          - binary_sensor.g3_flex_entrance_motion
+          #- binary_sensor.g3_flex_hall_motion
         to: "on"
     condition:
       - condition: state
-        entity_id: switch.security_mode
+        entity_id: switch.system_security_mode
         state: "on"
       - condition: state
         entity_id: timer.security_delay
@@ -200,7 +200,7 @@
         to: "on"
     condition:
       - condition: state
-        entity_id: switch.security_mode
+        entity_id: switch.system_security_mode
         state: "on"
     action:
       - service: timer.cancel
@@ -259,7 +259,7 @@
         to: "vibration"
     condition:
       - condition: state
-        entity_id: switch.security_mode
+        entity_id: switch.system_security_mode
         state: "on"
     action:
       - service: notify.telegram
@@ -291,7 +291,7 @@
         entity_id: binary_sensor.tod_day
         state: "off"
       - condition: state
-        entity_id: switch.security_mode
+        entity_id: switch.system_security_mode
         state: "off"
     action:
       - service: notify.telegram

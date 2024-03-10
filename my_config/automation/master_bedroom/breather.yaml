@@ -13,12 +13,12 @@
         minutes: '/3'
     condition:
       - condition: state
-        entity_id: switch.breather_auto_mb
+        entity_id: switch.system_breather_auto_mb
         state: 'on'
       - condition: not
         conditions:
           - condition: state
-            entity_id: switch.breather_mb_last_toggle_by_user
+            entity_id: switch.system_breather_mb_last_toggle_by_user
             state: 'on'
     action:
       - choose:
@@ -33,7 +33,7 @@
                 entity_id: binary_sensor.breather_mb
                 state: 'off'
               - condition: state
-                entity_id: switch.security_mode
+                entity_id: switch.system_security_mode
                 state: 'off'
               - condition: numeric_state
                 entity_id: sensor.0x00158d000222c746_temperature
@@ -45,7 +45,7 @@
                 entity_id: sensor.esp32_node_mb_co2
                 above: input_number.co2_high_limit
               - condition: state
-                entity_id: switch.breather_auto_speed_mb
+                entity_id: switch.system_breather_auto_speed_mb
                 state: 'on'
               - service: fan.set_percentage
                 entity_id: fan.breather_mb
@@ -63,10 +63,10 @@
                 entity_id: binary_sensor.breather_mb
                 state: 'on'
               - condition: state
-                entity_id: switch.security_mode
+                entity_id: switch.system_security_mode
                 state: 'off'
               - condition: state
-                entity_id: switch.breather_auto_speed_mb
+                entity_id: switch.system_breather_auto_speed_mb
                 state: 'on'
               - condition: numeric_state
                 entity_id: sensor.breather_set_speed_mb
@@ -148,8 +148,8 @@
     trigger:
       - platform: state
         entity_id:
-          - switch.breather_auto_mb
-          - switch.breather_mb_last_toggle_by_user
+          - switch.system_breather_auto_mb
+          - switch.system_breather_mb_last_toggle_by_user
     condition: 
       - condition: template
         value_template: "{{ trigger.to_state.state == 'on' }}"
@@ -159,10 +159,10 @@
     - service: homeassistant.turn_off
       target:
         entity_id: >-
-          {% if trigger.from_state.entity_id == 'switch.breather_auto_mb' %}
-          {{ 'switch.breather_mb_last_toggle_by_user' }}
+          {% if trigger.from_state.entity_id == 'switch.system_breather_auto_mb' %}
+          {{ 'switch.system_breather_mb_last_toggle_by_user' }}
           {% else %}
-          {{ 'switch.breather_auto_mb' }}
+          {{ 'switch.system_breather_auto_mb' }}
           {% endif %}
 
 # ##################################
@@ -172,11 +172,11 @@
     id: master_bedroom_breather_switches_default
     trigger:
       - platform: template
-        value_template: "{{ is_state('switch.breather_auto_mb','off') and
-                            is_state('switch.breather_mb_last_toggle_by_user','off') }}"
+        value_template: "{{ is_state('switch.system_breather_auto_mb','off') and
+                            is_state('switch.system_breather_mb_last_toggle_by_user','off') }}"
     condition: 
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
     - service: switch.turn_on
-      entity_id: switch.breather_auto_mb
+      entity_id: switch.system_breather_auto_mb
