@@ -89,7 +89,7 @@
   - Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
   - Unifi Aggregation Switch (2ea)
   - Unifi Enterprise Switch 24 PoE
-  - Unifi Switch XG
+  - not in use - Unifi Switch XG
   - Unifi Switch Light 8 PoE (3ea)
   - Unifi Switch Flex (3ea)
   - Unifi Switch Flex Mini (2ea)
@@ -97,7 +97,7 @@
   - Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
-  - Unifi Protect on Unifi Dream Machine Pro with 3Tb WD Purple
+  - Unifi NVR with 3Tb WD Purple
   - Ubiquiti Unifi G3 Flex Cameras (6ea)
   - Ubiquiti Unifi G3 Instant
   - Ubiquiti Unifi G4 Instant
@@ -202,19 +202,22 @@
   - ESP32 - Hall Big Breaker Box PZEM-004T
   - ESP8266 Oven K - Kitchen Oven K-type Thermocouple via max6675
   - ESP01 Weight Cell for RO water filter tank
-  - not in use - D1 Mini LED Bed light
+  - D1 Mini LED Bed light
   - D1 Mini Air Freshener with Figaro air sensor
   - D1 Mini TOF Distance and LD2410 Radar
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
   - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
+  - Tuya USB Micro Switch (2ea) - ESPHome firmware
 
 **Smart Speakers:**
   - not in use - Google Home Mini (5ea)
-  - Yandex Station Lite (4ea)
+  - Yandex Station Lite (3ea)
   - Yandex Station Mini 2 (1ea)
+  - Yandex Station 2 (1ea)
 
 **Other Devices:**
-  - Digma z801 Tablet
+  - Lenovo Xiaoxin Pad 2024 8/128 with Fully Kiosk Browser
+  - not in use - Digma z801 Tablet
   - not in use - SLS Gateway
   - not in use - DIYRuZ_Geiger Sensor
   - Shelly EM
@@ -233,7 +236,7 @@
 
 **Proxmox Node 2 Software:**
   - Proxmox VE 8
-      * Debian 11 with HA Supervised (backup instance)
+      * Debian 12 with HA Supervised (backup instance)
       * Plex
 
 
