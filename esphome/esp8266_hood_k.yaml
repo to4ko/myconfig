@@ -63,6 +63,28 @@ web_server:
 #     #internal: true
 #     output: blue_led
 #     id: main_led
+output:
+  - platform: gpio
+    id: fan_output
+    pin: 
+      number: GPIO04
+      allow_other_uses: true
+
+  - platform: gpio
+    id: light_output
+    pin: GPIO05
+
+light:
+  - platform: binary
+    name: ${board_name}
+    output: light_output
+    icon: mdi:car-light-fog
+    id: light_1
+
+fan:
+  - platform: binary
+    output: fan_output
+    name: ${board_name}_Fan
 
 spi:
   - id: spi_hood
@@ -131,7 +153,7 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
-        - switch.toggle: relay1
+        - light.toggle: light_1
     # on_click:
     #   min_length: 50ms
     #   max_length: 350ms
@@ -146,16 +168,18 @@ binary_sensor:
           - switch.toggle: button_led
 
 switch:
-  - platform: gpio
-    name: "${board_name}_Light"
-    pin: GPIO05
-    id: relay1
-    restore_mode: RESTORE_DEFAULT_OFF
-    icon: mdi:car-light-fog
+  # - platform: gpio
+  #   name: "${board_name}_Light"
+  #   pin: GPIO05
+  #   id: relay1
+  #   restore_mode: RESTORE_DEFAULT_OFF
+  #   icon: mdi:car-light-fog
 
   - platform: gpio
     name: "${board_name}_Fan"
-    pin: GPIO04
+    pin: 
+      number: GPIO04
+      allow_other_uses: true
     id: relay2
     restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:fan

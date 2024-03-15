@@ -31,6 +31,7 @@ wifi:
   #   dns2: 8.8.8.8
 
 logger:
+  baud_rate: 0
 
 api:
   reboot_timeout: 0s
@@ -46,6 +47,10 @@ output:
     pin: 
       number: GPIO13
       inverted: false
+  - platform: gpio
+    id: light_output
+    pin: GPIO12
+
 
 light:
   - platform: binary
@@ -53,7 +58,13 @@ light:
     internal: true
     output: manual_status_led
     id: wifi_led
-  
+
+  - platform: binary
+    name: ${board_name}
+    output: light_output
+    icon: mdi:spotlight
+    id: light_1
+
 binary_sensor:
   - platform: gpio
     pin: GPIO00
@@ -63,7 +74,7 @@ binary_sensor:
       - invert:
       - delayed_off: 10ms
     on_press:
-      - switch.toggle: relay
+      - light.toggle: light_1
 
   - platform: gpio
     name: ${board_name}_sw
@@ -76,18 +87,18 @@ binary_sensor:
       - delayed_off: 30ms    
     on_press:
       then:
-        - switch.toggle: relay
+        - light.toggle: light_1
 
   - platform: status
     name: ${board_name}_Status
 
-switch:
-  - platform: gpio
-    name: ${board_name}_Relay
-    pin: GPIO12
-    id: relay
-    icon: mdi:spotlight
-    
+# switch:
+#   - platform: gpio
+#     name: ${board_name}_Relay
+#     pin: GPIO12
+#     id: relay
+#     icon: mdi:spotlight
+
 sensor:
   - platform: uptime
     name: ${board_name}_Uptime_s
