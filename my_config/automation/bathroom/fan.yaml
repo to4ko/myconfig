@@ -27,7 +27,7 @@
                   scene: 4
           - conditions:
               - condition: state
-                entity_id: switch.esp32_node_b_relay_3
+                entity_id: fan.esp32_node_b_fan_b
                 state: 'off'
               - condition: state
                 entity_id: group.lights_b
@@ -36,15 +36,15 @@
                 entity_id: switch.esp32_node_b_fan_b_force_mode
                 state: 'off'
             sequence:
-              - service: switch.turn_off
-                entity_id: switch.esp32_node_b_relay_4
+              - service: fan.turn_off
+                entity_id: fan.esp32_node_b_fan_t
               - service: timer.pause
                 entity_id: timer.fan_t
               - service: switch.turn_on
                 entity_id: switch.esp32_node_b_fan_b_manual_mode
           - conditions:
               - condition: state
-                entity_id: switch.esp32_node_b_relay_3
+                entity_id: fan.esp32_node_b_fan_b
                 state: 'on'
               - condition: state
                 entity_id: switch.esp32_node_b_fan_b_force_mode
@@ -86,8 +86,8 @@
                 entity_id: group.lights_b
                 state: 'on'
             sequence:
-              - service: switch.toggle
-                entity_id: switch.sonoff_pow_r2_1_bottom_fan
+              - service: fan.toggle
+                entity_id: fan.sonoff_pow_r2_1_bottom_fan
   
 # # ##################################
 # # Bathroom Fan - On Manual Hold
@@ -134,8 +134,8 @@
 #       entity_id: input_boolean.fan_manual_b
 #       state: 'off'
 #   action:
-#     - service: switch.turn_off
-#       entity_id: switch.esp32_node_b_relay_3, switch.sonoff_pow_r2_1_bottom_fan
+#     - service: fan.turn_off
+#       entity_id: fan.esp32_node_b_fan_b, fan.sonoff_pow_r2_1_bottom_fan
 
 # ##################################
 # Bathroom Fan - Auto On
@@ -164,13 +164,13 @@
 #       entity_id: binary_sensor.high_humidity_b
 #       state: 'on'
 #   action:
-#     - service: switch.turn_on
-#       entity_id: switch.sonoff_pow_r2_1_bottom_fan
+#     - service: fan.turn_on
+#       entity_id: fan.sonoff_pow_r2_1_bottom_fan
 #     - condition: state
-#       entity_id: switch.esp32_node_b_relay_4
+#       entity_id: fan.esp32_node_b_fan_t
 #       state: 'off'
-#     - service: switch.turn_on
-#       entity_id: switch.esp32_node_b_relay_3
+#     - service: fan.turn_on
+#       entity_id: fan.esp32_node_b_fan_b
 
 # ##################################
 # Bathroom Fan - Auto
@@ -200,16 +200,16 @@
   #             - condition: template
   #               value_template: "{{ not is_state('switch.0x00158d0002a36433_channel_2','on') }}"
   #             - condition: state
-  #               entity_id: switch.esp32_node_b_relay_3
+  #               entity_id: fan.esp32_node_b_fan_b
   #               state: 'off'
   #           sequence:
-  #             - service: switch.turn_on
-  #               entity_id: switch.sonoff_pow_r2_1_bottom_fan
+  #             - service: fan.turn_on
+  #               entity_id: fan.sonoff_pow_r2_1_bottom_fan
   #             - condition: state
-  #               entity_id: switch.esp32_node_b_relay_4
+  #               entity_id: fan.esp32_node_b_fan_t
   #               state: 'off'
-  #             - service: switch.turn_on
-  #               entity_id: switch.esp32_node_b_relay_3
+  #             - service: fan.turn_on
+  #               entity_id: fan.esp32_node_b_fan_b
   #         - conditions:
   #             - condition: state
   #               entity_id: binary_sensor.high_humidity_b
@@ -220,10 +220,10 @@
   #               entity_id: switch.esp32_node_b_fan_b_manual_mode
   #               state: 'off'
   #             - condition: template
-  #               value_template: "{{ is_state('switch.esp32_node_b_relay_3','on') or is_state('switch.sonoff_pow_r2_1_bottom_fan','on')  }}"
+  #               value_template: "{{ is_state('fan.esp32_node_b_fan_b','on') or is_state('fan.sonoff_pow_r2_1_bottom_fan','on')  }}"
   #           sequence:
-  #             - service: switch.turn_off
-  #               entity_id: switch.esp32_node_b_relay_3, switch.sonoff_pow_r2_1_bottom_fan
+  #             - service: fan.turn_off
+  #               entity_id: fan.esp32_node_b_fan_b, fan.sonoff_pow_r2_1_bottom_fan
 
 
 # ##################################
@@ -248,7 +248,7 @@
                 id: 'to_on'
             sequence:
               # - condition: template
-              #   value_template: "{{ is_state('switch.esp32_node_b_relay_3','on') or is_state('switch.sonoff_pow_r2_1_bottom_fan','on') }}"
+              #   value_template: "{{ is_state('fan.esp32_node_b_fan_b','on') or is_state('fan.sonoff_pow_r2_1_bottom_fan','on') }}"
               # - condition: state
               #   entity_id: switch.esp32_node_b_fan_b_manual_mode
               #   state: 'off'
@@ -256,7 +256,9 @@
               #   entity_id: switch.esp32_node_b_fan_b_force_mode
               #   state: 'off'
               - service: switch.turn_off
-                entity_id: switch.esp32_node_b_fan_b_auto_mode, switch.esp32_node_b_relay_3, switch.sonoff_pow_r2_1_bottom_fan
+                entity_id: switch.esp32_node_b_fan_b_auto_mode
+              - service: fan.turn_off
+                entity_id: fan.esp32_node_b_fan_b, fan.sonoff_pow_r2_1_bottom_fan
           - conditions:
               - condition: trigger
                 id: 'to_off'
@@ -284,7 +286,7 @@
         entity_id: switch.system_security_mode
         state: 'off'
       - condition: template
-        value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
+        value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: template
         value_template: "{{ 1 <= now().hour < 6 }}"
       - condition: template
@@ -315,7 +317,7 @@
         entity_id: switch.system_security_mode
         state: 'off'
       - condition: template
-        value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
+        value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: template
         value_template: "{{ 1 <= now().hour < 6 }}"
       - condition: template
@@ -348,7 +350,7 @@
         entity_id: switch.system_security_mode
         state: 'off'
       - condition: template
-        value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
+        value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: template
         value_template: "{{states('number.esp32_node_b_humidity_set')|int(0) < 50 }}"
     action:
@@ -369,17 +371,17 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.esp32_node_b_relay_3
+        entity_id: fan.esp32_node_b_fan_b
         to: 
     condition:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
       - condition: template
-        value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
+        value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
     action:
-      - service: switch.turn_{{ states('switch.esp32_node_b_relay_3') }}
-        entity_id: switch.sonoff_pow_r2_1_bottom_fan
+      - service: fan.turn_{{ states('fan.esp32_node_b_fan_b') }}
+        entity_id: fan.sonoff_pow_r2_1_bottom_fan
 
 # ##################################
 # Bathroom - Bottom Fan On
@@ -397,8 +399,8 @@
         entity_id: switch.system_security_mode
         state: 'off'
     action:
-      - service: switch.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}
-        entity_id: switch.sonoff_pow_r2_1_bottom_fan
+      - service: fan.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}
+        entity_id: fan.sonoff_pow_r2_1_bottom_fan
 
 # ##################################
 # Bathroom - Bottom Fan Toggle
@@ -421,9 +423,9 @@
         state: 'off'
     action:
       - condition: template
-        value_template: "{{ is_state('group.lights_b','off') or is_state('switch.sonoff_pow_r2_1_bottom_fan','on') }}"
-      - service: switch.toggle
-        entity_id: switch.sonoff_pow_r2_1_bottom_fan
+        value_template: "{{ is_state('group.lights_b','off') or is_state('fan.sonoff_pow_r2_1_bottom_fan','on') }}"
+      - service: fan.toggle
+        entity_id: fan.sonoff_pow_r2_1_bottom_fan
   
 # ##################################
 # Bathroom - Main Fan Off by Timer
@@ -437,21 +439,21 @@
         event_data:
           entity_id: timer.fan_b
       # - platform: state
-      #   entity_id: switch.esp32_node_b_relay_3
+      #   entity_id: fan.esp32_node_b_fan_b
       #   to: 'off'
     condition:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - service: switch.turn_off
-        entity_id: switch.esp32_node_b_relay_3
+      - service: fan.turn_off
+        entity_id: fan.esp32_node_b_fan_b
       - service: switch.turn_off
         entity_id: switch.esp32_node_b_fan_b_manual_mode
       - condition: state
         entity_id: timer.fan_t
         state: 'paused'
-      - service: switch.turn_on
-        entity_id: switch.esp32_node_b_relay_4
+      - service: fan.turn_on
+        entity_id: fan.esp32_node_b_fan_t
       - service: timer.start
         entity_id: timer.fan_t
   
@@ -465,20 +467,20 @@
     initial_state: true
     trigger:
       - platform: state
-        entity_id: switch.esp32_node_b_relay_3
+        entity_id: fan.esp32_node_b_fan_b
         to:
     condition:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
       - condition: template
-        value_template: "{{ states('switch.esp32_node_b_relay_3') in ['on','off'] }}"
+        value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: state
         entity_id: switch.esp32_node_b_fan_b_force_mode
         state: 'off'
     action:
       - if:
           - condition: state
-            entity_id: switch.esp32_node_b_relay_3
+            entity_id: fan.esp32_node_b_fan_b
             state: 'on'
         then:
           - service: timer.start
@@ -512,18 +514,18 @@
   #             - condition: trigger
   #               id: "force_on"
   #           sequence:
-  #             - service: switch.turn_off
-  #               entity_id: switch.esp32_node_b_relay_4
-  #             - service: switch.turn_on
-  #               entity_id: switch.esp32_node_b_relay_3, switch.sonoff_pow_r2_1_bottom_fan
+  #             - service: fan.turn_off
+  #               entity_id: fan.esp32_node_b_fan_t
+  #             - service: fan.turn_on
+  #               entity_id: fan.esp32_node_b_fan_b, fan.sonoff_pow_r2_1_bottom_fan
   #             - service: switch.turn_on
   #               entity_id: switch.esp32_node_b_fan_b_force_mode
   #         - conditions:
   #             - condition: trigger
   #               id: "force_off"
   #           sequence:
-  #             - service: switch.turn_off
-  #               entity_id: switch.esp32_node_b_relay_3, switch.sonoff_pow_r2_1_bottom_fan
+  #             - service: fan.turn_off
+  #               entity_id: fan.esp32_node_b_fan_b, fan.sonoff_pow_r2_1_bottom_fan
   #             - service: switch.turn_off
   #               entity_id: switch.esp32_node_b_fan_b_force_mode
 

@@ -66,25 +66,37 @@ web_server:
 output:
   - platform: gpio
     id: fan_output
-    pin: 
-      number: GPIO04
-      allow_other_uses: true
+    pin: GPIO04
 
   - platform: gpio
     id: light_output
     pin: GPIO05
 
+  - platform: gpio
+    id: light_output_button_led
+    pin: GPIO16
+
 light:
   - platform: binary
     name: ${board_name}
     output: light_output
+    restore_mode: RESTORE_DEFAULT_OFF
     icon: mdi:car-light-fog
     id: light_1
+
+  - platform: binary
+    name: ${board_name}_Button_LED
+    output: light_output_button_led
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:led-off
+    id: light_2
 
 fan:
   - platform: binary
     output: fan_output
+    restore_mode: RESTORE_DEFAULT_OFF
     name: ${board_name}_Fan
+    id: fan_1
 
 spi:
   - id: spi_hood
@@ -116,11 +128,11 @@ binary_sensor:
               and:
                 - binary_sensor.is_on: id_status
             then:
-              - switch.turn_on: relay2
+              - fan.turn_on: fan_1
 
     on_release:
       then:
-        - switch.turn_off: relay2        
+        - fan.turn_off: fan_1       
 
   - platform: gpio
     name: "${board_name}_Fan_Button"
@@ -134,7 +146,7 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
-        - switch.toggle: relay2      
+        - fan.toggle: fan_1
     # on_click:
     #   min_length: 50ms
     #   max_length: 350ms
@@ -165,7 +177,7 @@ binary_sensor:
           - ON for at least 0.75s
         then:
           - logger.log: "---------> Long press"
-          - switch.toggle: button_led
+          - light.toggle: light_2
 
 switch:
   # - platform: gpio
@@ -175,21 +187,21 @@ switch:
   #   restore_mode: RESTORE_DEFAULT_OFF
   #   icon: mdi:car-light-fog
 
-  - platform: gpio
-    name: "${board_name}_Fan"
-    pin: 
-      number: GPIO04
-      allow_other_uses: true
-    id: relay2
-    restore_mode: RESTORE_DEFAULT_OFF
-    icon: mdi:fan
+  # - platform: gpio
+  #   name: "${board_name}_Fan"
+  #   pin: 
+  #     number: GPIO04
+  #     allow_other_uses: true
+  #   id: relay2
+  #   restore_mode: RESTORE_DEFAULT_OFF
+  #   icon: mdi:fan
 
-  - platform: gpio
-    name: "${board_name}_Button_LED"
-    pin: GPIO16
-    restore_mode: RESTORE_DEFAULT_OFF
-    icon: mdi:led-off
-    id: button_led
+  # - platform: gpio
+  #   name: "${board_name}_Button_LED"
+  #   pin: GPIO16
+  #   restore_mode: RESTORE_DEFAULT_OFF
+  #   icon: mdi:led-off
+  #   id: button_led
 
 button:
   - platform: restart

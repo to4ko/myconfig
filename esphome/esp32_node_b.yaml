@@ -135,14 +135,12 @@ output:
     pin: 
       number: GPIO18
       inverted: yes
-      allow_other_uses: true
 
   - platform: gpio
     id: fan_t_output
     pin: 
       number: GPIO19
       inverted: yes
-      allow_other_uses: true
 
 number:
   - platform: template
@@ -221,10 +219,20 @@ fan:
   - platform: binary
     output: fan_b_output
     name: ${board_name}_Fan_B
+    id: fan_b
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - fan.turn_off: fan_t
+    on_turn_off:
+      - switch.turn_off: id_fan_b_manual_mode
 
   - platform: binary
     output: fan_t_output
     name: ${board_name}_Fan_T
+    id: fan_t
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - fan.turn_off: fan_b
 
 switch:
   - platform: gpio
@@ -273,29 +281,29 @@ switch:
             id: id_global_valve_active
             value: 'false'
 
-  - platform: gpio
-    pin: 
-      number: GPIO18
-      inverted: yes
-      allow_other_uses: true
-    name: ${board_name}_Relay_3
-    id: relay3
-    interlock: [relay4]
-    restore_mode: RESTORE_DEFAULT_OFF
-    icon: mdi:fan
-    on_turn_off:
-      - switch.turn_off: id_fan_b_manual_mode
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO18
+  #     inverted: yes
+  #     allow_other_uses: true
+  #   name: ${board_name}_Relay_3
+  #   id: relay3
+  #   interlock: [relay4]
+  #   restore_mode: RESTORE_DEFAULT_OFF
+  #   icon: mdi:fan
+  #   on_turn_off:
+  #     - switch.turn_off: id_fan_b_manual_mode
 
-  - platform: gpio
-    pin: 
-      number: GPIO19
-      inverted: yes
-      allow_other_uses: true
-    name: ${board_name}_Relay_4
-    id: relay4
-    interlock: [relay3]
-    restore_mode: RESTORE_DEFAULT_OFF
-    icon: mdi:fan
+  # - platform: gpio
+  #   pin: 
+  #     number: GPIO19
+  #     inverted: yes
+  #     allow_other_uses: true
+  #   name: ${board_name}_Relay_4
+  #   id: relay4
+  #   interlock: [relay3]
+  #   restore_mode: RESTORE_DEFAULT_OFF
+  #   icon: mdi:fan
   
   - platform: gpio
     pin: 
@@ -335,10 +343,10 @@ switch:
           else:       
             - switch.turn_off: id_auto_mode_prev
       - switch.turn_off: id_fan_b_auto_mode
-      - switch.turn_on: relay3
+      - fan.turn_on: fan_b
     on_turn_off:
       - logger.log: "Manual Mode - switched off!"
-      - switch.turn_off: relay3
+      - fan.turn_off: fan_b
       - if:
           condition:
             - switch.is_on: id_auto_mode_prev
@@ -352,9 +360,9 @@ switch:
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       - logger.log: "Force Mode - switched on!"
-      - switch.turn_on: relay3
+      - fan.turn_on: fan_b
     on_turn_off:
-      - switch.turn_off: relay3
+      - fan.turn_off: fan_b
 
   - platform: template
     name: ${board_name}_Auto_Mode_Prev
@@ -410,17 +418,17 @@ time:
                 - for:
                     time: 60min
                     condition:
-                      switch.is_on: relay4
+                      fan.is_on: fan_t
               then:
-                - switch.turn_off: relay4 
+                - fan.turn_off: fan_t 
           - if:
               condition:
                 - for:
                     time: 60min
                     condition:
-                      switch.is_on: relay3
+                      fan.is_on: fan_b
               then:
-                - switch.turn_off: relay3 
+                - fan.turn_off: fan_b 
 
 interval:
   - interval: 5s
@@ -433,15 +441,15 @@ interval:
                   condition:
                     binary_sensor.is_on: id_high_humidity
               - binary_sensor.is_off: id_max_humidity
-              - switch.is_off: relay4
-              - switch.is_off: relay3
+              - fan.is_off: fan_t
+              - fan.is_off: fan_b
               - switch.is_on: id_fan_b_auto_mode
               - switch.is_off: id_fan_b_manual_mode
               - switch.is_off: id_fan_b_force_mode
           then:
               - logger.log: "Auto Mode - fan has switched on!"
-              - switch.turn_on: relay3
- 
+              - fan.turn_on: fan_b
+
       - if:
           condition:
             - and:
@@ -450,13 +458,13 @@ interval:
                   condition:
                     binary_sensor.is_off: id_high_humidity
               - binary_sensor.is_off: id_max_humidity
-              - switch.is_on: relay3
+              - fan.is_on: fan_b
               - switch.is_on: id_fan_b_auto_mode
               - switch.is_off: id_fan_b_manual_mode
               - switch.is_off: id_fan_b_force_mode
           then:
               - logger.log: "Auto mode - fan has switched off!"
-              - switch.turn_off: relay3
+              - fan.turn_off: fan_b
 
       - if:
           condition:
@@ -465,8 +473,8 @@ interval:
                   time: 10min
                   condition:
                     binary_sensor.is_on: id_max_humidity
-              - switch.is_off: relay3
-              - switch.is_off: relay4
+              - fan.is_off: fan_b
+              - fan.is_off: fan_t
           then:
               - logger.log: "Force Mode - switched on!"
               - switch.turn_on: id_fan_b_force_mode
@@ -489,7 +497,7 @@ interval:
               - for:
                   time: 10min
                   condition:
-                    switch.is_on: relay3
+                    fan.is_on: fan_b
               - switch.is_on: id_fan_b_manual_mode
           then:
               - logger.log: "Manual Mode - switched off!"

@@ -48,7 +48,7 @@ views:
                 show_name: true
                 show_state: true
                 state_color: true
-                columns: 6
+                columns: 7
                 entities:
                   - entity: sensor.zigbee_gateways_unavailable
                     name: Z GW Off
@@ -62,6 +62,8 @@ views:
                     name: Bed LED
                   - entity: switch.system_music_allowed
                     name: Night Alice
+                  - entity: binary_sensor.treadmill
+                    name: TMill
               - type: glance
                 show_name: true
                 show_state: true
@@ -221,6 +223,21 @@ views:
               - entity: sensor.yandex_mb_alice_state
                 name: MB
               - entity: sensor.yandex_hb_alice_state
+                name: HB
+
+          - type: glance
+            columns: 5
+            state_color: true
+            entities:
+              - entity: media_player.yandex_v
+                name: V
+              - entity: media_player.yandex_s
+                name: S
+              - entity: media_player.yandex_k
+                name: K
+              - entity: media_player.yandex_mb
+                name: MB
+              - entity: media_player.yandex_hb
                 name: HB
 
       # ##################################
@@ -424,15 +441,15 @@ views:
                     name: T
                   - entity: binary_sensor.0x00158d000232ddd6_contact
                     name: Seat
-                  - entity: switch.sonoff_pow_r2_1_bottom_fan
+                  - entity: fan.sonoff_pow_r2_1_bottom_fan
                     name: BFan B
                     tap_action:
                       action: toggle
-                  - entity: switch.esp32_node_b_relay_3
+                  - entity: fan.esp32_node_b_fan_b
                     name: Fan B
                     tap_action:
                       action: toggle
-                  - entity: switch.esp32_node_b_relay_4
+                  - entity: fan.esp32_node_b_fan_t
                     name: Fan T
                     tap_action:
                       action: toggle
@@ -1525,9 +1542,9 @@ views:
           - switch.0x00158d0002a36433_channel_2
           - light.mirror_light_b
           - type: divider
-          - switch.sonoff_pow_r2_1_relay #switch.0x00158d0002c3d86e_plug #switch.plug_158d0002c3d86e
-          - switch.sonoff_pow_r2_1_bottom_fan
-          - switch.esp32_node_b_relay_3
+          - switch.sonoff_pow_r2_1_relay
+          - fan.sonoff_pow_r2_1_bottom_fan
+          - fan.esp32_node_b_fan_b
           - type: divider
           - switch.esp32_node_b_relay_2
           - switch.esp32_node_b_relay_1
@@ -1540,7 +1557,7 @@ views:
           - switch.0x00158d0002a36f7f_channel_1
           - light.esp32_node_b_light
           - type: divider
-          - switch.esp32_node_b_relay_4 #switch.0x00158d0001a248e9_switch_l2 #switch.plug_158d0001f54f91
+          - fan.esp32_node_b_fan_t
 
       - type: entities
         title: Storage
@@ -4269,14 +4286,18 @@ views:
               #   name: UPS
               # - entity: sensor.esp32_node_st_dallas_4
               #   name: AUX
+              - entity: sensor.0x00158d000233fb72_temperature
+                name: St
               - entity: sensor.a4c138f0a65b_temperature
-                name: AUX Mi
+                name: Rack
 
           - type: history-graph
             hours_to_show: 24
             entities:
+              - entity: sensor.0x00158d000233fb72_humidity
+                name: St
               - entity: sensor.a4c138f0a65b_humidity
-                name: Humidity
+                name: Rack
 
   ################################################################
   # radio
@@ -5267,7 +5288,7 @@ views:
               - data: network_pan_id
                 name: Network PAN ID
                 modify: 'x == "" ? "-" : x+""'
-              - data: gateway_fw_ver
+              - data: gateway.firmware
                 name: FW
               - data: radio_tx_power
                 name: Radio TX Power
@@ -5337,10 +5358,10 @@ views:
               - data: gate
                 name: Gate
                 modify: x+''
-              - data: ieee
+              - data: device.extra.ieee
                 name: IEEE
                 modify: (x+'').toLowerCase()
-              - data: nwk
+              - data: device.extra.nwk
                 name: NWK
                 modify: (x+'').replace(/^0x/,"")
               - data: parent
@@ -5349,7 +5370,7 @@ views:
               - data: type
                 name: Type
                 modify: 'x == "" ? "-" : (x+"").replace(/^-$/, "device")'
-              - data: device_fw_ver
+              - data: device.extra.fw_ver
                 name: FW
                 modify: 'x == "" ? "-" : x+""'
               - data: msg_received
@@ -5364,16 +5385,16 @@ views:
               - data: new_resets
                 name: Resets
                 modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: linkquality
+              - data: device.extra.lqi
                 name: LQI
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
-              - data: rssi
+              - data: device.extra.rssi
                 name: RSSI
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
               - data: last_msg
                 name: Last Message
                 modify: x+''
-              - data: available
+              - data: device.available
                 name: Available
                 modify: 'x === true ? "✓" : x+""'
               - data: state
@@ -5403,9 +5424,9 @@ views:
               - data: friendly_name
                 name: Friendly Name
                 modify: 'x.replace(/ Ble$/,"")'
-              - data: mac
+              - data: device.extra.mac
                 name: MAC
-                modify: (x+'').replace(/(.{2}(?!$))/g,"$1:")
+                #modify: (x+'').replace(/(.{2}(?!$))/g,"$1:")
               - data: msg_received
                 name: Received
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
@@ -5435,9 +5456,9 @@ views:
               - data: friendly_name
                 name: Friendly Name
                 modify: 'x.replace(/ Ble$/,"")'
-              - data: mac
+              - data: device.extra.mac
                 name: MAC
-                modify: (x+'').replace(/(.{2}(?!$))/g,"$1:")
+                #modify: (x+'').replace(/(.{2}(?!$))/g,"$1:")
               - data: msg_received
                 name: Received
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
@@ -5478,10 +5499,10 @@ views:
               - data: gate
                 name: Gate
                 modify: x+''
-              - data: ieee
+              - data: device.extra.ieee
                 name: IEEE
                 modify: (x+'').toLowerCase()
-              - data: nwk
+              - data: device.extra.nwk
                 name: NWK
                 modify: (x+'').replace(/^0x/,"")
               - data: parent
@@ -5490,7 +5511,7 @@ views:
               - data: type
                 name: Type
                 modify: 'x == "" ? "-" : (x+"").replace(/^-$/, "device")'
-              - data: device_fw_ver
+              - data: device.extra.fw_ver
                 name: FW
                 modify: 'x == "" ? "-" : x+""'
               - data: msg_received
@@ -5505,16 +5526,16 @@ views:
               - data: new_resets
                 name: Resets
                 modify: "isNaN(parseInt(x, 10)) ? 0 : parseInt(x, 10)"
-              - data: linkquality
+              - data: device.extra.lqi
                 name: LQI
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
-              - data: rssi
+              - data: device.extra.rssi
                 name: RSSI
                 modify: 'isNaN(parseInt(x, 10)) ? "" : parseInt(x, 10)'
               - data: last_msg
                 name: Last Message
                 modify: x+''
-              - data: available
+              - data: device.available
                 name: Available
                 modify: 'x === true ? "✓" : x+""'
               - data: state
