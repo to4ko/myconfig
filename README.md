@@ -97,7 +97,7 @@
   - Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
-  - Ubiquiti Unifi NVR with 3Tb WD Purple
+  - Ubiquiti Unifi NVR with 4Tb WD Purple
   - Ubiquiti Unifi G3 Flex Cameras (6ea)
   - Ubiquiti Unifi G3 Instant
   - Ubiquiti Unifi G4 Instant
@@ -214,6 +214,7 @@
   - Yandex Station Lite (3ea)
   - Yandex Station Mini 2 (1ea)
   - Yandex Station 2 (1ea)
+  - Yandex Ststion Midi (1ea)
 
 **Other Devices:**
   - Lenovo Xiaoxin Pad 2024 8/128 with Fully Kiosk Browser
