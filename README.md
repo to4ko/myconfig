@@ -211,7 +211,7 @@
 
 **Smart Speakers:**
   - not in use - Google Home Mini (5ea)
-  - Yandex Station Lite (3ea)
+  - Yandex Station Lite (4ea)
   - Yandex Station Mini 2 (1ea)
   - Yandex Station 2 (1ea)
   - Yandex Ststion Midi (1ea)
