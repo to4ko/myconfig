@@ -34,6 +34,23 @@
             {%-endfor-%}
         unit_of_measurement: "ea"
 
+      - name: Zigbee Devices Stats Unavailable
+        unique_id: zigbee_devices_stats_unavailable
+        state: "{{ expand('group.gw3_zigbee_entities') | selectattr('attributes.device.available','ne',true) | map(attribute='name') | list | count }}"
+        icon: >
+          {% if states('sensor.zigbee_devices_unavailable')|int(0) > 0 %}
+          mdi:signal-off
+          {% else %}
+          mdi:signal
+          {% endif %}
+        attributes:
+          list: >-
+            {%-for state in expand('group.gw3_zigbee_entities')|list
+              if state.state in ['unavailable'] %}
+              {{state.name}}{%- if not loop.last -%}, {%-endif%}
+            {%-endfor-%}
+        unit_of_measurement: "ea"        
+
       - name: Zigbee Devices Last Resets
         unique_id: zigbee_devices_last_resets
         state: >-
