@@ -38,7 +38,7 @@
         unique_id: zigbee_devices_stats_unavailable
         state: "{{ expand('group.gw3_zigbee_entities') | selectattr('attributes.device.available','ne',true) | map(attribute='name') | list | count }}"
         icon: >
-          {% if states('sensor.zigbee_devices_unavailable')|int(0) > 0 %}
+          {% if states('sensor.zigbee_devices_stats_unavailable')|int(0) > 0 %}
           mdi:signal-off
           {% else %}
           mdi:signal
@@ -58,9 +58,11 @@
           {%- set threshold = 10 -%}
           {%- for item in states['sensor'] -%}
           {%- if ('_zigbee' in item.entity_id) -%}
-          {%- if item.attributes.new_resets is defined -%}
-          {%- if item.attributes.new_resets | int(default=0) > threshold -%}
+          {%- if item.attributes.device is defined -%}
+          {%- if item.attributes.device.extra.new_resets is defined -%}
+          {%- if item.attributes.device.extra.new_resets | int(default=0) > threshold -%}
           {%- set devices.device_name = devices.device_name + [item.name.replace(' Zigbee','') ~ ': ' ~ item.attributes.new_resets | format(morph=['раз','раза','раз'], as_text=false)] -%}
+          {%- endif -%}
           {%- endif -%}
           {%- endif -%}
           {%- endif -%}
