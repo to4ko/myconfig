@@ -1,0 +1,124 @@
+substitutions:
+  board_name: esp32_node_st
+  node_name: esp32-node-st
+  up_int: 60s
+  
+esphome:
+  name: ${node_name}
+  comment: ESP32 Node St
+  # platformio_options:
+  #   board_build.partitions: ../../../custom_components/partitions_esp32_4mb.csv
+
+esp32:
+  board: nodemcu-32s
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  #domain: .local
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  fast_connect: true
+  #use_address: 192.168.1.246
+  #power_save_mode: none
+  # manual_ip:
+  #   static_ip: 192.168.1.109
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+logger:
+  baud_rate: 0
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+dallas:
+  - pin: GPIO13  
+    update_interval: 15s
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+  - platform: dallas
+    address: 0x5e3ce104570ba028
+    name: ${board_name}_dallas_1
+    accuracy_decimals: 2
+    resolution: 12
+
+  - platform: dallas
+    address: 0xb63ce10457eb0228
+    name: ${board_name}_dallas_2
+    accuracy_decimals: 2
+    resolution: 12
+
+  - platform: dallas
+    address: 0xfb3ce10457006d28
+    name: ${board_name}_dallas_3
+    accuracy_decimals: 2
+    resolution: 12
+
+  - platform: dallas
+    address: 0xcf3ce10457ded728
+    name: ${board_name}_dallas_4
+    accuracy_decimals: 2
+    resolution: 12
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
+    
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
