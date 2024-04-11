@@ -89,7 +89,7 @@
   - Ubiquiti Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
   - Ubiquiti Unifi Aggregation Switch (2ea)
   - Ubiquiti Unifi Enterprise Switch 24 PoE
-  - not in use - Ubiquiti Unifi Switch XG
+  - Ubiquiti Unifi Switch XG
   - Ubiquiti Unifi Switch Light 8 PoE (3ea)
   - Ubiquiti Unifi Switch Flex (3ea)
   - Ubiquiti Unifi Switch Flex Mini (2ea)
@@ -97,7 +97,7 @@
   - Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
-  - Ubiquiti Unifi NVR with 4Tb WD Purple
+  - Ubiquiti Unifi NVR with 3*4Tb WD Purple in Raid 5
   - Ubiquiti Unifi G3 Flex Cameras (6ea)
   - Ubiquiti Unifi G3 Instant
   - Ubiquiti Unifi G4 Instant
@@ -176,6 +176,7 @@
   - HB01 Linptech ES1 Presence Sensor
   - RTCGQ02LM Mi Motion Sensor 2
   - CGPR1 Qingping Motion Sensor
+  - Mijia curtain companion MJSGCLBL01LM Rod-type (6ea)
 
 **ESPHome devices:**
   - Sonoff Pow R2 (2ea)
