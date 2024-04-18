@@ -1,0 +1,182 @@
+substitutions:
+  board_name: sp111_socket_2
+  host_name: sp111-socket-2
+  # # Higher value gives lower watt readout
+  # current_res: '0.00280'
+  # # Lower value gives lower voltage readout
+  # voltage_div: '81000'
+
+  
+esphome:
+  name: ${host_name}
+  comment: UV Fan-Lamp via SP111 Socket 2
+  # on_boot:
+  #   priority: -10
+  #   then:
+  #   # on affter boot
+  #   - switch.toggle: switch1
+
+esp8266:
+  board: esp8285
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  #domain: .local
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  fast_connect: true
+  #power_save_mode: none
+  # manual_ip:
+  #   static_ip: 192.168.1.137
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+logger:
+  baud_rate: 0
+  esp8266_store_log_strings_in_flash: false
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+web_server:
+  port: 80
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+    
+  - platform: gpio
+    pin:
+      number: GPIO13
+      inverted: True
+    name: "${board_name}_button"
+    on_press:
+      - fan.toggle: fan1
+
+output:
+  - platform: gpio
+    pin: GPIO15
+    id: relay
+  - platform: gpio
+    pin: GPIO00
+    inverted: True
+    id: led1
+
+status_led:
+  pin:
+    number: GPIO02
+    inverted: True
+
+fan:
+  - platform: binary
+    output: relay
+    name: "${board_name}_UV Fan"
+    restore_mode: RESTORE_DEFAULT_OFF
+    id: fan1
+
+# switch:
+#   - platform: template
+#     id: switch1
+#     restore_mode: RESTORE_DEFAULT_OFF
+#     icon: mdi:power-socket-eu
+#     optimistic: true
+#     name: "${board_name}_Relay"
+#     turn_on_action:
+#       - output.turn_on: relay
+#       - output.turn_on: led1
+#     turn_off_action:
+#       - output.turn_off: relay
+#       - output.turn_off: led1
+
+sensor:
+  # - platform: hlw8012
+  #   sel_pin:
+  #     number: GPIO12
+  #     inverted: True
+  #   cf_pin: GPIO05
+  #   cf1_pin: GPIO04
+  #   current_resistor: ${current_res}
+  #   voltage_divider: ${voltage_div}
+  #   current:
+  #     name: "${board_name}_A"
+  #     unit_of_measurement: A
+  #     accuracy_decimals: 3
+  #     icon: mdi:flash-circle
+  #   voltage:
+  #     name: "${board_name}_V"
+  #     unit_of_measurement: V
+  #     icon: mdi:flash-circle
+  #   power:
+  #     name: "${board_name}_W"
+  #     unit_of_measurement: W
+  #     id: "${board_name}_W"
+  #     icon: mdi:flash-circle
+  #   change_mode_every: 4
+  #   update_interval: 10s
+  # - platform: total_daily_energy
+  #   name: "${board_name}_Total Daily Energy"
+  #   power_id: "${board_name}_W"
+  #   filters:
+  #       # Multiplication factor from W to kW is 0.001
+  #       - multiply: 0.001
+  #   unit_of_measurement: kWh
+  #   icon: mdi:clock-alert
+      
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    icon: mdi:clock-outline
+    id: uptime_sensor
+
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    scan_results:
+      name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
+    
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+    
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
