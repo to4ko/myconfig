@@ -383,24 +383,24 @@ views:
                 name: B
               - entity: binary_sensor.wasp_t
                 name: T
-          - type: glance
-            show_name: true
-            show_state: false
-            state_color: true
-            columns: 6
-            entities:
-              - entity: binary_sensor.yandex_voice_mb
-                name: MB
-              - entity: binary_sensor.yandex_voice_s
-                name: S
-              - entity: binary_sensor.yandex_voice_v
-                name: V
-              - entity: binary_sensor.yandex_voice_b
-                name: B
-              - entity: binary_sensor.yandex_voice_hb
-                name: HB                
-              - entity: binary_sensor.yandex_voice_k
-                name: K
+          # - type: glance
+          #   show_name: true
+          #   show_state: false
+          #   state_color: true
+          #   columns: 6
+          #   entities:
+          #     - entity: binary_sensor.yandex_voice_mb
+          #       name: MB
+          #     - entity: binary_sensor.yandex_voice_s
+          #       name: S
+          #     - entity: binary_sensor.yandex_voice_v
+          #       name: V
+          #     - entity: binary_sensor.yandex_voice_b
+          #       name: B
+          #     - entity: binary_sensor.yandex_voice_hb
+          #       name: HB                
+          #     - entity: binary_sensor.yandex_voice_k
+          #       name: K
           - type: glance
             show_name: true
             show_state: false
@@ -4040,7 +4040,7 @@ views:
         title: Unifi & PiKVM
         cards:
           - type: glance
-            columns: 6
+            columns: 7
             state_color: true
             entities:
               - entity: sensor.udm_cpu_use
@@ -4055,20 +4055,8 @@ views:
                 name: USWT
               - entity: sensor.usw24_fan_speed
                 name: Fan
-          - type: glance
-            columns: 5
-            state_color: true
-            entities:
-              - entity: sensor.unvr_cpu_utilization
-                name: NVR CPU
-              - entity: sensor.unvr_cpu_temperature
-                name: CPUT
-              - entity: sensor.unvr_memory_utilization
-                name: MEM
-              - entity: binary_sensor.unvr_hdd_1
-                name: HDD 1
-              - entity: sensor.unvr_storage_utilization
-                name: Storage
+              - entity: binary_sensor.udmp_hdd_1
+                name: HDD
           - type: glance
             columns: 5
             state_color: true
@@ -5692,15 +5680,51 @@ views:
   - title: Testing
     icon: mdi:alpha
     cards:
+      - type: entities
+        entities:
+          - sensor.g3_flex_dixy_disk_write_rate
+          - sensor.g3_flex_entrance_disk_write_rate
+          - sensor.g3_flex_hall_disk_write_rate
+          - sensor.g3_flex_street_disk_write_rate
+          - sensor.g3_flex_window_disk_write_rate
+          - sensor.g3_flex_yard_disk_write_rate
+          - sensor.g3_instant_disk_write_rate
+          - sensor.g4_doorbell_disk_write_rate
+          - sensor.g4_instant_disk_write_rate                    
+      - type: entities
+        entities:
+          - sensor.g3_flex_dixy_storage_used
+          - sensor.g3_flex_entrance_storage_used
+          - sensor.g3_flex_hall_storage_used
+          - sensor.g3_flex_street_storage_used
+          - sensor.g3_flex_window_storage_used
+          - sensor.g3_flex_yard_storage_used
+          - sensor.g3_instant_storage_used
+          - sensor.g4_doorbell_storage_used
+          - sensor.g4_instant_storage_used   
       - type: glance
         entities:
           - sensor.treadmill_stats
           - binary_sensor.presence_b
           - binary_sensor.presence_t
-      - type: entities
+          - type: entities
         entities:
           - input_boolean.dima_business_trip
           - input_datetime.dima_return_date
+      - type: vertical-stack
+        cards:
+          - type: history-graph
+            #hours_to_show: 6
+            entities:
+              - sensor.ds1621plus_download_throughput
+              - sensor.ds1621plus_upload_throughput
+          - type: history-graph
+            #hours_to_show: 6
+            entities:
+              - sensor.ds920plus_download_throughput
+              - sensor.ds920plus_upload_throughput
+
+
       - type: vertical-stack
         cards:
           - type: history-graph
@@ -6193,3 +6217,26 @@ views:
   #       entities:
   #         - calendar.dni_rozhdeniia
   #         - calendar.prazdniki_rossii_polnyi
+
+  - title: Diagnostics
+    icon: mdi:card-text-outline
+    panel: true
+    cards:
+      - type: markdown
+        content: |
+          [diagnostics](/config/integrations/integration/hass_diagnostics) | [log](/config/logs) | total: {{ states('sensor.smart_log') }} items
+
+          {% for i in state_attr('sensor.smart_log', 'records') -%}
+          ---
+          <details>
+          <summary>
+            <b>{{i.get('domain') or i.get('package') or i.name}}</b> ({{i.count}}) {{i.get('category','')}} {{i.get('host','')}}
+            <br>&nbsp; &nbsp;<i>{{i.short}}</i>
+          </summary>
+          <div><b>{{i.name}}</b></div>
+          <div>{{i.message|replace('\n',' ')|regex_replace('(http[^\s]+)', '<a href="\\1">\\1</a>')}}</div>
+          <div>{{i.source|join(', ')}}{{', <a href="%s">github</a>'%i.github if 'github' in i}}</div>
+          {{'<pre>'+i.exception+'</pre>' if 'exception' in i}}
+          </details>
+
+          {% endfor %}

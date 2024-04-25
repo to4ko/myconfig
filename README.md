@@ -97,7 +97,7 @@
   - Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
-  - Ubiquiti Unifi NVR with 3*4Tb WD Purple in Raid 5
+  - Ubiquiti Unifi Dream Machine Pro with 4Tb WD Purple
   - Ubiquiti Unifi G3 Flex Cameras (6ea)
   - Ubiquiti Unifi G3 Instant
   - Ubiquiti Unifi G4 Instant

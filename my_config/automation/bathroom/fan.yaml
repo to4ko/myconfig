@@ -273,10 +273,10 @@
                 entity_id: switch.esp32_node_b_fan_b_auto_mode
 
 # ##################################
-# Bathroom - Fan Night mode (door closed)
+# Bathroom - Fan Night mode
 # ##################################
-  - alias: bathroom_fan_night_mode_door_close_control
-    id: bathroom_fan_night_mode_door_close_control
+  - alias: bathroom_fan_night_mode
+    id: bathroom_fan_night_mode
     initial_state: true
     trigger:
       - platform: time_pattern
@@ -289,50 +289,32 @@
         value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: template
         value_template: "{{ 1 <= now().hour < 6 }}"
-      - condition: template
-        value_template: "{{states('number.esp32_node_b_humidity_set')|int(0) != 30 }}"
-      - condition: state
-        entity_id: binary_sensor.0x00158d0002a14c5e_contact
-        state: 'off'
     action:
-      - service: number.set_value
-        data:
-          value: "30"
-        target:
-          entity_id: number.esp32_node_b_humidity_set
-      # - service: switch.turn_on
-      #   entity_id: switch.esp32_node_b_fan_b_force_mode
-
-# ##################################
-# Bathroom - Fan Night mode (door opened)
-# ##################################
-  - alias: bathroom_fan_night_mode_door_open_control
-    id: bathroom_fan_night_mode_door_open_control
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: '/5'
-    condition:
-      - condition: state
-        entity_id: switch.system_security_mode
-        state: 'off'
-      - condition: template
-        value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
-      - condition: template
-        value_template: "{{ 1 <= now().hour < 6 }}"
-      - condition: template
-        value_template: "{{states('number.esp32_node_b_humidity_set')|int(0) != 65 }}"
-      - condition: state
-        entity_id: binary_sensor.0x00158d0002a14c5e_contact
-        state: 'on'
-    action:
-      - service: number.set_value
-        data:
-          value: "65"
-        target:
-          entity_id: number.esp32_node_b_humidity_set
-      # - service: switch.turn_on
-      #   entity_id: switch.esp32_node_b_fan_b_force_mode
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x00158d0002a14c5e_contact
+                state: 'off'
+                for: 
+                  minutes: 3
+            sequence:
+              - service: number.set_value
+                data:
+                  value: "30"
+                target:
+                  entity_id: number.esp32_node_b_humidity_set
+          - conditions:
+              - condition: state
+                entity_id: binary_sensor.0x00158d0002a14c5e_contact
+                state: 'on'
+                for: 
+                  minutes: 3
+            sequence:
+              - service: number.set_value
+                data:
+                  value: "65"
+                target:
+                  entity_id: number.esp32_node_b_humidity_set
 
 # ##################################
 # Bathroom - Fan to normal mode
@@ -343,8 +325,6 @@
     trigger:
       - platform: time
         at: "06:20:00"
-      # - platform: time
-      #   at: "21:00:00"
     condition:
       - condition: state
         entity_id: switch.system_security_mode
