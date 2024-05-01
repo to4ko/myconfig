@@ -69,6 +69,7 @@
     id: system_location_notify
     initial_state: true
     mode: queued
+    max: 10
     max_exceeded: silent
     trigger:
       - platform: state
@@ -105,23 +106,34 @@
   - alias: system_person_came_left_home
     id: system_person_came_left_home
     mode: parallel
+    max: 10
+    max_exceeded: silent
     trigger:
-      - platform: event
-        event_type: state_changed
+      - platform: state
+        entity_id:
+          - person.dima
+          - person.sandra
+          - person.sasha
+          - person.vova
+        to:
     condition:
       - condition: state
         entity_id: input_boolean.ha_shutdown
         state: 'off'
         for:
           seconds: 15
-      - condition: template
-        value_template: "{{ trigger.event.data.new_state.domain == 'person' }}"
+      # - condition: template
+      #   value_template: >
+      #     {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
+      #     {{ trigger.event.data.old_state.state not in ignore and
+      #       trigger.event.data.new_state.state not in ignore and
+      #       trigger.event.data.new_state.state != trigger.event.data.old_state.state }}
       - condition: template
         value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
-          {{ trigger.event.data.old_state.state not in ignore and
-            trigger.event.data.new_state.state not in ignore and
-            trigger.event.data.new_state.state != trigger.event.data.old_state.state }}
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ trigger.from_state.state not in ignore and
+            trigger.to_state.state not in ignore and
+            trigger.to_state.state != trigger.from_state.state }}            
     action:
       #- service: notify.telegram
       #  data:
@@ -129,24 +141,24 @@
       - choose:
           - conditions:
               - condition: template
-                value_template: "{{ trigger.event.data.new_state.state == 'home' and trigger.event.data.old_state.state != 'home' }}"
+                value_template: "{{ trigger.to_state.state == 'home' and trigger.from_state.state != 'home' }}"
             sequence:
               - event: person_came_home
               - service: logbook.log
                 data:
                   name: Person Came Home
-                  message: " - {{ trigger.event.data.entity_id }}"
-                  entity_id: '{{ trigger.event.data.entity_id }}'
+                  message: " - {{ trigger.entity_id }}"
+                  entity_id: '{{ trigger.entity_id }}'
           - conditions:
               - condition: template
-                value_template: "{{ trigger.event.data.new_state.state != 'home' and trigger.event.data.old_state.state == 'home' }}"
+                value_template: "{{ trigger.to_state.state != 'home' and trigger.from_state.state == 'home' }}"
             sequence:
               - event: person_left_home
               - service: logbook.log
                 data:
                   name: Person Left Home
-                  message: " - {{ trigger.event.data.entity_id }}"
-                  entity_id: '{{ trigger.event.data.entity_id }}'
+                  message: " - {{ trigger.entity_id }}"
+                  entity_id: '{{ trigger.entity_id }}'
 
   - alias: system_location_home_mode
     id: system_location_home_mode
