@@ -19,6 +19,8 @@
   condition:
     - condition: template
       value_template: "{{ not 'system_error_counter' in (trigger.event.data.message|string) }}"
+    - condition: template
+      value_template: "{{ not 'a0d7b954_ide' in (trigger.event.data.message|string) }}"
   action:
     - service: counter.increment
       entity_id: counter.error_counter
@@ -39,6 +41,8 @@
   condition:
     - condition: template
       value_template: "{{ not 'system_warning_counter' in (trigger.event.data.message|string) }}"
+    - condition: template
+      value_template: "{{ not 'a0d7b954_ide' in (trigger.event.data.message|string) }}"
   action:
     - service: counter.increment
       entity_id: counter.warning_counter
@@ -2559,3 +2563,24 @@
   action:
     - service: switch.turn_off
       entity_id: switch.system_silent_mode
+      
+      
+# ##################################
+# System - go2rtc restart
+# ##################################
+- alias: system_go2rtc_restart
+  id: system_go2rtc_restart
+  initial_state: true
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.go2rtc_cpu_percent
+      above: 5
+      for:
+        minutes: 3
+  action:
+    - service: hassio.addon_restart
+      data:
+        addon: a889bffc_go2rtc
+    - service: notify.telegram
+      data:
+        message: "go2rtc перезапуск" 
