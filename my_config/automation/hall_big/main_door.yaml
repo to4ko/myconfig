@@ -9,22 +9,39 @@
     id: hall_big_main_door_not_closed_3m
     initial_state: true
     trigger:
-      - platform: state
+      - trigger: time_pattern
+        minutes: "/3"
+    condition:
+      - condition: state
         entity_id: binary_sensor.0x00158d0001e5d6be_contact
-        from: 'off'
-        to: 'on'
+        state: 'on'
         for:
           minutes: 3
     action:
-      # - service: >
-      #     {% if is_state('binary_sensor.tod_day','on') %} script.main_door_not_closed_tts
-      #     {%else%} script.noop
-      #     {%endif%}
+      - if:
+          - condition: state
+            entity_id: binary_sensor.tod_day
+            state: 'on'
+        then:
+          - service: media_player.volume_set
+            data:
+              entity_id: 
+                - media_player.yandex_hb
+              volume_level: '0.7'
+          - service: media_player.play_media
+            data:
+              media_content_type: dialog
+              entity_id: media_player.yandex_hb
+              media_content_id: 'Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Входн+ая дв+ерь н+е закр+ыта!'
       - service: notify.telegram
         data:
           message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
       - service: script.turn_on
         entity_id: script.open_door_photo
+      - service: media_player.volume_set
+        data:
+          entity_id: media_player.yandex_hb
+          volume_level: '{{states("input_number.main_volume")|float(0)}}'
   
 # ##################################
 # Hall Big - Main Door Closed
