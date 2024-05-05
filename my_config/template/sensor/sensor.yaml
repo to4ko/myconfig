@@ -114,66 +114,6 @@
     #   unit_of_measurement: "°C"
     #   device_class: temperature
 
-    - name: Dewpoint B
-      unique_id: dewpoint_b
-      unit_of_measurement: "°C"
-      device_class: temperature
-      state: >
-        {% set b = 17.368 %}
-        {% set c = 238.88 %}
-        {% set a = 6.1121 %}
-        {% set rh = states('sensor.0x00158d00020d7c3a_humidity') | float(1) %}
-        {% set t = states('sensor.0x00158d00020d7c3a_temperature') | float(0) %}
-        {% set gamma = log(rh / 100) + b * t / (c + t) %}
-        {{ (c * gamma / (b - gamma)) | round(1, 'common') }}
-
-    - name: Dewpoint T
-      unique_id: dewpoint_t
-      unit_of_measurement: "°C"
-      device_class: temperature
-      state: >
-        {% set b = 17.368 %}
-        {% set c = 238.88 %}
-        {% set a = 6.1121 %}
-        {% set rh = states('sensor.0x00158d0001e58754_humidity') | float(1) %}
-        {% set t = states('sensor.0x00158d0001e58754_temperature') | float(0) %}
-        {% set gamma = log(rh / 100) + b * t / (c + t) %}
-        {{ (c * gamma / (b - gamma)) | round(1, 'common') }}
-
-    - name: WiFi Devices Unavailable
-      unique_id: wifi_devices_unavailable
-      state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count + expand('group.esp_devices') | selectattr('state','in',['unavailable','off']) | map(attribute='name') | list | count }}"
-      icon: >
-        {% if states('sensor.wifi_devices_unavailable')|int(0) >  0 %}
-        mdi:wifi-off
-        {% else %}
-        mdi:wifi-check
-        {% endif %}
-      attributes:
-        list: >-
-          {%-for state in expand('group.wifi_devices')|list if state.state in ['unavailable'] %}
-            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
-          {%-endfor-%}
-          {%-if expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count >0 and expand('group.esp_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count >0%}, {%endif%}
-          {%-for state in expand('group.esp_devices')|list if state.state in ['unavailable','off'] %}
-            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
-          {%-endfor-%}
-      unit_of_measurement: "ea"
-    #{{state.name}}{%- if not loop.last -%}, {%-endif%}
-
-    - name: Abs Humidity B
-      unique_id: abs_humidity_b
-      state: >-
-        {% set h, t = states('sensor.0x00158d00020d7c3a_humidity') | float(0), states('sensor.0x00158d00020d7c3a_temperature') %}
-        {% if not h or t == 'unknown' -%}
-        'unknown'
-        {%- else %}
-        {% set t = t | float(0) %}
-        {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2, 'common') }}
-        {% endif %}
-      unit_of_measurement: "g/m³"
-      icon: mdi:water-percent
-
     # - name: Abs Humidity T
     #   unique_id: abs_humidity_t
     #   state: >-
@@ -186,19 +126,6 @@
     #     {% endif %}
     #   unit_of_measurement: "g/m³"
     #   icon: mdi:water-percent
-
-    - name: Abs Humidity H
-      unique_id: abs_humidity_h
-      state: >-
-        {% set h, t = states('sensor.humidity_average') | float(0), states('sensor.temperature_average') %}
-        {% if not h or t == 'unknown' -%}
-        'unknown'
-        {%- else %}
-        {% set t = t | float(0) %}
-        {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2, 'common') }}
-        {% endif %}
-      unit_of_measurement: "g/m³"
-      icon: mdi:water-percent
 
     # - name: Vova GPS Last Update
     #   state: "{{as_timestamp(state_attr('device_tracker.life360_vova_tsymbal','last_seen')) | timestamp_custom('%Y-%m-%d %H:%M:%S', true, default) }}"
@@ -547,3 +474,76 @@
       #   {% else %}
       #   mdi:brightness-5
       #   {% endif %}
+
+    - name: Dewpoint B
+      unique_id: dewpoint_b
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state: >
+        {% set b = 17.368 %}
+        {% set c = 238.88 %}
+        {% set a = 6.1121 %}
+        {% set rh = states('sensor.0x00158d00020d7c3a_humidity') | float(1) %}
+        {% set t = states('sensor.0x00158d00020d7c3a_temperature') | float(0) %}
+        {% set gamma = log(rh / 100) + b * t / (c + t) %}
+        {{ (c * gamma / (b - gamma)) | round(1, 'common') }}
+
+    - name: Dewpoint T
+      unique_id: dewpoint_t
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state: >
+        {% set b = 17.368 %}
+        {% set c = 238.88 %}
+        {% set a = 6.1121 %}
+        {% set rh = states('sensor.0x00158d0001e58754_humidity') | float(1) %}
+        {% set t = states('sensor.0x00158d0001e58754_temperature') | float(0) %}
+        {% set gamma = log(rh / 100) + b * t / (c + t) %}
+        {{ (c * gamma / (b - gamma)) | round(1, 'common') }}
+
+    - name: WiFi Devices Unavailable
+      unique_id: wifi_devices_unavailable
+      state: "{{ expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count + expand('group.esp_devices') | selectattr('state','in',['unavailable','off']) | map(attribute='name') | list | count }}"
+      icon: >
+        {% if states('sensor.wifi_devices_unavailable')|int(0) >  0 %}
+        mdi:wifi-off
+        {% else %}
+        mdi:wifi-check
+        {% endif %}
+      attributes:
+        list: >-
+          {%-for state in expand('group.wifi_devices')|list if state.state in ['unavailable'] %}
+            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
+          {%-endfor-%}
+          {%-if expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count >0 and expand('group.esp_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count >0%}, {%endif%}
+          {%-for state in expand('group.esp_devices')|list if state.state in ['unavailable','off'] %}
+            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
+          {%-endfor-%}
+      unit_of_measurement: "ea"
+    #{{state.name}}{%- if not loop.last -%}, {%-endif%}
+
+    - name: Abs Humidity B
+      unique_id: abs_humidity_b
+      state: >-
+        {% set h, t = states('sensor.0x00158d00020d7c3a_humidity') | float(0), states('sensor.0x00158d00020d7c3a_temperature') %}
+        {% if not h or t == 'unknown' -%}
+        'unknown'
+        {%- else %}
+        {% set t = t | float(0) %}
+        {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2, 'common') }}
+        {% endif %}
+      unit_of_measurement: "g/m³"
+      icon: mdi:water-percent
+
+    - name: Abs Humidity H
+      unique_id: abs_humidity_h
+      state: >-
+        {% set h, t = states('sensor.humidity_average') | float(0), states('sensor.temperature_average') %}
+        {% if not h or t == 'unknown' -%}
+        'unknown'
+        {%- else %}
+        {% set t = t | float(0) %}
+        {{ (h*6.112*2.1674*e**((t*17.67)/(t+243.5))/(t+273.15))|round(2, 'common') }}
+        {% endif %}
+      unit_of_measurement: "g/m³"
+      icon: mdi:water-percent
