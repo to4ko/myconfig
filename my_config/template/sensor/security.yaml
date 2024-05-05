@@ -1,4 +1,26 @@
-  - sensor:
+  - trigger:
+      - platform: time_pattern
+        seconds: "/15"  
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    sensor:
+      - name: People Home
+        unique_id: people_home
+        state: >-
+          {{ expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count }}
+        icon: >-
+          {%- set cnt = expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count %}
+          {%- if cnt <= 10 %}
+            mdi:numeric-{{cnt}}-box
+          {%- endif %}
+        unit_of_measurement: ea
+        attributes:
+          names: "{{expand('group.persons') | selectattr('state', 'eq', 'home') | map(attribute='name') | list | join(', ') }}"
+
       - name: Home Status
         unique_id: home_status
         state: >
@@ -13,19 +35,6 @@
           {% else %}
           mdi:home-outline
           {% endif %}
-
-      - name: People Home
-        unique_id: people_home
-        state: >-
-          {{ expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count }}
-        icon: >-
-          {%- set cnt = expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count %}
-          {%- if cnt <= 10 %}
-            mdi:numeric-{{cnt}}-box
-          {%- endif %}
-        unit_of_measurement: ea
-        attributes:
-          names: "{{expand('group.persons') | selectattr('state', 'eq', 'home') | map(attribute='name') | list | join(', ') }}"
 
 #{{ expand('group.persons') | selectattr('state', 'in', ['home', 'on'] ) | list | count }}
 
