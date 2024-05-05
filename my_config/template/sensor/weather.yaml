@@ -1,225 +1,253 @@
-- sensor:
-    - name: Sun Window Angular Simularity
-      unique_id: sun_window_angular_simularity
-      unit_of_measurement: "degrees"
-      state: >
-        {% set deg2rad = pi/180 %}
+  - trigger:
+      - platform: time_pattern
+        minutes: '/1'
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: automation_reloaded
+      - platform: event
+        event_type: event_template_reloaded
+    sensor:
+      - name: Sunlight pct
+        unique_id: sunlight_pct
+        state: >-
+          {%- set elevation = state_attr('sun.sun','elevation') | float(0) %}
+          {%- set cloud_coverage = states('sensor.pirateweather_cloud_coverage') | float(0) %}
+          {%- set cloud_factor = (1 - (0.75 * ( cloud_coverage / 100) ** 3 )) %}
+          {%- set min_elevation = -6 %} {# set this to official sun elevation for end of twighlight #}
+          {%- set max_elevation = 75 %} {# set this to the maximum noon sun elevation (minimum is 15 degrees) +10 (optional) find at https://www.suncalc.org/ #}
+          {%- set adjusted_elevation = elevation - min_elevation %}
+          {%- set adjusted_elevation = [adjusted_elevation,0] | max %}
+          {%- set adjusted_elevation = [adjusted_elevation,max_elevation - min_elevation] | min %}
+          {%- set adjusted_elevation = adjusted_elevation / (max_elevation - min_elevation) %}
+          {%- set adjusted_elevation = adjusted_elevation %}
+          {%- set adjusted_elevation = adjusted_elevation * 100 %}
+          {%- set brightness = adjusted_elevation * cloud_factor %}
+          {{ brightness | round }}
+        unit_of_measurement: "lx"
+        device_class: "illuminance"
 
-        {% set sun_azi = state_attr('sun.sun', 'azimuth') | int %}
-        {% set sun_ele = state_attr('sun.sun', 'elevation') | int %}
-
-        {% set sun_x = cos(sun_azi*deg2rad)*cos(sun_ele*deg2rad) %}
-        {% set sun_y = sin(sun_azi*deg2rad)*cos(sun_ele*deg2rad) %}
-        {% set sun_z = sin(sun_ele*deg2rad) %}
-
-        {% set win_azi = 343 %}
-        {% set win_ele = 0 %}
-
-        {% set win_x = cos(win_azi*deg2rad)*cos(win_ele*deg2rad) %}
-        {% set win_y = sin(win_azi*deg2rad)*cos(win_ele*deg2rad) %}
-        {% set win_z = sin(win_ele*deg2rad) %}
-
-        {% set dot = sun_x*win_x + sun_y*win_y + sun_z*win_z %}
-        {% set norm_win = sqrt(win_x**2 + win_y**2 + win_z**2) %}
-        {% set norm_sun = sqrt(sun_x**2 + sun_y**2 + sun_z**2) %}
-        {% set cos_sim = dot/(norm_win*norm_sun) %}
-
-        {% set ang_sim = 1 - acos(cos_sim)/pi %}
-        {{ ang_sim | round(3) }}
-
-    - name: Dewpoint
-      unique_id: dewpoint
-      device_class: temperature
-      unit_of_measurement: "°C"
-      state: >-
-        {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(1) %}
-        {%- set RH = states('sensor.0x00158d00020d7c3a_humidity') | float(1) %}
-        {%- set T = (( Tc * 9 / 5)+ 32) %}
-        {%- set b = 17.368 if T >0 else 17.966 %}
-        {%- set c = 238.88 if T >0 else 247.15 %}
-        {%- set pa = (RH / 100 * e**(b * T / (c + T)))|float(1) %}
-        {{((c * log(pa,2,0) / (b - log(pa,2,0)) -32 ) * 5/9)|round(1, 'common')}}
-
-    - name: Heatindex
-      unique_id: heatindex
-      device_class: temperature
-      unit_of_measurement: "°C"
-      state: >-
-        {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(1) %}
-        {%- set RH = states('sensor.0x00158d00020d7c3a_humidity') | float(1) %}
-        {%- set T = (( Tc * 9 / 5)+ 32) %}
-        {%- set c1 = -42.379 %}
-        {%- set c2 = 2.04901523 %}
-        {%- set c3 = 10.14333127 %}
-        {%- set c4 = -0.22475541 %}
-        {%- set c5 = -6.83783e-3 %}
-        {%- set c6 = -5.481717e-2 %}
-        {%- set c7 = 1.22874e-3 %}
-        {%- set c8 = 8.5282e-4 %}
-        {%- set c9 = -1.99e-6 %}
-        {%- set HI = 0.5 * (T + 61 + (T - 68) * 1.2 + RH * 0.094) %}
-        {%- set HI_result = HI if HI <80 else c1 + c2*T + c3*RH + c4*T*RH + c5*T**2 + c6*RH**2 + c7*T**2*RH + c8*T*RH**2 + c9*T**2*RH**2 %}
-        {{ ((HI_result -32 ) * 5/9)|round(1, 'common')}}
-
-    - name: Windchill
-      unique_id: windchill
-      device_class: temperature
-      unit_of_measurement: "°C"
-      state: >-
-        {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(0) %}
-        {%- set Vc = states('sensor.pirateweather_wind_speed')|float(0) %}
-        {%- set V = Vc * 2.23694 %}
-        {%- set T = (( Tc * 9 / 5)+ 32) %}
-        {{((35.74 + (0.6215 * T) - 35.75 * V**0.16 + 0.4275 * T * V**0.16 -32 ) * 5/9)|round(1, 'common')}}
-
-    - name: Feelslike
-      unique_id: feelslike
-      device_class: temperature
-      unit_of_measurement: "°C"
-      state: >-
-        {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(0) %}
-        {%- set Vc = states('sensor.pirateweather_wind_speed')|float(0) %}
-        {%- set V = Vc * 2.23694 %}
-        {%- set T = (( Tc * 9 / 5)+ 32) %}
-        {%- if T <= 50 and Vc > 3 %}{{states('sensor.windchill')|float(0)|round(2, 'common')}}
-        {%- elif T >= 80 %}{{states('sensor.heatindex')|float(0)|round(2, 'common')}}
-        {%- else %}{{Tc|round(2, 'common')}}
-        {%- endif %}
-
-    # - name: Pressure Change 3h
-    #   state: "{{state_attr('sensor.pressure_stats_3h','change')|float(0)}}"
-    #   unit_of_measurement: "hPa"
-    #   device_class: pressure
-
-    # - name: Pressure Change 6h
-    #   state: "{{state_attr('sensor.pressure_stats_6h','change')|float(0)}}"
-    #   unit_of_measurement: "hPa"
-    #   device_class: pressure
-
-    - name: Pressure Gradient
-      unique_id: pressure_gradient
-      state: >-
-        {% set result = ((state_attr('binary_sensor.pressure_falling_fast','gradient')|float(0) * 3600*100)|float(0))|round(1, 'common') %}
-        {% if result > 500 %}500
-        {% elif result < -500 %}-500
-        {%else%}{{result}}
-        {%endif%}
-      icon: mdi:chart-line-variant
-      unit_of_measurement: "Pah"
-
-    # - name: Pressure Indicator
-    #   unique_id: pressure_indicator
-    #   state: >
-    #     {% if is_state('binary_sensor.pressure_falling_fast','on')%} Falling Fast
-    #     {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off')%} Falling Slow
-    #     {% elif is_state('binary_sensor.pressure_rising_fast','on')%} Raising Fast
-    #     {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} Raising Slow
-    #     {% else %} Stable
-    #     {% endif %}
-    #   icon: >
-    #     {% if is_state('binary_sensor.pressure_falling_fast','on')%} mdi:chevron-triple-down
-    #     {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off') %} mdi:chevron-down
-    #     {% elif is_state('binary_sensor.pressure_rising_fast','on')%} mdi:chevron-triple-up
-    #     {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} mdi:chevron-up
-    #     {% else %} mdi:checkbox-blank-circle-outline
-    #     {% endif %}
-
-    # 0 Rising Very Rapidly = 3 hPa change or more per hour.
-    # 1 Rising Rapidly = 1.4 hPa change or more per hour.
-    # 2 Rising Slowly = 0.7 to less than 1.4 hPa change per hour.
-    # 3 Normal (Steady) = Between 0.7 and -0.7 hPa change per hour.
-    # 4 Falling Slowly = -0.7 up to -1.4 hPa change per hour.
-    # 5 Falling Rapidly = -1.4 hPa change or more per hour.
-    # 6 Falling Very Rapidly = -3 hPa change or more per hour.
-    - name: Pressure Weather Forecast
-      unique_id: pressure_weather_forecast
-      state: >-
-        {% set diff = states('sensor.pressure_change_3h') | float(0) %}
-        {% set press = states('sensor.pressure_average') | float(0) %}
-        {% set tempr = state_attr('weather.dima_s_home_main_server','temperature') | int(0) %}
-        {% if press > 1022.689 %}
-          {% if diff <= -1.4 %}
-            Пасмурно
-          {% else %}
-            Ясно
-          {% endif %}
-        {% elif press < 1009.144 %}
-          {% if diff <= -5 %}
-            Шторм
-          {% elif diff <= -0.7 %}
-            {% if tempr | int(0) < -5 %}
-              Снег
-            {% else %}
-              Осадки
-            {% endif %}
-          {% else %}
-            {% if tempr | int(0) < -10 %}
-              Ясно, очень холодно
-            {% elif tempr | int(0) < 0 %}
-              Ясно, холодно
-            {% elif tempr | int(0) < 20 %}
-              Ясно, прохладно
+      - name: Sun Window Angular Simularity
+        unique_id: sun_window_angular_simularity
+        unit_of_measurement: "degrees"
+        state: >
+          {% set deg2rad = pi/180 %}
+  
+          {% set sun_azi = state_attr('sun.sun', 'azimuth') | int %}
+          {% set sun_ele = state_attr('sun.sun', 'elevation') | int %}
+  
+          {% set sun_x = cos(sun_azi*deg2rad)*cos(sun_ele*deg2rad) %}
+          {% set sun_y = sin(sun_azi*deg2rad)*cos(sun_ele*deg2rad) %}
+          {% set sun_z = sin(sun_ele*deg2rad) %}
+  
+          {% set win_azi = 343 %}
+          {% set win_ele = 0 %}
+  
+          {% set win_x = cos(win_azi*deg2rad)*cos(win_ele*deg2rad) %}
+          {% set win_y = sin(win_azi*deg2rad)*cos(win_ele*deg2rad) %}
+          {% set win_z = sin(win_ele*deg2rad) %}
+  
+          {% set dot = sun_x*win_x + sun_y*win_y + sun_z*win_z %}
+          {% set norm_win = sqrt(win_x**2 + win_y**2 + win_z**2) %}
+          {% set norm_sun = sqrt(sun_x**2 + sun_y**2 + sun_z**2) %}
+          {% set cos_sim = dot/(norm_win*norm_sun) %}
+  
+          {% set ang_sim = 1 - acos(cos_sim)/pi %}
+          {{ ang_sim | round(3) }}
+  
+      - name: Dewpoint
+        unique_id: dewpoint
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(1) %}
+          {%- set RH = states('sensor.0x00158d00020d7c3a_humidity') | float(1) %}
+          {%- set T = (( Tc * 9 / 5)+ 32) %}
+          {%- set b = 17.368 if T >0 else 17.966 %}
+          {%- set c = 238.88 if T >0 else 247.15 %}
+          {%- set pa = (RH / 100 * e**(b * T / (c + T)))|float(1) %}
+          {{((c * log(pa,2,0) / (b - log(pa,2,0)) -32 ) * 5/9)|round(1, 'common')}}
+  
+      - name: Heatindex
+        unique_id: heatindex
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(1) %}
+          {%- set RH = states('sensor.0x00158d00020d7c3a_humidity') | float(1) %}
+          {%- set T = (( Tc * 9 / 5)+ 32) %}
+          {%- set c1 = -42.379 %}
+          {%- set c2 = 2.04901523 %}
+          {%- set c3 = 10.14333127 %}
+          {%- set c4 = -0.22475541 %}
+          {%- set c5 = -6.83783e-3 %}
+          {%- set c6 = -5.481717e-2 %}
+          {%- set c7 = 1.22874e-3 %}
+          {%- set c8 = 8.5282e-4 %}
+          {%- set c9 = -1.99e-6 %}
+          {%- set HI = 0.5 * (T + 61 + (T - 68) * 1.2 + RH * 0.094) %}
+          {%- set HI_result = HI if HI <80 else c1 + c2*T + c3*RH + c4*T*RH + c5*T**2 + c6*RH**2 + c7*T**2*RH + c8*T*RH**2 + c9*T**2*RH**2 %}
+          {{ ((HI_result -32 ) * 5/9)|round(1, 'common')}}
+  
+      - name: Windchill
+        unique_id: windchill
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(0) %}
+          {%- set Vc = states('sensor.pirateweather_wind_speed')|float(0) %}
+          {%- set V = Vc * 2.23694 %}
+          {%- set T = (( Tc * 9 / 5)+ 32) %}
+          {{((35.74 + (0.6215 * T) - 35.75 * V**0.16 + 0.4275 * T * V**0.16 -32 ) * 5/9)|round(1, 'common')}}
+  
+      - name: Feelslike
+        unique_id: feelslike
+        device_class: temperature
+        unit_of_measurement: "°C"
+        state: >-
+          {%- set Tc = state_attr('weather.dima_s_home_main_server','temperature')|float(0) %}
+          {%- set Vc = states('sensor.pirateweather_wind_speed')|float(0) %}
+          {%- set V = Vc * 2.23694 %}
+          {%- set T = (( Tc * 9 / 5)+ 32) %}
+          {%- if T <= 50 and Vc > 3 %}{{states('sensor.windchill')|float(0)|round(2, 'common')}}
+          {%- elif T >= 80 %}{{states('sensor.heatindex')|float(0)|round(2, 'common')}}
+          {%- else %}{{Tc|round(2, 'common')}}
+          {%- endif %}
+  
+      # - name: Pressure Change 3h
+      #   state: "{{state_attr('sensor.pressure_stats_3h','change')|float(0)}}"
+      #   unit_of_measurement: "hPa"
+      #   device_class: pressure
+  
+      # - name: Pressure Change 6h
+      #   state: "{{state_attr('sensor.pressure_stats_6h','change')|float(0)}}"
+      #   unit_of_measurement: "hPa"
+      #   device_class: pressure
+  
+      - name: Pressure Gradient
+        unique_id: pressure_gradient
+        state: >-
+          {% set result = ((state_attr('binary_sensor.pressure_falling_fast','gradient')|float(0) * 3600*100)|float(0))|round(1, 'common') %}
+          {% if result > 500 %}500
+          {% elif result < -500 %}-500
+          {%else%}{{result}}
+          {%endif%}
+        icon: mdi:chart-line-variant
+        unit_of_measurement: "Pah"
+  
+      # - name: Pressure Indicator
+      #   unique_id: pressure_indicator
+      #   state: >
+      #     {% if is_state('binary_sensor.pressure_falling_fast','on')%} Falling Fast
+      #     {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off')%} Falling Slow
+      #     {% elif is_state('binary_sensor.pressure_rising_fast','on')%} Raising Fast
+      #     {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} Raising Slow
+      #     {% else %} Stable
+      #     {% endif %}
+      #   icon: >
+      #     {% if is_state('binary_sensor.pressure_falling_fast','on')%} mdi:chevron-triple-down
+      #     {% elif is_state('binary_sensor.pressure_falling_slow','on') and is_state('binary_sensor.pressure_falling_slow','off') %} mdi:chevron-down
+      #     {% elif is_state('binary_sensor.pressure_rising_fast','on')%} mdi:chevron-triple-up
+      #     {% elif is_state('binary_sensor.pressure_rising_slow','on') and is_state('binary_sensor.pressure_rising_fast','off') %} mdi:chevron-up
+      #     {% else %} mdi:checkbox-blank-circle-outline
+      #     {% endif %}
+  
+      # 0 Rising Very Rapidly = 3 hPa change or more per hour.
+      # 1 Rising Rapidly = 1.4 hPa change or more per hour.
+      # 2 Rising Slowly = 0.7 to less than 1.4 hPa change per hour.
+      # 3 Normal (Steady) = Between 0.7 and -0.7 hPa change per hour.
+      # 4 Falling Slowly = -0.7 up to -1.4 hPa change per hour.
+      # 5 Falling Rapidly = -1.4 hPa change or more per hour.
+      # 6 Falling Very Rapidly = -3 hPa change or more per hour.
+      - name: Pressure Weather Forecast
+        unique_id: pressure_weather_forecast
+        state: >-
+          {% set diff = states('sensor.pressure_change_3h') | float(0) %}
+          {% set press = states('sensor.pressure_average') | float(0) %}
+          {% set tempr = state_attr('weather.dima_s_home_main_server','temperature') | int(0) %}
+          {% if press > 1022.689 %}
+            {% if diff <= -1.4 %}
+              Пасмурно
             {% else %}
               Ясно
             {% endif %}
-          {% endif %}
-        {% else %}
-          {% if diff <= -1.4 %}
-            {% if tempr | int(0) < -5 %}
-              Снег
+          {% elif press < 1009.144 %}
+            {% if diff <= -5 %}
+              Шторм
+            {% elif diff <= -0.7 %}
+              {% if tempr | int(0) < -5 %}
+                Снег
+              {% else %}
+                Осадки
+              {% endif %}
             {% else %}
-              Осадки
+              {% if tempr | int(0) < -10 %}
+                Ясно, очень холодно
+              {% elif tempr | int(0) < 0 %}
+                Ясно, холодно
+              {% elif tempr | int(0) < 20 %}
+                Ясно, прохладно
+              {% else %}
+                Ясно
+              {% endif %}
             {% endif %}
-          {% elif diff <= -0.7 %}
-            Пасмурно
           {% else %}
-            Без перемен
+            {% if diff <= -1.4 %}
+              {% if tempr | int(0) < -5 %}
+                Снег
+              {% else %}
+                Осадки
+              {% endif %}
+            {% elif diff <= -0.7 %}
+              Пасмурно
+            {% else %}
+              Без перемен
+            {% endif %}
           {% endif %}
-        {% endif %}
-      icon: >-
-        {% set diff = states('sensor.pressure_change_3h') | float(0) %}
-        {% set press = states('sensor.pressure_average') | float(0) %}
-        {% set tempr = state_attr('weather.dima_s_home_main_server','temperature') | int(0) %}
-        {%- if press > 1022.689 -%}
-          {%- if diff <= -1.4 -%}
-            mdi:weather-partly-cloudy
-          {%- else -%}
-            mdi:weather-sunny
-          {%- endif -%}
-        {%- elif press < 1009.144 -%}
-          {%- if diff <= -5 -%}
-            mdi:weather-tornado
-          {%- elif diff <= -0.7 -%}
-            {% if tempr | int(0) < -5 %}
-              mdi:weather-snowy
-            {% elif tempr | int(0) < 0 %}
-              mdi:weather-snowy-rainy
-            {% else %}
-              mdi:weather-pouring
-            {% endif %}
-          {%- else -%}
-            {% if tempr | int(0) < -10 %}
-              mdi:thermometer-alert
-            {% elif tempr | int(0) < 0 %}
-              mdi:thermometer-low
-            {% elif tempr | int(0) < 20 %}
+        icon: >-
+          {% set diff = states('sensor.pressure_change_3h') | float(0) %}
+          {% set press = states('sensor.pressure_average') | float(0) %}
+          {% set tempr = state_attr('weather.dima_s_home_main_server','temperature') | int(0) %}
+          {%- if press > 1022.689 -%}
+            {%- if diff <= -1.4 -%}
+              mdi:weather-partly-cloudy
+            {%- else -%}
               mdi:weather-sunny
-            {% else %}
-              mdi:weather-sunny
-            {% endif %}
-          {%- endif -%}
-        {%- else -%}
-          {%- if diff <= -1.4 -%}
-            {% if tempr | int(0) < -5 %}
-              mdi:weather-snowy
-            {% elif tempr | int(0) < 0 %}
-              mdi:weather-snowy-rainy
-            {% else %}
-              mdi:weather-pouring
-            {% endif %}
-          {%- elif diff <= -0.7 -%}
-            mdi:weather-partly-cloudy
+            {%- endif -%}
+          {%- elif press < 1009.144 -%}
+            {%- if diff <= -5 -%}
+              mdi:weather-tornado
+            {%- elif diff <= -0.7 -%}
+              {% if tempr | int(0) < -5 %}
+                mdi:weather-snowy
+              {% elif tempr | int(0) < 0 %}
+                mdi:weather-snowy-rainy
+              {% else %}
+                mdi:weather-pouring
+              {% endif %}
+            {%- else -%}
+              {% if tempr | int(0) < -10 %}
+                mdi:thermometer-alert
+              {% elif tempr | int(0) < 0 %}
+                mdi:thermometer-low
+              {% elif tempr | int(0) < 20 %}
+                mdi:weather-sunny
+              {% else %}
+                mdi:weather-sunny
+              {% endif %}
+            {%- endif -%}
           {%- else -%}
-            mdi:ship-wheel
+            {%- if diff <= -1.4 -%}
+              {% if tempr | int(0) < -5 %}
+                mdi:weather-snowy
+              {% elif tempr | int(0) < 0 %}
+                mdi:weather-snowy-rainy
+              {% else %}
+                mdi:weather-pouring
+              {% endif %}
+            {%- elif diff <= -0.7 -%}
+              mdi:weather-partly-cloudy
+            {%- else -%}
+              mdi:ship-wheel
+            {%- endif -%}
           {%- endif -%}
-        {%- endif -%}

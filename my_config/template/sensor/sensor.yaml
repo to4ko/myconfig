@@ -1,4 +1,4 @@
-- sensor:
+  - sensor:
     # - name: Bus 22 to Work
     #   state: "{{state_attr('sensor.bus_to_work','22')[0]}}"
 
@@ -30,101 +30,6 @@
       unique_id: curtain_position_mb
       state: "{{ state_attr('cover.1778456713918824448_motor','current_position')}}"
       icon: mdi:curtains
-
-    - name: School Lesson Number
-      unique_id: school_lesson_number
-      state: >-
-        {% set state = states('sensor.time') %}
-        {% if '08:30' <= state  <= '15:30' %}
-            {% if '08:30' <= state  <= '09:15' %}
-              1 урок
-            {% elif '09:30' <= state <= '10:15' %}
-              2 урок
-            {% elif '10:35' <= state <= '11:20' %}
-              3 урок
-            {% elif '11:40' <= state <= '12:25' %}
-              4 урок
-            {% elif '12:35' <= state <= '13:20' %}
-              5 урок
-            {% elif '13:40' <= state <= '14:25' %}
-              6 урок
-            {% elif '14:45' <= state <= '15:30' %}
-              7 урок
-            {% else %}
-              перемена
-            {% endif %}
-        {% else %}
-          
-        {%endif%}
-      # icon: >
-      #   {% if is_state('binary_sensor.school_lesson_number','on') %}
-      #   mdi:brightness-4
-      #   {% else %}
-      #   mdi:brightness-5
-      #   {% endif %}
-
-    - name: Breather Set Speed V
-      unique_id: breather_set_speed_v
-      state: >
-        {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
-        {% set cur_co2 = states('sensor.esp32_node_v_co2')|int(0) %}
-        {%- set datanames = namespace(alert_levels=[low_limit, low_limit +100, low_limit +200, low_limit +300]) -%}
-        {{ datanames.alert_levels | select( 'le', cur_co2) | list | count* 25 }}
-      icon: >
-        {% set spd = states('sensor.breather_set_speed_v')|int(0) %}
-        {% if spd == 0 %}
-        mdi:fan-off
-        {% elif spd == 25 %}
-        mdi:fan-speed-1
-        {% elif spd == 50 %}
-        mdi:fan-speed-2
-        {% elif spd == 75 %}
-        mdi:fan-speed-3
-        {% elif spd == 100 %}
-        mdi:fan-plus
-        {% endif %}
-
-    - name: Breather Set Speed MB
-      unique_id: breather_set_speed_mb
-      state: >-
-        {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
-        {% set cur_co2 = states('sensor.esp32_node_mb_co2')|int(0) %}
-        {%- set datanames = namespace(alert_levels=[low_limit, low_limit +100, low_limit +200, low_limit +300]) -%}
-        {{ datanames.alert_levels | select( 'le', cur_co2) | list | count * 25 }}
-      icon: >
-        {% set spd = states('sensor.breather_set_speed_mb')|int(0) %}
-        {% if spd == 0 %}
-        mdi:fan-off
-        {% elif spd == 25 %}
-        mdi:fan-speed-1
-        {% elif spd == 50 %}
-        mdi:fan-speed-2
-        {% elif spd == 75 %}
-        mdi:fan-speed-3
-        {% elif spd == 100 %}
-        mdi:fan-plus
-        {% endif %}
-
-    - name: Breather Set Speed S
-      unique_id: breather_set_speed_s
-      state: >-
-        {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
-        {% set cur_co2 = states('sensor.esp32_node_s_co2')|int(0) %}
-        {%- set datanames = namespace(alert_levels=[low_limit, low_limit +100, low_limit +200, low_limit +300]) -%}
-        {{ datanames.alert_levels | select( 'le', cur_co2) | list | count * 25 }}
-      icon: >
-        {% set spd = states('sensor.breather_set_speed_s')|int(0) %}
-        {% if spd == 0 %}
-        mdi:fan-off
-        {% elif spd == 25 %}
-        mdi:fan-speed-1
-        {% elif spd == 50 %}
-        mdi:fan-speed-2
-        {% elif spd == 75 %}
-        mdi:fan-speed-3
-        {% elif spd == 100 %}
-        mdi:fan-plus
-        {% endif %}
 
     # - name: LUMI OTA List
     #   unique_id: lumi_ota_list
@@ -179,10 +84,10 @@
     #       mdi:certificate-outline
     #     {% endif %}
 
-    - name: PC S Usage
-      unique_id: pc_s_usage
-      state: "{{(states('sensor.pc_s_stats')|float(0)*3600)|timestamp_custom('%H:%M:%S',false, 0)}}"
-      icon: mdi:progress-clock
+    # - name: PC S Usage
+    #   unique_id: pc_s_usage
+    #   state: "{{(states('sensor.pc_s_stats')|float(0)*3600)|timestamp_custom('%H:%M:%S',false, 0)}}"
+    #   icon: mdi:progress-clock
 
     # - name: Stove Temperature Median
     #   state: "{{ state_attr('sensor.stove_temperature_stats', 'median')|float(0) }}"
@@ -476,59 +381,169 @@
 #       icon: mdi:currency-cny
 
 
-- trigger:
-    - platform: event
-      event_type: calendar_holiday_event_list_updated
-  sensor:
-    - name: calendar_holiday_events
-      unique_id: calendar_holiday_events
-      state: "{{ (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
-      icon: mdi:calendar
-      attributes:
-        events: "{{ state_attr('input_select.calendar_holiday_events_list', 'options') | list }}"
+  - trigger:
+      - platform: event
+        event_type: calendar_holiday_event_list_updated
+    sensor:
+      - name: calendar_holiday_events
+        unique_id: calendar_holiday_events
+        state: "{{ (state_attr('input_select.calendar_holiday_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
+        icon: mdi:calendar
+        attributes:
+          events: "{{ state_attr('input_select.calendar_holiday_events_list', 'options') | list }}"
 
 
 
-- trigger:
-    - platform: event
-      event_type: calendar_event_list_updated
-    - platform: state
-      entity_id: sensor.calendar_events
-  sensor:
-    - name: calendar_events
-      unique_id: calendar_events
-      state: "{{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
-      attributes:
-        events: >-
-          {% if this.state | int(0) > 0 %}
-            {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}
-          {% else %}
-            ['Нет событий']
-          {% endif %}
-      icon: "{{ (this.state | int(0) > 0) | iif('mdi:calendar-star', 'mdi:calendar-blank') }}"
+  - trigger:
+      - platform: event
+        event_type: calendar_event_list_updated
+      - platform: state
+        entity_id: sensor.calendar_events
+    sensor:
+      - name: calendar_events
+        unique_id: calendar_events
+        state: "{{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list | count }}"
+        attributes:
+          events: >-
+            {% if this.state | int(0) > 0 %}
+              {{ (state_attr('input_select.calendar_events_list', 'options') | join('|') | replace ('Нет событий','')).split('|') | select('ne', '') | unique | list }}
+            {% else %}
+              ['Нет событий']
+            {% endif %}
+        icon: "{{ (this.state | int(0) > 0) | iif('mdi:calendar-star', 'mdi:calendar-blank') }}"
       
 
-- trigger:
-    - platform: state
-      entity_id: input_select.tts_audio_effect
-  sensor:
-    - name: tts_audio_effect
-      unique_id: tts_audio_effect
+  - trigger:
+      - platform: state
+        entity_id: input_select.tts_audio_effect
+    sensor:
+      - name: tts_audio_effect
+        unique_id: tts_audio_effect
+        state: >-
+          {%- if is_state('input_select.tts_audio_effect','За стеной') %}
+            behind_the_wall
+          {%- elif is_state('input_select.tts_audio_effect','Хомяк') %}
+            hamster
+          {%- elif is_state('input_select.tts_audio_effect','Мегафон') %}
+            megaphone
+          {%- elif is_state('input_select.tts_audio_effect','Питч') %}
+            pitch_down
+          {%- elif is_state('input_select.tts_audio_effect','Психоделика') %}
+            psychodelic
+          {%- elif is_state('input_select.tts_audio_effect','Пульсация') %}
+            pulse
+          {%- elif is_state('input_select.tts_audio_effect','Вокзал') %}
+            train_announce
+          {%- else %}
+            none
+          {%- endif %}
+
+  - trigger:
+      - platform: time_pattern
+        seconds: "/30"
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded        
+    sensor:
+    - name: PC S Usage
+      unique_id: pc_s_usage
+      state: "{{(states('sensor.pc_s_stats')|float(0)*3600)|timestamp_custom('%H:%M:%S',false, 0)}}"
+      icon: mdi:progress-clock
+
+    - name: Breather Set Speed V
+      unique_id: breather_set_speed_v
+      state: >
+        {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
+        {% set cur_co2 = states('sensor.esp32_node_v_co2')|int(0) %}
+        {%- set datanames = namespace(alert_levels=[low_limit, low_limit +100, low_limit +200, low_limit +300]) -%}
+        {{ datanames.alert_levels | select( 'le', cur_co2) | list | count* 25 }}
+      icon: >
+        {% set spd = states('sensor.breather_set_speed_v')|int(0) %}
+        {% if spd == 0 %}
+        mdi:fan-off
+        {% elif spd == 25 %}
+        mdi:fan-speed-1
+        {% elif spd == 50 %}
+        mdi:fan-speed-2
+        {% elif spd == 75 %}
+        mdi:fan-speed-3
+        {% elif spd == 100 %}
+        mdi:fan-plus
+        {% endif %}
+
+    - name: Breather Set Speed MB
+      unique_id: breather_set_speed_mb
       state: >-
-        {%- if is_state('input_select.tts_audio_effect','За стеной') %}
-          behind_the_wall
-        {%- elif is_state('input_select.tts_audio_effect','Хомяк') %}
-          hamster
-        {%- elif is_state('input_select.tts_audio_effect','Мегафон') %}
-          megaphone
-        {%- elif is_state('input_select.tts_audio_effect','Питч') %}
-          pitch_down
-        {%- elif is_state('input_select.tts_audio_effect','Психоделика') %}
-          psychodelic
-        {%- elif is_state('input_select.tts_audio_effect','Пульсация') %}
-          pulse
-        {%- elif is_state('input_select.tts_audio_effect','Вокзал') %}
-          train_announce
-        {%- else %}
-          none
-        {%- endif %}
+        {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
+        {% set cur_co2 = states('sensor.esp32_node_mb_co2')|int(0) %}
+        {%- set datanames = namespace(alert_levels=[low_limit, low_limit +100, low_limit +200, low_limit +300]) -%}
+        {{ datanames.alert_levels | select( 'le', cur_co2) | list | count * 25 }}
+      icon: >
+        {% set spd = states('sensor.breather_set_speed_mb')|int(0) %}
+        {% if spd == 0 %}
+        mdi:fan-off
+        {% elif spd == 25 %}
+        mdi:fan-speed-1
+        {% elif spd == 50 %}
+        mdi:fan-speed-2
+        {% elif spd == 75 %}
+        mdi:fan-speed-3
+        {% elif spd == 100 %}
+        mdi:fan-plus
+        {% endif %}
+
+    - name: Breather Set Speed S
+      unique_id: breather_set_speed_s
+      state: >-
+        {% set low_limit = states('input_number.co2_low_limit')|int(0) %}
+        {% set cur_co2 = states('sensor.esp32_node_s_co2')|int(0) %}
+        {%- set datanames = namespace(alert_levels=[low_limit, low_limit +100, low_limit +200, low_limit +300]) -%}
+        {{ datanames.alert_levels | select( 'le', cur_co2) | list | count * 25 }}
+      icon: >
+        {% set spd = states('sensor.breather_set_speed_s')|int(0) %}
+        {% if spd == 0 %}
+        mdi:fan-off
+        {% elif spd == 25 %}
+        mdi:fan-speed-1
+        {% elif spd == 50 %}
+        mdi:fan-speed-2
+        {% elif spd == 75 %}
+        mdi:fan-speed-3
+        {% elif spd == 100 %}
+        mdi:fan-plus
+        {% endif %}
+        
+    - name: School Lesson Number
+      unique_id: school_lesson_number
+      state: >-
+        {% set state = states('sensor.time') %}
+        {% if '08:30' <= state  <= '15:30' %}
+            {% if '08:30' <= state  <= '09:15' %}
+              1 урок
+            {% elif '09:30' <= state <= '10:15' %}
+              2 урок
+            {% elif '10:35' <= state <= '11:20' %}
+              3 урок
+            {% elif '11:40' <= state <= '12:25' %}
+              4 урок
+            {% elif '12:35' <= state <= '13:20' %}
+              5 урок
+            {% elif '13:40' <= state <= '14:25' %}
+              6 урок
+            {% elif '14:45' <= state <= '15:30' %}
+              7 урок
+            {% else %}
+              перемена
+            {% endif %}
+        {% else %}
+          
+        {%endif%}
+      # icon: >
+      #   {% if is_state('binary_sensor.school_lesson_number','on') %}
+      #   mdi:brightness-4
+      #   {% else %}
+      #   mdi:brightness-5
+      #   {% endif %}
