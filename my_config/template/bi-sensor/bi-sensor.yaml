@@ -65,15 +65,7 @@
       # - name: High Humidity B
       #   state: "{{ (states('sensor.0x00158d00020d7c3a_humidity')|float(0) >= 80) or (states('sensor.e72e0120fcdc_humidity')|float(0) >= 80) }}"
       #   device_class: problem
-  
-      - name: BLE Gateway
-        unique_id: ble_gateway
-        icon: mdi:bluetooth
-        state: "{{ is_state('input_boolean.settings_ble_gateway', 'on') }}"
-        attributes:
-          discovery: "{{ is_state('input_boolean.settings_ble_gateway_discovery', 'on') }}"
-          devices: "{{ states.sensor | selectattr('entity_id', 'search', '^sensor.ble_') | selectattr('attributes.mac_address', 'defined') | map(attribute='attributes.mac_address') | unique | sort | join('') | replace(':', '') ~ states.device_tracker | selectattr('entity_id', 'search', '^device_tracker.ble_') | selectattr('attributes.mac', 'defined') | map(attribute='attributes.mac') | unique | sort | join('') | replace(':', '') if is_state('binary_sensor.ble_gateway', 'on') }}"
-  
+
       # - name: Yandex Lite Speakers
       #   state: >
       #     {{not (is_state('media_player.yandex_hb','unavailable') and
@@ -178,14 +170,7 @@
       #   state: "{{ states('sensor.ippon_650_status_data') not in ['none','unknown','unavailable'] }}"
       #   icon: mdi:battery
       #   device_class: power
-  
-      - name: Chair 2 S
-        unique_id: chair_2_s
-        state: "{{ is_state('sensor.0x00158d0002a8ac3c_action','vibration') or is_state('sensor.0x00158d0002a8ac3c_action','tilt') }}"
-        delay_off:
-          minutes: 20
-        icon: mdi:chair-rolling
-  
+
       # - name: Ice Alarm Current
       #   unique_id: ice_alarm_current
       #   device_class: cold
@@ -700,7 +685,41 @@
         unique_id: microwave_k
         icon: mdi:microwave
         state: "{{ states('sensor.0x00158d00028a54e4_power')|float(0) > 10 }}"
-        
+
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      - platform: state
+        entity_id: sensor.0x00158d00035c194f_power
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: PC V
+        unique_id: pc_v
+        icon: mdi:desktop-tower
+        state: "{{ states('sensor.0x00158d00035c194f_power')|int(0) > 5 }}"
+
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      - platform: state
+        entity_id: sensor.0x00158d0003535ee5_power
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: PC S
+        unique_id: pc_s
+        icon: mdi:desktop-tower
+        state: "{{ states('sensor.0x00158d0003535ee5_power')|int(0) > 5 }}"
+
 
   - trigger:
       - platform: time_pattern
@@ -725,3 +744,63 @@
           is_state('switch.system_security_mode','on') or 
           (is_state('binary_sensor.0x00158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x00158d0001ef2ffc_contact'].last_changed) > 10*60))) 
           }}
+
+  - trigger:
+      - platform: state
+        entity_id: 
+          - sensor.0x00158d0002a8ac3c_action
+          - sensor.0x00158d0002a8ac3c_action
+        to:
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Chair 2 S
+        unique_id: chair_2_s
+        state: "{{ is_state('sensor.0x00158d0002a8ac3c_action','vibration') or is_state('sensor.0x00158d0002a8ac3c_action','tilt') }}"
+        delay_off:
+          minutes: 20
+        icon: mdi:chair-rolling
+
+
+  - trigger:
+      - platform: state
+        entity_id: 
+          - light.mirror_light_b
+          - switch.0x00158d0002a36433_channel_2
+        to:
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Light B
+        unique_id: light_b
+        state: "{{ is_state('switch.0x00158d0002a36433_channel_2','on') and is_state('light.mirror_light_b','on') }}"
+        icon: mdi:car-light-high
+        
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"    
+      - platform: state
+        entity_id: input_boolean.settings_ble_gateway
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+
+      - name: BLE Gateway
+        unique_id: ble_gateway
+        icon: mdi:bluetooth
+        state: "{{ is_state('input_boolean.settings_ble_gateway', 'on') }}"
+        attributes:
+          discovery: "{{ is_state('input_boolean.settings_ble_gateway_discovery', 'on') }}"
+          devices: "{{ states.sensor | selectattr('entity_id', 'search', '^sensor.ble_') | selectattr('attributes.mac_address', 'defined') | map(attribute='attributes.mac_address') | unique | sort | join('') | replace(':', '') ~ states.device_tracker | selectattr('entity_id', 'search', '^device_tracker.ble_') | selectattr('attributes.mac', 'defined') | map(attribute='attributes.mac') | unique | sort | join('') | replace(':', '') if is_state('binary_sensor.ble_gateway', 'on') }}"
