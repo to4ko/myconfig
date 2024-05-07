@@ -43,15 +43,7 @@
         state: "{{is_state('schedule.sasha_school_schedule','on') and is_state('binary_sensor.pova_5_interactive','on') }}"
         device_class: problem
         
-      - name: Seat not closed
-        unique_id: seat_not_closed
-        state: "{{ (is_state('binary_sensor.d1mini_distance_sensor_occupancy','off') or is_state('binary_sensor.d1mini_distance_sensor_radar','off')) and is_state('binary_sensor.0x00158d000232ddd6_contact','on') }}"
-        device_class: problem
-        delay_on:
-          seconds: 3
-        delay_off:
-          seconds: 3
-  
+
       - name: Supervisor Is Healthy
         unique_id: supervisor_is_healthy
         state: "{{ state_attr('sensor.supervisor_updates', 'healthy') }}"
@@ -796,7 +788,6 @@
       - platform: event
         event_type: automation_reloaded
     binary_sensor:
-
       - name: BLE Gateway
         unique_id: ble_gateway
         icon: mdi:bluetooth
@@ -804,3 +795,27 @@
         attributes:
           discovery: "{{ is_state('input_boolean.settings_ble_gateway_discovery', 'on') }}"
           devices: "{{ states.sensor | selectattr('entity_id', 'search', '^sensor.ble_') | selectattr('attributes.mac_address', 'defined') | map(attribute='attributes.mac_address') | unique | sort | join('') | replace(':', '') ~ states.device_tracker | selectattr('entity_id', 'search', '^device_tracker.ble_') | selectattr('attributes.mac', 'defined') | map(attribute='attributes.mac') | unique | sort | join('') | replace(':', '') if is_state('binary_sensor.ble_gateway', 'on') }}"
+
+  - trigger:
+      # - platform: time_pattern
+      #   minutes: "/1"    
+      - platform: state
+        entity_id:
+          - binary_sensor.d1mini_distance_sensor_occupancy
+          - binary_sensor.d1mini_distance_sensor_radar
+          - binary_sensor.0x00158d000232ddd6_contact
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: Seat not closed
+        unique_id: seat_not_closed
+        state: "{{ (is_state('binary_sensor.d1mini_distance_sensor_occupancy','off') or is_state('binary_sensor.d1mini_distance_sensor_radar','off')) and is_state('binary_sensor.0x00158d000232ddd6_contact','on') }}"
+        device_class: problem
+        delay_on:
+          seconds: 3
+        delay_off:
+          seconds: 3

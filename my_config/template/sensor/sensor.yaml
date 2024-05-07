@@ -148,16 +148,6 @@
       device_class: temperature
       unit_of_measurement: "°C"
 
-    - name: GDrive Last Backup
-      unique_id: gdrive_last_backup
-      icon: mdi:clock
-      state: "{{(as_timestamp(state_attr('sensor.backup_state','last_backup'), 0) )|timestamp_custom('%H:%M %d.%m.%Y',true,0)}}"
-
-    - name: GDrive Backup State
-      unique_id: gdrive_backup_state
-      icon: mdi:backup-restore
-      state: "{{states('sensor.backup_state')|capitalize|replace('_',' ')}}"
-
     # - name: GDrive Backup Size in HA
     #   unique_id: gdrive_backup_size_in_ha
     #   icon: mdi:file-eye
@@ -547,3 +537,25 @@
       state: >
         {% set x = states('sensor.time') %}
         {{ ( (as_timestamp(now()) | int(0) - as_timestamp(states.timer.washer_working.last_changed) | int(0)) / 60 ) | round(0, 'common') if not is_state('timer.washer_working','idle') else 0}}      
+
+  - trigger:
+      # - platform: time_pattern
+      #   seconds: "/30"
+      - platform: state
+        entity_id: sensor.backup_state
+      - platform: homeassistant
+        event: start
+      - platform: event
+        event_type: event_template_reloaded
+      - platform: event
+        event_type: automation_reloaded
+    sensor:
+      - name: GDrive Last Backup
+        unique_id: gdrive_last_backup
+        icon: mdi:clock
+        state: "{{(as_timestamp(state_attr('sensor.backup_state','last_backup'), 0) )|timestamp_custom('%H:%M %d.%m.%Y',true,0)}}"
+
+      - name: GDrive Backup State
+        unique_id: gdrive_backup_state
+        icon: mdi:backup-restore
+        state: "{{states('sensor.backup_state')|capitalize|replace('_',' ')}}"
