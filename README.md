@@ -103,7 +103,7 @@
   - Ubiquiti Unifi G4 Instant
   - Ubiquiti Unifi G4 Doorbell Pro POE Kit
   - not in use - Digma 100
-  - Aliexpress Pinhole camera via Synology Surveillance Station on DS1621+ 
+  - not in use - Aliexpress Pinhole camera via Synology Surveillance Station on DS1621+ 
 
 # Network map
 <details><summary>Click me...</summary>

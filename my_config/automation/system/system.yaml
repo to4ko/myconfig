@@ -705,7 +705,11 @@
     - service: input_number.set_value
       data:
         entity_id: input_number.main_volume
-        value: "{% if is_state('switch.system_silent_mode','on') %}0{%else%}0.5{%endif%}"
+        value: "{% if is_state('switch.system_silent_mode','on') %}0{%else%}0.4{%endif%}"
+    - service: number.set_value
+      data:
+        entity_id: number.up_chime_volume
+        value: "{% if is_state('switch.system_silent_mode','on') %}0{%else%}80{%endif%}"
     - service: notify.telegram
       data:
         message: >
@@ -1029,7 +1033,7 @@
         - binary_sensor.d1mini_bed_leds_status
         - binary_sensor.d1mini_air_freshener_status
         - binary_sensor.micro_usb_2_status
-        - binary_sensor.micro_usb_1_status
+        - binary_sensor.sp111_socket_1_status
         #- binary_sensor.shp6_socket_1_status
       from: "on"
       to: "off"
@@ -1087,7 +1091,7 @@
         - binary_sensor.d1mini_bed_leds_status
         - binary_sensor.d1mini_air_freshener_status
         - binary_sensor.micro_usb_2_status
-        - binary_sensor.micro_usb_1_status
+        - binary_sensor.sp111_socket_1_status
         #- binary_sensor.shp6_socket_1_status
       from: "off"
       to: "on"
@@ -1379,7 +1383,7 @@
         - sensor.d1mini_bed_leds_uptime_s
         - sensor.d1mini_air_freshener_uptime_s
         - sensor.micro_usb_2_uptime_s
-        - sensor.micro_usb_1_uptime_s
+        - sensor.sp111_socket_1_uptime_s
         #- sensor.shp6_socket_1_uptime_s
       from: "unavailable"
       for:
@@ -2301,32 +2305,32 @@
 # ##################################
 # System - Pinhole Cam Status
 # ##################################
-- alias: system_pinhole_status
-  id: system_pinhole_status
-  initial_state: true
-  trigger:
-    # - platform: state
-    #   entity_id: binary_sensor.wp_digma801_motion
-    #   to: 'unavailable'
-    #   for:
-    #     seconds: 30
+# - alias: system_pinhole_status
+#   id: system_pinhole_status
+#   initial_state: true
+#   trigger:
+#     # - platform: state
+#     #   entity_id: binary_sensor.wp_digma801_motion
+#     #   to: 'unavailable'
+#     #   for:
+#     #     seconds: 30
 
-    - platform: state
-      entity_id: binary_sensor.pinhole_state
-      to:
-      for:
-        minutes: 1
-  action:
-    - service: notify.telegram
-      data:
-        message: "\U0001f4f7 PinholeCam: {% if is_state('binary_sensor.pinhole_state','off')%}потеря связи{%else%}связь восстановлена{%endif%}"
-    - if:
-        - condition: state
-          entity_id: binary_sensor.pinhole_state
-          state: 'off'
-      then:
-        - service: switch.turn_off
-          entity_id: switch.digma_strip_hb_relay4
+#     - platform: state
+#       entity_id: binary_sensor.pinhole_state
+#       to:
+#       for:
+#         minutes: 1
+#   action:
+#     - service: notify.telegram
+#       data:
+#         message: "\U0001f4f7 PinholeCam: {% if is_state('binary_sensor.pinhole_state','off')%}потеря связи{%else%}связь восстановлена{%endif%}"
+#     - if:
+#         - condition: state
+#           entity_id: binary_sensor.pinhole_state
+#           state: 'off'
+#       then:
+#         - service: switch.turn_off
+#           entity_id: switch.digma_strip_hb_relay4
 
 # ##################################
 # System - System Updates Pending

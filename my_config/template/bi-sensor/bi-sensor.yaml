@@ -37,19 +37,68 @@
       #     {% else %}
       #       false
       #     {%endif%}
-  
+      - name: Kettle Boil K
+        unique_id: kettle_boil_k
+        icon: mdi:kettle-steam
+        state: "{{ states('sensor.0x00158d00028c9875_power')|float(0) > 500 }}"
+        delay_off:
+          minutes: 1
+
       - name: School Phone While Lesson
         unique_id: school_phone_while_lesson
         state: "{{is_state('schedule.sasha_school_schedule','on') and is_state('binary_sensor.pova_5_interactive','on') }}"
         device_class: problem
-        
 
       - name: Supervisor Is Healthy
         unique_id: supervisor_is_healthy
         state: "{{ state_attr('sensor.supervisor_updates', 'healthy') }}"
         availability: "{{ state_attr('sensor.supervisor_updates', 'healthy') != 'unknown' }}"
-  
-      # - name: BLE Gateway
+
+      - name: Washer B
+        unique_id: binary_sensor_washer_b
+        delay_off:
+          minutes: 2
+        state: "{{ states('sensor.shelly_pm_b_power')|float(0) > 5 }}"
+        icon: >
+          {% if states('sensor.shelly_pm_b_power')|float(0) == 0 %}
+            mdi:washing-machine-off
+          {% elif (states('sensor.shelly_pm_b_power')|float(0) > 0 and states('sensor.shelly_pm_b_power')|float(0) <= 0 ) %}
+            mdi:washing-machine-alert
+          {% else %}
+            mdi:washing-machine
+          {% endif %}
+
+      - name: High Humidity B
+        device_class: moisture
+        unique_id: high_humidity_b
+        #state: "{{ states('sensor.humidity_average_b')|float(0) > states('sensor.humidity_average')|float(0) + 10 }}"
+        state: "{{ states('sensor.humidity_average_b')|float(0) > 65 }}"
+        delay_off:
+          minutes: 5
+        delay_on:
+          minutes: 5
+
+      - name: Central Heating
+        unique_id: central_heating
+        state: "{{states('sensor.esp32_node_v_heating_pipe')|int(0) > 30 and states('sensor.esp32_node_mb_heating_pipe')|int(0) > 30 }}"
+        device_class: heat
+        delay_off:
+          hours: 3
+        # delay_on:
+        #   hours: 3
+
+      - name: Bed Led Enable
+        unique_id: bed_led_enable
+        state: "{{ states('sensor.0x04cf8cdf3c772824_illuminance')|int(0) <= states('input_number.inside_light_level')|int(5) and is_state('switch.system_security_mode','off') }}"
+        icon: mdi:bed-king
+        delay_off:
+          seconds: 30
+        delay_on:
+          seconds: 30
+
+
+
+        # - name: BLE Gateway
       #   icon: mdi:bluetooth
       #   state: "{{ is_state('input_boolean.settings_ble_gateway', 'on') }}"
       #   attributes:
@@ -276,24 +325,17 @@
   # - name: Main Switch HS Button
   #   state: "{{ states('sensor.0x00158d0002a36433_action') in ['button_1_single','button_1_double'] }}"
 
-  - trigger:
-      - platform: time_pattern
-        minutes: "/1"  
-      - platform: homeassistant
-        event: start
-      - platform: event
-        event_type: event_template_reloaded
-      - platform: event
-        event_type: automation_reloaded
-    binary_sensor:
-      - name: Bed Led Enable
-        unique_id: bed_led_enable
-        state: "{{ states('sensor.0x04cf8cdf3c772824_illuminance')|int(0) <= states('input_number.inside_light_level')|int(5) and is_state('switch.system_security_mode','off') }}"
-        icon: mdi:bed-king
-        delay_off:
-          seconds: 30
-        delay_on:
-          seconds: 30
+  # - trigger:
+  #     - platform: time_pattern
+  #       minutes: "/1"  
+  #     - platform: homeassistant
+  #       event: start
+  #     - platform: event
+  #       event_type: event_template_reloaded
+  #     - platform: event
+  #       event_type: automation_reloaded
+  #   binary_sensor:
+
 
   - trigger:
       - platform: state
@@ -314,9 +356,9 @@
       - name: Lullaby
         unique_id: Lullaby
         state: >-
-          {{ state_attr('media_player.yandex_mb','media_title') in ['Колыбельная Брамс','Спят усталые игрушки'] or
-             state_attr('media_player.yandex_v','media_title') in ['Колыбельная Брамс','Спят усталые игрушки'] or
-             state_attr('media_player.yandex_s','media_title') in ['Колыбельная Брамс','Спят усталые игрушки'] }}
+          {{ (is_state('media_player.yandex_mb','playing') and state_attr('media_player.yandex_mb','media_title') in ['Колыбельная Брамс','Спят усталые игрушки']) or
+             (is_state('media_player.yandex_v','playing') and state_attr('media_player.yandex_v','media_title') in ['Колыбельная Брамс','Спят усталые игрушки']) or
+             (is_state('media_player.yandex_s','playing') and state_attr('media_player.yandex_s','media_title') in ['Колыбельная Брамс','Спят усталые игрушки']) }}
   
   - trigger:
       - platform: time_pattern
@@ -542,25 +584,6 @@
           {% else %}
           mdi:brightness-5
           {% endif %}
-
-      - name: High Humidity B
-        device_class: moisture
-        unique_id: high_humidity_b
-        #state: "{{ states('sensor.humidity_average_b')|float(0) > states('sensor.humidity_average')|float(0) + 10 }}"
-        state: "{{ states('sensor.humidity_average_b')|float(0) > 65 }}"
-        delay_off:
-          minutes: 5
-        delay_on:
-          minutes: 5
-
-      - name: Central Heating
-        unique_id: central_heating
-        state: "{{states('sensor.esp32_node_v_heating_pipe')|int(0) > 30 and states('sensor.esp32_node_mb_heating_pipe')|int(0) > 30 }}"
-        device_class: heat
-        delay_off:
-          hours: 3
-        # delay_on:
-        #   hours: 3
   
       - name: Hot Water
         unique_id: hot_water
@@ -634,20 +657,6 @@
         unique_id: breather_mb
         icon: mdi:power
         state: "{{ states('sensor.0x00158d000345119e_power')|float(0) > 5 }}"
-  
-      - name: Washer B
-        unique_id: binary_sensor_washer_b
-        delay_off:
-          minutes: 2
-        state: "{{ states('sensor.shelly_pm_b_power')|float(0) > 5 }}"
-        icon: >
-          {% if states('sensor.shelly_pm_b_power')|float(0) == 0 %}
-            mdi:washing-machine-off
-          {% elif (states('sensor.shelly_pm_b_power')|float(0) > 0 and states('sensor.shelly_pm_b_power')|float(0) <= 0 ) %}
-            mdi:washing-machine-alert
-          {% else %}
-            mdi:washing-machine
-          {% endif %}
 
       - name: Fridge HB
         unique_id: fridge_hb
@@ -666,21 +675,14 @@
           mdi:kettle-outline
           {% endif %}
   
-      - name: Kettle Boil K
-        unique_id: kettle_boil_k
-        icon: mdi:kettle-steam
-        state: "{{ states('sensor.0x00158d00028c9875_power')|float(0) > 500 }}"
-        delay_off:
-          minutes: 1
-  
       - name: Microwave K
         unique_id: microwave_k
         icon: mdi:microwave
         state: "{{ states('sensor.0x00158d00028a54e4_power')|float(0) > 10 }}"
 
   - trigger:
-      - platform: time_pattern
-        minutes: "/1"
+      # - platform: time_pattern
+      #   minutes: "/1"
       - platform: state
         entity_id: sensor.0x00158d00035c194f_power
       - platform: homeassistant
@@ -696,8 +698,8 @@
         state: "{{ states('sensor.0x00158d00035c194f_power')|int(0) > 5 }}"
 
   - trigger:
-      - platform: time_pattern
-        minutes: "/1"
+      # - platform: time_pattern
+      #   minutes: "/1"
       - platform: state
         entity_id: sensor.0x00158d0003535ee5_power
       - platform: homeassistant
@@ -819,3 +821,28 @@
           seconds: 3
         delay_off:
           seconds: 3
+
+  # - trigger:
+  #     - platform: state
+  #       entity_id: sensor.shelly_pm_b_power
+  #       to:
+  #     - platform: homeassistant
+  #       event: start
+  #     - platform: event
+  #       event_type: event_template_reloaded
+  #     - platform: event
+  #       event_type: automation_reloaded
+  #   binary_sensor:
+  #     - name: Washer B
+  #       unique_id: binary_sensor_washer_b
+  #       delay_off:
+  #         minutes: 2
+  #       state: "{{ states('sensor.shelly_pm_b_power')|float(0) > 5 }}"
+  #       icon: >
+  #         {% if states('sensor.shelly_pm_b_power')|float(0) == 0 %}
+  #           mdi:washing-machine-off
+  #         {% elif (states('sensor.shelly_pm_b_power')|float(0) > 0 and states('sensor.shelly_pm_b_power')|float(0) <= 0 ) %}
+  #           mdi:washing-machine-alert
+  #         {% else %}
+  #           mdi:washing-machine
+  #         {% endif %}
