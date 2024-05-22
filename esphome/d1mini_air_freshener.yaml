@@ -5,20 +5,20 @@ substitutions:
 esphome:
   name: ${node_name}
   comment: D1 Mini Air Freshener
-  on_boot:
-    then:
-    - sensor.template.publish:
-        id: id_new_canister_sensor
-        state: !lambda return id(id_canister_replace).state;
-    - text_sensor.template.publish:
-        id: id_new_canister_time_text
-        state: !lambda |-
-                    char str[30];
-                    time_t currTime = id(id_canister_replace).state;
-                    strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&currTime));
-                    return  { str };
-    - component.update: id_refill_remaining
-    - component.update: id_days_in_use
+  # on_boot:
+  #   then:
+  #   - sensor.template.publish:
+  #       id: id_new_canister_sensor
+  #       state: !lambda return id(id_canister_replace).state;
+  #   - text_sensor.template.publish:
+  #       id: id_new_canister_time_text
+  #       state: !lambda |-
+  #                   char str[30];
+  #                   time_t currTime = id(id_canister_replace).state;
+  #                   strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&currTime));
+  #                   return  { str };
+  #   - component.update: id_refill_remaining
+  #   - component.update: id_days_in_use
       
 esp8266:
   board: d1_mini
@@ -29,9 +29,10 @@ wifi:
   password: !secret wifi_pass
   #domain: .local
   reboot_timeout: 15min
-  fast_connect: true
+  #fast_connect: true
   #output_power: 17.5dB
   #power_save_mode: none
+  use_address: 192.168.1.98
   # manual_ip:
   #   static_ip: 192.168.1.98
   #   gateway: 192.168.1.1
@@ -224,42 +225,42 @@ sensor:
     accuracy_decimals: 0
     internal: false
 
-  - platform: template
-    name: ${board_name}_Refill_Remaining
-    icon: mdi:clock-end
-    id: id_refill_remaining
-    unit_of_measurement: "days"
-    update_interval: 60s
-    accuracy_decimals: 0
-    lambda: |-
-      auto time = id(sntp_time).now();
-      if (!time.is_valid())
-      {
-        return {};
-      }
+  # - platform: template
+  #   name: ${board_name}_Refill_Remaining
+  #   icon: mdi:clock-end
+  #   id: id_refill_remaining
+  #   unit_of_measurement: "days"
+  #   update_interval: 60s
+  #   accuracy_decimals: 0
+  #   lambda: |-
+  #     auto time = id(sntp_time).now();
+  #     if (!time.is_valid())
+  #     {
+  #       return {};
+  #     }
     
-      auto count = id(id_counter).state;
-      auto refill = id(id_canister_resource).state;
+  #     auto count = id(id_counter).state;
+  #     auto refill = id(id_canister_resource).state;
       
-      if (count == 0)
-      {
-        return {};
-      }
+  #     if (count == 0)
+  #     {
+  #       return {};
+  #     }
     
-      auto s_time = id(id_new_canister_time_text).state.c_str();
-      tm stime = {0};
-      strptime(s_time, "%Y-%m-%d %H:%M", &stime);
+  #     auto s_time = id(id_new_canister_time_text).state.c_str();
+  #     tm stime = {0};
+  #     strptime(s_time, "%Y-%m-%d %H:%M", &stime);
     
-      char c_time[20];
-      strftime(c_time, sizeof(c_time), "%Y-%m-%d %H:%M", localtime(&time.timestamp));
-      tm ctime = {0};
-      strptime(c_time, "%Y-%m-%d %H:%M", &ctime);
+  #     char c_time[20];
+  #     strftime(c_time, sizeof(c_time), "%Y-%m-%d %H:%M", localtime(&time.timestamp));
+  #     tm ctime = {0};
+  #     strptime(c_time, "%Y-%m-%d %H:%M", &ctime);
     
-      time_t startTime = mktime(&stime);
-      time_t currTime = mktime(&ctime);;
-      time_t diff = difftime(currTime, startTime);
+  #     time_t startTime = mktime(&stime);
+  #     time_t currTime = mktime(&ctime);;
+  #     time_t diff = difftime(currTime, startTime);
       
-      return max(0, int(((diff / count) * (refill - count)) / 86400));
+  #     return max(0, int(((diff / count) * (refill - count)) / 86400));
 
   - platform: template
     name: ${board_name}_Days_in_Use
@@ -322,7 +323,7 @@ button:
                       time_t currTime = id(sntp_time).now().timestamp;
                       strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&currTime));
                       return  { str };
-      - component.update: id_refill_remaining
+      #- component.update: id_refill_remaining
       - component.update: id_days_in_use
 
   - platform: template
