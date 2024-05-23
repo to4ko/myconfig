@@ -13,7 +13,7 @@
     trigger:
       - platform: state
         entity_id: 
-          - binary_sensor.sonoff_mini_1_switch
+          #- binary_sensor.sonoff_mini_1_switch
           - binary_sensor.g4_doorbell_doorbell
         from: 'off'
         to: 'on'
@@ -27,25 +27,38 @@
       #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
       - service: switch.turn_on
         entity_id: switch.kiosk_screen
-      - service: notify.telegram_family
-        data:
-          title: Doorbell photo
-          message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
-          data:
-            photo:
-            - url: !secret doorbell_snap #door_snap
-              caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
-      - condition: state
-        entity_id: switch.system_silent_mode
-        state: 'on'
+      - parallel:
+          - service: notify.telegram_family
+            data:
+              title: Doorbell photo
+              message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+              data:
+                photo:
+                - url: !secret doorbell_snap #door_snap
+                  caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+          - service: notify.hass_synochat
+            data:
+              message: Внимание! Кто-то звонит в дверь!
+              data:
+                file_url: !secret doorbell_snap
       - service: light.turn_on
         data:
-          entity_id: light.esp32_node_k_led
-          effect: 'Green_Alarm'
+          entity_id: light.light_bar_s_ambilight
+          effect: 'Police'
           brightness: 255
+      - if: 
+          - condition: state
+            entity_id: switch.system_silent_mode
+            state: 'on'
+        then:
+          - service: light.turn_on
+            data:
+              entity_id: light.esp32_node_k_led
+              effect: 'Green_Alarm'
+              brightness: 255
       - delay: "00:00:20"
       - service: light.turn_off
-        entity_id: light.esp32_node_k_led
+        entity_id: light.esp32_node_k_led, light.light_bar_s_ambilight
         
       # - condition: state
       #   entity_id: light.digma_8592_screen

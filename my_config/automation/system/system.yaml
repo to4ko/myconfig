@@ -690,6 +690,9 @@
 - alias: system_silent_mode_toggle
   id: system_silent_mode_toggle
   initial_state: true
+  mode: queued
+  max: 10
+  max_exceeded: silent      
   trigger:
     - platform: state
       entity_id: switch.system_silent_mode
@@ -2605,3 +2608,20 @@
         - button.espresense_kitchen_restart
         - button.espresense_sasha_restart
         - button.espresense_master_bedroom_restart
+
+# ##################################
+# System - Unifi Doorbell Volume
+# ##################################
+- alias: system_doorbell_volume
+  id: system_doorbell_volume
+  initial_state: true
+  trigger:
+    - platform: time_pattern
+      hours: "/1"
+    - platform: homeassistant
+      event: start
+  action:
+    - service: number.set_value
+      data:
+        entity_id: number.up_chime_volume
+        value: "{{iif(is_state('switch.system_silent_mode','on'),0,80) }}"  
