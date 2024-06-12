@@ -32,17 +32,17 @@
                     photo:
                     - url: !secret window_snap
                       caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"  
-              - service: notify.mobile_app_iphone_14_pro_dtsymbal
-                data:
-                  message: "Звонок в домофон!"
-                  title: Домофон
-                  data:
-                    actions:
-                      - action: Domofon_Open
-                        title: Open
-                        authenticationRequired: false
-                        activationMode: background
-                    image: !secret window_snap
+              # - service: notify.mobile_app_iphone_14_pro_dtsymbal
+              #   data:
+              #     message: "Звонок в домофон!"
+              #     title: Домофон
+              #     data:
+              #       actions:
+              #         - action: Domofon_Open
+              #           title: Open
+              #           authenticationRequired: false
+              #           activationMode: background
+              #       image: !secret window_snap
               - service: notify.telegram_cam
                 data:
                   title: "{{states('sensor.time')}} {{states('sensor.date')}}"
@@ -51,11 +51,29 @@
                     photo:
                     - url: !secret window_snap
                       caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-              - service: notify.hass_synochat
-                data:
-                  message: Внимание! Зконок в домофон!
-                  data:
-                    file_url: !secret window_snap
+              - if:
+                  - condition: state
+                    entity_id: person.sasha
+                    state: 'home'
+                then:
+                  - service: notify.hass_synochat
+                    data:
+                      message: Внимание! Зконок в домофон!
+                      data:
+                        file_url: !secret window_snap
+              - if:
+                  - condition: state
+                    entity_id: person.vova
+                    state: 'home'
+                then:                  
+                  - service: notify.telegram_vova
+                    data:
+                      title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+                      message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+                      data:
+                        photo:
+                        - url: !secret window_snap
+                          caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
           # - service: mqtt.publish
           #   data:
           #     topic: 'wallpanel/digma801/command'
