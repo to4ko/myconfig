@@ -157,11 +157,16 @@ sensor:
     id: id_people_home
     internal: false
 
-  - platform: template
+  # - platform: template
+  #   name: ${board_name}_Battery_Level
+
+  - platform: homeassistant
     name: ${board_name}_Battery_Level
+    entity_id: sensor.kiosk_battery    
     id: id_battery
     device_class: battery
     unit_of_measurement: '%'
+    internal: false
     on_value:
       - if:
           condition:
@@ -257,16 +262,23 @@ interval:
 
   - interval: 1min
     then:
-      - http_request.get:
-          url: !secret kiosk_url
-          headers:
-            Content-Type: application/json
-          on_response:
-            then:
-              - lambda: |-
-                  json::parse_json(id(http_request_data).get_string(), [](JsonObject root) {
-                      id(id_battery).publish_state(root["batteryLevel"]);
-                  });
+      # - http_request.get:
+      #     url: !secret kiosk_url
+      #     capture_response: true
+      #     headers:
+      #       Content-Type: application/json
+      #     on_response:
+      #       then:
+      #         # - lambda: |-
+      #         #     json::parse_json(id(http_request_data).get_string(), [](JsonObject root) {
+      #         #         id(id_battery).publish_state(root["batteryLevel"]);
+      #         #     });
+
+      #         - lambda: |-
+      #             json::parse_json(body, [](JsonObject root) -> bool {
+      #                 id(id_battery).publish_state(root["batteryLevel"]);
+      #                 return true;
+      #             });
 
       - if:
           condition:
