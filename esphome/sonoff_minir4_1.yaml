@@ -32,9 +32,9 @@ wifi:
   #   dns1: 192.168.1.1
   #   dns2: 8.8.8.8
 
-http_request:
-  id: http_request_data
-  verify_ssl: false
+# http_request:
+#   id: http_request_data
+#   verify_ssl: false
 
 logger:
 
@@ -137,6 +137,7 @@ switch:
       - binary_sensor.template.publish:
           id: id_auto_mode
           state: OFF
+      - switch.turn_on: relay
     on_turn_off:
       - binary_sensor.template.publish:
           id: id_auto_mode
@@ -165,33 +166,51 @@ sensor:
     entity_id: sensor.kiosk_battery    
     id: id_battery
     device_class: battery
+    state_class: measurement
     unit_of_measurement: '%'
     internal: false
     on_value:
+      - logger.log: "------> Battery On_Value"
       - if:
           condition:
               - binary_sensor.is_on: id_auto_mode
           then:
+            - logger.log: "------> Battery On_Value - Auto mode ON"
             - if:
                 condition:
-                  and:
-                    - lambda: "return id(id_battery).state <= id(id_min_level).state;"
-                    - switch.is_off: relay
+                  - binary_sensor.is_on: id_tod
                 then:
-                  - switch.turn_on: relay
-                else:
+                  - logger.log: "------> Auto ON and TOD ON"
                   - if:
                       condition:
                         and:
-                          - lambda: "return id(id_battery).state >= id(id_max_level).state ;"
-                          - switch.is_on: relay
+                          - lambda: "return id(id_battery).state <= id(id_min_level).state;"
+                          - switch.is_off: relay
                       then:
-                        - switch.turn_off: relay
+                        - logger.log: "------> Battery Level < Min! Turn Relay ON"
+                        - switch.turn_on: relay
+                      else:
+                        - logger.log: "------> Battery Level NOT lower than Min. Checking if Higher than Max"
+                        - if:
+                            condition:
+                              and:
+                                - lambda: "return id(id_battery).state >= id(id_max_level).state ;"
+                                - switch.is_on: relay
+                            then:
+                              - logger.log: "------> Battery Level > Max! Turn Relay OFF"
+                              - switch.turn_off: relay
+                            else:
+                              - logger.log: "------> Battery Level NOT lower than Min and Not Higher than Max"
+                else:
+                  - logger.log: "------> Auto ON and TOD OFF"
+                  - switch.turn_on: relay
           else:
+            - logger.log: "------> Battery On_Value - Auto Mode Off"
             - if: 
                 condition:
                   - switch.is_off: relay
                 then:
+                  - logger.log: "------> Auto Mode OFF and Relay OFF -> Turn Relay ON"
                   - switch.turn_on: relay
 
 text_sensor:
@@ -242,20 +261,19 @@ time:
 interval:
   - interval: 15s
     then:
+      - logger.log: "------> Interval 15s - Check for Mode"
       - if:
           condition:
             and:
-              - not:
-                  - binary_sensor.is_on: id_security
-              - or:
-                  - not:
-                      - binary_sensor.is_on: id_tod
-                  - switch.is_on: id_always_on
+              - binary_sensor.is_off: id_security
+              - switch.is_on: id_always_on      
           then:
+            - logger.log: "------> Interval 15s - Security OFF, Always_on ON -> Auto Turn OFF"
             - binary_sensor.template.publish:
                 id: id_auto_mode
                 state: OFF
           else:
+            - logger.log: "------> Interval 15s - Auto Turn ON"
             - binary_sensor.template.publish:
                 id: id_auto_mode
                 state: ON
@@ -298,6 +316,7 @@ interval:
 
   - interval: 30s
     then:
+      - logger.log: "------> Interval 30s - TOD"
       - if:
           condition:
             or:
@@ -306,10 +325,12 @@ interval:
               - lambda: |-
                   return (id(sntp_time).now().hour >= 0 && id(sntp_time).now().hour < 7) ;
           then:
+            - logger.log: "------> Interval 30s - TOD OFF - Night"
             - binary_sensor.template.publish:
                 id: id_tod
                 state: OFF
           else:
+            - logger.log: "------> Interval 30s - TOD ON - Day"
             - binary_sensor.template.publish:
                 id: id_tod
                 state: ON
