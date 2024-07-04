@@ -51,11 +51,11 @@
   - 500Gb Samsung 870 EVO
   - 1Tb Samsung PM9A1
 
-**Proxmox Node 2 - Intel NUC 12 Pro**
-  - Intel i3-1220p
-  - 2*32Gb Samsung DDR4 SODIMM
-  - 500Gb Samsung 870 EVO
-  - 1Tb Samsung PM9A1
+**Proxmox Node 2 - Minisforum MS01**
+  - Intel i9-13900H
+  - 2*48Gb Crucial DDR5 SODIMM
+  - 512Gb Samsung PM9A1 M.2
+  - 2Tb Samsung PM9A3 U.2
 
 **KVM setup**
   - BLIKVM v3 HAT running PiKVM
@@ -63,7 +63,7 @@
 
 **Main Storage Unit - Synology DS1621+** 
   - 2*16Gb Crucial DDR4 SODIMM
-  - Synology E10G18-T1 Addon Card
+  - Mellanox ConnectX-3 Pro CX312B EN
   - 4ea WD HC550 16Tb as Main Storage
   - 2ea Samsung 870 EVO 2Tb in SHR1 as Fast Storage
   - 2ea SP A38 1Tb as NVME read\write cache
@@ -86,18 +86,18 @@
 
 # Networking
   - Ubiquiti U-fiber Loco
-  - Ubiquiti Unifi Dream Machine Pro, WAN1 1Gb\s + WAN2 500Mb\s + LTE Backup
+  - Ubiquiti Unifi Dream Machine Pro Max, WAN1 1Gb\s + WAN2 500Mb\s
   - Ubiquiti Unifi Aggregation Switch (2ea)
   - Ubiquiti Unifi Enterprise Switch 24 PoE
   - Ubiquiti Unifi Switch XG
-  - Ubiquiti Unifi Switch Light 8 PoE (3ea)
+  - Ubiquiti Unifi Enterprise Switch 8 PoE (3ea)
   - Ubiquiti Unifi Switch Flex (3ea)
   - Ubiquiti Unifi Switch Flex Mini (2ea)
   - Ubiquiti Unifi U6 Pro (4ea)
   - Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
-  - Ubiquiti Unifi Dream Machine Pro with 4Tb WD Purple
+  - Ubiquiti Unifi Dream Machine Pro MAx with 3Tb WD Purple
   - Ubiquiti Unifi G3 Flex Cameras (6ea)
   - Ubiquiti Unifi G3 Instant
   - Ubiquiti Unifi G4 Instant
@@ -232,15 +232,14 @@
 **Proxmox Node 1 Software:**
   - Proxmox VE 8
       * Debian 11 with HA Supervised (mian instance)
-      * Zabbix Server
-      * NGINX Proxy Manager
-      * Bitwarden
 
 **Proxmox Node 2 Software:**
   - Proxmox VE 8
       * Debian 12 with HA Supervised (backup instance)
       * Plex
-
+      * Zabbix Server
+      * NGINX Proxy Manager
+      * Bitwarden
 
 **Main Storage Unit Software**
   - DSM 7.2
@@ -254,9 +253,6 @@
 
 **Backup Storage Unit Software**
   - DSM 7.2
-  - Docker containers:
-    * Plex Media Server
-    * Adguard Home (not in use)
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
