@@ -571,6 +571,29 @@ white-space:nowrap;>
 <td>4*16Tb HDD + 2*2Tb SSD + 2*512Gb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
+<tr>
+<td rowspan="3">17</td>
+<td rowspan="3">2024</td>
+<td>Intel NUC 13 Pro</td>
+<td>i5-1340p</td>
+<td>2 * 32Gb DDR4</td>
+<td>500Gb SATA SSD + 1Tb NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Minisforum MS01</td>
+<td>i9-13900H</td>
+<td>2 * 48Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>4*16Tb HDD + 2*2Tb SSD + 2*1Tb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
 
 
 
