@@ -169,49 +169,49 @@ sensor:
     state_class: measurement
     unit_of_measurement: '%'
     internal: false
-    on_value:
-      - logger.log: "------> Battery On_Value"
-      - if:
-          condition:
-              - binary_sensor.is_on: id_auto_mode
-          then:
-            - logger.log: "------> Battery On_Value - Auto mode ON"
-            - if:
-                condition:
-                  - binary_sensor.is_on: id_tod
-                then:
-                  - logger.log: "------> Auto ON and TOD ON"
-                  - if:
-                      condition:
-                        and:
-                          - lambda: "return id(id_battery).state <= id(id_min_level).state;"
-                          - switch.is_off: relay
-                      then:
-                        - logger.log: "------> Battery Level < Min! Turn Relay ON"
-                        - switch.turn_on: relay
-                      else:
-                        - logger.log: "------> Battery Level NOT lower than Min. Checking if Higher than Max"
-                        - if:
-                            condition:
-                              and:
-                                - lambda: "return id(id_battery).state >= id(id_max_level).state ;"
-                                - switch.is_on: relay
-                            then:
-                              - logger.log: "------> Battery Level > Max! Turn Relay OFF"
-                              - switch.turn_off: relay
-                            else:
-                              - logger.log: "------> Battery Level NOT lower than Min and Not Higher than Max"
-                else:
-                  - logger.log: "------> Auto ON and TOD OFF"
-                  - switch.turn_on: relay
-          else:
-            - logger.log: "------> Battery On_Value - Auto Mode Off"
-            - if: 
-                condition:
-                  - switch.is_off: relay
-                then:
-                  - logger.log: "------> Auto Mode OFF and Relay OFF -> Turn Relay ON"
-                  - switch.turn_on: relay
+    # on_value:
+    #   - logger.log: "------> Battery On_Value"
+    #   - if:
+    #       condition:
+    #           - binary_sensor.is_on: id_auto_mode
+    #       then:
+    #         - logger.log: "------> Battery On_Value - Auto mode ON"
+    #         - if:
+    #             condition:
+    #               - binary_sensor.is_on: id_tod
+    #             then:
+    #               - logger.log: "------> Auto ON and TOD ON"
+    #               - if:
+    #                   condition:
+    #                     and:
+    #                       - lambda: "return id(id_battery).state <= id(id_min_level).state;"
+    #                       - switch.is_off: relay
+    #                   then:
+    #                     - logger.log: "------> Battery Level < Min! Turn Relay ON"
+    #                     - switch.turn_on: relay
+    #                   else:
+    #                     - logger.log: "------> Battery Level NOT lower than Min. Checking if Higher than Max"
+    #                     - if:
+    #                         condition:
+    #                           and:
+    #                             - lambda: "return id(id_battery).state >= id(id_max_level).state ;"
+    #                             - switch.is_on: relay
+    #                         then:
+    #                           - logger.log: "------> Battery Level > Max! Turn Relay OFF"
+    #                           - switch.turn_off: relay
+    #                         else:
+    #                           - logger.log: "------> Battery Level NOT lower than Min and Not Higher than Max"
+    #             else:
+    #               - logger.log: "------> Auto ON and TOD OFF"
+    #               - switch.turn_on: relay
+    #       else:
+    #         - logger.log: "------> Battery On_Value - Auto Mode Off"
+    #         - if: 
+    #             condition:
+    #               - switch.is_off: relay
+    #             then:
+    #               - logger.log: "------> Auto Mode OFF and Relay OFF -> Turn Relay ON"
+    #               - switch.turn_on: relay
 
 text_sensor:
   - platform: template
@@ -313,7 +313,6 @@ interval:
                 id: id_max_level
                 value: 80
 
-
   - interval: 30s
     then:
       - logger.log: "------> Interval 30s - TOD"
@@ -334,3 +333,48 @@ interval:
             - binary_sensor.template.publish:
                 id: id_tod
                 state: ON
+  
+  - interval: 10s
+    then:
+      - logger.log: "------> Interval 10s - Battery Level"
+      - if:
+          condition:
+              - binary_sensor.is_on: id_auto_mode
+          then:
+            - logger.log: "------> Battery Level - Auto mode ON"
+            - if:
+                condition:
+                  - binary_sensor.is_on: id_tod
+                then:
+                  - logger.log: "------> Battery Level -> Auto ON and TOD ON"
+                  - if:
+                      condition:
+                        and:
+                          - lambda: "return id(id_battery).state <= id(id_min_level).state;"
+                          - switch.is_off: relay
+                      then:
+                        - logger.log: "------> Battery Level - Battery Level < Min! Turn Relay ON"
+                        - switch.turn_on: relay
+                      else:
+                        - logger.log: "------> Battery Level - Battery Level NOT lower than Min. Checking if Higher than Max"
+                        - if:
+                            condition:
+                              and:
+                                - lambda: "return id(id_battery).state >= id(id_max_level).state ;"
+                                - switch.is_on: relay
+                            then:
+                              - logger.log: "------> Battery Level - Battery Level > Max! Turn Relay OFF"
+                              - switch.turn_off: relay
+                            else:
+                              - logger.log: "------> Battery Level - Battery Level NOT lower than Min and Not Higher than Max"
+                else:
+                  - logger.log: "------> Auto ON and TOD OFF"
+                  - switch.turn_on: relay
+          else:
+            - logger.log: "------> Battery Level - Auto Mode Off"
+            - if: 
+                condition:
+                  - switch.is_off: relay
+                then:
+                  - logger.log: "------> Battery Level - Auto Mode OFF and Relay OFF -> Turn Relay ON"
+                  - switch.turn_on: relay

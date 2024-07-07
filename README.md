@@ -97,7 +97,7 @@
   - Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)
 
 # Surveillance
-  - Ubiquiti Unifi Dream Machine Pro MAx with 3Tb WD Purple
+  - Ubiquiti Unifi Dream Machine Pro Max with 3Tb WD Purple
   - Ubiquiti Unifi G3 Flex Cameras (6ea)
   - Ubiquiti Unifi G3 Instant
   - Ubiquiti Unifi G4 Instant
