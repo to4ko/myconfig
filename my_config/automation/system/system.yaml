@@ -2580,22 +2580,22 @@
 # ##################################
 # System - go2rtc restart
 # ##################################
-- alias: system_go2rtc_restart
-  id: system_go2rtc_restart
-  initial_state: true
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.go2rtc_cpu_percent
-      above: 5
-      for:
-        minutes: 3
-  action:
-    # - service: hassio.addon_restart
-    #   data:
-    #     addon: a889bffc_go2rtc
-    - service: notify.telegram
-      data:
-        message: "go2rtc перезапуск" 
+# - alias: system_go2rtc_restart
+#   id: system_go2rtc_restart
+#   initial_state: true
+#   trigger:
+#     - platform: numeric_state
+#       entity_id: sensor.go2rtc_cpu_percent
+#       above: 5
+#       for:
+#         minutes: 3
+#   action:
+#     # - service: hassio.addon_restart
+#     #   data:
+#     #     addon: a889bffc_go2rtc
+#     - service: notify.telegram
+#       data:
+#         message: "go2rtc перезапуск" 
 
 # ##################################
 # System - espresence nodes restart
@@ -2630,3 +2630,41 @@
       data:
         entity_id: number.up_chime_volume
         value: "{{iif(is_state('switch.system_silent_mode','on'),0,80) }}"  
+
+
+# ##################################
+# System - Ds1621 Set Fan Speed
+# ##################################
+- alias: system_ds621_set_fan_speed
+  id: system_ds621_set_fan_speed
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id: input_select.ds1621_fan_speed_select
+      to:
+  action:
+    - service: mqtt.publish
+      data:
+        payload: "{{ states('input_select.ds1621_fan_speed_select') | lower }}"
+        topic: 1621/fan_speed_set
+        retain: true
+#     - service: timer.cancel
+#       entity_id: timer.1621_fan_speed
+#     - service: timer.start
+#       entity_id: timer.1621_fan_speed
+
+      
+# - alias: system_ds621_set_fan_speed_topic_reset
+#   id: system_ds621_set_fan_speed_topic_reset
+#   initial_state: true
+#   trigger:
+#     - platform: event
+#       event_type: timer.finished
+#       event_data:
+#         entity_id: timer.1621_fan_speed
+#   action:
+#     - service: mqtt.publish
+#       data:
+#         payload: ""
+#         topic: 1621/fan_speed_set
+#         retain: true
