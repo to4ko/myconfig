@@ -2668,3 +2668,40 @@
 #         payload: ""
 #         topic: 1621/fan_speed_set
 #         retain: true
+
+# ##################################
+# System - nodes network speed change
+# ##################################
+- alias: system_nodes_net_speed_change
+  id: system_nodes_net_speed_change
+  initial_state: true
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.ms01_enp2s0f0np0_speed
+        - sensor.ms01_enp2s0f1np1_speed
+        - sensor.ms01_enp87s0_speed
+        - sensor.ms01_enp89s0_speed
+        - sensor.pmox01_enp86s0_speed
+        - sensor.pmox01_ens1_speed
+        - sensor.pmox01_enx1cbfce6c8014_speed
+      to:
+  action:
+    - variables:
+        old_value: >-
+          {%if trigger.from_state.state|float(0) < 1000 %}
+          {{trigger.from_state.state}} Mb/s
+          {%elif trigger.from_state.state|float(0) >= 1000 %}
+          {{trigger.from_state.state|int(0) / 1000 }} Gb/s
+          {%endif%}        
+        new_value: >-
+          {%if trigger.to_state.state|float(0) < 1000 %}
+          {{trigger.to_state.state}} Mb/s
+          {%elif trigger.to_state.state|float(0) >= 1000 %}
+          {{trigger.to_state.state|int(0) / 1000 }} Gb/s
+          {%endif%}        
+    - service: notify.telegram
+      data:
+        message: "\U0001f6a6 {{trigger.to_state.name}}: {{old_value}} -> {{new_value}}"
+
+
