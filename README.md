@@ -85,25 +85,24 @@
   - CyberPower UT650EG 
 
 # Networking
-  - Ubiquiti U-fiber Loco
-  - Ubiquiti Unifi Dream Machine Pro Max, WAN1 1Gb\s + WAN2 500Mb\s
-  - Ubiquiti Unifi Aggregation Switch (2ea)
-  - Ubiquiti Unifi Enterprise Switch 24 PoE
-  - Ubiquiti Unifi Switch XG
-  - Ubiquiti Unifi Enterprise Switch 8 PoE (3ea)
-  - Ubiquiti Unifi Switch Flex (3ea)
-  - Ubiquiti Unifi Switch Flex Mini (2ea)
-  - Ubiquiti Unifi U6 Pro (4ea)
-  - Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)
+  - [Ubiquiti U-fiber Loco](https://store.ui.com/us/en/pro/category/all-fiber/products/ufiber-loco)
+  - [Ubiquiti Unifi Dream Machine Pro Max, WAN1 1Gb\s + WAN2 500Mb\s](https://store.ui.com/us/en/pro/category/all-unifi-cloud-gateways/products/udm-pro-max)
+  - [Ubiquiti Unifi Hi-Capacity Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-pro-aggregation)
+  - [Ubiquiti Unifi Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-aggregation)
+  - [Ubiquiti Unifi Enterprise Switch 24 PoE](https://store.ui.com/us/en/pro/category/all-switching/products/usw-enterprise-24-poe)
+  - [Ubiquiti Unifi Switch 10Gbe XG](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-xg)
+  - [Ubiquiti Unifi Enterprise Switch 8 PoE (3ea)](https://store.ui.com/us/en/pro/category/all-switching/products/switch-enterprise-8-poe)
+  - [Ubiquiti Unifi Switch Flex (3ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex)
+  - [Ubiquiti Unifi Switch Flex Mini (2ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-mini)
+  - [Ubiquiti Unifi U6 Pro (4ea)](https://store.ui.com/us/en/pro/category/all-wifi/products/u6-pro)
+  - [Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)](https://store.ui.com/us/en/pro/category/all-wifi/products/uap-ac-mesh)
 
 # Surveillance
   - Ubiquiti Unifi Dream Machine Pro Max with 3Tb WD Purple
-  - Ubiquiti Unifi G3 Flex Cameras (6ea)
-  - Ubiquiti Unifi G3 Instant
-  - Ubiquiti Unifi G4 Instant
-  - Ubiquiti Unifi G4 Doorbell Pro POE Kit
-  - not in use - Digma 100
-  - not in use - Aliexpress Pinhole camera via Synology Surveillance Station on DS1621+ 
+  - [Ubiquiti Unifi G3 Flex Camera (6ea)](https://store.ui.com/us/en/pro/category/all-cameras-nvrs/products/uvc-g3-flex)
+  - [Ubiquiti Unifi G3 Instant](https://store.ui.com/us/en/pro/category/all-cameras-nvrs/products/unifi-protect-g3-instant-camera)
+  - [Ubiquiti Unifi G4 Instant](https://store.ui.com/us/en/pro/category/all-cameras-nvrs/products/camera-g4-instant)
+  - [Ubiquiti Unifi G4 Doorbell Pro POE Kit](https://store.ui.com/us/en/pro/category/cameras-doorbells/collections/pro-store-doorbells-chimes/products/uvc-g4-doorbell-pro-poe-kit?variant=UVC-G4+Doorbell+Pro+PoE+Kit)
 
 # Network map
 <details><summary>Click me...</summary>
