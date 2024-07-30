@@ -61,7 +61,7 @@
   - BLIKVM v3 HAT running PiKVM
   - XH-HK4401 4-port HDMI USB KVM Switch
 
-**Main Storage Unit - Synology DS1621+** 
+**Main Storage Unit - Synology DS1621+** (https://www.synology.com/en-uk/products/DS1621+)
   - 2*16Gb Crucial DDR4 SODIMM
   - Mellanox ConnectX-3 Pro CX312B EN
   - 4ea WD HC550 16Tb as Main Storage
