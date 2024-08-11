@@ -23,22 +23,22 @@
             entity_id: binary_sensor.tod_day
             state: 'on'
         then:
-          - service: media_player.volume_set
+          - action: media_player.volume_set
             data:
               entity_id: 
                 - media_player.yandex_hb
               volume_level: '0.7'
-          - service: media_player.play_media
+          - action: media_player.play_media
             data:
               media_content_type: dialog
               entity_id: media_player.yandex_hb
               media_content_id: 'Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Входн+ая дв+ерь н+е закр+ыта!'
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
-      - service: script.turn_on
+      - action: script.turn_on
         entity_id: script.open_door_photo
-      - service: media_player.volume_set
+      - action: media_player.volume_set
         data:
           entity_id: media_player.yandex_hb
           volume_level: '{{states("input_number.main_volume")|float(0)}}'
@@ -55,7 +55,7 @@
         from: 'on'
         to: 'off'
     action:
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           title: Doorbell photo
           message: "\U0001f514 Входная дверь закрыта!"
@@ -63,5 +63,5 @@
             photo:
             - url: !secret doorbell_snap #door_snap
               caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.main_door_open_hb

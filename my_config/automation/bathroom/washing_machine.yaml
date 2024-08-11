@@ -23,19 +23,19 @@
           - "Idle"
           - "Drying"
     action:
-      - service: input_number.set_value
+      - action: input_number.set_value
         data:
           entity_id: input_number.washer_start
           value: "{{as_timestamp (now())|int(0)}}"
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.washer_working
-      - service: timer.start
+      - action: timer.start
         entity_id: timer.washer_working
-      - service: input_select.select_option
+      - action: input_select.select_option
         data:
           entity_id: input_select.washer_state
           option: Washing
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "\U000023F3 Стирка начата!"
   
@@ -55,9 +55,9 @@
         entity_id: binary_sensor.0x00158d0003fa6cf5_contact
         state: "on"
     action:
-      - service: input_boolean.turn_on
+      - action: input_boolean.turn_on
         entity_id: input_boolean.washer_door_issue
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "\U0000274c Внимание! Обнаружена ошибка сенсора двери стиральной машины!"
   
@@ -79,16 +79,16 @@
         entity_id: sensor.washing_machine_stopwatch
         below: 21
     action:
-      - service: input_select.select_option
+      - action: input_select.select_option
         data:
           entity_id: input_select.washer_state
           option: Pause
-      - service: input_boolean.turn_off
+      - action: input_boolean.turn_off
         data:
           entity_id: input_boolean.washer_drying
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.washer_working
-      - service: notify.telegram
+      - action: notify.telegram
         data_template:
           message: "\U000023F3 Стирка приостановлена"
   
@@ -106,15 +106,15 @@
         entity_id: input_select.washer_state
         state: "Pause"
     action:
-      - service: input_select.select_option
+      - action: input_select.select_option
         data:
           entity_id: input_select.washer_state
           option: Washing
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.washer_working
-      - service: timer.start
+      - action: timer.start
         entity_id: timer.washer_working
-      - service: notify.telegram
+      - action: notify.telegram
         data_template:
           message: "\U000023F3 Стирка продолжена"
   
@@ -144,28 +144,28 @@
                 entity_id: input_boolean.washer_door_issue
                 state: "off"
             sequence:
-              - service: timer.cancel
+              - action: timer.cancel
                 entity_id: timer.washing_machine_door, timer.washer_working
-              - service: timer.start
+              - action: timer.start
                 entity_id: timer.washing_machine_door
-              - service: input_select.select_option
+              - action: input_select.select_option
                 data:
                   entity_id: input_select.washer_state
                   option: Drying
-              - service: counter.increment
+              - action: counter.increment
                 entity_id: counter.washing_machine_runs
-              - service: input_number.set_value
+              - action: input_number.set_value
                 data:
                   entity_id: input_number.washer_b_run_time
                   value: "{{ (states('input_number.washer_b_run_time') | float(0) + (((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') / 60))|round(2, 'common') }}"
-              - service: input_number.set_value
+              - action: input_number.set_value
                 data:
                   entity_id: input_number.washing_gel_usage
                   value: >
                     {% set a = ((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common')|int(0) %}
                     {% set k = (0.02 if 20 < a < 35 else 0.04) | float(0) %}
                     {{ states('input_number.washing_gel_usage')|float(0) + (0 if a <20 else k)|float(0) }}
-              - service: notify.telegram
+              - action: notify.telegram
                 data:
                   message: "\U0000231B Стирка завершена! Время стирки составило {{((as_timestamp(now())| int(0) - states('input_number.washer_start')| int(0)) / 60 )| round(0, 'common') }}мин."
               - condition: state
@@ -174,11 +174,11 @@
               - condition: state
                 entity_id: switch.system_dark_mode
                 state: "off"
-              - service: media_player.volume_set
+              - action: media_player.volume_set
                 data:
                   entity_id: media_player.yandex_k
                   volume_level: '{{states("input_number.main_volume")|float(0)}}'
-              - service: media_player.play_media
+              - action: media_player.play_media
                 data:
                   media_content_type: dialog
                   entity_id: media_player.yandex_k
@@ -189,13 +189,13 @@
                 entity_id: input_boolean.washer_door_issue
                 state: "on"
             sequence:
-              - service: input_select.select_option
+              - action: input_select.select_option
                 data:
                   entity_id: input_select.washer_state
                   option: Drying
-              - service: timer.cancel
+              - action: timer.cancel
                 entity_id: timer.washing_machine_door
-              - service: timer.start
+              - action: timer.start
                 entity_id: timer.washing_machine_door
 
 # ##################################
@@ -214,11 +214,11 @@
 #       entity_id: input_select.washer_state
 #       state: 'Washing'
 #   action:
-#     - service: input_select.select_option
+#     - action: input_select.select_option
 #       data:
 #         entity_id: input_select.washer_state
 #         option: Idle
-#     - service: input_boolean.turn_off
+#     - action: input_boolean.turn_off
 #       entity_id: input_boolean.washer_door_issue
 
 # ##################################
@@ -236,7 +236,7 @@
 #       entity_id: input_select.washer_state
 #       state: 'Washing'
 #   action:
-#     - service: input_select.select_option
+#     - action: input_select.select_option
 #       data:
 #         entity_id: input_select.washer_state
 #         option: Idle
@@ -260,11 +260,11 @@
 #       entity_id: binary_sensor.washer_b
 #       state: 'on'
 #   action:
-#     - service: input_select.select_option
+#     - action: input_select.select_option
 #       data:
 #         entity_id: input_select.washer_state
 #         option: Washing
-#     - service: input_boolean.turn_off
+#     - action: input_boolean.turn_off
 #       entity_id: input_boolean.washer_door_issue
 
 # # ##################################
@@ -283,13 +283,13 @@
 #         entity_id: input_select.washer_state
 #         state: "Drying"
 #     action:
-#       - service: input_select.select_option
+#       - action: input_select.select_option
 #         data:
 #           entity_id: input_select.washer_state
 #           option: Idle
-#       - service: timer.cancel
+#       - action: timer.cancel
 #         entity_id: timer.washing_machine_door
-#       - service: input_boolean.turn_off
+#       - action: input_boolean.turn_off
 #         entity_id: input_boolean.washer_door_issue
   
 # # ##################################
@@ -308,7 +308,7 @@
 #       to: 'off'
 #       from: 'on'
 #   action:
-#     - service: input_boolean.turn_off
+#     - action: input_boolean.turn_off
 #       entity_id: input_boolean.washer_door_issue
 
 ##################################
@@ -333,12 +333,12 @@
         entity_id: binary_sensor.0x00158d0003fa6cf5_contact
         state: "off"
     action:
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "{{'\U0001f4a8'}} Откройте дверцу стиральной машины!"
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.washing_machine_door
-      - service: timer.start
+      - action: timer.start
         entity_id: timer.washing_machine_door
   
 ##################################
@@ -387,15 +387,15 @@
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - service: media_player.volume_set
+      - action: media_player.volume_set
         data:
           entity_id: media_player.yandex_k
           volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      # - service: tts.yandextts_say
+      # - action: tts.yandextts_say
       #   data:
       #     entity_id: media_player.home_mini_k
       #     message: "Ст+ирка завершен+а! В+ытащите бель+ё пож+алуста!"
-      - service: media_player.play_media
+      - action: media_player.play_media
         data:
           media_content_type: dialog
           entity_id: media_player.yandex_k
@@ -420,14 +420,14 @@
         entity_id: input_select.washer_state
         state: "Drying"
     action:
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "{{'\U00002705'}} Дверца стиральной машинки открыта!"
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.washing_machine_door, timer.washing_machine_door
-      - service: input_boolean.turn_off
+      - action: input_boolean.turn_off
         entity_id: input_boolean.washer_door_issue
-      - service: input_select.select_option
+      - action: input_select.select_option
         data:
           entity_id: input_select.washer_state
           option: Idle
@@ -449,7 +449,7 @@
         entity_id: input_boolean.washer_door_issue
         state: "on"
     action:
-      - service: input_boolean.turn_off
+      - action: input_boolean.turn_off
         entity_id: input_boolean.washer_door_issue
 
 ##################################
@@ -470,7 +470,7 @@
     #     entity_id: input_select.washer_state
     #     state: 'Washing'
     action:
-      - service: input_select.select_option
+      - action: input_select.select_option
         data:
           entity_id: input_select.washer_state
           option: Idle

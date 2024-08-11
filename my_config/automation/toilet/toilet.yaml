@@ -22,7 +22,7 @@
     # - condition: template
     #   value_template: "{{ (states('sensor.d1mini_air_freshener_canister_left')|int(0) < 10) and (states('number.d1mini_air_freshener_counter')|int(0) % 25) == 0 }}"
   action:
-    - service: counter.increment
+    - action: counter.increment
       entity_id: counter.toilet_tank
 
 
@@ -49,7 +49,7 @@
     - condition: template
       value_template: "{{ (states('sensor.d1mini_air_freshener_canister_left')|int(0) < 10) and (states('number.d1mini_air_freshener_counter')|int(0) % 25) == 0 }}"
   action:
-    - service: notify.telegram
+    - action: notify.telegram
       data:
         message: "\U0001f50b Необходимо заменить баллон в освежителе - осталось менее {{states('sensor.d1mini_air_freshener_canister_left')|int(0)}}%!"
 
@@ -78,14 +78,14 @@
       entity_id: fan.esp32_node_b_fan_t
       state: "off"
   action:
-    # - service: button.press
+    # - action: button.press
     #   entity_id: button.d1mini_air_freshener_spray
     - if:
         - condition: state
           entity_id: switch.esp32_node_b_fan_b_manual_mode
           state: 'off'
       then:
-        - service: fan.turn_on
+        - action: fan.turn_on
           entity_id: fan.esp32_node_b_fan_t
     - wait_for_trigger:
         - platform: state
@@ -96,16 +96,16 @@
       timeout:
         minutes: 30
       continue_on_timeout: false
-    - service: timer.cancel
+    - action: timer.cancel
       entity_id: timer.fan_t
-    - service: timer.start
+    - action: timer.start
       entity_id: timer.short_fan_t
     - condition: template
       value_template: "{{(as_timestamp(now()) - as_timestamp(states.button.d1mini_air_freshener_spray.last_changed)|int(0)) > 60 }}"
     # - wait_template: "{{ is_state('binary_sensor.d1mini_distance_sensor_radar', 'off') }}"
     #   timeout:
     #     minutes: 1
-    - service: button.press
+    - action: button.press
       entity_id: button.d1mini_air_freshener_spray
 
 # ##################################
@@ -123,7 +123,7 @@
         entity_id: sensor.0x00158d0001b97111_action
         click_type: double
   action:
-    - service: button.press
+    - action: button.press
       entity_id: button.d1mini_air_freshener_spray
 
 # ##################################
@@ -138,8 +138,8 @@
       to: 
       #value_template: "{{ not (6>=now().hour|int(0) >=0 or is_state('switch.system_security_mode','on') or (is_state('binary_sensor.0x00158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x00158d0001ef2ffc_contact'].last_changed) > 10*60))) }}"
   action:
-    #- service: climate.turn_{% if not (6>=now().hour|int(0) >=0 or is_state('switch.system_security_mode','on') or (is_state('binary_sensor.0x00158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x00158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
-    - service: climate.turn_{{states('binary_sensor.heater_trigger_t')}}
+    #- action: climate.turn_{% if not (6>=now().hour|int(0) >=0 or is_state('switch.system_security_mode','on') or (is_state('binary_sensor.0x00158d0001ef2ffc_contact','on') and (as_timestamp(now())-as_timestamp(states.binary_sensor['0x00158d0001ef2ffc_contact'].last_changed) > 10*60))) %}on{%else%}off{%endif%}
+    - action: climate.turn_{{states('binary_sensor.heater_trigger_t')}}
       entity_id: climate.sonoff_pow_r2_2_wall_heater
 
 # ##################################
@@ -187,14 +187,14 @@
       timeout:
         minutes: 20
       continue_on_timeout: false
-    # - service: media_player.volume_set
+    # - action: media_player.volume_set
     #   data:
     #     entity_id: media_player.yandex_k
     #     volume_level: '{{states("input_number.main_volume")|float(0) + 0.1}}'
     - condition: state
       entity_id: binary_sensor.seat_not_closed
       state: "on"
-    - service: media_player.play_media
+    - action: media_player.play_media
       data:
         media_content_type: dialog
         entity_id: media_player.yandex_k
@@ -208,7 +208,7 @@
       timeout:
         minutes: 5
       continue_on_timeout: false
-    - service: media_player.play_media
+    - action: media_player.play_media
       data:
         media_content_type: dialog
         entity_id: media_player.yandex_k
@@ -232,7 +232,7 @@
 #       for:
 #         seconds: 3
 #   action:
-#     - service: input_boolean.turn_on
+#     - action: input_boolean.turn_on
 #       entity_id: input_boolean.toilet_occupancy
 
 # - alias: toilet_occupancy_turn_on_with_button_and_seat
@@ -252,7 +252,7 @@
 #       entity_id: input_boolean.toilet_occupancy
 #       state: "off"
 #   action:
-#     - service: input_boolean.turn_on
+#     - action: input_boolean.turn_on
 #       entity_id: input_boolean.toilet_occupancy
 
 # - alias: toilet_occupancy_turn_off
@@ -273,7 +273,7 @@
 #       entity_id: input_boolean.toilet_occupancy
 #       state: "on"
 #   action:
-#     - service: input_boolean.turn_off
+#     - action: input_boolean.turn_off
 #       entity_id: input_boolean.toilet_occupancy
 
 # ##################################
@@ -288,18 +288,18 @@
       event_data:
         text: Я покакала
   action:
-    - service: media_player.play_media
+    - action: media_player.play_media
       data:
         media_content_type: text
         entity_id: "{{ trigger.event.data.entity_id }}"
         media_content_id: "{{['С облегчением!','Так держать!','Красава!','Красавелла!','Рада за тебя!','Давай еще!']|random}}"
         extra:
           volume_level: '{{states("input_number.main_volume")|float(0)}}'
-    - service: button.press
+    - action: button.press
       entity_id: button.d1mini_air_freshener_spray
-    - service: fan.turn_on
+    - action: fan.turn_on
       entity_id: fan.esp32_node_b_fan_t
     - delay:
         seconds: 5
-    - service: button.press
+    - action: button.press
       entity_id: button.d1mini_air_freshener_spray

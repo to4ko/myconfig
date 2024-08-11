@@ -1,57 +1,57 @@
   system_start:
     alias: System start script
     sequence:
-      - service: timer.{{'start' if (is_state('light.0x00158d0002a36f7f_channel_1','on') or is_state('light.esp32_node_b_light','on')) else 'cancel'}}
+      - action: timer.{{'start' if (is_state('light.0x00158d0002a36f7f_channel_1','on') or is_state('light.esp32_node_b_light','on')) else 'cancel'}}
         entity_id: timer.main_light_t
-      - service: timer.{{'start' if is_state('fan.esp32_node_b_fan_t','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('fan.esp32_node_b_fan_t','on') else 'cancel'}}
         entity_id: timer.fan_t
-      - service: timer.{{'start' if is_state('light.round_led_k','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('light.round_led_k','on') else 'cancel'}}
         entity_id: timer.main_light_k
-      - service: timer.{{'start' if (is_state('light.0x00158d0002a36433_channel_2','on') or is_state('light.mirror_light_b','on')) else 'cancel'}}
+      - action: timer.{{'start' if (is_state('light.0x00158d0002a36433_channel_2','on') or is_state('light.mirror_light_b','on')) else 'cancel'}}
         entity_id: timer.main_light_b 
-      - service: timer.{{'start' if is_state('fan.esp32_node_b_fan_b','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('fan.esp32_node_b_fan_b','on') else 'cancel'}}
         entity_id: timer.fan_b
-      - service: timer.{{'start' if is_state('fan.sonoff_pow_r2_1_bottom_fan','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('fan.sonoff_pow_r2_1_bottom_fan','on') else 'cancel'}}
         entity_id: timer.fan_bottom_b
-      - service: timer.{{'start' if is_state('group.lights_main_hb','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('group.lights_main_hb','on') else 'cancel'}}
         entity_id: timer.main_light_hb
-      - service: timer.{{'start' if (is_state('light.0x54ef441000680083_channel_1','on') or is_state('light.0x54ef441000680083_channel_2','on'))  else 'cancel'}}
+      - action: timer.{{'start' if (is_state('light.0x54ef441000680083_channel_1','on') or is_state('light.0x54ef441000680083_channel_2','on'))  else 'cancel'}}
         entity_id: timer.main_light_st
-      - service: timer.{{'start' if is_state('light.d1mini_bed_leds_strip_dima','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('light.d1mini_bed_leds_strip_dima','on') else 'cancel'}}
         entity_id: timer.led_strip_bed_dima_v
-      - service: timer.{{'start' if is_state('light.d1mini_bed_leds_strip_sandra','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('light.d1mini_bed_leds_strip_sandra','on') else 'cancel'}}
         entity_id: timer.led_strip_bed_sandra_v
-      - service: timer.{{'start' if is_state('group.lights_b','on') else 'cancel'}}
+      - action: timer.{{'start' if is_state('group.lights_b','on') else 'cancel'}}
         entity_id: timer.main_light_b
       - if:
           - condition: state
             entity_id: binary_sensor.0x00158d000232ddd6_contact
             state: 'off'
         then:
-          - service: light.turn_off
+          - action: light.turn_off
             entity_id: light.esp32_node_hs_toilet
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: light.led_strip_hb, light.led_strip_entrance_hb, light.mono_strip_1_light, light.esp32_node_k_light
         data:
           transition: 30
-      - service: script.sasha_presence
-      - service: script.washing_machine_state
+      - action: script.sasha_presence
+      - action: script.washing_machine_state
       # - choose:
       #     - conditions:
       #         - condition: state
       #           entity_id: input_select.washer_state
       #           state: 'Drying'
       #       sequence:
-      #         - service: timer.start
+      #         - action: timer.start
       #           entity_id: timer.washing_machine_door
       - if:
           - condition: state
             entity_id: switch.system_security_mode
             state: 'on'
         then:
-          - service: script.turn_on
+          - action: script.turn_on
             entity_id: script.away_mode_on
-      - service: homeassistant.update_entity
+      - action: homeassistant.update_entity
         entity_id:
           #- sensor.host_uptime
           #- sensor.ha_uptime
@@ -71,7 +71,7 @@
               {%- set sw_un = datanames.sw_un | join(', ') %}
               {{ num_sw_un|int >0 }}
         then:
-          - service: switch.turn_on
+          - action: switch.turn_on
             data:
               entity_id: >-
                 {%- set datanames = namespace(sw_un=[]) -%}
@@ -87,13 +87,13 @@
         timeout: 
           seconds: 10
         continue_on_timeout: true
-      - service: script.turn_on
+      - action: script.turn_on
         entity_id: script.domofon_locks_indicator
 
   sasha_presence:
     alias: Sasha presence
     sequence:
-      - service: device_tracker.see
+      - action: device_tracker.see
         data:
           dev_id: sasha
           location_name: "{% if is_state('input_boolean.sasha_tracker','on')%}home{%else%}not_home{%endif%}"
@@ -101,5 +101,5 @@
   # toilet_indicator_off:
   #   alias: Toilet Indicator Off
   #   sequence:
-  #     - service: light.turn_off
+  #     - action: light.turn_off
   #       entity_id: light.esp32_node_hs_toilet

@@ -1,19 +1,19 @@
   tts_test:
     alias: Test TTS
     sequence:
-      # - service: media_player.volume_set
+      # - action: media_player.volume_set
       #   data:
       #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
       #     volume_level: '{{states("input_number.main_volume")|float(0)}}'
-      # - service: tts.yandextts_say
+      # - action: tts.yandextts_say
       #   data:
       #     entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
       #     message: "Проверка звука!"
-    - service: media_player.volume_set
+    - action: media_player.volume_set
       data:
         entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
         volume_level: '{{states("input_number.main_volume")|float(0)}}'
-    - service: media_player.play_media
+    - action: media_player.play_media
       data:
         media_content_type: dialog
         entity_id: media_player.{{states('input_select.main_audio_out')|lower}}
@@ -28,7 +28,7 @@
                 entity_id: input_select.tts_audio_mode
                 state: 'Текст'
             sequence:
-              - service: media_player.play_media
+              - action: media_player.play_media
                 data:
                   media_content_type: dialog
                   entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
@@ -41,7 +41,7 @@
                 entity_id: input_select.tts_audio_mode
                 state: 'Команда'
             sequence:
-              - service: media_player.play_media
+              - action: media_player.play_media
                 data:
                   media_content_type: command
                   entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
@@ -53,22 +53,22 @@
                 entity_id: input_select.tts_audio_mode
                 state: 'Вопрос'
             sequence:
-              - service: input_number.set_value
+              - action: input_number.set_value
                 data:
                   entity_id: input_number.temp_volume
                   value: >
                     {% set ent_id = 'media_player.' + states('input_select.tts_audio_out')|lower %}
                     {% set vol = state_attr(ent_id,'volume_level') %}
                     {{ vol }}
-              - service: input_number.set_value
+              - action: input_number.set_value
                 data:
                   entity_id: input_number.tts_volume
                   value: 0
-              - service: media_player.volume_set
+              - action: media_player.volume_set
                 data:
                   entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
                   volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-              - service: media_player.play_media
+              - action: media_player.play_media
                 data:
                   entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
                   media_content_id: "{{ states('input_text.text_to_tts') }}"
@@ -80,11 +80,11 @@
                   {{ is_state(ent_id,'idle') }}
               - delay:
                   seconds: 1
-              - service: input_number.set_value
+              - action: input_number.set_value
                 data:
                   entity_id: input_number.tts_volume
                   value: '{{states("input_number.temp_volume")|float(0)}}'
-              - service: media_player.volume_set
+              - action: media_player.volume_set
                 data:
                   entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
                   volume_level: '{{states("input_number.tts_volume")|float(0)}}'
@@ -93,7 +93,7 @@
   alice_question:
     alias: Question to Alice
     sequence:
-      - service: media_player.play_media
+      - action: media_player.play_media
         entity_id: media_player.yandex_k
         data:
           media_content_id: "{{ trigger.event.data.text }}"
@@ -101,7 +101,7 @@
       - wait_for_trigger:
           platform: event
           event_type: yandex_station_response
-      - service: input_text.set_value
+      - action: input_text.set_value
         entity_id: input_text.tts_to_text
         data:
           value: "{{ trigger.event.data.text }}"
@@ -125,7 +125,7 @@
         example: '0.8'
         default: "{{states('input_number.tts_volume')|float(0)}}"
     sequence:
-       - service: media_player.play_media
+       - action: media_player.play_media
          data:
            entity_id: '{{ entity }}'
            media_content_id: '{{ text }}'

@@ -21,14 +21,14 @@
       - condition: template
         value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_doorbell', 'last_triggered'),0)|int(0)) > 10 }}"
     action:
-      # - service: mqtt.publish
+      # - action: mqtt.publish
       #   data:
       #     topic: 'wallpanel/digma801/command'
       #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.kiosk_screen
       - parallel:
-          - service: notify.telegram
+          - action: notify.telegram
             data:
               title: Doorbell photo
               message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
@@ -41,7 +41,7 @@
                 entity_id: person.vova
                 state: 'home'
             then:                  
-              - service: notify.telegram_vova
+              - action: notify.telegram_vova
                 data:
                   title: Doorbell photo
                   message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
@@ -54,12 +54,12 @@
                 entity_id: person.sasha
                 state: 'home'
             then:
-              - service: notify.hass_synochat
+              - action: notify.hass_synochat
                 data:
                   message: Внимание! Кто-то звонит в дверь!
                   data:
                     file_url: !secret doorbell_snap
-      - service: light.turn_on
+      - action: light.turn_on
         data:
           entity_id: light.light_bar_s_ambilight
           effect: 'Police'
@@ -69,19 +69,19 @@
             entity_id: switch.system_silent_mode
             state: 'on'
         then:
-          - service: light.turn_on
+          - action: light.turn_on
             data:
               entity_id: light.esp32_node_k_led
               effect: 'Green_Alarm'
               brightness: 255
       - delay: "00:00:20"
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: light.esp32_node_k_led, light.light_bar_s_ambilight
         
       # - condition: state
       #   entity_id: light.digma_8592_screen
       #   state: 'off'
-      # - service: light.turn_on
+      # - action: light.turn_on
       #   entity_id: light.digma_8592_screen
   
   # ##################################
@@ -104,9 +104,9 @@
   #       entity_id: binary_sensor.tod_day
   #       state: 'on'
   #   action:
-  #     - service: mqtt.publish
+  #     - action: mqtt.publish
   #         command_topic: 'wallpanel/digma8027/command'
   #         payload: '{"wake": true}'
   
-  #     # - service: light.turn_on
+  #     # - action: light.turn_on
   #     #   entity_id: light.digma_8592_screen

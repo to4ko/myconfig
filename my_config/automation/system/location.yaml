@@ -12,7 +12,7 @@
 #       - condition: template
 #         value_template: "{{states('person.vova') not in ['home','Home','Dima Parents','Sasha Parents','Dacha']}}"
 #     action:
-#       - service: input_number.set_value
+#       - action: input_number.set_value
 #         data:
 #           entity_id: input_number.vova_gps_delta
 #           value: "{{ ((as_timestamp(trigger.to_state.attributes.last_seen)|int(0) - as_timestamp(trigger.from_state.attributes.last_seen)|int(0))/60)|round(2, 'common') }}"
@@ -28,7 +28,7 @@
 #         entity_id: sensor.vova_gps_delta
 #         above: 30
 #     action:
-#       - service: notify.telegram
+#       - action: notify.telegram
 #         data:
 #           message: "\U0001f910 Внимание! Нет данных от Vova_GPS более 30 минут!"
   
@@ -42,7 +42,7 @@
 #       - platform: event
 #         event_type: life360_update_overdue
 #     action:
-#       - service: notify.telegram
+#       - action: notify.telegram
 #         data:
 #           title: Life360 update overdue
 #           message: "\U0001f910 Внимание! Задержка апдейта {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}}"
@@ -57,7 +57,7 @@
 #       - platform: event
 #         event_type: life360_update_restored
 #     action:
-#       - service: notify.telegram
+#       - action: notify.telegram
 #         data:
 #           title: Life360 update restored
 #           message: "\U0001f910 Внимание! Апдейт получен для {{state_attr(trigger.event.data.entity_id, 'friendly_name') or trigger.event.data.entity_id}} спустя {{ trigger.event.data.wait }}."
@@ -79,7 +79,7 @@
       - condition: template
         value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
     action:
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: >- 
             {%- set from = trigger.from_state.state |replace('_',' ') | title %}
@@ -135,7 +135,7 @@
             trigger.to_state.state not in ignore and
             trigger.to_state.state != trigger.from_state.state }}            
     action:
-      #- service: notify.telegram
+      #- action: notify.telegram
       #  data:
       #      message: "{{ trigger.event.data.old_state.state }} -> {{ trigger.event.data.new_state.state }}"
       - choose:
@@ -144,7 +144,7 @@
                 value_template: "{{ trigger.to_state.state == 'home' and trigger.from_state.state != 'home' }}"
             sequence:
               - event: person_came_home
-              - service: logbook.log
+              - action: logbook.log
                 data:
                   name: Person Came Home
                   message: " - {{ trigger.entity_id }}"
@@ -154,7 +154,7 @@
                 value_template: "{{ trigger.to_state.state != 'home' and trigger.from_state.state == 'home' }}"
             sequence:
               - event: person_left_home
-              - service: logbook.log
+              - action: logbook.log
                 data:
                   name: Person Left Home
                   message: " - {{ trigger.entity_id }}"
@@ -186,7 +186,7 @@
                     {% elif states('sensor.people_home')|int(0) == 0 %}
                     Away
                     {% endif %}
-              - service: input_select.select_option
+              - action: input_select.select_option
                 entity_id: input_select.home_mode
                 data:
                   option: "{{ txt }}"
@@ -195,7 +195,7 @@
               - condition: trigger
                 id: "vac"
             sequence:
-              - service: input_select.select_option
+              - action: input_select.select_option
                 entity_id: input_select.home_mode
                 data:
                   option: Vacation
@@ -214,7 +214,7 @@
 #       - condition: template
 #         value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
 #     action:
-#       service: notify.telegram
+#       action: notify.telegram
 #       data:
 #         message: "\U0001f30d Sandra: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
   
@@ -231,7 +231,7 @@
 #       - condition: template
 #         value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
 #     action:
-#       service: notify.telegram
+#       action: notify.telegram
 #       data:
 #         message: "\U0001f30d Vova: {{ trigger.from_state.state }} -> {{ trigger.to_state.state }}"
   
@@ -244,7 +244,7 @@
   #    platform: state
   #    entity_id: person.sasha
   #  action:
-  #    service: notify.telegram_errors
+  #    action: notify.telegram_errors
   #    data:
   #      message: 'Sasha: {{ now().strftime("%d.%m.%Y-%H%M%S") }} from {{ trigger.from_state.state }} to {{ trigger.to_state.state }}'
 

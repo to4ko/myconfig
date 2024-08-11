@@ -33,7 +33,7 @@
       #   entity_id: timer.led_strip_night_hb
       #   state: "idle"
     action:
-      - service: light.turn_on
+      - action: light.turn_on
         entity_id: light.led_strip_entrance_hb
         data:
           brightness: 3
@@ -75,10 +75,10 @@
       #   entity_id: timer.led_strip_day_hb
       #   state: "idle"
     action:
-      - service: script.hall_big_led_strip_on
+      - action: script.hall_big_led_strip_on
         data:
           strips: "{{ trigger.id }}"
-      # - service: script.hall_big_led_strip_on_separate
+      # - action: script.hall_big_led_strip_on_separate
       #   data:
       #     motion: "{{ trigger.id }}"
   
@@ -98,11 +98,11 @@
         from: "on"
         to: "off"
     action:
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: light.led_strip_hb, light.led_strip_entrance_hb
         data:
           transition: 5
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.system_dark_mode
   
 # ##################################
@@ -119,23 +119,23 @@
         from: "off"
         to: "on"
     action:
-      - service: script.hall_big_led_strip_on
+      - action: script.hall_big_led_strip_on
         data:
           strips: both
-      - service: input_number.set_value
+      - action: input_number.set_value
         data:
           entity_id: input_number.main_door_open
           value: "{{as_timestamp(now())|int(0) }}"
-      - service: counter.increment
+      - action: counter.increment
         entity_id: counter.main_door_hb
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }})"
-      - service: notify.telegram_cam
+      - action: notify.telegram_cam
         data:
           message: "\U0001f6aa Внимание! Входная дверь открыта! ({{states('sensor.time')}} {{states('sensor.date')}}, {{ states('counter.main_door_hb') }})"
       - delay: "00:00:09"
-      - service: script.turn_on
+      - action: script.turn_on
         entity_id: script.open_door_photo
   
 # ##################################
@@ -154,9 +154,9 @@
         to: "on"
         from: "off"
     action:
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.main_light_hb
-      - service: timer.start
+      - action: timer.start
         entity_id: timer.main_light_hb
   
 # ##################################
@@ -169,7 +169,7 @@
       - platform: template
         value_template: "{{not is_state('light.0x00158d000253f04a_channel_2','on') and not is_state('light.0x00158d000223921b_channel_1','on') }}"
     action:
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.main_light_hb
   
 # ##################################
@@ -197,7 +197,7 @@
                 entity_id: switch.system_security_mode
                 state: "off"
             sequence:
-              - service: script.hall_big_led_strip_on
+              - action: script.hall_big_led_strip_on
                 data:
                   strips: both
           - conditions:
@@ -205,7 +205,7 @@
                 entity_id: group.lights_main_hb
                 state: "on"
             sequence:
-              - service: light.turn_off
+              - action: light.turn_off
                 entity_id: light.led_strip_entrance_hb, light.led_strip_hb
                 data:
                   transition: 5
@@ -222,7 +222,7 @@
         event_data:
           entity_id: timer.main_light_hb
     action:
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: light.0x00158d000223921b_channel_1, light.0x00158d000253f04a_channel_2
   
 # ##################################
@@ -253,9 +253,9 @@
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.main_light_hb
-      - service: timer.start
+      - action: timer.start
         entity_id: timer.main_light_hb
   
 # ##################################
@@ -282,7 +282,7 @@
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - service: light.toggle
+      - action: light.toggle
         entity_id: light.0x00158d000223921b_channel_1
   
 # ##################################
@@ -308,7 +308,7 @@
         entity_id: sensor.ha_uptime
         above: 0
     action:
-      - service: light.toggle
+      - action: light.toggle
         entity_id: light.0x00158d000253f04a_channel_2
   
 # ##################################
@@ -353,13 +353,13 @@
             - condition: template
               value_template: "{{ repeat.index <= 5 }}"
           sequence:
-            - service: switch.turn_off
+            - action: switch.turn_off
               entity_id: switch.0x00158d00023e5812_outlet
             - delay:
                 seconds: 15
-            - service: switch.turn_on
+            - action: switch.turn_on
               entity_id: switch.0x00158d00023e5812_outlet
-            - service: notify.telegram
+            - action: notify.telegram
               data:
                 message: "\U0001f6a8 LED Strip HB restart done({{repeat.index}})!"
             - delay:
@@ -367,10 +367,10 @@
       - condition: state
         entity_id: light.led_strip_hb
         state: "unavailable"
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "\U0001f6a8 LED Strip HB restart unsuccessful!"
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.system_led_strip_hb_restart_key
   
 # ##################################
@@ -386,7 +386,7 @@
         entity_id: light.led_strip_hb
         from: "unavailable"
     action:
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.system_led_strip_hb_restart_key
   
 # ##################################
@@ -433,13 +433,13 @@
             - condition: template
               value_template: "{{ repeat.index <= 5 }}"
           sequence:
-            - service: switch.turn_off
+            - action: switch.turn_off
               entity_id: switch.digma_strip_hb_relay1
             - delay:
                 seconds: 15
-            - service: switch.turn_on
+            - action: switch.turn_on
               entity_id: switch.digma_strip_hb_relay1
-            - service: notify.telegram
+            - action: notify.telegram
               data:
                 message: "\U0001f6a8 LED Strip Entrance HB restart done({{repeat.index}})!"
             - delay:
@@ -447,10 +447,10 @@
       - condition: state
         entity_id: light.led_strip_entrance_hb
         state: "unavailable"
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "\U0001f6a8 LED Strip Entrance HB restart unsuccessful!"
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.system_led_strip_entrance_hb_restart_key
   
 # ##################################
@@ -466,7 +466,7 @@
         entity_id: light.led_strip_entrance_hb
         from: "unavailable"
     action:
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.system_led_strip_entrance_hb_restart_key
   
 # ##################################
@@ -491,13 +491,13 @@
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'single' }}"
             sequence:
-              - service: light.toggle
+              - action: light.toggle
                 entity_id: light.led_strip_entrance_hb
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'double' }}"
             sequence:
-              - service: light.turn_on
+              - action: light.turn_on
                 entity_id: light.led_strip_entrance_hb
                 data:
                   brightness: 255
@@ -506,7 +506,7 @@
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'hold' }}"
             sequence:
-              - service: light.turn_on
+              - action: light.turn_on
                 entity_id: light.led_strip_entrance_hb
                 data:
                   brightness: 40
@@ -529,9 +529,9 @@
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     action:
-      - service: timer.cancel
+      - action: timer.cancel
         entity_id: timer.led_strip_day_hb, timer.led_strip_night_hb
-      - service: timer.start
+      - action: timer.start
         data:
           entity_id: >
             timer.{% if is_state('binary_sensor.tod_day','on') %}led_strip_day_hb{%else%}led_strip_night_hb{%endif%}
@@ -554,7 +554,7 @@
         event_data:
           entity_id: timer.led_strip_night_hb
     action:
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: light.led_strip_entrance_hb, light.led_strip_hb
         data:
           transition: 5
@@ -601,18 +601,18 @@
                 entity_id: binary_sensor.tod_day
                 state: "on"
             sequence:
-              - service: timer.cancel
+              - action: timer.cancel
                 entity_id: timer.led_strip_day_hb
-              - service: timer.start
+              - action: timer.start
                 entity_id: timer.led_strip_day_hb
           - conditions:
               - condition: state
                 entity_id: binary_sensor.tod_day
                 state: "off"
             sequence:
-              - service: timer.cancel
+              - action: timer.cancel
                 entity_id: timer.led_strip_night_hb
-              - service: timer.start
+              - action: timer.start
                 entity_id: timer.led_strip_night_hb
 
   # # ##################################
@@ -656,9 +656,9 @@
   #     - condition: template
   #       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_led_strips_timer_restart', 'last_triggered'),0)|int(0)) > 15 }}"
   #   action:
-  #     - service: timer.cancel
+  #     - action: timer.cancel
   #       entity_id: timer.led_strip_day_hb
-  #     - service: timer.start
+  #     - action: timer.start
   #       entity_id: timer.led_strip_day_hb
 
 # ##################################
@@ -680,7 +680,7 @@
         entity_id: group.lights_main_hb
         state: 'on'
     action:
-      - service: light.turn_off
+      - action: light.turn_off
         entity_id: light.0x00158d000223921b_channel_1, light.0x00158d000253f04a_channel_2
         
 ##################################
@@ -699,7 +699,7 @@
 #        for:
 #          minutes: 2
 #    action:
- #     - service: script.turn_on
+ #     - action: script.turn_on
    #     entity_id: script.bedside_restart
 
 # ##################################
@@ -744,13 +744,13 @@
             - condition: template
               value_template: "{{ repeat.index <= 5 }}"
           sequence:
-            - service: switch.turn_off
+            - action: switch.turn_off
               entity_id: switch.0x00158d00039bd56d_plug
             - delay:
                 seconds: 15
-            - service: switch.turn_on
+            - action: switch.turn_on
               entity_id: switch.0x00158d00039bd56d_plug
-            - service: notify.telegram
+            - action: notify.telegram
               data:
                 message: "\U0001f6a8 Bedside restart done({{repeat.index}})!"
             - delay:
@@ -758,10 +758,10 @@
       - condition: state
         entity_id: light.bedside
         state: 'unavailable'
-      - service: notify.telegram
+      - action: notify.telegram
         data:
           message: "\U0001f6a8 Bedside restart unsuccessful!"
-      - service: switch.turn_off
+      - action: switch.turn_off
         entity_id: switch.system_bedside_restart_key
 
 # ##################################
@@ -777,5 +777,5 @@
         entity_id: light.bedside
         from: 'unavailable'
     action:
-      - service: switch.turn_on
+      - action: switch.turn_on
         entity_id: switch.system_bedside_restart_key
