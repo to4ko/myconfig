@@ -425,8 +425,8 @@
   trigger:
     - platform: time_pattern
       hours: "/1"
-    - platform: event
-      event_type: entity_registry_updated
+    # - platform: event
+    #   event_type: entity_registry_updated
     - platform: homeassistant
       event: start
   condition:
@@ -2717,4 +2717,20 @@
       data:
         message: "\U0001f6a6 {{trigger.to_state.name}}: {{old_value}} -> {{new_value}}"
 
-
+# ##################################
+# System - primary ip chage
+# ##################################
+- alias: system_primary_ip_change
+  id: system_primary_ip_change
+  initial_state: true
+  mode: queued
+  max: 50
+  max_exceeded: silent  
+  trigger:
+    - platform: state
+      entity_id: sensor.udm_last_active_ip
+      to:
+  action:
+    - action: notify.telegram
+      data:
+        message: "\U0001f6a6 {{trigger.to_state.name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
