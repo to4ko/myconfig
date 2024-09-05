@@ -219,7 +219,54 @@
         then:
           - action: media_player.turn_off
             entity_id: media_player.apple_tv_v
-          
+
+            
+# ##################################
+# Vova - Sleep time
+# ##################################
+  - alias: vova_sleep_time
+    id: vova_sleep_time
+    initial_state: true
+    trigger:
+      - platform: event
+        event_type: yandex_intent
+        event_data:
+          text: Пора спать
+    condition:
+      - condition: template
+        value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_v' }}"
+    action:
+      - action: switch.turn_off
+        entity_id: switch.0x00158d000290a093_plug
+      - action: media_player.turn_off
+        entity_id: media_player.apple_tv_v
+      - parallel:
+          - action: light.turn_off
+            entity_id: light.square_led_v
+            data:
+              transition: 15
+          - action: light.turn_off
+            entity_id: light.square_led_v_nightlight
+            data:
+              transition: 15
+          - action: light.turn_off
+            entity_id: light.led_color_v
+            data:
+              transition: 15
+          - if:
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: media_player.yandex_v
+                    state: 'playing'
+            then:
+              - action: media_player.play_media
+                entity_id: media_player.yandex_v
+                data:
+                  media_content_id: Включи спят усталые игрушки на повтор
+                  media_content_type: command
+
+
 # ##################################
 # Vova - Alice Stop\Start
 # ##################################
