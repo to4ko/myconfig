@@ -45,14 +45,7 @@
 </div>
 
 # Hardware Configuration
-**Proxmox Node 1**
-  - [Intel NUC 13 Pro](https://www.asus.com/displays-desktops/nucs/nuc-mini-pcs/asus-nuc-13-pro/)
-  - Intel i5-1340p
-  - 2*32Gb Samsung DDR4 SODIMM
-  - 500Gb Samsung 870 EVO
-  - 1Tb Samsung PM9A1
-
-**Proxmox Node 2**
+**Proxmox Node**
   - [Minisforum MS01](https://store.minisforum.com/products/minisforum-ms-01)
   - Intel i9-13900H
   - 2*48Gb Crucial DDR5 SODIMM
@@ -67,15 +60,13 @@
   - [Synology DS1621+](https://www.synology.com/en-uk/products/DS1621+)
   - 2*16Gb Crucial DDR4 SODIMM
   - Mellanox ConnectX-3 Pro CX312B EN
-  - 4ea WD HC550 16Tb as Main Storage
-  - 2ea Samsung 870 EVO 2Tb in SHR1 as Fast Storage
+  - 6ea WD HC550 16Tb as Main Storage
   - 2ea SP A38 1Tb as NVME read\write cache
 
 **Backup Storage Unit**
   - [Synology DS920+](https://global.synologydownload.com/download/Document/Hardware/DataSheet/DiskStation/20-year/DS920+/enu/Synology_DS920_Plus_Data_Sheet_enu.pdf)
   - 4Gb onboard + 16Gb Kingston DDR4 SODIMM
   - 2ea WD Purple 4Tb in SHR1 as Main Storage section 
-  - 2ea Samsung 870 EVO 1Tb in SHR1 as Fast Storage
   - 2ea Adata SX6000 Lite 256Gb as NVME read\write cache
 
 **Remote Backup Storage Unit**
@@ -598,7 +589,22 @@ white-space:nowrap;>
 <td>4*16Tb HDD + 2*2Tb SSD + 2*1Tb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
-
+<tr>
+<td rowspan="3">18</td>
+<td rowspan="3">2024</td>
+<td>Minisforum MS01</td>
+<td>i9-13900H</td>
+<td>2 * 48Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>4*16Tb HDD + 2*2Tb SSD + 2*1Tb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
 
 
 </tbody>
