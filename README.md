@@ -225,17 +225,15 @@
   - not in use - Xiaomi Kettle
 
 # Software configuration
-**Proxmox Node 1 Software:**
+**Proxmox Node Software:**
   - Proxmox VE 8
-      * Debian 11 with HA Supervised (main instance)
-
-**Proxmox Node 2 Software:**
-  - Proxmox VE 8
+      * Debian 12 with HA Supervised (main instance)
       * Debian 12 with HA Supervised (backup instance)
       * Plex
       * Zabbix Server
       * NGINX Proxy Manager
       * Bitwarden
+      * MariaDB
 
 **Main Storage Unit Software**
   - DSM 7.2
