@@ -160,6 +160,7 @@
   - Xiaomi Mi Power Plug ZigBee ZNCZ02LM (24ea)
 
 **Xiaomi BT\BLE Devices:**
+  - XMOSB01XS Xiaomi Mijia People Presence Sensor (2ea)
   - CGD1 Cleargrass alarm clock
   - LYWSD02 Temperature and Humidity sensor
   - LYWSD03MMC Hygro thermometer
