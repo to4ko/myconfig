@@ -8,13 +8,13 @@
   - alias: bathroom_button_b_single
     id: bathroom_button_b_single
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001b94abe_action
           click_type: single
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -64,13 +64,13 @@
   - alias: bathroom_button_b_double
     id: bathroom_button_b_double
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001b94abe_action
           click_type: double
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -95,17 +95,17 @@
 # - alias: bathroom_button_b_hold
 #   id: bathroom_button_b_hold
 #   initial_state: true
-#   trigger:
-#     - platform: event
+#   triggers:
+#     - trigger: event
 #       event_type: xiaomi_aqara.click
 #       event_data:
 #         entity_id: sensor.0x00158d0001b94abe_action
 #         click_type: hold
-#   condition:
+#   conditions:
 #     - condition: state
 #       entity_id: group.lights_b
 #       state: 'off'
-#   action:
+#   actions:
 #     - action: switch.turn_on
 #       entity_id: switch.0x00158d0002a36433_channel_2
               
@@ -115,15 +115,15 @@
 # - alias: bathroom_fan_auto_off
 #   id: bathroom_fan_auto_off
 #   initial_state: true
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: binary_sensor.high_humidity_b
 #       to: 'off'
-#     - platform: homeassistant
+#     - trigger: homeassistant
 #       event: start
-#     - platform: event
+#     - trigger: event
 #       event_type: automation_reloaded
-#   condition:
+#   conditions:
 #     - condition: state
 #       entity_id: timer.fan_b
 #       state: 'idle'
@@ -133,7 +133,7 @@
 #     - condition: state
 #       entity_id: input_boolean.fan_manual_b
 #       state: 'off'
-#   action:
+#   actions:
 #     - action: fan.turn_off
 #       entity_id: fan.esp32_node_b_fan_b, fan.sonoff_pow_r2_1_bottom_fan
 
@@ -143,17 +143,17 @@
 # - alias: bathroom_fan_auto_on
 #   id: bathroom_fan_auto_on
 #   initial_state: true
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: binary_sensor.high_humidity_b
 #       to: 'on'
-#     - platform: homeassistant
+#     - trigger: homeassistant
 #       event: start
-#     - platform: event
+#     - trigger: event
 #       event_type: automation_reloaded
-#     - platform: time_pattern
+#     - trigger: time_pattern
 #       minutes: '/5'
-#   condition:
+#   conditions:
 #     - condition: state
 #       entity_id: timer.fan_b
 #       state: 'idle'
@@ -163,7 +163,7 @@
 #     - condition: state
 #       entity_id: binary_sensor.high_humidity_b
 #       state: 'on'
-#   action:
+#   actions:
 #     - action: fan.turn_on
 #       entity_id: fan.sonoff_pow_r2_1_bottom_fan
 #     - condition: state
@@ -180,16 +180,16 @@
   #   initial_state: true
   #   mode: single
   #   max_exceeded: silent
-  #   trigger:
-  #     - platform: time_pattern
+  #   triggers:
+  #     - trigger: time_pattern
   #       minutes: "/1"
-  #   condition:
+  #   conditions:
   #     - condition: state
   #       entity_id: timer.fan_b
   #       state: 'idle'
   #     # - condition: template
   #     #   value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.bathroom_fan_auto', 'last_triggered'))|int(0)) > 60 }}"
-  #   action:
+  #   actions:
   #     - choose:
   #         - conditions:
   #             - condition: state
@@ -232,16 +232,16 @@
   - alias: bathroom_fan_with_light
     id: bathroom_fan_with_light
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.0x00158d0002a36433_channel_2 #group.lights_b
         to: 'on'
         id: 'to_on'
-      - platform: state
+      - trigger: state
         entity_id: light.0x00158d0002a36433_channel_2 #group.lights_b
         to: 'off'
         id: 'to_off'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -278,10 +278,10 @@
   - alias: bathroom_fan_night_mode
     id: bathroom_fan_night_mode
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: '/5'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
@@ -289,7 +289,7 @@
         value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: template
         value_template: "{{ 1 <= now().hour < 6 }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -322,10 +322,10 @@
   - alias: bathroom_fan_to_normal_mode
     id: bathroom_fan_to_normal_mode
     initial_state: true
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: "06:20:00"
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
@@ -333,7 +333,7 @@
         value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: template
         value_template: "{{states('number.esp32_node_b_humidity_set')|int(0) < 50 }}"
-    action:
+    actions:
       - action: number.set_value
         data:
           value: "65"
@@ -349,17 +349,17 @@
   - alias: bathroom_bottom_fan_with_fan
     id: bathroom_bottom_fan_with_fan
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: fan.esp32_node_b_fan_b
         to: 
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
       - condition: template
         value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
-    action:
+    actions:
       - action: fan.turn_{{ states('fan.esp32_node_b_fan_b') }}
         entity_id: fan.sonoff_pow_r2_1_bottom_fan
 
@@ -369,16 +369,16 @@
   - alias: bathroom_bottom_fan
     id: bathroom_bottom_fan
     initial_state: true
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: '07:00:03'
-      - platform: time
+      - trigger: time
         at: '23:00:03'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
-    action:
+    actions:
       - action: fan.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}
         entity_id: fan.sonoff_pow_r2_1_bottom_fan
 
@@ -388,10 +388,10 @@
   - alias: bathroom_bottom_fan_toggle
     id: bathroom_bottom_fan_toggle
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/30"
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'off'
@@ -401,7 +401,7 @@
       - condition: state
         entity_id: switch.esp32_node_b_fan_b_force_mode
         state: 'off'
-    action:
+    actions:
       - condition: template
         value_template: "{{ is_state('group.lights_b','off') or is_state('fan.sonoff_pow_r2_1_bottom_fan','on') }}"
       - action: fan.toggle
@@ -413,18 +413,18 @@
   - alias: bathroom_fan_off_by_timer
     id: bathroom_fan_off_by_timer
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.fan_b
       # - platform: state
       #   entity_id: fan.esp32_node_b_fan_b
       #   to: 'off'
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: fan.turn_off
         entity_id: fan.esp32_node_b_fan_b
       - action: switch.turn_off
@@ -445,11 +445,11 @@
     mode: single
     max_exceeded: silent
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: fan.esp32_node_b_fan_b
         to:
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
       - condition: template
@@ -457,7 +457,7 @@
       - condition: state
         entity_id: switch.esp32_node_b_fan_b_force_mode
         state: 'off'
-    action:
+    actions:
       - if:
           - condition: state
             entity_id: fan.esp32_node_b_fan_b
@@ -474,8 +474,8 @@
   #   initial_state: true
   #   mode: single
   #   max_exceeded: silent
-  #   trigger:
-  #     - platform: numeric_state
+  #   triggers:
+  #     - trigger: numeric_state
   #       entity_id: 
   #         - sensor.0x00158d00020d7c3a_humidity
   #         - sensor.e72e0120fcdc_humidity
@@ -483,12 +483,12 @@
   #       for: 
   #         minutes: 2
   #       id: 'force_on'
-  #     - platform: state
+  #     - trigger: state
   #       entity_id: binary_sensor.high_humidity_b
   #       to: 'off'
   #       from: 'on'
   #       id: 'force_off'
-  #   action:
+  #   actions:
   #     - choose:
   #         - conditions:
   #             - condition: trigger
@@ -518,12 +518,12 @@
   #   initial_state: true
   #   mode: single
   #   max_exceeded: silent
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: binary_sensor.0x00158d0002a14c5e_contact
   #       from: 'on'
   #       to: 'off'
-  #   condition:
+  #   conditions:
   #     - condition: state
   #       entity_id: binary_sensor.high_humidity_b
   #       state: 'on'
@@ -543,7 +543,7 @@
   #       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.toilet_close_seat_notify', 'last_triggered'))|int(0)) > 15 }}"
   #     - condition: template
   #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  #   action:
+  #   actions:
   #     - action: media_player.play_media
   #       data:
   #         media_content_type: dialog

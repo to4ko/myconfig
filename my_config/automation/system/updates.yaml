@@ -4,11 +4,11 @@
   # - alias: system_update_hacs
   #   id:  system_update_hacs
   #   initial_state: false
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: sensor.hacs
   #       attribute: repositories
-  #   condition:
+  #   conditions:
   #     - condition: numeric_state
   #       entity_id: sensor.ha_uptime
   #       above: 0
@@ -19,7 +19,7 @@
   #             trigger.to_state.state not in ignore and
   #             is_state('binary_sensor.updater_hacs_new_version', 'on')
   #           }}
-  #   action:
+  #   actions:
   #     - action: notify.telegram
   #       data:
   #         message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
@@ -41,10 +41,10 @@
     mode: queued
     max: 10
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: state_changed
-    condition:
+    conditions:
       - "{{ trigger.event.data.entity_id.startswith('update.') }}"
       - "{{ trigger.event.data.old_state is not none and trigger.event.data.new_state is not none }}"
       - or:
@@ -68,7 +68,7 @@
                 trigger.event.data.new_state.attributes.installed_version not in not_has_state and
                 trigger.event.data.new_state.attributes.installed_version is not none
               }}
-    action:
+    actions:
       - variables:
           latest_version: "{{ trigger.event.data.new_state.attributes.latest_version }}"
           installed_version: "{{ state_attr(trigger.event.data.entity_id, 'installed_version') }}"
@@ -94,11 +94,11 @@
 #   - alias: system_update_supervisor
 #     id:  system_update_supervisor
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: update.home_assistant_supervisor_update
 #         attribute: latest_version
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: >
 #           {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
@@ -107,7 +107,7 @@
 #              trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
 #              trigger.to_state.attributes.latest_version not in ignore
 #           }}
-#     action:
+#     actions:
 #       - action: notify.telegram
 #         data:
 #           message: "\U0001f389 Supervisor - доступна новая версия {{ state_attr('update.home_assistant_supervisor_update', 'latest_version') }}. Текущая {{ state_attr('update.home_assistant_supervisor_update', 'installed_version') }}"
@@ -118,11 +118,11 @@
 #   - alias: system_update_core
 #     id:  system_update_core
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: update.home_assistant_core_update
 #         attribute: latest_version
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: >
 #           {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
@@ -131,7 +131,7 @@
 #              trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
 #              trigger.to_state.attributes.latest_version not in ignore
 #           }}
-#     action:
+#     actions:
 #       - action: notify.telegram
 #         data:
 #           message: "\U0001f6e0 Core - доступна новая версия {{trigger.to_state.attributes.latest_version}}. Текущая {{state_attr(trigger.entity_id, 'installed_version')}}"
@@ -148,12 +148,12 @@
 #   - alias: system_update_addons
 #     id:  system_update_addons
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: binary_sensor.updater_addons
 #         from: "off"
 #         to: "on"
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: "{{ states('sensor.supervisor_updates')|int(0) >0 }}"
 #       - condition: template
@@ -163,7 +163,7 @@
 #             trigger.to_state.state not in ignore and
 #             trigger.to_state.state != trigger.from_state.state
 #           }}
-#     action:
+#     actions:
 #       - action: notify.telegram
 #         data:
 #           message: "\U0001f6e0 Addons - доступны обновления {% for addons_updates in state_attr('sensor.supervisor_updates', 'addons') %}{{ addons_updates.name }} ({{ addons_updates.version_latest }}){%if not loop.last %}, {%endif%}{% endfor %}!"
@@ -174,11 +174,11 @@
 #   - alias: system_supervisor_updated
 #     id:  system_supervisor_updated
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: sensor.ha_supervisor_current_version
 #         to:
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: >
 #           {% set ignore = ['unknown', 'unavailable', 'none'] %}
@@ -186,7 +186,7 @@
 #             trigger.to_state.state not in ignore and
 #             trigger.to_state.state != trigger.from_state.state
 #           }}
-#     action:
+#     actions:
 #       - action: notify.telegram
 #         data:
 #           message: "\U0001f38a Supervisor - обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}!"

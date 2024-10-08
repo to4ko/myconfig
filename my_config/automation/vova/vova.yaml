@@ -8,17 +8,17 @@
   # - alias: vova_tv_box_restart_sunday_9am
   #   id: vova_tv_box_restart_sunday_9am
   #   initial_state: true
-  #   trigger:
-  #     - platform: time
+  #   triggers:
+  #     - trigger: time
   #       at: "09:00:00"
-  #   condition:
+  #   conditions:
   #     - condition: time
   #       weekday:
   #         - sun
   #     - condition: state
   #       entity_id: switch.system_security_mode
   #       state: "off"
-  #   action:
+  #   actions:
   #     - action: switch.turn_off
   #       entity_id: switch.0x00158d000290a0bc_plug
   #     - delay: "00:00:05"
@@ -31,30 +31,30 @@
   - alias: vova_tv_control
     id: vova_tv_control
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.tv_delay_off
         id: 'timer_tv_off'
-      - platform: event
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.tv_delay_on
         id: 'timer_tv_on'
-      - platform: time
+      - trigger: time
         at: "22:00:00"
         id: 'time_trigger_night'
       # - platform: time
       #   at: "08:00:00"
       #   id: 'time_trigger_day'
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d00023d3206_action
           click_type: single
         id: 'button_single_click'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -105,18 +105,18 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: person.sandra
         to: 'home'
-      - platform: state
+      - trigger: state
         entity_id: person.sandra
         from: 'home'
       # - platform: homeassistant
       #   event: start
       # - platform: event
       #   event_type: automation_reloaded
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
       - condition: template
@@ -125,7 +125,7 @@
           {{ trigger.from_state.state not in ignore and
             trigger.to_state.state not in ignore and
             trigger.to_state.state != trigger.from_state.state }}
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -162,12 +162,12 @@
     initial_state: false
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: fan.purifier2s
         for:
           minutes: 1
-    condition:
+    conditions:
       - condition: state
         entity_id: fan.purifier2s
         state: 'on'
@@ -182,7 +182,7 @@
             entity_id: fan.purifier2s
             attribute: preset_mode
             state: 'Favorite'
-    action:
+    actions:
       - action: fan.set_preset_mode
         data:
           entity_id: fan.purifier2s
@@ -194,21 +194,21 @@
   - alias: vova_tv_plug_on_alice
     id: vova_tv_plug_on_alice
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Включи розетку телевизора
         id: 'on'
-      - platform: event
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Выключи розетку телевизора
         id: 'off'
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_v' }}"
-    action:
+    actions:
       - action: 'switch.turn_{{ trigger.id }}'
         entity_id: switch.0x00158d000290a093_plug
       - delay:
@@ -227,15 +227,15 @@
   - alias: vova_sleep_time
     id: vova_sleep_time
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Пора спать
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_v' }}"
-    action:
+    actions:
       - action: switch.turn_off
         entity_id: switch.0x00158d000290a093_plug
       - action: media_player.turn_off
@@ -250,7 +250,7 @@
             data:
               transition: 15
           - action: light.turn_off
-            entity_id: light.led_color_v
+            entity_id: light.0x54ef441000d4e7fd_light
             data:
               transition: 15
           - if:
@@ -275,16 +275,16 @@
 #     initial_state: true
 #     mode: single
 #     max_exceeded: silent
-#     trigger:
-#       - platform: event
+#     triggers:
+#       - trigger: event
 #         event_type: xiaomi_aqara.click
 #         event_data:
 #           entity_id: sensor.0x158d0001ef609b_action
 #           click_type: single
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-#     action:
+#     actions:
 #       - choose:
 #           - conditions:
 #               - condition: state

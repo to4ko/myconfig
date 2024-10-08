@@ -11,17 +11,17 @@
   mode: parallel
   max: 25
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         level: ERROR
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ not 'system_error_counter' in (trigger.event.data.message|string) }}"
     - condition: template
       value_template: "{{ not 'a0d7b954_ide' in (trigger.event.data.message|string) }}"
-  action:
+  actions:
     - action: counter.increment
       entity_id: counter.error_counter
 
@@ -34,17 +34,17 @@
   max: 25
   max_exceeded: silent
   initial_state: true
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         level: WARNING
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ not 'system_warning_counter' in (trigger.event.data.message|string) }}"
     - condition: template
       value_template: "{{ not 'a0d7b954_ide' in (trigger.event.data.message|string) }}"
-  action:
+  actions:
     - action: counter.increment
       entity_id: counter.warning_counter
 
@@ -57,15 +57,15 @@
   max: 25
   max_exceeded: silent
   initial_state: true
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: automation_triggered
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ not 'system_triggered_automations_counter' in (trigger.event.data.name|string) }}"
     - condition: template
       value_template: "{{ not 'system_esphome_ble_advert' in (trigger.event.data.name|string) }}"
-  action:
+  actions:
     - action: counter.increment
       entity_id: counter.triggered_automations
 
@@ -77,10 +77,10 @@
   mode: parallel
   max: 25
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: script_started
-  action:
+  actions:
     - action: counter.increment
       entity_id: counter.executed_scripts
 
@@ -90,10 +90,10 @@
 - alias: system_start
   id: system_start_message
   initial_state: true
-  trigger:
-    - platform: homeassistant
+  triggers:
+    - trigger: homeassistant
       event: start
-  action:
+  actions:
     # - action: homeassistant.update_entity
     #   entity_id:
     #     #- sensor.host_uptime
@@ -126,12 +126,12 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
+  triggers:
     # - platform: event
     #   event_type: homeassistant_stop
-    - platform: homeassistant
+    - trigger: homeassistant
       event: shutdown
-  action:
+  actions:
     - action: switch.turn_off
       entity_id: switch.system_main_lead
     - action: notify.telegram
@@ -144,15 +144,15 @@
 - alias: system_start_stop_flag_set
   id: system_start_stop_flag_set
   initial_state: true
-  trigger:
-    - platform: homeassistant
+  triggers:
+    - trigger: homeassistant
       event: start
       id: "homeassistant_start"
     # - platform: event
     #   event_type: homeassistant_stop
-    - platform: homeassistant
+    - trigger: homeassistant
       event: shutdown
-  action:
+  actions:
     - action: >
         {% if trigger.id == 'homeassistant_start' -%}
             input_boolean.turn_off
@@ -180,18 +180,18 @@
 - alias: system_github_star
   id: system_github_star
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.to4ko_myconfig_stars
       to:
-  condition:
+  conditions:
     - condition: template
       value_template: >
         {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
         {{ trigger.from_state.state not in ignore and
           trigger.to_state.state not in ignore and
           trigger.to_state.state != trigger.from_state.state }}
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U00002b50 GitHub Star -> {{ trigger.to_state.state }}! "
@@ -205,10 +205,10 @@
   mode: queued
   max: 10
   max_exceeded: silent      
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: device_tracker_new_device
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U00002734 Новое устройство: {{ trigger.event.data.host_name if trigger.event.data.host_name is defined else 'NA' }} - ({{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }})"
@@ -222,10 +222,10 @@
   mode: queued
   max: 20
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: entity_registry_updated
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ 'mi_11' not in trigger.event.data.entity_id }}"
     - condition: template
@@ -234,7 +234,7 @@
       value_template: "{{ 'lower' not in trigger.event.data.action }}"
     - condition: template
       value_template: "{{ 'update' not in trigger.event.data.action }}"
-  action:
+  actions:
     - action: telegram_bot.send_message
       data:
         message: "\U00002747 Entity - {{ trigger.event.data.action | capitalize }}: {{ trigger.event.data.old_entity_id+'->' if trigger.event.data.old_entity_id is defined }}{{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }}"
@@ -250,10 +250,10 @@
 #   mode: queued
 #   max: 20
 #   max_exceeded: silent
-#   trigger:
-#     - platform: event
+#   triggers:
+#     - trigger: event
 #       event_type: device_registry_updated
-#   action:
+#   actions:
 #     - action: telegram_bot.send_message
 #       data:
 #         message: "\U0001f4a1 Device - {{ trigger.event.data.action | capitalize }}: {{ device_attr(trigger.event.data.device_id, 'name') | capitalize }}"
@@ -269,10 +269,10 @@
   mode: queued
   max: 20
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: device_registry_updated
-  action:
+  actions:
     - action: python_script.exec
       data:
         device_id: "{{ trigger.event.data.device_id }}"
@@ -288,10 +288,10 @@
 - alias: system_new_day_telegram
   id: system_new_day_telegram
   initial_state: true
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "00:00:01"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int(0) }}, ошибок - {{states('counter.error_counter')|int(0) }}, предупреждений - {{states('counter.warning_counter')|int(0)}}, ошибок входа - {{states('counter.badlogin_counter')|int(0)}},  cработало автоматизаций - {{states('counter.triggered_automations')|int(0)}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int(0)}}, запущенно скриптов - {{states('counter.executed_scripts')|int(0)}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int(0)}}раз(а). Чайник включали - {{states('counter.kettle_k')|int(0)}}раз(а)"
@@ -321,12 +321,12 @@
 - alias: system_weather_to_telegram
   id: system_weather_to_telegram
   initial_state: true
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "07:00:00"
-    - platform: time
+    - trigger: time
       at: "21:00:00"
-  action:
+  actions:
     - action: script.turn_on
       entity_id: script.briefing_telegram
 
@@ -336,23 +336,23 @@
 - alias: system_login_failure
   id: system_login_failure
   initial_state: true
-  trigger:
-    - platform: persistent_notification
+  triggers:
+    - trigger: persistent_notification
       id: 'http-login'
       update_type:
         - added
         - updated
       notification_id: http-login
-    - platform: persistent_notification
+    - trigger: persistent_notification
       id: 'ip-ban'
       update_type:
         - added
         - updated
       notification_id: ip-ban
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
+  actions:
     - action: counter.increment
       entity_id: counter.badlogin_counter
     # - action: notify.telegram
@@ -396,14 +396,14 @@
 - alias: system_blocked_ip
   id: system_blocked_ip
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: persistent_notification.ip_ban
       to:
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: >
@@ -422,17 +422,17 @@
   mode: queued
   max: 10
   max_exceeded: silent
-  trigger:
-    - platform: time_pattern
+  triggers:
+    - trigger: time_pattern
       hours: "/1"
     # - platform: event
     #   event_type: entity_registry_updated
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
+  actions:
     - action: group.set
       data:
         object_id: updates_monitor
@@ -482,10 +482,10 @@
 - alias: system_battery_level_check
   id: system_battery_level_check
   initial_state: true
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "20:30:00"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: >-
@@ -512,10 +512,10 @@
 - alias: system_database_purge
   id: system_database_purge
   initial_state: true
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "02:00:00"
-  action:
+  actions:
     - action: recorder.purge
       data:
         keep_days: 3
@@ -532,10 +532,10 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: transmission_downloaded_torrent
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001F4AF Загрузка завершена {{trigger.event.data.name}}"
@@ -548,16 +548,16 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id:
         - persistent_notification.homeassistant_check_config
         - persistent_notification.invalid_config
       to: "notifying"
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0000274C Перезапуск отменён. Конфигурация содержит ошибки {{ trigger.to_state.attributes.message }}"
@@ -579,12 +579,12 @@
   mode: queued
   max: 10
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         level: ERROR
-  condition:
+  conditions:
     # - condition: template
     #   value_template: >-
     #     {{ not
@@ -598,7 +598,7 @@
         }}
     - condition: template
       value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: |
@@ -615,16 +615,16 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id: sensor.error_counter_hourly
       above: 100
-  condition:
+  conditions:
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'), 0)|int(0) ,0) > 15 }}"
     - condition: template
       value_template: "{{ (states('sensor.error_counter_hourly')|int(0) % 50) == 0 }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{states('sensor.error_counter_hourly')|int(0)}}"
@@ -637,16 +637,16 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id: sensor.warning_counter_hourly
       above: 100
-  condition:
+  conditions:
     - condition: template
       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_warning_per_hour', 'last_triggered'), 0)|int(0) ,0) > 15 }}"
     - condition: template
       value_template: "{{ (states('sensor.warning_counter_hourly')|int(0) % 50) == 0 }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U000026a0 Внимание! Количество предупреждений в час выросло до {{states('sensor.warning_counter_hourly')|int(0)}}"
@@ -660,16 +660,16 @@
   mode: queued
   max: 10
   max_exceeded: silent    
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         level: FATAL
-    - platform: event
+    - trigger: event
       event_type: system_log_event
       event_data:
         level: CRITICAL
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f534 Критическая ошибка системы: {{ trigger.event.data.message | e}}!"
@@ -680,11 +680,11 @@
 # - alias: system_radiation_alert
 #   id: system_radiation_alert
 #   initial_state: true
-#   trigger:
-#     - platform: numeric_state
+#   triggers:
+#     - trigger: numeric_state
 #       entity_id: sensor.esp32_ble_hs_dynamic_intensity
 #       above: 100
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.esp32_ble_hs_dynamic_intensity')|int(0)}}мсв/ч!"
@@ -698,16 +698,16 @@
   mode: queued
   max: 10
   max_exceeded: silent      
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: switch.system_silent_mode
       from: "on"
       to: "off"
-    - platform: state
+    - trigger: state
       entity_id: switch.system_silent_mode
       from: "off"
       to: "on"
-  action:
+  actions:
     - action: switch.turn_{{states('switch.system_silent_mode')}}
       entity_id: switch.esp32_domofon_mute, switch.sonoff_mini_1_mute
     - action: input_number.set_value
@@ -736,8 +736,8 @@
   mode: queued
   max: 5
   max_exceeded: silent
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id:
         #- binary_sensor.54ef44cf0fb9_gateway
         - binary_sensor.54ef444329cd_gateway
@@ -752,7 +752,7 @@
         - binary_sensor.54ef44439a55_gateway
         - binary_sensor.54ef4443a353_gateway
       to: "off"
-    - platform: state
+    - trigger: state
       entity_id:
         #- binary_sensor.54ef44cf0fb9_gateway
         - binary_sensor.54ef444329cd_gateway
@@ -767,13 +767,13 @@
         - binary_sensor.54ef44439a55_gateway
         - binary_sensor.54ef4443a353_gateway
       from: "off"
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
     - condition: numeric_state
       entity_id: sensor.ha_uptime
       above: 0
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {% if trigger.from_state.state in ['on','off','unknown','unavailable'] %}{{trigger.from_state.state}}{%else%}online{%endif%} -> {% if trigger.to_state.state in ['on','off','unknown','unavailable'] %}{{trigger.to_state.state}}{%else%}online{%endif%}"
@@ -786,13 +786,13 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.0x00158d000323c87c_contact
       to:
       for:
         seconds: 2
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: >
@@ -808,10 +808,10 @@
 - alias: system_dark_mode
   id: system_dark_mode
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: switch.system_dark_mode
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: >
@@ -831,15 +831,15 @@
 # ##################################
 # - alias: system_hacs_new_repo
 #   initial_state: false
-#   trigger:
-#     - platform: event
+#   triggers:
+#     - trigger: event
 #       event_type: hacs/repository
 #       event_data:
 #         service: registration
-#   condition:
+#   conditions:
 #     - condition: template
 #       value_template: "{{ trigger.event.data.repository is defined }}"
-#   action:
+#   actions:
 #     - action: persistent_notification.create
 #       data:
 #         title: New repository in HACS
@@ -855,22 +855,22 @@
 - alias: system_hot_water_pipe
   id: system_hot_water_pipe
   initial_state: true
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id: sensor.esp32_node_b_hot_pipe
       below: 40
       for:
         minutes: 5
-    - platform: numeric_state
+    - trigger: numeric_state
       entity_id: sensor.esp32_node_b_hot_pipe
       above: 40
       for:
         minutes: 5        
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.hot_water
       state: "on"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f321 Внимание! Горячая вода {% if states('sensor.esp32_node_b_hot_pipe')|float(0) > 40 %}включена{%else%}выключена{%endif%}!"
@@ -881,13 +881,13 @@
 - alias: system_cold_water_pipe
   id: system_cold_water_pipe
   initial_state: false
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id: sensor.esp32_node_b_cold_pipe
       above: sensor.0x00158d0001e58754_temperature
       for:
         minutes: 5
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_node_b_cold_pipe')|int(0)}}°C"
@@ -898,18 +898,18 @@
 - alias: system_central_heating
   id: system_central_heating
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.central_heating
       to: "off"
       for:
         minutes: 30
-    - platform: state
+    - trigger: state
       entity_id: binary_sensor.central_heating
       to: "on"
       for:
         minutes: 30
-  action:
+  actions:
     - action: input_boolean.turn_{{states('binary_sensor.central_heating')}}
       entity_id: input_boolean.central_heating
     - action: notify.telegram
@@ -922,19 +922,19 @@
 - alias: system_heating_pipes_warning
   id: system_heating_pipes_warning
   initial_state: true
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id:
         - sensor.esp32_node_v_heating_pipe
         - sensor.esp32_node_mb_heating_pipe
       below: 30
       for:
         minutes: 5
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.central_heating
       state: "on"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f321 Внимание! Температура трубы {{trigger.to_state.attributes.friendly_name}} ниже 30°C"
@@ -948,10 +948,10 @@
   mode: queued
   max: 100
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: state_changed
-  condition:
+  conditions:
     - condition: state
       entity_id: input_boolean.ha_shutdown
       state: "off"
@@ -967,7 +967,7 @@
     - condition: template
       value_template: >-
         {{ trigger.event.data.new_state.state in ['unavailable'] or trigger.event.data.old_state.state in ['unavailable'] }}
-  action:
+  actions:
     - if:
         - condition: template
           value_template: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
@@ -988,13 +988,13 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
-    - platform: numeric_state
+  triggers:
+    - trigger: numeric_state
       entity_id: sensor.zigbee_devices_unavailable
       below: 1
       for:
         seconds: 5
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U00002705 ZB: Все устройства онлайн!"
@@ -1008,8 +1008,8 @@
   mode: queued
   max: 15
   max_exceeded: silent
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id:
         - binary_sensor.esp32_strip_1s_bookshelf_mb_status
         - binary_sensor.digma_ir_k_status
@@ -1049,11 +1049,14 @@
         - binary_sensor.sp111_socket_1_status
         - binary_sensor.sonoff_basic_4_status
         #- binary_sensor.shp6_socket_1_status
+        - binary_sensor.esp32_strip_1s_entrance_hb_status
+        - binary_sensor.esp32_strip_1s_wadrobe_hb_status
+        
       from: "on"
       to: "off"
       for:
         minutes: 2
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f534 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
@@ -1067,8 +1070,8 @@
   mode: queued
   max: 15
   max_exceeded: silent
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id:
         - binary_sensor.esp32_strip_1s_bookshelf_mb_status
         - binary_sensor.digma_ir_k_status
@@ -1108,15 +1111,17 @@
         - binary_sensor.sp111_socket_1_status
         - binary_sensor.sonoff_basic_4_status
         #- binary_sensor.shp6_socket_1_status
+        - binary_sensor.esp32_strip_1s_entrance_hb_status
+        - binary_sensor.esp32_strip_1s_wadrobe_hb_status
       from: "off"
       to: "on"
       for:
         seconds: 5
-  condition:
+  conditions:
     - condition: numeric_state
       entity_id: sensor.ha_uptime
       above: 0
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f7e2 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
@@ -1131,16 +1136,16 @@
 # ##################################
 # - alias: system_weather_geomagnetic
 #   initial_state: false
-#   trigger:
-#     - platform: time_pattern
+#   triggers:
+#     - trigger: time_pattern
 #       hours: "/1"
-#   condition:
+#   conditions:
 #     - condition: state
 #       entity_id: binary_sensor.tod_day
 #       state: "on"
 #     - condition: template
 #       value_template: "{{(as_timestamp(now())|int(0) - as_timestamp(states.sensor.sensor.gismeteo_geomagnetic_field.last_changed)|int(0)) < 60*60 }}"
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: >-
@@ -1155,17 +1160,17 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         level: ERROR
-  condition:
+  conditions:
     - condition: template
       value_template: '{{ "xiaomi_gateway3" in (trigger.event.data.message|string) or "xiaomi_gateway3" in (trigger.event.data.message|string) }}'
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U000026d4 GW3 Ошибка обнаружена в логе!"
@@ -1178,24 +1183,24 @@
   initial_state: true
   mode: single
   max_exceeded: silent
-  trigger:
+  triggers:
     # - platform: event
     #   event_type: system_log_event
     #   event_data:
     #     level: ERROR
-    - platform: state
+    - trigger: state
       entity_id: switch.kiosk_screen
       to: "unavailable"
       id: "to_unavail"
       for:
         minutes: 5
-    - platform: state
+    - trigger: state
       entity_id: switch.kiosk_screen
       from: "unavailable"
       id: "from_unavail"
       for:
         minutes: 1
-  condition:
+  conditions:
     # - condition: template
     #   value_template: "{{ 'custom_components.fullykiosk.coordinator' in (trigger.event.data.name|string) or 'custom_components.fullykiosk.coordinator' in (trigger.event.data.name|string) }}"
     # - condition: template
@@ -1204,7 +1209,7 @@
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: template
       value_template: "{{(as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_fully_browser_restart', 'last_triggered'),0)|int(0)) > 5*60 }}"
-  action:
+  actions:
     - choose:
         - conditions:
             - condition: trigger
@@ -1230,15 +1235,15 @@
   max: 10
   max_exceeded: silent
   mode: queued
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: system_log_event
       event_data:
         level: WARNING
-  condition:
+  conditions:
     - condition: template
       value_template: '{{ "Already running" in (trigger.event.data.message|string) }}'
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U000026d4 Warning! {{ trigger.event.data.message | join | e }}"
@@ -1249,15 +1254,15 @@
 - alias: system_automation_reload
   id: system_automation_reload
   initial_state: true
-  trigger:
+  triggers:
     # - platform: event
     #   event_type: call_service
     #   event_data:
     #     domain: automation
     #     service: reload
-    - platform: event
+    - trigger: event
       event_type: automation_reloaded
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f4ac Автоматизации перезагружены!"
@@ -1268,13 +1273,13 @@
 - alias: system_scripts_reload
   id: system_scripts_reload
   initial_state: true
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: call_service
       event_data:
         domain: script
         service: reload
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f4ac Скрипты перезагружены!"
@@ -1284,10 +1289,10 @@
 # ##################################
 # - alias: system_gw3_devices_group_renewal
 #   initial_state: true
-#   trigger:
-#     - platform: time_pattern
+#   triggers:
+#     - trigger: time_pattern
 #       minutes: '/30'
-#   action:
+#   actions:
 #     - action: group.set
 #       data:
 #         object_id: gw3_devices
@@ -1302,10 +1307,10 @@
 - alias: system_devices_stats
   id: system_devices_stats
   initial_state: true
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "23:59:55"
-  action:
+  actions:
     - action: input_number.set_value
       data:
         entity_id: input_number.breather_v_run_time
@@ -1332,20 +1337,20 @@
 - alias: system_ac_power_status
   id: system_ac_power_status
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.0x00158d0003262acc_contact
       to: "on"
       from: "off"
       for:
         seconds: 3
-    - platform: state
+    - trigger: state
       entity_id: binary_sensor.0x00158d0003262acc_contact
       to: "off"
       from: "on"
       for:
         seconds: 3
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: >
@@ -1362,8 +1367,8 @@
   mode: queued
   max: 15
   max_exceeded: silent
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id:
         - sensor.esp32_strip_1s_bookshelf_mb_uptime_s
         - sensor.digma_ir_k_uptime_s
@@ -1405,10 +1410,10 @@
       from: "unavailable"
       for:
         seconds: 10
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ 0 <= states(trigger.entity_id)|int(-1) < 30 }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0000267b ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}} перезапустился, аптайм {{states(trigger.entity_id)}}с!"
@@ -1424,13 +1429,13 @@
 # - alias: system_air_quality_pm25
 #   id: system_air_quality_pm25
 #   initial_state: true
-#   trigger:
-#     - platform: numeric_state
+#   triggers:
+#     - trigger: numeric_state
 #       entity_id: sensor.waqi_pm25
 #       above: 100
 #       for:
 #         hours: 3
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U0001f32a Внимание! Уровень PM2.5 высокий! {{states('sensor.waqi_pm25')}}aqi!"
@@ -1441,13 +1446,13 @@
 # - alias: system_air_quality_pm10
 #   id: system_air_quality_pm10
 #   initial_state: true
-#   trigger:
-#     - platform: numeric_state
+#   triggers:
+#     - trigger: numeric_state
 #       entity_id: sensor.waqi_pm10
 #       above: 100
 #       for:
 #         hours: 3
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U0001f32a Внимание! Уровень PM10 высокий! {{state_attr('sensor.waqi_pm10')}}aqi!"
@@ -1461,17 +1466,17 @@
 #   max: 50
 #   max_exceeded: silent
 #   initial_state: true
-#   trigger:
-#     - platform: event
+#   triggers:
+#     - trigger: event
 #       event_type: state_changed
-#   condition:
+#   conditions:
 #     - condition: template
 #       value_template: "{{ trigger.event.data.new_state.state in ['unavailable'] }}"
 #     - condition: template
 #       value_template: "{{ 'esp01_air_freshener' not in trigger.event.data.entity_id }}"
 #     - condition: template
 #       value_template: "{{ 'i5_' not in trigger.event.data.entity_id }}"
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "{{trigger.event.data.entity_id}}: {{trigger.event.data.old_state.state}} -> {{trigger.event.data.new_state.state}}"
@@ -1482,11 +1487,11 @@
 - alias: system_briefing_entities_force_update
   id: system_briefing_entities_force_update
   initial_state: true
-  trigger:
-    - platform: time
+  triggers:
+    - trigger: time
       at: "06:50:00"
       id: "id_morning"
-    - platform: time
+    - trigger: time
       at: "20:50:00"
       id: "id_evening"
   # condition:
@@ -1499,7 +1504,7 @@
   #         {{ (act_time|int(0)-as_timestamp(sensor.last_updated)|int(0))>30*60 }}
   #         {%- endif %}
   #       {%- endfor %}
-  action:
+  actions:
     - action: hassio.addon_restart
       data:
         addon: a0d7b954_appdaemon
@@ -1595,14 +1600,20 @@
     # - action: notify.telegram
     #   data:
     #     message: "delta - {{as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired'))}}"
-        
     - if: 
         - condition: template
           value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) + 0 ) > 30 }}"
       then:
         - action: notify.telegram
           data:
-            message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{as_timestamp(state_attr('sensor.yandex_response','time_fired'))  | timestamp_custom('%d-%m-%Y %H:%M:%S',true,0)}} "
+            message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{as_timestamp(state_attr('sensor.yandex_response','time_fired'))  | timestamp_custom('%d-%m-%Y %H:%M:%S',true,0)}}"
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.ya_weather_error
+      else:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.ya_weather_error
     - wait_template: >
         {% set ent_id = 'sensor.yandex_st' + '_alice_state' %}
         {{ is_state(ent_id,'idle') }}
@@ -1631,20 +1642,20 @@
 - alias: system_hot_water_boolean_change
   id: system_hot_water_boolean_change
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.hot_water
       to:
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
-    - platform: event
+    - trigger: event
       event_type: automation_reloaded
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: template
       value_template: "{{ states('binary_sensor.hot_water') in ['on','off'] }}"
-  action:
+  actions:
     - action: input_boolean.turn_{{states('binary_sensor.hot_water')}}
       entity_id: input_boolean.hot_water
 
@@ -1654,20 +1665,20 @@
 - alias: system_cold_water_boolean_change
   id: system_cold_water_boolean_change
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.cold_water
       to:
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
-    - platform: event
+    - trigger: event
       event_type: automation_reloaded
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: template
       value_template: "{{ states('binary_sensor.cold_water') in ['on','off'] }}"
-  action:
+  actions:
     - action: input_boolean.turn_{{states('binary_sensor.cold_water')}}
       entity_id: input_boolean.cold_water
 
@@ -1677,18 +1688,18 @@
 - alias: system_central_heating_boolean_change
   id: system_central_heating_boolean_change
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.central_heating
       to:
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
-    - platform: event
+    - trigger: event
       event_type: automation_reloaded
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state('binary_sensor.central_heating','on') or is_state('binary_sensor.central_heating','off') }}"
-  action:
+  actions:
     - action: input_boolean.turn_{{states('binary_sensor.central_heating')}}
       entity_id: input_boolean.central_heating
 
@@ -1698,20 +1709,19 @@
 - alias: system_light_dark_mode_on_action
   id: system_light_dark_mode_on_action
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: switch.system_dark_mode
       from: "off"
       to: "on"
-  action:
+  actions:
     - action: light.turn_off
       entity_id:
         - light.esp32_node_k_light
         - light.mono_strip_1_light
         - light.0x54ef441000680083_channel_2
         - light.0x54ef441000680083_channel_1
-        - light.led_strip_hb
-        - light.led_strip_entrance_hb
+        - light.esp32_strip_1s_entrance_hb_rgb
 
 # ##################################
 # System - Wallpanel charge
@@ -1722,19 +1732,19 @@
 #   mode: queued
 #   max: 10
 #   max_exceeded: silent
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: sensor.wp_digma8027_battery_level
-#     - platform: state
+#     - trigger: state
 #       entity_id: switch.sonoff_1000d03987
-#   condition:
+#   conditions:
 #     - condition: template
 #       value_template: >
 #         {% set ignore = ['unknown', 'unavailable', 'none'] %}
 #         {{ trigger.from_state.state not in ignore and
 #           trigger.to_state.state not in ignore and
 #           trigger.to_state.state != trigger.from_state.state }}
-#   action:
+#   actions:
 #     - choose:
 #         - conditions:
 #             - condition: numeric_state
@@ -1790,20 +1800,20 @@
 # - alias: system_sls_state_change
 #   id: system_sls_state_change
 #   initial_state: true
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: binary_sensor.sls_gateway_state
 #       to:
 #       for:
 #         seconds: 5
-#   condition:
+#   conditions:
 #     - condition: template
 #       value_template: >
 #         {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
 #         {{ trigger.from_state.state not in ignore and
 #           trigger.to_state.state not in ignore and
 #           trigger.to_state.state != trigger.from_state.state }}
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: >-
@@ -1815,12 +1825,12 @@
 # - alias: system_wallpanel_connection
 #   id:  system_wallpanel_connection
 #   initial_state: false
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: binary_sensor.wp_digma801_motion
 #       for:
 #         minutes: 1
-#   condition:
+#   conditions:
 #     - condition: template
 #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
 #     - condition: template
@@ -1829,7 +1839,7 @@
 #         {{ (trigger.from_state.state in ignore or
 #           trigger.to_state.state in ignore) and
 #           trigger.to_state.state != trigger.from_state.state }}
-#   action:
+#   actions:
 #     # - action: notify.telegram
 #     #   data:
 #     #     message: "\U000026a0 Внимание! WallPanel {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
@@ -1879,25 +1889,25 @@
 # - alias: system_wallpanel_relaunch
 #   id:  system_wallpanel_relaunch
 #   initial_state: true
-#   trigger:
-#     - platform: time_pattern
+#   triggers:
+#     - trigger: time_pattern
 #       minutes: "/30"
-#     - platform: homeassistant
+#     - trigger: homeassistant
 #       event: start
-#     - platform: event
+#     - trigger: event
 #       event_type: automation_reloaded
-#     - platform: state
+#     - trigger: state
 #       entity_id: binary_sensor.wp_digma801_screen
 #       to: "on"
-#     - platform: state
+#     - trigger: state
 #       entity_id: binary_sensor.wp_digma801_motion
 #       to: "on"
-#   condition:
+#   conditions:
 #     - condition: template
 #       value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_wallpanel_relaunch', 'last_triggered'),0)|int(0)) > 5 }}"
 #     - condition: template
 #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-#   action:
+#   actions:
 #     - action: mqtt.publish
 #       data:
 #         topic: "wallpanel/digma801/command"
@@ -1911,14 +1921,14 @@
   mode: single
   max_exceeded: silent
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: persistent_notification.config_entry_discovery
       to: "notifying"
-  condition:
+  conditions:
     - condition: template
       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001F4DF Найдено новое устройство!"
@@ -1932,14 +1942,14 @@
 # - alias: system_cert_validity_check
 #   id:  system_cert_validity_check
 #   initial_state: true
-#   trigger:
-#     - platform: time
+#   triggers:
+#     - trigger: time
 #       at: "20:00:00"
-#   condition:
+#   conditions:
 #     - condition: numeric_state
 #       entity_id: sensor.cert_validity_left
 #       below: 16
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U000026a0 Срок действия сертификата заканчивается через 15 дней! Запуск обновления сертификата"
@@ -1947,7 +1957,7 @@
 #       data:
 #         addon: core_letsencrypt
 #     - wait_for_trigger:
-#         - platform: numeric_state
+#         - trigger: numeric_state
 #           entity_id: sensor.cert_validity_left
 #           above: 60
 #       timeout:
@@ -1963,10 +1973,10 @@
 # - alias: system_ya_response
 #   id:  system_ya_response
 #   initial_state: true
-#   trigger:
-#     - platform: event
+#   triggers:
+#     - trigger: event
 #       event_type: yandex_station_response
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "{{ trigger.event.data.text }}"
@@ -1979,10 +1989,10 @@
   initial_state: false
   mode: queued
   max: 70
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: state_changed
-  condition:
+  conditions:
     - condition: numeric_state
       entity_id: sensor.ha_uptime
       above: 1  
@@ -1995,7 +2005,7 @@
     - condition: template
       value_template: >-
         {{ state_attr(trigger.event.data.entity_id, 'last_missed') |int(0) > 9 }}
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U000023ed Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} пропустил {{ state_attr(trigger.event.data.entity_id, 'last_missed') | format(morph='пакет', as_text=false) }}!"
@@ -2008,10 +2018,10 @@
 #   initial_state: true
 #   mode: queued
 #   max: 70
-#   trigger:
-#     - platform: event
+#   triggers:
+#     - trigger: event
 #       event_type: state_changed
-#   condition:
+#   conditions:
 #     - condition: state
 #       entity_id: input_boolean.ha_shutdown
 #       state: 'off'
@@ -2027,7 +2037,7 @@
 #     - condition: template
 #       value_template: >-
 #         {{ trigger.event.data.new_state.attributes.new_resets |int(0) > trigger.event.data.old_state.attributes.new_resets |int(0) }}
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U0001f501 Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} перезапустился ({{ trigger.event.data.old_state.attributes.new_resets |int(0)}} -> {{trigger.event.data.new_state.attributes.new_resets |int(0) }})!"
@@ -2040,12 +2050,12 @@
 #   initial_state: true
 #   mode: queued
 #   max: 70
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: sensor.zigbee_devices_last_resets
-#   condition:
+#   conditions:
 #     - "{{ (states('sensor.zigbee_devices_last_resets') not in ['unknown', 'unavailable', 'none']) and (states('sensor.zigbee_devices_last_resets') != '')  }}"
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U0001f578️ Внимание! Обнаружены перезагрузки zigbee устройств: {{ states('sensor.zigbee_devices_last_resets') }}."
@@ -2056,8 +2066,8 @@
 # - alias: system_ya_station_mode
 #   id: system_ya_station_mode
 #   initial_state: true
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id:
 #         - media_player.yandex_k
 #         - media_player.yandex_hb
@@ -2067,7 +2077,7 @@
 #       attribute: connection_class
 #       for:
 #         seconds: 5
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: >-
@@ -2082,10 +2092,10 @@
   max: 500
   max_exceeded: silent
   initial_state: true
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: esphome.on_ble_advertise
-  action:
+  actions:
     - action: ble_monitor.parse_data
       data:
         packet: "{{ trigger.event.data.packet }}"
@@ -2099,13 +2109,13 @@
 #   mode: single
 #   max_exceeded: silent
 #   initial_state: true
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: sensor.qiwi_usd_rate_filtered
 #       to:
 #       for:
 #         minutes: 3
-#   condition:
+#   conditions:
 #     - condition: template
 #       value_template: >
 #         {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
@@ -2114,7 +2124,7 @@
 #           trigger.to_state.state not in ignore and
 #           trigger.to_state.state != trigger.from_state.state
 #         }}
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: >-
@@ -2143,21 +2153,21 @@
   mode: single
   max_exceeded: silent
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: media_player.yandex_s
       to: "playing"
       id: "by_state"
-    - platform: time
+    - trigger: time
       at: "23:00:00"
       id: "by_time"
-  condition:
+  conditions:
     - condition: state
       entity_id: switch.system_music_allowed
       state: "off"
     - condition: template
       value_template: "{{states('sensor.time').split(':')[0]|int >= 23 or states('sensor.time').split(':')[0]|int < 7}}"
-  action:
+  actions:
     - if:
         - condition: trigger
           id: "by_time"
@@ -2192,11 +2202,11 @@
 - alias: system_supervisor_unhealthy
   id: system_supervisor_unhealthyn
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.supervisor_is_healthy
       to:
-  action:
+  actions:
     - choose:
         - conditions:
             - condition: state
@@ -2220,8 +2230,8 @@
   max: 10
   max_exceeded: silent      
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       id: "non_local"
       entity_id:
         - binary_sensor.yandex_k
@@ -2231,7 +2241,7 @@
         - binary_sensor.yandex_mb
       from: "off"
       to: "on"
-    - platform: state
+    - trigger: state
       entity_id:
         - binary_sensor.yandex_k
         - binary_sensor.yandex_s
@@ -2240,7 +2250,7 @@
         - binary_sensor.yandex_mb
       from: "on"
       to: "off"
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f50a Станция {{trigger.to_state.name | e}} {% if trigger.id == 'non_local' -%} отключила локальный режим управления {%- else -%} перешла в локальный режим управления {%- endif %}"
@@ -2254,8 +2264,8 @@
 #   mode: queued
 #   max: 10
 #   max_exceeded: silent
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id:
 #         - update.1pm_led_mb_firmware_update
 #         - update.1pm_led_v_firmware_update
@@ -2283,7 +2293,7 @@
 #         - update.switch_8_60_v
 #         - update.switch_mini
 #       to: 'on'
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U0001f9f0 Обновление доступно для {{device_attr(trigger.entity_id, 'name')}}"
@@ -2294,26 +2304,26 @@
 # - alias: system_wallpanel_status
 #   id:  system_wallpanel_status
 #   initial_state: true
-#   trigger:
+#   triggers:
 #     # - platform: state
 #     #   entity_id: binary_sensor.wp_digma801_motion
 #     #   to: 'unavailable'
 #     #   for:
 #     #     seconds: 30
 
-#     - platform: state
+#     - trigger: state
 #       entity_id: binary_sensor.wp_digma801_connection
 #       to: 'off'
 #       from: 'on'
 #       for:
 #         seconds: 30
-#     - platform: state
+#     - trigger: state
 #       entity_id: binary_sensor.wp_digma801_connection
 #       to: 'on'
 #       from: 'off'
 #       for:
 #         seconds: 30
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U0001f4fa Wallpanel: {% if is_state('binary_sensor.wp_digma801_connection','on')%}связь восстановлена{%else%}потеря связи{%endif%}"
@@ -2324,19 +2334,19 @@
 # - alias: system_pinhole_status
 #   id: system_pinhole_status
 #   initial_state: true
-#   trigger:
+#   triggers:
 #     # - platform: state
 #     #   entity_id: binary_sensor.wp_digma801_motion
 #     #   to: 'unavailable'
 #     #   for:
 #     #     seconds: 30
 
-#     - platform: state
+#     - trigger: state
 #       entity_id: binary_sensor.pinhole_state
 #       to:
 #       for:
 #         minutes: 1
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "\U0001f4f7 PinholeCam: {% if is_state('binary_sensor.pinhole_state','off')%}потеря связи{%else%}связь восстановлена{%endif%}"
@@ -2354,18 +2364,18 @@
 # - alias: system_updates_pending
 #   id: system_updates_pending
 #   mode: restart
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: sensor.updater_core
-#     - platform: state
+#     - trigger: state
 #       entity_id: sensor.updater_hassos
-#     - platform: state
+#     - trigger: state
 #       entity_id: sensor.updater_supervisor
-#     - platform: state
+#     - trigger: state
 #       entity_id: sensor.hacs
-#     - platform: homeassistant
+#     - trigger: homeassistant
 #       event: start
-#   action:
+#   actions:
 #     - alias: "Update Persistent Notification"
 #       choose:
 #         conditions:
@@ -2419,11 +2429,11 @@
 
 # - alias: system_wallpanel_status_url
 #   id: system_wallpanel_status_url
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: binary_sensor.wp_digma801_connection
 #       attribute: currentUrl
-#   action:
+#   actions:
 #     - action: notify.telegram
 #       data:
 #         message: "{{ trigger.from_state.attribute.currentUrl }} -> {{ trigger.to_state.attribute.currentUrl }}"
@@ -2436,10 +2446,10 @@
 - alias: system_fully_integration_reload
   id: system_fully_integration_reload
   initial_state: true
-  trigger:
-    - platform: time_pattern
+  triggers:
+    - trigger: time_pattern
       minutes: "/10"
-  condition:
+  conditions:
     - condition: state
       entity_id: sensor.kiosk_battery
       state:
@@ -2447,7 +2457,7 @@
         - "unavailable"
       for:
         minutes: 5
-  action:
+  actions:
     - action: homeassistant.reload_config_entry
       data:
         entry_id: 2eb872806bf50b75953836ae0584662b
@@ -2458,14 +2468,14 @@
 - alias: system_fully_tablet_charge_on
   id: system_fully_tablet_charge_on
   initial_state: true
-  trigger:
-    - platform: time_pattern
+  triggers:
+    - trigger: time_pattern
       minutes: "/15"
-  condition:
+  conditions:
     - condition: numeric_state
       entity_id: sensor.kiosk_battery
       below: 20
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f50c Fully: Принудительное включение зарядки"
@@ -2478,24 +2488,24 @@
 - alias: system_fully_browser_restart
   id: system_fully_browser_restart
   initial_state: true
-  trigger:
-    - platform: time_pattern
+  triggers:
+    - trigger: time_pattern
       hours: "/1"
       id: "auto"
-    - platform: event
+    - trigger: event
       event_type: xiaomi_aqara.click
       event_data:
         entity_id: sensor.28d1273bc2f4_action
         click_type: single
       id: "manual"
-  condition:
+  conditions:
     - condition: trigger
       id: "auto"
     - condition: template
       value_template: "{{ 23 > now().hour > 6 }}"
-  action:
+  actions:
     # - wait_for_trigger:
-    #   condition:
+    #   conditions:
     # - condition: state
     #   entity_id: switch.kiosk_screensaver
     - action: button.press
@@ -2512,12 +2522,12 @@
   mode: queued
   max: 50
   max_exceeded: silent
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: repairs_issue_registry_updated
       event_data:
         service: create
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001F41B Проблема в <b>{{ trigger.event.data.domain | e }}</b>, детали: <b>{{ trigger.event.data.issue_id | e }}</b>"
@@ -2528,14 +2538,14 @@
 - alias: system_repair_sensor_update
   id: system_repair_sensor_update
   mode: restart
-  trigger:
-    - platform: event
+  triggers:
+    - trigger: event
       event_type: repairs_issue_registry_updated
       event_data:
         service: create
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
-  action:
+  actions:
     - action: homeassistant.update_entity
       data:
         entity_id: sensor.repairs_state
@@ -2546,21 +2556,21 @@
 # - alias: system_digma100_camera_restart
 #   id: system_digma100_camera_restart
 #   initial_state: false
-#   trigger:
-#     - platform: state
+#   triggers:
+#     - trigger: state
 #       entity_id: camera.digma100_digma100
 #       to: 'unavailable'
 #       for:
 #         minutes: 5
-#     - platform: homeassistant
+#     - trigger: homeassistant
 #       event: start
-#     - platform: event
+#     - trigger: event
 #       event_type: automation_reloaded
-#   condition:
+#   conditions:
 #     - condition: state
 #       entity_id: camera.digma100_digma100
 #       state: 'unavailable'
-#   action:
+#   actions:
 #     - action: switch.turn_off
 #       entity_id: switch.digma_strip_hb_relay2
 #     - delay:
@@ -2574,15 +2584,15 @@
 - alias: system_day_night_switch
   id: system_day_night_switch
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: binary_sensor.tod_day
       to: 'on'
-  condition:
+  conditions:
     - condition: state
       entity_id: switch.system_security_mode
       state: 'off'
-  action:
+  actions:
     - action: switch.turn_off
       entity_id: switch.system_silent_mode
       
@@ -2593,13 +2603,13 @@
 # - alias: system_go2rtc_restart
 #   id: system_go2rtc_restart
 #   initial_state: true
-#   trigger:
-#     - platform: numeric_state
+#   triggers:
+#     - trigger: numeric_state
 #       entity_id: sensor.go2rtc_cpu_percent
 #       above: 5
 #       for:
 #         minutes: 3
-#   action:
+#   actions:
 #     # - action: hassio.addon_restart
 #     #   data:
 #     #     addon: a889bffc_go2rtc
@@ -2613,10 +2623,10 @@
 - alias: system_espresence_nodes_restart
   id: system_espresence_nodes_restart
   initial_state: true
-  trigger:
-    - platform: time_pattern
+  triggers:
+    - trigger: time_pattern
       hours: "/3"
-  action:
+  actions:
     - action: button.press
       entity_id:
         - button.espresense_kitchen_restart
@@ -2630,12 +2640,12 @@
 - alias: system_doorbell_volume
   id: system_doorbell_volume
   initial_state: true
-  trigger:
-    - platform: time_pattern
+  triggers:
+    - trigger: time_pattern
       hours: "/1"
-    - platform: homeassistant
+    - trigger: homeassistant
       event: start
-  action:
+  actions:
     - action: number.set_value
       data:
         entity_id: number.up_chime_volume
@@ -2648,11 +2658,11 @@
 - alias: system_ds621_set_fan_speed
   id: system_ds621_set_fan_speed
   initial_state: true
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: input_select.ds1621_fan_speed_select
       to:
-  action:
+  actions:
     - action: mqtt.publish
       data:
         payload: "{{ states('input_select.ds1621_fan_speed_select') | lower }}"
@@ -2667,12 +2677,12 @@
 # - alias: system_ds621_set_fan_speed_topic_reset
 #   id: system_ds621_set_fan_speed_topic_reset
 #   initial_state: true
-#   trigger:
-#     - platform: event
+#   triggers:
+#     - trigger: event
 #       event_type: timer.finished
 #       event_data:
 #         entity_id: timer.1621_fan_speed
-#   action:
+#   actions:
 #     - action: mqtt.publish
 #       data:
 #         payload: ""
@@ -2688,8 +2698,8 @@
   mode: queued
   max: 50
   max_exceeded: silent  
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id:
         - sensor.ms01_enp3s0f0np0_speed
         - sensor.ms01_enp3s0f1np1_speed
@@ -2700,7 +2710,7 @@
         - sensor.ms01_enp1s0f2_speed
         - sensor.ms01_enp1s0f3_speed
       to:
-  action:
+  actions:
     - variables:
         old_value: >-
           {%if trigger.from_state.state|float(0) < 1000 %}
@@ -2727,11 +2737,11 @@
   mode: queued
   max: 50
   max_exceeded: silent  
-  trigger:
-    - platform: state
+  triggers:
+    - trigger: state
       entity_id: sensor.udm_last_active_ip
       to:
-  action:
+  actions:
     - action: notify.telegram
       data:
         message: "\U0001f6a6 {{trigger.to_state.name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"

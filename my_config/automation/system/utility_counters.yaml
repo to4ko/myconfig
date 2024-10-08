@@ -8,14 +8,14 @@
   - alias: system_water_cold_water_increase_counter
     id: system_water_cold_water_increase_counter
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.0x00158d0006d31d78_contact
         from: "on"
         to: "off"
         for:
           seconds: 5
-    action:
+    actions:
       - action: input_number.set_value
         data:
           entity_id: input_number.cold_water_meter
@@ -42,14 +42,14 @@
   - alias: system_water_hot_water_increase_counter
     id: system_water_hot_water_increase_counter
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.0x00158d000236fcd5_contact
         from: "on"
         to: "off"
         for:
           seconds: 5
-    action:
+    actions:
       - action: input_number.set_value
         data:
           entity_id: input_number.hot_water_meter
@@ -76,10 +76,10 @@
   - alias: system_power_meter_daily
     id: system_power_meter_daily
     initial_state: true
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: "23:59:30"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -116,7 +116,7 @@
                 data:
                   message: "\U0001f50c PZEM недоступен! Ожидаем"
               - wait_for_trigger:
-                  - platform: state
+                  - trigger: state
                     entity_id: binary_sensor.esp32_pzem_hb_status
                     to: "on"
                 timeout:
@@ -153,12 +153,12 @@
   - alias: system_new_month_notification
     id: system_new_month_notification
     initial_state: true
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: "00:00:10"
-    condition:
+    conditions:
       - "{{ now().timestamp() | timestamp_custom('%d') | int(0) == 21 }}"
-    action:
+    actions:
       - action: mqtt.publish
         data:
           topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
@@ -256,15 +256,15 @@
   - alias: system_power_15A_current
     id: system_power_15A_current
     initial_state: true
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.esp32_pzem_hb_current
         above: 15
         below: 20
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_15A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f6a8 Внимание! Общий ток более 15А!"
@@ -275,15 +275,15 @@
   - alias: system_power_20A_current
     id: system_power_20A_current
     initial_state: true
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.esp32_pzem_hb_current
         above: 20
         below: 30
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_20A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f6a8 Внимание! Общий ток более 20А!"
@@ -294,15 +294,15 @@
   - alias: system_power_30A_current
     id: system_power_30A_current
     initial_state: true
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.esp32_pzem_hb_current
         above: 30
         below: 40
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
-    action:
+    actions:
       - parallel:
           - action: notify.telegram
             data:
@@ -324,14 +324,14 @@
   - alias: system_power_tariff_change
     id: system_power_tariff_change
     initial_state: true
-    trigger:
-      - platform: homeassistant
+    triggers:
+      - trigger: homeassistant
         event: start
-      - platform: time
+      - trigger: time
         at: "07:00:00"
-      - platform: time
+      - trigger: time
         at: "23:00:00"
-    action:
+    actions:
     - action: select.select_option
       entity_id: select.energy_monthly_shelly_em
       data:
@@ -344,16 +344,16 @@
   - alias: system_high_power_while_not_home
     id: system_high_power_while_not_home
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/10"
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state('switch.system_security_mode','on') }}"
       - condition: numeric_state
         entity_id: sensor.esp32_pzem_hb_power
         above: 1200
-    action:
+    actions:
       - parallel:
           - action: notify.telegram
             data:
@@ -375,23 +375,23 @@
   - alias: system_water_consumption_not_home
     id: system_water_consumption_not_home
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.0x00158d0006d31d78_contact
         from: "on"
         to: "off"
         for:
           seconds: 5
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.0x00158d000236fcd5_contact
         from: "on"
         to: "off"
         for:
           seconds: 5
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state('switch.system_security_mode','on') }}"
-    action:
+    actions:
       - parallel:
           - action: notify.telegram
             data:
@@ -413,15 +413,15 @@
   - alias: system_water_sensor_outage
     id: system_water_sensor_outage
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/30"
-    condition:
+    conditions:
       - condition: template
         value_template: >
           {{ as_timestamp(now())- as_timestamp(states.sensor['0x00158d0006d31d78_zigbee'].last_updated) > 2*60*60 or
           as_timestamp(now())- as_timestamp(states.sensor['0x00158d000236fcd5_zigbee'].last_updated) > 2*60*60 }}
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0000274c Внимание! Нет данных от счетчика {% if as_timestamp(now())- as_timestamp(states.binary_sensor['0x00158d0006d31d78_contact'].last_updated) > 2*60*60 %}холодной{%else%}горячей{%endif%} воды!"

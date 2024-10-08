@@ -8,10 +8,10 @@
   - alias: master_bedroom_breather_auto_co2
     id: master_bedroom_breather_auto_co2
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: '/3'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_breather_auto_mb
         state: 'on'
@@ -20,7 +20,7 @@
           - condition: state
             entity_id: switch.system_breather_mb_last_toggle_by_user
             state: 'on'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -111,18 +111,18 @@
   # - alias: master_bedroom_breather_auto_alice
   #   id: master_bedroom_breather_auto_alice
   #   initial_state: true
-  #   trigger:
-  #     - platform: event
+  #   triggers:
+  #     - trigger: event
   #       event_type: yandex_intent
   #       event_data:
   #         text: Включи вентиляцию
   #       id: 'to_on'
-  #     - platform: event
+  #     - trigger: event
   #       event_type: yandex_intent
   #       event_data:
   #         text: Выключи вентиляцию
   #       id: 'to_off'
-  #   action:
+  #   actions:
   #     - action: media_player.play_media
   #       data:
   #         media_content_type: text
@@ -145,17 +145,17 @@
 # ##################################
   - alias: master_bedroom_breather_switches_interlock
     id: master_bedroom_breather_switches_interlock
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id:
           - switch.system_breather_auto_mb
           - switch.system_breather_mb_last_toggle_by_user
-    condition: 
+    conditions: 
       - condition: template
         value_template: "{{ trigger.to_state.state == 'on' }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
     - action: homeassistant.turn_off
       target:
         entity_id: >-
@@ -170,13 +170,13 @@
 # ##################################
   - alias: master_bedroom_breather_switches_default
     id: master_bedroom_breather_switches_default
-    trigger:
-      - platform: template
+    triggers:
+      - trigger: template
         value_template: "{{ is_state('switch.system_breather_auto_mb','off') and
                             is_state('switch.system_breather_mb_last_toggle_by_user','off') }}"
-    condition: 
+    conditions: 
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
     - action: switch.turn_on
       entity_id: switch.system_breather_auto_mb

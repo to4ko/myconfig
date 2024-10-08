@@ -10,18 +10,18 @@
 #     initial_state: true
 #     mode: single
 #     max_exceeded: silent
-#     trigger:
-#       - platform: event
+#     triggers:
+#       - trigger: event
 #         event_type: xiaomi_aqara.click
 #         event_data:
 #           entity_id: sensor.0x04cf8cdf3c7947e4_action
 #           click_type: button_3_single
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: "{{ states('light.bedside') in ['on','off'] }}"
 #       - condition: template
 #         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-#     action:
+#     actions:
 #       - choose:
 #           - conditions:
 #               - condition: state
@@ -59,18 +59,18 @@
 #     initial_state: true
 #     mode: single
 #     max_exceeded: silent
-#     trigger:
-#       - platform: event
+#     triggers:
+#       - trigger: event
 #         event_type: xiaomi_aqara.click
 #         event_data:
 #           entity_id: sensor.0x04cf8cdf3c7947e4_action
 #           click_type: button_4_single
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: "{{ states('light.square_led_v_nightlight') in ['on','off'] }}"
 #       - condition: template
 #         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-#     action:
+#     actions:
 #       - choose:
 #           - conditions:
 #               - condition: state
@@ -97,8 +97,8 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001712d55_action
@@ -108,12 +108,12 @@
       #   event_data:
       #     entity_id: sensor.0x04cf8cdf3c7947e4_action
       #     click_type: button_1_single
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.square_led_v') in ['on','off'] and states('light.square_led_v_nightlight') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -165,8 +165,8 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001712d55_action
@@ -176,12 +176,12 @@
       #   event_data:
       #     entity_id: sensor.0x04cf8cdf3c7947e4_action
       #     click_type: button_2_single
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.square_led_v') in ['on','off'] and states('light.square_led_v_nightlight') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -227,8 +227,8 @@
   - alias: vova_square_led_restart
     id: vova_square_led_restart
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/1"
       # - platform: state
       #   entity_id: light.square_led_v
@@ -239,7 +239,7 @@
       #   entity_id: sensor.ha_uptime
       #   above: 0
       #   below: 2
-    condition:
+    conditions:
       - condition: state
         entity_id: light.square_led_v
         state: 'unavailable'
@@ -254,7 +254,7 @@
         value_template: >
           {% set ignore = ['unknown', 'unavailable', 'none'] %}
           {{ states('switch.shelly_1pm_led_v') not in ignore }}        
-    action:
+    actions:
       - repeat:
           while:
             - condition: state
@@ -291,11 +291,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.square_led_v
         from: 'unavailable'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_square_led_v_restart_key
   
@@ -305,24 +305,24 @@
   - alias: vova_main_lamp_switch_on_if_off
     id: vova_main_lamp_switch_on_if_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001712d55_action
           click_type: button_1_single
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001712d55_action
           click_type: button_2_single
-    condition:
-      condition: state
-      entity_id: switch.shelly_1pm_led_v
-      state: 'off'
-    action:
-      action: switch.turn_on
-      entity_id: switch.shelly_1pm_led_v
+    conditions:
+      - condition: state
+        entity_id: switch.shelly_1pm_led_v
+        state: 'off'
+    actions:
+      - action: switch.turn_on
+        entity_id: switch.shelly_1pm_led_v
   
 # ##################################
 # Vova Main Lamp (Xiaomi Square LED) off Bedstrips on
@@ -332,13 +332,13 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
+    triggers:
       # - platform: template
       #   value_template: "{{ not is_state('light.square_led_v','on') and not is_state('light.square_led_v_nightlight','on') }}"
-      - platform: state
+      - trigger: state
         entity_id: group.lights_main_v
         to: 'off'
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.light_outside_mi
         state: 'off'
@@ -347,7 +347,7 @@
         state: 'off'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: light.turn_on
         entity_id: light.d1mini_bed_leds_strip_dima, light.d1mini_bed_leds_strip_sandra
         data:
@@ -359,23 +359,23 @@
 #   - alias: vova_bed_strips_mode
 #     id: vova_bed_strips_mode
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: binary_sensor.bed_led_enable
 #         from: 'on'
 #         to: 'off'
-#       - platform: state
+#       - trigger: state
 #         entity_id: binary_sensor.bed_led_enable
 #         from: 'off'
 #         to: 'on'
-#       - platform: homeassistant
+#       - trigger: homeassistant
 #         event: start
-#       - platform: event
+#       - trigger: event
 #         event_type: automation_reloaded
-#     condition:
+#     conditions:
 #       - condition: template
 #         value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.vova_bed_strips_mode', 'last_triggered'),0)|int(0)) > 5 }}"
-#     action:
+#     actions:
 #       - action: input_boolean.turn_{{states('binary_sensor.bed_led_enable')}}
 #         data:
 #           entity_id: input_boolean.bed_led_enable
@@ -388,22 +388,22 @@
     mode: parallel
     max_exceeded: silent
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d00053faae1_motion
         id: 'on_dima'
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d00044c7971_motion
         id: 'on_sandra'
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.bed_led_enable
         state: 'on'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -474,16 +474,16 @@
     mode: parallel
     max_exceeded: silent
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.d1mini_bed_leds_strip_sandra
         to:
         id: 'is_sandra'
-      - platform: state
+      - trigger: state
         entity_id: light.d1mini_bed_leds_strip_dima
         to:
         id: 'is_dima'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -506,18 +506,18 @@
     mode: parallel
     max_exceeded: silent
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.led_strip_bed_dima_v
         id: 'off_dima'
-      - platform: event
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.led_strip_bed_sandra_v
         id: 'off_sandra'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -567,18 +567,18 @@
     mode: parallel
     max_exceeded: silent
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.d1mini_bed_leds_strip_dima
         from: 'unavailable'
         to: 'on'
         id: 'un_dima'
-      - platform: state
+      - trigger: state
         entity_id: light.d1mini_bed_leds_strip_sandra
         from: 'unavailable'
         to: 'on'
         id: 'un_sandra'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -611,10 +611,10 @@
   - alias: vova_led_strip_bed_restart
     id: vova_led_strip_bed_restart
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/1"
-    condition:
+    conditions:
       - condition: state
         entity_id: light.d1mini_bed_leds_strip_dima, light.d1mini_bed_leds_strip_sandra
         state: 'unavailable'
@@ -625,7 +625,7 @@
       - condition: state
         entity_id: switch.system_led_strip_bed_v_restart_key
         state: 'on'
-    action:
+    actions:
       - repeat:
           while:
             - condition: state
@@ -662,11 +662,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.d1mini_bed_leds_strip_dima
         from: 'unavailable'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_led_strip_bed_v_restart_key
                 
@@ -678,19 +678,19 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.occupancy_v
         to: 'off'
         for: 
           hours: 2
-    condition:
+    conditions:
       - condition: state
         entity_id: group.lights_v
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
-        entity_id: light.square_led_v, light.square_led_v_nightlight, light.d1mini_bed_leds_strip_dima, light.d1mini_bed_leds_strip_sandra, light.led_color_v
+        entity_id: light.square_led_v, light.square_led_v_nightlight, light.d1mini_bed_leds_strip_dima, light.d1mini_bed_leds_strip_sandra, light.0x54ef441000d4e7fd_light
         data:
           transition: 15
 
@@ -700,8 +700,8 @@
   # - alias: vova_led_color_v_restart
   #   id: vova_led_color_v_restart
   #   initial_state: true
-  #   trigger:
-  #     - platform: time_pattern
+  #   triggers:
+  #     - trigger: time_pattern
   #       minutes: "/1"
   #     # - platform: state
   #     #   entity_id: light.led_color_s
@@ -712,13 +712,13 @@
   #     #   entity_id: sensor.ha_uptime
   #     #   above: 0
   #     #   below: 2
-  #   condition:
+  #   conditions:
   #     - condition: state
   #       entity_id: light.led_color_v
   #       state: 'unavailable'
   #       for:
   #         minutes: 2
-  #   action:
+  #   actions:
   #     - action: script.turn_on
   #       entity_id: script.led_color_v_restart
   
@@ -730,30 +730,30 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d00016bdb4a_action
-    condition:
+    conditions:
       - condition: template
-        value_template: "{{ states('light.led_color_v') in ['on','off'] }}"
+        value_template: "{{ states('light.0x54ef441000d4e7fd_light') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'single' }}"
             sequence:
               - action: light.toggle
-                entity_id: light.led_color_v
+                entity_id: light.0x54ef441000d4e7fd_light
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'double' }}"
             sequence:
               - action: light.turn_on
-                entity_id: light.led_color_v
+                entity_id: light.0x54ef441000d4e7fd_light
                 data:
                   brightness: 230
                   kelvin: 5000
@@ -762,7 +762,7 @@
                 value_template: "{{ trigger.event.data.click_type == 'hold' }}"
             sequence:
               - action: light.turn_on
-                entity_id: light.led_color_v
+                entity_id: light.0x54ef441000d4e7fd_light
                 data:
                   brightness: 14
                   kelvin: 3000
@@ -774,12 +774,12 @@
   #   id: sasha_led_color_turn_off_chair
   #   initial_state: false
   #   mode: queued
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: binary_sensor.chair_2_s
   #       to: 'off'
   #       from: 'on'
-  #   action:
+  #   actions:
   #     - action: light.turn_off
   #       entity_id: light.led_color_s
 
@@ -789,23 +789,23 @@
   - alias: vova_main_light_control_with_alice
     id: vova_main_light_control_with_alice
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Выключи свет в Вовиной комнате
         id: 'to_off_alice'
-      - platform: event
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Включи свет в Вовиной комнате
         id: 'to_on_alice'
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.square_led_v') in ['on','off'] and states('light.square_led_v_nightlight') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -823,80 +823,80 @@
                   brightness: 230
                   kelvin: 5000
 
-# ##################################
-# Vova - LED Color Restart
-# ##################################
-  - alias: vova_led_color_restart
-    id: vova_led_color_restart
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/1"
-      # - platform: state
-      #   entity_id: light.square_led_v
-      #   to: 'unavailable'
-      #   for:
-      #     minutes: 2
-      # - platform: numeric_state
-      #   entity_id: sensor.ha_uptime
-      #   above: 0
-      #   below: 2
-    condition:
-      - condition: state
-        entity_id: light.led_color_v
-        state: 'unavailable'
-        for:
-          minutes: 2
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-      - condition: state
-        entity_id: switch.system_led_color_v_restart_key
-        state: 'on'
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ states('switch.0x00158d00023a657a_plug') not in ignore }}
-    action:
-      - repeat:
-          while:
-            - condition: state
-              entity_id: light.led_color_v
-              state: "unavailable"
-            - condition: template
-              value_template: "{{ repeat.index <= 5 }}"
-          sequence:
-            - action: switch.turn_off
-              entity_id: switch.0x00158d00023a657a_plug
-            - delay:
-                seconds: 15
-            - action: switch.turn_on
-              entity_id: switch.0x00158d00023a657a_plug
-            - action: notify.telegram
-              data:
-                message: "\U0001f6a8 LED Color V restart done({{repeat.index}})!"
-            - delay:
-                seconds: 30
-      - condition: state
-        entity_id: light.led_color_v
-        state: 'unavailable'
-      - action: notify.telegram
-        data:
-          message: "\U0001f6a8 LED Color V restart unsuccessful!"
-      - action: switch.turn_off
-        entity_id: switch.system_led_color_v_restart_key
+# # ##################################
+# # Vova - LED Color Restart
+# # ##################################
+#   - alias: vova_led_color_restart
+#     id: vova_led_color_restart
+#     initial_state: true
+#     triggers:
+#       - trigger: time_pattern
+#         minutes: "/1"
+#       # - platform: state
+#       #   entity_id: light.square_led_v
+#       #   to: 'unavailable'
+#       #   for:
+#       #     minutes: 2
+#       # - platform: numeric_state
+#       #   entity_id: sensor.ha_uptime
+#       #   above: 0
+#       #   below: 2
+#     conditions:
+#       - condition: state
+#         entity_id: light.led_color_v
+#         state: 'unavailable'
+#         for:
+#           minutes: 2
+#       - condition: template
+#         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+#       - condition: state
+#         entity_id: switch.system_led_color_v_restart_key
+#         state: 'on'
+#       - condition: template
+#         value_template: >
+#           {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#           {{ states('switch.0x00158d00023a657a_plug') not in ignore }}
+#     actions:
+#       - repeat:
+#           while:
+#             - condition: state
+#               entity_id: light.led_color_v
+#               state: "unavailable"
+#             - condition: template
+#               value_template: "{{ repeat.index <= 5 }}"
+#           sequence:
+#             - action: switch.turn_off
+#               entity_id: switch.0x00158d00023a657a_plug
+#             - delay:
+#                 seconds: 15
+#             - action: switch.turn_on
+#               entity_id: switch.0x00158d00023a657a_plug
+#             - action: notify.telegram
+#               data:
+#                 message: "\U0001f6a8 LED Color V restart done({{repeat.index}})!"
+#             - delay:
+#                 seconds: 30
+#       - condition: state
+#         entity_id: light.led_color_v
+#         state: 'unavailable'
+#       - action: notify.telegram
+#         data:
+#           message: "\U0001f6a8 LED Color V restart unsuccessful!"
+#       - action: switch.turn_off
+#         entity_id: switch.system_led_color_v_restart_key
   
-# ##################################
-# Vova - LED Color V Auto Restart Key Toggle
-# ##################################
-  - alias: vova_led_color_restart_key_toggle
-    id: vova_led_color_restart_key_toggle
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    trigger:
-      - platform: state
-        entity_id: light.led_color_v
-        from: 'unavailable'
-    action:
-      - action: switch.turn_on
-        entity_id: switch.system_led_color_v_restart_key
+# # ##################################
+# # Vova - LED Color V Auto Restart Key Toggle
+# # ##################################
+#   - alias: vova_led_color_restart_key_toggle
+#     id: vova_led_color_restart_key_toggle
+#     initial_state: true
+#     mode: single
+#     max_exceeded: silent
+#     triggers:
+#       - trigger: state
+#         entity_id: light.led_color_v
+#         from: 'unavailable'
+#     actions:
+#       - action: switch.turn_on
+#         entity_id: switch.system_led_color_v_restart_key

@@ -8,10 +8,10 @@
   - alias: vova_breather_auto_co2
     id: vova_breather_auto_co2
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: '/3'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_breather_auto_v
         state: 'on'
@@ -20,7 +20,7 @@
           - condition: state
             entity_id: switch.system_breather_v_last_toggle_by_user
             state: 'on'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -105,7 +105,7 @@
   - alias: vova_breather_auto_timer
     id: vova_breather_auto_timer
     initial_state: true
-    trigger:
+    triggers:
       # - platform: time_pattern
       #   minutes: "/5"
       #   id: 'time_pattern' 
@@ -124,7 +124,7 @@
       #   from: 'on'
       #   to: 'off'
       #   id: 'to_off'
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.digma_ir_v_breather_remote_used
         to: 'on'
         id: 'ir_used_remote'
@@ -136,29 +136,29 @@
       #   entity_id: input_select.breazer_timer
       #   to:
       #   id: 'input'
-      - platform: event
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Выключи вентиляцию
         id: 'to_off_alice'
-      - platform: event
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Включи вентиляцию
         id: 'to_on_alice'
-      - platform: time
+      - trigger: time
         at: "21:00:00"
         id: 'time_trigger_night'
-      - platform: time
+      - trigger: time
         at: "08:00:00"
         id: 'time_trigger_day'
-    condition:
+    conditions:
       # - condition: state
       #   entity_id: switch.system_breather_auto_v
       #   state: 'off'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           # - conditions: # choice 0
           #     - condition: trigger
@@ -396,17 +396,17 @@
     max_exceeded: silent
     mode: queued
     max: 10
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: switch.0x00158d000344998e_plug
         to: 'off'
         for:
           seconds: 30
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.0x00158d000344998e_plug
 
@@ -415,18 +415,18 @@
 # ##################################
   - alias: vova_breather_switches_interlock
     id: vova_breather_switches_interlock
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id:
           - switch.system_hourly_mode_breather_v
           - switch.system_breather_auto_v
           - switch.system_breather_v_last_toggle_by_user
-    condition: 
+    conditions: 
       - condition: template
         value_template: "{{ trigger.to_state.state == 'on' }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
     - action: homeassistant.turn_off
       target:
         entity_id: >-
@@ -443,14 +443,14 @@
 # ##################################
   - alias: vova_breather_switches_default
     id: vova_breather_switches_default
-    trigger:
-      - platform: template
+    triggers:
+      - trigger: template
         value_template: "{{ is_state('switch.system_hourly_mode_breather_v','off') and 
                             is_state('switch.system_breather_auto_v','off') and
                             is_state('switch.system_breather_v_last_toggle_by_user','off') }}"
-    condition: 
+    conditions: 
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
     - action: switch.turn_on
       entity_id: switch.system_breather_auto_v

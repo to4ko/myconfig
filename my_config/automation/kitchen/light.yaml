@@ -10,21 +10,21 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b48381_motion
-      - platform: state
+      - trigger: state
         entity_id: sensor.0x00158d0002a2412d_action
         to: 
           - "vibration"
           - "tilt"
-    condition:
+    conditions:
       - condition: state
         entity_id: group.lights_main_k
         state: "on"
@@ -35,7 +35,7 @@
         state: "off"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_k
       - action: timer.start
@@ -47,11 +47,11 @@
   - alias: kitchen_timer_off
     id: kitchen_timer_off
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.round_led_k
         to: "off"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_k, timer.main_light_delay_k
       - action: timer.start
@@ -63,11 +63,11 @@
   - alias: kitchen_timer_on
     id: kitchen_timer_on
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.round_led_k
         to: "on"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_k
       - action: timer.start
@@ -83,16 +83,16 @@
   - alias: kitchen_auto_light_off
     id: kitchen_auto_light_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.main_light_k
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: "on"
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.round_led_k
         data:
@@ -108,16 +108,16 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b48381_motion
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: "on"
@@ -135,7 +135,7 @@
         state: "idle"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: light.turn_on
         entity_id: light.esp32_node_k_light #light.round_led_k
   
@@ -147,16 +147,16 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b48381_motion
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: "off"
@@ -172,7 +172,7 @@
         value_template: "{{as_timestamp(now())-as_timestamp(state_attr('automation.hall_small_auto_night_light', 'last_triggered'),0) < 600 }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"      
-    action:
+    actions:
       - action: light.turn_on
         entity_id: light.esp32_node_k_light
         data:
@@ -184,8 +184,8 @@
   - alias: kitchen_main_lamp_restart
     id: kitchen_main_lamp_restart
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/1"
       # - platform: state
       #   entity_id: light.round_led_k
@@ -196,7 +196,7 @@
       #   entity_id: sensor.ha_uptime
       #   above: 0
       #   below: 2
-    condition:
+    conditions:
       - condition: state
         entity_id: light.round_led_k
         state: "unavailable"
@@ -211,7 +211,7 @@
         value_template: >
           {% set ignore = ['unknown', 'unavailable', 'none'] %}
           {{ states('switch.0x00158d0002a36f7f_channel_2') not in ignore }}
-    action:
+    actions:
       - repeat:
           while:
             - condition: state
@@ -255,11 +255,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.round_led_k
         from: 'unavailable'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_round_led_k_restart_key
   
@@ -269,17 +269,17 @@
   - alias: kitchen_main_lamp_switch_on_if_off
     id: kitchen_main_lamp_switch_on_if_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0002a36f7f_action
           click_type: button_2_single
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.0x00158d0002a36f7f_channel_2
         state: "off"
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.0x00158d0002a36f7f_channel_2
   
@@ -291,13 +291,13 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0002a36f7f_action
           click_type: button_2_single
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
       - condition: state
@@ -305,7 +305,7 @@
         state: "on"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -364,13 +364,13 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0002a36f7f_action
           click_type: button_2_double
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
       - condition: state
@@ -378,7 +378,7 @@
         state: "on"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - if:
           - condition: state
             entity_id: binary_sensor.round_led_k_nightlight
@@ -403,11 +403,11 @@
   - alias: kitchen_led_strips_timer
     id: kitchen_led_strips_timer
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.esp32_node_k_light
         to: "on"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.led_strip_night_k
       - action: timer.start
@@ -419,12 +419,12 @@
   - alias: kitchen_led_strip_auto_led_off
     id: kitchen_led_strip_auto_led_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.led_strip_night_k
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.esp32_node_k_light
         data:
@@ -436,19 +436,19 @@
   - alias: kitchen_led_strip_timer_restart
     id: kitchen_led_strip_timer_restart
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b48381_motion
-      - platform: state
+      - trigger: state
         entity_id: light.esp32_node_k_light
         to: "on"
-    condition:
+    conditions:
       - condition: state
         entity_id: light.esp32_node_k_light
         state: "on"
@@ -460,7 +460,7 @@
       - condition: state
         entity_id: switch.system_security_mode
         state: "off"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.led_strip_night_k
       - action: timer.start
@@ -472,12 +472,12 @@
   - alias: kitchen_night_aux_light
     id: kitchen_night_aux_light
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.round_led_k
         to: 'off'
         from: 'on'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: "off"
@@ -493,7 +493,7 @@
       - condition: state
         entity_id: binary_sensor.light_outside_mi
         state: "off"
-    action:
+    actions:
       - action: light.turn_on
         entity_id: light.esp32_node_k_light
         data:
@@ -511,22 +511,22 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.occupancy_k
         to: 'off'
         for: 
           hours: 1
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.dced838db04e_occupancy
         to: 'off'
         for: 
           minutes: 15
-    condition:
+    conditions:
       - condition: state
         entity_id: group.lights_main_k
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.d1mini_light_l, light.sonoff_mini_4, light.esp8266_hood_k
       - action: light.turn_off

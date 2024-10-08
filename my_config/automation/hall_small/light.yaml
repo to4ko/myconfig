@@ -10,23 +10,23 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0001ae9f61_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b43ad4_motion
-      - platform: state
+      - trigger: state
         entity_id: 
           - binary_sensor.0x00158d00025315e9_contact #door mb
           - binary_sensor.0x00158d0002a14c5e_contact #door b
           - binary_sensor.0x00158d0001ef2ffc_contact #door t
         from: 'off'
         to: 'on'
-    condition:
+    conditions:
       - condition: state
         entity_id: light.round_led_k #group.lights_k
         state: 'off'
@@ -41,7 +41,7 @@
         state: 'off'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: light.turn_on
         entity_id: light.mono_strip_1_light
         data:
@@ -55,18 +55,18 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0002a36433_action
           click_type: button_1_single
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.round_led_hs') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - if:
           - condition: state
             entity_id: binary_sensor.round_led_hs_nightlight
@@ -104,16 +104,16 @@
   - alias: hall_small_main_lamp_on_double
     id: hall_small_main_lamp_on_double
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0002a36433_action
           click_type: button_1_double
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
-    action:
+    actions:
       - if:
           - condition: state
             entity_id: binary_sensor.round_led_hs_nightlight
@@ -138,8 +138,8 @@
   - alias: hall_small_main_lamp_restart
     id: hall_small_main_lamp_restart
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/1"
       # - platform: state
       #   entity_id: light.round_led_hs
@@ -150,7 +150,7 @@
       #   entity_id: sensor.ha_uptime
       #   above: 0
       #   below: 2
-    condition:
+    conditions:
       - condition: state
         entity_id: light.round_led_hs
         state: 'unavailable'
@@ -165,7 +165,7 @@
         value_template: >
           {% set ignore = ['unknown', 'unavailable', 'none'] %}
           {{ states('switch.0x00158d0002a36433_channel_1') not in ignore }}
-    action:
+    actions:
       - repeat:
           while:
             - condition: state
@@ -202,11 +202,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.round_led_hs
         from: 'unavailable'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_round_led_hs_restart_key
         
@@ -216,12 +216,12 @@
   - alias: hall_small_led_strip_timer_on
     id: hall_small_led_strip_timer_on
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.mono_strip_1_light
         to: 'on'
         from: 'off'
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.led_strip_night_hs
       - action: timer.start
@@ -233,12 +233,12 @@
   - alias: hall_small_led_strip_auto_led_off
     id: hall_small_led_strip_auto_led_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.led_strip_night_hs
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.mono_strip_1_light
         data:
@@ -250,16 +250,16 @@
   - alias: hall_small_led_strip_timer_restart
     id: hall_small_led_strip_timer_restart
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0001ae9f61_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b43ad4_motion
-    condition:
+    conditions:
       # - condition: state
       #   entity_id: binary_sensor.tod_day
       #   state: 'off'
@@ -268,7 +268,7 @@
       - condition: state
         entity_id: light.mono_strip_1_light
         state: 'on'
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.led_strip_night_hs
       - action: timer.start
@@ -282,16 +282,16 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0002b43ad4_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0001ae9f61_motion
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ not is_state('light.round_led_hs', 'off') }}"
       - condition: template
@@ -299,7 +299,7 @@
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_hs
       - action: timer.start
@@ -313,11 +313,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.round_led_hs
         to: 'off'
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_hs
   
@@ -329,11 +329,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.round_led_hs
         to: 'on'
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_hs
       - action: timer.start
@@ -347,16 +347,16 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.main_light_hs
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.round_led_hs
         data:
@@ -370,17 +370,17 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.occupancy_hs
         to: 'off'
         for: 
           hours: 1
-    condition:
+    conditions:
       - condition: state
         entity_id: group.lights_main_hs
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.round_led_hs, light.mono_strip_1_light
         data:

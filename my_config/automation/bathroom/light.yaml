@@ -8,16 +8,16 @@
   - alias: bathroom_light_off_auto
     id: bathroom_light_off_auto
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.main_light_b
-    #   - platform: event
+    #   - trigger: event
     #     event_type: timer.finished
     #     event_data:
     #       entity_id: timer.door_b
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.presence_b
         state: 'off'
@@ -26,7 +26,7 @@
       - condition: state
         entity_id: group.lights_b
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.0x00158d0002a36433_channel_2
       - action: light.turn_off
@@ -42,21 +42,21 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.presence_b
         from: 'on'
         to: 'off'
-      - platform: state
+      - trigger: state
         entity_id: group.lights_b
         to: 'on'
-    condition:
+    conditions:
       # - condition: state
       #   entity_id: timer.main_light_b
       #   state: 'idle'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_b
       - action: timer.start
@@ -68,19 +68,19 @@
   - alias: bathroom_timer_stop
     id: bathroom_timer_stop
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.presence_b
         from: 'off'
         to: 'on'
-      - platform: state
+      - trigger: state
         entity_id: group.lights_b
         to: 'off'
-    condition:
+    conditions:
       - condition: state
         entity_id: timer.main_light_b
         state: "active"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_b, timer.door_b
 
@@ -90,11 +90,11 @@
   - alias: bathroom_timer_stop_motion_with_light_presence
     id: bathroom_timer_stop_motion_with_light_presence
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.0x00158d000236bc6d_motion
         to: 'on'
-    condition:
+    conditions:
       and:
         - condition: state
           entity_id: binary_sensor.presence_b
@@ -109,7 +109,7 @@
             - condition: state
               entity_id: timer.door_b
               state: "active"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_b, timer.door_b
 
@@ -122,16 +122,16 @@
     max: 10
     max_exceeded: silent
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.wasp_b
         to: 'on'
         id: 'id_to_on'
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.wasp_b
         to: 'off'
         id: 'id_to_off'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -165,15 +165,15 @@
 #     max: 10
 #     max_exceeded: silent
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: group.lights_b
 #         to: 'on'
-#     condition:
+#     conditions:
 #       - condition: state
 #         entity_id: binary_sensor.0x00158d0002a14c5e_contact
 #         state: "on"
-#     action:
+#     actions:
 #       - action: timer.cancel
 #         entity_id: timer.door_b
 #       - action: timer.start
@@ -188,15 +188,15 @@
 #     max: 10
 #     max_exceeded: silent
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: binary_sensor.presence_b
 #         to: 'on'
-#     condition:
+#     conditions:
 #       - condition: state
 #         entity_id: timer.door_b
 #         state: "active"
-#     action:
+#     actions:
 #       - action: timer.cancel
 #         entity_id: timer.door_b
 
@@ -207,19 +207,19 @@
 #   - alias: bathroom_timer_pause_off
 #     id: bathroom_timer_pause_off
 #     initial_state: true
-#     trigger:
+#     triggers:
 #       # - platform: state
 #       #   entity_id: binary_sensor.0x00158d0002a14c5e_contact
 #       #   from: "off"
 #       #   to: "on"
-#       - platform: state
+#       - trigger: state
 #         entity_id: binary_sensor.wasp_b
 #         to: 'off'
-#     condition:
+#     conditions:
 #       - condition: state
 #         entity_id: group.lights_b
 #         state: "on"
-#     action:
+#     actions:
 #       - action: timer.cancel
 #         entity_id: timer.main_light_b
 #       - action: timer.start
@@ -234,15 +234,15 @@
   # - alias: bathroom_occupancy_off
   #   id: bathroom_occupancy_off
   #   initial_state: true
-  #   trigger:
+  #   triggers:
   #     # - platform: state
   #     #   entity_id: binary_sensor.0x00158d0002a14c5e_contact
   #     #   from: "off"
   #     #   to: "on"
-  #     - platform: state
+  #     - trigger: state
   #       entity_id: binary_sensor.wasp_b
   #       to: 'off'
-  #   condition:
+  #   conditions:
   #     - condition: state
   #       entity_id: input_boolean.bathroom_occupancy
   #       state: "on"
@@ -250,7 +250,7 @@
   #     #   entity_id: binary_sensor.0x00158d000236bc6d_motion
   #     #   state: 'off'
   #     #   for: "00:00:30"
-  #   action:
+  #   actions:
   #     - action: input_boolean.turn_off
   #       data:
   #         entity_id: input_boolean.bathroom_occupancy
@@ -261,8 +261,8 @@
   - alias: bathroom_auto_light_on_soft
     id: bathroom_auto_light_on_soft
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d000236bc6d_motion
@@ -270,7 +270,7 @@
       #   entity_id: binary_sensor.0x00158d0002a14c5e_contact
       #   from: "off"
       #   to: "on"
-    condition:
+    conditions:
       - condition: state
         entity_id: group.lights_b
         state: "off"
@@ -279,7 +279,7 @@
         state: "off"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: xiaomi_miio.light_set_scene
         data:
           entity_id: light.mirror_light_b
@@ -292,12 +292,12 @@
   # - alias: bathroom_auto_light_off
   #   id: bathroom_auto_light_off
   #   initial_state: true
-  #   trigger:
-  #     - platform: event
+  #   triggers:
+  #     - trigger: event
   #       event_type: timer.finished
   #       event_data:
   #         entity_id: timer.main_light_b
-  #   action:
+  #   actions:
   #     - action: light.turn_off
   #       entity_id: light.0x00158d0002a36433_channel_2
   #     - action: light.turn_off
@@ -311,13 +311,13 @@
   - alias: bathroom_light_toggle_repeater
     id: bathroom_light_toggle_repeater
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x54ef4410005054cc_action
           click_type: button_1_single
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -340,17 +340,17 @@
   - alias: bathroom_mirror_light_manual
     id: bathroom_mirror_light_manual
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001ef6089_action
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.mirror_light_b') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -412,8 +412,8 @@
   - alias: bathroom_mirror_light_restart
     id: bathroom_mirror_light_restart
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/1"
       # - platform: state
       #   entity_id: light.mirror_light_b
@@ -424,7 +424,7 @@
       #   entity_id: sensor.ha_uptime
       #   above: 0
       #   below: 2
-    condition:
+    conditions:
       - condition: state
         entity_id: light.mirror_light_b
         state: "unavailable"
@@ -439,7 +439,7 @@
         value_template: >
           {% set ignore = ['unknown', 'unavailable', 'none'] %}
           {{ states('switch.esp32_node_b_relay_5') not in ignore }}        
-    action:
+    actions:
       - repeat:
           while:
             - condition: state
@@ -476,11 +476,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.mirror_light_b
         from: 'unavailable'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_mirror_light_b_restart_key
   
@@ -492,14 +492,14 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: input_boolean.bathroom_occupancy
         to:
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('input_boolean.bathroom_occupancy') in ['on','off'] }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -528,18 +528,18 @@
     mode: queued
     max: 10
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.0x00158d0002a36433_channel_2
         to: "off"
         from: "on"
         id: "to_off"
-      - platform: state
+      - trigger: state
         entity_id: light.0x00158d0002a36433_channel_2
         to: "on"
         from: "off"
         id: "to_on"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger

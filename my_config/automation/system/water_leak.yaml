@@ -11,8 +11,8 @@
     mode: queued
     max: 10
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: 
           - binary_sensor.0x00158d00023297e7_moisture
           - binary_sensor.0x00158d00023684c2_moisture
@@ -22,7 +22,7 @@
         to: 'on'
         for:
           seconds: 5
-    action:
+    actions:
       - action: light.turn_on
         data:
           entity_id: >
@@ -90,8 +90,8 @@
     mode: queued
     max: 10
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: 
           - binary_sensor.0x00158d00023297e7_moisture
           - binary_sensor.0x00158d00023684c2_moisture
@@ -102,7 +102,7 @@
         from: 'on'
         for:
           seconds: 3
-    action:
+    actions:
       - action: homeassistant.turn_off
         data:
           entity_id: >
@@ -135,16 +135,16 @@
   - alias: system_water_leak_turn_water_off
     id: system_water_leak_turn_water_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001ef609b_action
           click_type: single
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -223,19 +223,19 @@
   - alias: system_water_leak_turn_water_on
     id: system_water_leak_turn_water_on
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001ef609b_action
           click_type: double
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
       - condition: state
         entity_id: group.leak_detected
         state: 'off'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state
@@ -310,19 +310,19 @@
   - alias: system_water_leak_turn_water_on_leak_detected
     id: system_water_leak_turn_water_on_leak_detected
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001ef609b_action
           click_type: double
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
       - condition: state
         entity_id: group.leak_detected
         state: 'on'
-    action:
+    actions:
       - action: media_player.volume_set
         data:
           entity_id: 
@@ -347,16 +347,16 @@
   - alias: system_water_leak_turn_water_on_force
     id: system_water_leak_turn_water_on_force
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001ef609b_action
           click_type: hold
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: media_player.volume_set
         data:
           entity_id: 
@@ -405,18 +405,18 @@
   - alias: system_water_valves_action
     id: system_water_valves_action
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.esp32_node_b_valve_active
         to:
-    condition:
+    conditions:
       - condition: template
         value_template: >
           {% set ignore = ['unknown', 'unavailable', 'none','0'] %}
           {{ trigger.from_state.state not in ignore and
             trigger.to_state.state not in ignore and
             trigger.to_state.state != trigger.from_state.state }}
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: >-

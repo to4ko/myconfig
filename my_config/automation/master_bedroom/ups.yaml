@@ -8,12 +8,12 @@
   - alias: master_bedroom_main_power_turned_off
     id: master_bedroom_main_power_turned_off
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: switch.0x00158d0002467773_outlet
         to: 'off'
         from: 'on'
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f50c Внимание! Вторая розетка отключена! Запущен UPS (1050)"
@@ -24,11 +24,11 @@
   - alias: master_bedroom_main_plug_pulled_out
     id: master_bedroom_main_plug_pulled_out
     initial_state: true
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.0x00158d0002467773_power
         below: 10
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f50c Внимание! Нагрузка во второй розетке упала! Проверь кабель!"
@@ -39,11 +39,11 @@
   - alias: master_bedroom_main_power_overpower
     id: master_bedroom_main_power_overpower
     initial_state: true
-    trigger:
-      - platform: numeric_state
+    triggers:
+      - trigger: numeric_state
         entity_id: sensor.0x00158d0002467773_power
         above: 1700 
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f50c Внимание! Перегрузка второй розетки! Отключите лишние потребители!"
@@ -54,11 +54,11 @@
   - alias: master_bedroom_ups_ob
     id: master_bedroom_ups_ob
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.ippon_1050_status_data
         to: 'OB'
-    action:
+    actions:
       - parallel:
           - action: notify.telegram
             data:
@@ -74,11 +74,11 @@
   - alias: master_bedroom_ups_lb
     id: master_bedroom_ups_lb
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.ippon_1050_status_data
         to: 'LB'
-    action:
+    actions:
       - parallel:
           - action: notify.telegram
             data:
@@ -100,14 +100,14 @@
   - alias: master_bedroom_ups_ol
     id: master_bedroom_ups_ol
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.ippon_1050_status_data
         to: 'OL'
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи(1050)!"
@@ -118,16 +118,16 @@
   - alias: master_bedroom_ups_unknown
     id: master_bedroom_ups_unknown
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.ippon_1050_status_data
         to: 'unknown'
         for:
           minutes: 5
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f6a8 Внимание! Связь с UPS(1050) потеряна!"
@@ -141,12 +141,12 @@
   - alias: master_bedroom_main_power_turned_on
     id: master_bedroom_main_power_turned_on
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: switch.0x00158d0002467773_outlet
         to: 'on'
         from: 'off'
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1050)!"

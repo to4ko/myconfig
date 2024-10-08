@@ -4,8 +4,8 @@
   - alias: security_everybody_out_1min
     id: security_everybody_out_1min
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.family_home
         to: 'off'
         for:
@@ -14,7 +14,7 @@
     #   - condition: state
     #     entity_id: switch.guestmode
     #     state: 'off'
-    action:
+    actions:
       - action: notify.mobile_app_iphone_14_pro_dtsymbal
         data:
           message: Включение режима охраны через 1 минуту!
@@ -34,12 +34,12 @@
   - alias: security_everybody_out_reply_from_app
     id: security_everybody_out_reply_from_app
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: mobile_app_notification_action
         event_data:
           service: "guestmode"
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_guest_mode
 
@@ -49,24 +49,24 @@
   - alias: security_wrapper
     id: security_wrapper
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.family_home
         to: 'off'
         for:
           minutes: 2
         id: 'to_on'
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.family_home
         to: 'on'
         for:
           seconds: 15
         id: 'to_off'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_guest_mode
         state: 'off'
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -92,13 +92,13 @@
   - alias: security_state_change
     id: security_state_change
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: switch.system_security_mode
         to:
         for:
           seconds: 15
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: state 
@@ -133,8 +133,8 @@
     mode: queued
     max: 25
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id:
           - binary_sensor.0x00158d00027129ae_contact
           - binary_sensor.0x00158d0001ef2ffc_contact
@@ -148,7 +148,7 @@
           - binary_sensor.0x00158d00022ccffe_contact
           - binary_sensor.0x00158d00025370d1_contact
         to:
-      - platform: state
+      - trigger: state
         entity_id:
           - binary_sensor.0x00158d0001ae9f61_motion
           - binary_sensor.0x00158d0001aea602_motion
@@ -170,7 +170,7 @@
           - binary_sensor.g3_flex_entrance_motion
           #- binary_sensor.g3_flex_hall_motion
         to: "on"
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: "on"
@@ -180,7 +180,7 @@
       - condition: numeric_state
         entity_id: sensor.ha_uptime
         above: 0
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f46e Сработал датчик {{trigger.to_state.attributes.friendly_name}}!"
@@ -193,16 +193,16 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.0x00158d0001e5d6be_contact
         from: "off"
         to: "on"
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: "on"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.security_delay
       - action: timer.start
@@ -213,10 +213,10 @@
   # # ##################################
   # - alias: security_system_pwr
   #   initial_state: true
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: binary_sensor.d1_security_power
-  #   action:
+  #   actions:
   #     - action: notify.telegram
   #       data:
   #         message: "\U0001f693 Охранная система: питание {% if is_state('binary_sensor.d1_security_power','on') %}включено!{% else %}выключено!{% endif %}"
@@ -226,10 +226,10 @@
   # # ##################################
   # - alias: security_system_armed
   #   initial_state: true
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: binary_sensor.d1_security_armed
-  #   action:
+  #   actions:
   #     - action: notify.telegram
   #       data:
   #         message: "\U0001f693 Охранная система {% if is_state('binary_sensor.d1_security_armed','on') %}включена!{% else %}выключена!{% endif %}"
@@ -239,10 +239,10 @@
   # # ##################################
   # - alias: security_system_alarm
   #   initial_state: true
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: binary_sensor.d1_security_alarm
-  #   action:
+  #   actions:
   #     - action: notify.telegram
   #       data:
   #         message: "\U0001f693 Охранная система: Тревога {% if is_state('binary_sensor.d1_security_alarm','on') %}включена!{% else %}выключена!{% endif %}"
@@ -253,15 +253,15 @@
   - alias: security_main_door_vibration
     id: security_main_door_vibration
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: sensor.0x00158d0002b5fbc1_action
         to: "vibration"
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: "on"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001F6AA Внимание! Главная дверь - Вибрация!"
@@ -275,8 +275,8 @@
     mode: queued
     max: 25
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id:
           - binary_sensor.0x00158d00025371f6_contact
           - binary_sensor.0x00158d000200ad58_contact
@@ -286,14 +286,14 @@
           - binary_sensor.0x00158d0002531749_contact
         from: "off"
         to: "on"
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: "off"
       - condition: state
         entity_id: switch.system_security_mode
         state: "off"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: >-

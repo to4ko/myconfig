@@ -8,12 +8,12 @@
   - alias: kitchen_briefing
     id: kitchen_briefing
     initial_state: true
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: "07:05:00"
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
-    condition:
+    conditions:
       - condition: time
         after: "07:00:00"
         before: "07:15:00"
@@ -22,7 +22,7 @@
       - condition: state
         entity_id: binary_sensor.workday_sensor
         state: "on"
-    action:
+    actions:
     #   - action: notify.telegram
     #     data:
     #       message: "Ждем триггер для брифинга"
@@ -31,11 +31,11 @@
           entity_id: input_number.main_volume
           value: "0.4"
       - wait_for_trigger:
-          - platform: event
+          - trigger: event
             event_type: xiaomi_aqara.motion
             event_data:
               entity_id: binary_sensor.0x00158d0002b4729d_motion
-          - platform: event
+          - trigger: event
             event_type: xiaomi_aqara.motion
             event_data:
               entity_id: binary_sensor.0x00158d0002b48381_motion
@@ -53,11 +53,11 @@
   - alias: kitchen_smoke_detected
     id: kitchen_smoke_detected
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.0x00158d0002c92f31_smoke
         to: "on"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U000026d4 Внимание! Сработал датчик дыма!"
@@ -68,11 +68,11 @@
   - alias: kitchen_gas_detected
     id: kitchen_gas_detected
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.0x00158d00024bcf85_gas
         to: "on"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U000026d4 Внимание! Сработал датчик газа!"
@@ -83,15 +83,15 @@
   - alias: kitchen_kettle_count
     id: kitchen_kettle_count
     initial_state: true
-    trigger:
+    triggers:
       # - platform: state
       #   entity_id: sensor.mi_kettle_state
       #   to: "ON"
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.kettle_boil_k
         from: "off"
         to: "on"
-    action:
+    actions:
       - action: counter.increment
         entity_id: counter.kettle_k
   
@@ -101,10 +101,10 @@
   - alias: kitchen_ro_filter_usage
     id: kitchen_ro_filter_usage
     initial_state: true
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: "00:00:10"
-    action:
+    actions:
       - action: input_number.set_value
         data:
           entity_id: input_number.ro_filter1_usage
@@ -139,8 +139,8 @@
   - alias: kitchen_ro_filter_wearing_level
     id: kitchen_ro_filter_wearing_level
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id:
           - sensor.ro_filter1_wearing
           - sensor.ro_filter2_wearing
@@ -149,7 +149,7 @@
           - sensor.ro_mineralizer_wearing
           - sensor.ro_postfilter_wearing
         to:
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ trigger.to_state.state|int(0) % 2 == 0 }}"
       - condition: template
@@ -162,7 +162,7 @@
              trigger.to_state.state != trigger.from_state.state }}
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: >-
@@ -182,10 +182,10 @@
   - alias: kitchen_oven_notify
     id: kitchen_oven_notify
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/30"
-    condition:
+    conditions:
       - condition: numeric_state
         entity_id: sensor.esp8266_oven_temp_k
         above: 100
@@ -193,7 +193,7 @@
         entity_id: binary_sensor.motion_k
         state: "off"
         for: "00:30:00"
-    action:
+    actions:
       - action: notify.telegram
         data:
           message: "\U0001f321 Внимание! Духовка включена ({{states('sensor.esp8266_oven_temp_k')|int(0)}}°C)!"
@@ -204,20 +204,20 @@
   - alias: kitchen_tv_plug_off
     id: kitchen_tv_plug_off
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.motion_k
         to: "off"
         for:
           minutes: 30
-    condition:
+    conditions:
       - condition: time
         after: "01:00:00"
         before: "07:00:00"
       - condition: state
         entity_id: switch.0x00158d0001e85086_plug
         state: "on"
-    action:
+    actions:
       - action: switch.turn_off
         entity_id: switch.0x00158d0001e85086_plug
   
@@ -227,12 +227,12 @@
   - alias: kitchen_tv_plug_on
     id: kitchen_tv_plug_on
     initial_state: false
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.motion_k
         to: "on"
         from: "off"
-    condition:
+    conditions:
       - condition: time
         after: "06:00:00"
       - condition: time
@@ -243,7 +243,7 @@
       - condition: state
         entity_id: switch.system_security_mode
         state: "off"
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.0x00158d0001e85086_plug
   
@@ -253,13 +253,13 @@
   - alias: kitchen_oven_notify_target_temp
     id: kitchen_oven_notify_target_temp
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: automation_reloaded
-      - platform: state
+      - trigger: state
         entity_id: binary_sensor.esp8266_oven_temp_k_oven_state
         to: "on"
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('sensor.oven_target_temperature')|int(0) > 100 }}"
       - condition: template
@@ -267,9 +267,9 @@
       - condition: state
         entity_id: binary_sensor.esp8266_oven_temp_k_oven_state
         state: "on"
-    action:
+    actions:
       - wait_for_trigger:
-          - platform: template
+          - trigger: template
             value_template: "{{ states('sensor.esp8266_oven_temp_k')|int(0) >= states('sensor.oven_target_temperature')|int(0) }}"
         timeout:
           minutes: 60
@@ -305,12 +305,12 @@
   - alias: kitchen_oven_notify_to_alice
     id: kitchen_oven_notify_to_alice
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Какая температура в духовке
-    action:
+    actions:
       - action: media_player.volume_set
         data:
           entity_id: media_player.yandex_k
@@ -332,12 +332,12 @@
   - alias: kitchen_today_dishwasher
     id: kitchen_today_dishwasher
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Кто моет посуду
-    action:
+    actions:
       - action: media_player.play_media
         data:
           media_content_type: text
@@ -352,16 +352,16 @@
 #   - alias: kitchen_airfryer_finish
 #     id: kitchen_airfryer_finish
 #     initial_state: true
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: sensor.air_fryer_status
 #         from: 'coocking'
 #         to: 'cooked'
-#     condition:
+#     conditions:
 #       - condition: state
 #         entity_id: binary_sensor.tod_day
 #         state: 'on'
-#     action:
+#     actions:
 #       - action: media_player.play_media
 #         data:
 #           media_content_type: text
@@ -376,12 +376,12 @@
   # - alias: kitchen_ro_pump_reset
   #   id: kitchen_ro_pump_reset
   #   initial_state: true
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: binary_sensor.ro_pump_stale
   #       from: 'off'
   #       to: 'on'
-  #   action:
+  #   actions:
   #     - action: switch.turn_off
   #       entity_id: switch.0x00158d00039258de_plug
   #     - delay:
@@ -395,21 +395,21 @@
   - alias: kitchen_tv_plug_on_alice
     id: kitchen_tv_plug_on_alice
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Включи розетку телевизора
         id: 'on'
-      - platform: event
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Выключи розетку телевизора
         id: 'off'
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_k' }}"
-    action:
+    actions:
       - action: 'switch.turn_{{ trigger.id }}'
         entity_id: switch.0x00158d0001e85086_plug
         
@@ -419,13 +419,13 @@
   - alias: kitchen_tv_plug_toggle_button
     id: kitchen_tv_plug_toggle_button
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d0001ef61be_action
           click_type: single
-    action:
+    actions:
       - action: switch.toggle
         entity_id: switch.0x00158d0001e85086_plug
 
@@ -436,23 +436,23 @@
     id: system_fan_control_alice
     initial_state: true
     mode: parallel
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Выключи вентиляцию
         id: 'off'
-      - platform: event
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Включи вентиляцию
         id: 'on'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'
       - condition: template
         value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_k' }}"
-    action:
+    actions:
       - action: 'fan.turn_{{ trigger.id }}'
         entity_id: fan.esp8266_hood_k_fan

@@ -10,34 +10,34 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
+    triggers:
       # - platform: event
       #   event_type: xiaomi_aqara.click
       #   event_data:
       #     entity_id: sensor.0x158d0001f3627d_action
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x04cf8cdf3c77d831_action
-    condition:
+    conditions:
       - condition: template
-        value_template: "{{ states('light.led_white_s') in ['on','off'] }}"
+        value_template: "{{ states('light.0x54ef441000d54c6c_light') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'single'  or trigger.event.data.click_type == 'button_1_single'}}"
             sequence:
               - action: light.toggle
-                entity_id: light.led_white_s
+                entity_id: light.0x54ef441000d54c6c_light
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_1_double' }}"
             sequence:
               - action: light.turn_on
-                entity_id: light.led_white_s
+                entity_id: light.0x54ef441000d54c6c_light
                 data:
                   brightness: 255
                   kelvin: 5000
@@ -46,7 +46,7 @@
                 value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_1_hold' }}"
             sequence:
               - action: light.turn_on
-                entity_id: light.led_white_s
+                entity_id: light.0x54ef441000d54c6c_light
                 data:
                   brightness: 14
                   kelvin: 3000
@@ -59,18 +59,18 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d00026eb820_action
           click_type: button_1_single
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.square_led_s') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - if:
           - condition: state
             entity_id: binary_sensor.square_led_s_nightlight
@@ -110,18 +110,18 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d00026eb820_action
           click_type: button_2_single
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.square_led_s') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - if:
           - condition: state
             entity_id: binary_sensor.square_led_s_nightlight
@@ -159,50 +159,50 @@
   - alias: sasha_table_lamp_off_night_mode_main_on
     id: sasha_table_lamp_off_night_mode_main_on
     initial_state: true
-    trigger:
-      - platform: state
-        entity_id: light.led_white_s
+    triggers:
+      - trigger: state
+        entity_id: light.0x54ef441000d54c6c_light
         to:
-      - platform: homeassistant
+      - trigger: homeassistant
         event: start
-      - platform: event
+      - trigger: event
         event_type: automation_reloaded
-    condition:
+    conditions:
       - condition: template
-        value_template: "{{state_attr('light.led_white_s','brightness')|int(0) < 10}}"
+        value_template: "{{state_attr('light.0x54ef441000d54c6c_light','brightness')|int(0) < 10}}"
       - condition: state
         entity_id: light.square_led_s
         state: 'on'
       - condition: state
-        entity_id: light.led_white_s
+        entity_id: light.0x54ef441000d54c6c_light
         state: 'on'
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
-        entity_id: light.led_white_s
+        entity_id: light.0x54ef441000d54c6c_light
   
   # ##################################
   # Sasha - Auto Night Light
   # ##################################
   # - alias: sasha_auto_nightlight_on
   #   initial_state: false
-  #   trigger:
-  #     - platform: state
+  #   triggers:
+  #     - trigger: state
   #       entity_id: binary_sensor.0x00158d000224f89f_motion, binary_sensor.0x00158d000224f89f_motion
   #       #from: 'off'
   #       to: 'on'
-  #   condition:
-  #     condition: and
-  #     conditions:
-  #       - condition: state
-  #         entity_id: binary_sensor.tod_day
-  #         state: 'off'
-  #       - condition: state
-  #         entity_id: person.sasha
-  #         state: 'home'
-  #   action:
+  #   conditions:
+  #     - condition: and
+  #       conditions:
+  #         - condition: state
+  #           entity_id: binary_sensor.tod_day
+  #           state: 'off'
+  #         - condition: state
+  #           entity_id: person.sasha
+  #           state: 'home'
+  #   actions:
   #     - action: light.turn_on
   #       entity_id: light.led_white_s
   #       data:
@@ -215,20 +215,20 @@
   - alias: sasha_night_auto_off_30m
     id: sasha_night_auto_off_30m
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.motion_s
         from: 'on'
         to: 'off'
         for:
           minutes: 30
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'off'
-    action:
+    actions:
       - action: light.turn_off
-        entity_id: light.led_white_s
+        entity_id: light.0x54ef441000d54c6c_light
         data:
           transition: 5
   
@@ -238,8 +238,8 @@
   - alias: sasha_square_led_restart
     id: sasha_square_led_restart
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/1"
       # - platform: state
       #   entity_id: light.square_led_s
@@ -250,7 +250,7 @@
       #   entity_id: sensor.ha_uptime
       #   above: 0
       #   below: 2
-    condition:
+    conditions:
       - condition: state
         entity_id: light.square_led_s
         state: 'unavailable'
@@ -265,7 +265,7 @@
         value_template: >
           {% set ignore = ['unknown', 'unavailable', 'none'] %}
           {{ states('switch.shelly_1_led_s') not in ignore }}
-    action:
+    actions:
       - repeat:
           while:
             - condition: state
@@ -302,11 +302,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.square_led_s
         from: 'unavailable'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_square_led_s_restart_key
   
@@ -316,16 +316,16 @@
   - alias: sasha_main_lamp_switch_on_if_off
     id: sasha_main_lamp_switch_on_if_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x00158d00026eb820_action
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.shelly_1_led_s
         state: 'off'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.shelly_1_led_s
   
@@ -337,16 +337,16 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d000224f89f_motion
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.motion
         event_data:
           entity_id: binary_sensor.0x00158d0003140824_motion
-    condition:
+    conditions:
       - condition: state
         entity_id: light.square_led_s
         state: 'on'
@@ -357,7 +357,7 @@
         state: 'off'
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_s
       - action: timer.start
@@ -369,12 +369,12 @@
   - alias: sasha_timer_off
     id: sasha_timer_off
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.square_led_s
         to: 'off'
         from: 'on'
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_s
   
@@ -384,16 +384,16 @@
   - alias: sasha_timer_on
     id: sasha_timer_on
     initial_state: true
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.square_led_s
         to: 'on'
         from: 'off'
-    condition:
+    conditions:
       - condition: state
         entity_id: switch.system_security_mode
         state: 'off'  
-    action:
+    actions:
       - action: timer.cancel
         entity_id: timer.main_light_s
       - action: timer.start
@@ -405,16 +405,16 @@
   - alias: sasha_auto_light_off
     id: sasha_auto_light_off
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: timer.finished
         event_data:
           entity_id: timer.main_light_s
-    condition:
+    conditions:
       - condition: state
         entity_id: binary_sensor.tod_day
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.square_led_s
         data:
@@ -426,21 +426,21 @@
   - alias: sasha_led_strip_control
     id: sasha_led_strip_control
     initial_state: true
-    trigger:
+    triggers:
       # - platform: event
       #   event_type: xiaomi_aqara.click
       #   event_data:
       #     entity_id: sensor.0x158d00019c8afd_action
-      - platform: event
+      - trigger: event
         event_type: xiaomi_aqara.click
         event_data:
           entity_id: sensor.0x04cf8cdf3c77d831_action
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.esp32_node_s_led') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}" 
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: template
@@ -475,19 +475,19 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: binary_sensor.occupancy_s
         to: 'off'
         for: 
           hours: 1
-    condition:
+    conditions:
       - condition: state
         entity_id: group.lights_s
         state: 'on'
-    action:
+    actions:
       - action: light.turn_off
-        entity_id: light.square_led_s, light.esp32_node_s_led, light.led_white_s
+        entity_id: light.square_led_s, light.esp32_node_s_led, light.0x54ef441000d54c6c_light
         data:
           transition: 15
 
@@ -497,23 +497,23 @@
   - alias: sasha_main_light_control_with_alice
     id: sasha_main_light_control_with_alice
     initial_state: true
-    trigger:
-      - platform: event
+    triggers:
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Выключи свет в Сашиной комнате
         id: 'to_off_alice'
-      - platform: event
+      - trigger: event
         event_type: yandex_intent
         event_data:
           text: Включи свет в Сашиной комнате
         id: 'to_on_alice'
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.square_led_s') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -537,8 +537,8 @@
   - alias: sasha_light_bar_restart
     id: sasha_light_bar_restart
     initial_state: true
-    trigger:
-      - platform: time_pattern
+    triggers:
+      - trigger: time_pattern
         minutes: "/1"
       # - platform: state
       #   entity_id: light.bedside_mb
@@ -549,7 +549,7 @@
       #   entity_id: sensor.ha_uptime
       #   above: 0
       #   below: 2
-    condition:
+    conditions:
       - condition: state
         entity_id: light.light_bar_s
         state: 'unavailable'
@@ -564,7 +564,7 @@
         value_template: >
           {% set ignore = ['unknown', 'unavailable', 'none'] %}
           {{ states('switch.sp111_socket_1_relay') not in ignore }}
-    action:
+    actions:
       - repeat:
           while:
             - condition: state
@@ -601,11 +601,11 @@
     initial_state: true
     mode: single
     max_exceeded: silent
-    trigger:
-      - platform: state
+    triggers:
+      - trigger: state
         entity_id: light.light_bar_s
         from: 'unavailable'
-    action:
+    actions:
       - action: switch.turn_on
         entity_id: switch.system_light_bar_s_restart_key
 
@@ -615,86 +615,86 @@
   - alias: sasha_main_night_light_turn_off
     id: sasha_main_night_light_turn_off
     initial_state: true
-    trigger:
-      - platform: time
+    triggers:
+      - trigger: time
         at: '23:00:03'
-    condition:
+    conditions:
       - condition: template
         value_template: "{{ states('light.s26_socket_1_night_s') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    action:
+    actions:
       - action: light.turn_off
         entity_id: light.s26_socket_1_night_s
 
-# ##################################
-# Sasha - LED White S Restart
-# ##################################
-  - alias: sasha_led_white_restart
-    id: sasha_led_white_restart
-    initial_state: true
-    trigger:
-      - platform: time_pattern
-        minutes: "/1"
-    condition:
-      - condition: state
-        entity_id: light.led_white_s
-        state: "unavailable"
-        for:
-          minutes: 2
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-      - condition: state
-        entity_id: switch.system_led_white_s_restart_key
-        state: 'on'
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ states('switch.0x00158d000358c773_plug') not in ignore }}        
-    action:
-      - repeat:
-          while:
-            - condition: state
-              entity_id: light.led_white_s
-              state: "unavailable"
-            - condition: template
-              value_template: "{{ repeat.index <= 5 }}"
-          sequence:
-            - action: switch.turn_off
-              entity_id: switch.0x00158d000358c773_plug
-            - delay:
-                seconds: 15
-            - action: switch.turn_on
-              entity_id: switch.0x00158d000358c773_plug
-            - action: notify.telegram
-              data:
-                message: "\U0001f6a8 LED White S restart done({{repeat.index}})!"
-            - delay:
-                seconds: 30
-      - condition: state
-        entity_id: light.led_white_s
-        state: 'unavailable'
-      - action: notify.telegram
-        data:
-          message: "\U0001f6a8 LED White S restart unsuccessful!"
-      - action: switch.turn_off
-        entity_id: switch.system_led_white_s_restart_key
+# # ##################################
+# # Sasha - LED White S Restart
+# # ##################################
+#   - alias: sasha_led_white_restart
+#     id: sasha_led_white_restart
+#     initial_state: true
+#     triggers:
+#       - trigger: time_pattern
+#         minutes: "/1"
+#     conditions:
+#       - condition: state
+#         entity_id: light.led_white_s
+#         state: "unavailable"
+#         for:
+#           minutes: 2
+#       - condition: template
+#         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+#       - condition: state
+#         entity_id: switch.system_led_white_s_restart_key
+#         state: 'on'
+#       - condition: template
+#         value_template: >
+#           {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#           {{ states('switch.0x00158d000358c773_plug') not in ignore }}        
+#     actions:
+#       - repeat:
+#           while:
+#             - condition: state
+#               entity_id: light.led_white_s
+#               state: "unavailable"
+#             - condition: template
+#               value_template: "{{ repeat.index <= 5 }}"
+#           sequence:
+#             - action: switch.turn_off
+#               entity_id: switch.0x00158d000358c773_plug
+#             - delay:
+#                 seconds: 15
+#             - action: switch.turn_on
+#               entity_id: switch.0x00158d000358c773_plug
+#             - action: notify.telegram
+#               data:
+#                 message: "\U0001f6a8 LED White S restart done({{repeat.index}})!"
+#             - delay:
+#                 seconds: 30
+#       - condition: state
+#         entity_id: light.led_white_s
+#         state: 'unavailable'
+#       - action: notify.telegram
+#         data:
+#           message: "\U0001f6a8 LED White S restart unsuccessful!"
+#       - action: switch.turn_off
+#         entity_id: switch.system_led_white_s_restart_key
   
-# ##################################
-# Sasha - LED White S Auto Restart Key Toggle
-# ##################################
-  - alias: sasha_led_white_restart_key_toggle
-    id: sasha_led_white_restart_key_toggle
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    trigger:
-      - platform: state
-        entity_id: light.led_white_s
-        from: 'unavailable'
-    action:
-      - action: switch.turn_on
-        entity_id: switch.system_led_white_s_restart_key
+# # ##################################
+# # Sasha - LED White S Auto Restart Key Toggle
+# # ##################################
+#   - alias: sasha_led_white_restart_key_toggle
+#     id: sasha_led_white_restart_key_toggle
+#     initial_state: true
+#     mode: single
+#     max_exceeded: silent
+#     triggers:
+#       - trigger: state
+#         entity_id: light.led_white_s
+#         from: 'unavailable'
+#     actions:
+#       - action: switch.turn_on
+#         entity_id: switch.system_led_white_s_restart_key
 
 # # ##################################
 # # Sasha - LED Color S Restart
@@ -702,10 +702,10 @@
 #   - alias: sasha_led_color_restart
 #     id: sasha_led_color_restart
 #     initial_state: true
-#     trigger:
-#       - platform: time_pattern
+#     triggers:
+#       - trigger: time_pattern
 #         minutes: "/1"
-#     condition:
+#     conditions:
 #       - condition: state
 #         entity_id: light.led_color_s
 #         state: "unavailable"
@@ -720,7 +720,7 @@
 #         value_template: >
 #           {% set ignore = ['unknown', 'unavailable', 'none'] %}
 #           {{ states('switch.shp6_socket_1_relay') not in ignore }}        
-#     action:
+#     actions:
 #       - repeat:
 #           while:
 #             - condition: state
@@ -757,10 +757,10 @@
 #     initial_state: true
 #     mode: single
 #     max_exceeded: silent
-#     trigger:
-#       - platform: state
+#     triggers:
+#       - trigger: state
 #         entity_id: light.led_white_s
 #         from: 'unavailable'
-#     action:
+#     actions:
 #       - action: switch.turn_on
 #         entity_id: switch.system_led_white_s_restart_key
