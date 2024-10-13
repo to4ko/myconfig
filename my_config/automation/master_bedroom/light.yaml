@@ -21,7 +21,7 @@
           entity_id: sensor.0x04cf8cdf3c77cc5f_action
     conditions:
       - condition: template
-        value_template: "{{ states('light.led_white_mb') in ['on','off'] }}"
+        value_template: "{{ states('light.0x54ef441000c88fa8_light') in ['on','off'] }}"
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
@@ -31,13 +31,13 @@
                 value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_1_single' }}"
             sequence:
               - action: light.toggle
-                entity_id: light.led_white_mb
+                entity_id: light.0x54ef441000c88fa8_light
           - conditions:
               - condition: template
                 value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_1_double' }}"
             sequence:
               - action: light.turn_on
-                entity_id: light.led_white_mb
+                entity_id: light.0x54ef441000c88fa8_light
                 data:
                   brightness: 255
                   kelvin: 5000
@@ -46,7 +46,7 @@
                 value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_1_hold' }}"
             sequence:
               - action: light.turn_on
-                entity_id: light.led_white_mb
+                entity_id: light.0x54ef441000c88fa8_light
                 data:
                   brightness: 14
                   kelvin: 3000
@@ -639,7 +639,7 @@
         state: 'on'
     actions:
       - action: light.turn_off
-        entity_id: light.round_led_mb_ambilight, light.led_white_mb, light.esp32_strip_1s_wadrobe_mb_rgb
+        entity_id: light.round_led_mb_ambilight, light.0x54ef441000c88fa8_light, light.esp32_strip_1s_wadrobe_mb_rgb
         data:
           transition: 15
       - condition: state
@@ -679,71 +679,71 @@
   #     - action: 'switch.turn_{{ trigger.id }}'
   #       entity_id: switch.gosund_strip_p1_relay1, switch.gosund_strip_p1_relay2, switch.gosund_strip_p1_relay3
   
-# ##################################
-# Master Bedroom - LED White MB Restart
-# ##################################
-  - alias: master_bedroom_led_white_restart
-    id: master_bedroom_led_white_restart
-    initial_state: true
-    triggers:
-      - trigger: time_pattern
-        minutes: "/1"
-    conditions:
-      - condition: state
-        entity_id: light.led_white_mb
-        state: "unavailable"
-        for:
-          minutes: 2
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-      - condition: state
-        entity_id: switch.system_led_white_mb_restart_key
-        state: 'on'
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ states('switch.0x00158d0002c3d86e_plug') not in ignore }}        
-    actions:
-      - repeat:
-          while:
-            - condition: state
-              entity_id: light.led_white_mb
-              state: "unavailable"
-            - condition: template
-              value_template: "{{ repeat.index <= 5 }}"
-          sequence:
-            - action: switch.turn_off
-              entity_id: switch.0x00158d0002c3d86e_plug
-            - delay:
-                seconds: 15
-            - action: switch.turn_on
-              entity_id: switch.0x00158d0002c3d86e_plug
-            - action: notify.telegram
-              data:
-                message: "\U0001f6a8 LED White MB restart done({{repeat.index}})!"
-            - delay:
-                seconds: 30
-      - condition: state
-        entity_id: light.led_white_mb
-        state: 'unavailable'
-      - action: notify.telegram
-        data:
-          message: "\U0001f6a8 LED White MB restart unsuccessful!"
-      - action: switch.turn_off
-        entity_id: switch.system_led_white_mb_restart_key
+# # ##################################
+# # Master Bedroom - LED White MB Restart
+# # ##################################
+#   - alias: master_bedroom_led_white_restart
+#     id: master_bedroom_led_white_restart
+#     initial_state: true
+#     triggers:
+#       - trigger: time_pattern
+#         minutes: "/1"
+#     conditions:
+#       - condition: state
+#         entity_id: light.led_white_mb
+#         state: "unavailable"
+#         for:
+#           minutes: 2
+#       - condition: template
+#         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+#       - condition: state
+#         entity_id: switch.system_led_white_mb_restart_key
+#         state: 'on'
+#       - condition: template
+#         value_template: >
+#           {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#           {{ states('switch.0x00158d0002c3d86e_plug') not in ignore }}        
+#     actions:
+#       - repeat:
+#           while:
+#             - condition: state
+#               entity_id: light.led_white_mb
+#               state: "unavailable"
+#             - condition: template
+#               value_template: "{{ repeat.index <= 5 }}"
+#           sequence:
+#             - action: switch.turn_off
+#               entity_id: switch.0x00158d0002c3d86e_plug
+#             - delay:
+#                 seconds: 15
+#             - action: switch.turn_on
+#               entity_id: switch.0x00158d0002c3d86e_plug
+#             - action: notify.telegram
+#               data:
+#                 message: "\U0001f6a8 LED White MB restart done({{repeat.index}})!"
+#             - delay:
+#                 seconds: 30
+#       - condition: state
+#         entity_id: light.led_white_mb
+#         state: 'unavailable'
+#       - action: notify.telegram
+#         data:
+#           message: "\U0001f6a8 LED White MB restart unsuccessful!"
+#       - action: switch.turn_off
+#         entity_id: switch.system_led_white_mb_restart_key
   
-# ##################################
-# Master Bedroom - LED White MB Auto Restart Key Toggle
-# ##################################
-  - alias: master_bedroom_led_white_restart_key_toggle
-    id: master_bedroom_led_white_restart_key_toggle
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: light.led_white_mb
-        from: 'unavailable'
-    actions:
-      - action: switch.turn_on
-        entity_id: switch.system_led_white_mb_restart_key
+# # ##################################
+# # Master Bedroom - LED White MB Auto Restart Key Toggle
+# # ##################################
+#   - alias: master_bedroom_led_white_restart_key_toggle
+#     id: master_bedroom_led_white_restart_key_toggle
+#     initial_state: true
+#     mode: single
+#     max_exceeded: silent
+#     triggers:
+#       - trigger: state
+#         entity_id: light.led_white_mb
+#         from: 'unavailable'
+#     actions:
+#       - action: switch.turn_on
+#         entity_id: switch.system_led_white_mb_restart_key
