@@ -114,12 +114,12 @@
   - Yeelight LED Ceiling Lamp Pro White 960mm (YLXD08YL)
   - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
   - Yeelight LED Ceiling Lamp 480mm White (YLXD05YL)
-  - Yeelight LED Light Strip (YLDD01YL)
-  - Yeelight LED Light Strip Plus (YLDD04YL)
-  - Yeelight LED Light Strip 1S (YLDD05YL) (3ea)
-  - Yeelight LED Bulb (Color) (YLDP06YL) (2ea)
-  - Yeelight Smart LED Bubl W3 (YLDP005) (1ea)
-  - Yeelight LED Tunable Bulb (White) (YLDP05YL) (2ea)
+  - not in use - Yeelight LED Light Strip (YLDD01YL)
+  - not in use - Yeelight LED Light Strip Plus (YLDD04YL)
+  - not in use - Yeelight LED Light Strip 1S (YLDD05YL) (3ea)
+  - not in use - Yeelight LED Bulb (Color) (YLDP06YL) (2ea)
+  - not in use - Yeelight Smart LED Bubl W3 (YLDP005) (1ea)
+  - not in use - Yeelight LED Tunable Bulb (White) (YLDP05YL) (2ea)
   - Yeelight Display Light Lamp Pro (YLTD003) (1ea)
   - Xiaomi Philips Zhirui Downlight (9290012799) (1ea)
   - not in use - Yeelight Jiaoyue 260 (YLXD62YI)
@@ -158,6 +158,7 @@
   - Aqara Wireless Mini Switch with Gyroscope WXKG12LM (2ea)
   - Aqara E1 Wireless Remote Switch (Double Rocker) WXKG17LM (1ea)
   - Xiaomi Mi Power Plug ZigBee ZNCZ02LM (24ea)
+  - Aqara T1 E27 Buld ZNLDP14LM (4ea)
 
 **Xiaomi BT\BLE Devices:**
   - XMOSB01XS Xiaomi Mijia People Presence Sensor (2ea)
@@ -169,7 +170,7 @@
   - Mi Body Composition Scale 2
   - MMC-T201-1 Digital Baby Thermometer
   - YLAI003 Smart Wireless Switch
-  - HB01 Linptech ES1 Presence Sensor
+  - HB01 Linptech ES1 Presence Sensor (4ea)
   - RTCGQ02LM Mi Motion Sensor 2
   - CGPR1 Qingping Motion Sensor
   - Mijia curtain companion MJSGCLBL01LM Rod-type (6ea)
@@ -211,7 +212,7 @@
   - Yandex Station Lite (4ea)
   - Yandex Station Mini 2 (1ea)
   - Yandex Station 2 (1ea)
-  - Yandex Ststion Midi (1ea)
+  - Yandex Ststion Midi (2ea)
 
 **Other Devices:**
   - Lenovo Xiaoxin Pad 2024 8/128 with Fully Kiosk Browser
@@ -234,12 +235,12 @@
       * NGINX Proxy Manager
       * Bitwarden
       * MariaDB
+      * EMQX
 
 **Main Storage Unit Software**
   - DSM 7.2
   - Proxmox Backup Server VM
   - Docker containers:
-    * MQTT
     * InfluxDB
     * Transmission
     * qBitTorrent
