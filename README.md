@@ -158,7 +158,7 @@
   - Aqara Wireless Mini Switch with Gyroscope WXKG12LM (2ea)
   - Aqara E1 Wireless Remote Switch (Double Rocker) WXKG17LM (1ea)
   - Xiaomi Mi Power Plug ZigBee ZNCZ02LM (24ea)
-  - Aqara T1 E27 Buld ZNLDP14LM (4ea)
+  - Aqara T1 E27 Bulb ZNLDP14LM (4ea)
 
 **Xiaomi BT\BLE Devices:**
   - XMOSB01XS Xiaomi Mijia People Presence Sensor (2ea)
@@ -186,6 +186,7 @@
   - Blitzwolf LT11
   - not in use - Blitzwolf SS5 dual gang relay
   - Digma IR Remote (4ea)
+  - Yeelight 1s Led Strip ESPHome firmware (4ea)
 
 **ESPHome DIY devices:**
   - ESP32 - Node K - Kitchen SensAir S8, BME280, BHI1750, Water Filter Counters, IR controller
@@ -205,7 +206,7 @@
   - D1 Mini TOF Distance and LD2410 Radar
   - BTF Adressable LED strip Controller (based on esp8265) flashed with ESPHome
   - not in use - ESP01 (deepsleep on 14500 LiOn batteries) air freshener (Deerma Aerosol Dispenser DEM-PX830)
-  - Tuya USB Micro Switch (2ea) - ESPHome firmware
+  - not in use - Tuya USB Micro Switch (2ea) - ESPHome firmware
 
 **Smart Speakers:**
   - not in use - Google Home Mini (5ea)
