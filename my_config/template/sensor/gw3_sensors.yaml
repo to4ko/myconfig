@@ -217,12 +217,6 @@
       - trigger: event
         event_type: automation_reloaded                
     sensor:
-      - name: GW3 Zigbee Devices Count
-        unique_id: gw3_zigbee_devices_count
-        state: "{{ states.sensor|selectattr('entity_id', 'match', 'sensor.*_zigbee') | map(attribute='attributes.name') | unique | list | count }}"
-        icon: mdi:zigbee
-        unit_of_measurement: "ea"
-  
       - name: GW3 HB Zigbee Devices Count
         unique_id: gw3_hb_zigbee_devices_count
         state: "{{ states.sensor|selectattr('entity_id', 'match', 'sensor.*_zigbee') | selectattr('attributes.gate', 'eq','Gateway3a HB') | map(attribute='attributes.name') | unique | list | count }}"
@@ -258,13 +252,24 @@
         state: "{{ states.sensor|selectattr('entity_id', 'match', 'sensor.*_zigbee') | selectattr('attributes.gate', 'eq','Gateway3a MB') | map(attribute='attributes.name') | unique | list | count }}"
         icon: mdi:zigbee
         unit_of_measurement: "ea"
-  
+
+      - name: GW3 Zigbee Devices Count
+        unique_id: gw3_zigbee_devices_count
+        state: "{{ states.sensor|selectattr('attributes.device', 'defined')|selectattr('attributes.device.extra.type', 'eq', 'zigbee')| map(attribute='attributes.name') | list | count }}"
+        icon: mdi:zigbee
+        unit_of_measurement: "ea"
+
       - name: GW3 BT Devices Count
         unique_id: gw3_bt_devices_count
-        state: "{{ states.sensor|selectattr('attributes.device', 'defined')|selectattr('attributes.device.extra.mac', 'defined')| map(attribute='attributes.name') | list | count }}"
+        state: "{{ states.sensor|selectattr('attributes.device', 'defined')|selectattr('attributes.device.extra.type', 'eq', 'ble')| map(attribute='attributes.name') | list | count }}"
         icon: mdi:bluetooth
         unit_of_measurement: "ea"
-  
+
+      - name: GW3 Mesh Devices Count
+        unique_id: gw3_mesh_devices_count
+        state: "{{ states.sensor|selectattr('attributes.device', 'defined')|selectattr('attributes.device.extra.type', 'eq', 'mesh')| map(attribute='attributes.name') | list | count }}"
+        icon: mdi:bluetooth-transfer
+        unit_of_measurement: "ea"
   
       # - name: GW3 K Zigbee Errors Count
       #   state: "{{ state_attr('sensor.0x588e81fffe72678e_gateway','zigbee_oe')|int(0) }}"

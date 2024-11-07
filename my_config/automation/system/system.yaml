@@ -863,11 +863,16 @@
       entity_id: sensor.esp32_node_b_hot_pipe
       above: 40
       for:
-        minutes: 5        
+        minutes: 5
   conditions:
     - condition: state
       entity_id: input_boolean.hot_water
       state: "on"
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: sensor.esp32_node_b_hot_pipe
+          state: 'unavailable'
   actions:
     - action: notify.telegram
       data:
@@ -2490,7 +2495,7 @@
   initial_state: true
   triggers:
     - trigger: time_pattern
-      hours: "/1"
+      hours: "/2"
       id: "auto"
     - trigger: event
       event_type: xiaomi_aqara.click
@@ -2498,11 +2503,11 @@
         entity_id: sensor.28d1273bc2f4_action
         click_type: single
       id: "manual"
-  conditions:
-    - condition: trigger
-      id: "auto"
-    - condition: template
-      value_template: "{{ 23 > now().hour > 6 }}"
+  # conditions:
+  #   - condition: trigger
+  #     id: "auto"
+  #   - condition: template
+  #     value_template: "{{ 23 > now().hour > 6 }}"
   actions:
     # - wait_for_trigger:
     #   conditions:
