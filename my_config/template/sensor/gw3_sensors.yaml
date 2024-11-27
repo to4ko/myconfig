@@ -148,6 +148,41 @@
         unit_of_measurement: "ea"
         availability: "{{ is_state('input_boolean.ha_shutdown','off') }}"
 
+      - name: BLE Devices Stats Unavailable
+        unique_id: ble_devices_stats_unavailable
+        state: "{{ expand('group.gw3_ble_entities') | selectattr('attributes.device', 'defined') | selectattr('attributes.device.available', 'defined') | selectattr('attributes.device.available','ne',true) | map(attribute='name') | list | count }}"
+        icon: >
+          {% if states('sensor.ble_devices_stats_unavailable')|int(0) > 0 %}
+          mdi:signal-off
+          {% else %}
+          mdi:signal
+          {% endif %}
+        attributes:
+          list: >-
+            {%-for state in expand('group.gw3_ble_entities')|list
+              if state.attributes.device is defined and state.attributes.device.available != true %}
+              {{state.name}}{%- if not loop.last -%}, {%-endif%}
+            {%-endfor-%}
+        unit_of_measurement: "ea"
+        availability: "{{ is_state('input_boolean.ha_shutdown','off') }}"
+
+      - name: MESH Devices Stats Unavailable
+        unique_id: mesh_devices_stats_unavailable
+        state: "{{ expand('group.gw3_mesh_entities') | selectattr('attributes.device', 'defined') | selectattr('attributes.device.available', 'defined') | selectattr('attributes.device.available','ne',true) | map(attribute='name') | list | count }}"
+        icon: >
+          {% if states('sensor.mesh_devices_stats_unavailable')|int(0) > 0 %}
+          mdi:signal-off
+          {% else %}
+          mdi:signal
+          {% endif %}
+        attributes:
+          list: >-
+            {%-for state in expand('group.gw3_mesh_entities')|list
+              if state.attributes.device is defined and state.attributes.device.available != true %}
+              {{state.name}}{%- if not loop.last -%}, {%-endif%}
+            {%-endfor-%}
+        unit_of_measurement: "ea"
+        availability: "{{ is_state('input_boolean.ha_shutdown','off') }}"        
 
   - trigger:
       - trigger: time_pattern
