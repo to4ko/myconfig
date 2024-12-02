@@ -52,6 +52,13 @@
   - 512Gb Samsung PM9A1 M.2
   - 2Tb Samsung PM9A3 U.2
 
+**Proxmox Backup Server**
+  - [Chatreey NAS](https://aliexpress.ru/item/1005006838685142.html)
+  - Intel N100
+  - 16Gb Micron DDR4 SODIMM
+  - 512Gb Samsung PM9A1 M.2
+  - 2*2Tb Samsung 870 EVO
+
 **KVM setup**
   - [BLIKVM v3 HAT running PiKVM](https://aliexpress.ru/item/1005004377930400.html)
   - XH-HK4401 4-port HDMI USB KVM Switch
@@ -59,7 +66,7 @@
 **Main Storage Unit** 
   - [Synology DS1621+](https://www.synology.com/en-uk/products/DS1621+)
   - 2*16Gb Crucial DDR4 SODIMM
-  - Mellanox ConnectX-3 Pro CX312B EN
+  - Mellanox ConnectX-3
   - 6ea WD HC550 16Tb as Main Storage
   - 2ea SP A38 1Tb as NVME read\write cache
 
