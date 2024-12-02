@@ -61,6 +61,7 @@
 
 **KVM setup**
   - [BLIKVM v3 HAT running PiKVM](https://aliexpress.ru/item/1005004377930400.html)
+  - [Raspberry Pi4 4Gb](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
   - XH-HK4401 4-port HDMI USB KVM Switch
 
 **Main Storage Unit** 
