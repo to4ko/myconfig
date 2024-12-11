@@ -119,6 +119,10 @@ binary_sensor:
         input: true
       inverted: false
 
+  - platform: template
+    name: ${board_name}_Hot_Water_ON
+    id: id_hot_water_on
+
 light:
   - platform: monochromatic
     name: ${board_name}_Light
@@ -175,6 +179,7 @@ sensor:
   - platform: dallas_temp
     address: 0x6B3C01D607C1EF28
     name: ${board_name}_Hot_Pipe
+    id: dallas_hot
     # accuracy_decimals: 2
     # resolution: 12
     # update_interval: 30s
@@ -506,3 +511,22 @@ interval:
           then:
               - logger.log: "Manual Mode - switched off!"
               - switch.turn_off: id_fan_b_manual_mode
+
+      - if:
+          condition:
+            - and:
+              - for:
+                  time: 5min
+                  condition:
+                    lambda: |-
+                      return id(dallas_hot).state > 40;
+          then:
+              - logger.log: "---> Hot Water ON"
+              - binary_sensor.template.publish:
+                  id: id_hot_water_on
+                  state: ON
+          else: 
+              - logger.log: "---> Hot Water OFF"
+              - binary_sensor.template.publish:
+                  id: id_hot_water_on
+                  state: OFF
