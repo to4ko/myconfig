@@ -61,7 +61,7 @@
 
 **Proxmox backup server**
   - [ZXIPC R5-4500U Mini PC](https://aliexpress.ru/item/1005007007752583.html)
-  - AMD Ryxen 5 4500U
+  - AMD Ryzen 5 4500U
   - 16Gb Micron DDR4 SODIMM
   - 512Gb Samsung PM9A1 M.2
   - 2Tb Samsung 870 EVO
