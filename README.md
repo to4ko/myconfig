@@ -45,24 +45,36 @@
 </div>
 
 # Hardware Configuration
-**Proxmox Node**
+**Proxmox Node 1**
   - [Minisforum MS01](https://store.minisforum.com/products/minisforum-ms-01)
   - Intel i9-13900H
   - 2*48Gb Crucial DDR5 SODIMM
   - 512Gb Samsung PM9A1 M.2
   - 2Tb Samsung PM9A3 U.2
 
-**Proxmox Backup Server**
-  - [Chatreey NAS](https://aliexpress.ru/item/1005006838685142.html)
-  - Intel N100
+**Proxmox Node 2**
+  - [Minisforum MS01](https://store.minisforum.com/products/minisforum-ms-01)
+  - Intel i9-12900H
+  - 2*32Gb DDR5 SODIMM
+  - 512Gb Samsung PM9A1 M.2
+  - 2Tb Micron 7400 Pro U.3
+
+**Proxmox backup server**
+  - [ZXIPC R5-4500U Mini PC](https://aliexpress.ru/item/1005007007752583.html)
+  - AMD Ryxen 5 4500U
   - 16Gb Micron DDR4 SODIMM
   - 512Gb Samsung PM9A1 M.2
-  - 2*2Tb Samsung 870 EVO
+  - 2Tb Samsung 870 EVO
 
 **KVM setup**
   - [BLIKVM v3 HAT running PiKVM](https://aliexpress.ru/item/1005004377930400.html)
   - [Raspberry Pi4 4Gb](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
   - XH-HK4401 4-port HDMI USB KVM Switch
+
+**KVM2 "light"setup**
+  - [CSI-2](https://aliexpress.ru/item/1005005499573640.html)
+  - [Raspberry Pi Zero 2W](https://aliexpress.ru/item/1005005792181612.html)
+
 
 **Main Storage Unit** 
   - [Synology DS1621+](https://www.synology.com/en-uk/products/DS1621+)
@@ -604,6 +616,29 @@ white-space:nowrap;>
 <td>Minisforum MS01</td>
 <td>i9-13900H</td>
 <td>2 * 48Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>6*16Tb HDD + 2*1Tb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
+<tr>
+<td rowspan="3">19</td>
+<td rowspan="3">2024</td>
+<td>Minisforum MS01</td>
+<td>i9-13900H</td>
+<td>2 * 48Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Minisforum MS01</td>
+<td>i9-12900H</td>
+<td>2 * 32Gb DDR5</td>
 <td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
 <td>-</td>
 </tr>
