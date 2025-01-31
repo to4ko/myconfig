@@ -149,6 +149,7 @@
   - Xiaomi Multimode Gateway 2 CN (6ea)
   - Xiaomi Air Purifier 2s
   - Xiaomi Wifi Plugs v2 (4ea)
+  - Viomi Water Purifier 1200g
   - not in use - Xiaomi Wifi Plugs v2 (3ea)
   - not in use - Xiaomi IR controller
   - not in use - Qingping Air Monitor Lite (2ea)
