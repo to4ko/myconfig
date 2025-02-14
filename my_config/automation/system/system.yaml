@@ -2805,8 +2805,6 @@
               data:
                 message: "\U0001f7e2 Plex back online!"
 
-
-
 # ##################################
 # System - plex status change
 # ##################################
@@ -2824,3 +2822,28 @@
     - action: notify.telegram
       data:
         message: "\U0001f534 Node B Restart Reason: {{states('sensor.esp32_node_b_reset_reason') }}"
+
+# ##################################
+# System - restart HB gateway
+# ##################################
+- alias: system_retart_gateway
+  id: system_retart_gateway
+  initial_state: true
+  mode: queued
+  max: 50
+  max_exceeded: silent  
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.gateway3a_hb_free_memory
+      below: 10000
+      for:
+        hours: 1  
+  actions:
+    - action: select.select_option
+      data:
+        option: reboot
+      target:
+        entity_id: select.54ef443f1fac_command
+    - action: notify.telegram
+      data:
+        message: "\U0001f534 Gateway HB restart"
