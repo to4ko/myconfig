@@ -2639,19 +2639,19 @@
 # ##################################
 # System - espresence nodes restart
 # ##################################
-- alias: system_espresence_nodes_restart
-  id: system_espresence_nodes_restart
-  initial_state: true
-  triggers:
-    - trigger: time_pattern
-      hours: "/3"
-  actions:
-    - action: button.press
-      entity_id:
-        - button.espresense_kitchen_restart
-        - button.espresense_sasha_restart
-        - button.espresense_master_bedroom_restart
-        - button.espresense_vova_restart
+# - alias: system_espresence_nodes_restart
+#   id: system_espresence_nodes_restart
+#   initial_state: true
+#   triggers:
+#     - trigger: time_pattern
+#       hours: "/3"
+#   actions:
+#     - action: button.press
+#       entity_id:
+#         - button.espresense_kitchen_restart
+#         - button.espresense_sasha_restart
+#         - button.espresense_master_bedroom_restart
+#         - button.espresense_vova_restart
 
 # ##################################
 # System - Unifi Doorbell Volume
@@ -2728,11 +2728,14 @@
         - sensor.ms01a_enp1s0f1_speed
         - sensor.ms01a_enp1s0f2_speed
         - sensor.ms01a_enp1s0f3_speed
-        - sensor.ms01b_enp2s0f0np0_speed
-        - sensor.ms01b_enp2s0f1np1_speed
-        - sensor.ms01b_enp87s0_speed
-        - sensor.ms01b_enp89s0_speed
-        
+        - sensor.ms01b_enp3s0f0np0_speed
+        - sensor.ms01b_enp3s0f1np1_speed
+        - sensor.ms01b_enp88s0_speed
+        - sensor.ms01b_enp90s0_speed
+        - sensor.ms01b_enp1s0f0_speed
+        - sensor.ms01b_enp1s0f1_speed
+        - sensor.ms01b_enp1s0f2_speed
+        - sensor.ms01b_enp1s0f3_speed 
       to:
   actions:
     - variables:
@@ -2847,3 +2850,52 @@
     - action: notify.telegram
       data:
         message: "\U0001f534 Gateway HB restart"
+        
+        
+        
+# ##################################
+# System - restart vm owrt1
+# ##################################
+- alias: system_vm_owrt1
+  id: system_vm_owrt1
+  initial_state: true
+  mode: queued
+  max: 50
+  max_exceeded: silent  
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.googlevideo_com
+      to: 'off'
+      for:
+        minutes: 5
+  actions:
+    - action: notify.telegram
+      data:
+        message: "\U0001f534 VM OWRT Restart"
+    - action: button.press
+      entity_id: button.qemu_vm_owrt_228_shutdown
+    - wait_template: "{{ is_state('binary_sensor.qemu_vm_owrt_228_status', 'off') }}"
+      timeout: "00:05:00"
+    - action: button.press
+      entity_id: button.qemu_vm_owrt_228_start
+
+
+# ##################################
+# System - googlevideo unavalable
+# ##################################
+- alias: system_googlevideo_unavalable
+  id: system_googlevideo_unavalable
+  initial_state: true
+  mode: queued
+  max: 50
+  max_exceeded: silent  
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.googlevideo_com
+      to: 'off'
+      for:
+        minutes: 1
+  actions:
+    - action: notify.telegram
+      data:
+        message: "\U0001f534 Googlevideo unavalable"
