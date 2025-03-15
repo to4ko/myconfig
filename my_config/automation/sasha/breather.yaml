@@ -18,7 +18,7 @@
       - condition: not
         conditions:
           - condition: state
-            entity_id: switch.system_breather_s_last_toggle_by_user
+            entity_id: switch.system_breather_manual_s
             state: 'on'
     actions:
       - choose:
@@ -105,6 +105,90 @@
                 entity_id: fan.breather_s
 
 # ##################################
+# Sasha - Breather Auto Timer
+# ##################################
+  - alias: sasha_breather_auto_timer
+    id: sasha_breather_auto_timer
+    initial_state: true
+    triggers:
+      - trigger: event
+        event_type: yandex_intent
+        event_data:
+          text: Выключи вентиляцию
+        id: 'to_off_alice'
+      - trigger: event
+        event_type: yandex_intent
+        event_data:
+          text: Включи вентиляцию
+        id: 'to_on_alice'
+      - trigger: time
+        at: "21:00:00"
+        id: 'time_trigger_night'
+      - trigger: time
+        at: "09:00:00"
+        id: 'time_trigger_day'
+    conditions:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    actions:
+      - choose:
+          - conditions: # choice 5
+              - condition: trigger
+                id: "to_off_alice"
+            sequence:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_s' }}"
+
+              - if:
+                  - condition: state
+                    entity_id: binary_sensor.breather_s
+                    state: 'on'
+                then:
+                  - action: fan.turn_off
+                    entity_id: fan.breather_s
+                    
+              # - action: timer.cancel
+              #   entity_id: timer.breather_v
+
+              - action: switch.turn_on
+                entity_id: switch.system_breather_auto_s
+
+          - conditions: # choice 6
+              - condition: trigger
+                id: 'to_on_alice'
+            sequence:
+              - condition: template
+                value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_s' }}"
+
+              - if:
+                  - condition: state
+                    entity_id: binary_sensor.breather_s
+                    state: 'off'
+                then:
+                  - action: switch.turn_on
+                    entity_id: switch.system_breather_manual_s
+                  - action: fan.turn_on
+                    entity_id: fan.breather_s
+
+          - conditions: # choice 8
+              - condition: trigger
+                id: "time_trigger_night"
+            sequence:
+              - action: switch.turn_on
+                entity_id: switch.system_breather_manual_s
+              - action: fan.set_percentage
+                entity_id: fan.breather_s
+                data:
+                  percentage: 50
+                    
+          - conditions: # choice 9
+              - condition: trigger
+                id: "time_trigger_day"
+            sequence:
+              - action: fan.turn_off
+                entity_id: fan.breather_s
+
+# ##################################
 # Sasha - Breather Switches Interlock
 # ##################################
   - alias: sasha_breather_switches_interlock
@@ -113,7 +197,7 @@
       - trigger: state
         entity_id:
           - switch.system_breather_auto_s
-          - switch.system_breather_s_last_toggle_by_user
+          - switch.system_breather_manual_s
     conditions: 
       - condition: template
         value_template: "{{ trigger.to_state.state == 'on' }}"
@@ -124,7 +208,7 @@
       target:
         entity_id: >-
           {% if trigger.from_state.entity_id == 'switch.system_breather_auto_s' %}
-          {{ 'switch.system_breather_s_last_toggle_by_user' }}
+          {{ 'switch.system_breather_manual_s' }}
           {% else %}
           {{ 'switch.system_breather_auto_s' }}
           {% endif %}
@@ -137,7 +221,7 @@
     triggers:
       - trigger: template
         value_template: "{{ is_state('switch.system_breather_auto_s','off') and
-                            is_state('switch.system_breather_s_last_toggle_by_user','off') }}"
+                            is_state('switch.system_breather_manual_s','off') }}"
     conditions: 
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"

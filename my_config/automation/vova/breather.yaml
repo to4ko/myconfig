@@ -18,7 +18,7 @@
       - condition: not
         conditions:
           - condition: state
-            entity_id: switch.system_breather_v_last_toggle_by_user
+            entity_id: switch.system_breather_manual_v
             state: 'on'
     actions:
       - choose:
@@ -150,7 +150,7 @@
         at: "21:00:00"
         id: 'time_trigger_night'
       - trigger: time
-        at: "08:00:00"
+        at: "09:00:00"
         id: 'time_trigger_day'
     conditions:
       # - condition: state
@@ -330,10 +330,10 @@
                     entity_id: binary_sensor.breather_v
                     state: 'off'
                 then:
+                  - action: switch.turn_on
+                    entity_id: switch.system_breather_manual_v
                   - action: fan.turn_on
                     entity_id: fan.breather_v
-                  - action: switch.turn_on
-                    entity_id: switch.system_breather_v_last_toggle_by_user
                   # - action: timer.cancel
                   #   entity_id: timer.breather_v
                   # - action: switch.turn_on
@@ -356,7 +356,7 @@
                 id: "time_trigger_night"
             sequence:
               - action: switch.turn_on
-                entity_id: switch.system_breather_v_last_toggle_by_user
+                entity_id: switch.system_breather_manual_v
               - action: fan.set_percentage
                 entity_id: fan.breather_v
                 data:
@@ -420,7 +420,7 @@
         entity_id:
           - switch.system_hourly_mode_breather_v
           - switch.system_breather_auto_v
-          - switch.system_breather_v_last_toggle_by_user
+          - switch.system_breather_manual_v
     conditions: 
       - condition: template
         value_template: "{{ trigger.to_state.state == 'on' }}"
@@ -431,9 +431,9 @@
       target:
         entity_id: >-
           {% if trigger.from_state.entity_id == 'switch.system_hourly_mode_breather_v' %}
-          {{ 'switch.system_breather_auto_v', 'switch.system_breather_v_last_toggle_by_user' }}
+          {{ 'switch.system_breather_auto_v', 'switch.system_breather_manual_v' }}
           {% elif trigger.from_state.entity_id == 'switch.system_breather_auto_v' %}
-          {{ 'switch.system_hourly_mode_breather_v', 'switch.system_breather_v_last_toggle_by_user' }}
+          {{ 'switch.system_hourly_mode_breather_v', 'switch.system_breather_manual_v' }}
           {% else %}
           {{ 'switch.system_hourly_mode_breather_v', 'switch.system_breather_auto_v' }}
           {% endif %}
@@ -447,7 +447,7 @@
       - trigger: template
         value_template: "{{ is_state('switch.system_hourly_mode_breather_v','off') and 
                             is_state('switch.system_breather_auto_v','off') and
-                            is_state('switch.system_breather_v_last_toggle_by_user','off') }}"
+                            is_state('switch.system_breather_manual_v','off') }}"
     conditions: 
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
