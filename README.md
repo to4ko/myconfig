@@ -109,9 +109,10 @@
   - [Ubiquiti Unifi Switch 10Gbe XG](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-xg)
   - [Ubiquiti Unifi Enterprise Switch 8 PoE (3ea)](https://store.ui.com/us/en/pro/category/all-switching/products/switch-enterprise-8-poe)
   - [Ubiquiti Unifi Switch Flex (3ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex)
-  - [Ubiquiti Unifi Switch Flex Mini (2ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-mini)
+  - [Ubiquiti Unifi Switch Flex Mini (1ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-mini)
   - [Ubiquiti Unifi U6 Pro (4ea)](https://store.ui.com/us/en/pro/category/all-wifi/products/u6-pro)
   - [Ubiquiti Unifi AP AC Mesh with UMA-D (yard WiFi)](https://store.ui.com/us/en/pro/category/all-wifi/products/uap-ac-mesh)
+  - [Ubiquiti Unifi Switch Flex Mini 2.5G (2ea)](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-flex-2-5g-5)
 
 # Surveillance
   - Ubiquiti Unifi Dream Machine Pro Max with 3Tb WD Purple
