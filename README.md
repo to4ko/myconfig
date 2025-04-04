@@ -115,10 +115,13 @@
   - [Ubiquiti Unifi Switch Flex Mini 2.5G (2ea)](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-flex-2-5g-5)
 
 # Surveillance
-  - Ubiquiti Unifi Dream Machine Pro Max with 3Tb WD Purple
-  - [Ubiquiti Unifi G3 Flex Camera (6ea)](https://store.ui.com/us/en/pro/category/all-cameras-nvrs/products/uvc-g3-flex)
+  - Ubiquiti Unifi Dream Machine Pro Max with 6Tb Toshibe Drive
   - [Ubiquiti Unifi G3 Instant](https://store.ui.com/us/en/pro/category/all-cameras-nvrs/products/unifi-protect-g3-instant-camera)
   - [Ubiquiti Unifi G4 Instant](https://store.ui.com/us/en/pro/category/all-cameras-nvrs/products/camera-g4-instant)
+  - [Ubiquiti Unifi G5 Dome](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-dome)
+  - [Ubiquiti Unifi G5 Turret Ultra (2ea)](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-turret-ultra)
+  - [Ubiquiti Unifi G5 Bullet (2ea)](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-bullet)
+  - [Ubiquiti Unifi G5 Flex](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-flex)
   - [Ubiquiti Unifi G4 Doorbell Pro POE Kit](https://store.ui.com/us/en/pro/category/cameras-doorbells/collections/pro-store-doorbells-chimes/products/uvc-g4-doorbell-pro-poe-kit?variant=UVC-G4+Doorbell+Pro+PoE+Kit)
 
 # Network map
