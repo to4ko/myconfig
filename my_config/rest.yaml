@@ -9,3 +9,45 @@
 #       - name: EUR_RUR
 #         value_template: "{{ value_json.Valute.EUR.Value | float(0) | round(2, 'common') }}"
 #         unit_of_measurement: "RUR"
+
+  - resource: "http://192.168.1.26:1984/api/streams"
+    scan_interval: 10
+    timeout: 5
+    sensor:
+      - name: 1621 Go2RTC Active Streams
+        value_template: >
+          {% set active = namespace(count=0) %}
+          {% for stream in value_json.values() %}
+          {% if stream.consumers is iterable and stream.consumers | count > 0 %}
+          {% set active.count = active.count + 1 %}
+          {% endif %}
+          {% endfor %}
+          {{ active.count }}
+
+  - resource: "http://192.168.1.14:1984/api/streams"
+    scan_interval: 15
+    timeout: 5
+    sensor:
+      - name: Main Go2RTC Active Streams
+        value_template: >
+          {% set active = namespace(count=0) %}
+          {% for stream in value_json.values() %}
+          {% if stream.consumers is iterable and stream.consumers | count > 0 %}
+          {% set active.count = active.count + 1 %}
+          {% endif %}
+          {% endfor %}
+          {{ active.count }}
+
+  - resource: "http://192.168.1.34:1984/api/streams"
+    scan_interval: 15
+    timeout: 5
+    sensor:
+      - name: Backup Go2RTC Active Streams
+        value_template: >
+          {% set active = namespace(count=0) %}
+          {% for stream in value_json.values() %}
+          {% if stream.consumers is iterable and stream.consumers | count > 0 %}
+          {% set active.count = active.count + 1 %}
+          {% endif %}
+          {% endfor %}
+          {{ active.count }}
