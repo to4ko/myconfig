@@ -2856,28 +2856,28 @@
 # ##################################
 # System - restart vm owrt1
 # ##################################
-- alias: system_vm_owrt1
-  id: system_vm_owrt1
-  initial_state: true
-  mode: queued
-  max: 50
-  max_exceeded: silent  
-  triggers:
-    - trigger: state
-      entity_id: binary_sensor.googlevideo_com
-      to: 'off'
-      for:
-        minutes: 5
-  actions:
-    - action: notify.telegram
-      data:
-        message: "\U0001f534 VM OWRT Restart"
-    - action: button.press
-      entity_id: button.qemu_vm_owrt_228_shutdown
-    - wait_template: "{{ is_state('binary_sensor.qemu_vm_owrt_228_status', 'off') }}"
-      timeout: "00:05:00"
-    - action: button.press
-      entity_id: button.qemu_vm_owrt_228_start
+# - alias: system_vm_owrt1
+#   id: system_vm_owrt1
+#   initial_state: true
+#   mode: queued
+#   max: 50
+#   max_exceeded: silent  
+#   triggers:
+#     - trigger: state
+#       entity_id: binary_sensor.googlevideo_com
+#       to: 'off'
+#       for:
+#         minutes: 5
+#   actions:
+#     - action: notify.telegram
+#       data:
+#         message: "\U0001f534 VM OWRT Restart"
+#     - action: button.press
+#       entity_id: button.qemu_vm_owrt_228_shutdown
+#     - wait_template: "{{ is_state('binary_sensor.qemu_vm_owrt_228_status', 'off') }}"
+#       timeout: "00:05:00"
+#     - action: button.press
+#       entity_id: button.qemu_vm_owrt_228_start
 
 
 # ##################################
@@ -2895,10 +2895,39 @@
       to: 'off'
       for:
         minutes: 1
+      id: "to_off"
+    - trigger: state
+      entity_id: binary_sensor.googlevideo_com
+      to: 'on'
+      for:
+        minutes: 1
+      id: "to_on"
   actions:
-    - action: notify.telegram
-      data:
-        message: "\U0001f534 Googlevideo unavalable"
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: "to_off"
+          sequence:
+            - action: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.googlevideo_error
+            - action: notify.telegram
+              data:
+                message: "\U0001f534 Googlevideo connection lost"
+        - conditions:
+            - condition: trigger
+              id: "to_on"
+            - condition: state
+              entity_id: input_boolean.googlevideo_error
+              state: 'on'
+          sequence:
+            - action: input_boolean.turn_off
+              target:
+                entity_id: input_boolean.googlevideo_error
+            - action: notify.telegram
+              data:
+                message: "\U0001f7e2 Googlevideo connection restored!"
+
 
 # ##################################
 # System - 1621 go2ortc stream count
@@ -2915,11 +2944,18 @@
       to:
       for: 
         seconds: 30
+  conditions:
+    - condition: state
+      entity_id: sensor.1621_go2rtc_active_streams
+      state: "0"
   actions:
     - action: notify.telegram
       data:
-        message: "\U0001f4f9 1621 StreamCount {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        message: "\U0001f4f9 1621 StreamCount {{trigger.from_state.state}} -> {{trigger.to_state.state}}. Kiosk reload start url"
     - action: button.press
       entity_id: button.kiosk_load_start_url
-      
-        #button.kiosk_restart_browser
+        # - action: notify.telegram
+        #   data:
+        #     message: "\U0001f4f9 Kiosk restart"
+        # - action: button.press
+        #   entity_id: button.kiosk_restart_browser
