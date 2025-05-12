@@ -39,8 +39,8 @@
       - action: light.turn_on
         data:
           entity_id: >-
-            {%if is_state('binary_sensor.tod_day','on') and is_state('switch.system_dark_mode','off') %}light.0x54ef441000680083_channel_2,light.0x54ef441000680083_channel_1
-            {%elif is_state('binary_sensor.tod_day','off') or is_state('switch.system_dark_mode','on') %}light.0x54ef441000680083_channel_1
+            {%if is_state('binary_sensor.tod_day','on') and is_state('switch.system_dark_mode','off') %}light.0x54ef441000680083_channel_2,light.round_led_st
+            {%elif is_state('binary_sensor.tod_day','off') or is_state('switch.system_dark_mode','on') %}light.round_led_st
             {%endif%}
   
 # ##################################
@@ -76,8 +76,8 @@
       - action: light.turn_on
         data:
           entity_id: >-
-            {%if is_state('binary_sensor.tod_day','on') and is_state('switch.system_dark_mode','off') %}light.0x54ef441000680083_channel_2,light.0x54ef441000680083_channel_1
-            {%elif is_state('binary_sensor.tod_day','off') or is_state('switch.system_dark_mode','on') %}light.0x54ef441000680083_channel_1
+            {%if is_state('binary_sensor.tod_day','on') and is_state('switch.system_dark_mode','off') %}light.0x54ef441000680083_channel_2,light.round_led_st
+            {%elif is_state('binary_sensor.tod_day','off') or is_state('switch.system_dark_mode','on') %}light.round_led_st
             {%endif%}
   
   # # ##################################
@@ -122,7 +122,7 @@
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
       - action: light.turn_on
-        entity_id: light.0x54ef441000680083_channel_2, light.0x54ef441000680083_channel_1
+        entity_id: light.0x54ef441000680083_channel_2, light.round_led_st
   
 # ##################################
 # Storage - Auto Light Off
@@ -160,7 +160,7 @@
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"      
     actions:
       - action: light.turn_off
-        entity_id: light.0x54ef441000680083_channel_2,light.0x54ef441000680083_channel_1
+        entity_id: light.0x54ef441000680083_channel_2,light.round_led_st
       - action: timer.cancel
         entity_id: timer.main_light_st
   
@@ -174,7 +174,7 @@
     max_exceeded: silent
     triggers:
       - trigger: template
-        value_template: "{{ is_state('light.0x54ef441000680083_channel_2','on') or is_state('light.0x54ef441000680083_channel_1','on')}}"
+        value_template: "{{ is_state('light.0x54ef441000680083_channel_2','on') or is_state('light.round_led_st','on')}}"
     conditions:
       - condition: template
         value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
@@ -231,7 +231,7 @@
     max_exceeded: silent
     triggers:
       - trigger: state
-        entity_id: light.0x54ef441000680083_channel_2, light.0x54ef441000680083_channel_1
+        entity_id: light.0x54ef441000680083_channel_2, light.round_led_st
         to: 'off'
         from: 'on'
     conditions:
@@ -245,7 +245,7 @@
       - action: timer.start
         entity_id: timer.main_light_delay_st
       - action: light.turn_off
-        entity_id: light.0x54ef441000680083_channel_1
+        entity_id: light.round_led_st
   
 # ##################################
 # Storage - Night Off
@@ -278,7 +278,7 @@
             - light.esp32_node_k_light
             - light.mono_strip_1_light
             - light.0x54ef441000680083_channel_2
-            - light.0x54ef441000680083_channel_1
+            - light.round_led_st
             - light.esp32_strip_1s_wadrobe_hb_rgb
             - light.esp32_strip_1s_entrance_hb_rgb
             - light.mirror_light_b
@@ -367,4 +367,26 @@
         state: 'on'
     actions:
       - action: light.turn_off
-        entity_id: light.0x54ef441000680083_channel_2,light.0x54ef441000680083_channel_1
+        entity_id: light.0x54ef441000680083_channel_2,light.round_led_st
+        
+        
+# ##################################
+# Storage - Night Light Toggle
+# ##################################
+  - alias: storage_night_light_toggle
+    id: storage_night_light_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: event
+        event_type: xiaomi_aqara.click
+        event_data:
+          entity_id: sensor.0x54ef441000680083_action
+          click_type: button_1_single
+    conditions:
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    actions:
+      - action: light.toggle
+        entity_id: light.round_led_st
