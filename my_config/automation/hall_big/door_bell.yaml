@@ -59,24 +59,25 @@
                   message: Внимание! Кто-то звонит в дверь!
                   data:
                     file_url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap
-      - action: light.turn_on
-        data:
-          entity_id: light.light_bar_s_ambilight
-          effect: 'Police'
-          brightness: 255
-      - if: 
-          - condition: state
-            entity_id: switch.system_silent_mode
-            state: 'on'
-        then:
+      - parallel:
           - action: light.turn_on
             data:
-              entity_id: light.esp32_node_k_led
-              effect: 'Green_Alarm'
+              entity_id: light.light_bar_s_ambilight
+              effect: 'Police'
               brightness: 255
-      - delay: "00:00:20"
-      - action: light.turn_off
-        entity_id: light.esp32_node_k_led, light.light_bar_s_ambilight
+          - if: 
+              - condition: state
+                entity_id: switch.system_silent_mode
+                state: 'on'
+            then:
+              - action: light.turn_on
+                data:
+                  entity_id: light.esp32_node_k_led
+                  effect: 'Green_Alarm'
+                  brightness: 255
+          - delay: "00:00:21"
+          - action: light.turn_off
+            entity_id: light.esp32_node_k_led, light.light_bar_s_ambilight
         
       # - condition: state
       #   entity_id: light.digma_8592_screen
