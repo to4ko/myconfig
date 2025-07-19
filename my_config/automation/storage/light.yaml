@@ -390,3 +390,81 @@
     actions:
       - action: light.toggle
         entity_id: light.round_led_st
+
+# ##################################
+# Storage - Round LED St Restart
+# ##################################
+  - alias: storage_round_led_restart
+    id: storage_round_led_restart
+    initial_state: true
+    triggers:
+      - trigger: time_pattern
+        minutes: "/1"
+      # - platform: state
+      #   entity_id: light.round_led_hs
+      #   to: 'unavailable'
+      #   for:
+      #     minutes: 2
+      # - platform: numeric_state
+      #   entity_id: sensor.ha_uptime
+      #   above: 0
+      #   below: 2
+    conditions:
+      - condition: state
+        entity_id: light.round_led_st
+        state: 'unavailable'
+        for:
+          minutes: 2
+      - condition: template
+        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      - condition: state
+        entity_id: switch.system_round_led_st_restart_key
+        state: 'on'
+      - condition: template
+        value_template: >
+          {% set ignore = ['unknown', 'unavailable', 'none'] %}
+          {{ states('switch.sonoff_basic_2_relay') not in ignore }}
+    actions:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: light.round_led_st
+              state: "unavailable"
+            - condition: template
+              value_template: "{{ repeat.index <= 5 }}"
+          sequence:
+            - action: switch.turn_off
+              entity_id: switch.sonoff_basic_2_relay
+            - delay:
+                seconds: 15
+            - action: switch.turn_on
+              entity_id: switch.sonoff_basic_2_relay
+            - action: notify.telegram
+              data:
+                message: "\U0001f6a8 Round LED St restart done({{repeat.index}})!"
+            - delay:
+                seconds: 30
+      - condition: state
+        entity_id: light.round_led_st
+        state: 'unavailable'
+      - action: notify.telegram
+        data:
+          message: "\U0001f6a8 Round LED St restart unsuccessful!"
+      - action: switch.turn_off
+        entity_id: switch.system_round_led_st_restart_key
+  
+# ##################################
+# Storage - Round LED Restart Key Toggle
+# ##################################
+  - alias: storage_round_led_restart_key_toggle
+    id: storage_round_led_restart_key_toggle
+    initial_state: true
+    mode: single
+    max_exceeded: silent
+    triggers:
+      - trigger: state
+        entity_id: light.round_led_st
+        from: 'unavailable'
+    actions:
+      - action: switch.turn_on
+        entity_id: switch.system_round_led_st_restart_key
