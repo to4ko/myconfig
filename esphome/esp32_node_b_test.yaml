@@ -1,0 +1,122 @@
+substitutions:
+  board_name: esp32_node_b_test
+  node_name: esp32-node-b-test
+
+esphome:
+  name: ${node_name}
+  comment: ESP32 test
+  # platformio_options:
+  #   board_build.f_cpu: 81000000L
+
+safe_mode:
+  disabled: False
+  num_attempts: 5
+  reboot_timeout: 15min
+
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: esp-idf
+
+# external_components:
+#   - source: github://pr#4216
+#     components: esp32
+
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_pass
+  domain: !secret my_domain
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  #fast_connect: true
+  #power_save_mode: none
+  # manual_ip:
+  #   static_ip: 192.168.1.99
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+debug:
+  update_interval: 5s
+
+logger:
+  baud_rate: 0
+  level: debug
+
+api:
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+
+web_server:
+  port: 80
+
+
+binary_sensor:
+  - platform: status
+    name: ${board_name}_Status
+
+sensor:
+  - platform: uptime
+    name: ${board_name}_Uptime_s
+    id: uptime_sensor
+    update_interval: 15s
+    
+  - platform: wifi_signal
+    name: ${board_name}_WiFi_RSSI
+    update_interval: 60s
+
+esp32_ble_tracker:
+
+button:
+  - platform: restart
+    name: ${board_name}_Restart
+
+text_sensor:
+  - platform: template
+    name: ${board_name}_Uptime
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: ${board_name}_IP
+    ssid:
+      name: ${board_name}_SSID
+    bssid:
+      name: ${board_name}_BSSID
+    mac_address:
+      name: ${board_name}_Mac
+    # scan_results:
+    #   name: ${board_name}_Latest_Scan_Results
+
+  - platform: version
+    name: ${board_name}_ESPHome_Version
+    hide_timestamp: true
+
+  # - platform: debug
+  #   device:
+  #     name: ${board_name}_Device_Info
+  #   reset_reason:
+  #     name: ${board_name}_Reset_Reason
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

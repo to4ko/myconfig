@@ -494,13 +494,10 @@
         {% endif %}
       attributes:
         list: >-
-          {%-for state in expand('group.wifi_devices')|list if state.state in ['unavailable'] %}
-            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
-          {%-endfor-%}
-          {%-if expand('group.wifi_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count >0 and expand('group.esp_devices') | selectattr('state','in',['unavailable']) | map(attribute='name') | list | count >0%}, {%endif%}
-          {%-for state in expand('group.esp_devices')|list if state.state in ['unavailable','off'] %}
-            {{device_attr(state.entity_id,'name')}}{%- if not loop.last -%}, {%-endif%}
-          {%-endfor-%}
+          {%- set wifi = expand('group.wifi_devices') | selectattr('state', 'in', ['unavailable']) | list %}
+          {%- set esp = expand('group.esp_devices') | selectattr('state', 'in', ['unavailable', 'off']) | list %}
+          {%- set combined = wifi + esp %}
+          {{ combined | map(attribute='entity_id') | map('device_attr', 'name') | join(', ') }}
       unit_of_measurement: "ea"
     #{{state.name}}{%- if not loop.last -%}, {%-endif%}
 

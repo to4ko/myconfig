@@ -146,7 +146,7 @@
   - not in use - Yeelight LED Tunable Bulb (White) (YLDP05YL) (2ea)
   - Yeelight Display Light Lamp Pro (YLTD003) (1ea)
   - Xiaomi Philips Zhirui Downlight (9290012799) (1ea)
-  - not in use - Yeelight Jiaoyue 260 (YLXD62YI)
+  - Yeelight Jiaoyue 260 (YLXD62YI)
   - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
 
 **Xiaomi\Aqara WiFi Devices:**
