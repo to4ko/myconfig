@@ -34,10 +34,10 @@
     <!--  Links-->
     <!--</a>-->
     <!--<span> | </span>-->
-    <a href="https://github.com/to4ko/myconfig#small-tips">
-      Small tips
-    </a>
-    <span> | </span>
+    <!--<a href="https://github.com/to4ko/myconfig#small-tips">-->
+    <!--  Small tips-->
+    <!--</a>-->
+    <!--<span> | </span>-->
     <a href="https://github.com/to4ko/myconfig#chats">
       Chats
     </a>
@@ -300,25 +300,25 @@
   - [Home Assistant - Hardware](https://t.me/homeassistant_hardware)
   - [ESPhome RU](https://t.me/esphome)
 
-# Small Tips
-<details>
-  <summary>List of integrations in use</summary>
+<!--# Small Tips-->
+<!--<details>-->
+<!--  <summary>List of integrations in use</summary>-->
 
-  ```yaml
-  {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}
-  {%- set ns = namespace(integrations = []) %}
-  {%- for device in devices %}
-    {%- set ids = device_attr(device, 'identifiers') | list | first | default('unknown') %}
-    {%- if ids and ids | length == 2 %}
-      {%- set integration, something_unique = ids %}
-      {%- if integration not in ns.integrations %}
-        {%- set ns.integrations = ns.integrations + [ integration ] %}
-      {%- endif %}
-    {%- endif %}
-  {%- endfor %}
-  {{ ns.integrations }}
-  ```
-</details>
+<!--  ```yaml-->
+<!--  {% set devices = states | map(attribute='entity_id') | map('device_id') | unique | reject('eq',None) | list %}-->
+<!--  {%- set ns = namespace(integrations = []) %}-->
+<!--  {%- for device in devices %}-->
+<!--    {%- set ids = device_attr(device, 'identifiers') | list | first | default('unknown') %}-->
+<!--    {%- if ids and ids | length == 2 %}-->
+<!--      {%- set integration, something_unique = ids %}-->
+<!--      {%- if integration not in ns.integrations %}-->
+<!--        {%- set ns.integrations = ns.integrations + [ integration ] %}-->
+<!--      {%- endif %}-->
+<!--    {%- endif %}-->
+<!--  {%- endfor %}-->
+<!--  {{ ns.integrations }}-->
+<!--  ```-->
+<!--</details>-->
 
 <!--<details>-->
 <!--  <summary>some usefull SQL tips</summary>-->
@@ -337,23 +337,23 @@
 <!--  ```-->
 <!--</details>-->
 
-<details>
-  <summary>List of all used domains</summary>
+<!--<details>-->
+<!--  <summary>List of all used domains</summary>-->
 
-  ```yaml
-  {%- for d in states | groupby('domain') %}
-    {{ d[0] }}
-  {%- endfor %}
-  ```
-</details>
+<!--  ```yaml-->
+<!--  {%- for d in states | groupby('domain') %}-->
+<!--    {{ d[0] }}-->
+<!--  {%- endfor %}-->
+<!--  ```-->
+<!--</details>-->
 
-<details>
-  <summary>List of all devices(IDs) per integration</summary>
+<!--<details>-->
+<!--  <summary>List of all devices(IDs) per integration</summary>-->
 
-  ```yaml
-  {{ integration_entities('yeelight') |  map('device_id') | unique | list }}
-  ```
-</details>
+<!--  ```yaml-->
+<!--  {{ integration_entities('yeelight') |  map('device_id') | unique | list }}-->
+<!--  ```-->
+<!--</details>-->
 
 # Hardware Evolution
 <!-- ![Hardwarez](images/hardware_evolution.jpg) -->
