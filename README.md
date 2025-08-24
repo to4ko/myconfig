@@ -115,6 +115,11 @@
   - [Ubiquiti Unifi U7 Outdoor ](https://store.ui.com/us/en/category/wifi-outdoor/products/u7-outdoor)
   - [Ubiquiti Unifi Switch Flex Mini 2.5G (2ea)](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-flex-2-5g-5)
   - [Ubiquiti Unifi Switch Flex 2.5G PoE](https://store.ui.com/us/en/category/all-switching/products/usw-flex-2-5g-8-poe)
+  - [Ubiquiti Unifi Gateway Max](https://store.ui.com/us/en/category/cloud-gateways-compact/collections/cloud-gateway-max)
+  - [Ubiquiti Unifi Switch Lite 8 Poe](https://store.ui.com/us/en/category/all-switching/products/usw-lite-8-poe)
+  - [Ubiquiti Unifi U6 Pro](https://store.ui.com/us/en/category/all-wifi/products/u6-pro)
+  - [Ubiquiti Unifi Dream Router](https://techspecs.ui.com/unifi/cloud-gateways/udr)
+  - [Ubiquiti Unifi Express](https://store.ui.com/us/en/category/all-cloud-gateways/products/ux)
 
 # Surveillance
   - Ubiquiti Unifi Dream Machine Pro Max with 12Tb WD Purple
@@ -124,6 +129,8 @@
   - [Ubiquiti Unifi G5 Bullet (2ea)](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-bullet)
   - [Ubiquiti Unifi G5 Flex](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-flex)
   - [Ubiquiti Unifi G4 Doorbell Pro POE Kit](https://store.ui.com/us/en/pro/category/cameras-doorbells/collections/pro-store-doorbells-chimes/products/uvc-g4-doorbell-pro-poe-kit?variant=UVC-G4+Doorbell+Pro+PoE+Kit)
+  - [Ubiquiti Unifi G3 Flex](https://techspecs.ui.com/unifi/cameras-nvrs/uvc-g3-flex)
+
 
 # Network map
 <details><summary>Click me...</summary>
