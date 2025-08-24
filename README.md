@@ -30,10 +30,10 @@
       Screenshots
     </a>
     <span> | </span>
-    <a href="https://github.com/to4ko/myconfig#links">
-      Links
-    </a>
-    <span> | </span>
+    <!--<a href="https://github.com/to4ko/myconfig#links">-->
+    <!--  Links-->
+    <!--</a>-->
+    <!--<span> | </span>-->
     <a href="https://github.com/to4ko/myconfig#small-tips">
       Small tips
     </a>
@@ -110,7 +110,7 @@
   - [Ubiquiti Unifi Enterprise Switch 8 PoE (3ea)](https://store.ui.com/us/en/pro/category/all-switching/products/switch-enterprise-8-poe)
   - [Ubiquiti Unifi Switch Flex (2ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex)
   - not in use - [Ubiquiti Unifi Switch Flex Mini (1ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-mini)
-  - [Ubiquiti Unifi U6 Pro ](https://store.ui.com/us/en/pro/category/all-wifi/products/u6-pro)
+  - [Ubiquiti Unifi U7 Lite ](https://store.ui.com/us/en/category/all-wifi/products/u7-lite)
   - [Ubiquiti Unifi U7 Pro XG ](https://store.ui.com/us/en/category/wifi-flagship/products/u7-pro-xg?variant=u7-pro-xg-us)
   - [Ubiquiti Unifi U7 Outdoor ](https://store.ui.com/us/en/category/wifi-outdoor/products/u7-outdoor)
   - [Ubiquiti Unifi Switch Flex Mini 2.5G (2ea)](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-flex-2-5g-5)
@@ -284,16 +284,16 @@
   - **gitignore.sh**  bash script to be used after gitigrone file updated
   - **gitupdate.sh**  git upload -->
 
-# Links
-  - [Alexxit](https://github.com/alexxit)
-  - [Omh](https://github.com/omhy)
-  - [Vasilchuk](https://github.com/Anonym-tsk)
-  - [S_p_i_r_i_t_u_s](https://github.com/Spirituss)
-  - [lapatoc](https://github.com/bastshoes)
-  - [Vtel](https://github.com/zvldz)
-  - [Enzokot](https://github.com/Enzokot)
-  - [AVBor](https://github.com/avbor)
-  - [Andrew](https://github.com/andrewjswan)
+<!--# Links-->
+<!--  - [Alexxit](https://github.com/alexxit)-->
+<!--  - [Omh](https://github.com/omhy)-->
+<!--  - [Vasilchuk](https://github.com/Anonym-tsk)-->
+<!--  - [S_p_i_r_i_t_u_s](https://github.com/Spirituss)-->
+<!--  - [lapatoc](https://github.com/bastshoes)-->
+<!--  - [Vtel](https://github.com/zvldz)-->
+<!--  - [Enzokot](https://github.com/Enzokot)-->
+<!--  - [AVBor](https://github.com/avbor)-->
+<!--  - [Andrew](https://github.com/andrewjswan)-->
 
 # Chats
   - [Home Assistant RU](https://t.me/homassistant)
