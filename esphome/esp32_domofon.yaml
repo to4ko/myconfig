@@ -11,7 +11,14 @@ esphome:
   on_boot:
     priority: -100
     then:
+      - logger.log: "----> on boot run"
       - script.execute: state_standby
+      - delay: 5s
+      - ble.disable:
+
+esp32_ble:
+  enable_on_boot: False
+
 
 safe_mode:
   disabled: False
@@ -210,21 +217,66 @@ script:
     then:
       - logger.log: "Set state 'Standby'"
       - script.execute: led_off
+      - logger.log: "--------> bottom lock check"
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_off: id_bottom_lock
+          then:
+            - logger.log: "----------> bottom lock - locked"
+            - light.turn_on:
+                id: id_led1
+                brightness: 20%
+                red: 100%
+                green: 65%
+                blue: 0%
+                effect: "Blink"
+          else:
+            - logger.log: "----------> bottom lock - un-locked"
+      - logger.log: "--------> top lock check"
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_off: id_top_lock
+          then:
+            - logger.log: "----------> top lock locked"
+            - light.turn_on:
+                id: id_led1
+                brightness: 20%
+                red: 100%
+                green: 65%
+                blue: 0%
+                #effect: "Blink"
+          else:
+            - logger.log: "----------> top lock - un-locked"                
+      - logger.log: "--------> auto open once check"
       - if:
           condition:
             switch.is_on: auto_open_once
           then:
-            script.execute: led_green_blink
+            - logger.log: "----------> auto open once - on"
+            - script.execute: led_green_blink
+          else:
+            - logger.log: "----------> auto open once - off"            
+      - logger.log: "--------> auto open check"
       - if:
           condition:
             switch.is_on: auto_open
           then:
-            script.execute: led_green_on
+            - script.execute: led_green_on
+            - logger.log: "----------> auto open - on"
+          else:
+            - logger.log: "----------> auto open - off"                        
+      - logger.log: "--------> reject check"
       - if:
           condition:
             switch.is_on: auto_reject
           then:
-            script.execute: led_red_blink
+            - script.execute: led_red_blink
+            - logger.log: "----------> reject - on"
+          else:
+            - logger.log: "----------> reject - off"                        
+      - logger.log: "--------> mute check"
       - if:
           condition:
             and:
@@ -232,15 +284,24 @@ script:
               - switch.is_off: auto_open_once
               - switch.is_off: auto_open
           then:
-            script.execute: led_blue_blink
+            - logger.log: "----------> mute - on"
+            - script.execute: led_blue_blink
+          else:
+            - logger.log: "----------> mute - off"            
+      - logger.log: "--------> all off check"
       - if:
           condition:
             and:
               - switch.is_off: auto_open_once
               - switch.is_off: auto_open
               - switch.is_off: auto_reject
+              - binary_sensor.is_off: id_bottom_lock
+              - binary_sensor.is_off: id_top_lock
           then:
-            script.execute: led_off
+            - logger.log: "----------> all off"
+            - script.execute: led_off
+          else:
+            - logger.log: "----------> all off - off"            
 
   # Call state
   - id: state_call
@@ -429,27 +490,27 @@ binary_sensor:
         else:
           - logger.log: "--------> Manual Open - Not OK"
 
-  # - platform: homeassistant
-  #   name: ${board_name}_bottom_lock
-  #   internal: true
-  #   entity_id: binary_sensor.bottom_lock #binary_sensor.0x00158d0002a1a4b2_contact
-  #   id: id_bottom_lock
-  #   #filters:
-  #   #  - invert:    
-  #   on_state:
-  #     then:
-  #       - script.execute: locks_lights
+  - platform: homeassistant
+    name: ${board_name}_bottom_lock
+    internal: false
+    entity_id: binary_sensor.bottom_lock #binary_sensor.0x00158d0002a1a4b2_contact
+    id: id_bottom_lock
+    #filters:
+    #  - invert:    
+    # on_state:
+    #   then:
+    #     - script.execute: locks_lights
 
-  # - platform: homeassistant
-  #   name: ${board_name}_top_lock
-  #   internal: true
-  #   entity_id: binary_sensor.top_lock #binary_sensor.0x00158d0002b7c2c8_contact
-  #   id: id_top_lock
-  #   #filters:
-  #   #  - invert:    
-  #   on_state:
-  #     then:
-  #       - script.execute: locks_lights
+  - platform: homeassistant
+    name: ${board_name}_top_lock
+    internal: false
+    entity_id: binary_sensor.top_lock #binary_sensor.0x00158d0002b7c2c8_contact
+    id: id_top_lock
+    #filters:
+    #  - invert:    
+    # on_state:
+    #   then:
+    #     - script.execute: locks_lights
 
 light:
   - platform: esp32_rmt_led_strip
@@ -713,3 +774,8 @@ time:
                 - script.execute: call_accept
                 - delay: 00:00:05
                 - button.press: restart_button
+
+interval:
+  - interval: 1min
+    then:
+      - script.execute: state_standby
