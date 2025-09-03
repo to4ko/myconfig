@@ -5,6 +5,8 @@ substitutions:
 esphome:
   name: ${node_name}
   comment: D1 Mini Air Freshener
+  friendly_name: D1 Mini Air Freshener
+  area: Toilet
   # on_boot:
   #   then:
   #   - sensor.template.publish:
@@ -57,6 +59,12 @@ ota:
   
 web_server:
   port: 80
+
+globals:
+  - id: puffs_per_day_avg
+    type: float
+    restore_value: yes
+    initial_value: '0.0'
 
 binary_sensor:
   - platform: status
@@ -268,42 +276,93 @@ sensor:
       
   #     return max(0, int(((diff / count) * (refill - count)) / 86400));
 
+  # - platform: template
+  #   name: ${board_name}_Days_in_Use
+  #   icon: mdi:clock-end
+  #   id: id_days_in_use
+  #   update_interval: 60s
+  #   unit_of_measurement: "days"
+  #   accuracy_decimals: 0
+  #   lambda: |-
+  #     auto time = id(sntp_time).now();
+  #     if (!time.is_valid())
+  #     {
+  #       return {};
+  #     }
+    
+  #     auto count = id(id_counter).state;
+  #     auto refill = id(id_canister_resource).state;
+      
+  #     if (count == 0)
+  #     {
+  #       return {};
+  #     }
+    
+  #     auto s_time = id(id_new_canister_time_text).state.c_str();
+  #     tm stime = {0};
+  #     strptime(s_time, "%Y-%m-%d %H:%M", &stime);
+    
+  #     char c_time[20];
+  #     strftime(c_time, sizeof(c_time), "%Y-%m-%d %H:%M", localtime(&time.timestamp));
+  #     tm ctime = {0};
+  #     strptime(c_time, "%Y-%m-%d %H:%M", &ctime);
+    
+  #     time_t startTime = mktime(&stime);
+  #     time_t currTime = mktime(&ctime);;
+  #     time_t diff = difftime(currTime, startTime);
+      
+  #     return max(0, int(diff / 86400));
+
   - platform: template
     name: ${board_name}_Days_in_Use
     icon: mdi:clock-end
     id: id_days_in_use
     update_interval: 60s
     unit_of_measurement: "days"
-    accuracy_decimals: 0
+    accuracy_decimals: 1
     lambda: |-
       auto time = id(sntp_time).now();
-      if (!time.is_valid())
-      {
+      if (!time.is_valid()) {
         return {};
       }
-    
-      auto count = id(id_counter).state;
-      auto refill = id(id_canister_resource).state;
       
-      if (count == 0)
-      {
-        return {};
+      auto replace_time = id(id_canister_replace).state;
+      if (replace_time <= 0) {
+        return 0.0;
       }
-    
-      auto s_time = id(id_new_canister_time_text).state.c_str();
-      tm stime = {0};
-      strptime(s_time, "%Y-%m-%d %H:%M", &stime);
-    
-      char c_time[20];
-      strftime(c_time, sizeof(c_time), "%Y-%m-%d %H:%M", localtime(&time.timestamp));
-      tm ctime = {0};
-      strptime(c_time, "%Y-%m-%d %H:%M", &ctime);
-    
-      time_t startTime = mktime(&stime);
-      time_t currTime = mktime(&ctime);;
-      time_t diff = difftime(currTime, startTime);
       
-      return max(0, int(diff / 86400));
+      return (time.timestamp - replace_time) / 86400.0;
+
+  - platform: template
+    name: ${board_name}_Days_Remaining
+    icon: mdi:calendar-clock
+    id: id_days_remaining
+    unit_of_measurement: "days"
+    update_interval: 60s
+    accuracy_decimals: 1
+    lambda: |-
+      // Если баллон новый или нет данных об использовании
+      if (id(id_counter).state <= 0 || id(id_days_in_use).state <= 0) {
+        // Если баллон полный, возвращаем расчет по умолчанию (60 дней)
+        if (id(id_canister_resource).state > 0) {
+          return id(id_canister_resource).state / 83.0; // 5000 пшиков / 83 в день = ~60 дней
+        }
+        return 0.0;
+      }
+      
+      // Рассчитываем среднее количество пшиков в день
+      float current_puffs_per_day = id(id_counter).state / id(id_days_in_use).state;
+      
+      // Обновляем скользящее среднее (80% старое значение + 20% новое)
+      id(puffs_per_day_avg) = id(puffs_per_day_avg) * 0.8 + current_puffs_per_day * 0.2;
+      
+      // Рассчитываем оставшиеся дни
+      float remaining_puffs = id(id_canister_resource).state - id(id_counter).state;
+      if (id(puffs_per_day_avg) <= 0) {
+        return 0.0;
+      }
+      
+      return remaining_puffs / id(puffs_per_day_avg);
 
 button:
   - platform: restart
@@ -437,3 +496,9 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow
+
+interval:
+  - interval: 1min
+    then:
+      - component.update: id_days_remaining
+      - component.update: id_days_in_use
