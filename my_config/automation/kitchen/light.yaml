@@ -5,534 +5,534 @@
 # #####################################################################################
 # Kitchen - Timer restart with movement
 # ##################################
-  - alias: kitchen_timer_restart
-    id: kitchen_timer_restart
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b48381_motion
-      - trigger: state
-        entity_id: sensor.0x00158d0002a2412d_action
-        to: 
-          - "vibration"
-          - "tilt"
-    conditions:
-      - condition: state
-        entity_id: group.lights_main_k
-        state: "on"
-      - condition: template
-        value_template: "{{(as_timestamp(now()) - as_timestamp(state_attr('automation.kitchen_timer_restart', 'last_triggered'),0)|int(0)) > 5 }}"
-      - condition: state
-        entity_id: switch.system_security_mode
-        state: "off"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.main_light_k
-      - action: timer.start
-        entity_id: timer.main_light_k
-  
+- alias: kitchen_timer_restart
+  id: kitchen_timer_restart
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b4729d_motion
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b48381_motion
+    - trigger: state
+      entity_id: sensor.0x00158d0002a2412d_action
+      to:
+        - "vibration"
+        - "tilt"
+  conditions:
+    - condition: state
+      entity_id: group.lights_main_k
+      state: "on"
+    - condition: template
+      value_template: "{{(as_timestamp(now()) - as_timestamp(state_attr('automation.kitchen_timer_restart', 'last_triggered'),0)|int(0)) > 5 }}"
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.main_light_k
+    - action: timer.start
+      entity_id: timer.main_light_k
+
 # ##################################
 # Kitchen - Timer off
 # ##################################
-  - alias: kitchen_timer_off
-    id: kitchen_timer_off
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: light.round_led_k
-        to: "off"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.main_light_k, timer.main_light_delay_k
-      - action: timer.start
-        entity_id: timer.main_light_delay_k
-  
+- alias: kitchen_timer_off
+  id: kitchen_timer_off
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_k
+      to: "off"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.main_light_k, timer.main_light_delay_k
+    - action: timer.start
+      entity_id: timer.main_light_delay_k
+
 # ##################################
 # Kitchen - Timer start on light on
 # ##################################
-  - alias: kitchen_timer_on
-    id: kitchen_timer_on
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: light.round_led_k
-        to: "on"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.main_light_k
-      - action: timer.start
-        entity_id: timer.main_light_k
-      - action: light.turn_off
-        entity_id: light.esp32_node_k_light, light.mono_strip_1_light
-        data:
-          transition: 5
-  
+- alias: kitchen_timer_on
+  id: kitchen_timer_on
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_k
+      to: "on"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.main_light_k
+    - action: timer.start
+      entity_id: timer.main_light_k
+    - action: light.turn_off
+      entity_id: light.esp32_node_k_light, light.mono_strip_1_light
+      data:
+        transition: 5
+
 # ##################################
 # Kitchen - Auto Light Off
 # ##################################
-  - alias: kitchen_auto_light_off
-    id: kitchen_auto_light_off
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: timer.finished
-        event_data:
-          entity_id: timer.main_light_k
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: "on"
-      - condition: state
-        entity_id: binary_sensor.presence_k
-        state: 'off'
-    actions:
-      - action: light.turn_off
-        entity_id: light.round_led_k
-        data:
-          transition: 15
-      - action: light.turn_off
-        entity_id: light.d1mini_light_l, light.sonoff_mini_4, light.esp8266_hood_k
-  
+- alias: kitchen_auto_light_off
+  id: kitchen_auto_light_off
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.main_light_k
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "on"
+    - condition: state
+      entity_id: binary_sensor.presence_k
+      state: "off"
+  actions:
+    - action: light.turn_off
+      entity_id: light.round_led_k
+      data:
+        transition: 15
+    - action: light.turn_off
+      entity_id: light.d1mini_light_l_led, light.sonoff_mini_4_led, light.esp8266_hood_k_main
+
 # ##################################
 # Kitchen - Auto Light On
 # ##################################
-  - alias: kitchen_auto_light_on
-    id: kitchen_auto_light_on
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b48381_motion
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: "on"
-      - condition: state
-        entity_id: switch.system_security_mode
-        state: "off"
-      - condition: state
-        entity_id: group.lights_main_k
-        state: "off"
-      - condition: state
-        entity_id: binary_sensor.light_outside_mi
-        state: "off"
-      - condition: state
-        entity_id: timer.main_light_delay_k
-        state: "idle"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - action: light.turn_on
-        entity_id: light.esp32_node_k_light #light.round_led_k
-  
+- alias: kitchen_auto_light_on
+  id: kitchen_auto_light_on
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b4729d_motion
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b48381_motion
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "on"
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+    - condition: state
+      entity_id: group.lights_main_k
+      state: "off"
+    - condition: state
+      entity_id: binary_sensor.light_outside_mi
+      state: "off"
+    - condition: state
+      entity_id: timer.main_light_delay_k
+      state: "idle"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - action: light.turn_on
+      entity_id: light.esp32_node_k_light #light.round_led_k
+
 # ##################################
 # Kitchen - Auto Night Light
 # ##################################
-  - alias: kitchen_auto_night_light
-    id: kitchen_auto_night_light
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b48381_motion
-    conditions:
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: "off"
-      - condition: template
-        value_template: "{{ not is_state('light.esp32_node_k_light', 'on') }}"
-      - condition: state
-        entity_id: group.lights_main_k
-        state: "off"
-      - condition: state
-        entity_id: switch.system_security_mode
-        state: "off"
-      - condition: template
-        value_template: "{{as_timestamp(now())-as_timestamp(state_attr('automation.hall_small_auto_night_light', 'last_triggered'),0) < 600 }}"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"      
-    actions:
-      - action: light.turn_on
-        entity_id: light.esp32_node_k_light
-        data:
-          brightness: 255
-  
+- alias: kitchen_auto_night_light
+  id: kitchen_auto_night_light
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b4729d_motion
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b48381_motion
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "off"
+    - condition: template
+      value_template: "{{ not is_state('light.esp32_node_k_light', 'on') }}"
+    - condition: state
+      entity_id: group.lights_main_k
+      state: "off"
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+    - condition: template
+      value_template: "{{as_timestamp(now())-as_timestamp(state_attr('automation.hall_small_auto_night_light', 'last_triggered'),0) < 600 }}"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - action: light.turn_on
+      entity_id: light.esp32_node_k_light
+      data:
+        brightness: 255
+
 # ##################################
 # Kitchen - Round Led K restart
 # ##################################
-  - alias: kitchen_main_lamp_restart
-    id: kitchen_main_lamp_restart
-    initial_state: true
-    triggers:
-      - trigger: time_pattern
-        minutes: "/1"
-      # - platform: state
-      #   entity_id: light.round_led_k
-      #   to: "unavailable"
-      #   for:
-      #     minutes: 2
-      # - platform: numeric_state
-      #   entity_id: sensor.ha_uptime
-      #   above: 0
-      #   below: 2
-    conditions:
-      - condition: state
-        entity_id: light.round_led_k
-        state: "unavailable"
-        for:
-          minutes: 2
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-      - condition: state
-        entity_id: switch.system_round_led_k_restart_key
-        state: 'on'
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ states('switch.0x00158d0002a36f7f_channel_2') not in ignore }}
-    actions:
-      - repeat:
-          while:
-            - condition: state
-              entity_id: light.round_led_k
-              state: "unavailable"
-            - condition: template
-              value_template: "{{ repeat.index <= 5 }}"
-          sequence:
-            - action: switch.turn_off
-              entity_id: switch.0x00158d0002a36f7f_channel_2
-            - delay:
-                seconds: 15
-            - action: switch.turn_on
-              entity_id: switch.0x00158d0002a36f7f_channel_2
-            - action: notify.telegram
-              data:
-                message: "\U0001f6a8 Round LED K restart done({{repeat.index}})!"
-            - delay:
-                seconds: 30
-      - if:
+- alias: kitchen_main_lamp_restart
+  id: kitchen_main_lamp_restart
+  initial_state: true
+  triggers:
+    - trigger: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.round_led_k
+    #   to: "unavailable"
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
+  conditions:
+    - condition: state
+      entity_id: light.round_led_k
+      state: "unavailable"
+      for:
+        minutes: 2
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: state
+      entity_id: switch.system_round_led_k_restart_key
+      state: "on"
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ states('switch.0x00158d0002a36f7f_channel_2') not in ignore }}
+  actions:
+    - repeat:
+        while:
           - condition: state
             entity_id: light.round_led_k
-            state: 'unavailable'
-        then:
+            state: "unavailable"
+          - condition: template
+            value_template: "{{ repeat.index <= 5 }}"
+        sequence:
+          - action: switch.turn_off
+            entity_id: switch.0x00158d0002a36f7f_channel_2
+          - delay:
+              seconds: 15
+          - action: switch.turn_on
+            entity_id: switch.0x00158d0002a36f7f_channel_2
           - action: notify.telegram
             data:
-              message: "\U0001f6a8 Round LED K restart unsuccessful!"
-          - action: switch.turn_off
-            entity_id: switch.system_round_led_k_restart_key
-        else:
-          - action: light.turn_{{ states("binary_sensor.round_led_k_prev") | lower }}
-            entity_id: light.round_led_k
-          - action: switch.turn_on
-            entity_id: switch.system_round_led_k_restart_key
-  
+              message: "\U0001f6a8 Round LED K restart done({{repeat.index}})!"
+          - delay:
+              seconds: 30
+    - if:
+        - condition: state
+          entity_id: light.round_led_k
+          state: "unavailable"
+      then:
+        - action: notify.telegram
+          data:
+            message: "\U0001f6a8 Round LED K restart unsuccessful!"
+        - action: switch.turn_off
+          entity_id: switch.system_round_led_k_restart_key
+      else:
+        - action: light.turn_{{ states("binary_sensor.round_led_k_prev") | lower }}
+          entity_id: light.round_led_k
+        - action: switch.turn_on
+          entity_id: switch.system_round_led_k_restart_key
+
 # ##################################
 # Kitchen - Main Light Auto Restart Key Toggle
 # ##################################
-  - alias: kitchen_main_lamp_restart_key_toggle
-    id: kitchen_main_lamp_restart_key_toggle
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: light.round_led_k
-        from: 'unavailable'
-    actions:
-      - action: switch.turn_on
-        entity_id: switch.system_round_led_k_restart_key
-  
+- alias: kitchen_main_lamp_restart_key_toggle
+  id: kitchen_main_lamp_restart_key_toggle
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_k
+      from: "unavailable"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.system_round_led_k_restart_key
+
 # ##################################
 # Kitchen - Turn Lamp Switch On if Off
 # ##################################
-  - alias: kitchen_main_lamp_switch_on_if_off
-    id: kitchen_main_lamp_switch_on_if_off
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x00158d0002a36f7f_action
-          click_type: button_2_single
-    conditions:
-      - condition: state
-        entity_id: switch.0x00158d0002a36f7f_channel_2
-        state: "off"
-    actions:
-      - action: switch.turn_on
-        entity_id: switch.0x00158d0002a36f7f_channel_2
-  
+- alias: kitchen_main_lamp_switch_on_if_off
+  id: kitchen_main_lamp_switch_on_if_off
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d0002a36f7f_action
+        click_type: button_2_single
+  conditions:
+    - condition: state
+      entity_id: switch.0x00158d0002a36f7f_channel_2
+      state: "off"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.0x00158d0002a36f7f_channel_2
+
 # ##################################
 # Kitchen Main Lamp (Xiaomi Round LED) - On
 # ##################################
-  - alias: kitchen_main_lamp_on
-    id: kitchen_main_lamp_on
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x00158d0002a36f7f_action
-          click_type: button_2_single
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
-      - condition: state
-        entity_id: switch.0x00158d0002a36f7f_channel_2
-        state: "on"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.round_led_k_nightlight
-                state: 'on'
-              - condition: state
+- alias: kitchen_main_lamp_on
+  id: kitchen_main_lamp_on
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d0002a36f7f_action
+        click_type: button_2_single
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
+    - condition: state
+      entity_id: switch.0x00158d0002a36f7f_channel_2
+      state: "on"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.round_led_k_nightlight
+              state: "on"
+            - condition: state
+              entity_id: light.round_led_k
+              state: "off"
+          sequence:
+            - action: yeelight.set_mode
+              data:
                 entity_id: light.round_led_k
-                state: 'off'
-            sequence:
-              - action: yeelight.set_mode
-                data:
-                  entity_id: light.round_led_k
-                  mode: normal
-              - action: light.turn_on
-                entity_id: light.round_led_k
-                data:
-                  brightness: 230
-                  color_temp_kelvin: 5000
-  
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.round_led_k_nightlight
-                state: 'off'
-              - condition: state
-                entity_id: light.round_led_k
-                state: 'on'
-            sequence:
-              - action: light.turn_off
-                entity_id: light.round_led_k
-              - delay: 00:00:01
-              - condition: state
-                entity_id: light.round_led_k
-                state: 'on'
-              - action: light.turn_off
-                entity_id: light.round_led_k
-          
-          - conditions:
-              - condition: state
-                entity_id: light.round_led_k
-                state: 'off'
-              - condition: state
-                entity_id: binary_sensor.round_led_k_nightlight
-                state: 'off'
-            sequence:
-              - action: light.turn_on
-                entity_id: light.round_led_k
-                data:
-                  brightness: 230
-                  color_temp_kelvin: 5000
-  
+                mode: normal
+            - action: light.turn_on
+              entity_id: light.round_led_k
+              data:
+                brightness: 230
+                color_temp_kelvin: 5000
+
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.round_led_k_nightlight
+              state: "off"
+            - condition: state
+              entity_id: light.round_led_k
+              state: "on"
+          sequence:
+            - action: light.turn_off
+              entity_id: light.round_led_k
+            - delay: 00:00:01
+            - condition: state
+              entity_id: light.round_led_k
+              state: "on"
+            - action: light.turn_off
+              entity_id: light.round_led_k
+
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_k
+              state: "off"
+            - condition: state
+              entity_id: binary_sensor.round_led_k_nightlight
+              state: "off"
+          sequence:
+            - action: light.turn_on
+              entity_id: light.round_led_k
+              data:
+                brightness: 230
+                color_temp_kelvin: 5000
+
 # ##################################
 # Kitchen Main Lamp (Xiaomi Round LED) - On Full
 # ##################################
-  - alias: kitchen_main_lamp_on_full
-    id: kitchen_main_lamp_on_full
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x00158d0002a36f7f_action
-          click_type: button_2_double
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
-      - condition: state
-        entity_id: switch.0x00158d0002a36f7f_channel_2
-        state: "on"
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - if:
-          - condition: state
-            entity_id: binary_sensor.round_led_k_nightlight
-            state: 'on'
-          - condition: state
+- alias: kitchen_main_lamp_on_full
+  id: kitchen_main_lamp_on_full
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d0002a36f7f_action
+        click_type: button_2_double
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.round_led_k') in ['on','off'] }}"
+    - condition: state
+      entity_id: switch.0x00158d0002a36f7f_channel_2
+      state: "on"
+    - condition: template
+      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - if:
+        - condition: state
+          entity_id: binary_sensor.round_led_k_nightlight
+          state: "on"
+        - condition: state
+          entity_id: light.round_led_k
+          state: "off"
+      then:
+        - action: yeelight.set_mode
+          data:
             entity_id: light.round_led_k
-            state: 'off'
-        then:
-          - action: yeelight.set_mode
-            data:
-              entity_id: light.round_led_k
-              mode: normal  
-      - action: light.turn_on
-        entity_id: light.round_led_k
-        data:
-          brightness: 230
-          color_temp_kelvin: 5000
-  
+            mode: normal
+    - action: light.turn_on
+      entity_id: light.round_led_k
+      data:
+        brightness: 230
+        color_temp_kelvin: 5000
+
 # ##################################
 # Kitchen - LED Strip Timer start
 # ##################################
-  - alias: kitchen_led_strips_timer
-    id: kitchen_led_strips_timer
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: light.esp32_node_k_light
-        to: "on"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.led_strip_night_k
-      - action: timer.start
-        entity_id: timer.led_strip_night_k
-  
+- alias: kitchen_led_strips_timer
+  id: kitchen_led_strips_timer
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: light.esp32_node_k_light
+      to: "on"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.led_strip_night_k
+    - action: timer.start
+      entity_id: timer.led_strip_night_k
+
 # ##################################
 # Kitchen - Auto LED Strips off
 # ##################################
-  - alias: kitchen_led_strip_auto_led_off
-    id: kitchen_led_strip_auto_led_off
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: timer.finished
-        event_data:
-          entity_id: timer.led_strip_night_k
-    actions:
-      - action: light.turn_off
-        entity_id: light.esp32_node_k_light
-        data:
-          transition: 5
-  
+- alias: kitchen_led_strip_auto_led_off
+  id: kitchen_led_strip_auto_led_off
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.led_strip_night_k
+  actions:
+    - action: light.turn_off
+      entity_id: light.esp32_node_k_light
+      data:
+        transition: 5
+
 # ##################################
 # Kitchen - LED Strip Timer restart with movement
 # ##################################
-  - alias: kitchen_led_strip_timer_restart
-    id: kitchen_led_strip_timer_restart
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b4729d_motion
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0002b48381_motion
-      - trigger: state
-        entity_id: light.esp32_node_k_light
-        to: "on"
-    conditions:
-      - condition: state
-        entity_id: light.esp32_node_k_light
-        state: "on"
-      - condition: state
-        entity_id: binary_sensor.tod_day
-        state: "off"
-      - condition: template
-        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_led_strip_timer_restart', 'last_triggered'),0)|int(0)) > 5 }}"
-      - condition: state
-        entity_id: switch.system_security_mode
-        state: "off"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.led_strip_night_k
-      - action: timer.start
-        entity_id: timer.led_strip_night_k
-  
+- alias: kitchen_led_strip_timer_restart
+  id: kitchen_led_strip_timer_restart
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b4729d_motion
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0002b48381_motion
+    - trigger: state
+      entity_id: light.esp32_node_k_light
+      to: "on"
+  conditions:
+    - condition: state
+      entity_id: light.esp32_node_k_light
+      state: "on"
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "off"
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.kitchen_led_strip_timer_restart', 'last_triggered'),0)|int(0)) > 5 }}"
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.led_strip_night_k
+    - action: timer.start
+      entity_id: timer.led_strip_night_k
+
 # ##################################
 # Kitchen - Main light off - Aux light on
 # ##################################
-  - alias: kitchen_night_aux_light
-    id: kitchen_night_aux_light
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: light.round_led_k
-        to: 'off'
-        from: 'on'
-    conditions:
-      - condition: state
-        entity_id: switch.system_security_mode
-        state: "off"
-      - condition: state
-        entity_id:
-          - light.d1mini_light_l
-          - light.sonoff_mini_4
-          - light.esp8266_hood_k
-          - light.esp32_node_k_light
-          - light.mono_strip_1_light
-          - light.round_led_hs
-        state: "off"
-      - condition: state
-        entity_id: binary_sensor.light_outside_mi
-        state: "off"
-    actions:
-      - action: light.turn_on
-        entity_id: light.esp32_node_k_light
-        data:
-          brightness: 255
-      - action: light.turn_on
-        entity_id: light.mono_strip_1_light
-        data:
-          brightness: 128
+- alias: kitchen_night_aux_light
+  id: kitchen_night_aux_light
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_k
+      to: "off"
+      from: "on"
+  conditions:
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+    - condition: state
+      entity_id:
+        - light.d1mini_light_l_led
+        - light.sonoff_mini_4_led
+        - light.esp8266_hood_k_main
+        - light.esp32_node_k_light
+        - light.mono_strip_1_light
+        - light.round_led_hs
+      state: "off"
+    - condition: state
+      entity_id: binary_sensor.light_outside_mi
+      state: "off"
+  actions:
+    - action: light.turn_on
+      entity_id: light.esp32_node_k_light
+      data:
+        brightness: 255
+    - action: light.turn_on
+      entity_id: light.mono_strip_1_light
+      data:
+        brightness: 128
 
 # ##################################
 # Kitchen - Main Light off with no occupancy for 15 min
 # ##################################
-  - alias: kitchen_main_light_off_with_occupancy
-    id: kitchen_main_light_off_with_occupancy
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.presence_k
-        to: 'off'
-        for: 
-          minutes: 15
-    #   - trigger: state
-    #     entity_id: binary_sensor.dced838db04e_occupancy
-    #     to: 'off'
-    #     for: 
-    #       minutes: 15
-    conditions:
-      - condition: state
-        entity_id: group.lights_main_k
-        state: 'on'
-    actions:
-      - action: light.turn_off
-        entity_id: light.d1mini_light_l, light.sonoff_mini_4, light.esp8266_hood_k
-      - action: light.turn_off
-        entity_id: light.round_led_k
-        data:
-          transition: 15
+- alias: kitchen_main_light_off_with_occupancy
+  id: kitchen_main_light_off_with_occupancy
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.presence_k
+      to: "off"
+      for:
+        minutes: 15
+  #   - trigger: state
+  #     entity_id: binary_sensor.dced838db04e_occupancy
+  #     to: 'off'
+  #     for:
+  #       minutes: 15
+  conditions:
+    - condition: state
+      entity_id: group.lights_main_k
+      state: "on"
+  actions:
+    - action: light.turn_off
+      entity_id: light.d1mini_light_l_led, light.sonoff_mini_4_led, light.esp8266_hood_k_main
+    - action: light.turn_off
+      entity_id: light.round_led_k
+      data:
+        transition: 15

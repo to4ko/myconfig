@@ -4,8 +4,8 @@ substitutions:
 
 esphome:
   name: ${node_name}
-  comment: ESP32 PZEM HB
-  friendly_name: ESP32 PZEM HB
+  comment: "ESP32 PZEM HB"
+  friendly_name: "ESP32 PZEM HB"
   area: "Hall Big"  
   on_boot:
     - priority: 260
@@ -78,12 +78,12 @@ modbus:
 
 binary_sensor:
   - platform: status
-    name: ${board_name}_Status
+    name: "Status"
     id: id_status
 
 text_sensor:
   - platform: template
-    name: ${board_name}_Uptime
+    name: "Uptime"
     lambda: |-
         int seconds = round(id(uptime_sensor).raw_state);
         int days = seconds / (24 * 3600);
@@ -103,43 +103,44 @@ text_sensor:
   
   - platform: wifi_info
     ip_address:
-      name: ${board_name}_IP
+      name: "IP"
     ssid:
-      name: ${board_name}_SSID
+      name: "SSID"
     bssid:
-      name: ${board_name}_BSSID
+      name: "BSSID"
     mac_address:
-      name: ${board_name}_Mac
+      name: "MAC"
     # scan_results:
-    #   name: ${board_name}_Latest_Scan_Results
+    #   name: "Latest Scan Results"
 
   - platform: version
-    name: ${board_name}_ESPHome_Version
+    name: "ESPHome Version"
     hide_timestamp: true
 
 sensor:
   - platform: uptime
-    name: ${board_name}_Uptime_s
+    name: "Uptime s"
     id: uptime_sensor
     update_interval: 15s
-
+    disabled_by_default: true
+    
   - platform: wifi_signal
-    name: ${board_name}_WiFi_RSSI
+    name: "WiFi RSSI"
     update_interval: 60s
 
   - platform: pzemac
     current:
-      name: ${board_name}_Current
+      name: "Current"
       accuracy_decimals: 1
       device_class: current
       id: id_current
     voltage:
-      name: ${board_name}_Voltage
+      name: "Voltage"
       accuracy_decimals: 1
       device_class: voltage
       id: id_voltage
     energy:
-      name: ${board_name}_Energy
+      name: "Energy"
       accuracy_decimals: 3
       unit_of_measurement: kWh
       device_class: energy
@@ -148,17 +149,17 @@ sensor:
         - multiply: 0.001
       id: id_energy
     power:
-      name: ${board_name}_Power
+      name: "Power"
       accuracy_decimals: 0
       id: id_power
       unit_of_measurement: W
       device_class: power
     frequency:
-      name: ${board_name}_Frequency
+      name: "Frequency"
       accuracy_decimals: 0
       id: if_frequency
     power_factor:
-      name: ${board_name}_Power Factor
+      name: "Power Factor"
       accuracy_decimals: 2
       unit_of_measurement: '%'
       icon: mdi:cosine-wave
@@ -168,7 +169,7 @@ sensor:
     modbus_id: pzem_modbus
 
   - platform: template
-    name: ${board_name}_Power_kW
+    name: "Power kW"
     lambda: return (id(id_power).state)*0.001;
     id: id_power_kw
     accuracy_decimals: 3
@@ -177,7 +178,7 @@ sensor:
     icon: mdi:lightning-bolt-outline
 
   - platform: template
-    name: ${board_name}_Power_Night
+    name: "Power Night"
     id: id_power_night
     icon: mdi:speedometer
     lambda: |- 
@@ -196,7 +197,7 @@ sensor:
     unit_of_measurement: 'W'
     
   - platform: template
-    name: ${board_name}_Power_Day
+    name: "Power Day"
     id: id_power_day
     icon: mdi:speedometer
     lambda: |-
@@ -215,7 +216,7 @@ sensor:
     unit_of_measurement: 'W'
 
   - platform: integration
-    name: ${board_name}_Energy_Monthly
+    name: "Energy Monthly"
     id: id_energy_monthly
     sensor: id_power
     time_unit: h
@@ -227,7 +228,7 @@ sensor:
     state_class: total_increasing
 
   - platform: integration
-    name: ${board_name}_Energy_Monthly_Day
+    name: "Energy Monthly Day"
     id: id_energy_monthly_day
     sensor: id_power_day
     time_unit: h
@@ -239,7 +240,7 @@ sensor:
     state_class: total_increasing
 
   - platform: integration
-    name: ${board_name}_Energy_Monthly_Night
+    name: "Energy Monthly Night"
     id: id_energy_monthly_night
     sensor: id_power_night
     time_unit: h
@@ -251,7 +252,7 @@ sensor:
     state_class: total_increasing
 
   - platform: total_daily_energy
-    name: ${board_name}_Energy_Daily
+    name: "Energy Daily"
     icon: mdi:gauge
     id: id_energy_daily
     power_id: id_power
@@ -261,7 +262,7 @@ sensor:
     accuracy_decimals: 3            
 
   - platform: total_daily_energy
-    name: ${board_name}_Energy_Daily_Night
+    name: "Energy Daily Night"
     icon: mdi:gauge
     id: id_energy_daily_night
     power_id: id_power_night
@@ -271,7 +272,7 @@ sensor:
     accuracy_decimals: 3
 
   - platform: total_daily_energy
-    name: ${board_name}_Energy_Daily_Day
+    name: "Energy Daily Day"
     icon: mdi:gauge
     id: id_energy_daily_day
     power_id: id_power_day
@@ -285,38 +286,38 @@ sensor:
   #   voltage: id_voltage
   #   current: id_current
   #   apparent_power:
-  #     name: ${board_name}_Apparent_Power
+  #     name: "Apparent Power"
   #   reactive_power:
-  #     name: ${board_name}_Reactive_Power
+  #     name: "Reactive Power"
   #   wait_time: 500
 
 button:
   - platform: restart
-    name: ${board_name}_Restart
+    name: "Restart"
 
 switch:
   - platform: template
-    name: ${board_name}_Energy_Reset_Monthly_Night
+    name: "Energy Reset Monthly Night"
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly_night     
 
   - platform: template
-    name: ${board_name}_Energy_Reset_Monthly_Day
+    name: "Energy Reset Monthly Day"
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly_day
 
-  - platform: template #
-    name: ${board_name}_Energy_Reset_Monthly
+  - platform: template
+    name: "Energy Reset Monthly"
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly
 
   - platform: uart
-    name: ${board_name}_Energy_Reset_UART
+    name: "Energy Reset UART"
     data: [0x01, 0x42, 0x80, 0x11]
     uart_id: pzem_uart
 
   - platform: template
-    name: ${board_name}_Energy_Reset_All
+    name: "Energy Reset All"
     turn_on_action: 
       - sensor.integration.reset: id_energy_monthly
       - delay: 1s

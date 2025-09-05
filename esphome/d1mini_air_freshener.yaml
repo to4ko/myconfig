@@ -1,29 +1,15 @@
 substitutions:
   board_name: d1mini_air_freshener
   node_name: d1mini-air-freshener
-  
+
 esphome:
   name: ${node_name}
-  comment: D1 Mini Air Freshener
-  friendly_name: D1 Mini Air Freshener
-  area: Toilet
-  # on_boot:
-  #   then:
-  #   - sensor.template.publish:
-  #       id: id_new_canister_sensor
-  #       state: !lambda return id(id_canister_replace).state;
-  #   - text_sensor.template.publish:
-  #       id: id_new_canister_time_text
-  #       state: !lambda |-
-  #                   char str[30];
-  #                   time_t currTime = id(id_canister_replace).state;
-  #                   strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&currTime));
-  #                   return  { str };
-  #   - component.update: id_refill_remaining
-  #   - component.update: id_days_in_use
+  comment: "D1 Mini Air Freshener"
+  friendly_name: "D1 Mini Air Freshener"
+  area: "Toilet"
 
 safe_mode:
-  disabled: False
+  disabled: false
   num_attempts: 5
   reboot_timeout: 15min
 
@@ -34,29 +20,18 @@ esp8266:
 wifi:
   ssid: !secret wifi_ssid_iot
   password: !secret wifi_pass
-  domain: !secret my_domain
   reboot_timeout: 15min
-  #fast_connect: true
-  #output_power: 17.5dB
-  #power_save_mode: none
-  #use_address: 192.168.1.98
-  # manual_ip:
-  #   static_ip: 192.168.1.98
-  #   gateway: 192.168.1.1
-  #   subnet: 255.255.255.0
-  #   dns1: 192.168.1.1
-  #   dns2: 8.8.8.8
 
 logger:
   baud_rate: 0
   esp8266_store_log_strings_in_flash: false
-  
+
 api:
   reboot_timeout: 0s
 
 ota:
   - platform: esphome
-  
+
 web_server:
   port: 80
 
@@ -66,16 +41,26 @@ globals:
     restore_value: yes
     initial_value: '0.0'
 
+  - id: last_canister_replace
+    type: unsigned long
+    restore_value: yes
+    initial_value: '0'
+
+  - id: g_new_canister_sensor
+    type: unsigned long
+    restore_value: true
+    initial_value: '0'
+
 binary_sensor:
   - platform: status
-    name: ${board_name}_Status
+    name: "Status"
 
   - platform: gpio
     pin:
       number: GPIO13
       mode: INPUT_PULLUP
       inverted: true
-    name: ${board_name}_Button
+    name: "Button"
     id: id_button
     filters:
       - delayed_on: 10ms
@@ -92,38 +77,9 @@ binary_sensor:
           - button.press: id_button_reset
           - light.turn_off: id_green_led
 
-  # - platform: gpio
-  #   pin:
-  #     number: GPIO12
-  #     mode: INPUT_PULLUP
-  #     inverted: true
-  #   name: ${board_name}_Canister
-  #   id: can_presence
-  #   filters:
-  #     - delayed_on: 10ms
-  #     - delayed_off: 10ms
-  #   on_press:
-  #     then: 
-  #       - light.turn_off: id_red_led
-  #   on_release:
-  #     then: 
-  #       - light.turn_on:
-  #             id: id_red_led
-  #             effect: "Blink"
-  
-  # - platform: template
-  #   name: ${board_name}_Occupancy
-  #   device_class: occupancy
-  #   lambda: |-
-  #     if (id(id_distance).state > 0.1) {
-  #       return true;
-  #     } else {
-  #       return false;
-  #     }      
-
 number:
   - platform: template
-    name: ${board_name}_Counter
+    name: "Counter"
     icon: mdi:counter
     id: id_counter
     restore_value: true
@@ -137,7 +93,7 @@ number:
         - component.update: id_canister_left
 
   - platform: template
-    name: ${board_name}_Canister_Resource
+    name: "Canister Resource"
     icon: mdi:counter
     id: id_canister_resource
     restore_value: true
@@ -151,7 +107,21 @@ number:
         - component.update: id_canister_left
 
   - platform: template
-    name: ${board_name}_Canister_Replace
+    name: "Days in Use Adjustment"
+    icon: mdi:counter
+    id: id_days_in_use_adjustment
+    restore_value: true
+    update_interval: 30s
+    min_value: 0
+    max_value: 3000
+    step: 1
+    optimistic: true
+    on_value:
+      then:
+        - component.update: id_days_in_use
+
+  - platform: template
+    name: "Canister Replace"
     icon: mdi:counter
     id: id_canister_replace
     restore_value: true
@@ -164,7 +134,7 @@ number:
 
 text_sensor:
   - platform: template
-    name: ${board_name}_Uptime
+    name: "Uptime"
     lambda: |-
         int seconds = round(id(uptime_sensor).raw_state);
         int days = seconds / (24 * 3600);
@@ -184,37 +154,48 @@ text_sensor:
 
   - platform: wifi_info
     ip_address:
-      name: ${board_name}_IP
+      name: "IP"
     ssid:
-      name: ${board_name}_SSID
+      name: "SSID"
     bssid:
-      name: ${board_name}_BSSID
+      name: "BSSID"
     mac_address:
-      name: ${board_name}_Mac
-    # scan_results:
-    #   name: ${board_name}_Latest_Scan_Results
+      name: "MAC"
 
   - platform: version
-    name: ${board_name}_ESPHome_Version
+    name: "ESPHome Version"
     hide_timestamp: true
 
+  # - platform: template
+  #   name: ${board_name}_New_Canister_Time
+  #   icon: mdi:clock-start
+  #   id: id_new_canister_time_text
+
   - platform: template
-    name: ${board_name}_New_Canister_Time
-    icon: mdi:clock-start
+    name: "New Canister Time"
     id: id_new_canister_time_text
+    lambda: |-
+      char str[30];
+      time_t t = id(last_canister_replace);
+      if (t == 0)
+        return {};  // означает "нет значения"
+      strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&t));
+      return std::string(str);
+
 
 sensor:
   - platform: uptime
-    name: ${board_name}_Uptime_s
+    name: "Uptime s"
     id: uptime_sensor
     update_interval: 15s
+    disabled_by_default: true
 
   - platform: wifi_signal
-    name: ${board_name}_WiFi_RSSI
+    name: "WiFi RSSI"
     update_interval: 60s
 
   - platform: template
-    name: ${board_name}_Canister_Left
+    name: "Canister Left"
     id: id_canister_left
     lambda: |-
       float raw_value = id(id_counter).state;
@@ -225,7 +206,7 @@ sensor:
     on_value_range:
       - below: 5
         then:
-          - light.turn_on:    
+          - light.turn_on:
               id: id_red_led
               effect: "Blink"
       - above: 5
@@ -233,88 +214,17 @@ sensor:
           - light.turn_off: id_red_led
 
   - platform: template
-    name: ${board_name}_New_Canister_Sensor
+    name: "New Canister Sensor"
     id: id_new_canister_sensor
-    update_interval: 60s
+    unit_of_measurement: "s"
     accuracy_decimals: 0
-    internal: false
+    update_interval: 60s
+    lambda: |-
+      return (float) id(g_new_canister_sensor);
 
-  # - platform: template
-  #   name: ${board_name}_Refill_Remaining
-  #   icon: mdi:clock-end
-  #   id: id_refill_remaining
-  #   unit_of_measurement: "days"
-  #   update_interval: 60s
-  #   accuracy_decimals: 0
-  #   lambda: |-
-  #     auto time = id(sntp_time).now();
-  #     if (!time.is_valid())
-  #     {
-  #       return {};
-  #     }
-    
-  #     auto count = id(id_counter).state;
-  #     auto refill = id(id_canister_resource).state;
-      
-  #     if (count == 0)
-  #     {
-  #       return {};
-  #     }
-    
-  #     auto s_time = id(id_new_canister_time_text).state.c_str();
-  #     tm stime = {0};
-  #     strptime(s_time, "%Y-%m-%d %H:%M", &stime);
-    
-  #     char c_time[20];
-  #     strftime(c_time, sizeof(c_time), "%Y-%m-%d %H:%M", localtime(&time.timestamp));
-  #     tm ctime = {0};
-  #     strptime(c_time, "%Y-%m-%d %H:%M", &ctime);
-    
-  #     time_t startTime = mktime(&stime);
-  #     time_t currTime = mktime(&ctime);;
-  #     time_t diff = difftime(currTime, startTime);
-      
-  #     return max(0, int(((diff / count) * (refill - count)) / 86400));
-
-  # - platform: template
-  #   name: ${board_name}_Days_in_Use
-  #   icon: mdi:clock-end
-  #   id: id_days_in_use
-  #   update_interval: 60s
-  #   unit_of_measurement: "days"
-  #   accuracy_decimals: 0
-  #   lambda: |-
-  #     auto time = id(sntp_time).now();
-  #     if (!time.is_valid())
-  #     {
-  #       return {};
-  #     }
-    
-  #     auto count = id(id_counter).state;
-  #     auto refill = id(id_canister_resource).state;
-      
-  #     if (count == 0)
-  #     {
-  #       return {};
-  #     }
-    
-  #     auto s_time = id(id_new_canister_time_text).state.c_str();
-  #     tm stime = {0};
-  #     strptime(s_time, "%Y-%m-%d %H:%M", &stime);
-    
-  #     char c_time[20];
-  #     strftime(c_time, sizeof(c_time), "%Y-%m-%d %H:%M", localtime(&time.timestamp));
-  #     tm ctime = {0};
-  #     strptime(c_time, "%Y-%m-%d %H:%M", &ctime);
-    
-  #     time_t startTime = mktime(&stime);
-  #     time_t currTime = mktime(&ctime);;
-  #     time_t diff = difftime(currTime, startTime);
-      
-  #     return max(0, int(diff / 86400));
 
   - platform: template
-    name: ${board_name}_Days_in_Use
+    name: "Days in Use"
     icon: mdi:clock-end
     id: id_days_in_use
     update_interval: 60s
@@ -325,74 +235,82 @@ sensor:
       if (!time.is_valid()) {
         return {};
       }
-      
       auto replace_time = id(id_canister_replace).state;
       if (replace_time <= 0) {
-        return 0.0;
+        return id(id_days_in_use_adjustment).state;  // возвращаем только корректировку
       }
-      
-      return (time.timestamp - replace_time) / 86400.0;
+      float adjustment = id(id_days_in_use_adjustment).state;
+      if (std::isnan(adjustment)) {
+        adjustment = 0.0;
+      }
+      return (time.timestamp - replace_time) / 86400.0 + adjustment;
 
   - platform: template
-    name: ${board_name}_Days_Remaining
+    name: "Days Remaining"
     icon: mdi:calendar-clock
     id: id_days_remaining
     unit_of_measurement: "days"
     update_interval: 60s
     accuracy_decimals: 1
     lambda: |-
-      // Если баллон новый или нет данных об использовании
-      if (id(id_counter).state <= 0 || id(id_days_in_use).state <= 0) {
-        // Если баллон полный, возвращаем расчет по умолчанию (60 дней)
-        if (id(id_canister_resource).state > 0) {
-          return id(id_canister_resource).state / 83.0; // 5000 пшиков / 83 в день = ~60 дней
+      float days_in_use = id(id_days_in_use).state;
+      float total_puffs = id(id_counter).state;
+      float canister_total = id(id_canister_resource).state;
+
+      if (days_in_use <= 0 || total_puffs <= 0) {
+        // Если ещё не было использования — вернём приблизительный срок
+        if (canister_total > 0) {
+          return canister_total / 83.0;  // оценка по 83 пшика в день
         }
         return 0.0;
       }
-      
-      // Рассчитываем среднее количество пшиков в день
-      float current_puffs_per_day = id(id_counter).state / id(id_days_in_use).state;
-      
-      // Обновляем скользящее среднее (80% старое значение + 20% новое)
-      id(puffs_per_day_avg) = id(puffs_per_day_avg) * 0.8 + current_puffs_per_day * 0.2;
-      
-      // Рассчитываем оставшиеся дни
-      float remaining_puffs = id(id_canister_resource).state - id(id_counter).state;
-      if (id(puffs_per_day_avg) <= 0) {
-        return 0.0;
+
+      // среднее число пшиков в день
+      float current_puffs_per_day = total_puffs / days_in_use;
+      if (std::isnan(current_puffs_per_day) || current_puffs_per_day <= 0) {
+        current_puffs_per_day = 1.0;  // защита от деления на ноль
       }
-      
+
+      // скользящее среднее для сглаживания
+      id(puffs_per_day_avg) = id(puffs_per_day_avg) * 0.8 + current_puffs_per_day * 0.2;
+
+      float remaining_puffs = canister_total - total_puffs;
+      if (remaining_puffs < 0) remaining_puffs = 0;
+
+      if (std::isnan(id(puffs_per_day_avg)) || id(puffs_per_day_avg) <= 0) {
+        return remaining_puffs;  // пока нет среднего — просто пшики
+      }
+
       return remaining_puffs / id(puffs_per_day_avg);
 
 button:
   - platform: restart
-    name: ${board_name}_Restart
+    name: "Restart"
 
   - platform: template
-    name: ${board_name}_New_Canister
+    name: "New Canister"
     id: id_button_reset
     on_press:
       - number.set:
           id: id_counter
           value: 0
       - number.set:
+          id: id_days_in_use_adjustment
+          value: 0          
+      - lambda: |-
+          id(last_canister_replace) = id(sntp_time).now().timestamp;
+      - number.set:
           id: id_canister_replace
           value: !lambda 'return int(id(sntp_time).now().timestamp);'
-      - sensor.template.publish:
-          id: id_new_canister_sensor
-          state: !lambda 'return id(sntp_time).now().timestamp;'
-      - text_sensor.template.publish:
-          id: id_new_canister_time_text
-          state: !lambda |-
-                      char str[30];
-                      time_t currTime = id(sntp_time).now().timestamp;
-                      strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&currTime));
-                      return  { str };
-      #- component.update: id_refill_remaining
+      - globals.set:
+          id: g_new_canister_sensor
+          value: !lambda 'return (unsigned long) id(sntp_time).now().timestamp;'
+      - component.update: id_new_canister_sensor          
       - component.update: id_days_in_use
+      - component.update: id_new_canister_time_text
 
   - platform: template
-    name: ${board_name}_Spray
+    name: "Spray"
     id: id_button_spray
     on_press:
       - switch.turn_on: spray
@@ -401,13 +319,13 @@ switch:
   - platform: gpio
     pin:
       number: GPIO15
-    name: ${board_name}_Spray
+    name: "Spray"
     id: spray
     icon: mdi:sprinkler
     restore_mode: ALWAYS_OFF
     internal: true
     on_turn_on:
-      then:  
+      then:
         - number.set:
             id: id_counter
             value: !lambda |-
@@ -415,7 +333,7 @@ switch:
         - component.update: id_counter
         - delay: 100ms
         - switch.turn_off: spray
-        
+
 output:
   - platform: esp8266_pwm
     id: output_led1
@@ -429,7 +347,7 @@ output:
 
 light:
   - platform: monochromatic
-    name: ${board_name}_LED_Green
+    name: "LED Green"
     output: output_led1
     id: id_green_led
     effects:
@@ -458,10 +376,10 @@ light:
                 id: id_green_led
                 brightness: 1%
                 transition_length: 50ms
-            - delay: 450ms    
+            - delay: 450ms
 
   - platform: monochromatic
-    name: ${board_name}_LED_Red
+    name: "LED Red"
     output: output_led2
     id: id_red_led
     effects:
