@@ -227,7 +227,7 @@
     - condition: template
       value_template: "{{ 'mi_11' not in trigger.event.data.entity_id }}"
     - condition: template
-      value_template: "{{ 'pova_5' not in trigger.event.data.entity_id }}"
+      value_template: "{{ 'pova_7' not in trigger.event.data.entity_id }}"
     - condition: template
       value_template: "{{ 'lower' not in trigger.event.data.action }}"
     - condition: template
@@ -333,6 +333,8 @@
 # ##################################
 - alias: system_login_failure
   id: system_login_failure
+  mode: single
+  max_exceeded: silent  
   initial_state: true
   triggers:
     - trigger: persistent_notification
@@ -347,9 +349,9 @@
         - updated
       notification_id: ip-ban
       id: "ip-ban"
-  conditions:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  # conditions:
+  #   - condition: template
+  #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
     - action: counter.increment
       entity_id: counter.badlogin_counter
@@ -390,14 +392,16 @@
 # ##################################
 - alias: system_blocked_ip
   id: system_blocked_ip
+  mode: single
+  max_exceeded: silent  
   initial_state: true
   triggers:
     - trigger: state
       entity_id: persistent_notification.ip_ban
       to:
-  conditions:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  # conditions:
+  #   - condition: template
+  #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
     - action: notify.telegram
       data:
@@ -414,9 +418,10 @@
 - alias: system_groups_rebuild
   id: system_groups_rebuild
   initial_state: true
-  mode: queued
-  max: 10
+  mode: single
+  #max: 10
   max_exceeded: silent
+  
   triggers:
     - trigger: time_pattern
       hours: "/1"
@@ -424,9 +429,9 @@
     #   event_type: entity_registry_updated
     - trigger: homeassistant
       event: start
-  conditions:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  # conditions:
+  #   - condition: template
+  #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
     - action: group.set
       data:
@@ -563,9 +568,9 @@
         - persistent_notification.homeassistant_check_config
         - persistent_notification.invalid_config
       to: "notifying"
-  conditions:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  # conditions:
+  #   - condition: template
+  #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
     - action: notify.telegram
       data:
@@ -1170,7 +1175,7 @@
 # ##################################
 - alias: system_xiaomi_gw3_error
   id: system_xiaomi_gw3_error
-  initial_state: true
+  initial_state: false
   mode: single
   max_exceeded: silent
   triggers:
@@ -1181,8 +1186,8 @@
   conditions:
     - condition: template
       value_template: '{{ "xiaomi_gateway3" in (trigger.event.data.message|string) or "xiaomi_gateway3" in (trigger.event.data.message|string) }}'
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
     - action: notify.telegram
       data:
@@ -1218,8 +1223,8 @@
     #   value_template: "{{ 'custom_components.fullykiosk.coordinator' in (trigger.event.data.name|string) or 'custom_components.fullykiosk.coordinator' in (trigger.event.data.name|string) }}"
     # - condition: template
     #   value_template: "{{ 'Cannot connect to host' in (trigger.event.data.message|string) or 'Cannot connect to host' in (trigger.event.data.message|string)}}"
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: template
       value_template: "{{(as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_fully_browser_restart', 'last_triggered'),0)|int(0)) > 5*60 }}"
   actions:
@@ -1626,11 +1631,13 @@
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.ya_weather_error
-    - wait_template: >
-        {% set ent_id = 'sensor.yandex_st' + '_alice_state' %}
-        {{ is_state(ent_id,'idle') }}
+    - wait_template: "{{ is_state('sensor.yandex_st_alice_state','idle') }}"
       timeout:
         minutes: 5
+# {% set ent_id = 'sensor.yandex_st' + '_alice_state' %}
+# {{ is_state(ent_id,'idle') }}
+        
+
     - action: input_number.set_value
       data:
         entity_id: input_number.tts_volume
@@ -1653,6 +1660,8 @@
 # ##################################
 - alias: system_hot_water_boolean_change
   id: system_hot_water_boolean_change
+  mode: single
+  max_exceeded: silent  
   initial_state: true
   triggers:
     - trigger: state
@@ -1663,8 +1672,8 @@
     - trigger: event
       event_type: automation_reloaded
   conditions:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: template
       value_template: "{{ states('binary_sensor.hot_water') in ['on','off'] }}"
   actions:
@@ -1676,6 +1685,8 @@
 # ##################################
 - alias: system_cold_water_boolean_change
   id: system_cold_water_boolean_change
+  mode: single
+  max_exceeded: silent 
   initial_state: true
   triggers:
     - trigger: state
@@ -1686,8 +1697,8 @@
     - trigger: event
       event_type: automation_reloaded
   conditions:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     - condition: template
       value_template: "{{ states('binary_sensor.cold_water') in ['on','off'] }}"
   actions:
@@ -1938,9 +1949,9 @@
     - trigger: state
       entity_id: persistent_notification.config_entry_discovery
       to: "notifying"
-  conditions:
-    - condition: template
-      value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  # conditions:
+  #   - condition: template
+  #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
     - action: notify.telegram
       data:
@@ -2101,9 +2112,10 @@
 # ##################################
 - alias: system_esphome_ble_advert
   id: system_esphome_ble_advert
-  mode: parallel
-  max: 500
+  #mode: parallel
+  max: 10
   max_exceeded: silent
+  mode: queued
   initial_state: true
   triggers:
     - trigger: event

@@ -293,7 +293,7 @@
       - choose:
           - conditions:
               - condition: state
-                entity_id: binary_sensor.0x00158d0002a14c5e_contact
+                entity_id: binary_sensor.0x00158d0003f1b140_contact
                 state: 'off'
                 for: 
                   minutes: 3
@@ -305,7 +305,7 @@
                   entity_id: number.esp32_node_b_humidity_set
           - conditions:
               - condition: state
-                entity_id: binary_sensor.0x00158d0002a14c5e_contact
+                entity_id: binary_sensor.0x00158d0003f1b140_contact
                 state: 'on'
                 for: 
                   minutes: 3
@@ -379,7 +379,8 @@
         entity_id: switch.system_security_mode
         state: 'off'
     actions:
-      - action: fan.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}
+      - action: fan.turn_{{ 'off' if is_state('binary_sensor.tod_day','on') else 'on' }}
+#fan.turn_{%if states('binary_sensor.tod_day')%}off{%else%}on{%endif%}
         entity_id: fan.sonoff_pow_r2_1_bottom_fan
 
 # ##################################
@@ -412,6 +413,8 @@
 # ##################################
   - alias: bathroom_fan_off_by_timer
     id: bathroom_fan_off_by_timer
+    mode: single
+    max_exceeded: silent    
     initial_state: true
     triggers:
       - trigger: event
@@ -421,9 +424,9 @@
       # - platform: state
       #   entity_id: fan.esp32_node_b_fan_b
       #   to: 'off'
-    conditions:
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    # conditions:
+    #   - condition: template
+    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
       - action: fan.turn_off
         entity_id: fan.esp32_node_b_fan_b
@@ -450,8 +453,8 @@
         entity_id: fan.esp32_node_b_fan_b
         to:
     conditions:
-      - condition: template
-        value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+      # - condition: template
+      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
       - condition: template
         value_template: "{{ states('fan.esp32_node_b_fan_b') in ['on','off'] }}"
       - condition: state
@@ -520,7 +523,7 @@
   #   max_exceeded: silent
   #   triggers:
   #     - trigger: state
-  #       entity_id: binary_sensor.0x00158d0002a14c5e_contact
+  #       entity_id: binary_sensor.0x00158d0003f1b140_contact
   #       from: 'on'
   #       to: 'off'
   #   conditions:
@@ -528,7 +531,7 @@
   #       entity_id: binary_sensor.high_humidity_b
   #       state: 'on'
   #     - condition: state
-  #       entity_id: binary_sensor.0x00158d0002a14c5e_contact
+  #       entity_id: binary_sensor.0x00158d0003f1b140_contact
   #       state: 'off'
   #     - condition: state
   #       entity_id: switch.0x00158d0002a36433_channel_2
