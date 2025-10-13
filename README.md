@@ -75,7 +75,6 @@
   - [CSI-2](https://aliexpress.ru/item/1005005499573640.html)
   - [Raspberry Pi Zero 2W](https://aliexpress.ru/item/1005005792181612.html)
 
-
 **Main Storage Unit** 
   - [Synology DS1621+](https://www.synology.com/en-uk/products/DS1621+)
   - 2*16Gb Crucial DDR4 SODIMM
@@ -86,12 +85,12 @@
 **Backup Storage Unit**
   - [Synology DS920+](https://global.synologydownload.com/download/Document/Hardware/DataSheet/DiskStation/20-year/DS920+/enu/Synology_DS920_Plus_Data_Sheet_enu.pdf)
   - 4Gb onboard + 16Gb Kingston DDR4 SODIMM
-  - 2ea WD Purple 4Tb in SHR1 as Main Storage section 
+  - 4ea WD Purple 4Tb in SHR1 as Main Storage section 
   - 2ea Adata SX6000 Lite 256Gb as NVME read\write cache
 
 **Remote Backup Storage Unit**
   - [Synology DS220+](https://global.synologydownload.com/download/Document/Hardware/DataSheet/DiskStation/20-year/DS220+/enu/Synology_DS220_Plus_Data_Sheet_enu.pdf)
-  - 2ea Seagate Skyhawk 4Tb in SHR1 as Main Storage section
+  - 2ea Toshiba MG06 8Tb in SHR1 as Main Storage section
 
 **UPS**
   - Ippon Back Basic 1500
@@ -104,12 +103,12 @@
   - [Ubiquiti U-fiber Loco](https://store.ui.com/us/en/pro/category/all-fiber/products/ufiber-loco)
   - [Ubiquiti Unifi Dream Machine Pro Max, WAN1 1Gb\s + WAN2 500Mb\s](https://store.ui.com/us/en/pro/category/all-unifi-cloud-gateways/products/udm-pro-max)
   - [Ubiquiti Unifi Hi-Capacity Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-pro-aggregation)
-  - not in use - [Ubiquiti Unifi Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-aggregation)
+  - [Ubiquiti Unifi Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-aggregation)
   - [Ubiquiti Unifi Enterprise Switch 24 PoE](https://store.ui.com/us/en/pro/category/all-switching/products/usw-enterprise-24-poe)
-  - not in use - [Ubiquiti Unifi Switch 10Gbe XG](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-xg)
+  - [Ubiquiti Unifi Switch 10Gbe XG](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-xg)
   - [Ubiquiti Unifi Enterprise Switch 8 PoE (3ea)](https://store.ui.com/us/en/pro/category/all-switching/products/switch-enterprise-8-poe)
   - [Ubiquiti Unifi Switch Flex (2ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex)
-  - not in use - [Ubiquiti Unifi Switch Flex Mini (1ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-mini)
+  - [Ubiquiti Unifi Switch Flex Mini (1ea)](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-mini)
   - [Ubiquiti Unifi U7 Lite ](https://store.ui.com/us/en/category/all-wifi/products/u7-lite)
   - [Ubiquiti Unifi U7 Pro XG ](https://store.ui.com/us/en/category/wifi-flagship/products/u7-pro-xg?variant=u7-pro-xg-us)
   - [Ubiquiti Unifi U7 Outdoor ](https://store.ui.com/us/en/category/wifi-outdoor/products/u7-outdoor)
@@ -118,7 +117,9 @@
   - [Ubiquiti Unifi Gateway Max](https://store.ui.com/us/en/category/cloud-gateways-compact/collections/cloud-gateway-max)
   - [Ubiquiti Unifi Switch Lite 8 Poe](https://store.ui.com/us/en/category/all-switching/products/usw-lite-8-poe)
   - [Ubiquiti Unifi U6 Pro](https://store.ui.com/us/en/category/all-wifi/products/u6-pro)
-  - [Ubiquiti Unifi Dream Router](https://techspecs.ui.com/unifi/cloud-gateways/udr)
+  - [Ubiquiti Unifi Dream Router (2ea)](https://techspecs.ui.com/unifi/cloud-gateways/udr)
+  - [Ubiquiti Unifi Cloud Gateway Max](https://store.ui.com/us/en/category/cloud-gateways-compact/collections/cloud-gateway-max)
+  - [Ubiquiti Unifi U6 Pro](https://store.ui.com/us/en/category/all-wifi/products/u6-pro)
   - [Ubiquiti Unifi Express](https://store.ui.com/us/en/category/all-cloud-gateways/products/ux)
 
 # Surveillance
