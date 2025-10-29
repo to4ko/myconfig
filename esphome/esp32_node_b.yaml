@@ -14,6 +14,30 @@ esphome:
       then:
         - delay: 5s
         - ble.disable:
+        - delay: 5s
+        - component.update: dallas_hot
+        - logger.log: "---> Dallas updated"
+        - delay: 2s
+        - if:
+            condition:
+              - lambda: |-
+                  return id(dallas_hot).state > 40;
+            then:
+                - logger.log: "---> Hot Water ON (boot)"
+                - binary_sensor.template.publish:
+                    id: id_hot_water_on
+                    state: ON
+                - globals.set:
+                    id: g_hot_water
+                    value: 'true'
+            else: 
+                - logger.log: "---> Hot Water OFF (boot)"
+                - binary_sensor.template.publish:
+                    id: id_hot_water_on
+                    state: OFF
+                - globals.set:
+                    id: g_hot_water
+                    value: 'false'
 
 esp32_ble:
   enable_on_boot: False
@@ -27,10 +51,6 @@ esp32:
   board: nodemcu-32s
   framework:
     type: esp-idf
-
-# external_components:
-#   - source: github://pr#4216
-#     components: esp32
 
 wifi:
   ssid: !secret wifi_ssid_iot
@@ -93,6 +113,11 @@ globals:
     restore_value: false
     initial_value: 'false'
 
+  - id: g_hot_water
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
 binary_sensor:
   - platform: status
     name: "Status"
@@ -141,6 +166,9 @@ binary_sensor:
   - platform: template
     name: "Hot Water ON"
     id: id_hot_water_on
+    #update_interval: 30s
+    lambda: |-
+      return id(g_hot_water);
 
 light:
   - platform: monochromatic
@@ -557,21 +585,57 @@ interval:
               - logger.log: "Manual Mode - switched off!"
               - switch.turn_off: id_fan_b_manual_mode
 
-      - if:
-          condition:
-            - and:
-              - for:
-                  time: 5min
-                  condition:
-                    lambda: |-
-                      return id(dallas_hot).state > 40;
-          then:
-              - logger.log: "---> Hot Water ON"
-              - binary_sensor.template.publish:
-                  id: id_hot_water_on
-                  state: ON
-          else: 
-              - logger.log: "---> Hot Water OFF"
-              - binary_sensor.template.publish:
-                  id: id_hot_water_on
-                  state: OFF
+      # - if:
+      #     condition:
+      #       - for:
+      #           time: 10s
+      #           condition:
+      #             lambda: |-
+      #               return id(dallas_hot).state > 40;
+      #       - lambda: |-
+      #           return (millis() / 1000.0) > 30;
+      #     then:
+      #         - logger.log: "---> Hot Water ON (interval)"
+      #         - binary_sensor.template.publish:
+      #             id: id_hot_water_on
+      #             state: ON
+      #         - globals.set:
+      #             id: g_hot_water
+      #             value: 'true'
+      #     else: 
+      #         - logger.log: "---> Hot Water OFF (interval)"
+      #         - binary_sensor.template.publish:
+      #             id: id_hot_water_on
+      #             state: OFF
+      #         - globals.set:
+      #             id: g_hot_water
+      #             value: 'false'
+
+
+      - lambda: |-
+          // Проверяем аптайм и удержание температуры
+          if ((millis() / 1000.0) > 30) {
+            // Вспомогательная переменная для удержания температуры
+            static unsigned long hot_start = 0;
+            if (id(dallas_hot).state > 40) {
+              if (hot_start == 0) {
+                hot_start = millis();
+              }
+              // Если температура держится >40 непрерывно 10 секунд
+              if ((millis() - hot_start) >= 10000) {
+                if (!id(g_hot_water)) {
+                  ESP_LOGD("hotwater", "Hot Water ON");
+                  id(g_hot_water) = true;
+                  id(id_hot_water_on).publish_state(true);
+                }
+              }
+            } else {
+              // Температура упала ниже порога — сбрасываем таймер и выключаем
+              hot_start = 0;
+              if (id(g_hot_water)) {
+                ESP_LOGD("hotwater", "Hot Water OFF");
+                id(g_hot_water) = false;
+                id(id_hot_water_on).publish_state(false);
+              }
+            }
+          }                  

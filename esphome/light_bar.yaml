@@ -1,0 +1,225 @@
+substitutions:
+  board_name: light_bar
+  node_name: light-bar
+
+esphome:
+  name: ${node_name}
+  comment: "Light Bar"
+  friendly_name: "Light Bar"
+  area: "Sasha's room"
+
+safe_mode:
+  disabled: False
+  num_attempts: 5
+  reboot_timeout: 15min
+
+esp8266:
+  board: esp_wroom_02
+
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_pass
+  domain: !secret my_domain
+  reboot_timeout: 15min
+  #output_power: 17.5dB
+  #fast_connect: true
+  #power_save_mode: none
+  # manual_ip:
+  #   static_ip: 192.168.1.68
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+external_components:
+  - source:
+      type: local
+      path: lib
+    components: [yeelight_remote]
+
+logger:
+  baud_rate: 0
+
+api:
+
+ota:
+  - platform: esphome
+
+binary_sensor:
+  - platform: status
+    name: "Status"
+
+button:
+  - platform: restart
+    name: "Restart"
+
+
+text_sensor:
+  - platform: template
+    name: "Uptime"
+    lambda: |-
+        int seconds = round(id(uptime_sensor).raw_state);
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: "IP"
+    ssid:
+      name: "SSID"
+    bssid:
+      name: "BSSID"
+    mac_address:
+      name: "MAC"
+    # scan_results:
+    #   name: "Latest Scan Results"
+
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true
+    
+sensor:
+  - platform: uptime
+    name: "Uptime s"
+    id: uptime_sensor
+    update_interval: 15s
+    disabled_by_default: true
+    
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    update_interval: 60s
+    
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
+    
+output:
+  - platform: esp8266_pwm
+    pin: GPIO12
+    id: output_cw
+    power_supply: power
+  - platform: esp8266_pwm
+    pin: GPIO5
+    id: output_ww
+    power_supply: power
+
+power_supply:
+  - id: power
+    pin: GPIO4
+    enable_time: 0s
+    keep_on_time: 0s
+
+light:
+  - platform: cwww
+    id: light1
+    default_transition_length: 0.1s
+    constant_brightness: true
+    gamma_correct: 2.8 # управляет нелинейной коррекцией яркости, чтобы восприятие света человеком выглядело «линейно»
+    name: "Front"
+    cold_white: output_cw
+    warm_white: output_ww
+    cold_white_color_temperature: 6500 K
+    warm_white_color_temperature: 2700 K
+    icon: mdi:led-strip-variant
+
+  - platform: neopixelbus
+    num_leds: 40
+    pin: GPIO13
+    name: "Back"
+    variant: WS2812
+    id: LED_ring
+    power_supply: power
+    icon: mdi:led-strip
+    # default_color: [127, 172, 255] # Начальный цвет белый (RGB)
+    effects:
+      - addressable_rainbow:
+      - random:
+      - strobe:
+      - addressable_color_wipe:
+      - strobe:
+          name: Police
+          colors:
+            - state: true
+              brightness: 100%
+              red: 100%
+              green: 0%
+              blue: 0%
+              duration: 500ms
+            - state: false
+              duration: 250ms
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 000%
+              blue: 100%
+              duration: 500ms        
+
+uart:
+  - id: remote_bus
+    baud_rate: 4800
+    rx_pin: GPIO2
+
+yeelight_remote:
+  # disable_parity_check: true # Отключаем проверку контрольной суммы
+  on_press:
+    - if:
+        condition:
+          lambda: "return id(light1).current_values.is_on();"
+        then:
+          - light.turn_off:
+              id: light1
+              transition_length: 1s
+        else:
+          - light.turn_on:
+              id: light1
+              transition_length: 1s
+  on_left:
+    then:
+      - light.dim_relative:
+          id: light1
+          relative_brightness: -0.05
+  on_right:
+    then:
+      - light.dim_relative:
+          id: light1
+          relative_brightness: 0.05
+  on_long_press:
+    - light.toggle: LED_ring
+
+  # on_press_left: # Используем существующий триггер
+  # on_press_right: # Используем существующий триггер
+
+  on_press_left:
+    - lambda: |-
+        float current_temp = id(light1).current_values.get_color_temperature();
+        if (current_temp == 0.0f) current_temp = 370.0f;  // mireds ~2700K
+        float new_temp = current_temp + 20.0f;  // сдвиг в сторону «теплее»
+        if (new_temp > 370.0f) new_temp = 370.0f;
+        auto call = id(light1).make_call();
+        call.set_color_temperature(new_temp);
+        call.perform();
+        ESP_LOGD("yeelight", "Temperature: %.0f K", 1000000.0f / new_temp);  // Кастомный лог
+
+  on_press_right:
+    - lambda: |-
+        float current_temp = id(light1).current_values.get_color_temperature();
+        if (current_temp == 0.0f) current_temp = 154.0f;  // mireds ~6500K
+        float new_temp = current_temp - 20.0f;  // сдвиг в сторону «холоднее»
+        if (new_temp < 154.0f) new_temp = 154.0f;
+        auto call = id(light1).make_call();
+        call.set_color_temperature(new_temp);
+        call.perform();
+        ESP_LOGD("yeelight", "Temperature: %.0f K", 1000000.0f / new_temp);  // Кастомный лог

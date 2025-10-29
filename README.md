@@ -147,13 +147,9 @@
   - Yeelight LED Ceiling Lamp Pro White 960mm (YLXD08YL)
   - Yeelight LED Ceiling Light Pro 940mm White (YLXD56YL) 
   - Yeelight LED Ceiling Lamp 480mm White (YLXD05YL)
-  - not in use - Yeelight LED Light Strip (YLDD01YL)
-  - not in use - Yeelight LED Light Strip Plus (YLDD04YL)
-  - not in use - Yeelight LED Light Strip 1S (YLDD05YL) (3ea)
   - not in use - Yeelight LED Bulb (Color) (YLDP06YL) (2ea)
   - not in use - Yeelight Smart LED Bubl W3 (YLDP005) (1ea)
   - not in use - Yeelight LED Tunable Bulb (White) (YLDP05YL) (2ea)
-  - Yeelight Display Light Lamp Pro (YLTD003) (1ea)
   - Xiaomi Philips Zhirui Downlight (9290012799) (1ea)
   - Yeelight Jiaoyue 260 (YLXD62YI)
   - not in use - Xiaomi Philips Smart LED Bulb E27 White (9290012800) (2ea)
@@ -212,6 +208,7 @@
 **ESPHome devices:**
   - Sonoff Pow R2 (2ea)
   - Sonoff Mini (3ea)
+  - Sonoff MINIR4 (1ea)
   - not in use - Sonoff 4ch
   - not in use - Sonoff L1
   - not in use - Sonoff S26 Plugs (3ea)
@@ -221,6 +218,7 @@
   - not in use - Blitzwolf SS5 dual gang relay
   - Digma IR Remote (4ea)
   - Yeelight 1s Led Strip ESPHome firmware (4ea)
+  - Yeelight Display Light Lamp Pro (YLTD003) ESPhome firmware
 
 **ESPHome DIY devices:**
   - ESP32 - Node K - Kitchen SensAir S8, BME280, BHI1750, Water Filter Counters, IR controller
@@ -258,7 +256,10 @@
   - Shelly 1PM (2ea)
   - Shelly 1 (2ea)
   - Shelly Plug S (2ea)
+  - Shelly Plug S Plus (2ea)
+  - Shelly Plug MTR (1ea)
   - not in use - Xiaomi Kettle
+  - Sonoff S60 Plug (2ea)
 
 # Software configuration
 **Proxmox Node Software:**
