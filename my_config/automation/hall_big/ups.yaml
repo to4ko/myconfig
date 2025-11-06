@@ -5,241 +5,254 @@
 # #####################################################################################
 # Hall Big - Main power turned off
 # ##################################
-  - alias: hall_big_main_power_turned_off
-    id: hall_big_main_power_turned_off
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: switch.0x00158d000230fc52_outlet
-        to: 'off'
-        from: 'on'
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS (1200)"
-  
+- alias: hall_big_main_power_turned_off
+  id: hall_big_main_power_turned_off
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: switch.0x00158d000230fc52_outlet
+      to: "off"
+      from: "on"
+  actions:
+    - action: notify.send_message
+      data:
+        message: "\U0001f50c Внимание! Главная розетка отключена! Запущен UPS (1200)"
+
 # ##################################
 # Hall Big - Main plug pulled out
 # ##################################
-  - alias: hall_big_main_plug_pulled_out
-    id: hall_big_main_plug_pulled_out
-    initial_state: true
-    triggers:
-      - trigger: numeric_state
-        entity_id: sensor.0x00158d000230fc52_power
-        below: 10
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Внимание! Нагрузка в главной розетке упала! Проверь кабель!"
-  
+- alias: hall_big_main_plug_pulled_out
+  id: hall_big_main_plug_pulled_out
+  initial_state: true
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.0x00158d000230fc52_power
+      below: 10
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Внимание! Нагрузка в главной розетке упала! Проверь кабель!"
+
 # ##################################
 # Hall Big - Main power - over-power
 # ##################################
-  - alias: hall_big_main_power_overpower
-    id: hall_big_main_power_overpower
-    initial_state: true
-    triggers:
-      - trigger: numeric_state
-        entity_id: sensor.0x00158d000230fc52_power
-        above: 1700 
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Внимание! Перегрузка главной розетки! Отключите лишние потребители!"
-  
-  # # ##################################
-  # # Hall Big - UPS - OB
-  # # ##################################
-  # - alias: hall_big_ups_ob
-  #   id: hall_big_ups_ob
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: sensor.ippon_1200_status_data
-  #       to: 'OB'
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U0001f50b Внимание! Запущен UPS (1200)!"
-  #     - action: notify.mobile_app_iphone_12_dtsymbal
-  #       data:
-  #         title: "Внимание!"
-  #         message: "Запущен UPS (1200)"
-  
-  # # ##################################
-  # # Hall Big - UPS - LB
-  # # ##################################
-  # - alias: hall_big_ups_lb
-  #   id: hall_big_ups_lb
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: sensor.ippon_1200_status_data
-  #       to: 'LB'
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы!"
-  #     - action: notify.mobile_app_iphone_12_dtsymbal
-  #       data:
-  #         title: "Внимание!"
-  #         message: "UPS полностью разряжен! Завершаем работу!"
-  #         data:
-  #           push:
-  #             sound:
-  #               name: "default"
-  #               critical: 1
-  #               volume: 1.0        
-  # #    - action: hassio.host_shutdown
-  
-  # # ##################################
-  # # Hall Big - UPS - OL
-  # # ##################################
-  # - alias: hall_big_ups_ol
-  #   id: hall_big_ups_ol
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: sensor.ippon_1200_status_data
-  #       to: 'OL'
-  #   conditions:
-  #     - condition: template
-  #       value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1200)!"
-  
-  # # ##################################
-  # # Hall Big - UPS - Unknown
-  # # ##################################
-  # - alias: hall_big_ups_unknown
-  #   id: hall_big_ups_unknown
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: sensor.ippon_1200_status_data
-  #       to: 
-  #         - unknown
-  #         - unavailable
-  #       for:
-  #         minutes: 1
-  #   conditions:
-  #     - condition: template
-  #       value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U0001f6a8 Внимание! Связь с UPS(1200) потеряна!"
-  
+- alias: hall_big_main_power_overpower
+  id: hall_big_main_power_overpower
+  initial_state: true
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.0x00158d000230fc52_power
+      above: 1700
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Внимание! Перегрузка главной розетки! Отключите лишние потребители!"
+
+# # ##################################
+# # Hall Big - UPS - OB
+# # ##################################
+# - alias: hall_big_ups_ob
+#   id: hall_big_ups_ob
+#   initial_state: true
+#   triggers:
+#     - trigger: state
+#       entity_id: sensor.ippon_1200_status_data
+#       to: 'OB'
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima  
+#         message: "\U0001f50b Внимание! Запущен UPS (1200)!"
+#     - action: notify.mobile_app_iphone_12_dtsymbal
+#       data:
+#         title: "Внимание!"
+#         message: "Запущен UPS (1200)"
+
+# # ##################################
+# # Hall Big - UPS - LB
+# # ##################################
+# - alias: hall_big_ups_lb
+#   id: hall_big_ups_lb
+#   initial_state: true
+#   triggers:
+#     - trigger: state
+#       entity_id: sensor.ippon_1200_status_data
+#       to: 'LB'
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima  
+#         message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы!"
+#     - action: notify.mobile_app_iphone_12_dtsymbal
+#       data:
+#         title: "Внимание!"
+#         message: "UPS полностью разряжен! Завершаем работу!"
+#         data:
+#           push:
+#             sound:
+#               name: "default"
+#               critical: 1
+#               volume: 1.0
+# #    - action: hassio.host_shutdown
+
+# # ##################################
+# # Hall Big - UPS - OL
+# # ##################################
+# - alias: hall_big_ups_ol
+#   id: hall_big_ups_ol
+#   initial_state: true
+#   triggers:
+#     - trigger: state
+#       entity_id: sensor.ippon_1200_status_data
+#       to: 'OL'
+#   conditions:
+#     - condition: template
+#       value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima  
+#         message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1200)!"
+
+# # ##################################
+# # Hall Big - UPS - Unknown
+# # ##################################
+# - alias: hall_big_ups_unknown
+#   id: hall_big_ups_unknown
+#   initial_state: true
+#   triggers:
+#     - trigger: state
+#       entity_id: sensor.ippon_1200_status_data
+#       to:
+#         - unknown
+#         - unavailable
+#       for:
+#         minutes: 1
+#   conditions:
+#     - condition: template
+#       value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima  
+#         message: "\U0001f6a8 Внимание! Связь с UPS(1200) потеряна!"
+
 # ##################################
 # Hall Big - Main power turned on
 # ##################################
-  - alias: hall_big_main_power_turned_on
-    id: hall_big_main_power_turned_on
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: switch.0x00158d000230fc52_outlet
-        to: 'on'
-        from: 'off'
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1200)!"
-          
-  # ##################################
-  # Hall Big - UPS - State
-  # ##################################
-  # - alias: hall_big_ups_state
-  #   id: hall_big_ups_state
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: sensor.ippon_1200_status_data
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U0001f50b UPS(1200): {{trigger.from_state.state}} -> {{trigger.to_state.state}} !"
-  
-  
+- alias: hall_big_main_power_turned_on
+  id: hall_big_main_power_turned_on
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: switch.0x00158d000230fc52_outlet
+      to: "on"
+      from: "off"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1200)!"
+
+# ##################################
+# Hall Big - UPS - State
+# ##################################
+# - alias: hall_big_ups_state
+#   id: hall_big_ups_state
+#   initial_state: true
+#   triggers:
+#     - trigger: state
+#       entity_id: sensor.ippon_1200_status_data
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima  
+#         message: "\U0001f50b UPS(1200): {{trigger.from_state.state}} -> {{trigger.to_state.state}} !"
+
 # ##################################
 # Hall Big - UPS - States
 # ##################################
-  - alias: hall_big_ups_states
-    id: hall_big_ups_states
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: sensor.ippon_1500_status_data
-        to:
-    conditions:
-      - condition: template
-        value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
-    actions:
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.to_state.state == 'OB DISCHRG' or trigger.to_state.state == 'OB' }}"
-            sequence:
-              - parallel:
-                  - action: notify.telegram
-                    data:
-                      message: "\U0001f50b Внимание! Запущен UPS (1200)!"
-                  - action: notify.mobile_app_iphone_16_pro_dima
-                    data:
-                      title: "Внимание!"
-                      message: "Запущен UPS (1200)"
+- alias: hall_big_ups_states
+  id: hall_big_ups_states
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: sensor.ippon_1500_status_data
+      to:
+  conditions:
+    - condition: template
+      value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
+  actions:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.to_state.state == 'OB DISCHRG' or trigger.to_state.state == 'OB' }}"
+          sequence:
+            - parallel:
+                - action: notify.send_message
+                  data:
+                    entity_id: notify.telegram_dima
+                    message: "\U0001f50b Внимание! Запущен UPS (1200)!"
+                - action: notify.mobile_app_iphone_16_pro_dima
+                  data:
+                    title: "Внимание!"
+                    message: "Запущен UPS (1200)"
 
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.to_state.state == 'LB' or trigger.to_state.state == 'FSD OB DISCHRG LB'}}"
-            sequence:
-              - parallel:
-                  - action: notify.telegram
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.to_state.state == 'LB' or trigger.to_state.state == 'FSD OB DISCHRG LB'}}"
+          sequence:
+            - parallel:
+                - action: notify.send_message
+                  data:
+                    entity_id: notify.telegram_dima
+                    message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы через 10сек!"
+                - action: notify.mobile_app_iphone_16_pro_dima
+                  data:
+                    title: "Внимание!"
+                    message: "UPS полностью разряжен! Завершаем работу через 10сек!"
                     data:
-                      message: "\U0001f6a8 Внимание! Заряд батареи (1200) критический! Завершение работы через 10сек!"
-                  - action: notify.mobile_app_iphone_16_pro_dima
-                    data:
-                      title: "Внимание!"
-                      message: "UPS полностью разряжен! Завершаем работу через 10сек!"
-                      data:
-                        push:
-                          sound:
-                            name: "default"
-                            critical: 1
-                            volume: 1.0
-              - delay:
-                  seconds: 10
-              - action: hassio.host_shutdown
+                      push:
+                        sound:
+                          name: "default"
+                          critical: 1
+                          volume: 1.0
+            - delay:
+                seconds: 10
+            - action: hassio.host_shutdown
 
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.to_state.state == 'OL CHRG' or trigger.to_state.state == 'OL'}}"
-              - condition: template
-                value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-            sequence:
-              - action: notify.telegram
-                data:
-                  message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1200)!"
-  
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.to_state.state in ['unknown','unavailable'] }}"
-              - condition: template
-                value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-            sequence:
-              - action: notify.telegram
-                data:
-                  message: "\U0001f6a8 Внимание! Связь с UPS(1200) потеряна!"
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.to_state.state == 'OL CHRG' or trigger.to_state.state == 'OL'}}"
+            - condition: template
+              value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
+          sequence:
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи (1200)!"
 
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.from_state.state in ['unknown','unavailable'] }}"
-              - condition: template
-                value_template: "{{ trigger.to_state.state not in ['unknown','unavailable','none'] }}"
-            sequence:
-              - action: notify.telegram
-                data:
-                  message: "\U0001f6a8 Внимание! Связь с UPS(1200) восстановлена!"
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.to_state.state in ['unknown','unavailable'] }}"
+            - condition: template
+              value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
+          sequence:
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f6a8 Внимание! Связь с UPS(1200) потеряна!"
+
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.from_state.state in ['unknown','unavailable'] }}"
+            - condition: template
+              value_template: "{{ trigger.to_state.state not in ['unknown','unavailable','none'] }}"
+          sequence:
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f6a8 Внимание! Связь с UPS(1200) восстановлена!"

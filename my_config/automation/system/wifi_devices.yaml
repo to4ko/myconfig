@@ -5,166 +5,167 @@
 # #####################################################################################
 # System - Critical WiFi Devices state - Unavailable
 # ##################################
-  - alias: system_critical_wifi_devices_unavailable
-    id: system_critical_wifi_devices_unavailable
-    initial_state: true
-    mode: queued
-    max_exceeded: silent
-    max: 25
-    triggers:
-      - trigger: state
-        entity_id:
-          - light.square_led_v
-          - light.square_led_s
-          - light.round_led_mb
-          - light.round_led_k
-          - light.round_led_hs
-          #- light.bedside
-          # - light.bed_led_dima_v
-          # - light.d1mini_bed_leds_strip_sandra
-          - switch.shelly_1_led_mb
-          - switch.shelly_1pm_led_v
-          #- light.led_color_v
-          #- light.led_color_s
-          #- light.led_white_s
-          #- light.led_color_s
-          #- light.led_white_mb
-          - fan.purifier2s
-          - switch.ms01a_plug_hb
-          - switch.ms01b_plug_hb
-          - switch.pbs100_plug_st
-          - switch.shelly_1_led_s
-          #- light.round_led_secondary_hs
-          #- light.light_bar_front
-        to: "unavailable"
-        for:
-          minutes: 1
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0000274C {{trigger.to_state.name|title}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-          #message: "\U0000274C {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-  
+- alias: system_critical_wifi_devices_unavailable
+  id: system_critical_wifi_devices_unavailable
+  initial_state: true
+  mode: queued
+  max_exceeded: silent
+  max: 25
+  triggers:
+    - trigger: state
+      entity_id:
+        - light.square_led_v
+        - light.square_led_s
+        - light.round_led_mb
+        - light.round_led_k
+        - light.round_led_hs
+        #- light.bedside
+        # - light.bed_led_dima_v
+        # - light.d1mini_bed_leds_strip_sandra
+        - switch.shelly_1_led_mb
+        - switch.shelly_1pm_led_v
+        #- light.led_color_v
+        #- light.led_color_s
+        #- light.led_white_s
+        #- light.led_color_s
+        #- light.led_white_mb
+        - fan.purifier2s
+        - switch.ms01a_plug_hb
+        - switch.ms01b_plug_hb
+        - switch.pbs100_plug_st
+        - switch.shelly_1_led_s
+        #- light.round_led_secondary_hs
+        #- light.light_bar_front
+      to: "unavailable"
+      for:
+        minutes: 1
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0000274C {{trigger.to_state.name|title}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        #message: "\U0000274C {{trigger.to_state.attributes.friendly_name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
 # ##################################
 # System - Critical WiFi Devices state - available
 # ##################################
-  - alias: system_critical_wifi_devices_available
-    id: system_critical_wifi_devices_available
-    initial_state: true
-    max_exceeded: silent
-    max: 25
-    triggers:
-      - trigger: state
-        entity_id:
-          - light.square_led_v
-          - light.square_led_s
-          - light.round_led_mb
-          - light.round_led_k
-          - light.round_led_hs
-          #- light.bedside
-          # - light.d1mini_bed_leds_strip_sandra
-          # - light.bed_led_dima_v
-          - switch.shelly_1_led_mb
-          - switch.shelly_1pm_led_v
-          #- light.led_color_v
-          #- light.led_color_s
-          #- light.led_color_s
-          #- light.led_white_s
-          #- light.led_white_mb
-          - fan.purifier2s
-          - switch.ms01a_plug_hb
-          - switch.ms01b_plug_hb
-          - switch.pbs100_plug_st
-          - switch.shelly_1_led_s
-          #- light.round_led_secondary_hs
-          #- light.light_bar_s
-        from: "unavailable"
-    conditions:
-      - condition: template
-        value_template: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 60 }}"
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U00002705 {{trigger.to_state.name|title}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-  
+- alias: system_critical_wifi_devices_available
+  id: system_critical_wifi_devices_available
+  initial_state: true
+  max_exceeded: silent
+  max: 25
+  triggers:
+    - trigger: state
+      entity_id:
+        - light.square_led_v
+        - light.square_led_s
+        - light.round_led_mb
+        - light.round_led_k
+        - light.round_led_hs
+        #- light.bedside
+        # - light.d1mini_bed_leds_strip_sandra
+        # - light.bed_led_dima_v
+        - switch.shelly_1_led_mb
+        - switch.shelly_1pm_led_v
+        #- light.led_color_v
+        #- light.led_color_s
+        #- light.led_color_s
+        #- light.led_white_s
+        #- light.led_white_mb
+        - fan.purifier2s
+        - switch.ms01a_plug_hb
+        - switch.ms01b_plug_hb
+        - switch.pbs100_plug_st
+        - switch.shelly_1_led_s
+        #- light.round_led_secondary_hs
+        #- light.light_bar_s
+      from: "unavailable"
+  conditions:
+    - condition: template
+      value_template: "{{(trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() > 60 }}"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U00002705 {{trigger.to_state.name|title}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
 # ##################################
 # System - Critical Switches toggle
 # ##################################
-  - alias: system_critical_switches_toggle
-    id: system_critical_switches_toggle
-    initial_state: true
-    max_exceeded: silent
-    mode: queued
-    max: 10
-    triggers:
-      - trigger: state
-        entity_id:
-          - switch.0x00158d00023e5812_outlet
-          - switch.esp32_node_b_relay_5
-          - switch.shelly_1_led_s
-          - switch.digma_strip_hb_relay1
-          - switch.digma_strip_hb_relay2
-          - switch.digma_strip_hb_relay3
-          - switch.digma_strip_hb_relay4
-          - switch.0x00158d00039bd56d_plug
-          - switch.0x00158d0002a36433_channel_1
-          - switch.0x00158d0002a36f7f_channel_2
-          - switch.shelly_1_led_mb
-          - switch.shelly_1pm_led_v
-          #- switch.0x00158d0001a248e3_channel_1
-          - switch.0x00158d0001a248e3_channel_2
-          - switch.0x00158d0001f26071_outlet
-        to: "off"
-        for:
-          seconds: 30
-    actions:
-      - action: switch.turn_on
-        data:
-          entity_id: "{{ trigger.entity_id }}"
-      - action: notify.telegram
-        data:
-          message: "\U00002705 Включение - {{trigger.to_state.name|title}}"
-
+- alias: system_critical_switches_toggle
+  id: system_critical_switches_toggle
+  initial_state: true
+  max_exceeded: silent
+  mode: queued
+  max: 10
+  triggers:
+    - trigger: state
+      entity_id:
+        - switch.0x00158d00023e5812_outlet
+        - switch.esp32_node_b_relay_5
+        - switch.shelly_1_led_s
+        - switch.digma_strip_hb_relay1
+        - switch.digma_strip_hb_relay2
+        - switch.digma_strip_hb_relay3
+        - switch.digma_strip_hb_relay4
+        - switch.0x00158d00039bd56d_plug
+        - switch.0x00158d0002a36433_channel_1
+        - switch.0x00158d0002a36f7f_channel_2
+        - switch.shelly_1_led_mb
+        - switch.shelly_1pm_led_v
+        #- switch.0x00158d0001a248e3_channel_1
+        - switch.0x00158d0001a248e3_channel_2
+        - switch.0x00158d0001f26071_outlet
+      to: "off"
+      for:
+        seconds: 30
+  actions:
+    - action: switch.turn_on
+      data:
+        entity_id: "{{ trigger.entity_id }}"
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U00002705 Включение - {{trigger.to_state.name|title}}"
 # ##################################
 # System - CO2 Reconnect
 # ##################################
-  # - alias: system_co2_monitors_reconnect
-  #   id: system_co2_monitors_reconnect
-  #   initial_state: true
-  #   max_exceeded: silent
-  #   mode: queued
-  #   max: 10
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: sensor.cgllc_cgdn1_89d7_co2_density
-  #       to: 'unavailable'
-  #       for:
-  #         minutes: 1
-  #       id: 'air_s'
-  #     - trigger: state
-  #       entity_id: sensor.cgllc_cgdn1_8ee1_co2_density
-  #       to: 'unavailable'
-  #       for:
-  #         minutes: 1
-  #       id: 'air_mb'
-  #   actions:
-  #     - choose:
-  #         - conditions:
-  #             - condition: trigger
-  #               id: 'air_s'
-  #           sequence:
-  #             - action: unifi.reconnect_client
-  #               data:
-  #                 device_id: 3a4b98a38681bd64484b2a4b45befd6d
-  #         - conditions:
-  #             - condition: trigger
-  #               id: 'air_mb'
-  #           sequence:
-  #             - action: unifi.reconnect_client
-  #               data:
-  #                 device_id: 3e9239fc946fd8c4190a9c8c8b3b17d3
-  
-  
+# - alias: system_co2_monitors_reconnect
+#   id: system_co2_monitors_reconnect
+#   initial_state: true
+#   max_exceeded: silent
+#   mode: queued
+#   max: 10
+#   triggers:
+#     - trigger: state
+#       entity_id: sensor.cgllc_cgdn1_89d7_co2_density
+#       to: 'unavailable'
+#       for:
+#         minutes: 1
+#       id: 'air_s'
+#     - trigger: state
+#       entity_id: sensor.cgllc_cgdn1_8ee1_co2_density
+#       to: 'unavailable'
+#       for:
+#         minutes: 1
+#       id: 'air_mb'
+#   actions:
+#     - choose:
+#         - conditions:
+#             - condition: trigger
+#               id: 'air_s'
+#           sequence:
+#             - action: unifi.reconnect_client
+#               data:
+#                 device_id: 3a4b98a38681bd64484b2a4b45befd6d
+#         - conditions:
+#             - condition: trigger
+#               id: 'air_mb'
+#           sequence:
+#             - action: unifi.reconnect_client
+#               data:
+#                 device_id: 3e9239fc946fd8c4190a9c8c8b3b17d3
+
 # ##################################
 # System - Bed Strips restart
 # ##################################
@@ -203,7 +204,6 @@
 #       - action: homeassistant.reload_config_entry
 #         data:
 #           entry_id: a3add87af9575143575396fd33e4f0a2
-          
 
 # # ##################################
 # # System - Bed Strips restart (WH)
@@ -221,7 +221,7 @@
 #         id: 'id_sandra'
 #     actions:
 #       - variables:
-#           status_from: >- 
+#           status_from: >-
 #               {{ iif(trigger.json.heartbeat is not none and trigger.json.heartbeat.status | int(0) == 1, 'online', 'offline', 'offline') }}
 #       - condition: template
 #         value_template: "{{ status_from == 'offline'}}"
@@ -242,7 +242,7 @@
 #               - action: homeassistant.reload_config_entry
 #                 data:
 #                   entry_id: a3add87af9575143575396fd33e4f0a2
-#               - action: notify.telegram
+#               - action: notify.send_message
 #                 data:
 #                   message: "\U00002705 Перезапуск Ленты Дима (вебхук)"
 #           - conditions:
@@ -261,10 +261,9 @@
 #               - action: homeassistant.reload_config_entry
 #                 data:
 #                   entry_id: 3db3d77cd2392c85523b6d212d5cf107
-#               - action: notify.telegram
+#               - action: notify.send_message
 #                 data:
 #                   message: "\U00002705 Перезапуск Ленты Сандра (вебхук)"
-
 
 # # ##################################
 # # System - Critical WiFi Devices reconnecting
@@ -286,7 +285,7 @@
 #         for:
 #           seconds: 30
 #     actions:
-#       - action: notify.telegram
+#       - action: notify.send_message
 #         data:
 #           message: "\U0000274C {{trigger.to_state.name|title}}: reconnecting client"
 #       - action: unifi.reconnect_client
@@ -295,7 +294,6 @@
 #             {% set qwe = trigger.to_state.entity_id %}
 #             {% set abc = 'switch.' + qwe.split('.')[1] %}
 #             {{device_id(abc)}}
-
 
 # ##################################
 # # System - Critical WiFi Devices reconnecting at 06:00
@@ -310,7 +308,7 @@
 #       - trigger: time
 #         at: "06:00:01"
 #     actions:
-#       - action: notify.telegram
+#       - action: notify.send_message
 #         data:
 #           message: "\U0000274C Y reconnecting"
 #       - repeat:
@@ -326,66 +324,63 @@
 #                   {% set qwe = repeat.item %}
 #                   {% set abc = 'switch.' + qwe.split('.')[1] %}
 #                   {{device_id(abc)}}
-        
-      #   #led color s
-      # - action: unifi.reconnect_client
-      #   data:
-      #     device_id: e660a9507bd87caa935e5bc2f66339e3
-        
-      #   #led color v
-      # - action: unifi.reconnect_client
-      #   data:
-      #     device_id: a9b06d9688eaffa1423b0b88ec232e12
-        
-      #   #led white s
-      # - action: unifi.reconnect_client
-      #   data:
-      #     device_id: b889d682007168081a70f8cd5d0dd0cb
-        
-      #   #led entrance hb
-      # - action: unifi.reconnect_client
-      #   data:
-      #     device_id: c910b03bfa195cf4576b22cd2330e409
-        
-      #   # led white mb
-      # - action: unifi.reconnect_client
-      #   data:
-      #     device_id: b983fdf06101ebde936a1aadf2d6e143
 
+#   #led color s
+# - action: unifi.reconnect_client
+#   data:
+#     device_id: e660a9507bd87caa935e5bc2f66339e3
+
+#   #led color v
+# - action: unifi.reconnect_client
+#   data:
+#     device_id: a9b06d9688eaffa1423b0b88ec232e12
+
+#   #led white s
+# - action: unifi.reconnect_client
+#   data:
+#     device_id: b889d682007168081a70f8cd5d0dd0cb
+
+#   #led entrance hb
+# - action: unifi.reconnect_client
+#   data:
+#     device_id: c910b03bfa195cf4576b22cd2330e409
+
+#   # led white mb
+# - action: unifi.reconnect_client
+#   data:
+#     device_id: b983fdf06101ebde936a1aadf2d6e143
 
 # ##################################
 # System - Critical Micro USB WiFi Devices reconnecting
 # ##################################
-  # - alias: system_critical_micro_usb_reconnect
-  #   id: system_critical_micro_usb_reconnect
-  #   initial_state: true
-  #   mode: queued
-  #   max_exceeded: silent
-  #   max: 25
-  #   triggers:
-  #     - trigger: state
-  #       entity_id:
-  #         #- switch.sp111_socket_1_relay_usb
-  #         - light.micro_usb_2_night_s
-  #       to: "unavailable"
-  #       for:
-  #         seconds: 30
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U0000274C {{trigger.to_state.name|title}}: reconnecting client"
-  #     - action: unifi.reconnect_client
-  #       data:
-  #         device_id: '{{device_id(trigger.entity_id)}}'
-          
-          
-          
-      # - action: notify.telegram
-      #   data:
-      #     message: "\U0000274C {{trigger.to_state.name|title}}: reconnecting client"
-      # - action: unifi.reconnect_client
-      #   data:
-      #     device_id: >-
-      #       {% set qwe = trigger.to_state.entity_id %}
-      #       {% set abc = 'switch.' + qwe.split('.')[1] %}
-      #       {{device_id(abc)}}          
+# - alias: system_critical_micro_usb_reconnect
+#   id: system_critical_micro_usb_reconnect
+#   initial_state: true
+#   mode: queued
+#   max_exceeded: silent
+#   max: 25
+#   triggers:
+#     - trigger: state
+#       entity_id:
+#         #- switch.sp111_socket_1_relay_usb
+#         - light.micro_usb_2_night_s
+#       to: "unavailable"
+#       for:
+#         seconds: 30
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         message: "\U0000274C {{trigger.to_state.name|title}}: reconnecting client"
+#     - action: unifi.reconnect_client
+#       data:
+#         device_id: '{{device_id(trigger.entity_id)}}'
+
+# - action: notify.send_message
+#   data:
+#     message: "\U0000274C {{trigger.to_state.name|title}}: reconnecting client"
+# - action: unifi.reconnect_client
+#   data:
+#     device_id: >-
+#       {% set qwe = trigger.to_state.entity_id %}
+#       {% set abc = 'switch.' + qwe.split('.')[1] %}
+#       {{device_id(abc)}}

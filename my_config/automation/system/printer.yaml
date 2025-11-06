@@ -1,66 +1,68 @@
 # ##################################
 # System - HP 178 Toner Level
 # ##################################
-  - alias: system_printer_toner_level
-    id:  system_printer_toner_level
-    initial_state: true
-    mode: queued
-    max: 10
-    max_exceeded: silent        
-    # max: 4
-    # max_exceeded: silent
-    triggers:
-      - trigger: numeric_state
-        entity_id:
-          - sensor.hp_178nw_black
-          - sensor.hp_178nw_cyan
-          - sensor.hp_178nw_magenta
-          - sensor.hp_178nw_yellow
-        below: 30
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178nw_black')|int(0)}}%, C {{states('sensor.hp_178nw_cyan')|int(0)}}%, M {{states('sensor.hp_178nw_magenta')|int(0)}}%, Y {{states('sensor.hp_178nw_yellow')|int(0)}}%"
-  
-  # ##################################
-  # System - Printer weekly restart
-  # ##################################
-  # - alias: system_printer_weekly_restart
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: time
-  #       at: '06:59:00'
-  #   conditions:
-  #     - condition: time
-  #       weekday:
-  #         - mon
-  #     - condition: state
-  #       entity_id: switch.system_security_mode
-  #       state: 'off'
-  #   actions:
-  #     - action: switch.turn_off
-  #       entity_id: switch.0x00158d00028b4fc3_plug
-  #     - delay: '00:00:15'
-  #     - action: switch.turn_on
-  #       entity_id: switch.0x00158d00028b4fc3_plug
-  #     - delay: '00:00:45'
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U000026a0 Не забудьте включить принтер!"
-  
+- alias: system_printer_toner_level
+  id: system_printer_toner_level
+  initial_state: true
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  # max: 4
+  # max_exceeded: silent
+  triggers:
+    - trigger: numeric_state
+      entity_id:
+        - sensor.hp_178nw_black
+        - sensor.hp_178nw_cyan
+        - sensor.hp_178nw_magenta
+        - sensor.hp_178nw_yellow
+      below: 30
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f5a8 Внимание! Необходимо заказать картриджи. B {{states('sensor.hp_178nw_black')|int(0)}}%, C {{states('sensor.hp_178nw_cyan')|int(0)}}%, M {{states('sensor.hp_178nw_magenta')|int(0)}}%, Y {{states('sensor.hp_178nw_yellow')|int(0)}}%"
+
+# ##################################
+# System - Printer weekly restart
+# ##################################
+# - alias: system_printer_weekly_restart
+#   initial_state: true
+#   triggers:
+#     - trigger: time
+#       at: '06:59:00'
+#   conditions:
+#     - condition: time
+#       weekday:
+#         - mon
+#     - condition: state
+#       entity_id: switch.system_security_mode
+#       state: 'off'
+#   actions:
+#     - action: switch.turn_off
+#       entity_id: switch.0x00158d00028b4fc3_plug
+#     - delay: '00:00:15'
+#     - action: switch.turn_on
+#       entity_id: switch.0x00158d00028b4fc3_plug
+#     - delay: '00:00:45'
+#     - action: notify.send_message
+#       data:
+#         message: "\U000026a0 Не забудьте включить принтер!"
+
 # ##################################
 # System - Printer offline
 # ##################################
-  - alias: system_printer_offline
-    id:  system_printer_offline
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: sensor.hp_color_laser_mfp_178nw
-        to: "unavailable"
-        for:
-          minutes: 5
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U000026a0 Принтер не в сети! Проверьте питание!"
+- alias: system_printer_offline
+  id: system_printer_offline
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: sensor.hp_color_laser_mfp_178nw
+      to: "unavailable"
+      for:
+        minutes: 5
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U000026a0 Принтер не в сети! Проверьте питание!"

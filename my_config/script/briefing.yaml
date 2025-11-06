@@ -1,8 +1,9 @@
 briefing_telegram:
   alias: Briefing to Telegram
   sequence:
-    - action: notify.telegram_family
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: |-
           {%- set date = as_timestamp(now()) -%}
           {%- set weekday_list = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'] %}
@@ -13,9 +14,9 @@ briefing_telegram:
           {%- set month = month_list[m_ok-1] %} 
           {%- set hour_num = now().hour | int(0) %}
           {%- if hour_num >=6 and hour_num <12 %}{{"\U00002600"}}Доброе утро! {% elif hour_num>=12 and hour_num<17 %}{{"\U0001f31e"}}Добрый день! {% elif hour_num>=17 and hour_num<22 %}{{"\U0001f31d"}}Добрый вечер! {% else %}{{"\U0001f31a"}}Доброй ночи! {% endif %}
-          
+
           {%- if hour_num < 17 and hour_num >= 0 %}Сегодня {{ weekday }}, {{ now().day|int(0) }} {{ month_list[now().month-1] }}.
-          
+
           {%- if (now().weekday() <= 4 and is_state('binary_sensor.workday','off')) or (now().weekday() > 4 and is_state('binary_sensor.workday','on')) %}
           Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
           {% endif %}
@@ -30,7 +31,6 @@ briefing_telegram:
           Обратите внимание - завтра {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][(now()+timedelta(days=1)).weekday()|int(0)]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday_tomorrow','on') else 'не рабочий'}} день.{%endif%}
           {% endif %}
 
-          
 briefing_tts:
   alias: Briefing to TTS
   sequence:

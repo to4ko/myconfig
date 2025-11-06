@@ -1,93 +1,92 @@
 # ##################################
 # System - Update - HACS
 # ##################################
-  # - alias: system_update_hacs
-  #   id:  system_update_hacs
-  #   initial_state: false
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: sensor.hacs
-  #       attribute: repositories
-  #   conditions:
-  #     - condition: numeric_state
-  #       entity_id: sensor.ha_uptime
-  #       above: 0
-  #     - condition: template
-  #       value_template: >
-  #         {% set ignore = ['unknown', 'unavailable', 'none'] %}
-  #         {{ trigger.from_state.state not in ignore and
-  #             trigger.to_state.state not in ignore and
-  #             is_state('binary_sensor.updater_hacs_new_version', 'on')
-  #           }}
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
+# - alias: system_update_hacs
+#   id:  system_update_hacs
+#   initial_state: false
+#   triggers:
+#     - trigger: state
+#       entity_id: sensor.hacs
+#       attribute: repositories
+#   conditions:
+#     - condition: numeric_state
+#       entity_id: sensor.ha_uptime
+#       above: 0
+#     - condition: template
+#       value_template: >
+#         {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#         {{ trigger.from_state.state not in ignore and
+#             trigger.to_state.state not in ignore and
+#             is_state('binary_sensor.updater_hacs_new_version', 'on')
+#           }}
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         message: "\U0001f389 HACS - доступны обновления {% for repo in state_attr('sensor.hacs', 'repositories') %}{{ repo.display_name }} ({{ repo.available_version }}){%if not loop.last %}, {%endif%}{% endfor %}!"
 
-      # - action: persistent_notification.create
-      #   data:
-      #     title: "\U0001f389 Updates available in HACS"
-      #     message: >-
-      #       {% for repo in state_attr(trigger.entity_id, 'repositories') %}
-      #         {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
-      #       {% endfor %} 
+# - action: persistent_notification.create
+#   data:
+#     title: "\U0001f389 Updates available in HACS"
+#     message: >-
+#       {% for repo in state_attr(trigger.entity_id, 'repositories') %}
+#         {{ repo.display_name }} _{{ repo["installed_version"] }}_ -> _{{ repo["available_version"] }}_
+#       {% endfor %}
 
 # ##################################
 # System - Update - All from Update domain
 # ##################################
-  - alias: system_update_available_and_installed_notification
-    id: system_update_available_and_installed_notification
-    initial_state: false
-    mode: queued
-    max: 10
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: state_changed
-    conditions:
-      - "{{ trigger.event.data.entity_id.startswith('update.') }}"
-      - "{{ trigger.event.data.old_state is not none and trigger.event.data.new_state is not none }}"
-      - or:
-          - condition: template
-            value_template: >
-              {{ 
-                trigger.event.data.new_state.state == 'on' and
-                ((is_state_attr(trigger.event.data.entity_id, 'device_class', 'firmware')
-                and version(trigger.event.data.new_state.attributes.latest_version) != version(trigger.event.data.old_state.attributes.latest_version))
-                or version(trigger.event.data.new_state.attributes.latest_version) > version(trigger.event.data.old_state.attributes.latest_version)) and
-                trigger.event.data.new_state.attributes.latest_version not in not_has_state and
-                trigger.event.data.new_state.attributes.latest_version is not none
-              }}
-          - condition: template
-            value_template: >
-              {{ 
-                trigger.event.data.old_state.state == 'on' and trigger.event.data.new_state.state == 'off' and
-                ((is_state_attr(trigger.event.data.entity_id, 'device_class', 'firmware')
-                and version(trigger.event.data.new_state.attributes.installed_version) != version(trigger.event.data.old_state.attributes.installed_version))
-                or version(trigger.event.data.new_state.attributes.installed_version) > version(trigger.event.data.old_state.attributes.installed_version)) and
-                trigger.event.data.new_state.attributes.installed_version not in not_has_state and
-                trigger.event.data.new_state.attributes.installed_version is not none
-              }}
-    actions:
-      - variables:
-          latest_version: "{{ trigger.event.data.new_state.attributes.latest_version }}"
-          installed_version: "{{ state_attr(trigger.event.data.entity_id, 'installed_version') }}"
-          old_installed_version: "{{ trigger.event.data.old_state.attributes.installed_version }}"
-          friendlyname: "{{- trigger.event.data.new_state.name | replace(' Update', '') -}}"
-      - if:
-          - condition: template
-            value_template: "{{ trigger.event.data.new_state.attributes.installed_version != trigger.event.data.old_state.attributes.installed_version }}"
-        then:
-          - action: notify.telegram
-            data:
-              message: "\U0001f38a {{ friendlyname }} обновлен с {{ old_installed_version }} на {{ latest_version }}"
-        else:
-          - action: notify.telegram
-            data:
-              message: "\U0001f6e0 {{ friendlyname }} доступна новая версия {{ latest_version }}. Текущая {{ installed_version }}"
-
-
-
+- alias: system_update_available_and_installed_notification
+  id: system_update_available_and_installed_notification
+  initial_state: false
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: state_changed
+  conditions:
+    - "{{ trigger.event.data.entity_id.startswith('update.') }}"
+    - "{{ trigger.event.data.old_state is not none and trigger.event.data.new_state is not none }}"
+    - or:
+        - condition: template
+          value_template: >
+            {{ 
+              trigger.event.data.new_state.state == 'on' and
+              ((is_state_attr(trigger.event.data.entity_id, 'device_class', 'firmware')
+              and version(trigger.event.data.new_state.attributes.latest_version) != version(trigger.event.data.old_state.attributes.latest_version))
+              or version(trigger.event.data.new_state.attributes.latest_version) > version(trigger.event.data.old_state.attributes.latest_version)) and
+              trigger.event.data.new_state.attributes.latest_version not in not_has_state and
+              trigger.event.data.new_state.attributes.latest_version is not none
+            }}
+        - condition: template
+          value_template: >
+            {{ 
+              trigger.event.data.old_state.state == 'on' and trigger.event.data.new_state.state == 'off' and
+              ((is_state_attr(trigger.event.data.entity_id, 'device_class', 'firmware')
+              and version(trigger.event.data.new_state.attributes.installed_version) != version(trigger.event.data.old_state.attributes.installed_version))
+              or version(trigger.event.data.new_state.attributes.installed_version) > version(trigger.event.data.old_state.attributes.installed_version)) and
+              trigger.event.data.new_state.attributes.installed_version not in not_has_state and
+              trigger.event.data.new_state.attributes.installed_version is not none
+            }}
+  actions:
+    - variables:
+        latest_version: "{{ trigger.event.data.new_state.attributes.latest_version }}"
+        installed_version: "{{ state_attr(trigger.event.data.entity_id, 'installed_version') }}"
+        old_installed_version: "{{ trigger.event.data.old_state.attributes.installed_version }}"
+        friendlyname: "{{- trigger.event.data.new_state.name | replace(' Update', '') -}}"
+    - if:
+        - condition: template
+          value_template: "{{ trigger.event.data.new_state.attributes.installed_version != trigger.event.data.old_state.attributes.installed_version }}"
+      then:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f38a {{ friendlyname }} обновлен с {{ old_installed_version }} на {{ latest_version }}"
+      else:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6e0 {{ friendlyname }} доступна новая версия {{ latest_version }}. Текущая {{ installed_version }}"
 # # ##################################
 # # System - Supervisor Update Available
 # # ##################################
@@ -102,13 +101,13 @@
 #       - condition: template
 #         value_template: >
 #           {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
-#           {{ 
+#           {{
 #              is_state(trigger.entity_id, 'on') and
 #              trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
 #              trigger.to_state.attributes.latest_version not in ignore
 #           }}
 #     actions:
-#       - action: notify.telegram
+#       - action: notify.send_message
 #         data:
 #           message: "\U0001f389 Supervisor - доступна новая версия {{ state_attr('update.home_assistant_supervisor_update', 'latest_version') }}. Текущая {{ state_attr('update.home_assistant_supervisor_update', 'installed_version') }}"
 
@@ -126,19 +125,19 @@
 #       - condition: template
 #         value_template: >
 #           {% set ignore = ['unknown', 'unavailable', 'none', None, null, ''] %}
-#           {{ 
+#           {{
 #              is_state(trigger.entity_id, 'on') and
 #              trigger.to_state.attributes.latest_version != trigger.from_state.attributes.latest_version and
 #              trigger.to_state.attributes.latest_version not in ignore
 #           }}
 #     actions:
-#       - action: notify.telegram
+#       - action: notify.send_message
 #         data:
 #           message: "\U0001f6e0 Core - доступна новая версия {{trigger.to_state.attributes.latest_version}}. Текущая {{state_attr(trigger.entity_id, 'installed_version')}}"
 #       # - action: hassio.addon_start
 #       #   data:
 #       #     addon: core_check_config
-#       # - action: notify.telegram
+#       # - action: notify.send_message
 #       #   data:
 #       #     message: "\U0001f514 Запущена проверка конфига с новой версией HA"
 
@@ -164,7 +163,7 @@
 #             trigger.to_state.state != trigger.from_state.state
 #           }}
 #     actions:
-#       - action: notify.telegram
+#       - action: notify.send_message
 #         data:
 #           message: "\U0001f6e0 Addons - доступны обновления {% for addons_updates in state_attr('sensor.supervisor_updates', 'addons') %}{{ addons_updates.name }} ({{ addons_updates.version_latest }}){%if not loop.last %}, {%endif%}{% endfor %}!"
 
@@ -187,6 +186,6 @@
 #             trigger.to_state.state != trigger.from_state.state
 #           }}
 #     actions:
-#       - action: notify.telegram
+#       - action: notify.send_message
 #         data:
 #           message: "\U0001f38a Supervisor - обновлен с {{ trigger.from_state.state }} на {{ trigger.to_state.state }}!"

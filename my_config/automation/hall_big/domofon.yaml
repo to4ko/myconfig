@@ -5,115 +5,134 @@
 # #####################################################################################
 # Hall Big - Domofon Incoming Call
 # ##################################
-  - alias: hall_big_domofon_incoming_call
-    id: hall_big_domofon_incoming_call
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.esp32_domofon_incomingcall
-        to: 'on'
-        from: 'off'
-    actions:
-      - parallel:
-          # - action: mqtt.publish
-          #   data:
-          #     topic: 'wallpanel/digma801/command'
-          #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
-          - action: switch.turn_on
-            entity_id: switch.kiosk_screen
-          - parallel:
-              - action: notify.telegram
-                data:
-                  title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-                  message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+- alias: hall_big_domofon_incoming_call
+  id: hall_big_domofon_incoming_call
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.esp32_domofon_incomingcall
+      to: "on"
+      from: "off"
+  actions:
+    - parallel:
+        # - action: mqtt.publish
+        #   data:
+        #     topic: 'wallpanel/digma801/command'
+        #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+        - action: switch.turn_on
+          entity_id: switch.kiosk_screen
+        - parallel:
+            # - action: notify.send_message
+            #   data:
+            #     entity_id: notify.telegram_dima
+            #     title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+            #     message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+            #     data:
+            #       photo:
+            #         - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
+            #           caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+            - action: telegram_bot.send_photo
+              data:
+                url: http://localhost:1984/api/frame.jpeg?src=g5_window
+                caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+                target: !secret tel_chat_id_cam
+                #timeout: 180
+
+
+
+            # - action: notify.mobile_app_iphone_16_pro_dima
+            #   data:
+            #     message: "Звонок в домофон!"
+            #     title: Домофон
+            #     data:
+            #       actions:
+            #         - action: Domofon_Open
+            #           title: Open
+            #           authenticationRequired: false
+            #           activationMode: background
+            #       image: !secret window_snap
+            # - action: notify.send_message
+            #   data:
+            #     entity_id: notify.telegram_cam
+            #     title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+            #     message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+            #     data:
+            #       photo:
+            #         - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
+            #           caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+            - action: telegram_bot.send_photo
+              data:
+                url: http://localhost:1984/api/frame.jpeg?src=g5_window
+                caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+                target: !secret tel_chat_id
+                #timeout: 180
+
+            - if:
+                - condition: state
+                  entity_id: person.sasha
+                  state: "home"
+              then:
+                - action: notify.hass_synochat
                   data:
-                    photo:
-                    - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
-                      caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"  
-              # - action: notify.mobile_app_iphone_16_pro_dima
-              #   data:
-              #     message: "Звонок в домофон!"
-              #     title: Домофон
-              #     data:
-              #       actions:
-              #         - action: Domofon_Open
-              #           title: Open
-              #           authenticationRequired: false
-              #           activationMode: background
-              #       image: !secret window_snap
-              - action: notify.telegram_cam
-                data:
-                  title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-                  message: "{{states('sensor.time')}} {{states('sensor.date')}}"
-                  data:
-                    photo:
-                    - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
-                      caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-              - if:
-                  - condition: state
-                    entity_id: person.sasha
-                    state: 'home'
-                then:
-                  - action: notify.hass_synochat
+                    message: Внимание! Зконок в домофон!
                     data:
-                      message: Внимание! Зконок в домофон!
-                      data:
-                        file_url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
-              # - if:
-              #     - condition: state
-              #       entity_id: person.vova
-              #       state: 'home'
-              #   then:                  
-              #     - action: notify.telegram_vova
-              #       data:
-              #         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
-              #         message: "{{states('sensor.time')}} {{states('sensor.date')}}"
-              #         data:
-              #           photo:
-              #           - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
-              #             caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-          # - action: mqtt.publish
-          #   data:
-          #     topic: 'wallpanel/digma801/command'
-          #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'              
-      - or:
-          - condition: state
-            entity_id: switch.system_silent_mode
-            state: 'on'
-          - condition: state
-            entity_id: switch.esp32_domofon_mute
-            state: 'on'
-      - action: light.turn_on
-        data:
-          entity_id: light.esp32_node_k_led
-          effect: 'Green_Alarm'
-          brightness: 255
-      - delay: "00:00:20"
-      - action: light.turn_off
+                      file_url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
+            # - if:
+            #     - condition: state
+            #       entity_id: person.vova
+            #       state: 'home'
+            #   then:
+            #     - action: notify.send_message_vova
+            #       data:
+            #         title: "{{states('sensor.time')}} {{states('sensor.date')}}"
+            #         message: "{{states('sensor.time')}} {{states('sensor.date')}}"
+            #         data:
+            #           photo:
+            #           - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
+            #             caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+        # - action: mqtt.publish
+        #   data:
+        #     topic: 'wallpanel/digma801/command'
+        #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+    - or:
+        - condition: state
+          entity_id: switch.system_silent_mode
+          state: "on"
+        - condition: state
+          entity_id: switch.esp32_domofon_mute
+          state: "on"
+    - action: light.turn_on
+      data:
         entity_id: light.esp32_node_k_led
-  
+        effect: "Green_Alarm"
+        brightness: 255
+    - delay: "00:00:20"
+    - action: light.turn_off
+      entity_id: light.esp32_node_k_led
+
 # ##################################
 # Hall Big - Domofon Incoming Call
 # ##################################
-  - alias: hall_big_domofon_open_from_iphone
-    id: hall_big_domofon_open_from_iphone
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: mobile_app_notification_action
-        event_data:
-          service: "Domofon_Open"
-    actions:
-      - action: switch.turn_on
-        entity_id: switch.esp32_domofon_open
-      - action: notify.telegram
-        data:
-          message: "\U0001f518 Домофон открыт с телефона!"
-  
+- alias: hall_big_domofon_open_from_iphone
+  id: hall_big_domofon_open_from_iphone
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: mobile_app_notification_action
+      event_data:
+        service: "Domofon_Open"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.esp32_domofon_open
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f518 Домофон открыт с телефона!"
+
 # ##################################
 # Hall Big - Domofon Auto Open On Arrival
 # ##################################
@@ -128,15 +147,16 @@
 #     - condition: template
 #       value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
+#         entity_id: notify.telegram_dima
 #         message: >
 #           {% if trigger.from_state.attributes.friendly_name == "Dima" %} {{"\U0001F9D4"}} Дима прибыл домой!
 #           {% elif trigger.from_state.attributes.friendly_name == "Sandra" %} {{"\U0001F467"}} Саша прибыла домой!
 #           {% elif trigger.from_state.attributes.friendly_name == "Vova" %} {{"\U0001F471"}} Вова прибыл домой!
 #           {%endif%}
 #     - action: >
-#         {% if trigger.from_state.attributes.friendly_name != "Babayka"%} notify.telegram_{{ trigger.from_state.attributes.friendly_name|lower }}
+#         {% if trigger.from_state.attributes.friendly_name != "Babayka"%} notify.send_message_{{ trigger.from_state.attributes.friendly_name|lower }}
 #         {%else%} script.noop
 #         {%endif%}
 #       data:
@@ -151,51 +171,53 @@
 # ##################################
 # Hall Big - Domofon auto message
 # ##################################
-  - alias: hall_big_domofon_auto_message
-    id: hall_big_domofon_auto_message
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.esp32_domofon_auto_opening
-        from: 'off'
-        to: 'on'
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001F4DE Домофон открыт автоматически!"
-  
+- alias: hall_big_domofon_auto_message
+  id: hall_big_domofon_auto_message
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.esp32_domofon_auto_opening
+      from: "off"
+      to: "on"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001F4DE Домофон открыт автоматически!"
+
 # ##################################
 # Hall Big - Domofon auto opening status
 # ##################################
-  - alias: hall_big_domofon_auto_opening
-    id: hall_big_domofon_auto_opening
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once
-        to:
-    conditions:
-      - condition: template
-        value_template: >-
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ trigger.from_state.state not in ignore and
-             trigger.to_state.state not in ignore and
-             trigger.to_state.state != trigger.from_state.state
-          }}
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - action: notify.telegram
-        data:
-          message: >
-            {% if is_state('switch.esp32_domofon_auto_open','on') and 'once' not in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Автооткрытие включено!
-            {% elif is_state('switch.esp32_domofon_auto_open_once','on') and 'once' in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Разовое автооткрытие включено!
-            {% else %}{{'\U0001f512'}} Домофон: Автооткрытие выключено!{% endif %}
-  
+- alias: hall_big_domofon_auto_opening
+  id: hall_big_domofon_auto_opening
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once
+      to:
+  conditions:
+    - condition: template
+      value_template: >-
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ trigger.from_state.state not in ignore and
+           trigger.to_state.state not in ignore and
+           trigger.to_state.state != trigger.from_state.state
+        }}
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: >
+          {% if is_state('switch.esp32_domofon_auto_open','on') and 'once' not in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Автооткрытие включено!
+          {% elif is_state('switch.esp32_domofon_auto_open_once','on') and 'once' in trigger.to_state.entity_id %}{{'\U0001f513'}} Домофон: Разовое автооткрытие включено!
+          {% else %}{{'\U0001f512'}} Домофон: Автооткрытие выключено!{% endif %}
+
 # ##################################
 # Hall Big - Domofon auto off on door open\close
 # ##################################
@@ -220,83 +242,83 @@
 #     - action: timer.start
 #       entity_id: timer.domofon
 
-
 # ##################################
 # Hall Bid - Domofon Timer start
-# ################################## 
-  - alias: hall_big_domofon_timer_on
-    id: hall_big_domofon_timer_on
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: template
-        value_template: "{{is_state('switch.esp32_domofon_auto_open','on') or is_state('switch.esp32_domofon_auto_open_once','on') }}"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.domofon
-      - action: timer.start
-        entity_id: timer.domofon
-  
+# ##################################
+- alias: hall_big_domofon_timer_on
+  id: hall_big_domofon_timer_on
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: template
+      value_template: "{{is_state('switch.esp32_domofon_auto_open','on') or is_state('switch.esp32_domofon_auto_open_once','on') }}"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.domofon
+    - action: timer.start
+      entity_id: timer.domofon
+
 # ##################################
 # Hall Big - Domofon auto open turn off
 # ##################################
-  - alias: hall_big_domofon_auto_open_turn_off
-    id: hall_big_domofon_auto_open_turn_off
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: timer.finished
-        event_data:
-          entity_id: timer.domofon
-    actions:
-      - action: switch.turn_off
-        entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once, switch.esp32_domofon_mute
-  
+- alias: hall_big_domofon_auto_open_turn_off
+  id: hall_big_domofon_auto_open_turn_off
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.domofon
+  actions:
+    - action: switch.turn_off
+      entity_id: switch.esp32_domofon_auto_open, switch.esp32_domofon_auto_open_once, switch.esp32_domofon_mute
+
 # ##################################
 # Hall Bid - Domofon Timer stop
-# ################################## 
-  - alias: hall_big_domofon_timer_off
-    id: hall_big_domofon_timer_off
-    initial_state: true
-    triggers:
-      - trigger: template
-        value_template: "{{not is_state('switch.esp32_domofon_auto_open','on') and not is_state('switch.esp32_domofon_auto_open_once','on') }}"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.domofon
-  
+# ##################################
+- alias: hall_big_domofon_timer_off
+  id: hall_big_domofon_timer_off
+  initial_state: true
+  triggers:
+    - trigger: template
+      value_template: "{{not is_state('switch.esp32_domofon_auto_open','on') and not is_state('switch.esp32_domofon_auto_open_once','on') }}"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.domofon
+
 # ##################################
 # Hall big - Domofon Button
 # ##################################
-  - alias: hall_big_domofon_button
-    id: hall_big_domofon_button
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.esp32_domofon_button
-        from: 'off'
-        to: 'on'
-    actions:
-      # - action: switch.turn_on
-      #   entity_id: switch.esp32_domofon_open_manual
-      # - action: mqtt.publish
-      #   data:
-      #     topic: 'wallpanel/digma801/command'
-      #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
-      # - action: notify.telegram
-      #   data:
-      #     message: "\U0001f518 Домофон открыт вручную!"
-      #     data:
-      #       photo:
-      #         - url: !secret entrance_snap
-      - action: switch.turn_on
-        entity_id: switch.kiosk_screen
-      - action: telegram_bot.send_photo
-        data:
-          url: http://localhost:1984/api/frame.jpeg?src=g5_entrance #!secret entrance_snap
-          caption: "\U0001f518 Домофон открыт вручную!"
-          target: !secret tel_chat_id
-          timeout: 180
+- alias: hall_big_domofon_button
+  id: hall_big_domofon_button
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.esp32_domofon_button
+      from: "off"
+      to: "on"
+  actions:
+    # - action: switch.turn_on
+    #   entity_id: switch.esp32_domofon_open_manual
+    # - action: mqtt.publish
+    #   data:
+    #     topic: 'wallpanel/digma801/command'
+    #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+    # - action: notify.send_message
+    #   data:
+    #     entity_id: notify.telegram_dima
+    #     message: "\U0001f518 Домофон открыт вручную!"
+    #     data:
+    #       photo:
+    #         - url: !secret entrance_snap
+    - action: switch.turn_on
+      entity_id: switch.kiosk_screen
+    - action: telegram_bot.send_photo
+      data:
+        url: http://localhost:1984/api/frame.jpeg?src=g5_entrance #!secret entrance_snap
+        caption: "\U0001f518 Домофон открыт вручную!"
+        target: !secret tel_chat_id
+        timeout: 180

@@ -5,117 +5,124 @@
 # #####################################################################################
 # Hall Big - Doorbell
 # ##################################
-  - alias: hall_big_doorbell
-    id: hall_big_doorbell
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: 
-          #- binary_sensor.sonoff_mini_1_switch
-          - binary_sensor.g4_doorbell_doorbell
-        from: 'off'
-        to: 'on'
-    conditions:
-      - condition: template
-        value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_doorbell', 'last_triggered'),0)|int(0)) > 10 }}"
-    actions:
-      # - action: mqtt.publish
-      #   data:
-      #     topic: 'wallpanel/digma801/command'
-      #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
-      - action: switch.turn_on
-        entity_id: switch.kiosk_screen
-      - parallel:
-          - action: notify.telegram
-            data:
-              title: Doorbell photo
-              message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+- alias: hall_big_doorbell
+  id: hall_big_doorbell
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id:
+        #- binary_sensor.sonoff_mini_1_switch
+        - binary_sensor.g4_doorbell_doorbell
+      from: "off"
+      to: "on"
+  conditions:
+    - condition: template
+      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.hall_big_doorbell', 'last_triggered'),0)|int(0)) > 10 }}"
+  actions:
+    # - action: mqtt.publish
+    #   data:
+    #     topic: 'wallpanel/digma801/command'
+    #     payload: '{"wake": true,"clearCache": true,"relaunch": true,"reload": true,"brightness": 200}'
+    - action: switch.turn_on
+      entity_id: switch.kiosk_screen
+    - parallel:
+        # - action: notify.send_message
+        #   data:
+        #     entity_id: notify.telegram_dima
+        #     title: Doorbell photo
+        #     message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+        #     data:
+        #       photo:
+        #         - url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap #door_snap
+        #           caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+
+        - action: telegram_bot.send_photo
+          data:
+            url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell
+            caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+            target: !secret tel_chat_id
+
+        # - if:
+        #     - condition: state
+        #       entity_id: person.vova
+        #       state: 'home'
+        #   then:
+        #     - action: notify.send_message_vova
+        #       data:
+        #         title: Doorbell photo
+        #         message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
+        #         data:
+        #           photo:
+        #           - url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap #door_snap
+        #             caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
+        - if:
+            - condition: state
+              entity_id: person.sasha
+              state: "home"
+          then:
+            - action: notify.hass_synochat
               data:
-                photo:
-                - url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap #door_snap
-                  caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
-          # - if:
-          #     - condition: state
-          #       entity_id: person.vova
-          #       state: 'home'
-          #   then:                  
-          #     - action: notify.telegram_vova
-          #       data:
-          #         title: Doorbell photo
-          #         message: "\U0001f514 Внимание! Кто-то звонит в дверь!"
-          #         data:
-          #           photo:
-          #           - url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap #door_snap
-          #             caption: "\U0001f514 Внимание! Кто-то звонит в дверь! {{states('sensor.time')}} {{states('sensor.date')}}"
-          - if:
-              - condition: state
-                entity_id: person.sasha
-                state: 'home'
-            then:
-              - action: notify.hass_synochat
+                message: Внимание! Кто-то звонит в дверь!
                 data:
-                  message: Внимание! Кто-то звонит в дверь!
-                  data:
-                    file_url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap
-      - parallel:
-          - action: light.turn_on
-            continue_on_error: true
-            data:
-              entity_id: light.light_bar_back
-              effect: 'Police'
-              brightness: 255
-          - action: light.turn_on
-            continue_on_error: true
-            data:
-              entity_id: light.esp32_node_k_led
-              effect: 'Green_Alarm'
-              brightness: 255
-      #- delay: "00:00:25"
-      - wait_for_trigger:
-          - trigger: state
-            entity_id:
-              - binary_sensor.582d344031f7_contact
-              - binary_sensor.0x00158d0001e5d6be_contact
-            from: "on"
-            to: "off"
-        timeout:
-          seconds: 10
-        continue_on_timeout: true
-      - action: light.turn_off
-        continue_on_error: true
-        entity_id: light.esp32_node_k_led, light.light_bar_back
-        
-      # - condition: state
-      #   entity_id: light.digma_8592_screen
-      #   state: 'off'
-      # - action: light.turn_on
-      #   entity_id: light.digma_8592_screen
-  
-  # ##################################
-  # Hall Big - Kiosk on with motion
-  # ##################################
-  # - alias: hall_big_kiosk_on_with_motion
-  #   id: hall_big_kiosk_on_with_motion
-  #   initial_state: true
-  #   mode: queued
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: binary_sensor.0x00158d0001e05856_motion
-  #       from: 'off'
-  #       to: 'on'
-  #   conditions:
-  #     # - condition: state
-  #     #   entity_id: light.digma_8592_screen
-  #     #   state: 'off'
-  #     - condition: state
-  #       entity_id: binary_sensor.tod_day
-  #       state: 'on'
-  #   actions:
-  #     - action: mqtt.publish
-  #         command_topic: 'wallpanel/digma8027/command'
-  #         payload: '{"wake": true}'
-  
-  #     # - action: light.turn_on
-  #     #   entity_id: light.digma_8592_screen
+                  file_url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap
+    - parallel:
+        - action: light.turn_on
+          continue_on_error: true
+          data:
+            entity_id: light.light_bar_back
+            effect: "Police"
+            brightness: 255
+        - action: light.turn_on
+          continue_on_error: true
+          data:
+            entity_id: light.esp32_node_k_led
+            effect: "Green_Alarm"
+            brightness: 255
+    #- delay: "00:00:25"
+    - wait_for_trigger:
+        - trigger: state
+          entity_id:
+            - binary_sensor.582d344031f7_contact
+            - binary_sensor.0x00158d0001e5d6be_contact
+          from: "on"
+          to: "off"
+      timeout:
+        seconds: 10
+      continue_on_timeout: true
+    - action: light.turn_off
+      continue_on_error: true
+      entity_id: light.esp32_node_k_led, light.light_bar_back
+
+    # - condition: state
+    #   entity_id: light.digma_8592_screen
+    #   state: 'off'
+    # - action: light.turn_on
+    #   entity_id: light.digma_8592_screen
+# ##################################
+# Hall Big - Kiosk on with motion
+# ##################################
+# - alias: hall_big_kiosk_on_with_motion
+#   id: hall_big_kiosk_on_with_motion
+#   initial_state: true
+#   mode: queued
+#   triggers:
+#     - trigger: state
+#       entity_id: binary_sensor.0x00158d0001e05856_motion
+#       from: 'off'
+#       to: 'on'
+#   conditions:
+#     # - condition: state
+#     #   entity_id: light.digma_8592_screen
+#     #   state: 'off'
+#     - condition: state
+#       entity_id: binary_sensor.tod_day
+#       state: 'on'
+#   actions:
+#     - action: mqtt.publish
+#         command_topic: 'wallpanel/digma8027/command'
+#         payload: '{"wake": true}'
+
+#     # - action: light.turn_on
+#     #   entity_id: light.digma_8592_screen

@@ -1,89 +1,89 @@
+# bed_led_toggle_v:
+#   alias: Bed LED Toggle V
+#   sequence:
+#     - action: input_boolean.toggle
+#       entity_id: input_boolean.bed_led_enable
 
-  # bed_led_toggle_v:
-  #   alias: Bed LED Toggle V
-  #   sequence:
-  #     - action: input_boolean.toggle
-  #       entity_id: input_boolean.bed_led_enable
+# ha_released_update:
+#   alias: HA Released version update from server
+#   sequence:
+#     action: homeassistant.update_entity
+#     entity_id:
+#       - sensor.ha_supervisor_current_version
+#       - sensor.ha_supervisor_latest_version
+#       - sensor.ha_supervisor_latest_beta
+#       - sensor.ha_installed_version
+#       - sensor.ha_latest_version
+#       - sensor.ha_latest_beta
+tv_delay:
+  alias: TV Delay
+  sequence:
+    - action: timer.start
+      entity_id: timer.tv_delay_off
+      data:
+        duration: "{{states('input_number.tv_delay')|int(0) * 60 }}"
 
-  # ha_released_update:
-  #   alias: HA Released version update from server
-  #   sequence:
-  #     action: homeassistant.update_entity
-  #     entity_id: 
-  #       - sensor.ha_supervisor_current_version
-  #       - sensor.ha_supervisor_latest_version
-  #       - sensor.ha_supervisor_latest_beta
-  #       - sensor.ha_installed_version
-  #       - sensor.ha_latest_version
-  #       - sensor.ha_latest_beta
-  tv_delay:
-    alias: TV Delay
-    sequence:
-      - action: timer.start
-        entity_id: timer.tv_delay_off
-        data:
-          duration: "{{states('input_number.tv_delay')|int(0) * 60 }}"
+speedtest_manual:
+  alias: Speedtest
+  sequence:
+    - action: speedtestdotnet.speedtest
 
-  speedtest_manual:
-    alias: Speedtest
-    sequence:
-      - action: speedtestdotnet.speedtest
+purge_db:
+  alias: Purge Main DB
+  sequence:
+    - action: recorder.purge
+      data:
+        keep_days: 1
+        repack: true
 
-  purge_db:
-    alias: Purge Main DB
-    sequence:
-      - action: recorder.purge
-        data:
-          keep_days: 1
-          repack: true
+noop:
+  alias: Dummy
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  sequence:
+    - delay:
+        seconds: 0.1
 
-  noop:
-    alias: Dummy
-    mode: queued
-    max: 10
-    max_exceeded: silent
-    sequence:
-      - delay:
-          seconds: 0.1 
-      
-  # circadian_lighting_toggle:
-  #   alias: Circadian Lightning Toggle All
-  #   sequence:
-  #     - action: switch.toggle
-  #       entity_id: switch.circadian_lighting_all
-  #     - action: "switch.turn_{%if is_state('switch.circadian_lighting_all','on')%}on{%else%}off{%endif%}"
-  #       entity_id:
-  #         - switch.circadian_lighting_k
-  #         - switch.circadian_lighting_s
-  #         - switch.circadian_lighting_v
-  #         - switch.circadian_lighting_mb
+# circadian_lighting_toggle:
+#   alias: Circadian Lightning Toggle All
+#   sequence:
+#     - action: switch.toggle
+#       entity_id: switch.circadian_lighting_all
+#     - action: "switch.turn_{%if is_state('switch.circadian_lighting_all','on')%}on{%else%}off{%endif%}"
+#       entity_id:
+#         - switch.circadian_lighting_k
+#         - switch.circadian_lighting_s
+#         - switch.circadian_lighting_v
+#         - switch.circadian_lighting_mb
 
-  unknown_state:
-    alias: Unknown State
-    sequence:
-      - action: notify.telegram
-        data:
-          message: >
-            {% set unk_list = states | selectattr ('state', 'in', ['unknown','unavailable']) | map(attribute='entity_id') | list | join(', ') %}
-            {% set unk_count = states | selectattr ('state', 'in', ['unknown','unavailable']) | list | length  %}
-            
-            {% if unk_count >0 %}{{"\U0001f4f6"}} Не определено {{unk_count}}сущностей: {{unk_list}}
-            {%else%}{{"\U00002705"}}Все сущности определены!{%endif%}
+unknown_state:
+  alias: Unknown State
+  sequence:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: >
+          {% set unk_list = states | selectattr ('state', 'in', ['unknown','unavailable']) | map(attribute='entity_id') | list | join(', ') %}
+          {% set unk_count = states | selectattr ('state', 'in', ['unknown','unavailable']) | list | length  %}
 
-  # test_automation_off:
-  #   sequence:
-  #     - action: automation.turn_off
-  #       entity_id:
-  #         - automation.system_automation_error 
-  #         - automation.system_critical_error_notify
-  #         - automation.system_gw3_state
-  #         - automation.system_zb_devices_status
-  #         - automation.system_esp_devices_status
-  #         - automation.system_already_running_log
-  #         - automation.system_esp_reboot
-  #         - automation.system_gw3_devices_msg_missed
-  #         - automation.system_error_counter
-  #         - automation.system_warning_counter
-  #         - automation.system_new_device_found
-  #         - automation.system_entity_change
-  #         - automation.system_device_entity_deletion
+          {% if unk_count >0 %}{{"\U0001f4f6"}} Не определено {{unk_count}}сущностей: {{unk_list}}
+          {%else%}{{"\U00002705"}}Все сущности определены!{%endif%}
+
+# test_automation_off:
+#   sequence:
+#     - action: automation.turn_off
+#       entity_id:
+#         - automation.system_automation_error
+#         - automation.system_critical_error_notify
+#         - automation.system_gw3_state
+#         - automation.system_zb_devices_status
+#         - automation.system_esp_devices_status
+#         - automation.system_already_running_log
+#         - automation.system_esp_reboot
+#         - automation.system_gw3_devices_msg_missed
+#         - automation.system_error_counter
+#         - automation.system_warning_counter
+#         - automation.system_new_device_found
+#         - automation.system_entity_change
+#         - automation.system_device_entity_deletion

@@ -5,67 +5,75 @@
 # #####################################################################################
 # Hall Big - Main door not closed for 3 minutes
 # ##################################
-  - alias: hall_big_main_door_not_closed_3m
-    id: hall_big_main_door_not_closed_3m
-    initial_state: true
-    triggers:
-      - trigger: time_pattern
-        minutes: "/3"
-    conditions:
-      - condition: state
-        entity_id: 
-          #- binary_sensor.582d344031f7_contact #ble
-          - binary_sensor.0x00158d0001e5d6be_contact # zigbee
-        state: 'on'
-        for:
-          minutes: 3
-    actions:
-      - if:
-          - condition: state
-            entity_id: binary_sensor.tod_day
-            state: 'on'
-        then:
-          - action: media_player.volume_set
-            data:
-              entity_id: 
-                - media_player.yandex_hb
-              volume_level: '0.7'
-          - action: media_player.play_media
-            data:
-              media_content_type: "{{ states('input_select.alice_mode') }}"
-              entity_id: media_player.yandex_hb
-              media_content_id: 'Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Входн+ая дв+ерь н+е закр+ыта!'
-      - action: notify.telegram
-        data:
-          message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
-      - action: script.turn_on
-        entity_id: script.open_door_photo
-      - action: media_player.volume_set
-        data:
-          entity_id: media_player.yandex_hb
-          volume_level: '{{states("input_number.main_volume")|float(0)}}'
-  
+- alias: hall_big_main_door_not_closed_3m
+  id: hall_big_main_door_not_closed_3m
+  initial_state: true
+  triggers:
+    - trigger: time_pattern
+      minutes: "/3"
+  conditions:
+    - condition: state
+      entity_id:
+        #- binary_sensor.582d344031f7_contact #ble
+        - binary_sensor.0x00158d0001e5d6be_contact # zigbee
+      state: "on"
+      for:
+        minutes: 3
+  actions:
+    - if:
+        - condition: state
+          entity_id: binary_sensor.tod_day
+          state: "on"
+      then:
+        - action: media_player.volume_set
+          data:
+            entity_id:
+              - media_player.yandex_hb
+            volume_level: "0.7"
+        - action: media_player.play_media
+          data:
+            media_content_type: "{{ states('input_select.alice_mode') }}"
+            entity_id: media_player.yandex_hb
+            media_content_id: "Вним+ание! Входн+ая дв+ерь н+е закр+ыта! Входн+ая дв+ерь н+е закр+ыта!"
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001F441 Внимание! Входная дверь НЕ закрыта!"
+    - action: script.turn_on
+      entity_id: script.open_door_photo
+    - action: media_player.volume_set
+      data:
+        entity_id: media_player.yandex_hb
+        volume_level: '{{states("input_number.main_volume")|float(0)}}'
+
 # ##################################
 # Hall Big - Main Door Closed
 # ##################################
-  - alias: hall_big_main_door_closed
-    id: hall_big_main_door_closed
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id:
-          #- binary_sensor.582d344031f7_contact #ble
-          - binary_sensor.0x00158d0001e5d6be_contact # zigbee
-        from: 'on'
-        to: 'off'
-    actions:
-      - action: notify.telegram
-        data:
-          title: Doorbell photo
-          message: "\U0001f514 Входная дверь закрыта!"
-          data:
-            photo:
-            - url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap #door_snap
-              caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
-      - action: timer.cancel
-        entity_id: timer.main_door_open_hb
+- alias: hall_big_main_door_closed
+  id: hall_big_main_door_closed
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id:
+        #- binary_sensor.582d344031f7_contact #ble
+        - binary_sensor.0x00158d0001e5d6be_contact # zigbee
+      from: "on"
+      to: "off"
+  actions:
+    # - action: notify.send_message
+    #   data:
+    #     entity_id: notify.telegram_dima
+    #     title: Doorbell photo
+    #     message: "\U0001f514 Входная дверь закрыта!"
+    #     data:
+    #       photo:
+    #         - url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap #door_snap
+    #           caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
+    - action: telegram_bot.send_photo
+      data:
+        url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell
+        caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
+        target: !secret tel_chat_id
+              
+    - action: timer.cancel
+      entity_id: timer.main_door_open_hb

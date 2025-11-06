@@ -1,132 +1,136 @@
 # ##################################
 # Emergency - backup connection
 # ##################################
-  - alias: emergency_backup
-    id: emergency_backup
-    initial_state: true
-    mode: queued
-    max: 10
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.hass_backup_ping
-        to:
-      #   from: 'on'
-      # - platform: state
-      #   entity_id: binary_sensor.hass_backup_ping
-      #   from: 'off'
-      #   to: 'on'
-      - trigger: state
-        entity_id: binary_sensor.hass_backup_state
-        to:
-      #   from: 'on'
-      # - platform: state
-      #   entity_id: binary_sensor.hass_backup_state
-      #   to: 'on'
-      #   from: 'off'
-    actions:
-      - action: notify.telegram
-        data:
-          message: >-
-            {% if is_state('binary_sensor.hass_backup_ping','on') and is_state('binary_sensor.hass_backup_state','on') %}{{'\U00002705'}}
-            {% elif is_state('binary_sensor.hass_backup_ping','on') or is_state('binary_sensor.hass_backup_state','on') %}{{'\U000026a0'}}
-            {% else %}{{'\U0000274C'}}
-            {% endif %} Backup: HA - {{states('binary_sensor.hass_backup_state')|upper}}, host - {{states('binary_sensor.hass_backup_ping')|upper}}!
-  
-  # # ##################################
-  # # Emergency - NUC connection
-  # # ##################################
-  # - alias: emergency_nuc
-  #   id: emergency_nuc
-  #   initial_state: true
-  #   mode: queued
-  #   max: 10
-  #   max_exceeded: silent
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: binary_sensor.nuc
-  #       to: 'off'
-  #       from: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.nuc
-  #       from: 'off'
-  #       to: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.nuc_state
-  #       to: 'off'
-  #       from: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.nuc_state
-  #       to: 'on'
-  #       from: 'off'
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: >-
-  #           {% if is_state('binary_sensor.nuc','on') and is_state('binary_sensor.nuc_state','on') %}{{'\U00002705'}}
-  #           {% elif is_state('binary_sensor.nuc','on') or is_state('binary_sensor.nuc_state','on') %}{{'\U000026a0'}}
-  #           {% else %}{{'\U0000274C'}}
-  #           {% endif %} NUC: HA - {{states('binary_sensor.nuc_state')|upper}}, host - {{states('binary_sensor.nuc')|upper}}!
-  
-  # ##################################
-  # Emergency - RPI connection
-  # ##################################
-  # - alias: emergency_rpi
-  #   initial_state: true
-  #   triggers:
-  # #    - trigger: state
-  # #      entity_id: sensor.rpi_state
-  # #      to: 'unavailable'
-  # #      for: "00:00:10"
-  #     - trigger: state
-  #       entity_id: binary_sensor.rpi
-  #       to: 'off'
-  #       from: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.rpi
-  #       from: 'off'
-  #       to: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.rpi_state
-  #       to: 'off'
-  #       from: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.rpi_state
-  #       from: 'off'
-  #       to: 'on'
-  # #  conditions:
-  # #    - condition: state
-  # #      entity_id: automation.06_bathroom_cell_power
-  # #      state: 'off'     
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "{%if is_state('binary_sensor.rpi','on') and is_state('binary_sensor.rpi_state','on')%}\U00002705{%else%}\U0000274C{%endif%} RPI: HA - {{states('binary_sensor.rpi_state')|upper}}, host - {{states('binary_sensor.rpi')|upper}}!"
-          
-  # ##################################
-  # Emergency - j3455 connection
-  # ##################################
-  # - alias: emergency_j3455
-  #   id: emergency_j3455
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: binary_sensor.j3455
-  #       to: 'off'
-  #       from: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.j3455
-  #       from: 'off'
-  #       to: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.j3455_state
-  #       to: 'off'
-  #       from: 'on'
-  #     - trigger: state
-  #       entity_id: binary_sensor.j3455_state
-  #       from: 'off'
-  #       to: 'on'
-  #   actions:
-  #     - action: notify.telegram
-  #       data:
-  #         message: "{%if is_state('binary_sensor.j3455','on') and is_state('binary_sensor.j3455_state','on')%}\U00002705{%else%}\U0000274C{%endif%} j3455: HA - {{states('binary_sensor.j3455_state')|upper}}, host - {{states('binary_sensor.j3455')|upper}}!"
+- alias: emergency_backup
+  id: emergency_backup
+  initial_state: true
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.hass_backup_ping
+      to:
+    #   from: 'on'
+    # - platform: state
+    #   entity_id: binary_sensor.hass_backup_ping
+    #   from: 'off'
+    #   to: 'on'
+    - trigger: state
+      entity_id: binary_sensor.hass_backup_state
+      to:
+    #   from: 'on'
+    # - platform: state
+    #   entity_id: binary_sensor.hass_backup_state
+    #   to: 'on'
+    #   from: 'off'
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: >-
+          {% if is_state('binary_sensor.hass_backup_ping','on') and is_state('binary_sensor.hass_backup_state','on') %}{{'\U00002705'}}
+          {% elif is_state('binary_sensor.hass_backup_ping','on') or is_state('binary_sensor.hass_backup_state','on') %}{{'\U000026a0'}}
+          {% else %}{{'\U0000274C'}}
+          {% endif %} Backup: HA - {{states('binary_sensor.hass_backup_state')|upper}}, host - {{states('binary_sensor.hass_backup_ping')|upper}}!
+
+# # ##################################
+# # Emergency - NUC connection
+# # ##################################
+# - alias: emergency_nuc
+#   id: emergency_nuc
+#   initial_state: true
+#   mode: queued
+#   max: 10
+#   max_exceeded: silent
+#   triggers:
+#     - trigger: state
+#       entity_id: binary_sensor.nuc
+#       to: 'off'
+#       from: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.nuc
+#       from: 'off'
+#       to: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.nuc_state
+#       to: 'off'
+#       from: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.nuc_state
+#       to: 'on'
+#       from: 'off'
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima
+#         message: >-
+#           {% if is_state('binary_sensor.nuc','on') and is_state('binary_sensor.nuc_state','on') %}{{'\U00002705'}}
+#           {% elif is_state('binary_sensor.nuc','on') or is_state('binary_sensor.nuc_state','on') %}{{'\U000026a0'}}
+#           {% else %}{{'\U0000274C'}}
+#           {% endif %} NUC: HA - {{states('binary_sensor.nuc_state')|upper}}, host - {{states('binary_sensor.nuc')|upper}}!
+
+# ##################################
+# Emergency - RPI connection
+# ##################################
+# - alias: emergency_rpi
+#   initial_state: true
+#   triggers:
+# #    - trigger: state
+# #      entity_id: sensor.rpi_state
+# #      to: 'unavailable'
+# #      for: "00:00:10"
+#     - trigger: state
+#       entity_id: binary_sensor.rpi
+#       to: 'off'
+#       from: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.rpi
+#       from: 'off'
+#       to: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.rpi_state
+#       to: 'off'
+#       from: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.rpi_state
+#       from: 'off'
+#       to: 'on'
+# #  conditions:
+# #    - condition: state
+# #      entity_id: automation.06_bathroom_cell_power
+# #      state: 'off'
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima
+#         message: "{%if is_state('binary_sensor.rpi','on') and is_state('binary_sensor.rpi_state','on')%}\U00002705{%else%}\U0000274C{%endif%} RPI: HA - {{states('binary_sensor.rpi_state')|upper}}, host - {{states('binary_sensor.rpi')|upper}}!"
+
+# ##################################
+# Emergency - j3455 connection
+# ##################################
+# - alias: emergency_j3455
+#   id: emergency_j3455
+#   initial_state: true
+#   triggers:
+#     - trigger: state
+#       entity_id: binary_sensor.j3455
+#       to: 'off'
+#       from: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.j3455
+#       from: 'off'
+#       to: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.j3455_state
+#       to: 'off'
+#       from: 'on'
+#     - trigger: state
+#       entity_id: binary_sensor.j3455_state
+#       from: 'off'
+#       to: 'on'
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima
+#         message: "{%if is_state('binary_sensor.j3455','on') and is_state('binary_sensor.j3455_state','on')%}\U00002705{%else%}\U0000274C{%endif%} j3455: HA - {{states('binary_sensor.j3455_state')|upper}}, host - {{states('binary_sensor.j3455')|upper}}!"

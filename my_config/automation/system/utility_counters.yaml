@@ -5,423 +5,435 @@
 # #####################################################################################
 # Cold Water - Increase
 # ##################################
-  - alias: system_water_cold_water_increase_counter
-    id: system_water_cold_water_increase_counter
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.0x00158d0006d31d78_contact
-        from: "on"
-        to: "off"
-        for:
-          seconds: 5
-    actions:
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.cold_water_meter
-          value: "{{ (states('input_number.cold_water_meter')|float(0) + 0.01 ) | round(2, 'common') }}"
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.cold_water_meter_month
-          value: "{{ (states('input_number.cold_water_meter_month')|float(0) + 0.01 ) | round(2, 'common') }}"
-  
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/cold_water_meter"
-          payload: "{{states('input_number.cold_water_meter')|float(0)}}"
-          retain: true
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/cold_water_meter_month"
-          payload: "{{states('input_number.cold_water_meter_month')|float(0)}}"
-          retain: true
-  
+- alias: system_water_cold_water_increase_counter
+  id: system_water_cold_water_increase_counter
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.0x00158d0006d31d78_contact
+      from: "on"
+      to: "off"
+      for:
+        seconds: 5
+  actions:
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.cold_water_meter
+        value: "{{ (states('input_number.cold_water_meter')|float(0) + 0.01 ) | round(2, 'common') }}"
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.cold_water_meter_month
+        value: "{{ (states('input_number.cold_water_meter_month')|float(0) + 0.01 ) | round(2, 'common') }}"
+
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/cold_water_meter"
+        payload: "{{states('input_number.cold_water_meter')|float(0)}}"
+        retain: true
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/cold_water_meter_month"
+        payload: "{{states('input_number.cold_water_meter_month')|float(0)}}"
+        retain: true
+
 # ##################################
 # Hot Water - Increase
 # ##################################
-  - alias: system_water_hot_water_increase_counter
-    id: system_water_hot_water_increase_counter
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.0x00158d000236fcd5_contact
-        from: "on"
-        to: "off"
-        for:
-          seconds: 5
-    actions:
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.hot_water_meter
-          value: "{{ (states('input_number.hot_water_meter')|float(0) + 0.01 ) | round(2, 'common') }}"
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.hot_water_meter_month
-          value: "{{ (states('input_number.hot_water_meter_month')|float(0) + 0.01 ) | round(2, 'common') }}"
-  
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/hot_water_meter"
-          payload: "{{states('input_number.hot_water_meter')|float(0)}}"
-          retain: true
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/hot_water_meter_month"
-          payload: "{{states('input_number.hot_water_meter_month')|float(0)}}"
-          retain: true
-  
+- alias: system_water_hot_water_increase_counter
+  id: system_water_hot_water_increase_counter
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.0x00158d000236fcd5_contact
+      from: "on"
+      to: "off"
+      for:
+        seconds: 5
+  actions:
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.hot_water_meter
+        value: "{{ (states('input_number.hot_water_meter')|float(0) + 0.01 ) | round(2, 'common') }}"
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.hot_water_meter_month
+        value: "{{ (states('input_number.hot_water_meter_month')|float(0) + 0.01 ) | round(2, 'common') }}"
+
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/hot_water_meter"
+        payload: "{{states('input_number.hot_water_meter')|float(0)}}"
+        retain: true
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/hot_water_meter_month"
+        payload: "{{states('input_number.hot_water_meter_month')|float(0)}}"
+        retain: true
+
 # ##################################
 # System - Power Meter Daily
 # ##################################
-  - alias: system_power_meter_daily
-    id: system_power_meter_daily
-    initial_state: true
-    triggers:
-      - trigger: time
-        at: "23:59:30"
-    actions:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.esp32_pzem_hb_status
-                state: "on"
-            sequence:
-              - action: input_number.set_value
-                data:
-                  entity_id: input_number.power_meter_t1
-                  value: "{{ ((states('input_number.power_meter_t1')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_day')|float(0)/1 )|round(2, 'common') }}"
-              - action: input_number.set_value
-                data:
-                  entity_id: input_number.power_meter_t2
-                  value: "{{ ((states('input_number.power_meter_t2')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_night')|float(0)/1 )|round(2, 'common') }}"
-              - action: mqtt.publish
-                data:
-                  topic: "utility/main/energy/day"
-                  payload: "{{ states('input_number.power_meter_t1') }}"
-                  retain: true
-              - action: mqtt.publish
-                data:
-                  topic: "utility/main/energy/night"
-                  payload: "{{ states('input_number.power_meter_t2') }}"
-                  retain: true
-              - action: notify.telegram
-                data:
-                  message: "\U0001f50c Данные счетчика электричества обновлены! D {{states('sensor.esp32_pzem_hb_energy_daily_day')|int(0)}}, N {{states('sensor.esp32_pzem_hb_energy_daily_night')|int(0)}}"
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.esp32_pzem_hb_status
-                state: "off"
-            sequence:
-              - action: notify.telegram
-                data:
-                  message: "\U0001f50c PZEM недоступен! Ожидаем"
-              - wait_for_trigger:
-                  - trigger: state
-                    entity_id: binary_sensor.esp32_pzem_hb_status
-                    to: "on"
-                timeout:
-                  seconds: 28
-                continue_on_timeout: false
-              - action: notify.telegram
-                data:
-                  message: "\U0001f50c PZEM доступен!"
-              - action: input_number.set_value
-                data:
-                  entity_id: input_number.power_meter_t1
-                  value: "{{ ((states('input_number.power_meter_t1')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_day')|float(0)/1 )|round(2, 'common') }}"
-              - action: input_number.set_value
-                data:
-                  entity_id: input_number.power_meter_t2
-                  value: "{{ ((states('input_number.power_meter_t2')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_night')|float(0)/1 )|round(2, 'common') }}"
-              - action: mqtt.publish
-                data:
-                  topic: "utility/main/energy/day"
-                  payload: "{{ states('input_number.power_meter_t1') }}"
-                  retain: true
-              - action: mqtt.publish
-                data:
-                  topic: "utility/main/energy/night"
-                  payload: "{{ states('input_number.power_meter_t2') }}"
-                  retain: true
-              - action: notify.telegram
-                data:
-                  message: "\U0001f50c Данные счетчика электричества обновлены!"
-  
+- alias: system_power_meter_daily
+  id: system_power_meter_daily
+  initial_state: true
+  triggers:
+    - trigger: time
+      at: "23:59:30"
+  actions:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.esp32_pzem_hb_status
+              state: "on"
+          sequence:
+            - action: input_number.set_value
+              data:
+                entity_id: input_number.power_meter_t1
+                value: "{{ ((states('input_number.power_meter_t1')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_day')|float(0)/1 )|round(2, 'common') }}"
+            - action: input_number.set_value
+              data:
+                entity_id: input_number.power_meter_t2
+                value: "{{ ((states('input_number.power_meter_t2')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_night')|float(0)/1 )|round(2, 'common') }}"
+            - action: mqtt.publish
+              data:
+                topic: "utility/main/energy/day"
+                payload: "{{ states('input_number.power_meter_t1') }}"
+                retain: true
+            - action: mqtt.publish
+              data:
+                topic: "utility/main/energy/night"
+                payload: "{{ states('input_number.power_meter_t2') }}"
+                retain: true
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f50c Данные счетчика электричества обновлены! D {{states('sensor.esp32_pzem_hb_energy_daily_day')|int(0)}}, N {{states('sensor.esp32_pzem_hb_energy_daily_night')|int(0)}}"
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.esp32_pzem_hb_status
+              state: "off"
+          sequence:
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f50c PZEM недоступен! Ожидаем"
+            - wait_for_trigger:
+                - trigger: state
+                  entity_id: binary_sensor.esp32_pzem_hb_status
+                  to: "on"
+              timeout:
+                seconds: 28
+              continue_on_timeout: false
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f50c PZEM доступен!"
+            - action: input_number.set_value
+              data:
+                entity_id: input_number.power_meter_t1
+                value: "{{ ((states('input_number.power_meter_t1')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_day')|float(0)/1 )|round(2, 'common') }}"
+            - action: input_number.set_value
+              data:
+                entity_id: input_number.power_meter_t2
+                value: "{{ ((states('input_number.power_meter_t2')) | float(0) + states('sensor.esp32_pzem_hb_energy_daily_night')|float(0)/1 )|round(2, 'common') }}"
+            - action: mqtt.publish
+              data:
+                topic: "utility/main/energy/day"
+                payload: "{{ states('input_number.power_meter_t1') }}"
+                retain: true
+            - action: mqtt.publish
+              data:
+                topic: "utility/main/energy/night"
+                payload: "{{ states('input_number.power_meter_t2') }}"
+                retain: true
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f50c Данные счетчика электричества обновлены!"
+
 # ##################################
 # System - Water\Power - New Month Notification
 # ##################################
-  - alias: system_new_month_notification
-    id: system_new_month_notification
-    initial_state: true
-    triggers:
-      - trigger: time
-        at: "00:00:10"
-    conditions:
-      - "{{ now().timestamp() | timestamp_custom('%d') | int(0) == 21 }}"
-    actions:
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
-          payload: "{{states('input_number.hot_water_meter')|float(0)}}"
-          retain: true
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
-          payload: "{{states('input_number.cold_water_meter')|float(0)}}"
-          retain: true
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t1"
-          payload: "{{((states('input_number.power_meter_t1'))|float(0))}}"
-          retain: true
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t2"
-          payload: "{{((states('input_number.power_meter_t2'))|float(0))}}"
-          retain: true
-      - action: mqtt.publish
-        data:
-          topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
-          payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S',true,0)}}"
-          retain: true
-      - action: notify.telegram
-        data:
-          message: >
-            {{ "\U0001f4a6" }}
-            Показания счетчиков:
-            ХВС: {{ states('input_number.cold_water_meter')|float(0) }}м3
-            ГВС: {{ states('input_number.hot_water_meter')|float(0) }}м3
-  
-            За месяц:
-            ХВС: {{ states('input_number.cold_water_meter_month')|float(0) }}м3
-            ГВС: {{ states('input_number.hot_water_meter_month')|float(0) }}м3
-            Стоимость: {{ ((states('sensor.water_cost'))|float(0))}}руб.
-      - action: notify.telegram
-        data:
-          message: >
-            {{ "\U0001f50c" }}
-            Показания счетчика:
-            Т1: {{ ((states('input_number.power_meter_t1'))|float(0))}} кВт*ч
-            Т2: {{ ((states('input_number.power_meter_t2'))|float(0))}} кВт*ч
-  
-            За месяц:
-            Т1: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_day')|float(0)))|round(0, 'common')}} кВт*ч
-            Т2: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_night')|float(0)))|round(0, 'common')}} кВт*ч
-            Стоимость: {{ ((states('sensor.power_cost'))|float(0)) }} руб.
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.power_meter_last_month_t1
-          value: "{{ states('input_number.power_meter_t1')|float(0)}}"
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.power_meter_last_month_t2
-          value: "{{ states('input_number.power_meter_t2')|float(0)}}"
-  
-      - action: switch.turn_on
-        entity_id: switch.esp32_pzem_hb_energy_reset_all
-      - delay:
-          seconds: 10
-  
-      - action: switch.turn_on
-        entity_id: switch.esp32_pzem_hb_energy_reset_uart
-  
-      # - action: switch.turn_on
-      #   entity_id: switch.esp32_domofon_energy_reset_all
-  
-      # - switch.esp32_pzem_hb_energy_reset_monthly
-      # - switch.esp32_pzem_hb_energy_reset_monthly_day
-      # - switch.esp32_pzem_hb_energy_reset_monthly_night
-      # - switch.esp32_domofon_energy_reset_monthly
-      # - switch.esp32_domofon_energy_reset_monthly_day
-      # - switch.esp32_domofon_energy_reset_monthly_night
-  
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.hot_water_meter_last_month
-          value: "{{ states('input_number.hot_water_meter')|float(0) }}"
-      - action: input_number.set_value
-        data:
-          entity_id: input_number.cold_water_meter_last_month
-          value: "{{ states('input_number.cold_water_meter')|float(0) }}"
-      - action: input_number.set_value
-        data:
-          entity_id:
-            - input_number.hot_water_meter_month
-            - input_number.cold_water_meter_month
-          value: 0
-  
+- alias: system_new_month_notification
+  id: system_new_month_notification
+  initial_state: true
+  triggers:
+    - trigger: time
+      at: "00:00:10"
+  conditions:
+    - "{{ now().timestamp() | timestamp_custom('%d') | int(0) == 21 }}"
+  actions:
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/{{now().year}}/{{now().month}}/hot_water_meter"
+        payload: "{{states('input_number.hot_water_meter')|float(0)}}"
+        retain: true
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/{{now().year}}/{{now().month}}/cold_water_meter"
+        payload: "{{states('input_number.cold_water_meter')|float(0)}}"
+        retain: true
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t1"
+        payload: "{{((states('input_number.power_meter_t1'))|float(0))}}"
+        retain: true
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/{{now().year}}/{{now().month}}/power_meter_t2"
+        payload: "{{((states('input_number.power_meter_t2'))|float(0))}}"
+        retain: true
+    - action: mqtt.publish
+      data:
+        topic: "utility/main/{{now().year}}/{{now().month}}/timestamp"
+        payload: "{{as_timestamp(now()) | timestamp_custom('%d-%m-%Y %H:%M:%S',true,0)}}"
+        retain: true
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: >
+          {{ "\U0001f4a6" }}
+          Показания счетчиков:
+          ХВС: {{ states('input_number.cold_water_meter')|float(0) }}м3
+          ГВС: {{ states('input_number.hot_water_meter')|float(0) }}м3
+
+          За месяц:
+          ХВС: {{ states('input_number.cold_water_meter_month')|float(0) }}м3
+          ГВС: {{ states('input_number.hot_water_meter_month')|float(0) }}м3
+          Стоимость: {{ ((states('sensor.water_cost'))|float(0))}}руб.
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: >
+          {{ "\U0001f50c" }}
+          Показания счетчика:
+          Т1: {{ ((states('input_number.power_meter_t1'))|float(0))}} кВт*ч
+          Т2: {{ ((states('input_number.power_meter_t2'))|float(0))}} кВт*ч
+
+          За месяц:
+          Т1: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_day')|float(0)))|round(0, 'common')}} кВт*ч
+          Т2: {{ ((states('sensor.esp32_pzem_hb_energy_monthly_night')|float(0)))|round(0, 'common')}} кВт*ч
+          Стоимость: {{ ((states('sensor.power_cost'))|float(0)) }} руб.
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.power_meter_last_month_t1
+        value: "{{ states('input_number.power_meter_t1')|float(0)}}"
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.power_meter_last_month_t2
+        value: "{{ states('input_number.power_meter_t2')|float(0)}}"
+
+    - action: switch.turn_on
+      entity_id: switch.esp32_pzem_hb_energy_reset_all
+    - delay:
+        seconds: 10
+
+    - action: switch.turn_on
+      entity_id: switch.esp32_pzem_hb_energy_reset_uart
+
+    # - action: switch.turn_on
+    #   entity_id: switch.esp32_domofon_energy_reset_all
+
+    # - switch.esp32_pzem_hb_energy_reset_monthly
+    # - switch.esp32_pzem_hb_energy_reset_monthly_day
+    # - switch.esp32_pzem_hb_energy_reset_monthly_night
+    # - switch.esp32_domofon_energy_reset_monthly
+    # - switch.esp32_domofon_energy_reset_monthly_day
+    # - switch.esp32_domofon_energy_reset_monthly_night
+
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.hot_water_meter_last_month
+        value: "{{ states('input_number.hot_water_meter')|float(0) }}"
+    - action: input_number.set_value
+      data:
+        entity_id: input_number.cold_water_meter_last_month
+        value: "{{ states('input_number.cold_water_meter')|float(0) }}"
+    - action: input_number.set_value
+      data:
+        entity_id:
+          - input_number.hot_water_meter_month
+          - input_number.cold_water_meter_month
+        value: 0
+
 # ##################################
 # System - Power - High current
 # ##################################
-  - alias: system_power_15A_current
-    id: system_power_15A_current
-    initial_state: true
-    triggers:
-      - trigger: numeric_state
-        entity_id: sensor.esp32_pzem_hb_current
-        above: 15
-        below: 20
-    conditions:
-      - condition: template
-        value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_15A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f6a8 Внимание! Общий ток более 15А!"
-  
+- alias: system_power_15A_current
+  id: system_power_15A_current
+  initial_state: true
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.esp32_pzem_hb_current
+      above: 15
+      below: 20
+  conditions:
+    - condition: template
+      value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_15A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f6a8 Внимание! Общий ток более 15А!"
+
 # ##################################
 # System - Power - High current
 # ##################################
-  - alias: system_power_20A_current
-    id: system_power_20A_current
-    initial_state: true
-    triggers:
-      - trigger: numeric_state
-        entity_id: sensor.esp32_pzem_hb_current
-        above: 20
-        below: 30
-    conditions:
-      - condition: template
-        value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_20A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f6a8 Внимание! Общий ток более 20А!"
-  
+- alias: system_power_20A_current
+  id: system_power_20A_current
+  initial_state: true
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.esp32_pzem_hb_current
+      above: 20
+      below: 30
+  conditions:
+    - condition: template
+      value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_20A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f6a8 Внимание! Общий ток более 20А!"
+
 # ##################################
 # System - Power - Ultra High current
 # ##################################
-  - alias: system_power_30A_current
-    id: system_power_30A_current
-    initial_state: true
-    triggers:
-      - trigger: numeric_state
-        entity_id: sensor.esp32_pzem_hb_current
-        above: 30
-        below: 40
-    conditions:
-      - condition: template
-        value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
-    actions:
-      - parallel:
-          - action: notify.telegram
+- alias: system_power_30A_current
+  id: system_power_30A_current
+  initial_state: true
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.esp32_pzem_hb_current
+      above: 30
+      below: 40
+  conditions:
+    - condition: template
+      value_template: "{{ (as_timestamp(now())|int(0) - as_timestamp(state_attr('automation.system_power_30A_current', 'last_triggered'),0)|int(0)) > 10*60 }}"
+  actions:
+    - parallel:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6a8 Внимание! Общий ток более 30А!"
             data:
-              message: "\U0001f6a8 Внимание! Общий ток более 30А!"
-              data:
-                push:
-                  sound:
-                    name: "default"
-                    critical: 1
-                    volume: 1.0
-          - action: notify.mobile_app_iphone_16_pro_dima
-            data:
-              title: "Внимание!"
-              message: "Внимание! Общий ток более 30А"
-  
+              push:
+                sound:
+                  name: "default"
+                  critical: 1
+                  volume: 1.0
+        - action: notify.mobile_app_iphone_16_pro_dima
+          data:
+            title: "Внимание!"
+            message: "Внимание! Общий ток более 30А"
+
 # ##################################
 # System - Utility meter tariff change
 # ##################################
-  # - alias: system_power_tariff_change
-  #   id: system_power_tariff_change
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: homeassistant
-  #       event: start
-  #     - trigger: time
-  #       at: "07:00:00"
-  #     - trigger: time
-  #       at: "23:00:00"
-  #   actions:
-  #   - action: select.select_option
-  #     entity_id: select.energy_monthly_shelly_em
-  #     data:
-  #       option: "{%- if (7 <= now().hour < 23) -%}day{%- else -%}night{%- endif -%}"
+# - alias: system_power_tariff_change
+#   id: system_power_tariff_change
+#   initial_state: true
+#   triggers:
+#     - trigger: homeassistant
+#       event: start
+#     - trigger: time
+#       at: "07:00:00"
+#     - trigger: time
+#       at: "23:00:00"
+#   actions:
+#   - action: select.select_option
+#     entity_id: select.energy_monthly_shelly_em
+#     data:
+#       option: "{%- if (7 <= now().hour < 23) -%}day{%- else -%}night{%- endif -%}"
 
 # ##################################
 
 # System - High Power Consumption
 # ##################################
-  - alias: system_high_power_while_not_home
-    id: system_high_power_while_not_home
-    initial_state: true
-    triggers:
-      - trigger: time_pattern
-        minutes: "/10"
-    conditions:
-      - condition: template
-        value_template: "{{ is_state('switch.system_security_mode','on') }}"
-      - condition: numeric_state
-        entity_id: sensor.esp32_pzem_hb_power
-        above: 1200
-    actions:
-      - parallel:
-          - action: notify.telegram
+- alias: system_high_power_while_not_home
+  id: system_high_power_while_not_home
+  initial_state: true
+  triggers:
+    - trigger: time_pattern
+      minutes: "/10"
+  conditions:
+    - condition: template
+      value_template: "{{ is_state('switch.system_security_mode','on') }}"
+    - condition: numeric_state
+      entity_id: sensor.esp32_pzem_hb_power
+      above: 1200
+  actions:
+    - parallel:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
+        - action: notify.mobile_app_iphone_16_pro_dima
+          data:
+            title: "Внимание!"
+            message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
             data:
-              message: "\U0001f6a8 Внимание! Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
-          - action: notify.mobile_app_iphone_16_pro_dima
-            data:
-              title: "Внимание!"
-              message: "Охрана Вкл! Высокое потребление электричества {{states('sensor.esp32_pzem_hb_power')|int(0)}}Вт!"
-              data:
-                push:
-                  sound:
-                    name: "default"
-                    critical: 1
-                    volume: 1.0
-  
+              push:
+                sound:
+                  name: "default"
+                  critical: 1
+                  volume: 1.0
+
 # ##################################
 # System - Water Consumption
 # ##################################
-  - alias: system_water_consumption_not_home
-    id: system_water_consumption_not_home
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.0x00158d0006d31d78_contact
-        from: "on"
-        to: "off"
-        for:
-          seconds: 5
-      - trigger: state
-        entity_id: binary_sensor.0x00158d000236fcd5_contact
-        from: "on"
-        to: "off"
-        for:
-          seconds: 5
-    conditions:
-      - condition: template
-        value_template: "{{ is_state('switch.system_security_mode','on') }}"
-    actions:
-      - parallel:
-          - action: notify.telegram
+- alias: system_water_consumption_not_home
+  id: system_water_consumption_not_home
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.0x00158d0006d31d78_contact
+      from: "on"
+      to: "off"
+      for:
+        seconds: 5
+    - trigger: state
+      entity_id: binary_sensor.0x00158d000236fcd5_contact
+      from: "on"
+      to: "off"
+      for:
+        seconds: 5
+  conditions:
+    - condition: template
+      value_template: "{{ is_state('switch.system_security_mode','on') }}"
+  actions:
+    - parallel:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6a8 Внимание! Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
+        - action: notify.mobile_app_iphone_16_pro_dima
+          data:
+            title: "Внимание!"
+            message: "Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
             data:
-              message: "\U0001f6a8 Внимание! Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
-          - action: notify.mobile_app_iphone_16_pro_dima
-            data:
-              title: "Внимание!"
-              message: "Охрана Вкл! Потребление {% if 'Hot' in trigger.to_state.attributes.friendly_name %}горячей{%else%}холодной{%endif%} воды!"
-              data:
-                push:
-                  sound:
-                    name: "default"
-                    critical: 1
-                    volume: 1.0
-  
+              push:
+                sound:
+                  name: "default"
+                  critical: 1
+                  volume: 1.0
+
 # ##################################
 # System - Water sensor outage
 # ##################################
-  - alias: system_water_sensor_outage
-    id: system_water_sensor_outage
-    initial_state: true
-    triggers:
-      - trigger: time_pattern
-        minutes: "/30"
-    conditions:
-      - condition: template
-        value_template: >
-          {{ as_timestamp(now())- as_timestamp(states.sensor['0x00158d0006d31d78_zigbee'].last_updated) > 2*60*60 or
-          as_timestamp(now())- as_timestamp(states.sensor['0x00158d000236fcd5_zigbee'].last_updated) > 2*60*60 }}
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0000274c Внимание! Нет данных от счетчика {% if as_timestamp(now())- as_timestamp(states.binary_sensor['0x00158d0006d31d78_contact'].last_updated) > 2*60*60 %}холодной{%else%}горячей{%endif%} воды!"
+- alias: system_water_sensor_outage
+  id: system_water_sensor_outage
+  initial_state: true
+  triggers:
+    - trigger: time_pattern
+      minutes: "/30"
+  conditions:
+    - condition: template
+      value_template: >
+        {{ as_timestamp(now())- as_timestamp(states.sensor['0x00158d0006d31d78_zigbee'].last_updated) > 2*60*60 or
+        as_timestamp(now())- as_timestamp(states.sensor['0x00158d000236fcd5_zigbee'].last_updated) > 2*60*60 }}
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0000274c Внимание! Нет данных от счетчика {% if as_timestamp(now())- as_timestamp(states.binary_sensor['0x00158d0006d31d78_contact'].last_updated) > 2*60*60 %}холодной{%else%}горячей{%endif%} воды!"

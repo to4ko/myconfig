@@ -5,148 +5,156 @@
 # #####################################################################################
 # Master Bedroom - Main power turned off
 # ##################################
-  - alias: master_bedroom_main_power_turned_off
-    id: master_bedroom_main_power_turned_off
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: switch.0x00158d0002467773_outlet
-        to: 'off'
-        from: 'on'
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Внимание! Вторая розетка отключена! Запущен UPS (1050)"
-  
+- alias: master_bedroom_main_power_turned_off
+  id: master_bedroom_main_power_turned_off
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: switch.0x00158d0002467773_outlet
+      to: "off"
+      from: "on"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Внимание! Вторая розетка отключена! Запущен UPS (1050)"
+
 # ##################################
 # Master Bedroom - Main plug pulled out
 # ##################################
-  - alias: master_bedroom_main_plug_pulled_out
-    id: master_bedroom_main_plug_pulled_out
-    initial_state: true
-    triggers:
-      - trigger: numeric_state
-        entity_id: sensor.0x00158d0002467773_power
-        below: 10
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Внимание! Нагрузка во второй розетке упала! Проверь кабель!"
-  
+- alias: master_bedroom_main_plug_pulled_out
+  id: master_bedroom_main_plug_pulled_out
+  initial_state: true
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.0x00158d0002467773_power
+      below: 10
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Внимание! Нагрузка во второй розетке упала! Проверь кабель!"
+
 # ##################################
 # Master Bedroom- Main power - over-power
 # ##################################
-  - alias: master_bedroom_main_power_overpower
-    id: master_bedroom_main_power_overpower
-    initial_state: true
-    triggers:
-      - trigger: numeric_state
-        entity_id: sensor.0x00158d0002467773_power
-        above: 1700 
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Внимание! Перегрузка второй розетки! Отключите лишние потребители!"
-  
+- alias: master_bedroom_main_power_overpower
+  id: master_bedroom_main_power_overpower
+  initial_state: true
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.0x00158d0002467773_power
+      above: 1700
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Внимание! Перегрузка второй розетки! Отключите лишние потребители!"
+
 # ##################################
 # Master Bedroom- UPS - OB
 # ##################################
-  - alias: master_bedroom_ups_ob
-    id: master_bedroom_ups_ob
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: sensor.ippon_1050_status_data
-        to: 'OB'
-    actions:
-      - parallel:
-          - action: notify.telegram
-            data:
-              message: "\U0001f50b Внимание! Запущен UPS (1050)!"
-          - action: notify.mobile_app_iphone_16_pro_dima
-            data:
-              title: "Внимание!"
-              message: "Запущен UPS (1050)"
-  
+- alias: master_bedroom_ups_ob
+  id: master_bedroom_ups_ob
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: sensor.ippon_1050_status_data
+      to: "OB"
+  actions:
+    - parallel:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f50b Внимание! Запущен UPS (1050)!"
+        - action: notify.mobile_app_iphone_16_pro_dima
+          data:
+            title: "Внимание!"
+            message: "Запущен UPS (1050)"
+
 # ##################################
 # Master Bedroom- UPS - LB
 # ##################################
-  - alias: master_bedroom_ups_lb
-    id: master_bedroom_ups_lb
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: sensor.ippon_1050_status_data
-        to: 'LB'
-    actions:
-      - parallel:
-          - action: notify.telegram
+- alias: master_bedroom_ups_lb
+  id: master_bedroom_ups_lb
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: sensor.ippon_1050_status_data
+      to: "LB"
+  actions:
+    - parallel:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6a8 Внимание! Заряд батареи (1050) критический! Завершение работы NUC!"
+        - action: notify.mobile_app_iphone_16_pro_dima
+          data:
+            title: "Внимание!"
+            message: "UPS полностью разряжен! Завершаем работу NUC!"
             data:
-              message: "\U0001f6a8 Внимание! Заряд батареи (1050) критический! Завершение работы NUC!"
-          - action: notify.mobile_app_iphone_16_pro_dima
-            data:
-              title: "Внимание!"
-              message: "UPS полностью разряжен! Завершаем работу NUC!"
-              data:
-                push:
-                  sound:
-                    name: "default"
-                    critical: 1
-                    volume: 1.0        
-          
+              push:
+                sound:
+                  name: "default"
+                  critical: 1
+                  volume: 1.0
+
 # ##################################
 # Master Bedroom- UPS - OL
 # ##################################
-  - alias: master_bedroom_ups_ol
-    id: master_bedroom_ups_ol
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: sensor.ippon_1050_status_data
-        to: 'OL'
-    conditions:
-      - condition: template
-        value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи(1050)!"
-  
+- alias: master_bedroom_ups_ol
+  id: master_bedroom_ups_ol
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: sensor.ippon_1050_status_data
+      to: "OL"
+  conditions:
+    - condition: template
+      value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50b Питание восстановлено! Начинаем заряд батареи(1050)!"
+
 # ##################################
 # Master Bedroom- UPS - Unknown
 # ##################################
-  - alias: master_bedroom_ups_unknown
-    id: master_bedroom_ups_unknown
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: sensor.ippon_1050_status_data
-        to: 'unknown'
-        for:
-          minutes: 5
-    conditions:
-      - condition: template
-        value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f6a8 Внимание! Связь с UPS(1050) потеряна!"
-      # - action: input_boolean.turn_on
-      #   data:
-      #     entity_id: input_boolean.ippon_1050_announce
-  
+- alias: master_bedroom_ups_unknown
+  id: master_bedroom_ups_unknown
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: sensor.ippon_1050_status_data
+      to: "unknown"
+      for:
+        minutes: 5
+  conditions:
+    - condition: template
+      value_template: "{{ trigger.from_state.state not in ['unknown','unavailable','none'] }}"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f6a8 Внимание! Связь с UPS(1050) потеряна!"
+    # - action: input_boolean.turn_on
+    #   data:
+    #     entity_id: input_boolean.ippon_1050_announce
+
 # ##################################
 # Master Bedroom- Main power turned on
 # ##################################
-  - alias: master_bedroom_main_power_turned_on
-    id: master_bedroom_main_power_turned_on
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: switch.0x00158d0002467773_outlet
-        to: 'on'
-        from: 'off'
-    actions:
-      - action: notify.telegram
-        data:
-          message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1050)!"
+- alias: master_bedroom_main_power_turned_on
+  id: master_bedroom_main_power_turned_on
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: switch.0x00158d0002467773_outlet
+      to: "on"
+      from: "off"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Электроснабжение восстановлено! Начинаем зарядку UPS(1050)!"

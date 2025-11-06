@@ -5,686 +5,686 @@
 # #####################################################################################
 # MB Table Lamp (Yeelight White)
 # ##################################
-  - alias: master_bedroom_table_lamp
-    id: master_bedroom_table_lamp
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      # - platform: event
-      #   event_type: xiaomi_aqara.click
-      #   event_data:
-      #     entity_id: sensor.0x158d00023d3116_action
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x04cf8cdf3c77cc5f_action
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.0x54ef441000c88fa8_light') in ['on','off'] }}"
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_1_single' }}"
-            sequence:
-              - action: light.toggle
-                entity_id: light.0x54ef441000c88fa8_light
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_1_double' }}"
-            sequence:
-              - action: light.turn_on
-                entity_id: light.0x54ef441000c88fa8_light
-                data:
-                  brightness: 255
-                  color_temp_kelvin: 5000
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_1_hold' }}"
-            sequence:
-              - action: light.turn_on
-                entity_id: light.0x54ef441000c88fa8_light
-                data:
-                  brightness: 14
-                  color_temp_kelvin: 3000
-  
+- alias: master_bedroom_table_lamp
+  id: master_bedroom_table_lamp
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    # - platform: event
+    #   event_type: xiaomi_aqara.click
+    #   event_data:
+    #     entity_id: sensor.0x158d00023d3116_action
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x04cf8cdf3c77cc5f_action
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.0x54ef441000c88fa8_light') in ['on','off'] }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_1_single' }}"
+          sequence:
+            - action: light.toggle
+              entity_id: light.0x54ef441000c88fa8_light
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_1_double' }}"
+          sequence:
+            - action: light.turn_on
+              entity_id: light.0x54ef441000c88fa8_light
+              data:
+                brightness: 255
+                color_temp_kelvin: 5000
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_1_hold' }}"
+          sequence:
+            - action: light.turn_on
+              entity_id: light.0x54ef441000c88fa8_light
+              data:
+                brightness: 14
+                color_temp_kelvin: 3000
+
 # ##################################
 # Master Bedroom Main Lamp (Xiaomi Round LED)
 # ##################################
-  - alias: master_bedroom_main_lamp_right_button
-    id: master_bedroom_main_lamp_right_button
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x00158d00013e6aa5_action
-          click_type: button_2_single
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x04cf8cdf3c77cc5f_action
-          click_type: button_3_single
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.round_led_mb_nightlight
-                state: 'on'
-              - condition: state
+- alias: master_bedroom_main_lamp_right_button
+  id: master_bedroom_main_lamp_right_button
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d00013e6aa5_action
+        click_type: button_2_single
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x04cf8cdf3c77cc5f_action
+        click_type: button_3_single
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.round_led_mb_nightlight
+              state: "on"
+            - condition: state
+              entity_id: light.round_led_mb
+              state: "off"
+          sequence:
+            - action: yeelight.set_mode
+              data:
                 entity_id: light.round_led_mb
-                state: 'off'
-            sequence:
-              - action: yeelight.set_mode
-                data:
-                  entity_id: light.round_led_mb
-                  mode: normal
-              - action: light.turn_on
-                entity_id: light.round_led_mb
-                data:
-                  brightness: 230
-                  color_temp_kelvin: 5000
-          - conditions:
-              - condition: state
-                entity_id: light.round_led_mb
-                state: 'off'
-              - condition: state
-                entity_id: binary_sensor.round_led_mb_nightlight
-                state: 'off'
-            sequence:
-              - action: light.turn_on
-                entity_id: light.round_led_mb
-                data:
-                  brightness: 230
-                  color_temp_kelvin: 5000
-          - conditions:
-              - condition: state
-                entity_id: light.round_led_mb
-                state: 'on'
-            sequence:
-              - action: light.turn_off
-                entity_id: light.round_led_mb
+                mode: normal
+            - action: light.turn_on
+              entity_id: light.round_led_mb
+              data:
+                brightness: 230
+                color_temp_kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: "off"
+            - condition: state
+              entity_id: binary_sensor.round_led_mb_nightlight
+              state: "off"
+          sequence:
+            - action: light.turn_on
+              entity_id: light.round_led_mb
+              data:
+                brightness: 230
+                color_temp_kelvin: 5000
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: "on"
+          sequence:
+            - action: light.turn_off
+              entity_id: light.round_led_mb
 
 # ##################################
 # Master Bedroom Main Lamp (Xiaomi Round LED) Nightlight
 # ##################################
-  # - alias: master_bedroom_main_lamp_nightlight
-  #   id: master_bedroom_main_lamp_nightlight
-  #   initial_state: true
-  #   mode: single
-  #   max_exceeded: silent
-  #   triggers:
-  #     - trigger: event
-  #       event_type: xiaomi_aqara.click
-  #       event_data:
-  #         entity_id: sensor.0x04cf8cdf3c77cc5f_action
-  #         click_type: button_3_tripple
-  #   conditions:
-  #     - condition: template
-  #       value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
-  #     - condition: template
-  #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  #   actions:
-  #     - choose:
-  #         - conditions:
-  #             - condition: state
-  #               entity_id: binary_sensor.round_led_mb_nightlight
-  #               state: 'on'
-  #             - condition: state
-  #               entity_id: light.round_led_mb
-  #               state: 'off'
-  #           sequence:
-  #             - action: yeelight.set_mode
-  #               data:
-  #                 entity_id: light.round_led_mb
-  #                 mode: normal
-  #             - action: light.turn_on
-  #               entity_id: light.round_led_mb
-  #               data:
-  #                 brightness: 230
-  #                 color_temp_kelvin: 5000
-  #         - conditions:
-  #             - condition: state
-  #               entity_id: light.round_led_mb
-  #               state: 'off'
-  #             - condition: state
-  #               entity_id: binary_sensor.round_led_mb_nightlight
-  #               state: 'off'
-  #           sequence:
-  #             - action: light.turn_on
-  #               entity_id: light.round_led_mb
-  #               data:
-  #                 brightness: 230
-  #                 color_temp_kelvin: 5000
-  #         - conditions:
-  #             - condition: state
-  #               entity_id: light.round_led_mb
-  #               state: 'on'
-  #           sequence:
-  #             - action: light.turn_off
-  #               entity_id: light.round_led_mb
-                  
-  
+# - alias: master_bedroom_main_lamp_nightlight
+#   id: master_bedroom_main_lamp_nightlight
+#   initial_state: true
+#   mode: single
+#   max_exceeded: silent
+#   triggers:
+#     - trigger: event
+#       event_type: xiaomi_aqara.click
+#       event_data:
+#         entity_id: sensor.0x04cf8cdf3c77cc5f_action
+#         click_type: button_3_tripple
+#   conditions:
+#     - condition: template
+#       value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
+#     - condition: template
+#       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+#   actions:
+#     - choose:
+#         - conditions:
+#             - condition: state
+#               entity_id: binary_sensor.round_led_mb_nightlight
+#               state: 'on'
+#             - condition: state
+#               entity_id: light.round_led_mb
+#               state: 'off'
+#           sequence:
+#             - action: yeelight.set_mode
+#               data:
+#                 entity_id: light.round_led_mb
+#                 mode: normal
+#             - action: light.turn_on
+#               entity_id: light.round_led_mb
+#               data:
+#                 brightness: 230
+#                 color_temp_kelvin: 5000
+#         - conditions:
+#             - condition: state
+#               entity_id: light.round_led_mb
+#               state: 'off'
+#             - condition: state
+#               entity_id: binary_sensor.round_led_mb_nightlight
+#               state: 'off'
+#           sequence:
+#             - action: light.turn_on
+#               entity_id: light.round_led_mb
+#               data:
+#                 brightness: 230
+#                 color_temp_kelvin: 5000
+#         - conditions:
+#             - condition: state
+#               entity_id: light.round_led_mb
+#               state: 'on'
+#           sequence:
+#             - action: light.turn_off
+#               entity_id: light.round_led_mb
+
 # ##################################
 # Master Bedroom Main Lamp (Xiaomi Round LED) - Full
 # ##################################
-  - alias: master_bedroom_main_lamp_right_button_full
-    id: master_bedroom_main_lamp_right_button_full
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x00158d00013e6aa5_action
-          click_type: button_2_double
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
-    actions:
-      - action: light.turn_on
-        entity_id: light.round_led_mb
-        data:
-          brightness: 230
-          color_temp_kelvin: 5000
-  
+- alias: master_bedroom_main_lamp_right_button_full
+  id: master_bedroom_main_lamp_right_button_full
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d00013e6aa5_action
+        click_type: button_2_double
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
+  actions:
+    - action: light.turn_on
+      entity_id: light.round_led_mb
+      data:
+        brightness: 230
+        color_temp_kelvin: 5000
+
 # ##################################
 # Master Bedroom Main Lamp (Xiaomi Round LED)
 # ##################################
-  - alias: master_bedroom_main_lamp_left_button
-    id: master_bedroom_main_lamp_left_button
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x00158d00013e6aa5_action
-          click_type: button_1_single
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x04cf8cdf3c77cc5f_action
-          click_type: button_3_double
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    actions:
-      - choose:
-          - conditions:
-              - condition: state
-                entity_id: binary_sensor.round_led_mb_nightlight
-                state: 'on'
-              - condition: state
+- alias: master_bedroom_main_lamp_left_button
+  id: master_bedroom_main_lamp_left_button
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d00013e6aa5_action
+        click_type: button_1_single
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x04cf8cdf3c77cc5f_action
+        click_type: button_3_double
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.round_led_mb') in ['on','off'] }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+  actions:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.round_led_mb_nightlight
+              state: "on"
+            - condition: state
+              entity_id: light.round_led_mb
+              state: "off"
+          sequence:
+            - action: yeelight.set_mode
+              data:
                 entity_id: light.round_led_mb
-                state: 'off'
-            sequence:
-              - action: yeelight.set_mode
-                data:
-                  entity_id: light.round_led_mb
-                  mode: normal
-              - action: light.turn_on
-                entity_id: light.round_led_mb
-                data:
-                  brightness: 77
-                  color_temp_kelvin: 3000
-          - conditions:
-              - condition: state
-                entity_id: light.round_led_mb
-                state: 'off'
-              - condition: state
-                entity_id: binary_sensor.round_led_mb_nightlight
-                state: 'off'
-            sequence:
-              - action: light.turn_on
-                entity_id: light.round_led_mb
-                data:
-                  brightness: 77
-                  color_temp_kelvin: 3000
-          - conditions:
-              - condition: state
-                entity_id: light.round_led_mb
-                state: 'on'
-            sequence:
-              - action: light.turn_off
-                entity_id: light.round_led_mb
-  
+                mode: normal
+            - action: light.turn_on
+              entity_id: light.round_led_mb
+              data:
+                brightness: 77
+                color_temp_kelvin: 3000
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: "off"
+            - condition: state
+              entity_id: binary_sensor.round_led_mb_nightlight
+              state: "off"
+          sequence:
+            - action: light.turn_on
+              entity_id: light.round_led_mb
+              data:
+                brightness: 77
+                color_temp_kelvin: 3000
+        - conditions:
+            - condition: state
+              entity_id: light.round_led_mb
+              state: "on"
+          sequence:
+            - action: light.turn_off
+              entity_id: light.round_led_mb
+
 # ##################################
 # Master Bedroom - Round LED Restart
 # ##################################
-  - alias: master_bedroom_round_led_restart
-    id: master_bedroom_round_led_restart
-    mode: single
-    max_exceeded: silent    
-    initial_state: true
-    triggers:
-      - trigger: time_pattern
-        minutes: "/1"
-      # - platform: state
-      #   entity_id: light.round_led_mb
-      #   to: "unavailable"
-      #   for:
-      #     minutes: 2
-      # - platform: numeric_state
-      #   entity_id: sensor.ha_uptime
-      #   above: 0
-      #   below: 2
-    conditions:
-      - condition: state
-        entity_id: light.round_led_mb
-        state: "unavailable"
-        for:
-          minutes: 2
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-      - condition: state
-        entity_id: switch.system_round_led_mb_restart_key
-        state: 'on'
-      - condition: template
-        value_template: >
-          {% set ignore = ['unknown', 'unavailable', 'none'] %}
-          {{ states('switch.shelly_1_led_mb') not in ignore }}        
-    actions:
-      - repeat:
-          while:
-            - condition: state
-              entity_id: light.round_led_mb
-              state: "unavailable"
-            - condition: template
-              value_template: "{{ repeat.index <= 5 }}"
-          sequence:
-            - action: switch.turn_off
-              entity_id: switch.shelly_1_led_mb
-            - delay:
-                seconds: 15
-            - action: switch.turn_on
-              entity_id: switch.shelly_1_led_mb
-            - action: notify.telegram
-              data:
-                message: "\U0001f6a8 Round LED MB restart done({{repeat.index}})!"
-            - delay:
-                seconds: 30
-      - condition: state
-        entity_id: light.round_led_mb
-        state: 'unavailable'
-      - action: notify.telegram
-        data:
-          message: "\U0001f6a8 Round LED MB restart unsuccessful!"
-      - action: switch.turn_off
-        entity_id: switch.system_round_led_mb_restart_key
-  
+- alias: master_bedroom_round_led_restart
+  id: master_bedroom_round_led_restart
+  mode: single
+  max_exceeded: silent
+  initial_state: true
+  triggers:
+    - trigger: time_pattern
+      minutes: "/1"
+    # - platform: state
+    #   entity_id: light.round_led_mb
+    #   to: "unavailable"
+    #   for:
+    #     minutes: 2
+    # - platform: numeric_state
+    #   entity_id: sensor.ha_uptime
+    #   above: 0
+    #   below: 2
+  conditions:
+    - condition: state
+      entity_id: light.round_led_mb
+      state: "unavailable"
+      for:
+        minutes: 2
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: state
+      entity_id: switch.system_round_led_mb_restart_key
+      state: "on"
+    - condition: template
+      value_template: >
+        {% set ignore = ['unknown', 'unavailable', 'none'] %}
+        {{ states('switch.shelly_1_led_mb') not in ignore }}
+  actions:
+    - repeat:
+        while:
+          - condition: state
+            entity_id: light.round_led_mb
+            state: "unavailable"
+          - condition: template
+            value_template: "{{ repeat.index <= 5 }}"
+        sequence:
+          - action: switch.turn_off
+            entity_id: switch.shelly_1_led_mb
+          - delay:
+              seconds: 15
+          - action: switch.turn_on
+            entity_id: switch.shelly_1_led_mb
+          - action: notify.send_message
+            data:
+              entity_id: notify.telegram_dima
+              message: "\U0001f6a8 Round LED MB restart done({{repeat.index}})!"
+          - delay:
+              seconds: 30
+    - condition: state
+      entity_id: light.round_led_mb
+      state: "unavailable"
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f6a8 Round LED MB restart unsuccessful!"
+    - action: switch.turn_off
+      entity_id: switch.system_round_led_mb_restart_key
+
 # ##################################
 # Master Bedroom - Main Light Auto Restart Key Toggle
 # ##################################
-  - alias: master_bedroom_main_lamp_restart_key_toggle
-    id: master_bedroom_lamp_restart_key_toggle
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: light.round_led_mb
-        from: 'unavailable'
-    actions:
-      - action: switch.turn_on
-        entity_id: switch.system_round_led_mb_restart_key
-  
+- alias: master_bedroom_main_lamp_restart_key_toggle
+  id: master_bedroom_lamp_restart_key_toggle
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_mb
+      from: "unavailable"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.system_round_led_mb_restart_key
+
 # ##################################
 # Master Bedroom - Turn Lamp Switch On if Off
 # ##################################
-  - alias: master_bedroom_main_lamp_switch_on_if_off
-    id: master_bedroom_main_lamp_switch_on_if_off
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x00158d00013e6aa5_action
-          click_type: button_2_single
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x04cf8cdf3c77cc5f_action
-          click_type: button_3_single
-    conditions:
-      - condition: state
-        entity_id: switch.shelly_1_led_mb
-        state: "off"
-    actions:
-      - action: switch.turn_on
-        entity_id: switch.shelly_1_led_mb
-  
+- alias: master_bedroom_main_lamp_switch_on_if_off
+  id: master_bedroom_main_lamp_switch_on_if_off
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x00158d00013e6aa5_action
+        click_type: button_2_single
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x04cf8cdf3c77cc5f_action
+        click_type: button_3_single
+  conditions:
+    - condition: state
+      entity_id: switch.shelly_1_led_mb
+      state: "off"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.shelly_1_led_mb
+
 # ##################################
 # Master Bedroom - Timer restart with movement
 # ##################################
-  - alias: master_bedroom_timer_restart
-    id: master_bedroom_timer_restart
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.motion
-        event_data:
-          entity_id: binary_sensor.0x00158d0001e53cda_motion
-    conditions:
-      - condition: state
-        entity_id: light.round_led_mb
-        state: "on"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.main_light_mb
-      - action: timer.start
-        entity_id: timer.main_light_mb
-  
+- alias: master_bedroom_timer_restart
+  id: master_bedroom_timer_restart
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.motion
+      event_data:
+        entity_id: binary_sensor.0x00158d0001e53cda_motion
+  conditions:
+    - condition: state
+      entity_id: light.round_led_mb
+      state: "on"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.main_light_mb
+    - action: timer.start
+      entity_id: timer.main_light_mb
+
 # ##################################
 # Master Bedroom - Timer off
 # ##################################
-  - alias: master_bedroom_timer_off
-    id: master_bedroom_timer_off
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: light.round_led_mb
-        to: "off"
-        from: "on"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.main_light_mb
-  
+- alias: master_bedroom_timer_off
+  id: master_bedroom_timer_off
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_mb
+      to: "off"
+      from: "on"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.main_light_mb
+
 # ##################################
 # Master Bedroom - Timer start on light on
 # ##################################
-  - alias: master_bedroom_timer_on
-    id: master_bedroom_timer_on
-    initial_state: true
-    triggers:
-      - trigger: state
-        entity_id: light.round_led_mb
-        to: "on"
-        from: "off"
-    actions:
-      - action: timer.cancel
-        entity_id: timer.main_light_mb
-      - action: timer.start
-        entity_id: timer.main_light_mb
-  
-  # # ##################################
-  # # Master Bedroom - Auto Light Off
-  # # ##################################
-  # - alias: master_bedroom_auto_light_off
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: event
-  #       event_type: timer.finished
-  #       event_data:
-  #         entity_id: timer.main_light_mb
-  #   # condition:
-  #   #   - condition: state
-  #   #     entity_id: binary_sensor.tod_day
-  #   #     state: 'on'
-  #   actions:
-  #     - action: light.turn_off
-  #       entity_id: light.round_led_mb
-  #       data:
-  #         transition: 30
-  
-  # ##################################
-  # Master Bedroom - Auto Light On
-  # ##################################
-  # - alias: master_bedroom_auto_light_on
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: event
-  #       event_type: xiaomi_aqara.motion
-  #       event_data:
-  #         entity_id: binary_sensor.motion_sensor_158d0001e53cda
-  #   conditions:
-  #     - condition: and
-  #       conditions:
-  #         - condition: state
-  #           entity_id: light.round_led_mb
-  #           state: 'off'
-  #         - condition: state
-  #           entity_id: binary_sensor.tod_day
-  #           state: 'on'
-  #         - condition: state
-  #           entity_id: sun.sun
-  #           state: below_horizon
-  #   actions:
-  #     - action: light.turn_on
-  #       entity_id: light.round_led_mb
-  
-  # ##################################
-  # Master Bedroom - Auto Ambilight On
-  # ##################################
-  # - alias: master_bedroom_auto_ambilight_light
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: state
-  #       entity_id: light.round_led_mb
-  #   actions:
-  #     - action: script.turn_on
-  #       data:
-  #         entity_id: script.master_bedroom_ambilight_{{ states('light.round_led_mb') | lower }}
-  
+- alias: master_bedroom_timer_on
+  id: master_bedroom_timer_on
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_mb
+      to: "on"
+      from: "off"
+  actions:
+    - action: timer.cancel
+      entity_id: timer.main_light_mb
+    - action: timer.start
+      entity_id: timer.main_light_mb
+
+# # ##################################
+# # Master Bedroom - Auto Light Off
+# # ##################################
+# - alias: master_bedroom_auto_light_off
+#   initial_state: true
+#   triggers:
+#     - trigger: event
+#       event_type: timer.finished
+#       event_data:
+#         entity_id: timer.main_light_mb
+#   # condition:
+#   #   - condition: state
+#   #     entity_id: binary_sensor.tod_day
+#   #     state: 'on'
+#   actions:
+#     - action: light.turn_off
+#       entity_id: light.round_led_mb
+#       data:
+#         transition: 30
+
+# ##################################
+# Master Bedroom - Auto Light On
+# ##################################
+# - alias: master_bedroom_auto_light_on
+#   initial_state: true
+#   triggers:
+#     - trigger: event
+#       event_type: xiaomi_aqara.motion
+#       event_data:
+#         entity_id: binary_sensor.motion_sensor_158d0001e53cda
+#   conditions:
+#     - condition: and
+#       conditions:
+#         - condition: state
+#           entity_id: light.round_led_mb
+#           state: 'off'
+#         - condition: state
+#           entity_id: binary_sensor.tod_day
+#           state: 'on'
+#         - condition: state
+#           entity_id: sun.sun
+#           state: below_horizon
+#   actions:
+#     - action: light.turn_on
+#       entity_id: light.round_led_mb
+
+# ##################################
+# Master Bedroom - Auto Ambilight On
+# ##################################
+# - alias: master_bedroom_auto_ambilight_light
+#   initial_state: true
+#   triggers:
+#     - trigger: state
+#       entity_id: light.round_led_mb
+#   actions:
+#     - action: script.turn_on
+#       data:
+#         entity_id: script.master_bedroom_ambilight_{{ states('light.round_led_mb') | lower }}
+
 # ##################################
 # Master Bedroom Table Lamp (Yeelight Color E27)
 # ##################################
-  # - alias: master_bedroom_color_table_lamp
-  #   id: master_bedroom_color_table_lamp
-  #   initial_state: true
-  #   mode: single
-  #   max_exceeded: silent
-  #   triggers:
-  #     # - platform: event
-  #     #   event_type: xiaomi_aqara.click
-  #     #   event_data:
-  #     #     entity_id: sensor.0x158d0001ef61be_action
-  #     - trigger: event
-  #       event_type: xiaomi_aqara.click
-  #       event_data:
-  #         entity_id: sensor.0x04cf8cdf3c77cc5f_action
-  #   conditions:
-  #     - condition: template
-  #       value_template: "{{ states('light.led_color_mb') in ['on','off'] }}"
-  #     - condition: template
-  #       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-  #   actions:
-  #     - choose:
-  #         - conditions:
-  #             - condition: template
-  #               value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_2_single' }}"
-  #           sequence:
-  #             - action: light.toggle
-  #               entity_id: light.led_color_mb
-  #         - conditions:
-  #             - condition: template
-  #               value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_2_double'  }}"
-  #           sequence:
-  #             - action: light.turn_on
-  #               entity_id: light.led_color_mb
-  #               data:
-  #                 brightness: 255
-  #                 color_temp_kelvin: 5000
-  #         - conditions:
-  #             - condition: template
-  #               value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_2_hold'  }}"
-  #           sequence:
-  #             - action: light.turn_on
-  #               entity_id: light.led_color_mb
-  #               data:
-  #                 brightness: 14
-  #                 color_temp_kelvin: 3000
+# - alias: master_bedroom_color_table_lamp
+#   id: master_bedroom_color_table_lamp
+#   initial_state: true
+#   mode: single
+#   max_exceeded: silent
+#   triggers:
+#     # - platform: event
+#     #   event_type: xiaomi_aqara.click
+#     #   event_data:
+#     #     entity_id: sensor.0x158d0001ef61be_action
+#     - trigger: event
+#       event_type: xiaomi_aqara.click
+#       event_data:
+#         entity_id: sensor.0x04cf8cdf3c77cc5f_action
+#   conditions:
+#     - condition: template
+#       value_template: "{{ states('light.led_color_mb') in ['on','off'] }}"
+#     - condition: template
+#       value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+#   actions:
+#     - choose:
+#         - conditions:
+#             - condition: template
+#               value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_2_single' }}"
+#           sequence:
+#             - action: light.toggle
+#               entity_id: light.led_color_mb
+#         - conditions:
+#             - condition: template
+#               value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_2_double'  }}"
+#           sequence:
+#             - action: light.turn_on
+#               entity_id: light.led_color_mb
+#               data:
+#                 brightness: 255
+#                 color_temp_kelvin: 5000
+#         - conditions:
+#             - condition: template
+#               value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_2_hold'  }}"
+#           sequence:
+#             - action: light.turn_on
+#               entity_id: light.led_color_mb
+#               data:
+#                 brightness: 14
+#                 color_temp_kelvin: 3000
 
 # ##################################
 # Master Bedroom - LED Strip Bookshelf Control with square key
 # ##################################
-  - alias: master_bedroom_led_strip_bookshelf_control
-    id: master_bedroom_led_strip_bookshelf_control
-    mode: single
-    max_exceeded: silent    
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x04cf8cdf3c77cc5f_action
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.esp32_strip_1s_bookshelf_mb_rgb') in ['on','off'] }}"
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}" 
-      - condition: numeric_state
-        entity_id: sensor.ha_uptime
-        above: 0
-    actions:
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_4_single' }}"
-            sequence:
-              - action: light.toggle
+- alias: master_bedroom_led_strip_bookshelf_control
+  id: master_bedroom_led_strip_bookshelf_control
+  mode: single
+  max_exceeded: silent
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x04cf8cdf3c77cc5f_action
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.esp32_strip_1s_bookshelf_mb_rgb') in ['on','off'] }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 0
+  actions:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_4_single' }}"
+          sequence:
+            - action: light.toggle
+              entity_id: light.esp32_strip_1s_bookshelf_mb_rgb
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_4_double' }}"
+          sequence:
+            - action: light.turn_on
+              data:
                 entity_id: light.esp32_strip_1s_bookshelf_mb_rgb
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_4_double' }}"
-            sequence:
-              - action: light.turn_on
-                data:
-                  entity_id: light.esp32_strip_1s_bookshelf_mb_rgb
-                  brightness: 255
-                  rgb_color: [255, 159, 70]
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_4_hold' }}"
-            sequence:
-              - action: light.turn_on
-                data:
-                  entity_id: light.esp32_strip_1s_bookshelf_mb_rgb
-                  brightness: 15
-                  rgb_color: [250, 95, 85]
+                brightness: 255
+                rgb_color: [255, 159, 70]
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_4_hold' }}"
+          sequence:
+            - action: light.turn_on
+              data:
+                entity_id: light.esp32_strip_1s_bookshelf_mb_rgb
+                brightness: 15
+                rgb_color: [250, 95, 85]
 
 # ##################################
 # Master Bedroom - LED Strip Wadrobe Control with square key
 # ##################################
-  - alias: master_bedroom_led_strip_wadrobe_control
-    id: master_bedroom_led_strip_wadrobe_control
-    mode: single
-    max_exceeded: silent    
-    initial_state: true
-    triggers:
-      - trigger: event
-        event_type: xiaomi_aqara.click
-        event_data:
-          entity_id: sensor.0x04cf8cdf3c77cc5f_action
-    conditions:
-      - condition: template
-        value_template: "{{ states('light.esp32_strip_1s_wadrobe_mb_rgb') in ['on','off'] }}"
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}" 
-      - condition: numeric_state
-        entity_id: sensor.ha_uptime
-        above: 0
-    actions:
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_2_single' }}"
-            sequence:
-              - action: light.toggle
+- alias: master_bedroom_led_strip_wadrobe_control
+  id: master_bedroom_led_strip_wadrobe_control
+  mode: single
+  max_exceeded: silent
+  initial_state: true
+  triggers:
+    - trigger: event
+      event_type: xiaomi_aqara.click
+      event_data:
+        entity_id: sensor.0x04cf8cdf3c77cc5f_action
+  conditions:
+    - condition: template
+      value_template: "{{ states('light.esp32_strip_1s_wadrobe_mb_rgb') in ['on','off'] }}"
+    # - condition: template
+    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    - condition: numeric_state
+      entity_id: sensor.ha_uptime
+      above: 0
+  actions:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'single' or trigger.event.data.click_type == 'button_2_single' }}"
+          sequence:
+            - action: light.toggle
+              entity_id: light.esp32_strip_1s_wadrobe_mb_rgb
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_2_double' }}"
+          sequence:
+            - action: light.turn_on
+              data:
                 entity_id: light.esp32_strip_1s_wadrobe_mb_rgb
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'double' or trigger.event.data.click_type == 'button_2_double' }}"
-            sequence:
-              - action: light.turn_on
-                data:
-                  entity_id: light.esp32_strip_1s_wadrobe_mb_rgb
-                  brightness: 255
-                  rgb_color: [255, 159, 70]
-          - conditions:
-              - condition: template
-                value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_2_hold' }}"
-            sequence:
-              - action: light.turn_on
-                data:
-                  entity_id: light.esp32_strip_1s_wadrobe_mb_rgb
-                  brightness: 15
-                  rgb_color: [250, 95, 85]
+                brightness: 255
+                rgb_color: [255, 159, 70]
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.event.data.click_type == 'hold' or trigger.event.data.click_type == 'button_2_hold' }}"
+          sequence:
+            - action: light.turn_on
+              data:
+                entity_id: light.esp32_strip_1s_wadrobe_mb_rgb
+                brightness: 15
+                rgb_color: [250, 95, 85]
 
 # ##################################
 # Master Bedroom - Main Light off with no occupancy for 1 hour
 # ##################################
-  - alias: master_bedroom_main_light_off_with_occupancy
-    id: master_bedroom_main_light_off_with_occupancy
-    initial_state: true
-    mode: single
-    max_exceeded: silent
-    triggers:
-      - trigger: state
-        entity_id: binary_sensor.presence_mb
-        to: 'off'
-        for: 
-          minutes: 15
-    conditions:
-      - condition: state
-        entity_id: group.lights_mb
-        state: 'on'
-    actions:
-      - action: light.turn_off
-        entity_id: light.round_led_mb_ambilight, light.0x54ef441000c88fa8_light, light.esp32_strip_1s_wadrobe_mb_rgb, light.esp32_strip_1s_bookshelf_mb_rgb
-        data:
-          transition: 15
-      # - condition: state
-      #   entity_id: binary_sensor.tod_day
-      #   state: 'off'
-      # - condition: state
-      #   entity_id: binary_sensor.round_led_mb_nightlight
-      #   state: 'off'
-      - action: light.turn_off
-        entity_id: light.round_led_mb
-        data:
-          transition: 15
-
+- alias: master_bedroom_main_light_off_with_occupancy
+  id: master_bedroom_main_light_off_with_occupancy
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.presence_mb
+      to: "off"
+      for:
+        minutes: 15
+  conditions:
+    - condition: state
+      entity_id: group.lights_mb
+      state: "on"
+  actions:
+    - action: light.turn_off
+      entity_id: light.round_led_mb_ambilight, light.0x54ef441000c88fa8_light, light.esp32_strip_1s_wadrobe_mb_rgb, light.esp32_strip_1s_bookshelf_mb_rgb
+      data:
+        transition: 15
+    # - condition: state
+    #   entity_id: binary_sensor.tod_day
+    #   state: 'off'
+    # - condition: state
+    #   entity_id: binary_sensor.round_led_mb_nightlight
+    #   state: 'off'
+    - action: light.turn_off
+      entity_id: light.round_led_mb
+      data:
+        transition: 15
 # ##################################
 # System - cristmass Tree Control Alice
 # ##################################
-  # - alias: master_bedroom_cristmass_tree_control_alice
-  #   id: master_bedroom_cristmass_tree_control_alice
-  #   initial_state: true
-  #   mode: parallel
-  #   triggers:
-  #     - trigger: event
-  #       event_type: yandex_intent
-  #       event_data:
-  #         text: Выключи ёлку
-  #       id: 'off'
-  #     - trigger: event
-  #       event_type: yandex_intent
-  #       event_data:
-  #         text: Включи ёлку
-  #       id: 'on'
-  #   conditions:
-  #     - condition: state
-  #       entity_id: switch.system_security_mode
-  #       state: 'off'
-  #   actions:
-  #     - action: 'switch.turn_{{ trigger.id }}'
-  #       entity_id: switch.gosund_strip_p1_relay1, switch.gosund_strip_p1_relay2, switch.gosund_strip_p1_relay3
-  
+# - alias: master_bedroom_cristmass_tree_control_alice
+#   id: master_bedroom_cristmass_tree_control_alice
+#   initial_state: true
+#   mode: parallel
+#   triggers:
+#     - trigger: event
+#       event_type: yandex_intent
+#       event_data:
+#         text: Выключи ёлку
+#       id: 'off'
+#     - trigger: event
+#       event_type: yandex_intent
+#       event_data:
+#         text: Включи ёлку
+#       id: 'on'
+#   conditions:
+#     - condition: state
+#       entity_id: switch.system_security_mode
+#       state: 'off'
+#   actions:
+#     - action: 'switch.turn_{{ trigger.id }}'
+#       entity_id: switch.gosund_strip_p1_relay1, switch.gosund_strip_p1_relay2, switch.gosund_strip_p1_relay3
+
 # # ##################################
 # # Master Bedroom - LED White MB Restart
 # # ##################################
@@ -708,7 +708,7 @@
 #       - condition: template
 #         value_template: >
 #           {% set ignore = ['unknown', 'unavailable', 'none'] %}
-#           {{ states('switch.0x00158d0002c3d86e_plug') not in ignore }}        
+#           {{ states('switch.0x00158d0002c3d86e_plug') not in ignore }}
 #     actions:
 #       - repeat:
 #           while:
@@ -724,20 +724,22 @@
 #                 seconds: 15
 #             - action: switch.turn_on
 #               entity_id: switch.0x00158d0002c3d86e_plug
-#             - action: notify.telegram
+#             - action: notify.send_message
 #               data:
+#                 entity_id: notify.telegram_dima  
 #                 message: "\U0001f6a8 LED White MB restart done({{repeat.index}})!"
 #             - delay:
 #                 seconds: 30
 #       - condition: state
 #         entity_id: light.led_white_mb
 #         state: 'unavailable'
-#       - action: notify.telegram
-#         data:
+#       - action: notify.send_message
+#         data:  
+#           entity_id: notify.telegram_dima  
 #           message: "\U0001f6a8 LED White MB restart unsuccessful!"
 #       - action: switch.turn_off
 #         entity_id: switch.system_led_white_mb_restart_key
-  
+
 # # ##################################
 # # Master Bedroom - LED White MB Auto Restart Key Toggle
 # # ##################################

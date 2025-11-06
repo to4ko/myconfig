@@ -103,8 +103,9 @@
     #     - sensor.errors_during_boot
     #     - sensor.warnings_during_boot
     #     #- binary_sensor.bed_led_enable
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001F603 Сервер({{state_attr('update.home_assistant_core_update','installed_version')}}) запущен за {{states('sensor.start_time')|int(0)}}сек! {{states('sensor.errors_during_boot')|int(0) | format(morph='ошибка', as_text=false) }}, {{states('sensor.warnings_during_boot')|int(0)| format(morph='предупреждение', as_text=false) }}"
     - action: script.turn_on
       entity_id: script.system_start
@@ -132,8 +133,9 @@
   actions:
     - action: switch.turn_off
       entity_id: switch.system_main_lead
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001F621 Сервер({{state_attr('update.home_assistant_core_update','installed_version')}}) остановлен после {{states('sensor.ha_uptime_text').replace('d','д').replace('h','ч').replace('m','м')}} работы!"
 
 # ##################################
@@ -190,8 +192,9 @@
           trigger.to_state.state not in ignore and
           trigger.to_state.state != trigger.from_state.state }}
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U00002b50 GitHub Star -> {{ trigger.to_state.state }}! "
 
 # ##################################
@@ -207,8 +210,9 @@
     - trigger: event
       event_type: device_tracker_new_device
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U00002734 Новое устройство: {{ trigger.event.data.host_name if trigger.event.data.host_name is defined else 'NA' }} - ({{ trigger.event.data.entity_id if trigger.event.data.entity_id is defined else 'NA' }})"
 
 # ##################################
@@ -290,8 +294,9 @@
     - trigger: time
       at: "00:00:01"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001F305 Начался новый день! За прошедшие сутки перезагрузок - {{states('counter.restart_counter')|int(0) }}, ошибок - {{states('counter.error_counter')|int(0) }}, предупреждений - {{states('counter.warning_counter')|int(0)}}, ошибок входа - {{states('counter.badlogin_counter')|int(0)}},  cработало автоматизаций - {{states('counter.triggered_automations')|int(0)}}, ошибок автоматизаций - {{states('counter.automation_error_counter')|int(0)}}, запущенно скриптов - {{states('counter.executed_scripts')|int(0)}}. Входная дверь открывалась - {{states('counter.main_door_hb')|int(0)}}раз(а). Чайник включали - {{states('counter.kettle_k')|int(0)}}раз(а)"
     - action: counter.reset
       entity_id:
@@ -334,7 +339,7 @@
 - alias: system_login_failure
   id: system_login_failure
   mode: single
-  max_exceeded: silent  
+  max_exceeded: silent
   initial_state: true
   triggers:
     - trigger: persistent_notification
@@ -355,7 +360,7 @@
   actions:
     - action: counter.increment
       entity_id: counter.badlogin_counter
-    # - action: notify.telegram
+    # - action: notify.send_message
     #   data:
     #     message: >-
     #       {% set ipadress = trigger.to_state.attributes.message.split('Login attempt or request with invalid authentication from ')[1] | replace('. See the log for details.','') %}
@@ -393,7 +398,7 @@
 - alias: system_blocked_ip
   id: system_blocked_ip
   mode: single
-  max_exceeded: silent  
+  max_exceeded: silent
   initial_state: true
   triggers:
     - trigger: state
@@ -403,8 +408,9 @@
   #   - condition: template
   #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: >
           {% set ipadress = trigger.to_state.attributes.message.split('from ')[1] | regex_replace('\s+.*') %}
           {{"\U000026d4"}} Заблокирован IP: {{ ipadress }}
@@ -421,7 +427,7 @@
   mode: single
   #max: 10
   max_exceeded: silent
-  
+
   triggers:
     - trigger: time_pattern
       hours: "/1"
@@ -500,8 +506,9 @@
     - trigger: time
       at: "20:30:00"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: >-
           {%- set datanames = namespace(low_batt=[]) -%}
           {%- set threshold_zb = states('input_number.battery_low_level_zb')|int(0) -%}
@@ -534,8 +541,9 @@
       data:
         keep_days: 15
         repack: true
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f4ab Очистка базы"
 
 # ##################################
@@ -550,8 +558,9 @@
     - trigger: event
       event_type: transmission_downloaded_torrent
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001F4AF Загрузка завершена {{trigger.event.data.name}}"
 
 # ##################################
@@ -572,8 +581,9 @@
   #   - condition: template
   #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0000274C Перезапуск отменён. Конфигурация содержит ошибки {{ trigger.to_state.attributes.message }}"
     - action: persistent_notification.dismiss
       data:
@@ -613,8 +623,9 @@
     - condition: template
       value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: |
           {{ '\U0000274C' }} Ошибка выполнения автоматизации: {{ trigger.event.data.message | e }}
     - action: counter.increment
@@ -639,8 +650,9 @@
     - condition: template
       value_template: "{{ (states('sensor.error_counter_hourly')|int(0) % 50) == 0 }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{states('sensor.error_counter_hourly')|int(0)}}"
 
 # ##################################
@@ -661,8 +673,9 @@
     - condition: template
       value_template: "{{ (states('sensor.warning_counter_hourly')|int(0) % 50) == 0 }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U000026a0 Внимание! Количество предупреждений в час выросло до {{states('sensor.warning_counter_hourly')|int(0)}}"
 
 # ##################################
@@ -684,8 +697,9 @@
       event_data:
         level: CRITICAL
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f534 Критическая ошибка системы: {{ trigger.event.data.message | e}}!"
 
 # ##################################
@@ -699,7 +713,7 @@
 #       entity_id: sensor.esp32_ble_hs_dynamic_intensity
 #       above: 100
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U00002622 Внимание! Радиоактивный фон превышен {{states('sensor.esp32_ble_hs_dynamic_intensity')|int(0)}}мсв/ч!"
 
@@ -732,8 +746,9 @@
       data:
         entity_id: number.up_chime_volume
         value: "{% if is_state('switch.system_silent_mode','on') %}0{%else%}80{%endif%}"
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: >
           {% if is_state('switch.system_silent_mode','on') %}
             {{'\U0001f515'}} Режим тишины включен!
@@ -788,8 +803,9 @@
       entity_id: sensor.ha_uptime
       above: 0
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U00002699 {{trigger.to_state.attributes.friendly_name}}: {% if trigger.from_state.state in ['on','off','unknown','unavailable'] %}{{trigger.from_state.state}}{%else%}online{%endif%} -> {% if trigger.to_state.state in ['on','off','unknown','unavailable'] %}{{trigger.to_state.state}}{%else%}online{%endif%}"
 
 # ##################################
@@ -807,8 +823,9 @@
       for:
         seconds: 2
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: >
           {% if is_state('binary_sensor.0x00158d000323c87c_contact','off') %}
           {{'\U0001F7E2'}} Watchdog: API Connected
@@ -826,8 +843,9 @@
     - trigger: state
       entity_id: switch.system_dark_mode
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: >
           {% if is_state('switch.system_dark_mode','on') %}
             {{'\U0001f318'}} Режим темноты включен
@@ -890,8 +908,9 @@
           entity_id: sensor.esp32_node_b_hot_pipe
           state: "unavailable"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f321 Внимание! Горячая вода {% if states('sensor.esp32_node_b_hot_pipe')|float(0) > 40 %}включена{%else%}выключена{%endif%}!"
 
 # ##################################
@@ -907,8 +926,9 @@
       for:
         minutes: 5
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f321 Внимание! Температура трубы холодной воды выше {{states('sensor.esp32_node_b_cold_pipe')|int(0)}}°C"
 
 # ##################################
@@ -931,8 +951,9 @@
   actions:
     - action: input_boolean.turn_{{states('binary_sensor.central_heating')}}
       entity_id: input_boolean.central_heating
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f321 Внимание! Отопление {% if is_state('binary_sensor.central_heating','on') %}включено{%else%}выключено{%endif%}!"
 
 # ##################################
@@ -954,8 +975,9 @@
       entity_id: input_boolean.central_heating
       state: "on"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f321 Внимание! Температура трубы {{trigger.to_state.attributes.friendly_name}} ниже 30°C"
 
 # ##################################
@@ -991,8 +1013,9 @@
         - condition: template
           value_template: "{{ states('input_boolean.ha_shutdown') == 'off' }}"
       then:
-        - action: notify.telegram
+        - action: notify.send_message
           data:
+            entity_id: notify.telegram_dima
             message: >
               {% if trigger.event.data.new_state.state in ['unavailable'] %}{{'\U0001F4A5'}}
               {% elif trigger.event.data.old_state.state in ['unavailable'] %}{{'\U00002705'}}
@@ -1014,8 +1037,9 @@
       for:
         seconds: 5
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U00002705 ZB: Все устройства онлайн!"
 
 # ##################################
@@ -1076,8 +1100,9 @@
       for:
         minutes: 2
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f534 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 
 # ##################################
@@ -1142,8 +1167,9 @@
       entity_id: sensor.ha_uptime
       above: 0
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f7e2 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 # {%-for state in states.binary_sensor
 # if  state.entity_id.endswith("_status") and state.entity_id in integration_entities('esphome')%}
@@ -1165,7 +1191,7 @@
 #     - condition: template
 #       value_template: "{{(as_timestamp(now())|int(0) - as_timestamp(states.sensor.sensor.gismeteo_geomagnetic_field.last_changed)|int(0)) < 60*60 }}"
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: >-
 #           {% set magnetic_conditions = ['Норма','Небольшие возмущения','Небольшие возмущения','Небольшие возмущения','Слабая буря','Умеренная буря','Сильная буря','Шторм','Экстремальный шторм'] %}
@@ -1190,8 +1216,9 @@
     # - condition: template
     #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U000026d4 GW3 Ошибка обнаружена в логе!"
 
 # ##################################
@@ -1234,15 +1261,17 @@
             - condition: trigger
               id: "to_unavail"
           sequence:
-            - action: notify.telegram
+            - action: notify.send_message
               data:
+                entity_id: notify.telegram_dima
                 message: "\U000026d4 Fully: связь потеряна!"
         - conditions:
             - condition: trigger
               id: "from_unavail"
           sequence:
-            - action: notify.telegram
+            - action: notify.send_message
               data:
+                entity_id: notify.telegram_dima
                 message: "\U00002705 Fully: связь восстановлена!"
 
 # ##################################
@@ -1263,8 +1292,9 @@
     - condition: template
       value_template: '{{ "Already running" in (trigger.event.data.message|string) }}'
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U000026d4 Warning! {{ trigger.event.data.message | join | e }}"
 
 # ##################################
@@ -1282,8 +1312,9 @@
     - trigger: event
       event_type: automation_reloaded
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f4ac Автоматизации перезагружены!"
 
 # ##################################
@@ -1299,8 +1330,9 @@
         domain: script
         service: reload
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f4ac Скрипты перезагружены!"
 
 # ##################################
@@ -1346,7 +1378,7 @@
     #   data:
     #     entity_id: input_number.washer_b_run_time
     #     value: "{{ (states('input_number.washer_b_run_time') | float(0) + states('sensor.washer_b_run_time_yesterday') | float(0)) | round(2, 'common') }}"
-    # - action: notify.telegram
+    # - action: notify.send_message
     #   data:
     #     message: "\U0001f9ed Статистика использования устройств обновлена!"
 
@@ -1370,8 +1402,9 @@
       for:
         seconds: 3
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: >
           {% if is_state('binary_sensor.0x00158d0003262acc_contact','on') %}{{'\U00002705'}} Электроснабжение восстановлено!
           {% else %}{{'\U0000274c'}} Внимание! Электроснабжение прекращено!
@@ -1433,8 +1466,9 @@
     - condition: template
       value_template: "{{ 0 <= states(trigger.entity_id)|int(-1) < 30 }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0000267b ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}} перезапустился, аптайм {{states(trigger.entity_id)|int(0)}}с!"
 # {%-for state in states.sensor
 # if  state.entity_id.endswith("_uptime_s")%}
@@ -1454,7 +1488,7 @@
 #       for:
 #         hours: 3
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f32a Внимание! Уровень PM2.5 высокий! {{states('sensor.waqi_pm25')}}aqi!"
 
@@ -1471,7 +1505,7 @@
 #       for:
 #         hours: 3
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f32a Внимание! Уровень PM10 высокий! {{state_attr('sensor.waqi_pm10')}}aqi!"
 
@@ -1495,7 +1529,7 @@
 #     - condition: template
 #       value_template: "{{ 'i5_' not in trigger.event.data.entity_id }}"
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "{{trigger.event.data.entity_id}}: {{trigger.event.data.old_state.state}} -> {{trigger.event.data.new_state.state}}"
 
@@ -1607,23 +1641,24 @@
     - delay:
         seconds: 2
 
-    # - action: notify.telegram
+    # - action: notify.send_message
     #   data:
     #     message: "now - {{ as_timestamp(now()) }} "
 
-    # - action: notify.telegram
+    # - action: notify.send_message
     #   data:
     #     message: "fired - {{ as_timestamp(state_attr('sensor.yandex_response','time_fired')) }} "
 
-    # - action: notify.telegram
+    # - action: notify.send_message
     #   data:
     #     message: "delta - {{as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired'))}}"
     - if:
         - condition: template
           value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) + 0 ) > 30 }}"
       then:
-        - action: notify.telegram
+        - action: notify.send_message
           data:
+            entity_id: notify.telegram_dima
             message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{as_timestamp(state_attr('sensor.yandex_response','time_fired'))  | timestamp_custom('%d-%m-%Y %H:%M:%S',true,0)}}"
         - action: input_boolean.turn_on
           target:
@@ -1635,9 +1670,8 @@
     - wait_template: "{{ is_state('sensor.yandex_st_alice_state','idle') }}"
       timeout:
         minutes: 5
-# {% set ent_id = 'sensor.yandex_st' + '_alice_state' %}
-# {{ is_state(ent_id,'idle') }}
-        
+    # {% set ent_id = 'sensor.yandex_st' + '_alice_state' %}
+    # {{ is_state(ent_id,'idle') }}
 
     - action: input_number.set_value
       data:
@@ -1652,7 +1686,7 @@
     #     - condition: template
     #       value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) ) > 10 }}"
     #   then:
-    #     - action: notify.telegram
+    #     - action: notify.send_message
     #       data:
     #         message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{state_attr('sensor.yandex_response','time_fired')}}"
 
@@ -1662,7 +1696,7 @@
 - alias: system_hot_water_boolean_change
   id: system_hot_water_boolean_change
   mode: single
-  max_exceeded: silent  
+  max_exceeded: silent
   initial_state: true
   triggers:
     - trigger: state
@@ -1687,7 +1721,7 @@
 - alias: system_cold_water_boolean_change
   id: system_cold_water_boolean_change
   mode: single
-  max_exceeded: silent 
+  max_exceeded: silent
   initial_state: true
   triggers:
     - trigger: state
@@ -1839,7 +1873,7 @@
 #           trigger.to_state.state not in ignore and
 #           trigger.to_state.state != trigger.from_state.state }}
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: >-
 #           {% if trigger.to_state.state == 'on' %}{{"\U00002705"}}{% else %}{{"\U000026d4"}}{% endif %} SLS шлюз: {{trigger.from_state.state}} -> {{trigger.to_state.state}}
@@ -1865,7 +1899,7 @@
 #           trigger.to_state.state in ignore) and
 #           trigger.to_state.state != trigger.from_state.state }}
 #   actions:
-#     # - action: notify.telegram
+#     # - action: notify.send_message
 #     #   data:
 #     #     message: "\U000026a0 Внимание! WallPanel {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 
@@ -1954,8 +1988,9 @@
   #   - condition: template
   #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001F4DF Найдено новое устройство!"
     # - action: persistent_notification.dismiss
     #   data:
@@ -1975,7 +2010,7 @@
 #       entity_id: sensor.cert_validity_left
 #       below: 16
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U000026a0 Срок действия сертификата заканчивается через 15 дней! Запуск обновления сертификата"
 #     - action: hassio.addon_start
@@ -1988,7 +2023,7 @@
 #       timeout:
 #         minutes: 20
 #       continue_on_timeout: false
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U00002705 Сертификат успешно обновлен!"
 
@@ -2002,7 +2037,7 @@
 #     - trigger: event
 #       event_type: yandex_station_response
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "{{ trigger.event.data.text }}"
 
@@ -2031,8 +2066,9 @@
       value_template: >-
         {{ state_attr(trigger.event.data.entity_id, 'last_missed') |int(0) > 9 }}
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U000023ed Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} пропустил {{ state_attr(trigger.event.data.entity_id, 'last_missed') | format(morph='пакет', as_text=false) }}!"
 
 # ##################################
@@ -2063,7 +2099,7 @@
 #       value_template: >-
 #         {{ trigger.event.data.new_state.attributes.new_resets |int(0) > trigger.event.data.old_state.attributes.new_resets |int(0) }}
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f501 Внимание! {{iif(device_attr(trigger.event.data.entity_id, 'name_by_user') != none, device_attr(trigger.event.data.entity_id, 'name_by_user'), device_attr(trigger.event.data.entity_id, 'name'), device_attr(trigger.event.data.entity_id, 'name'))}} перезапустился ({{ trigger.event.data.old_state.attributes.new_resets |int(0)}} -> {{trigger.event.data.new_state.attributes.new_resets |int(0) }})!"
 
@@ -2081,7 +2117,7 @@
 #   conditions:
 #     - "{{ (states('sensor.zigbee_devices_last_resets') not in ['unknown', 'unavailable', 'none']) and (states('sensor.zigbee_devices_last_resets') != '')  }}"
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f578️ Внимание! Обнаружены перезагрузки zigbee устройств: {{ states('sensor.zigbee_devices_last_resets') }}."
 
@@ -2103,7 +2139,7 @@
 #       for:
 #         seconds: 5
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: >-
 #           {% if trigger.to_state.attributes.connection_class in ['local_push', 'local_poll'] -%}{{ '\U00002705' }}{%- else -%}{{ '\U000026A0' }}{%- endif -%}{{- trigger.to_state.name -}}: {{- trigger.from_state.attributes.connection_class-}} --> {{- trigger.to_state.attributes.connection_class-}}
@@ -2151,7 +2187,7 @@
 #           trigger.to_state.state != trigger.from_state.state
 #         }}
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: >-
 #           {%- set new = trigger.to_state.state |float(0) %}
@@ -2239,13 +2275,19 @@
               entity_id: binary_sensor.supervisor_is_healthy
               state: "on"
           sequence:
-            - action: notify.telegram
+            - action: notify.send_message
               data:
+                entity_id: notify.telegram_dima
                 message: "\U00002705 Supevisor перешел в состояние Healthy!"
-      default:
-        - action: notify.telegram
-          data:
-            message: "\U0000274C Supevisor перешел в состояние Unhealthy!"
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.supervisor_is_healthy
+              state: "on"
+          sequence:                
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0000274C Supevisor перешел в состояние Unhealthy!"
 
 # ##################################
 # System - Ya speaker state
@@ -2277,8 +2319,9 @@
       from: "on"
       to: "off"
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f50a Станция {{trigger.to_state.name | e}} {% if trigger.id == 'non_local' -%} отключила локальный режим управления {%- else -%} перешла в локальный режим управления {%- endif %}"
 
 # ##################################
@@ -2320,7 +2363,7 @@
 #         - update.switch_mini
 #       to: 'on'
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f9f0 Обновление доступно для {{device_attr(trigger.entity_id, 'name')}}"
 
@@ -2350,7 +2393,7 @@
 #       for:
 #         seconds: 30
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f4fa Wallpanel: {% if is_state('binary_sensor.wp_digma801_connection','on')%}связь восстановлена{%else%}потеря связи{%endif%}"
 
@@ -2373,7 +2416,7 @@
 #       for:
 #         minutes: 1
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f4f7 PinholeCam: {% if is_state('binary_sensor.pinhole_state','off')%}потеря связи{%else%}связь восстановлена{%endif%}"
 #     - if:
@@ -2460,7 +2503,7 @@
 #       entity_id: binary_sensor.wp_digma801_connection
 #       attribute: currentUrl
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "{{ trigger.from_state.attribute.currentUrl }} -> {{ trigger.to_state.attribute.currentUrl }}"
 
@@ -2502,8 +2545,9 @@
       entity_id: sensor.kiosk_battery
       below: 20
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f50c Fully: Принудительное включение зарядки"
     - action: switch.turn_on
       entity_id: switch.sonoff_mini_r4_kiosk_charger_relay
@@ -2554,8 +2598,9 @@
       event_data:
         service: create
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001F41B Проблема в <b>{{ trigger.event.data.domain | e }}</b>, детали: <b>{{ trigger.event.data.issue_id | e }}</b>"
 
 # ##################################
@@ -2638,7 +2683,7 @@
 #     # - action: hassio.addon_restart
 #     #   data:
 #     #     addon: a889bffc_go2rtc
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "go2rtc перезапуск"
 
@@ -2755,8 +2800,9 @@
           {%elif trigger.to_state.state|float(0) >= 1000 %}
           {{trigger.to_state.state|int(0) / 1000 }} Gb/s
           {%endif%}
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f6a6 {{trigger.to_state.name}}: {{old_value}} -> {{new_value}}"
 
 # ##################################
@@ -2773,8 +2819,9 @@
       entity_id: sensor.udm_last_active_ip
       to:
   actions:
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f6a6 {{trigger.to_state.name}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 
 # ##################################
@@ -2801,15 +2848,17 @@
             - condition: trigger
               id: "id_to"
           sequence:
-            - action: notify.telegram
+            - action: notify.send_message
               data:
+                entity_id: notify.telegram_dima
                 message: "\U0001f534 Plex went offline!"
         - conditions:
             - condition: trigger
               id: "id_from"
           sequence:
-            - action: notify.telegram
+            - action: notify.send_message
               data:
+                entity_id: notify.telegram_dima
                 message: "\U0001f7e2 Plex back online!"
 
 # ##################################
@@ -2826,7 +2875,7 @@
 #       entity_id: sensor.esp32_node_b_reset_reason
 #       to:
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f534 Node B Restart Reason: {{states('sensor.esp32_node_b_reset_reason') }}"
 
@@ -2851,8 +2900,9 @@
         option: reboot
       target:
         entity_id: select.54ef443f1fac_command
-    - action: notify.telegram
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: "\U0001f534 Gateway HB restart"
 
 # ##################################
@@ -2871,7 +2921,7 @@
 #       for:
 #         minutes: 5
 #   actions:
-#     - action: notify.telegram
+#     - action: notify.send_message
 #       data:
 #         message: "\U0001f534 VM OWRT Restart"
 #     - action: button.press
@@ -2912,8 +2962,9 @@
             - action: input_boolean.turn_on
               target:
                 entity_id: input_boolean.googlevideo_error
-            - action: notify.telegram
+            - action: notify.send_message
               data:
+                entity_id: notify.telegram_dima
                 message: "\U0001f534 Googlevideo connection lost"
         - conditions:
             - condition: trigger
@@ -2925,8 +2976,9 @@
             - action: input_boolean.turn_off
               target:
                 entity_id: input_boolean.googlevideo_error
-            - action: notify.telegram
+            - action: notify.send_message
               data:
+                entity_id: notify.telegram_dima
                 message: "\U0001f7e2 Googlevideo connection restored!"
 
 # ##################################
@@ -2949,13 +3001,13 @@
       entity_id: sensor.1621_go2rtc_active_streams
       state: "0"
   actions:
-    # - action: notify.telegram
+    # - action: notify.send_message
     #   data:
     #     message: "\U0001f4f9 1621 StreamCount {{trigger.from_state.state}} -> {{trigger.to_state.state}}. Kiosk reload start url"
     - action: button.press
       entity_id:
         button.kiosk_load_start_url
-        # - action: notify.telegram
+        # - action: notify.send_message
         #   data:
         #     message: "\U0001f4f9 Kiosk restart"
         # - action: button.press

@@ -1,164 +1,162 @@
-  breather_v_turn_on:
-    alias: Breather V Turn On
-    mode: queued
-    max: 10
-    max_exceeded: silent
-    sequence:
-      - action: switch.turn_off
-        entity_id: switch.0x00158d000344998e_plug
-      - delay:
-          seconds: 3
-      - action: switch.turn_on
-        entity_id: switch.0x00158d000344998e_plug
-      - delay:
-          seconds: 1
-      - action: button.press
-        entity_id: button.digma_ir_v_breather_pwr
+breather_v_turn_on:
+  alias: Breather V Turn On
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  sequence:
+    - action: switch.turn_off
+      entity_id: switch.0x00158d000344998e_plug
+    - delay:
+        seconds: 3
+    - action: switch.turn_on
+      entity_id: switch.0x00158d000344998e_plug
+    - delay:
+        seconds: 1
+    - action: button.press
+      entity_id: button.digma_ir_v_breather_pwr
 
-  breather_turn_on:
-    alias: Breather Turn On
-    mode: queued
-    max: 10
-    max_exceeded: silent
-    fields:
-      breather:
-        description: 'Идентификатор бризера (V, S, MB)'
-        example: 'V'
-    sequence:
-      # - action: notify.telegram
-      #   data:
-      #     message: "name {{breather}}, speed {{speed}}"
+breather_turn_on:
+  alias: Breather Turn On
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  fields:
+    breather:
+      description: "Идентификатор бризера (V, S, MB)"
+      example: "V"
+  sequence:
+    # - action: notify.send_message
+    #   data:
+    #     message: "name {{breather}}, speed {{speed}}"
 
+    # - if:
+    #     - condition: template
+    #       value_template: "{{ breather == 'V' }}"
+    #     - condition: state
+    #       entity_id: binary_sensor.breather_v
+    #       state: 'off'
+    #   then:
+    #     - action: switch.turn_off
+    #       entity_id: switch.0x00158d000344998e_plug
+    #     # - action: notify.send_message
+    #     #   data:
+    #     #     message: "plug off"
+    #     - delay:
+    #         seconds: 10
+    #     - action: switch.turn_on
+    #       entity_id: switch.0x00158d000344998e_plug
+    #     # - action: notify.send_message
+    #     #   data:
+    #     #     message: "plug on"
+    #     - delay:
+    #         seconds: 10
+    #     - action: button.press
+    #       entity_id: button.digma_ir_v_breather_pwr
 
-      # - if:
-      #     - condition: template
-      #       value_template: "{{ breather == 'V' }}"
-      #     - condition: state
-      #       entity_id: binary_sensor.breather_v
-      #       state: 'off'
-      #   then:
-      #     - action: switch.turn_off
-      #       entity_id: switch.0x00158d000344998e_plug
-      #     # - action: notify.telegram
-      #     #   data:
-      #     #     message: "plug off"
-      #     - delay:
-      #         seconds: 10
-      #     - action: switch.turn_on
-      #       entity_id: switch.0x00158d000344998e_plug
-      #     # - action: notify.telegram
-      #     #   data:
-      #     #     message: "plug on"
-      #     - delay:
-      #         seconds: 10
-      #     - action: button.press
-      #       entity_id: button.digma_ir_v_breather_pwr
+    # - action: notify.send_message
+    #   data:
+    #     message: "ir fire pwr on"
+    - variables:
+        breather_ent: "{{ 'binary_sensor.breather_' + (breather| lower) }}"
+    - if:
+        - condition: template
+          value_template: "{{ is_state(breather_ent,'off') }}"
+      then:
+        - action: button.press
+          data:
+            entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
+    - action: fan.set_percentage
+      data:
+        entity_id: "{{ 'fan.breather_' + (breather | lower ) }}"
+        percentage: "{{ state_attr('fan.breather_' + (breather | lower ),'percentage') }}"
 
+breather_turn_off:
+  alias: Breather Turn Off
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  fields:
+    breather:
+      description: "Идентификатор бризера (V, S, MB)"
+      example: "V"
+  sequence:
+    - variables:
+        breather_ent: "{{ 'binary_sensor.breather_' + (breather| lower) }}"
+    - if:
+        - condition: template
+          value_template: "{{ is_state(breather_ent,'on') }}"
+      then:
+        - action: button.press
+          data:
+            entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
 
-          # - action: notify.telegram
-          #   data:
-          #     message: "ir fire pwr on"
-      - variables:
-          breather_ent: "{{ 'binary_sensor.breather_' + (breather| lower) }}"
-      - if:
-          - condition: template
-            value_template: "{{ is_state(breather_ent,'off') }}"
-        then:
-          - action: button.press
-            data:
-              entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
-      - action: fan.set_percentage
-        data:
-          entity_id: "{{ 'fan.breather_' + (breather | lower ) }}"
-          percentage: "{{ state_attr('fan.breather_' + (breather | lower ),'percentage') }}"
+breather_speed_control:
+  alias: Breather Speed Control
+  mode: queued
+  max: 10
+  max_exceeded: silent
+  fields:
+    breather:
+      description: "Идентификатор бризера (V, S, MB)"
+      example: "V"
+    speed:
+      description: "Скорость для установки (25,50,75,100)"
+      example: "25"
+  sequence:
+    # - action: notify.send_message
+    #   data:
+    #     message: "name {{breather}}, speed {{speed}}"
+    - delay:
+        seconds: 5
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ speed|int(0) == 0 }}"
+          sequence:
+            - action: button.press
+              data:
+                entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
+            # - action: notify.send_message
+            #   data:
+            #     message: "name {{breather}}, to off"
 
-  breather_turn_off:
-    alias: Breather Turn Off
-    mode: queued
-    max: 10
-    max_exceeded: silent
-    fields:
-      breather:
-        description: 'Идентификатор бризера (V, S, MB)'
-        example: 'V'
-    sequence:
-      - variables:
-          breather_ent: "{{ 'binary_sensor.breather_' + (breather| lower) }}"
-      - if:
-          - condition: template
-            value_template: "{{ is_state(breather_ent,'on') }}"
-        then:
-          - action: button.press
-            data:
-              entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
-
-  breather_speed_control:
-    alias: Breather Speed Control
-    mode: queued
-    max: 10
-    max_exceeded: silent
-    fields:
-      breather:
-        description: 'Идентификатор бризера (V, S, MB)'
-        example: 'V'
-      speed:
-        description: 'Скорость для установки (25,50,75,100)'
-        example: '25'
-    sequence:
-      # - action: notify.telegram
-      #   data:
-      #     message: "name {{breather}}, speed {{speed}}"
-      - delay:
-          seconds: 5
-      - choose:
-          - conditions:
-              - condition: template
-                value_template: "{{ speed|int(0) == 0 }}"
-            sequence:
-              - action: button.press
-                data:
-                  entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
-              # - action: notify.telegram
-              #   data:
-              #     message: "name {{breather}}, to off"
-
-          - conditions:
-              - condition: template
-                value_template: "{{ speed|int(0) != 0 }}"
-            sequence:
-              - choose:
-                  - conditions:
-                      - condition: template
-                        value_template: "{{ is_state('binary_sensor.breather_' + (breather| lower), 'off') }}"
-                    sequence:
-                      # - action: notify.telegram
-                      #   data:
-                      #     message: "{{breather}} power from script"
-                      - action: button.press
-                        data:
-                          entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
-                      - delay:
-                          seconds: 2
-              - repeat:
-                  count: 5
+        - conditions:
+            - condition: template
+              value_template: "{{ speed|int(0) != 0 }}"
+          sequence:
+            - choose:
+                - conditions:
+                    - condition: template
+                      value_template: "{{ is_state('binary_sensor.breather_' + (breather| lower), 'off') }}"
                   sequence:
+                    # - action: notify.send_message
+                    #   data:
+                    #     message: "{{breather}} power from script"
                     - action: button.press
                       data:
-                        entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_down' }}"
+                        entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_pwr' }}"
                     - delay:
-                        milliseconds: 500
-              # - action: notify.telegram
-              #   data:
-              #     message: "speed set to {{speed}}"
-              - repeat:
-                  count: "{{ ((speed|int(0)) / 25) - 1}}"
-                  sequence:
-                    - action: button.press
-                      data:
-                        entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_up' }}"
-                    - delay:
-                        milliseconds: 500
-              - action: input_number.set_value
-                data:
-                  entity_id: "{{ 'input_number.breather_' + (breather| lower) + '_percentage' }}"
-                  value: "{{speed}}"
+                        seconds: 2
+            - repeat:
+                count: 5
+                sequence:
+                  - action: button.press
+                    data:
+                      entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_down' }}"
+                  - delay:
+                      milliseconds: 500
+            # - action: notify.send_message
+            #   data:
+            #     message: "speed set to {{speed}}"
+            - repeat:
+                count: "{{ ((speed|int(0)) / 25) - 1}}"
+                sequence:
+                  - action: button.press
+                    data:
+                      entity_id: "{{ 'button.digma_ir_' + (breather| lower) + '_breather_up' }}"
+                  - delay:
+                      milliseconds: 500
+            - action: input_number.set_value
+              data:
+                entity_id: "{{ 'input_number.breather_' + (breather| lower) + '_percentage' }}"
+                value: "{{speed}}"
