@@ -1,0 +1,109 @@
+telegram_send:
+  fields:
+    target:
+      description: "ID чата получателя или несколько через запятую"
+      example: "1234567890 или [1234567890, 9876543210]"
+      required: true
+      selector:
+        text:
+    message:
+      description: "Текст сообщения"
+      example: "Привет из Home Assistant!"
+      required: false
+      selector:
+        text:
+          multiline: true
+    media_type:
+      description: "Тип медиа: text, photo, video"
+      example: "text"
+      required: false
+      default: "text"
+      selector:
+        select:
+          options:
+            - "text"
+            - "photo"
+            - "video"
+    media_path:
+      description: "Путь к файлу (для photo/video)"
+      example: "/config/www/snapshot.jpg"
+      required: false
+      selector:
+        text:
+    media_url:
+      description: "URL медиа файла (альтернатива media_path)"
+      example: "http://192.168.1.100:8123/local/image.jpg"
+      required: false
+      selector:
+        text:
+    caption:
+      description: "Подпись к медиа файлу"
+      example: "Скриншот с камеры"
+      required: false
+      selector:
+        text:
+          multiline: true
+    disable_notification:
+      description: "Отключить звук уведомления"
+      example: false
+      required: false
+      default: false
+      selector:
+        boolean:
+    parse_mode:
+      description: "Режим парсинга текста: Markdown, HTML"
+      example: "Markdown"
+      required: false
+      selector:
+        select:
+          options:
+            - "Markdown"
+            - "HTML"
+  sequence:
+    - choose:
+        # Отправка текстового сообщения
+        - conditions:
+            - condition: template
+              value_template: "{{ media_type == 'text' }}"
+          sequence:
+            - service: telegram_bot.send_message
+              data:
+                target: "{{ target }}"
+                message: "{{ message }}"
+                disable_notification: "{{ disable_notification }}"
+                parse_mode: "{{ parse_mode if parse_mode else '' }}"
+        
+        # Отправка фото
+        - conditions:
+            - condition: template
+              value_template: "{{ media_type == 'photo' }}"
+          sequence:
+            - service: telegram_bot.send_photo
+              data:
+                target: "{{ target }}"
+                caption: "{{ caption if caption else message }}"
+                file: "{{ media_path if media_path else '' }}"
+                url: "{{ media_url if media_url else '' }}"
+                disable_notification: "{{ disable_notification }}"
+                parse_mode: "{{ parse_mode if parse_mode else '' }}"
+        
+        # Отправка видео
+        - conditions:
+            - condition: template
+              value_template: "{{ media_type == 'video' }}"
+          sequence:
+            - service: telegram_bot.send_video
+              data:
+                target: "{{ target }}"
+                caption: "{{ caption if caption else message }}"
+                file: "{{ media_path if media_path else '' }}"
+                url: "{{ media_url if media_url else '' }}"
+                disable_notification: "{{ disable_notification }}"
+                parse_mode: "{{ parse_mode if parse_mode else '' }}"
+      
+      # Fallback - если тип не распознан
+      default:
+        - service: system_log.write
+          data:
+            message: "Telegram wrapper: неизвестный тип медиа {{ media_type }}"
+            level: warning
