@@ -264,17 +264,16 @@
 # Software configuration
 **Proxmox Node Software:**
   - Proxmox VE 8
-      * Debian 12 with HA Supervised (main instance)
-      * Debian 12 with HA Supervised (backup instance)
+      * HAOS (main instance)
+      * HAOS (backup instance)
       * Plex
       * Zabbix Server
       * NGINX Proxy Manager
       * Bitwarden
       * MariaDB
-      * EMQX
 
 **Main Storage Unit Software**
-  - DSM 7.2
+  - DSM 7.3
   - Proxmox Backup Server VM
   - Docker containers:
     * InfluxDB
