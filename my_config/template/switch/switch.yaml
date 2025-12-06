@@ -1,0 +1,45 @@
+  - switch:
+    - unique_id: switch_pc_v
+      turn_on:
+      - action: switch.turn_on
+        target:
+          entity_id:
+          - switch.vovapc
+      turn_off:
+      - action: hassio.addon_stdin
+        data:
+          addon: core_rpc_shutdown
+          input: vova_pc
+      default_entity_id: switch.pc_v
+      icon: mdi:desktop-tower-monitor
+      state: '{{ states(''binary_sensor.pc_v'')|int(0) > 5 }}'
+      name: pc_v
+      
+  - switch:
+    - unique_id: switch_pc_s
+      turn_on:
+      - action: switch.turn_on
+        target:
+          entity_id:
+          - switch.sashapc
+      turn_off:
+      - action: hassio.addon_stdin
+        data:
+          addon: core_rpc_shutdown
+          input: sasha_pc
+      default_entity_id: switch.pc_s
+      icon: mdi:desktop-tower-monitor
+      state: '{{ states(''binary_sensor.pc_s'') }}'
+      name: pc_s
+  
+  - switch:
+    - unique_id: kill_switch
+      turn_on:
+      - action: automation.turn_off
+        entity_id: all
+      turn_off:
+      - action: automation.turn_on
+        entity_id: all
+      default_entity_id: switch.kill_switch
+      name: Kill Switch
+      state: '{{ is_state(''automation.system_error_counter'', ''off'') }}'
