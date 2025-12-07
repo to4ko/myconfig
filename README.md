@@ -274,7 +274,7 @@
 
 **Main Storage Unit Software**
   - DSM 7.3
-  - Proxmox Backup Server VM
+  - not in use - Proxmox Backup Server VM
   - Docker containers:
     * InfluxDB
     * Transmission
