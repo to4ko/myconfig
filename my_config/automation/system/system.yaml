@@ -3012,3 +3012,53 @@
         #     message: "\U0001f4f9 Kiosk restart"
         # - action: button.press
         #   entity_id: button.kiosk_restart_browser
+
+# ##################################
+# System - macpro sleep
+# ##################################
+- alias: system_macpro_sleep
+  id: system_macpro_sleep
+  initial_state: true
+  mode: queued
+  max: 50
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.macpro_ping
+      to: "off"
+      for:
+        minutes: 1
+      id: "to_off"
+    - trigger: state
+      entity_id: binary_sensor.macpro_ping
+      to: "on"
+      for:
+        minutes: 1
+      id: "to_on"
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: "to_off"
+          sequence:
+            - action: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.macpro_sleep
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f534 MacPro Ping Lost"
+        - conditions:
+            - condition: trigger
+              id: "to_on"
+            - condition: state
+              entity_id: input_boolean.macpro_sleep
+              state: "on"
+          sequence:
+            - action: input_boolean.turn_off
+              target:
+                entity_id: input_boolean.macpro_sleep
+            - action: notify.send_message
+              data:
+                entity_id: notify.telegram_dima
+                message: "\U0001f7e2 MacPro Ping Restored"
