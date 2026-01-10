@@ -59,6 +59,13 @@
   - 512Gb Samsung PM9A1 M.2
   - 2Tb Micron 7400 Pro U.3
 
+**Proxmox Node 3**
+  - [Minisforum MS02 Ultra](https://store.minisforum.com/products/minisforum-ms-02-ultra)
+  - Intel Core Ultra 9 285HX
+  - 2*48Gb DDR5 SODIMM
+  - 1Tb Samsung PM9A1 M.2
+  - 2Tb Samsung 970 Evo Plus
+
 **Proxmox backup server**
   - [ZXIPC R5-4500U Mini PC](https://aliexpress.ru/item/1005007007752583.html)
   - AMD Ryzen 5 4500U
@@ -654,6 +661,36 @@ white-space:nowrap;>
 <td>i9-12900H</td>
 <td>2 * 32Gb DDR5</td>
 <td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>6*16Tb HDD + 2*1Tb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
+<tr>
+<td rowspan="4">19</td>
+<td rowspan="4">2024</td>
+<td>Minisforum MS01</td>
+<td>i9-13900H</td>
+<td>2 * 48Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Minisforum MS01</td>
+<td>i9-12900H</td>
+<td>2 * 32Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Minisforum MS02 Ultra</td>
+<td>Cure 9 Ultra 285HX</td>
+<td>2 * 48Gb DDR5</td>
+<td>1Tbb M.2 NVME SSD + 2Tb M2 NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
