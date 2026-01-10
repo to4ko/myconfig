@@ -688,7 +688,7 @@ white-space:nowrap;>
 </tr>
 <tr>
 <td>Minisforum MS02 Ultra</td>
-<td>Cure 9 Ultra 285HX</td>
+<td>Core 9 Ultra 285HX</td>
 <td>2 * 48Gb DDR5</td>
 <td>1Tbb M.2 NVME SSD + 2Tb M2 NVME SSD</td>
 <td>-</td>
