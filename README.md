@@ -671,8 +671,8 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="4">19</td>
-<td rowspan="4">2024</td>
+<td rowspan="4">20</td>
+<td rowspan="4">2026</td>
 <td>Minisforum MS01</td>
 <td>i9-13900H</td>
 <td>2 * 48Gb DDR5</td>
