@@ -121,7 +121,6 @@
   - [Ubiquiti Unifi U7 Outdoor ](https://store.ui.com/us/en/category/wifi-outdoor/products/u7-outdoor)
   - [Ubiquiti Unifi Switch Flex Mini 2.5G (2ea)](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-flex-2-5g-5)
   - [Ubiquiti Unifi Switch Flex 2.5G PoE](https://store.ui.com/us/en/category/all-switching/products/usw-flex-2-5g-8-poe)
-  - [Ubiquiti Unifi Gateway Max](https://store.ui.com/us/en/category/cloud-gateways-compact/collections/cloud-gateway-max)
   - [Ubiquiti Unifi Switch Lite 8 Poe](https://store.ui.com/us/en/category/all-switching/products/usw-lite-8-poe)
   - [Ubiquiti Unifi U6 Pro](https://store.ui.com/us/en/category/all-wifi/products/u6-pro)
   - [Ubiquiti Unifi Dream Router (2ea)](https://techspecs.ui.com/unifi/cloud-gateways/udr)
