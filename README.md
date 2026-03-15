@@ -48,23 +48,24 @@
 **Proxmox Node 1**
   - [Minisforum MS01](https://store.minisforum.com/products/minisforum-ms-01)
   - Intel i9-13900H
-  - 2*48Gb Crucial DDR5 SODIMM
+  - 2*32Gb Crucial DDR5 SODIMM
   - 512Gb Samsung PM9A1 M.2
   - 2Tb Samsung PM9A3 U.2
 
 **Proxmox Node 2**
   - [Minisforum MS01](https://store.minisforum.com/products/minisforum-ms-01)
   - Intel i9-12900H
-  - 2*32Gb DDR5 SODIMM
+  - 2*8Gb DDR5 SODIMM
   - 512Gb Samsung PM9A1 M.2
   - 2Tb Micron 7400 Pro U.3
+  - 2Tb Intel P4510 U.2
 
 **Proxmox Node 3**
   - [Minisforum MS02 Ultra](https://store.minisforum.com/products/minisforum-ms-02-ultra)
   - Intel Core Ultra 9 285HX
   - 2*48Gb DDR5 SODIMM
   - 1Tb Samsung PM9A1 M.2
-  - 2Tb Samsung 970 Evo Plus
+  - 2Tb Micron 7400 Pro U.3
 
 **Proxmox backup server**
   - [ZXIPC R5-4500U Mini PC](https://aliexpress.ru/item/1005007007752583.html)
