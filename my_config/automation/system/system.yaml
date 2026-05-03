@@ -131,8 +131,18 @@
     - trigger: homeassistant
       event: shutdown
   actions:
-    - action: switch.turn_off
-      entity_id: switch.system_main_lead
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ states('sensor.local_ip') == '192.168.1.34' }}"
+          sequence:
+            - action: switch.turn_off
+              target:
+                entity_id: switch.system_backup_lead
+      default:
+        - action: switch.turn_off
+          target:
+            entity_id: switch.system_main_lead
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima
@@ -744,7 +754,7 @@
         value: "{% if is_state('switch.system_silent_mode','on') %}0{%else%}0.4{%endif%}"
     - action: number.set_value
       target:
-        entity_id: number.up_chime_volume
+        entity_id: number.up_chime_ring_volume_g4_doorbell
       data:    
         value: "{% if is_state('switch.system_silent_mode','on') %}0{%else%}80{%endif%}"
     - action: notify.send_message
@@ -2719,7 +2729,7 @@
   actions:
     - action: number.set_value
       target:
-        entity_id: number.up_chime_volume
+        entity_id: number.up_chime_ring_volume_g4_doorbell
       data:
         value: "{{iif(is_state('switch.system_silent_mode','on'),0,80) }}"
         
