@@ -37,38 +37,75 @@ calendar_events:
         default: ""
         selector:
           text:
+    # sequence:
+    #   - action: calendar.get_events
+    #     data:
+    #       start_date_time: "{{ date_start | default( today_at().strftime('%Y-%m-%d %H:%M:%S') ) }}"
+    #       duration:
+    #         hours: 24
+    #         minutes: 0
+    #         seconds: 0
+    #     target:
+    #       entity_id: "{{ calendar }}"
+    #     response_variable: calendar_events
+    #   - variables:
+    #       result: |-
+    #         {% set ns = namespace(events={}) %}
+    #         {% for calendar in calendar_events.values() %}
+    #           {% for event in calendar.events %}
+    #             {% set index = loop.index | string %}
+    #             {% if not make_choice | default(false) %}
+    #               {% set value = event.summary %}
+    #             {% else %}
+    #               {% set cns = namespace(choice=false) -%}
+    #               {% for word in choice_word.split("|") %}
+    #                 {% set cns.choice = cns.choice or event.summary.startswith(word) %}
+    #               {% endfor %}
+    #               {% set value = event.summary if cns.choice else event.description %}
+    #             {% endif %}
+    #             {% set value = value | replace(remove | default(''), '') %}
+    #             {% set ns.events = dict(ns.events, **{ index : value }) %}
+    #           {% endfor %}
+    #         {% endfor %}
+    #         {{ ns.events }}
+    #   - stop: Success
+    #     response_variable: result
+    # icon: mdi:calendar-alert-outline
+    # mode: single
     sequence:
-      - action: calendar.get_events
-        data:
-          start_date_time: "{{ date_start | default( today_at().strftime('%Y-%m-%d %H:%M:%S') ) }}"
-          duration:
-            hours: 24
-            minutes: 0
-            seconds: 0
-        target:
-          entity_id: "{{ calendar }}"
-        response_variable: calendar_events
-      - variables:
-          result: |-
-            {% set ns = namespace(events={}) %}
-            {% for calendar in calendar_events.values() %}
-              {% for event in calendar.events %}
-                {% set index = loop.index | string %}
-                {% if not make_choice | default(false) %}
-                  {% set value = event.summary %}
-                {% else %}
-                  {% set cns = namespace(choice=false) -%}
-                  {% for word in choice_word.split("|") %}
-                    {% set cns.choice = cns.choice or event.summary.startswith(word) %}
+      - if:
+          - condition: template
+            value_template: "{{ states(calendar) not in ['unavailable', 'unknown'] }}"
+        then:
+          - action: calendar.get_events
+            data:
+              start_date_time: "{{ date_start | default( today_at().strftime('%Y-%m-%d %H:%M:%S') ) }}"
+              duration:
+                hours: 24
+                minutes: 0
+                seconds: 0
+            target:
+              entity_id: "{{ calendar }}"
+            response_variable: calendar_events
+          - variables:
+              result: |-
+                {% set ns = namespace(events={}) %}
+                {% for calendar in calendar_events.values() %}
+                  {% for event in calendar.events %}
+                    {% set index = loop.index | string %}
+                    {% if not make_choice | default(false) %}
+                      {% set value = event.summary %}
+                    {% else %}
+                      {% set cns = namespace(choice=false) -%}
+                      {% for word in choice_word.split("|") %}
+                        {% set cns.choice = cns.choice or event.summary.startswith(word) %}
+                      {% endfor %}
+                      {% set value = event.summary if cns.choice else event.description %}
+                    {% endif %}
+                    {% set value = value | replace(remove | default(''), '') %}
+                    {% set ns.events = dict(ns.events, **{ index : value }) %}
                   {% endfor %}
-                  {% set value = event.summary if cns.choice else event.description %}
-                {% endif %}
-                {% set value = value | replace(remove | default(''), '') %}
-                {% set ns.events = dict(ns.events, **{ index : value }) %}
-              {% endfor %}
-            {% endfor %}
-            {{ ns.events }}
-      - stop: Success
-        response_variable: result
-    icon: mdi:calendar-alert-outline
-    mode: single
+                {% endfor %}
+                {{ ns.events }}
+          - stop: Success
+            response_variable: result
