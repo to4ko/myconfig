@@ -167,57 +167,7 @@ script:
             switch.turn_off: id_mute
       - switch.turn_off: id_headset_mute
 
-  # change light with locks
-  # - id: locks_lights
-  #   then:
-  #     - logger.log: "Lock Lights"
-  #     - if:
-  #         condition:
-  #           and:
-  #             - binary_sensor.is_on: id_bottom_lock
-  #             - binary_sensor.is_on: id_top_lock
-  #         then:
-  #           light.turn_on:
-  #             id: id_led1
-  #             brightness: 25%
-  #             red: 100%
-  #             green: 65%
-  #             blue: 0%
-  #     - if:
-  #         condition:
-  #           and:
-  #             - binary_sensor.is_on: id_bottom_lock
-  #             - binary_sensor.is_off: id_top_lock
-  #         then:
-  #           light.turn_on:
-  #             id: id_led1
-  #             brightness: 25%
-  #             red: 100%
-  #             green: 65%
-  #             blue: 0%          
-  #             effect: 'Blink'
-  #     - if:
-  #         condition:
-  #           and: 
-  #             - binary_sensor.is_off: id_bottom_lock
-  #             - binary_sensor.is_on: id_top_lock
-  #         then:
-  #           light.turn_on:
-  #             id: id_led1
-  #             brightness: 25%
-  #             red: 100%
-  #             green: 65%
-  #             blue: 0%
-  #     - if:
-  #         condition:
-  #           and:
-  #             - binary_sensor.is_on: id_bottom_lock
-  #             - binary_sensor.is_on: id_top_lock
-  #         then:
-  #           light.turn_off:
-  #             id: id_led1
-
-  # State - Standby
+# State - Standby
   - id: state_standby
     then:
       - logger.log: "Set state 'Standby'"
@@ -519,6 +469,12 @@ binary_sensor:
     #   then:
     #     - script.execute: locks_lights
 
+  - platform: homeassistant
+    name: "Sw_TEST"
+    internal: false
+    entity_id: switch.smartintercom_ru_vsegda_sbrasyvat
+    
+    
 light:
   - platform: esp32_rmt_led_strip
     rgb_order: GRB
@@ -714,19 +670,21 @@ switch:
     on_turn_off:
       - script.execute: state_standby
 
-  - platform: template
+  - platform: homeassistant
     name: "Reject"
     id: auto_reject
     icon: mdi:door-closed-lock
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
-    on_turn_on:
-      - switch.turn_off: auto_open
-      - switch.turn_off: auto_open_once
-      - script.execute: state_standby
-    on_turn_off:
-      - script.execute: state_standby
-      
+    entity_id: switch.smartintercom_ru_vsegda_sbrasyvat
+    
+    # optimistic: true
+    # restore_mode: RESTORE_DEFAULT_OFF
+    # on_turn_on:
+    #   - switch.turn_off: auto_open
+    #   - switch.turn_off: auto_open_once
+    #   - script.execute: state_standby
+    # on_turn_off:
+    #   - script.execute: state_standby
+        
   - platform: template
     name: "Mute"
     id: mute
