@@ -168,95 +168,65 @@ script:
   #     - switch.turn_off: id_headset_mute
 
 # State - Standby
+
   - id: state_standby
     then:
       - logger.log: "Set state 'Standby'"
-      - script.execute: led_off
-      - logger.log: "--------> bottom lock check"
       - if:
           condition:
-            and:
-              - binary_sensor.is_off: id_bottom_lock
+            binary_sensor.is_off: id_top_lock
           then:
-            - logger.log: "----------> bottom lock - locked"
+            - logger.log: "State: Top lock open (solid, highest priority)"
             - light.turn_on:
                 id: id_led1
                 brightness: 20%
                 red: 100%
                 green: 65%
                 blue: 0%
-                effect: "Blink"
           else:
-            - logger.log: "----------> bottom lock - un-locked"
-      - logger.log: "--------> top lock check"
-      - if:
-          condition:
-            and:
-              - binary_sensor.is_off: id_top_lock
-          then:
-            - logger.log: "----------> top lock locked"
-            - light.turn_on:
-                id: id_led1
-                brightness: 20%
-                red: 100%
-                green: 65%
-                blue: 0%
-                #effect: "Blink"
-          else:
-            - logger.log: "----------> top lock - un-locked"                
-      - logger.log: "--------> auto open once check"
-      - if:
-          condition:
-            binary_sensor.is_on: auto_open_once
-          then:
-            - logger.log: "----------> auto open once - on"
-            - script.execute: led_green_blink
-          else:
-            - logger.log: "----------> auto open once - off"            
-      - logger.log: "--------> auto open check"
-      - if:
-          condition:
-            binary_sensor.is_on: auto_open
-          then:
-            - script.execute: led_green_on
-            - logger.log: "----------> auto open - on"
-          else:
-            - logger.log: "----------> auto open - off"                        
-      - logger.log: "--------> reject check"
-      - if:
-          condition:
-            binary_sensor.is_on: auto_reject
-          then:
-            - script.execute: led_red_blink
-            - logger.log: "----------> reject - on"
-          else:
-            - logger.log: "----------> reject - off"                        
-      - logger.log: "--------> mute check"
-      - if:
-          condition:
-            and:
-              - binary_sensor.is_on: mute
-              - binary_sensor.is_off: auto_open_once
-              - binary_sensor.is_off: auto_open
-          then:
-            - logger.log: "----------> mute - on"
-            - script.execute: led_blue_blink
-          else:
-            - logger.log: "----------> mute - off"            
-      - logger.log: "--------> all off check"
-      - if:
-          condition:
-            and:
-              - binary_sensor.is_off: auto_open_once
-              - binary_sensor.is_off: auto_open
-              - binary_sensor.is_off: auto_reject
-              - binary_sensor.is_off: id_bottom_lock
-              - binary_sensor.is_off: id_top_lock
-          then:
-            - logger.log: "----------> all off"
-            - script.execute: led_off
-          else:
-            - logger.log: "----------> all off - off"            
+            - if:
+                condition:
+                  binary_sensor.is_off: id_bottom_lock
+                then:
+                  - logger.log: "State: Bottom lock open (blink)"
+                  - light.turn_on:
+                      id: id_led1
+                      brightness: 20%
+                      red: 100%
+                      green: 65%
+                      blue: 0%
+                      effect: "Blink"
+                else:
+                  - if:
+                      condition:
+                        binary_sensor.is_on: mute
+                      then:
+                        - logger.log: "State: Mute"
+                        - script.execute: led_blue_blink
+                      else:
+                        - if:
+                            condition:
+                              binary_sensor.is_on: auto_reject
+                            then:
+                              - logger.log: "State: Reject"
+                              - script.execute: led_red_blink
+                            else:
+                              - if:
+                                  condition:
+                                    binary_sensor.is_on: auto_open_once
+                                  then:
+                                    - logger.log: "State: Auto Open Once"
+                                    - script.execute: led_green_blink
+                                  else:
+                                    - if:
+                                        condition:
+                                          binary_sensor.is_on: auto_open
+                                        then:
+                                          - logger.log: "State: Auto Open"
+                                          - script.execute: led_green_on
+                                        else:
+                                          - logger.log: "State: All clear"
+                                          - light.turn_off: id_led1
 
   # # Call state
   # - id: state_call
