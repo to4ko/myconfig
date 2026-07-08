@@ -1,0 +1,749 @@
+substitutions:
+  dev_name: "ESP32 Intercom"
+  
+#ESP32 Определение нужных GPIO
+  base: esp32dev
+  led_status: GPIO16            # Индикатор статуса API, GPIO2 - это встроенный синий светодиод на ESP12
+  led_indicator: GPIO13         # Дополнительный индикатор, который будет показывать режимы и прочее.
+  detect_line: GPIO12           # Пин детектора вызова
+  button_boot: GPIO0            # Кнопка управления платой и перевода в режим прошивки
+  relay_line: GPIO14            # Пин "Отключения динамика"
+  switch_open: GPIO17           # Пин "Открытие двери"
+  switch_phone: GPIO4           # Пин "Трубка положена/поднята"
+
+#input_select_mode_value
+  input_select_disable: "Не активен"
+  input_select_reject: "Сброс вызова"
+  input_select_accept: "Открывать всегда"
+
+#line_status_text
+  line_status_call:   "Вызов"
+  line_status_answer: "Ответ"
+  line_status_open:   "Открытие двери"
+  line_status_reject: "Сброс вызова"
+  line_status_close:  "Закрыто"
+
+#delay
+  call_end_detect_delay: "4000"     # Интервал между детектированием вызова
+  delay_before_answer: "1000"       # (default) Отпределили вызов, *** подождали ***... Передаем управление на плату,
+                                    # отключаем трубку, *** подождали *** ... (Number компонент before_answer)
+  delay_before_open_door: 100ms     # *** подождали *** ... нажимаем кнопку открытия двери.
+  delay_open_on_time: "600"         # (default) Кнопка открытия двери нажата, *** подождали *** ... отпустили кнопку. (Number компонент open_time)
+  delay_after_close_door: "2000"    # (default) Отпустили кнопку открытия двери, *** подождали *** ... Возвращаем управление на трубку (Number компонент after_close)
+
+esp32:
+  board: ${base}
+  framework:
+    type: esp-idf
+    advanced:
+      minimum_chip_revision: "3.0"
+
+esp32_ble:
+  enable_on_boot: False
+
+safe_mode:
+  disabled: False
+  num_attempts: 5
+  reboot_timeout: 15min
+
+esphome:
+  name: esp32-intercom
+  comment: "ESP32 Intercom"
+  friendly_name: "ESP32 Intercom"
+  # platformio_options:
+  #     board_build.filesystem: littlefs
+  #     board_build.partitions: ../../../config/esphome/partitions_esp32.csv 
+#      build_flags: 
+#        - "-DSDCARD" # Поддержка SD карты    
+  on_boot:
+    priority: -100
+    then:
+      - script.execute: boot_script
+
+# Enable logging
+logger:
+
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_pass
+  domain: !secret my_domain
+  reboot_timeout: 15min
+  power_save_mode: none
+  min_auth_mode: WPA2
+  use_address: 192.168.200.93
+  #output_power: 17.5dB
+  #fast_connect: true
+  #power_save_mode: none
+  # manual_ip:
+  #   static_ip: 192.168.1.81
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+#captive_portal:
+ 
+# Глобальные переменные
+globals:
+  - id: current_mode
+    type: int
+    initial_value: '0'
+    restore_value: true
+  - id: status_line
+    type: bool
+    initial_value: 'false'
+  - id: status_mute
+    type: bool
+    initial_value: 'false'
+    restore_value: true
+  - id: status_phone_disable
+    type: bool
+    initial_value: 'false'
+    restore_value: true
+  - id: status_leding
+    type: bool
+    initial_value: 'true'
+    restore_value: true
+  - id: status_once_mode
+    type: int
+    initial_value: '0'
+    restore_value: true
+
+
+api:
+  reboot_timeout: 0min
+
+ota:
+  - platform: esphome
+    allow_partition_access: true
+
+# Пошла мазута
+light:
+  - platform: status_led
+    id: led_status
+    pin: $led_status
+    effects:
+      - strobe:
+          name: blink
+          colors:
+            - state: true
+              duration: 100ms
+            - state: false
+              duration: 1900ms
+  - platform: monochromatic
+    id: led_action
+    output: indicator
+    internal: true
+    restore_mode: ALWAYS_OFF
+    default_transition_length: 0ms
+    effects:
+      - pulse:
+          name: pulse
+          update_interval: 2s
+      - strobe:
+          name: blink
+          colors:
+            - state: true
+              duration: 100ms
+            - state: false
+              duration: 1900ms
+      - strobe:
+          name: calling
+          colors:
+            - state: true
+              duration: 50ms
+            - state: false
+              duration: 50ms
+
+script:
+  - id: boot_script
+    then:
+      - logger.log: "Boot config"
+      - if:
+          condition:
+            lambda: 'return id(current_mode) == 0;'
+          then:
+            - select.set:
+                id: mode_select
+                option: ${input_select_disable}
+            - logger.log: ${input_select_disable}
+          else:      
+            if:
+              condition:
+                lambda: 'return id(current_mode) == 1;'
+              then:
+                - select.set:
+                    id: mode_select
+                    option: ${input_select_reject}
+                - logger.log: ${input_select_reject}
+              else:   
+                - select.set:
+                    id: mode_select
+                    option: ${input_select_accept}
+                - logger.log: ${input_select_accept}
+      - if:
+          condition:
+            lambda: 'return id(status_leding);'
+          then:
+            switch.turn_on: led
+      - if:
+          condition:
+            lambda: 'return id(status_mute);'
+          then:
+            switch.turn_on: mute
+      - if:
+          condition:
+            lambda: 'return id(status_phone_disable);'
+          then:
+            switch.turn_on: phone_disable
+      - if:
+          condition:
+            lambda: 'return id(status_once_mode) == 1;'
+          then:
+            switch.turn_on: accept_call
+          else:
+            if:
+              condition:
+                lambda: 'return id(status_once_mode) == 2;' 
+              then:
+                switch.turn_on: delivery
+              else:
+                if:
+                  condition:
+                    lambda: 'return id(status_once_mode) == 3;'
+                  then:
+                    switch.turn_on: reject_call
+
+  - id: led_check
+    then:
+      - light.turn_off:
+          id: led_action
+      - light.turn_off:
+          id: led_status
+      - if:
+          condition:
+            lambda: 'return id(status_leding);'
+          then:
+          - if:
+              condition:
+                lambda: 'return id(status_mute);'
+              then:
+                light.turn_on:
+                  id: led_action
+                  effect: pulse
+          - if:
+              condition:
+                  lambda: 'return id(status_once_mode) > 0;'
+              then:
+                if:
+                  condition:
+                    lambda: 'return id(status_once_mode) < 3;'
+                  then:
+                    light.turn_on:
+                      id: led_action
+                      effect: blink
+                  else:
+                    light.turn_on:
+                      id: led_status
+                      effect: blink
+          - if:
+              condition:
+                lambda: 'return id(status_line);'
+              then:
+                light.turn_on:
+                  id: led_action
+                  effect: calling
+
+  # Accept incoming call
+  - id: accepting
+    then:
+      if:
+        condition:
+          lambda: 'return id(status_line);'
+        then:
+          - output.turn_on: relay_switch_line
+          - output.turn_on: phone_up
+          - lambda: 'id(line_status).publish_state("${line_status_answer}");'
+          - delay: !lambda "return id(delay_before_answer).state;"
+          - delay: $delay_before_open_door
+          - output.turn_on: open_door
+          - lambda: 'id(line_status).publish_state("${line_status_open}");'
+          - delay: !lambda "return id(delay_open_time).state;"
+          - output.turn_off: open_door
+          - lambda: 'id(line_status).publish_state("${line_status_reject}");'
+          - delay: !lambda "return id(delay_after_close).state;"
+          - output.turn_off: phone_up
+          - lambda: 'id(line_status).publish_state("${line_status_close}");'
+          - if:
+              condition:
+                switch.is_on: accept_call
+              then:
+                switch.turn_off: accept_call
+
+  # Reject incoming call
+  - id: rejecting
+    then:
+      if:
+        condition:
+          lambda: 'return id(status_line);'
+        then:
+          - output.turn_on: relay_switch_line
+          - output.turn_on: phone_up
+          - lambda: 'id(line_status).publish_state("${line_status_answer}");'
+          - delay: !lambda "return id(delay_before_answer).state;"
+          - lambda: 'id(line_status).publish_state("${line_status_reject}");'
+          - output.turn_off: phone_up
+          - lambda: 'id(line_status).publish_state("${line_status_close}");'
+          - delay: !lambda "return id(delay_after_close).state;"
+          - if:
+              condition:
+                switch.is_on: reject_call
+              then:
+                switch.turn_off: reject_call
+
+  - id: state_call
+    then:
+      if:
+        condition:
+          switch.is_on: accept_call
+        then:
+          script.execute: accepting
+        else:
+          if:
+            condition:
+              switch.is_on: reject_call
+            then:
+              script.execute: rejecting
+            else:
+              if:
+                condition:
+                  lambda: 'return id(current_mode) == 2;'
+                then:
+                  script.execute: accepting
+                else:
+                  if:
+                    condition:
+                      lambda: 'return id(current_mode) == 1;'
+                    then:
+                      script.execute: rejecting
+                    else:
+                      lambda: 'id(line_status).publish_state("${line_status_close}");'
+
+number:
+  - platform: template
+    name: "Call End Delay"
+    icon: "mdi:clock"
+    id: call_end_delay
+    optimistic: true
+    mode: box
+    unit_of_measurement: "мс"
+    entity_category: "config"
+    restore_value: true
+    initial_value: ${call_end_detect_delay}
+    min_value: 1000
+    max_value: 10000
+    step: 100
+    
+  - platform: template
+    name: "Before answer"
+    icon: "mdi:clock"
+    id: delay_before_answer
+    optimistic: true
+    mode: box
+    unit_of_measurement: "мс"
+    entity_category: "config"
+    restore_value: true
+    initial_value: ${delay_before_answer}
+    min_value: 100
+    max_value: 5000
+    step: 100
+    
+  - platform: template
+    name: "Open Time"
+    icon: "mdi:clock"
+    id: delay_open_time
+    optimistic: true
+    mode: box
+    unit_of_measurement: "мс"
+    entity_category: "config"
+    restore_value: true
+    initial_value: ${delay_open_on_time}
+    min_value: 100
+    max_value: 2000
+    step: 50
+    
+  - platform: template
+    name: "After Close"
+    icon: "mdi:clock"
+    id: delay_after_close
+    optimistic: true
+    mode: box
+    unit_of_measurement: "мс"
+    entity_category: "config"
+    restore_value: true
+    initial_value: ${delay_after_close_door}
+    min_value: 100
+    max_value: 5000
+    step: 100
+
+select:
+  - platform: template
+    name: "Modes"
+    icon: "mdi:deskphone"
+    optimistic: true
+    id: mode_select
+    options:
+      - ${input_select_disable}
+      - ${input_select_reject}
+      - ${input_select_accept}
+    initial_option: ${input_select_disable}
+    on_value:
+      lambda: |-
+          if (id(mode_select).state == "${input_select_disable}") {
+            id(current_mode) = 0;
+          } else if (id(mode_select).state == "${input_select_reject}") {
+            id(current_mode) = 1;
+          } else {
+            id(current_mode) = 2;
+          }
+        
+text_sensor:
+  - platform: template
+    name: "Uptime"
+    lambda: |-
+        int seconds = round(id(uptime_sensor).get_raw_state());
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 15s
+
+  - platform: wifi_info
+    ip_address:
+      name: "IP"
+    ssid:
+      name: "SSID"
+    bssid:
+      name: "BSSID"
+    mac_address:
+      name: "MAC"
+    # scan_results:
+    #   name: "Latest Scan Results"
+
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true
+
+
+  - platform: template
+    id: line_status
+    icon: "mdi:bell"
+    name: "Line Status"
+    lambda: 'return {"${line_status_close}"};'
+
+sensor:
+  - platform: uptime
+    name: "Uptime s"
+    id: uptime_sensor
+    update_interval: 15s
+    #disabled_by_default: true
+    
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    update_interval: 60s    
+  
+binary_sensor:
+  - platform: gpio
+    id: line_detect
+    name: "Line Detect"
+    pin:
+      number: $detect_line
+      mode: INPUT_PULLUP
+      inverted: True
+    filters:
+      - delayed_off: !lambda "return id(call_end_delay).state;"
+    on_press:
+      if:
+        condition:
+          lambda: 'return id(status_line) == false;'
+        then:
+          - lambda: 'id(status_line) = true;'
+          - output.turn_off: phone_up
+          - script.wait: led_check
+          - script.execute: led_check
+          - logger.log: "Incoming call detected"
+          - if:
+              condition:
+                lambda: 'return id(status_mute);'
+              then:
+                output.turn_on: relay_switch_line
+          - delay: !lambda "return id(delay_before_answer).state;"
+          - script.execute: state_call
+    on_release:
+      - if:
+          condition:
+            switch.is_on: phone_disable
+          then:
+            output.turn_on: relay_switch_line
+          else:
+            output.turn_off: relay_switch_line
+      - output.turn_off: phone_up
+      - lambda: 'id(status_line) = false;'
+      - logger.log: "Incoming call completed"
+      - script.wait: led_check
+      - script.execute: led_check
+    on_state:
+      lambda: |-
+        if (x) {
+          id(line_status).publish_state("${line_status_call}");
+        } else {
+          id(line_status).publish_state("${line_status_close}");
+        }   
+      
+  - platform: gpio
+    id: button_boot
+    pin:
+      number: $button_boot
+      mode: INPUT_PULLUP
+      inverted: True
+    on_press:
+      then:
+        switch.toggle: accept_call
+    on_multi_click:
+      - timing:
+        - ON for at least 5s
+        then:
+          lambda: |-
+            ESP_LOGW("DMF", "Erase settings and restart...");
+            wifi::global_wifi_component->save_wifi_sta("-----", "");
+            delay(500);
+            App.safe_reboot();
+
+output:
+- platform: gpio
+  id: relay_switch_line
+  pin:
+    number: $relay_line
+    mode: OUTPUT
+    
+- platform: gpio
+  id: open_door
+  pin:
+    number: $switch_open
+    mode: OUTPUT
+    
+- platform: ledc
+  id: indicator
+  pin:
+    number: $led_indicator
+    mode: OUTPUT
+    
+- platform: gpio
+  id: phone_up
+  pin:
+    number: $switch_phone
+    mode: OUTPUT
+    inverted: true
+
+button:
+  - platform: restart
+    name: "Restart"
+    id: restart_button
+    
+  - platform: template
+    name: "Save"
+    id: save
+    icon: "mdi:content-save-cog"
+    entity_category: "config"
+    on_press:
+      - lambda: 'global_preferences->sync();' 
+      
+switch:
+  - platform: template
+    name: "Delivery"
+    id: delivery
+    icon: "mdi:package"
+    restore_mode: DISABLED
+    turn_on_action:
+      - switch.template.publish:
+          id: delivery
+          state: true
+      - if:
+          condition:
+            switch.is_off: accept_call
+          then:
+            switch.turn_on: accept_call
+    turn_off_action:
+      - switch.template.publish:
+          id: delivery
+          state: false
+      - if:
+          condition:
+            switch.is_on: accept_call
+          then:
+            lambda: 'id(status_once_mode) = 1;'
+          else:
+            lambda: 'id(status_once_mode) = 0;'
+      - script.wait: led_check
+      - script.execute: led_check
+        
+  - platform: template
+    name: "Accept Call"
+    id: accept_call
+    icon: "mdi:door-open"
+    restore_mode: DISABLED
+    turn_on_action:
+      - switch.template.publish:
+          id: accept_call
+          state: true
+      - if:
+          condition:
+            switch.is_on: reject_call
+          then:
+            switch.turn_off: reject_call
+      - logger.log: "Accept call switch is ON"
+      - if:
+          condition:
+            switch.is_on: delivery
+          then:
+            lambda: 'id(status_once_mode) = 2;'
+          else: 
+            lambda: 'id(status_once_mode) = 1;'
+      - script.wait: led_check
+      - script.execute: led_check
+      - if:
+          condition:
+            lambda: 'return id(status_line);'
+          then:
+            - logger.log: "Execute action script"
+            - script.execute: state_call
+          else:
+            - logger.log: "No incoming call. One-time mode is set."
+    turn_off_action:
+      - switch.template.publish:
+          id: accept_call
+          state: false
+      - if:
+          condition:
+            switch.is_on: delivery
+          then:
+            switch.turn_off: delivery
+      - lambda: 'id(status_once_mode) = 0;'
+      - script.wait: led_check
+      - script.execute: led_check
+  
+  - platform: template
+    name: "Reject Call"
+    id: reject_call
+    icon: "mdi:phone-hangup"
+    restore_mode: DISABLED
+    turn_on_action:
+      - switch.template.publish:
+          id: reject_call
+          state: true
+      - if:
+          condition:
+            switch.is_on: accept_call
+          then:
+            - switch.turn_off: accept_call
+      - lambda: 'id(status_once_mode) = 3;'
+      - script.wait: led_check
+      - script.execute: led_check
+      - if:
+          condition:
+            lambda: 'return id(status_line);'
+          then:
+            - logger.log: "Execute action script"   
+            - script.execute: state_call
+          else:
+            - logger.log: "No incoming call. One-time mode is set."
+    turn_off_action:
+      - switch.template.publish:
+          id: reject_call
+          state: false
+      - lambda: 'id(status_once_mode) = 0;'
+      - script.wait: led_check
+      - script.execute: led_check
+
+  - platform: template
+    name: "Mute"
+    id: mute
+    icon: "mdi:bell-off"
+    entity_category: "config"
+    restore_mode: DISABLED
+    turn_on_action:
+      - switch.template.publish:
+          id: mute
+          state: true
+      - lambda: 'id(status_mute) = true;'
+      - script.wait: led_check
+      - script.execute: led_check
+    turn_off_action:
+      - switch.template.publish:
+          id: mute
+          state: false
+      - lambda: 'id(status_mute) = false;'
+      - script.wait: led_check
+      - script.execute: led_check
+
+  - platform: template
+    name: "Phone Disable"
+    id: phone_disable
+    icon: "mdi:phone-off"
+    entity_category: "config"
+    restore_mode: DISABLED
+    turn_on_action:
+      - switch.template.publish:
+          id: phone_disable
+          state: true
+      - lambda: 'id(status_phone_disable) = true;'
+      - if:
+          condition:
+            lambda: 'return id(status_line) == false;'
+          then:
+            output.turn_on: relay_switch_line
+    turn_off_action:
+      - switch.template.publish:
+          id: phone_disable
+          state: false
+      - lambda: 'id(status_phone_disable) = false;'
+      - if:
+          condition:
+            lambda: 'return id(status_line) == false;'
+          then:
+            output.turn_off: relay_switch_line  
+
+  - platform: template
+    name: "LED"
+    id: led
+    icon: "mdi:led-on"
+    entity_category: "config"
+    restore_mode: DISABLED
+    turn_on_action:
+      - switch.template.publish:
+          id: led
+          state: true
+      - lambda: 'id(status_leding) = true;'
+      - script.wait: led_check
+      - script.execute: led_check
+    turn_off_action:
+      - switch.template.publish:
+          id: led
+          state: false
+      - lambda: 'id(status_leding) = false;'
+      - script.wait: led_check
+      - script.execute: led_check
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
