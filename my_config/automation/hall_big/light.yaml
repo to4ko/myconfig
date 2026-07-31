@@ -218,6 +218,29 @@
               data:
                 transition: 5
 
+
+# ##################################
+# Hall big - Timer start on presence off
+# ##################################
+- alias: hall_big_timer_start_on_presence_off
+  id: hall_big_timer_start_on_presence_off
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.presence_hb
+      to: 'off'
+  conditions:
+    - condition: state
+      entity_id: group.lights_main_hb
+      state: "on"      
+  actions:
+    - action: timer.cancel
+      entity_id: timer.main_light_short_hb
+    - action: timer.start
+      entity_id: timer.main_light_short_hb
+
+
+
 # ##################################
 # Hall big - Auto Light Off 10m without movements
 # ##################################
@@ -229,6 +252,11 @@
       event_type: timer.finished
       event_data:
         entity_id: timer.main_light_hb
+    - trigger: event
+      event_type: timer.finished
+      event_data:
+        entity_id: timer.main_light_short_hb
+
   actions:
     - action: light.turn_off
       entity_id: light.0x00158d000223921b_channel_1, light.0x00158d000253f04a_channel_2
