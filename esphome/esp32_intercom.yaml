@@ -399,6 +399,206 @@ script:
                     else:
                       lambda: 'id(line_status).publish_state("${line_status_close}");'
 
+  - id: state_standby
+    then:
+      - logger.log: "Set state 'Standby'"
+      - if:
+          condition:
+            binary_sensor.is_off: id_top_lock
+          then:
+            - logger.log: "State: Top lock open (solid, highest priority)"
+            - light.turn_on:
+                id: id_led1
+                brightness: 20%
+                red: 100%
+                green: 65%
+                blue: 0%
+                effect: "None"
+          else:
+            - if:
+                condition:
+                  binary_sensor.is_off: id_bottom_lock
+                then:
+                  - logger.log: "State: Bottom lock open (blink)"
+                  - light.turn_on:
+                      id: id_led1
+                      brightness: 20%
+                      red: 100%
+                      green: 65%
+                      blue: 0%
+                      effect: "Blink"
+                else:
+                  - if:
+                      condition:
+                        binary_sensor.is_on: mute
+                      then:
+                        - logger.log: "State: Mute"
+                        - script.execute: led_blue_blink
+                      else:
+                        - if:
+                            condition:
+                              binary_sensor.is_on: auto_reject
+                            then:
+                              - logger.log: "State: Reject"
+                              - script.execute: led_red_blink
+                            else:
+                              - if:
+                                  condition:
+                                    binary_sensor.is_on: auto_open_once
+                                  then:
+                                    - logger.log: "State: Auto Open Once"
+                                    - script.execute: led_green_blink
+                                  else:
+                                    - if:
+                                        condition:
+                                          binary_sensor.is_on: auto_open
+                                        then:
+                                          - logger.log: "State: Auto Open"
+                                          - script.execute: led_green_on
+                                        else:
+                                          - logger.log: "State: All clear"
+                                          - light.turn_off: id_led1
+
+  # # Call state
+  # - id: state_call
+  #   then:
+  #     - logger.log: "Set state 'Incoming call'"
+  #     - script.execute: led_off
+  #     - if:
+  #         condition:
+  #           and:
+  #             - switch.is_off: auto_open
+  #             - switch.is_off: auto_open_once
+  #             - switch.is_off: auto_reject
+  #             - switch.is_on: mute
+  #         then:
+  #           script.execute: led_red_on
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_reject
+  #         then:
+  #           script.execute: call_reject
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open
+  #         then:
+  #           script.execute: call_accept
+  #     - if:
+  #         condition:
+  #           switch.is_on: auto_open_once
+  #         then:
+  #           - script.execute: call_accept    
+  #           - delay: 1s
+  #           - switch.turn_off: auto_open_once
+
+  # Turn off leds
+  - id: led_off
+    then:
+      - light.turn_off: id_led1
+      - if:
+          condition:
+            binary_sensor.is_on: mute
+          then:
+            - logger.log: "Blue ON from led off"
+            - light.turn_on: 
+                id: id_led1
+                brightness: 20%
+                red: 0%
+                green: 0%
+                blue: 100%
+                effect: "Blink"
+
+  - id: led_green_blink_double
+    then:
+      light.turn_on:
+        id: id_led1
+        brightness: 20%
+        red: 0%
+        green: 100%
+        blue: 0%
+        effect: "Blink Double"
+
+  - id: led_red_blink_double
+    then:
+      light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 100%
+          green: 0%
+          blue: 0%
+          effect: "Blink Double"
+
+  - id: led_blue_blink_double
+    then:
+      - light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 0%
+          green: 0%
+          blue: 100%
+          effect: "Blink Double"
+
+  - id: led_green_blink
+    then:
+      light.turn_on:
+        id: id_led1
+        brightness: 20%
+        red: 0%
+        green: 100%
+        blue: 0%
+        effect: "Blink"
+
+  - id: led_red_blink
+    then:
+      light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 100%
+          green: 0%
+          blue: 0%
+          effect: "Blink"
+
+  - id: led_blue_blink
+    then:
+      - light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 0%
+          green: 0%
+          blue: 100%
+          effect: "Blink"
+
+  - id: led_blue_on
+    then:
+      - light.turn_on:
+          id: id_led1
+          brightness: 20%
+          red: 0%
+          green: 0%
+          blue: 100%
+          effect: "None"
+
+  - id: led_green_on
+    then:
+      light.turn_on:
+        id: id_led1
+        brightness: 20%
+        red: 0%
+        green: 100%
+        blue: 0%
+        effect: "None"
+
+  - id: led_red_on
+    then:
+      light.turn_on:
+        id: id_led1
+        brightness: 20%
+        red: 100%
+        green: 0%
+        blue: 0%
+        effect: "None"
+
+                      
 number:
   - platform: template
     name: "Call End Delay"
