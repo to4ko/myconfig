@@ -430,28 +430,28 @@ script:
                 else:
                   - if:
                       condition:
-                        binary_sensor.is_on: mute
+                        switch.is_on: mute
                       then:
                         - logger.log: "State: Mute"
                         - script.execute: led_blue_blink
                       else:
                         - if:
                             condition:
-                              binary_sensor.is_on: auto_reject
+                              switch.is_on: reject_call
                             then:
                               - logger.log: "State: Reject"
                               - script.execute: led_red_blink
                             else:
                               - if:
                                   condition:
-                                    binary_sensor.is_on: auto_open_once
+                                    switch.is_on: delivery
                                   then:
                                     - logger.log: "State: Auto Open Once"
                                     - script.execute: led_green_blink
                                   else:
                                     - if:
                                         condition:
-                                          binary_sensor.is_on: auto_open
+                                          switch.is_on: accept_call
                                         then:
                                           - logger.log: "State: Auto Open"
                                           - script.execute: led_green_on
@@ -497,7 +497,7 @@ script:
       - light.turn_off: id_led1
       - if:
           condition:
-            binary_sensor.is_on: mute
+            switch.is_on: mute
           then:
             - logger.log: "Blue ON from led off"
             - light.turn_on: 
@@ -825,73 +825,32 @@ binary_sensor:
     on_state:
       then:
         - script.execute: state_standby
-          
-  - platform: homeassistant
-    name: "Reject"
-    id: auto_reject
-    icon: mdi:door-closed-lock
-    entity_id: switch.smartintercom_ru_vsegda_sbrasyvat
-    internal: false
-    on_state:
-      then:
-        - script.execute: state_standby
-          
-  - platform: homeassistant
-    name: "Auto Open"
-    id: auto_open
-    icon: mdi:check-all
-    entity_id: switch.smartintercom_ru_otkryvat_vsegda
-    internal: false
-    on_state:
-      then:
-        - script.execute: state_standby
-    
-  - platform: homeassistant
-    name: "Auto Open Once"
-    id: auto_open_once
-    icon: mdi:check
-    entity_id: switch.smartintercom_ru_otkryvat_na_sleduiushchii_zvonok
-    internal: false
-    on_state:
-      then:
-        - script.execute: state_standby
-    
-  - platform: homeassistant
-    name: "Mute"
-    id: mute
-    icon: mdi:volume-off
-    entity_id: switch.smartintercom_ru_otkliuchit_trubku_domofona
-    internal: false
-    on_state:
-      then:
-        - script.execute: state_standby
 
-            
 output:
-- platform: gpio
-  id: relay_switch_line
-  pin:
-    number: $relay_line
-    mode: OUTPUT
-    
-- platform: gpio
-  id: open_door
-  pin:
-    number: $switch_open
-    mode: OUTPUT
-    
-- platform: ledc
-  id: indicator
-  pin:
-    number: $led_indicator
-    mode: OUTPUT
-    
-- platform: gpio
-  id: phone_up
-  pin:
-    number: $switch_phone
-    mode: OUTPUT
-    inverted: true
+  - platform: gpio
+    id: relay_switch_line
+    pin:
+      number: $relay_line
+      mode: OUTPUT
+      
+  - platform: gpio
+    id: open_door
+    pin:
+      number: $switch_open
+      mode: OUTPUT
+      
+  - platform: ledc
+    id: indicator
+    pin:
+      number: $led_indicator
+      mode: OUTPUT
+      
+  - platform: gpio
+    id: phone_up
+    pin:
+      number: $switch_phone
+      mode: OUTPUT
+      inverted: true
 
 button:
   - platform: restart
