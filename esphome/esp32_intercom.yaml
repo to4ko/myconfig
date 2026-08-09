@@ -872,7 +872,6 @@ switch:
     icon: "mdi:package"
     restore_mode: DISABLED
     turn_on_action:
-      - script.execute: state_standby
       - switch.template.publish:
           id: delivery
           state: true
@@ -881,8 +880,8 @@ switch:
             switch.is_off: accept_call
           then:
             switch.turn_on: accept_call
-    turn_off_action:
       - script.execute: state_standby
+    turn_off_action:
       - switch.template.publish:
           id: delivery
           state: false
@@ -895,6 +894,7 @@ switch:
             lambda: 'id(status_once_mode) = 0;'
       - script.wait: led_check
       - script.execute: led_check
+      - script.execute: state_standby
         
   - platform: template
     name: "Accept Call"
@@ -902,7 +902,6 @@ switch:
     icon: "mdi:door-open"
     restore_mode: DISABLED
     turn_on_action:
-      - script.execute: state_standby
       - switch.template.publish:
           id: accept_call
           state: true
@@ -929,6 +928,7 @@ switch:
             - script.execute: state_call
           else:
             - logger.log: "No incoming call. One-time mode is set."
+      - script.execute: state_standby
     turn_off_action:
       - script.execute: state_standby
       - switch.template.publish:
@@ -942,6 +942,7 @@ switch:
       - lambda: 'id(status_once_mode) = 0;'
       - script.wait: led_check
       - script.execute: led_check
+      - script.execute: state_standby
   
   - platform: template
     name: "Reject Call"
@@ -949,7 +950,6 @@ switch:
     icon: "mdi:phone-hangup"
     restore_mode: DISABLED
     turn_on_action:
-      - script.execute: state_standby
       - switch.template.publish:
           id: reject_call
           state: true
@@ -969,14 +969,15 @@ switch:
             - script.execute: state_call
           else:
             - logger.log: "No incoming call. One-time mode is set."
-    turn_off_action:
       - script.execute: state_standby
+    turn_off_action:
       - switch.template.publish:
           id: reject_call
           state: false
       - lambda: 'id(status_once_mode) = 0;'
       - script.wait: led_check
       - script.execute: led_check
+      - script.execute: state_standby
 
   - platform: template
     name: "Mute"
@@ -985,21 +986,21 @@ switch:
     entity_category: "config"
     restore_mode: DISABLED
     turn_on_action:
-      - script.execute: state_standby
       - switch.template.publish:
           id: mute
           state: true
       - lambda: 'id(status_mute) = true;'
       - script.wait: led_check
       - script.execute: led_check
-    turn_off_action:
       - script.execute: state_standby
+    turn_off_action:
       - switch.template.publish:
           id: mute
           state: false
       - lambda: 'id(status_mute) = false;'
       - script.wait: led_check
       - script.execute: led_check
+      - script.execute: state_standby
 
   - platform: template
     name: "Phone Disable"
