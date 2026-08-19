@@ -52,10 +52,14 @@
       - trigger: state
         entity_id: fan.breather_mb
         to: 'off'
+        for:
+          seconds: 10
         id: 'id_state_mb'
       - trigger: state
         entity_id: fan.breather_s
         to: 'off'
+        for:
+          seconds: 10
         id: 'id_state_s'
       # - platform: state
       #   entity_id: switch.system_breather_auto_mb, switch.system_breather_auto_v, switch.system_breather_auto_s
@@ -70,12 +74,22 @@
           - conditions:
               - condition: trigger
                 id: 'id_state_mb'
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: binary_sensor.breather_mb
+                    state: 'unavailable'
             sequence:
               - action: switch.turn_off
                 entity_id: switch.system_breather_manual_mb
           - conditions:
               - condition: trigger
                 id: 'id_state_s'
+              - condition: not
+                conditions:
+                  - condition: state
+                    entity_id: binary_sensor.breather_s
+                    state: 'unavailable'
             sequence:
               - action: switch.turn_off
                 entity_id: switch.system_breather_manual_s
