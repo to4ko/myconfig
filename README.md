@@ -10,14 +10,6 @@
       Hardware Configuration
     </a>
     <span> | </span>
-    <a href="https://github.com/to4ko/myconfig#hardware-evolution">
-      Hardware Evolution
-    </a>
-    <span> | </span>
-    <a href="https://github.com/to4ko/myconfig#smart-devices">
-      Smart Devices
-    </a>
-    <span> | </span>
     <a href="https://github.com/to4ko/myconfig#networking">
       Networking
     </a>
@@ -26,8 +18,20 @@
       Surveillance
     </a>
     <span> | </span>
-    <a href="https://github.com/to4ko/myconfig#screenshots">
-      Screenshots
+    <a href="https://github.com/to4ko/myconfig#network-map">
+      Network map
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#smart-devices">
+      Smart Devices
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#software-configuration">
+      Software Configuration
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#hardware-evolution">
+      Hardware Evolution
     </a>
     <span> | </span>
     <!--<a href="https://github.com/to4ko/myconfig#links">-->
@@ -40,6 +44,10 @@
     <!--<span> | </span>-->
     <a href="https://github.com/to4ko/myconfig#chats">
       Chats
+    </a>
+    <span> | </span>
+    <a href="https://github.com/to4ko/myconfig#screenshots">
+      Screenshots
     </a>
   </h4>
 </div>
@@ -373,8 +381,7 @@
 # Hardware Evolution
 <!-- ![Hardwarez](images/hardware_evolution.jpg) -->
 <details><summary>Click me...</summary>
-<table max-width:100%;
-white-space:nowrap;>
+<table style="max-width:100%; white-space:nowrap;">
 <tbody>
 <tr>
 <td>#</td>
@@ -586,7 +593,7 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="3">16</td>
+<td rowspan="3">17</td>
 <td rowspan="3">2023</td>
 <td>Intel NUC 13 Pro</td>
 <td>i5-1340p</td>
@@ -609,7 +616,7 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="3">17</td>
+<td rowspan="3">18</td>
 <td rowspan="3">2024</td>
 <td>Intel NUC 13 Pro</td>
 <td>i5-1340p</td>
@@ -632,7 +639,7 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="2">18</td>
+<td rowspan="2">19</td>
 <td rowspan="2">2024</td>
 <td>Minisforum MS01</td>
 <td>i9-13900H</td>
@@ -648,7 +655,7 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="3">19</td>
+<td rowspan="3">20</td>
 <td rowspan="3">2024</td>
 <td>Minisforum MS01</td>
 <td>i9-13900H</td>
@@ -671,7 +678,7 @@ white-space:nowrap;>
 <td>-</td>
 </tr>
 <tr>
-<td rowspan="4">20</td>
+<td rowspan="4">21</td>
 <td rowspan="4">2026</td>
 <td>Minisforum MS01</td>
 <td>i9-13900H</td>
@@ -690,7 +697,7 @@ white-space:nowrap;>
 <td>Minisforum MS02 Ultra</td>
 <td>Core 9 Ultra 285HX</td>
 <td>2 * 48Gb DDR5</td>
-<td>1Tbb M.2 NVME SSD + 2Tb M2 NVME SSD</td>
+<td>1Tb M.2 NVME SSD + 2Tb M2 NVME SSD</td>
 <td>-</td>
 </tr>
 <tr>
