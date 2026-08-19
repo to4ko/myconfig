@@ -129,6 +129,7 @@
   - [Ubiquiti Unifi U7 Lite ](https://store.ui.com/us/en/category/all-wifi/products/u7-lite)
   - [Ubiquiti Unifi U7 Pro XG ](https://store.ui.com/us/en/category/wifi-flagship/products/u7-pro-xg?variant=u7-pro-xg-us)
   - [Ubiquiti Unifi U7 Outdoor ](https://store.ui.com/us/en/category/wifi-outdoor/products/u7-outdoor)
+  - [Ubiquiti Unifi U7 Long Range](https://store.ui.com/us/en/category/wifi-flagship/products/u7-lr)
   - [Ubiquiti Unifi Switch Flex Mini 2.5G (2ea)](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-flex-2-5g-5)
   - [Ubiquiti Unifi Switch Flex 2.5G PoE](https://store.ui.com/us/en/category/all-switching/products/usw-flex-2-5g-8-poe)
   - [Ubiquiti Unifi Switch Lite 8 Poe](https://store.ui.com/us/en/category/all-switching/products/usw-lite-8-poe)
