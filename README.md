@@ -93,9 +93,11 @@
 
 **Main Storage Unit** 
   - [Synology DS1621+](https://www.synology.com/en-uk/products/DS1621+)
+  - [Synology DX517](https://www.synology.com/en-uk/products/DX517) expansion unit
   - 2*16Gb Crucial DDR4 SODIMM
-  - Mellanox ConnectX-3
+  - Intel X710
   - 6ea WD HC550 16Tb as Main Storage
+  - 5ea WD HC550 16Tb in DX517 as additional Storage
   - 2ea SP A38 1Tb as NVME read\write cache
 
 **Backup Storage Unit**
@@ -119,7 +121,6 @@
   - [Ubiquiti U-fiber Loco](https://store.ui.com/us/en/pro/category/all-fiber/products/ufiber-loco)
   - [Ubiquiti Unifi Dream Machine Pro Max, WAN1 1Gb\s + WAN2 500Mb\s](https://store.ui.com/us/en/pro/category/all-unifi-cloud-gateways/products/udm-pro-max)
   - [Ubiquiti Unifi Hi-Capacity Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-pro-aggregation)
-  - [Ubiquiti Unifi Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-aggregation)
   - [Ubiquiti Unifi Enterprise Switch 24 PoE](https://store.ui.com/us/en/pro/category/all-switching/products/usw-enterprise-24-poe)
   - [Ubiquiti Unifi Switch 10Gbe XG](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-xg)
   - [Ubiquiti Unifi Enterprise Switch 8 PoE (3ea)](https://store.ui.com/us/en/pro/category/all-switching/products/switch-enterprise-8-poe)
@@ -131,11 +132,10 @@
   - [Ubiquiti Unifi Switch Flex Mini 2.5G (2ea)](https://eu.store.ui.com/eu/en/category/switching-utility/products/usw-flex-2-5g-5)
   - [Ubiquiti Unifi Switch Flex 2.5G PoE](https://store.ui.com/us/en/category/all-switching/products/usw-flex-2-5g-8-poe)
   - [Ubiquiti Unifi Switch Lite 8 Poe](https://store.ui.com/us/en/category/all-switching/products/usw-lite-8-poe)
-  - [Ubiquiti Unifi U6 Pro](https://store.ui.com/us/en/category/all-wifi/products/u6-pro)
   - [Ubiquiti Unifi Dream Router (2ea)](https://techspecs.ui.com/unifi/cloud-gateways/udr)
   - [Ubiquiti Unifi Cloud Gateway Max](https://store.ui.com/us/en/category/cloud-gateways-compact/collections/cloud-gateway-max)
-  - [Ubiquiti Unifi U6 Pro](https://store.ui.com/us/en/category/all-wifi/products/u6-pro)
   - [Ubiquiti Unifi Express](https://store.ui.com/us/en/category/all-cloud-gateways/products/ux)
+  - [Ubiquiti Unifi Express 7](https://store.ui.com/us/en/category/cloud-gateways-wifi-integrated/products/ux7)
 
 # Surveillance
   - Ubiquiti Unifi Dream Machine Pro Max with 12Tb WD Purple
@@ -288,7 +288,7 @@
       * MariaDB
 
 **Main Storage Unit Software**
-  - DSM 7.3
+  - DSM 7.x
   - not in use - Proxmox Backup Server VM
   - Docker containers:
     * InfluxDB
@@ -297,7 +297,7 @@
     * Adguard home (not in use)
 
 **Backup Storage Unit Software**
-  - DSM 7.2
+  - DSM 7.x
 
 <!-- **Scripts:**
   - **ipmi_mqtt.sh**  Publishing IPMI, Temp and other system monitoring info to MQTT broker
