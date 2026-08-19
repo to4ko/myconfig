@@ -918,11 +918,17 @@
         - condition: state
           entity_id: sensor.esp32_node_b_hot_pipe
           state: "unavailable"
+    - condition: template
+      value_template: >-
+        {{ (states('sensor.esp32_node_b_hot_pipe')|float(0) > 40) != is_state('input_boolean.hot_water_last_notified', 'on') }}
   actions:
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima
         message: "\U0001f321 Внимание! Горячая вода {% if states('sensor.esp32_node_b_hot_pipe')|float(0) > 40 %}включена{%else%}выключена{%endif%}!"
+    - action: input_boolean.turn_{{ 'on' if states('sensor.esp32_node_b_hot_pipe')|float(0) > 40 else 'off' }}
+      target:
+        entity_id: input_boolean.hot_water_last_notified
 
 # ##################################
 # System - Cold water pipe warning

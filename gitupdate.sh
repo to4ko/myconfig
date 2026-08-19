@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /usr/share/hassio/homeassistant
+cd /config
 echo "-----> cd done"
 git add .
 echo "-----> git add done"
