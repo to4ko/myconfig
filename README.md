@@ -279,7 +279,7 @@
 
 # Software configuration
 **Proxmox Node Software:**
-  - Proxmox VE 8
+  - Proxmox VE
       * HAOS (main instance)
       * HAOS (backup instance)
       * Plex
