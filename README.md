@@ -707,6 +707,36 @@
 <td>6*16Tb HDD + 2*1Tb NVME (read\write cache)</td>
 <td>-</td>
 </tr>
+<tr>
+<td rowspan="4">22</td>
+<td rowspan="4">2026</td>
+<td>Minisforum MS01</td>
+<td>i9-13900H</td>
+<td>2 * 48Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Minisforum MS01</td>
+<td>i9-12900H</td>
+<td>2 * 32Gb DDR5</td>
+<td>512Gb M.2 NVME SSD + 2*2Tb U.2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Minisforum MS02 Ultra</td>
+<td>Core 9 Ultra 285HX</td>
+<td>2 * 48Gb DDR5</td>
+<td>1Tb M.2 NVME SSD + 2Tb M2 NVME SSD</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Synology DS1621+ + DX517</td>
+<td>Ryzen V1500B</td>
+<td>2 * 16Gb DDR4</td>
+<td>6*16Tb HDD + 5*16Tb HDD (DX517) + 2*1Tb NVME (read\write cache)</td>
+<td>-</td>
+</tr>
 
 
 </tbody>
