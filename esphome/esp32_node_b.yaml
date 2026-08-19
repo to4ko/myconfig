@@ -233,6 +233,22 @@ sensor:
     # accuracy_decimals: 2
     # resolution: 12
     update_interval: 60s
+    on_value:
+      then:
+        - lambda: |-
+            if (x > 40) {
+              if (!id(g_hot_water)) {
+                ESP_LOGD("hotwater", "Hot Water ON");
+                id(g_hot_water) = true;
+                id(id_hot_water_on).publish_state(true);
+              }
+            } else {
+              if (id(g_hot_water)) {
+                ESP_LOGD("hotwater", "Hot Water OFF");
+                id(g_hot_water) = false;
+                id(id_hot_water_on).publish_state(false);
+              }
+            }
 
   - platform: sht3xd
     temperature:
