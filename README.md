@@ -732,7 +732,7 @@
 <td>-</td>
 </tr>
 <tr>
-<td>Synology DS1621+ + DX517</td>
+<td>Synology DS1621+ with DX517</td>
 <td>Ryzen V1500B</td>
 <td>2 * 16Gb DDR4</td>
 <td>6*16Tb HDD + 5*16Tb HDD (DX517) + 2*1Tb NVME (read\write cache)</td>
