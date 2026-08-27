@@ -1,0 +1,203 @@
+substitutions:
+  node_name: esp32-breather-mb
+  friendly_name: "ESP32 Breather MB"
+
+  ## Пины UART к разъёму RF-модуля бризера (через level shifter на линии RX).
+  ## GPIO4 = TX ESP32 -> PA2 бризера, напрямую, без шифтера (обе стороны 3.3V).
+  ## GPIO5 = RX ESP32 <- PA3 бризера, через канал HV1/LV1 шифтера (бризер отдаёт 5V).
+  tx_pin: GPIO3
+  rx_pin: GPIO4
+
+esphome:
+  name: ${node_name}
+  friendly_name: ${friendly_name}
+  comment: "Tion O2 breezer control"
+  platformio_options:
+    build_flags:
+      - -std=gnu++17
+    build_unflags:
+      - -std=gnu++11
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+safe_mode:
+  disabled: False
+  num_attempts: 5
+  reboot_timeout: 15min
+
+preferences:
+  flash_write_interval: 10min
+
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_pass
+  domain: !secret my_domain
+  reboot_timeout: 15min
+  min_auth_mode: WPA2
+  #output_power: 17.5dB
+  #fast_connect: true
+  power_save_mode: none
+  # networks:
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     bssid: !secret wifi_bssid_mb_main
+  #     priority: 0
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  # manual_ip:
+  #   static_ip: 192.168.1.104
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+logger:
+  baud_rate: 0 # UART занят бризером, лог только по WiFi/USB
+  #level: VERY_VERBOSE
+
+api:
+
+ota:
+  - id: esphome_ota
+    platform: esphome
+
+uart:
+  - id: tion_uart
+    tx_pin: ${tx_pin}
+    rx_pin: ${rx_pin}
+    baud_rate: 115200
+
+## Локальные копии компонентов проекта, без обращения к внешним URL при сборке.
+## tion, tion-api, tion_o2_uart - из github.com/dentra/esphome-tion (components/).
+## vport, cgp, etl - из github.com/dentra/esphome-components (components/),
+## это обязательная инфраструктурная зависимость самого tion-компонента.
+external_components:
+  - source:
+      type: local
+      path: custom_components/tion
+    components: [tion, tion-api, tion_o2_uart, vport, cgp, etl]
+
+vport:
+  - platform: tion_o2_uart
+    id: tion_uart_vport
+    uart_id: tion_uart
+
+tion:
+  type: o2
+  id: tion_api
+  vport_id: tion_uart_vport
+  update_interval: 30s
+  batch_timeout: 200ms
+  state_timeout: 3s
+
+climate:
+  - platform: tion
+    id: tion_climate
+    name: None # используется friendly_name
+    enable_heat_cool: False
+
+sensor:
+  - platform: uptime
+    name: "Uptime s"
+    id: uptime_sensor
+    update_interval: 60s
+    #disabled_by_default: true
+      
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    update_interval: 60s
+  
+  
+  - platform: tion
+    id: tion_outdoor_temperature
+    type: outdoor_temperature
+    name: Outdoor Temperature
+    
+  - platform: tion
+    id: tion_productivity
+    type: productivity
+    name: Productivity
+    
+  - platform: tion
+    id: tion_boost_time_left
+    type: boost_time_left
+    name: Boost Time Left
+
+switch:
+  - platform: tion
+    id: tion_boost
+    type: boost
+    name: Boost
+
+number:
+  - platform: tion
+    id: tion_boost_time
+    type: boost_time
+    name: Boost Time
+    initial_value: 20min
+    restore_value: true
+
+binary_sensor:
+  - platform: tion
+    id: tion_state_problem
+    type: state
+    name: State Problem
+
+text_sensor:
+  - platform: template
+    name: "Uptime"
+    lambda: |-
+        int seconds = round(id(uptime_sensor).get_raw_state());
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 60s
+  
+  - platform: wifi_info
+    ip_address:
+      name: "IP"
+    ssid:
+      name: "SSID"
+    bssid:
+      name: "BSSID"
+    mac_address:
+      name: "MAC"
+    # scan_results:
+    #   name: "Latest Scan Results"
+
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true
+  
+  - platform: tion
+    id: tion_firmware_version
+    type: firmware_version
+    name: "Tion Firmware Version"
+
+  - platform: tion
+    id: tion_errors
+    type: errors
+    name: "Tion Errors"
+
+button:
+  - platform: restart
+    name: Restart
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
