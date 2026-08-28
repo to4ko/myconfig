@@ -1,12 +1,12 @@
 # #####################################################################################
 #
-# SASHA - breather
+# Sasha - breather
 #
 # #####################################################################################
 # Sasha- breather auto co2
 # ##################################
-  - alias: sasha_breather_auto_co2
-    id: sasha_breather_auto_co2
+  - alias: sasha_breather_auto_co2_esp32
+    id: sasha_breather_auto_co2_esp32
     initial_state: true
     triggers:
       - trigger: time_pattern
@@ -39,18 +39,22 @@
                 entity_id: sensor.0x00158d0001e6d85a_temperature
                 above: 20
             sequence:
-              - action: fan.turn_on
-                entity_id: fan.breather_s
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.esp32_breather_s
+                data:
+                  hvac_mode: fan_only
               - condition: numeric_state
                 entity_id: sensor.esp32_node_s_co2
                 above: input_number.co2_high_limit
               - condition: state
                 entity_id: switch.system_breather_auto_speed_s
                 state: 'on'
-              - action: fan.set_percentage
-                entity_id: fan.breather_s
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: climate.esp32_breather_s
                 data:
-                  percentage: "{{states('sensor.breather_set_speed_s')|int(0) }}"
+                  fan_mode: "{{ (states('sensor.breather_set_speed_s')|int(0) / 25)|round(0,'floor')|int }}"
 
           - conditions:
               - condition: state
@@ -72,14 +76,15 @@
                 entity_id: sensor.breather_set_speed_s
                 above: 0
             sequence:
-              - action: fan.set_percentage
-                entity_id: fan.breather_s
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: climate.esp32_breather_s
                 data:
-                  percentage: "{{states('sensor.breather_set_speed_s')|int(0) }}"
+                  fan_mode: "{{ (states('sensor.breather_set_speed_s')|int(0) / 25)|round(0,'floor')|int }}"
 
           - conditions:
-              - or: 
-                  - and: 
+              - or:
+                  - and:
                       - condition: state
                         entity_id: binary_sensor.0x00158d00025370d1_contact
                         state: 'off'
@@ -90,7 +95,7 @@
                         entity_id: binary_sensor.breather_s
                         state: 'on'
                   - and:
-                      - or: 
+                      - or:
                           - condition: numeric_state
                             entity_id: sensor.0x00158d0001e6d85a_temperature
                             below: 20
@@ -101,16 +106,19 @@
                         entity_id: binary_sensor.breather_s
                         state: 'on'
             sequence:
-              - action: fan.turn_off
-                entity_id: fan.breather_s
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.esp32_breather_s
+                data:
+                  hvac_mode: 'off'
 
 # ##################################
 # Sasha - Breather Auto Timer
 # ##################################
-  - alias: sasha_breather_auto_timer
-    id: sasha_breather_auto_timer
+  - alias: sasha_breather_auto_timer_esp32
+    id: sasha_breather_auto_timer_esp32
     mode: single
-    max_exceeded: silent    
+    max_exceeded: silent
     initial_state: true
     triggers:
       - trigger: event
@@ -129,9 +137,6 @@
       - trigger: time
         at: "09:00:00"
         id: 'time_trigger_day'
-    # conditions:
-    #   - condition: template
-    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
       - choose:
           - conditions: # choice 5
@@ -146,11 +151,11 @@
                     entity_id: binary_sensor.breather_s
                     state: 'on'
                 then:
-                  - action: fan.turn_off
-                    entity_id: fan.breather_s
-                    
-              # - action: timer.cancel
-              #   entity_id: timer.breather_v
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: climate.esp32_breather_s
+                    data:
+                      hvac_mode: 'off'
 
               - action: switch.turn_on
                 entity_id: switch.system_breather_auto_s
@@ -169,8 +174,11 @@
                 then:
                   - action: switch.turn_on
                     entity_id: switch.system_breather_manual_s
-                  - action: fan.turn_on
-                    entity_id: fan.breather_s
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: climate.esp32_breather_s
+                    data:
+                      hvac_mode: fan_only
 
           - conditions: # choice 8
               - condition: trigger
@@ -178,23 +186,27 @@
             sequence:
               - action: switch.turn_on
                 entity_id: switch.system_breather_manual_s
-              - action: fan.set_percentage
-                entity_id: fan.breather_s
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: climate.esp32_breather_s
                 data:
-                  percentage: 25
-                    
+                  fan_mode: "1"
+
           - conditions: # choice 9
               - condition: trigger
                 id: "time_trigger_day"
             sequence:
-              - action: fan.turn_off
-                entity_id: fan.breather_s
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.esp32_breather_s
+                data:
+                  hvac_mode: 'off'
 
 # ##################################
-# Sasha - Breather Switches Interlock
+# Sasha - Breather Switches Interlock  (no fan/climate action — unchanged logic)
 # ##################################
-  - alias: sasha_breather_switches_interlock
-    id: sasha_breather_switches_interlock
+  - alias: sasha_breather_switches_interlock_esp32
+    id: sasha_breather_switches_interlock_esp32
     mode: single
     max_exceeded: silent
     initial_state: true
@@ -203,11 +215,9 @@
         entity_id:
           - switch.system_breather_auto_s
           - switch.system_breather_manual_s
-    conditions: 
+    conditions:
       - condition: template
         value_template: "{{ trigger.to_state.state == 'on' }}"
-    #   - condition: template
-    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
       - action: homeassistant.turn_off
         target:
@@ -219,10 +229,10 @@
             {% endif %}
 
 # ##################################
-# Sasha - Breather Switches to default
+# Sasha - Breather Switches to default  (no fan/climate action — unchanged logic)
 # ##################################
-  - alias: sasha_breather_switches_default
-    id: sasha_breather_switches_default
+  - alias: sasha_breather_switches_default_esp32
+    id: sasha_breather_switches_default_esp32
     mode: single
     max_exceeded: silent
     initial_state: true
@@ -230,9 +240,6 @@
       - trigger: template
         value_template: "{{ is_state('switch.system_breather_auto_s','off') and
                             is_state('switch.system_breather_manual_s','off') }}"
-    # conditions: 
-    #   - condition: template
-    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
     - action: switch.turn_on
       entity_id: switch.system_breather_auto_s

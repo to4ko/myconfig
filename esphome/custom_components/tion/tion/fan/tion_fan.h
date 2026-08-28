@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "esphome/core/defines.h"
 #include "esphome/core/helpers.h"
 #include "esphome/core/component.h"
@@ -26,6 +29,11 @@ class TionFan : public fan::Fan, public Component, public Parented<TionApiCompon
  protected:
   void control(const fan::FanCall &call) override;
   void on_state_(const TionState &state);
+
+  // fan::Fan::set_supported_preset_modes() (ESPHome >= 2026.x) хранит не копии строк, а голые
+  // const char*, обязанные жить вечно - поэтому исходные строки держим тут (см. tion_climate.h
+  // custom_fan_modes_/custom_presets_ для того же паттерна).
+  std::vector<std::string> preset_modes_storage_{};
 };
 
 }  // namespace tion

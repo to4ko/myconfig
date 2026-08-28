@@ -10,6 +10,10 @@ namespace tion {
 static const char *const TAG = "tion_api_component";
 static const char *const STATE_TIMEOUT = "state_timeout";
 static const char *const BATCH_TIMEOUT = "batch_timeout";
+// Доп. таймер повторного опроса состояния сразу после отправки команды (см.
+// перечень изменений в perform_()/on_state_() ниже) — независимое имя, чтобы
+// не конфликтовать с STATE_TIMEOUT/BATCH_TIMEOUT в set_timeout()/cancel_timeout().
+static const char *const POST_WRITE_POLL = "post_write_poll";
 
 void TionApiComponent::BatchStateCall::perform() {
   this->start_time_ = millis();
@@ -28,6 +32,17 @@ void TionApiComponent::BatchStateCall::perform_() {
   dentra::tion::TionStateCall::perform();
   this->start_time_ = 0;
   this->c_->state_check_schedule_();
+  // По логам пользователя: квитанция (State-ответ) именно на "State set" иногда
+  // теряется/бьётся на линии (похоже на TX->RX наводку/эхо), из-за чего
+  // срабатывает "State was not received" и State Problem временно включается -
+  // НО сама команда реально доходит и применяется бризером (это видно по тому,
+  // что следующий штатный "Request State Get" всегда показывает уже новое
+  // состояние). Раньше актуальное состояние подтягивалось только на очередном
+  // update_interval (до 30-90с). Теперь независимо от того, придёт квитанция
+  // или нет, через 1с после отправки команды форсируем обычный State Get -
+  // если он пройдёт (а по логам он проходит стабильно), реальное состояние
+  // подтянется почти сразу, а не через полный цикл опроса.
+  this->c_->set_timeout(POST_WRITE_POLL, 1000, [c = this->c_]() { c->api_->request_state(); });
 }
 
 void TionApiComponent::call_setup() {
@@ -64,6 +79,9 @@ void TionApiComponent::on_state_(const TionState &state, const uint32_t request_
   // clear error reporting
   this->status_clear_error();
   this->cancel_timeout(STATE_TIMEOUT);
+  // Состояние уже получено (не важно, это была квитанция на запись или наш
+  // форсированный пере-опрос из perform_()) - отдельный пере-опрос больше не нужен.
+  this->cancel_timeout(POST_WRITE_POLL);
   // notify state
   this->defer([this]() { this->state_callback_.call(&this->state()); });
 }

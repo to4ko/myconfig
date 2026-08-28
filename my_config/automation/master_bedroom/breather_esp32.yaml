@@ -4,9 +4,9 @@
 #
 # #####################################################################################
 # Master Bedroom- breather auto co2
-# ################################## 
-  - alias: master_bedroom_breather_auto_co2
-    id: master_bedroom_breather_auto_co2
+# ##################################
+  - alias: master_bedroom_breather_auto_co2_esp32
+    id: master_bedroom_breather_auto_co2_esp32
     initial_state: true
     triggers:
       - trigger: time_pattern
@@ -39,18 +39,22 @@
                 entity_id: sensor.0x00158d000222c746_temperature
                 above: 20
             sequence:
-              - action: fan.turn_on
-                entity_id: fan.breather_mb
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.esp32_breather_mb
+                data:
+                  hvac_mode: fan_only
               - condition: numeric_state
                 entity_id: sensor.esp32_node_mb_co2
                 above: input_number.co2_high_limit
               - condition: state
                 entity_id: switch.system_breather_auto_speed_mb
                 state: 'on'
-              - action: fan.set_percentage
-                entity_id: fan.breather_mb
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: climate.esp32_breather_mb
                 data:
-                  percentage: "{{states('sensor.breather_set_speed_mb')|int(0) }}"
+                  fan_mode: "{{ (states('sensor.breather_set_speed_mb')|int(0) / 25)|round(0,'floor')|int }}"
 
           - conditions:
               - condition: state
@@ -72,14 +76,15 @@
                 entity_id: sensor.breather_set_speed_mb
                 above: 0
             sequence:
-              - action: fan.set_percentage
-                entity_id: fan.breather_mb
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: climate.esp32_breather_mb
                 data:
-                  percentage: "{{states('sensor.breather_set_speed_mb')|int(0) }}"
+                  fan_mode: "{{ (states('sensor.breather_set_speed_mb')|int(0) / 25)|round(0,'floor')|int }}"
 
           - conditions:
-              - or: 
-                  - and: 
+              - or:
+                  - and:
                       - condition: state
                         entity_id: binary_sensor.0x00158d000200ad58_contact
                         state: 'off'
@@ -90,7 +95,7 @@
                         entity_id: binary_sensor.breather_mb
                         state: 'on'
                   - and:
-                      - or: 
+                      - or:
                           - condition: numeric_state
                             entity_id: sensor.0x00158d000222c746_temperature
                             below: 20
@@ -101,16 +106,19 @@
                         entity_id: binary_sensor.breather_mb
                         state: 'on'
             sequence:
-              - action: fan.turn_off
-                entity_id: fan.breather_mb
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.esp32_breather_mb
+                data:
+                  hvac_mode: 'off'
 
 # ##################################
 # Master bedroom  - Breather Auto Timer
 # ##################################
-  - alias: master_bedroom_breather_auto_timer
-    id: master_bedroom_breather_auto_timer
+  - alias: master_bedroom_breather_auto_timer_esp32
+    id: master_bedroom_breather_auto_timer_esp32
     mode: single
-    max_exceeded: silent    
+    max_exceeded: silent
     initial_state: true
     triggers:
       - trigger: event
@@ -126,12 +134,12 @@
       # - trigger: time
       #   at: "21:00:00"
       #   id: 'time_trigger_night'
+      # NOTE: night trigger is commented out here exactly as in the original
+      # breather.yaml (already flagged separately) — not something this
+      # migration is meant to fix. Left as-is.
       - trigger: time
         at: "09:00:00"
         id: 'time_trigger_day'
-    # conditions:
-    #   - condition: template
-    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
       - choose:
           - conditions: # choice 5
@@ -146,11 +154,11 @@
                     entity_id: binary_sensor.breather_mb
                     state: 'on'
                 then:
-                  - action: fan.turn_off
-                    entity_id: fan.breather_mb
-                    
-              # - action: timer.cancel
-              #   entity_id: timer.breather_v
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: climate.esp32_breather_mb
+                    data:
+                      hvac_mode: 'off'
 
               - action: switch.turn_on
                 entity_id: switch.system_breather_auto_mb
@@ -167,84 +175,52 @@
                     entity_id: binary_sensor.breather_mb
                     state: 'off'
                 then:
-                  - action: fan.turn_on
-                    entity_id: fan.breather_mb
+                  - action: climate.set_hvac_mode
+                    target:
+                      entity_id: climate.esp32_breather_mb
+                    data:
+                      hvac_mode: fan_only
                   - action: switch.turn_on
                     entity_id: switch.system_breather_manual_mb
 
-          - conditions: # choice 8
+          - conditions: # choice 8 (unreachable — see note above on the disabled trigger)
               - condition: trigger
                 id: "time_trigger_night"
             sequence:
               - action: switch.turn_on
                 entity_id: switch.system_breather_manual_mb
-              - action: fan.set_percentage
-                entity_id: fan.breather_mb
+              - action: climate.set_fan_mode
+                target:
+                  entity_id: climate.esp32_breather_mb
                 data:
-                  percentage: 50
-                    
+                  fan_mode: "2"
+
           - conditions: # choice 9
               - condition: trigger
                 id: "time_trigger_day"
             sequence:
-              - action: fan.turn_off
-                entity_id: fan.breather_mb
-
-
-
-# ##################################
-# Master Bedroom- breather auto by alica
-# ##################################
-  # - alias: master_bedroom_breather_auto_alice
-  #   id: master_bedroom_breather_auto_alice
-  #   initial_state: true
-  #   triggers:
-  #     - trigger: event
-  #       event_type: yandex_intent
-  #       event_data:
-  #         text: Включи вентиляцию
-  #       id: 'to_on'
-  #     - trigger: event
-  #       event_type: yandex_intent
-  #       event_data:
-  #         text: Выключи вентиляцию
-  #       id: 'to_off'
-  #   actions:
-  #     - action: media_player.play_media
-  #       data:
-  #         media_content_type: "{{ states('input_select.alice_mode') }}"
-  #         entity_id: '{{ trigger.event.data.entity_id }}'
-  #         media_content_id: "{{['С облегчением!','Так держать!','Красава!','Красавелла!','Рада за тебя!','Давай еще!']|random}}"
-  #         extra:
-  #           volume_level: '{{states("input_number.main_volume")|float(0)}}'
-  #     - action: button.press
-  #       entity_id: button.d1mini_air_freshener_spray
-  #     - action: fan.turn_on
-  #       entity_id: fan.esp32_node_b_fan_t
-  #     - delay:
-  #         seconds: 5
-  #     - action: button.press
-  #       entity_id: button.d1mini_air_freshener_spray
-
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: climate.esp32_breather_mb
+                data:
+                  hvac_mode: 'off'
 
 # ##################################
-# Master Bedroom - Breather Switches Interlock
+# Master Bedroom - Breather Switches Interlock  (no fan/climate action — unchanged logic)
 # ##################################
-  - alias: master_bedroom_breather_switches_interlock
-    id: master_bedroom_breather_switches_interlock
+  - alias: master_bedroom_breather_switches_interlock_esp32
+    id: master_bedroom_breather_switches_interlock_esp32
     mode: single
-    max_exceeded: silent    
+    max_exceeded: silent
     initial_state: true
     triggers:
       - trigger: state
         entity_id:
           - switch.system_breather_auto_mb
           - switch.system_breather_manual_mb
-    conditions: 
+    conditions:
       - condition: template
         value_template: "{{ trigger.to_state.state == 'on' }}"
-      # - condition: template
-      #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
     - action: homeassistant.turn_off
       target:
@@ -256,20 +232,17 @@
           {% endif %}
 
 # ##################################
-# Master Bedroom - Breather Switches to default
+# Master Bedroom - Breather Switches to default  (no fan/climate action — unchanged logic)
 # ##################################
-  - alias: master_bedroom_breather_switches_default
-    id: master_bedroom_breather_switches_default
+  - alias: master_bedroom_breather_switches_default_esp32
+    id: master_bedroom_breather_switches_default_esp32
     mode: single
-    max_exceeded: silent    
+    max_exceeded: silent
     initial_state: true
     triggers:
       - trigger: template
         value_template: "{{ is_state('switch.system_breather_auto_mb','off') and
                             is_state('switch.system_breather_manual_mb','off') }}"
-    # conditions: 
-    #   - condition: template
-    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
     actions:
     - action: switch.turn_on
       entity_id: switch.system_breather_auto_mb

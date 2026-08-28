@@ -1,0 +1,279 @@
+# #####################################################################################
+#
+# Vova - breather
+#
+# #####################################################################################
+# Vova- breather auto co2
+# ##################################
+- alias: vova_breather_auto_co2_esp32
+  id: vova_breather_auto_co2_esp32
+  initial_state: true
+  triggers:
+    - trigger: time_pattern
+      minutes: "/3"
+  conditions:
+    - condition: state
+      entity_id: switch.system_breather_auto_v
+      state: "on"
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: switch.system_breather_manual_v
+          state: "on"
+  actions:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x00158d0003fa6cf5_contact
+              state: "off"
+            - condition: numeric_state
+              entity_id: sensor.esp32_node_v_co2
+              above: input_number.co2_high_limit
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "off"
+            - condition: state
+              entity_id: switch.system_security_mode
+              state: "off"
+          sequence:
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.esp32_breather_v
+              data:
+                hvac_mode: fan_only
+            - condition: numeric_state
+              entity_id: sensor.esp32_node_v_co2
+              above: input_number.co2_high_limit
+            - condition: state
+              entity_id: switch.system_breather_auto_speed_v
+              state: "on"
+            - action: climate.set_fan_mode
+              target:
+                entity_id: climate.esp32_breather_v
+              data:
+                fan_mode: "{{ (states('sensor.breather_set_speed_v')|int(0) / 25)|round(0,'floor')|int }}"
+
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x00158d0003fa6cf5_contact
+              state: "off"
+            - condition: numeric_state
+              entity_id: sensor.esp32_node_v_co2
+              above: input_number.co2_high_limit
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "on"
+            - condition: state
+              entity_id: switch.system_security_mode
+              state: "off"
+            - condition: state
+              entity_id: switch.system_breather_auto_speed_v
+              state: "on"
+            - condition: numeric_state
+              entity_id: sensor.breather_set_speed_v
+              above: 0
+          sequence:
+            - action: climate.set_fan_mode
+              target:
+                entity_id: climate.esp32_breather_v
+              data:
+                fan_mode: "{{ (states('sensor.breather_set_speed_v')|int(0) / 25)|round(0,'floor')|int }}"
+
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x00158d0003fa6cf5_contact
+              state: "off"
+            - condition: numeric_state
+              entity_id: sensor.esp32_node_v_co2
+              below: input_number.co2_low_limit
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "on"
+          sequence:
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.esp32_breather_v
+              data:
+                hvac_mode: 'off'
+
+        - conditions:
+            - condition: state
+              entity_id: binary_sensor.0x00158d0003fa6cf5_contact
+              state: "on"
+            - condition: state
+              entity_id: binary_sensor.breather_v
+              state: "on"
+          sequence:
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.esp32_breather_v
+              data:
+                hvac_mode: 'off'
+
+# ##################################
+# Vova - Breather Auto Timer
+# ##################################
+- alias: vova_breather_auto_timer_esp32
+  id: vova_breather_auto_timer_esp32
+  mode: single
+  max_exceeded: silent
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.digma_ir_v_breather_remote_used
+      to: "on"
+      id: "ir_used_remote"
+    - trigger: event
+      event_type: yandex_intent
+      event_data:
+        text: Выключи вентиляцию
+      id: "to_off_alice"
+    - trigger: event
+      event_type: yandex_intent
+      event_data:
+        text: Включи вентиляцию
+      id: "to_on_alice"
+    - trigger: time
+      at: "21:00:00"
+      id: "time_trigger_night"
+    - trigger: time
+      at: "09:00:00"
+      id: "time_trigger_day"
+  actions:
+    - choose:
+        - conditions: # choice 5
+            - condition: trigger
+              id: "to_off_alice"
+          sequence:
+            - condition: template
+              value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_v' }}"
+
+            - if:
+                - condition: state
+                  entity_id: binary_sensor.breather_v
+                  state: "on"
+              then:
+                - action: climate.set_hvac_mode
+                  target:
+                    entity_id: climate.esp32_breather_v
+                  data:
+                    hvac_mode: 'off'
+
+            - action: switch.turn_on
+              entity_id: switch.system_breather_auto_v
+
+        - conditions: # choice 6
+            - condition: trigger
+              id: "to_on_alice"
+          sequence:
+            - condition: template
+              value_template: "{{ trigger.event.data.entity_id == 'media_player.yandex_v' }}"
+
+            - if:
+                - condition: state
+                  entity_id: binary_sensor.breather_v
+                  state: "off"
+              then:
+                - action: switch.turn_on
+                  entity_id: switch.system_breather_manual_v
+                - action: climate.set_hvac_mode
+                  target:
+                    entity_id: climate.esp32_breather_v
+                  data:
+                    hvac_mode: fan_only
+
+        - conditions: # choice 8
+            - condition: trigger
+              id: "time_trigger_night"
+          sequence:
+            - action: switch.turn_on
+              entity_id: switch.system_breather_manual_v
+            - action: climate.set_fan_mode
+              target:
+                entity_id: climate.esp32_breather_v
+              data:
+                fan_mode: "2"
+
+        - conditions: # choice 9
+            - condition: trigger
+              id: "time_trigger_day"
+          sequence:
+            - action: climate.set_hvac_mode
+              target:
+                entity_id: climate.esp32_breather_v
+              data:
+                hvac_mode: 'off'
+            - action: timer.cancel
+              entity_id: timer.breather_v
+            - action: switch.turn_on
+              entity_id: switch.system_breather_auto_v
+
+# ##################################
+# Vova - Breather Plug Toggle  (unchanged — role vs. new ESP32 controller unclear)
+# ##################################
+- alias: vova_breather_plug_toggle_esp32
+  id: vova_breather_plug_toggle_esp32
+  initial_state: true
+  max_exceeded: silent
+  mode: queued
+  max: 10
+  triggers:
+    - trigger: state
+      entity_id: switch.0x00158d000344998e_plug
+      to: "off"
+      for:
+        seconds: 30
+  conditions:
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.0x00158d000344998e_plug
+
+# ##################################
+# Vova - Breather Switches Interlock  (no fan/climate action — unchanged logic)
+# ##################################
+- alias: vova_breather_switches_interlock_esp32
+  id: vova_breather_switches_interlock_esp32
+  mode: single
+  max_exceeded: silent
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id:
+        - switch.system_hourly_mode_breather_v
+        - switch.system_breather_auto_v
+        - switch.system_breather_manual_v
+  conditions:
+    - condition: template
+      value_template: "{{ trigger.to_state.state == 'on' }}"
+  actions:
+    - action: homeassistant.turn_off
+      target:
+        entity_id: >-
+          {% if trigger.from_state.entity_id == 'switch.system_hourly_mode_breather_v' %}
+          {{ 'switch.system_breather_auto_v', 'switch.system_breather_manual_v' }}
+          {% elif trigger.from_state.entity_id == 'switch.system_breather_auto_v' %}
+          {{ 'switch.system_hourly_mode_breather_v', 'switch.system_breather_manual_v' }}
+          {% else %}
+          {{ 'switch.system_hourly_mode_breather_v', 'switch.system_breather_auto_v' }}
+          {% endif %}
+
+# ##################################
+# Vova - Breather Switches to default  (no fan/climate action — unchanged logic)
+# ##################################
+- alias: vova_breather_switches_default_esp32
+  id: vova_breather_switches_default_esp32
+  mode: single
+  max_exceeded: silent
+  initial_state: true
+  triggers:
+    - trigger: template
+      value_template:
+        "{{ is_state('switch.system_hourly_mode_breather_v','off') and
+        is_state('switch.system_breather_auto_v','off') and
+        is_state('switch.system_breather_manual_v','off') }}"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.system_breather_auto_v
