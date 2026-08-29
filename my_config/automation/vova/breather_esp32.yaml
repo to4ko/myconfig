@@ -36,9 +36,13 @@
               entity_id: switch.system_security_mode
               state: "off"
           sequence:
-            - action: climate.set_hvac_mode
+            - action: climate.turn_on
               target:
                 entity_id: climate.esp32_breather_v
+            - action: climate.set_hvac_mode
+              target:
+                entity_id:
+                  - climate.esp32_breather_v
               data:
                 hvac_mode: fan_only
             - condition: numeric_state
@@ -73,6 +77,15 @@
               entity_id: sensor.breather_set_speed_v
               above: 0
           sequence:
+            - action: climate.turn_on
+              target:
+                entity_id: climate.esp32_breather_v
+            - action: climate.set_hvac_mode
+              target:
+                entity_id:
+                  - climate.esp32_breather_v
+              data:
+                hvac_mode: fan_only          
             - action: climate.set_fan_mode
               target:
                 entity_id: climate.esp32_breather_v
@@ -90,11 +103,9 @@
               entity_id: binary_sensor.breather_v
               state: "on"
           sequence:
-            - action: climate.set_hvac_mode
+            - action: climate.turn_off
               target:
                 entity_id: climate.esp32_breather_v
-              data:
-                hvac_mode: 'off'
 
         - conditions:
             - condition: state
@@ -153,12 +164,9 @@
                   entity_id: binary_sensor.breather_v
                   state: "on"
               then:
-                - action: climate.set_hvac_mode
+                - action: climate.turn_off
                   target:
                     entity_id: climate.esp32_breather_v
-                  data:
-                    hvac_mode: 'off'
-
             - action: switch.turn_on
               entity_id: switch.system_breather_auto_v
 
@@ -176,18 +184,31 @@
               then:
                 - action: switch.turn_on
                   entity_id: switch.system_breather_manual_v
-                - action: climate.set_hvac_mode
+                - action: climate.turn_on
                   target:
                     entity_id: climate.esp32_breather_v
+                - action: climate.set_hvac_mode
+                  target:
+                    entity_id:
+                      - climate.esp32_breather_v
                   data:
                     hvac_mode: fan_only
-
+                
         - conditions: # choice 8
             - condition: trigger
               id: "time_trigger_night"
           sequence:
             - action: switch.turn_on
               entity_id: switch.system_breather_manual_v
+            - action: climate.turn_on
+              target:
+                entity_id: climate.esp32_breather_v
+            - action: climate.set_hvac_mode
+              target:
+                entity_id:
+                  - climate.esp32_breather_v
+              data:
+                hvac_mode: fan_only
             - action: climate.set_fan_mode
               target:
                 entity_id: climate.esp32_breather_v
@@ -198,11 +219,9 @@
             - condition: trigger
               id: "time_trigger_day"
           sequence:
-            - action: climate.set_hvac_mode
+            - action: climate.turn_off
               target:
                 entity_id: climate.esp32_breather_v
-              data:
-                hvac_mode: 'off'
             - action: timer.cancel
               entity_id: timer.breather_v
             - action: switch.turn_on
