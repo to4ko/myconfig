@@ -494,8 +494,8 @@ void NutServerComponent::handle_list_var(NutClient &client, const std::string &a
     "battery.charge", "battery.voltage", "battery.voltage.nominal", "battery.runtime",
     "input.voltage", "input.voltage.nominal", "input.frequency", 
     "input.transfer.low", "input.transfer.high",
-    "output.voltage", "output.voltage.nominal", 
-    "ups.load", "ups.realpower.nominal", "ups.power.nominal"
+    "output.voltage", "output.voltage.nominal",
+    "ups.load", "ups.realpower.nominal", "ups.power.nominal", "ups.temperature"
   };
   
   for (const auto &var : variables) {
@@ -845,6 +845,9 @@ std::string NutServerComponent::get_ups_var(const std::string &var_name) {
     }
     if (var_name == "ups.power.nominal" && !std::isnan(ups_data.power.apparent_power_nominal)) {
       return std::to_string(static_cast<int>(ups_data.power.apparent_power_nominal));
+    }
+    if (var_name == "ups.temperature" && !std::isnan(ups_data.power.temperature)) {
+      return format_nut_value(std::to_string(ups_data.power.temperature));
     }
   }
   

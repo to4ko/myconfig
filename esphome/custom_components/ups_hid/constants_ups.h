@@ -193,6 +193,7 @@ namespace sensor_type {
     static constexpr const char* UPS_TIMER_REBOOT = "ups_timer_reboot";
     static constexpr const char* UPS_TIMER_SHUTDOWN = "ups_timer_shutdown";
     static constexpr const char* UPS_TIMER_START = "ups_timer_start";
+    static constexpr const char* TEMPERATURE = "ups_temperature";
 }
 
 // ==================== Binary Sensor Type Identifiers ====================

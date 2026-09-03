@@ -17,6 +17,10 @@ CONF_PROTOCOL_TIMEOUT = "protocol_timeout"
 CONF_PROTOCOL = "protocol"
 CONF_FALLBACK_NOMINAL_VOLTAGE = "fallback_nominal_voltage"
 CONF_UPS_HID_ID = "ups_hid_id"
+# Manual battery percentage calibration - see the "battery voltage low/high"
+# comments in the CONFIG_SCHEMA below for why this exists.
+CONF_BATTERY_VOLTAGE_HIGH = "battery_voltage_high"
+CONF_BATTERY_VOLTAGE_LOW = "battery_voltage_low"
 
 # Known UPS vendor IDs for validation
 KNOWN_VENDOR_IDS = {
@@ -29,7 +33,6 @@ KNOWN_VENDOR_IDS = {
     0x051D: "APC",
     0x0592: "Powerware",
     0x05DD: "Delta Electronics",
-    0x0665: "Cypress Semiconductor (Megatec/Q1, e.g. many Ippon UPS units)",
     0x06DA: "MGE UPS Systems",
     0x075D: "Idowell",
     0x0764: "CyberPower",
@@ -121,12 +124,27 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(
                 CONF_PROTOCOL_TIMEOUT, default="15s"
             ): validate_protocol_timeout,
-            # Protocol selection: auto (default), apc, cyberpower, generic, megatec
+            # Protocol selection: auto (default), apc, cyberpower, generic
             cv.Optional(CONF_PROTOCOL, default="auto"): cv.one_of(
-                "auto", "apc", "cyberpower", "generic", "megatec", lower=True
+                "auto", "apc", "cyberpower", "generic", lower=True
             ),
             # Fallback nominal voltage (European 230V default for international compatibility)
             cv.Optional(CONF_FALLBACK_NOMINAL_VOLTAGE, default="230V"): validate_fallback_nominal_voltage,
+            # Manual battery percentage calibration, for protocols/devices
+            # that don't report a usable charge percentage directly (e.g.
+            # Megatec/Q1, which only gives a raw battery voltage). These
+            # set the "0% charge" and "100% charge" voltage points used by
+            # the built-in linear estimate - matching real NUT's
+            # override.battery.voltage.low / override.battery.voltage.high
+            # ups.conf directives for blazer_usb/nutdrv_qx devices. Leave
+            # unset to use the automatic nominal-voltage-scaled default
+            # instead. Both a "number:" entity (for live tuning from the
+            # ESPHome web UI/Home Assistant) and this YAML default write to
+            # the same underlying value - whichever was set most recently
+            # wins, and the number entity starts out showing whatever this
+            # default resolves to.
+            cv.Optional(CONF_BATTERY_VOLTAGE_HIGH): cv.float_,
+            cv.Optional(CONF_BATTERY_VOLTAGE_LOW): cv.float_,
         }
     ).extend(cv.polling_component_schema("30s"))
      .extend(cv.COMPONENT_SCHEMA),
@@ -149,3 +167,8 @@ async def to_code(config):
     cg.add(var.set_protocol_timeout(config[CONF_PROTOCOL_TIMEOUT]))
     cg.add(var.set_protocol_selection(config[CONF_PROTOCOL]))
     cg.add(var.set_fallback_nominal_voltage(config[CONF_FALLBACK_NOMINAL_VOLTAGE]))
+
+    if CONF_BATTERY_VOLTAGE_HIGH in config:
+        cg.add(var.set_battery_voltage_high_override(config[CONF_BATTERY_VOLTAGE_HIGH]))
+    if CONF_BATTERY_VOLTAGE_LOW in config:
+        cg.add(var.set_battery_voltage_low_override(config[CONF_BATTERY_VOLTAGE_LOW]))

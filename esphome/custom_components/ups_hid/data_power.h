@@ -23,6 +23,10 @@ struct PowerData {
   // Power ratings and capabilities
   float realpower_nominal{NAN};        // Nominal real power rating (W)
   float apparent_power_nominal{NAN};   // Nominal apparent power rating (VA)
+
+  // UPS chassis/internal temperature (deg C), when the protocol reports one
+  // (e.g. Megatec/Q1's TT.T field). NAN when not supported/available.
+  float temperature{NAN};
   
   // Power status information
   std::string status{};                // Power status text (Online, On Battery, etc.)

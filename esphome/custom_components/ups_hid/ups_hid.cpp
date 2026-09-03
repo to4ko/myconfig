@@ -359,6 +359,8 @@ void UpsHidComponent::update_sensors() {
       value = ups_data_.test.timer_shutdown;
     } else if (type == sensor_type::UPS_TIMER_START && ups_data_.test.timer_start != -1) {
       value = ups_data_.test.timer_start;
+    } else if (type == sensor_type::TEMPERATURE && !std::isnan(ups_data_.power.temperature)) {
+      value = ups_data_.power.temperature;
     }
     
     if (!std::isnan(value)) {
@@ -835,6 +837,11 @@ float UpsHidComponent::get_output_voltage() const {
 float UpsHidComponent::get_load_percent() const {
   std::lock_guard<std::mutex> lock(data_mutex_);
   return ups_data_.power.load_percent;
+}
+
+float UpsHidComponent::get_temperature() const {
+  std::lock_guard<std::mutex> lock(data_mutex_);
+  return ups_data_.power.temperature;
 }
 
 float UpsHidComponent::get_runtime_minutes() const {

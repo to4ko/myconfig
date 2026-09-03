@@ -9,12 +9,14 @@ from esphome.const import (
     DEVICE_CLASS_DURATION,
     DEVICE_CLASS_POWER,
     DEVICE_CLASS_EMPTY,
+    DEVICE_CLASS_TEMPERATURE,
     UNIT_PERCENT,
     UNIT_VOLT,
     UNIT_MINUTE,
     UNIT_HERTZ,
     UNIT_WATT,
     UNIT_SECOND,
+    UNIT_CELSIUS,
 )
 
 
@@ -129,6 +131,11 @@ SENSOR_TYPES = {
         "unit": UNIT_SECOND,
         "device_class": DEVICE_CLASS_DURATION,
         "accuracy_decimals": 0,
+    },
+    "ups_temperature": {
+        "unit": UNIT_CELSIUS,
+        "device_class": DEVICE_CLASS_TEMPERATURE,
+        "accuracy_decimals": 1,
     },
 }
 

@@ -1,0 +1,501 @@
+substitutions:
+  board_name: esp32_nut_hs
+  node_name: esp32-nut-hs
+ 
+esphome:
+  name: ${node_name}
+  comment: "ESP32 NUT Server HS"
+  friendly_name: "ESP32 NUT Server HS"
+  area: "Hall small"
+
+esp32_ble:
+  enable_on_boot: False
+
+safe_mode:
+  disabled: False
+  num_attempts: 5
+  reboot_timeout: 15min
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_pass
+  domain: !secret my_domain
+  reboot_timeout: 15min
+  min_auth_mode: WPA2
+  #output_power: 17.5dB
+  #fast_connect: true
+  power_save_mode: none
+  # networks:
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  #     bssid: !secret wifi_bssid_mb_main
+  #     priority: 0
+  #   - ssid: !secret wifi_ssid
+  #     password: !secret wifi_pass
+  #     hidden: false
+  # manual_ip:
+  #   static_ip: 192.168.1.104
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
+  #   dns1: 192.168.1.1
+  #   dns2: 8.8.8.8
+
+
+debug:
+  update_interval: 5s
+
+logger:
+  baud_rate: 0
+
+api:
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+    allow_partition_access: true
+
+web_server:
+  port: 80
+
+# packages:
+#   remote_package:
+#     url: https://github.com/bullshit/esphome-components
+#     ref: main
+#     files: ['configs/essential_sensors.yaml', 'configs/extended_sensors.yaml']
+#     refresh: 5s
+
+external_components:
+  - source:
+      type: local
+      path: custom_components
+    components: [ups_hid, nut_server]
+
+ups_hid:
+  id: ups_monitor
+  protocol: auto
+  update_interval: 30s
+  battery_voltage_high: 13.5   # LiFePO4, с запасом ниже наблюдаемых ~13.6В в покое
+  battery_voltage_low: 12.0    # LiFePO4, дженерик-старт
+  
+nut_server:
+  ups_hid_id: ups_monitor
+  ups_name: "Ippon"
+  username: "admin"
+  password: "admin"
+
+one_wire:
+  - platform: gpio
+    pin: GPIO7
+
+number:
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Voltage Calibration High"
+    calibration_type: battery_voltage_high
+    min_value: 0
+    max_value: 30
+    step: 0.1
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Voltage Calibration Low"
+    calibration_type: battery_voltage_low
+    min_value: 0
+    max_value: 30
+    step: 0.1
+
+    
+binary_sensor:
+  - platform: status
+    name: "Status"
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Charging"
+    id: battery_charging
+    type: charging
+    device_class: battery
+    
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Overload Warning"
+    id: overload_warning
+    type: overload
+    device_class: power
+    
+text_sensor:
+  - platform: template
+    name: "Uptime"
+    lambda: |-
+        int seconds = round(id(uptime_sensor).get_raw_state());
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 60s
+  
+  - platform: wifi_info
+    ip_address:
+      name: "IP"
+    ssid:
+      name: "SSID"
+    bssid:
+      name: "BSSID"
+    mac_address:
+      name: "MAC"
+    # scan_results:
+    #   name: "Latest Scan Results"
+
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true
+
+  # These stay "Unavailable" in HA for Megatec/Q1 (this Ippon doesn't
+  # report any of them - no "I" identification command support on this
+  # hardware). Left in the config on purpose: if this board ever gets
+  # moved to a different UPS/protocol that *does* report them (e.g. APC or
+  # CyberPower via their native HID Power Device Class), they'll start
+  # populating automatically with no config changes needed - the
+  # component already skips publish_state() entirely when a field has no
+  # data, which is what makes an entity show as "Unavailable" rather than
+  # a misleading blank/zero value.
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Manufacturer"
+    id: ups_manufacturer
+    type: manufacturer
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Model"
+    id: ups_model
+    type: model
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Serial Number"
+    id: ups_serial_number
+    type: serial_number
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Firmware Version"
+    id: ups_firmware_version
+    type: firmware_version
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Input Sensitivity"
+    id: input_sensitivity
+    type: input_sensitivity
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Manufacture Date"
+    id: ups_manufacture_date
+    type: ups_mfr_date
+    icon: "mdi:calendar-clock"
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Firmware Auxiliary"
+    id: firmware_aux
+    type: ups_firmware_aux
+    icon: "mdi:chip"
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Beeper Status"
+    id: ups_beeper_status
+    type: ups_beeper_status
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Status"
+    id: ups_nut_status
+    type: nut_status
+    icon: "mdi:information-outline"
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Status"
+    id: battery_status
+    type: battery_status
+    icon: "mdi:battery-heart"
+
+  # - platform: debug
+  #   device:
+  #     name: ${board_name}_Device_Info
+  #   reset_reason:
+  #     name: ${board_name}_Reset_Reason
+sensor:
+  - platform: uptime
+    name: "Uptime s"
+    id: uptime_sensor
+    update_interval: 60s
+    #disabled_by_default: true
+      
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    update_interval: 60s
+
+  - platform: dallas_temp
+    name: "ESP Battery Temperature"
+    update_interval: 60s
+    
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Level"
+    id: battery_level
+    type: battery_level
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Input Voltage"
+    id: input_voltage
+    type: input_voltage
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Output Voltage"
+    id: output_voltage
+    type: output_voltage
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Load Percentage"
+    id: load_percentage
+    type: load_percent
+    unit_of_measurement: "%"
+    device_class: power_factor
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Stays "Unavailable" for Megatec/Q1 (this Ippon) - its "Q1" status
+  # reply doesn't include a runtime estimate. Left in on purpose, same
+  # reasoning as the text sensors above: works automatically if this
+  # board ever ends up on a protocol/device that does report it.
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Runtime Remaining"
+    id: runtime_remaining
+    type: runtime
+    unit_of_measurement: "min"
+    device_class: duration
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Advanced battery metrics
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Voltage"
+    id: battery_voltage
+    type: battery_voltage
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 1
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Voltage Nominal"
+    id: battery_voltage_nominal
+    type: battery_voltage_nominal
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Temperature"
+    id: ups_temperature
+    type: ups_temperature
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # Input power analysis
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Input Voltage Nominal"
+    id: input_voltage_nominal
+    type: input_voltage_nominal
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # Same story as above: "Unavailable" for Megatec/Q1 on this specific
+  # Ippon, but will populate automatically without any config changes if
+  # this board ends up on a UPS/protocol that does report them.
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Input Transfer Low"
+    id: input_transfer_low
+    type: input_transfer_low
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Input Transfer High"
+    id: input_transfer_high
+    type: input_transfer_high
+    unit_of_measurement: "V"
+    device_class: voltage
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Real Power Nominal"
+    id: ups_realpower_nominal
+    type: ups_realpower_nominal
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Delay Shutdown"
+    id: ups_delay_shutdown
+    type: ups_delay_shutdown
+    unit_of_measurement: "s"
+    device_class: duration
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Delay Start"
+    id: ups_delay_start
+    type: ups_delay_start
+    unit_of_measurement: "s"
+    device_class: duration
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "UPS Delay Reboot"
+    id: ups_delay_reboot
+    type: ups_delay_reboot
+    unit_of_measurement: "s"
+    device_class: duration
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Battery Runtime Low Threshold"
+    id: battery_runtime_low
+    type: battery_runtime_low
+    unit_of_measurement: "min"
+    device_class: duration
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Input Frequency"
+    id: input_frequency
+    type: frequency
+    unit_of_measurement: "Hz"
+    state_class: measurement
+    accuracy_decimals: 1
+
+  # Calculated power consumption
+  - platform: template
+    name: "UPS Load Power"
+    id: ups_load_power
+    unit_of_measurement: "W"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 1
+    lambda: |-
+      if (!std::isnan(id(load_percentage).state)) {
+        float ups_max_power = 700.0; // Fallback: this Ippon's rated VA
+
+        // Prefer the HID-reported nominal power if the connected
+        // UPS/protocol actually provides one (Megatec/Q1 on this specific
+        // Ippon doesn't, so this sensor reads "Unavailable"/NAN here and
+        // the fallback above is used - but this becomes accurate
+        // automatically on hardware that does report it, e.g. APC/CyberPower).
+        if (!std::isnan(id(ups_realpower_nominal).state)) {
+          ups_max_power = id(ups_realpower_nominal).state;
+        }
+
+        return (ups_max_power * id(load_percentage).state) / 100.0;
+      }
+      return NAN;
+    update_interval: 30s
+    
+  # - platform: debug
+  #   free:
+  #     name: ${board_name}_Heap_Free
+  #   block:
+  #     name: ${board_name}_Heap_Max_Block
+  #   loop_time:
+  #     name: ${board_name}_Loop_Time
+
+switch:
+
+button:
+  - platform: restart
+    name: "Restart"
+
+  # Megatec/Q1 only has a single "beeper.toggle" wire command (no separate
+  # on/off) - MegatecProtocol::beeper_enable()/beeper_disable() handle that
+  # by checking the last known state and only toggling if needed, so these
+  # two buttons are safe to press repeatedly / press the "wrong" one by
+  # mistake without fighting each other.
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Beeper On"
+    id: beeper_on_button
+    beeper_action: enable
+    icon: "mdi:volume-high"
+
+  - platform: ups_hid
+    ups_hid_id: ups_monitor
+    name: "Beeper Off"
+    id: beeper_off_button
+    beeper_action: disable
+    icon: "mdi:volume-off"
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow

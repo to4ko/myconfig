@@ -26,6 +26,7 @@ namespace esphome { namespace text_sensor { class TextSensor; } }
 #include <unordered_map>
 #include <string>
 #include <mutex>
+#include <cmath>
 
 #ifdef USE_ESP32
 #include "esp_err.h"
@@ -88,6 +89,15 @@ namespace esphome
       void set_protocol_selection(const std::string &protocol) { protocol_selection_ = protocol; }
       void set_fallback_nominal_voltage(float voltage) { fallback_nominal_voltage_ = voltage; }
 
+      // Manual battery percentage calibration (0%/100% voltage points),
+      // used by protocols that can't report charge percentage directly
+      // (e.g. Megatec/Q1). Settable from YAML (a fixed default) and/or a
+      // "number:" entity (live tuning) - both just write here, whichever
+      // happens most recently wins. NAN (the default) means "not
+      // configured, use the protocol's own automatic fallback instead".
+      void set_battery_voltage_high_override(float voltage) { battery_voltage_high_override_ = voltage; }
+      void set_battery_voltage_low_override(float voltage) { battery_voltage_low_override_ = voltage; }
+
       // Data getters for sensors (thread-safe)
       UpsData get_ups_data() const { 
         std::lock_guard<std::mutex> lock(data_mutex_);
@@ -96,6 +106,8 @@ namespace esphome
       std::string get_protocol_name() const;
       uint32_t get_protocol_timeout() const { return protocol_timeout_ms_; }
       float get_fallback_nominal_voltage() const { return fallback_nominal_voltage_; }
+      float get_battery_voltage_high_override() const { return battery_voltage_high_override_; }
+      float get_battery_voltage_low_override() const { return battery_voltage_low_override_; }
       
       // Convenient state getters for lambda expressions (no sensor entities required)
       bool is_online() const;
@@ -104,17 +116,13 @@ namespace esphome
       bool is_charging() const;
       bool has_fault() const;
       bool is_overloaded() const;
-      // Standard NUT ups.status string (e.g. "OL", "OB CHRG", "OB DISCHRG
-      // LB", "OL ALARM") built from the flags above - the same logic
-      // nut_server uses to answer real NUT clients, exposed here too so it
-      // can be shown as a plain ESPHome text sensor without needing a
-      // separate NUT integration in Home Assistant.
       std::string get_nut_status() const;
       float get_battery_level() const;
       float get_input_voltage() const;
       float get_output_voltage() const;
       float get_load_percent() const;
       float get_runtime_minutes() const;
+      float get_temperature() const;
       
       // Test control methods
       bool start_battery_test_quick();
@@ -157,6 +165,8 @@ namespace esphome
       uint32_t protocol_timeout_ms_{10000};
       std::string protocol_selection_{"auto"};
       float fallback_nominal_voltage_{230.0f};  // European standard (230V) for international compatibility
+      float battery_voltage_high_override_{NAN};
+      float battery_voltage_low_override_{NAN};
 
       bool connected_{false};
       uint32_t last_successful_read_{0};
@@ -220,8 +230,7 @@ namespace esphome
       esp_err_t hid_set_report(uint8_t report_type, uint8_t report_id,
                              const uint8_t* data, size_t data_len,
                              uint32_t timeout_ms = 1000);
-      esp_err_t hid_interrupt_read(uint8_t* data, size_t* data_len,
-                             uint32_t timeout_ms = 1000);
+      esp_err_t hid_interrupt_read(uint8_t* data, size_t* data_len, uint32_t timeout_ms = 1000);
       esp_err_t get_string_descriptor(uint8_t string_index, std::string& result);
       
       // Transport information
@@ -240,13 +249,10 @@ namespace esphome
       // Internal helper methods
       void cleanup();
 
-      // Lock-free counterparts of is_online()/is_on_battery()/
-      // is_low_battery()/is_charging()/has_fault()/get_nut_status(),
-      // for use by code that already holds data_mutex_ (namely
-      // update_sensors()). The public versions above just lock and
-      // delegate to these - calling the public (locking) versions from
-      // inside update_sensors() would deadlock, since std::mutex isn't
-      // reentrant.
+      // Lock-free variants for internal use while data_mutex_ is already held
+      // (e.g. from within update_sensors()) - calling the public locking
+      // versions from such a context would deadlock (std::mutex is not
+      // reentrant).
       bool is_online_locked() const;
       bool is_on_battery_locked() const;
       bool is_low_battery_locked() const;

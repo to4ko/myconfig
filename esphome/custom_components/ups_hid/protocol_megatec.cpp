@@ -42,22 +42,39 @@ static constexpr uint32_t MEGATEC_INTERRUPT_READ_TIMEOUT_MS = 2000;
 MegatecProtocol::MegatecProtocol(UpsHidComponent *parent) : UpsProtocolBase(parent) {}
 
 // Q1 doesn't report a charge percentage directly, only battery voltage - so
-// we estimate it the same way NUT's generic Megatec/Q1 handling effectively
-// does: linear interpolation between an empty and full voltage for the
-// battery string, scaled to the reported (or assumed 12V) nominal voltage.
-// This is necessarily approximate; a lead-acid UPS battery's voltage-to-
-// charge curve isn't perfectly linear, but it's far better than reporting
-// nothing, and matches typical DIY Megatec integrations.
-static float estimate_battery_level_percent(float voltage, float nominal_voltage) {
+// we estimate it via linear interpolation between an "empty" and "full"
+// voltage for the battery string. Two ways to get those two points:
+//
+//   1. Manual calibration (override_low/override_high) - set via the
+//      "battery_voltage_low"/"battery_voltage_high" YAML options on the
+//      ups_hid: component. This matches real NUT's
+//      override.battery.voltage.low/high ups.conf directives for
+//      blazer_usb/nutdrv_qx devices, and is the accurate option once
+//      you've actually characterized your specific battery.
+//   2. Automatic fallback (used when either override is NAN/unset): scale
+//      generic 12V lead-acid assumptions (~10.5V empty, ~13.7V float
+//      charge) by the reported (or assumed 12V) nominal voltage. This is
+//      necessarily approximate - a lead-acid voltage-to-charge curve isn't
+//      perfectly linear - but far better than reporting nothing.
+static float estimate_battery_level_percent(float voltage, float nominal_voltage, float override_low,
+                                              float override_high) {
   if (std::isnan(voltage)) {
     return NAN;
   }
-  float base = (!std::isnan(nominal_voltage) && nominal_voltage > 0.0f) ? nominal_voltage : 12.0f;
-  // For a 12V lead-acid string: ~10.5V unloaded = empty, ~13.7V float
-  // charge = full. Scale proportionally for other nominal voltages (e.g.
-  // 24V, 36V battery banks on larger units).
-  float low = base * (10.5f / 12.0f);
-  float high = base * (13.7f / 12.0f);
+
+  float low, high;
+  if (!std::isnan(override_low) && !std::isnan(override_high) && override_high > override_low) {
+    low = override_low;
+    high = override_high;
+  } else {
+    float base = (!std::isnan(nominal_voltage) && nominal_voltage > 0.0f) ? nominal_voltage : 12.0f;
+    // For a 12V lead-acid string: ~10.5V unloaded = empty, ~13.7V float
+    // charge = full. Scale proportionally for other nominal voltages (e.g.
+    // 24V, 36V battery banks on larger units).
+    low = base * (10.5f / 12.0f);
+    high = base * (13.7f / 12.0f);
+  }
+
   if (high <= low) {
     return NAN;
   }
@@ -66,21 +83,6 @@ static float estimate_battery_level_percent(float voltage, float nominal_voltage
   if (pct > 100.0f) pct = 100.0f;
   return pct;
 }
-
-// NOTE: an earlier version of this file had a drain_stale_interrupt_data()
-// helper here that pre-read and discarded a few packets before every query,
-// on the theory that stale queued packets from the previous poll cycle
-// were corrupting Q1 responses. That made things *worse*, not better: this
-// device appears to continuously stream 8-byte packets on its interrupt
-// endpoint, so "draining" doesn't discard old leftover data - it races
-// with and sometimes eats the first bytes of the real, upcoming response
-// instead (a timed-out drain read gets marked abandoned rather than
-// cancelled, and when it completes late with real data, that data is
-// silently thrown away instead of being counted as part of the next
-// query's response). Removed. The occasional Q1 parse failure this was
-// meant to fix is rare (~once every 10-15 poll cycles) and self-recovers
-// on the next update() call, which is a far better trade-off than this
-// "fix" reliably breaking every single query.
 
 bool MegatecProtocol::query(const std::string &command, std::string &response, uint32_t timeout_ms) {
   response.clear();
@@ -231,12 +233,14 @@ bool MegatecProtocol::parse_status_response(const std::string &response, UpsData
   data.power.load_percent = load_percent;
   data.power.frequency = frequency;
   data.battery.voltage = battery_voltage;
-  data.battery.level = estimate_battery_level_percent(battery_voltage, data.battery.voltage_nominal);
+  data.battery.level = estimate_battery_level_percent(
+      battery_voltage, data.battery.voltage_nominal,
+      parent_->get_battery_voltage_low_override(), parent_->get_battery_voltage_high_override());
   // Q1 doesn't report a fault-voltage-vs-nominal distinction we can use
   // directly for input_transfer_low/high; leave those as NAN (unknown)
   // rather than guessing.
   (void) input_fault_voltage;
-  (void) temperature;  // No dedicated sensor field for UPS temperature yet.
+  data.power.temperature = temperature;
 
   bool have_status_bits = (matched == 8) && (std::strlen(status_bits) >= 8);
 

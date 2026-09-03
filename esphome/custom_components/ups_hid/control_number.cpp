@@ -1,5 +1,6 @@
 #include "control_number.h"
 #include "esphome/core/log.h"
+#include <cmath>
 
 namespace esphome {
 namespace ups_hid {
@@ -64,6 +65,81 @@ const char *UpsDelayNumber::delay_type_to_string() const {
       return "start";
     case DELAY_REBOOT:
       return "reboot";
+    default:
+      return "unknown";
+  }
+}
+
+void UpsCalibrationNumber::setup() {
+  ESP_LOGD(TAG_NUMBER, "Setting up UPS calibration number '%s' for %s",
+           this->get_name().c_str(), this->calibration_type_to_string());
+
+  if (this->parent_ == nullptr) {
+    ESP_LOGW(TAG_NUMBER, "Parent UPS HID component not set");
+    return;
+  }
+
+  // Salted so this doesn't collide with some other component's preference
+  // that happens to share this entity's object_id hash.
+  this->pref_ = global_preferences->make_preference<float>(this->get_object_id_hash() ^ 0xCA71B4A7UL);
+
+  float restored = NAN;
+  if (this->pref_.load(&restored) && !std::isnan(restored)) {
+    // A value was previously set via this entity (HA/web UI) - it wins
+    // over the YAML default, which would otherwise silently clobber it on
+    // every boot.
+    if (this->calibration_type_ == BATTERY_VOLTAGE_HIGH) {
+      this->parent_->set_battery_voltage_high_override(restored);
+    } else {
+      this->parent_->set_battery_voltage_low_override(restored);
+    }
+    this->publish_state(restored);
+    return;
+  }
+
+  // Nothing persisted yet (first boot) - show whatever's currently in
+  // effect (the YAML-configured default, if any was set on the ups_hid:
+  // component) as this entity's starting state.
+  float current = (this->calibration_type_ == BATTERY_VOLTAGE_HIGH)
+                       ? this->parent_->get_battery_voltage_high_override()
+                       : this->parent_->get_battery_voltage_low_override();
+  if (!std::isnan(current)) {
+    this->publish_state(current);
+  }
+}
+
+void UpsCalibrationNumber::dump_config() {
+  LOG_NUMBER("", "UPS Calibration Number", this);
+  ESP_LOGCONFIG(TAG_NUMBER, "  Type: %s", this->calibration_type_to_string());
+}
+
+void UpsCalibrationNumber::control(float value) {
+  if (this->parent_ == nullptr) {
+    ESP_LOGW(TAG_NUMBER, "Parent UPS HID component not set");
+    return;
+  }
+
+  switch (this->calibration_type_) {
+    case BATTERY_VOLTAGE_HIGH:
+      this->parent_->set_battery_voltage_high_override(value);
+      break;
+    case BATTERY_VOLTAGE_LOW:
+      this->parent_->set_battery_voltage_low_override(value);
+      break;
+  }
+
+  this->pref_.save(&value);
+
+  ESP_LOGI(TAG_NUMBER, "Set %s calibration to %.2f V", this->calibration_type_to_string(), value);
+  this->publish_state(value);
+}
+
+const char *UpsCalibrationNumber::calibration_type_to_string() const {
+  switch (this->calibration_type_) {
+    case BATTERY_VOLTAGE_HIGH:
+      return "battery_voltage_high";
+    case BATTERY_VOLTAGE_LOW:
+      return "battery_voltage_low";
     default:
       return "unknown";
   }
