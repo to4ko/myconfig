@@ -103,6 +103,16 @@ climate:
     enable_heat_cool: False # оставляем только Heat / Fan only (+Off)
 
 sensor:
+  - platform: uptime
+    name: "Uptime s"
+    id: uptime_sensor
+    update_interval: 60s
+    #disabled_by_default: true
+      
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    update_interval: 60s
+  
   - platform: tion
     id: tion_outdoor_temperature
     type: outdoor_temperature
@@ -115,12 +125,6 @@ sensor:
     id: tion_boost_time_left
     type: boost_time_left
     name: Boost Time Left
-  - platform: wifi_signal
-    name: WiFi RSSI
-    update_interval: 60s
-  - platform: uptime
-    name: Uptime
-    update_interval: 60s
 
 fan:
   - platform: tion
@@ -155,18 +159,56 @@ binary_sensor:
     name: State Problem
 
 text_sensor:
+  - platform: template
+    name: "Uptime"
+    lambda: |-
+        int seconds = round(id(uptime_sensor).get_raw_state());
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 60s
+  
+  - platform: wifi_info
+    ip_address:
+      name: "IP"
+    ssid:
+      name: "SSID"
+    bssid:
+      name: "BSSID"
+    mac_address:
+      name: "MAC"
+    # scan_results:
+    #   name: "Latest Scan Results"
+
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true
+  
   - platform: tion
     id: tion_firmware_version
     type: firmware_version
-    name: Version
+    name: "Tion Firmware Version"
+
   - platform: tion
     id: tion_errors
     type: errors
-    name: Errors
-  - platform: version
-    name: ESPHome Version
-    hide_timestamp: true
+    name: "Tion Errors"
 
 button:
   - platform: restart
     name: Restart
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
