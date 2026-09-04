@@ -156,6 +156,22 @@ binary_sensor:
         icon: mdi:washing-machine
         lambda: return x[0] == 2;
 
+  - platform: template
+    id: bsh_wm_running_derived
+    name: "Program Running (Derived)"
+    device_class: running
+    icon: mdi:washing-machine
+    lambda: |-
+      // bsh_wm_running comes straight from one D-Bus frame (0x26/0x1101) and
+      // sometimes gets stuck/misses updates. Corroborate with door lock state
+      // and remaining time so a single bad frame doesn't flip the state.
+      if (std::isnan(id(bsh_wm_remain).state)) {
+        return {};
+      }
+      bool door_locked = !id(bsh_wm_door_lock).state;
+      bool time_left = id(bsh_wm_remain).state > 0;
+      return door_locked && time_left;
+
 sensor:
   - platform: bshdbus
     dest: 0x14
