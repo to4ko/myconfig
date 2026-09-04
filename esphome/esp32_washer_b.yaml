@@ -58,6 +58,12 @@ external_components:
       path: custom_components/bsh-home-appliances
     components: [bshdbus]
 
+globals:
+  - id: wm_start_latch
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
 bshdbus:
   uart_id: dbus_uart
   on_frame:
@@ -119,6 +125,7 @@ binary_sensor:
         icon: mdi:button-pointer
         lambda: return 1;
         on_press:
+          - lambda: id(wm_start_latch) = true;
           - delay: 1s
           - lambda: id(bsh_wm_start_button).publish_state(NAN);
   - platform: bshdbus
@@ -131,6 +138,7 @@ binary_sensor:
         icon: mdi:ray-start-arrow
         lambda: return 1;
         on_press:
+          - lambda: id(wm_start_latch) = true;
           - delay: 1s
           - lambda: id(bsh_wm_program_started).publish_state(NAN);
   - platform: bshdbus
@@ -141,6 +149,8 @@ binary_sensor:
         name: "Door Open"
         device_class: door
         lambda: return x[0] == 2;
+        on_press:
+          - lambda: id(wm_start_latch) = false;
       - id: bsh_wm_door_lock
         name: "Door Lock"
         device_class: lock
@@ -163,14 +173,12 @@ binary_sensor:
     icon: mdi:washing-machine
     lambda: |-
       // bsh_wm_running comes straight from one D-Bus frame (0x26/0x1101) and
-      // sometimes gets stuck/misses updates. Corroborate with door lock state
-      // and remaining time so a single bad frame doesn't flip the state.
-      if (std::isnan(id(bsh_wm_remain).state)) {
-        return {};
-      }
+      // sometimes gets stuck/misses updates. Corroborate with door lock state,
+      // remaining time and a start-event latch (Start Button / Program Started,
+      // cleared on door open) so one missed/stale frame doesn't flip the state.
       bool door_locked = !id(bsh_wm_door_lock).state;
-      bool time_left = id(bsh_wm_remain).state > 0;
-      return door_locked && time_left;
+      bool time_left = !std::isnan(id(bsh_wm_remain).state) && id(bsh_wm_remain).state > 0;
+      return door_locked && (time_left || id(wm_start_latch));
 
 sensor:
   - platform: bshdbus
