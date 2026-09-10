@@ -29,6 +29,19 @@ void TionApiComponent::BatchStateCall::perform_() {
 #ifdef TION_ENABLE_API_CONTROL_CALLBACK
   this->c_->control_callback_.call(this);
 #endif
+
+  // Обратная защита к switch_::Heater::set() (tion_properties.h): та не даёт включить
+  // подогреватель без вентилятора. Здесь - симметричный случай: если в этом батче
+  // вентилятор явно выключается (power_state=false или fan_speed=0), heater_state в
+  // самом батче не трогали, а подогреватель сейчас включён - гасим и его, чтобы он не
+  // остался работать без обдува.
+  const bool fan_turned_off = (this->get_power_state().has_value() && !*this->get_power_state()) ||
+                               (this->get_fan_speed().has_value() && *this->get_fan_speed() == 0);
+  if (fan_turned_off && !this->get_heater_state().has_value() && this->c_->state().heater_state) {
+    ESP_LOGD(TAG, "Fan is being turned off while heater is on - forcing heater off too");
+    this->set_heater_state(false);
+  }
+
   dentra::tion::TionStateCall::perform();
   this->start_time_ = 0;
   this->c_->state_check_schedule_();

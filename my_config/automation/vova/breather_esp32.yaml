@@ -36,24 +36,19 @@
               entity_id: switch.system_security_mode
               state: "off"
           sequence:
-            - action: climate.turn_on
+            - action: fan.turn_on
               target:
-                entity_id: climate.esp32_breather_v
-            - action: climate.set_hvac_mode
-              target:
-                entity_id:
-                  - climate.esp32_breather_v
-              data:
-                hvac_mode: fan_only
+                entity_id: fan.esp32_breather_v
+
             - condition: numeric_state
               entity_id: sensor.esp32_node_v_co2
               above: input_number.co2_high_limit
             - condition: state
               entity_id: switch.system_breather_auto_speed_v
               state: "on"
-            - action: climate.set_fan_mode
+            - action: fan.set_preset_mode
               target:
-                entity_id: climate.esp32_breather_v
+                entity_id: fan.esp32_breather_v
               data:
                 fan_mode: "{{ (states('sensor.breather_set_speed_v')|int(0) / 25)|round(0,'floor')|int }}"
 
@@ -77,18 +72,12 @@
               entity_id: sensor.breather_set_speed_v
               above: 0
           sequence:
-            - action: climate.turn_on
+            - action: fan.turn_on
               target:
-                entity_id: climate.esp32_breather_v
-            - action: climate.set_hvac_mode
+                entity_id: fan.esp32_breather_v
+            - action: fan.set_preset_mode
               target:
-                entity_id:
-                  - climate.esp32_breather_v
-              data:
-                hvac_mode: fan_only          
-            - action: climate.set_fan_mode
-              target:
-                entity_id: climate.esp32_breather_v
+                entity_id: fan.esp32_breather_v
               data:
                 fan_mode: "{{ (states('sensor.breather_set_speed_v')|int(0) / 25)|round(0,'floor')|int }}"
 
@@ -103,9 +92,9 @@
               entity_id: binary_sensor.breather_v
               state: "on"
           sequence:
-            - action: climate.turn_off
+            - action: fan.turn_off
               target:
-                entity_id: climate.esp32_breather_v
+                entity_id: fan.esp32_breather_v
 
         - conditions:
             - condition: state
@@ -115,11 +104,9 @@
               entity_id: binary_sensor.breather_v
               state: "on"
           sequence:
-            - action: climate.set_hvac_mode
+            - action: fan.turn_off
               target:
-                entity_id: climate.esp32_breather_v
-              data:
-                hvac_mode: 'off'
+                entity_id: fan.esp32_breather_v
 
 # ##################################
 # Vova - Breather Auto Timer
@@ -164,9 +151,9 @@
                   entity_id: binary_sensor.breather_v
                   state: "on"
               then:
-                - action: climate.turn_off
+                - action: fan.turn_off
                   target:
-                    entity_id: climate.esp32_breather_v
+                    entity_id: fan.esp32_breather_v
             - action: switch.turn_on
               entity_id: switch.system_breather_auto_v
 
@@ -184,34 +171,22 @@
               then:
                 - action: switch.turn_on
                   entity_id: switch.system_breather_manual_v
-                - action: climate.turn_on
+                - action: fan.turn_on
                   target:
-                    entity_id: climate.esp32_breather_v
-                - action: climate.set_hvac_mode
-                  target:
-                    entity_id:
-                      - climate.esp32_breather_v
-                  data:
-                    hvac_mode: fan_only
-                
+                    entity_id: fan.esp32_breather_v
+
         - conditions: # choice 8
             - condition: trigger
               id: "time_trigger_night"
           sequence:
             - action: switch.turn_on
               entity_id: switch.system_breather_manual_v
-            - action: climate.turn_on
+            - action: fan.turn_on
               target:
-                entity_id: climate.esp32_breather_v
-            - action: climate.set_hvac_mode
+                entity_id: fan.esp32_breather_v
+            - action: fan.set_preset_mode
               target:
-                entity_id:
-                  - climate.esp32_breather_v
-              data:
-                hvac_mode: fan_only
-            - action: climate.set_fan_mode
-              target:
-                entity_id: climate.esp32_breather_v
+                entity_id: fan.esp32_breather_v
               data:
                 fan_mode: "2"
 
@@ -219,9 +194,9 @@
             - condition: trigger
               id: "time_trigger_day"
           sequence:
-            - action: climate.turn_off
+            - action: fan.turn_off
               target:
-                entity_id: climate.esp32_breather_v
+                entity_id: fan.esp32_breather_v
             - action: timer.cancel
               entity_id: timer.breather_v
             - action: switch.turn_on

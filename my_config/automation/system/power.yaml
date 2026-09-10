@@ -1,0 +1,81 @@
+# #####################################################################################
+#
+# SYSTEM - Power outage (house-wide)
+#
+# #####################################################################################
+# House - Power outage started (first UPS to go OB)
+# ##################################
+- alias: house_power_outage_started
+  id: house_power_outage_started
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id:
+        - sensor.ippon_1050_status_data
+        - sensor.ippon_1050_mb_status_data
+        - sensor.ippon_1500_status_data
+        - sensor.ippon_650_hs_status_data
+        - sensor.ippon_650_s_status_data
+      to: "OB"
+  conditions:
+    - condition: template
+      value_template: >
+        {{ ([states('sensor.ippon_1050_status_data'), states('sensor.ippon_1050_mb_status_data'),
+             states('sensor.ippon_1500_status_data'), states('sensor.ippon_650_hs_status_data'),
+             states('sensor.ippon_650_s_status_data')] | select('eq', 'OB') | list | length) <= 1 }}
+  actions:
+    # ждём немного - если это реальная авария, остальные ИБП присоединятся почти сразу
+    - delay: "00:00:10"
+    - variables:
+        down_ups: >
+          {{ [
+               ['Storage (1050)', states('sensor.ippon_1050_status_data')],
+               ['Master Bedroom (1050 MB)', states('sensor.ippon_1050_mb_status_data')],
+               ['Hall Big (1500)', states('sensor.ippon_1500_status_data')],
+               ['Hall Small (650 HS)', states('sensor.ippon_650_hs_status_data')],
+               ['Sasha (650 S)', states('sensor.ippon_650_s_status_data')],
+             ] | selectattr('1', 'eq', 'OB') | map(attribute='0') | list }}
+    - if:
+        - condition: template
+          value_template: "{{ down_ups | length > 1 }}"
+      then:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: >-
+              🚨 Похоже, авария по всему дому! На батарее сразу несколько ИБП: {{ down_ups | join(', ') }}
+      else:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: >-
+              ⚠️ ИБП «{{ down_ups[0] }}» ушёл на батарею. Остальные ИБП в порядке — похоже, это локальная проблема (выдернули шнур/обслуживание), а не авария по всему дому.
+
+# ##################################
+# House - Power outage ended (last UPS back to OL)
+# ##################################
+- alias: house_power_outage_ended
+  id: house_power_outage_ended
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id:
+        - sensor.ippon_1050_status_data
+        - sensor.ippon_1050_mb_status_data
+        - sensor.ippon_1500_status_data
+        - sensor.ippon_650_hs_status_data
+        - sensor.ippon_650_s_status_data
+      to: "OL"
+  conditions:
+    - condition: template
+      value_template: "{{ trigger.from_state.state not in ['unknown', 'unavailable', 'none'] }}"
+    - condition: template
+      value_template: >
+        {{ ([states('sensor.ippon_1050_status_data'), states('sensor.ippon_1050_mb_status_data'),
+             states('sensor.ippon_1500_status_data'), states('sensor.ippon_650_hs_status_data'),
+             states('sensor.ippon_650_s_status_data')] | select('eq', 'OB') | list | length) == 0 }}
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c Электричество восстановлено во всём доме."

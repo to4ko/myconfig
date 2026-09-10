@@ -182,6 +182,32 @@
         brightness: 255
 
 # ##################################
+# Kitchen - Lamp turned on by itself after power outage
+# ##################################
+- alias: kitchen_lamp_unexpected_on_after_outage
+  id: kitchen_lamp_unexpected_on_after_outage
+  initial_state: true
+  triggers:
+    - trigger: state
+      entity_id: light.round_led_k
+      from: "unavailable"
+      to: "on"
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "off"
+    - condition: state
+      entity_id: binary_sensor.presence_k
+      state: "off"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f6a8 Кухонная лампа сама включилась после сбоя питания, гашу!"
+    - action: light.turn_off
+      entity_id: light.round_led_k
+
+# ##################################
 # Kitchen - Round Led K restart
 # ##################################
 - alias: kitchen_main_lamp_restart
