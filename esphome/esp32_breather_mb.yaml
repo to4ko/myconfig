@@ -127,7 +127,7 @@ sensor:
     update_interval: 60s
 
   - platform: internal_temperature
-    name: "Internal Temperature"
+    name: "ESP Internal Temperature"
     device_class: "temperature"
     state_class: "measurement"
     accuracy_decimals: 1
@@ -148,6 +148,23 @@ sensor:
     type: boost_time_left
     name: Boost Time Left
 
+  - platform: duty_time
+    id: breather_fan_work_time
+    name: Fan Work Time
+    sensor: fan_active_status
+    restore: true
+    last_time:
+      name: Fan Last Turn-On Time
+
+  - platform: duty_time
+    id: breather_heater_work_time
+    name: Heater Work Time
+    sensor: heater_active_status
+    restore: true
+    last_time:
+      name: Heater Last Turn-On Time
+
+      
 fan:
   - platform: tion
     id: tion_fan
@@ -180,6 +197,16 @@ binary_sensor:
     type: state
     name: State Problem
 
+  - platform: template
+    id: fan_active_status
+    lambda: |-
+      return id(tion_fan).state;
+
+  - platform: template
+    id: heater_active_status
+    lambda: |-
+      return id(tion_heater).state;      
+    
 text_sensor:
   - platform: template
     name: "Uptime"
