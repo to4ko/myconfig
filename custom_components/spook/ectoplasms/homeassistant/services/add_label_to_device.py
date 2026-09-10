@@ -1,0 +1,46 @@
+"""Spook - Your homie."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+import voluptuous as vol
+
+from homeassistant.components.homeassistant import DOMAIN
+from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import (
+    config_validation as cv,
+    device_registry as dr,
+)
+
+from ....core_compat import async_update_any_device
+from ....services import AbstractSpookAdminService
+from ..labels import async_check_labels_exist
+
+if TYPE_CHECKING:
+    from homeassistant.core import ServiceCall
+
+
+class SpookService(AbstractSpookAdminService):
+    """Home Assistant service to add a label to a device."""
+
+    domain = DOMAIN
+    service = "add_label_to_device"
+    schema = {
+        vol.Required("label_id"): vol.All(cv.ensure_list, [cv.string]),
+        vol.Required("device_id"): vol.All(cv.ensure_list, [cv.string]),
+    }
+
+    async def async_handle_service(self, call: ServiceCall) -> None:
+        """Handle the service call."""
+        async_check_labels_exist(self.hass, call.data["label_id"])
+
+        device_registry = dr.async_get(self.hass)
+        for device_id in call.data["device_id"]:
+            if (device_entry := device_registry.async_get(device_id)) is None:
+                msg = f"Device {device_id} not found"
+                raise HomeAssistantError(msg)
+
+            labels = device_entry.labels.copy()
+            labels.update(call.data["label_id"])
+            async_update_any_device(device_registry, device_id, labels=labels)

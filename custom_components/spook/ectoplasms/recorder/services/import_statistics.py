@@ -1,0 +1,79 @@
+"""Spook - Your homie."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+import voluptuous as vol
+
+from homeassistant.components.recorder import DOMAIN
+from homeassistant.components.recorder.models import StatisticMeanType
+from homeassistant.components.recorder.statistics import (
+    STATISTIC_UNIT_TO_UNIT_CONVERTER,
+    async_add_external_statistics,
+    async_import_statistics,
+)
+from homeassistant.core import ServiceCall, valid_entity_id
+from homeassistant.helpers import config_validation as cv
+
+from ....services import AbstractSpookAdminService
+
+if TYPE_CHECKING:
+    from homeassistant.components.recorder.models import StatisticMetaData
+
+
+class SpookService(AbstractSpookAdminService):
+    """Recorder integration service to import statistics."""
+
+    domain = DOMAIN
+    service = "import_statistics"
+    schema = {
+        vol.Required("has_mean"): bool,
+        vol.Required("has_sum"): bool,
+        vol.Optional("name", default=None): vol.Any(None, str),
+        vol.Required("source"): str,
+        vol.Required("statistic_id"): str,
+        vol.Optional("unit_of_measurement", default=None): vol.Any(None, str),
+        vol.Required("stats"): [
+            {
+                vol.Required("start"): cv.datetime,
+                vol.Optional("mean"): vol.Any(float, int),
+                vol.Optional("min"): vol.Any(float, int),
+                vol.Optional("max"): vol.Any(float, int),
+                vol.Optional("last_reset", default=None): vol.Any(None, cv.datetime),
+                vol.Optional("state"): vol.Any(float, int),
+                vol.Optional("sum"): vol.Any(float, int),
+            },
+        ],
+    }
+
+    async def async_handle_service(self, call: ServiceCall) -> None:
+        """Handle the service call."""
+        metadata: StatisticMetaData = {
+            "has_sum": call.data["has_sum"],
+            "mean_type": (
+                StatisticMeanType.ARITHMETIC
+                if call.data["has_mean"]
+                else StatisticMeanType.NONE
+            ),
+            # Named after itself when nobody says otherwise. Home Assistant
+            # writes no name on the statistics a sensor keeps for itself, and
+            # takes that as meaning there is an entity somewhere holding the
+            # name instead. Importing without one leaves statistics that read
+            # as a sensor's, which is how Spook's own repairs end up calling
+            # something imported through here unknown. #1565.
+            "name": call.data["name"] or call.data["statistic_id"],
+            "source": call.data["source"],
+            "statistic_id": call.data["statistic_id"],
+            "unit_class": STATISTIC_UNIT_TO_UNIT_CONVERTER.get(
+                call.data["unit_of_measurement"]
+            ).UNIT_CLASS
+            if call.data["unit_of_measurement"] in STATISTIC_UNIT_TO_UNIT_CONVERTER
+            else None,
+            "unit_of_measurement": call.data["unit_of_measurement"],
+        }
+
+        if valid_entity_id(call.data["statistic_id"]):
+            async_import_statistics(self.hass, metadata, call.data["stats"])
+        else:
+            async_add_external_statistics(self.hass, metadata, call.data["stats"])

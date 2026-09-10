@@ -1,0 +1,555 @@
+import asyncio
+import time
+from typing import Optional
+
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
+from homeassistant.const import (
+    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    CONCENTRATION_PARTS_PER_MILLION,
+    PERCENTAGE,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfVolume,
+)
+from homeassistant.util import dt
+
+from .core.const import DOMAIN
+from .core.entity import XEntity
+from .core.ewelink import SIGNAL_ADD_ENTITIES, XRegistry
+
+PARALLEL_UPDATES = 0  # fix entity_platform parallel_updates Semaphore
+
+
+async def async_setup_entry(hass, config_entry, add_entities):
+    ewelink: XRegistry = hass.data[DOMAIN][config_entry.entry_id]
+    ewelink.dispatcher_connect(
+        SIGNAL_ADD_ENTITIES,
+        lambda x: add_entities([e for e in x if isinstance(e, SensorEntity)]),
+    )
+
+
+DEVICE_CLASSES = {
+    "battery": SensorDeviceClass.BATTERY,
+    "battery_voltage": SensorDeviceClass.VOLTAGE,
+    "co2": SensorDeviceClass.CO2,
+    "cpu_temperature": SensorDeviceClass.TEMPERATURE,
+    "current": SensorDeviceClass.CURRENT,
+    "current_supply": SensorDeviceClass.CURRENT,
+    "humidity": SensorDeviceClass.HUMIDITY,
+    "outdoor_temp": SensorDeviceClass.TEMPERATURE,
+    "power": SensorDeviceClass.POWER,
+    "power_supply": SensorDeviceClass.POWER,
+    "pm25": SensorDeviceClass.PM25,
+    "pm10": SensorDeviceClass.PM10,
+    "remote_temperature": SensorDeviceClass.TEMPERATURE,
+    "rssi": SensorDeviceClass.SIGNAL_STRENGTH,
+    "temperature": SensorDeviceClass.TEMPERATURE,
+    "voltage": SensorDeviceClass.VOLTAGE,
+}
+
+UNITS = {
+    "battery": PERCENTAGE,
+    "battery_voltage": UnitOfElectricPotential.VOLT,
+    "co2": CONCENTRATION_PARTS_PER_MILLION,
+    "cpu_temperature": UnitOfTemperature.CELSIUS,
+    "current": UnitOfElectricCurrent.AMPERE,
+    "current_supply": UnitOfElectricCurrent.AMPERE,
+    "humidity": PERCENTAGE,
+    "outdoor_temp": UnitOfTemperature.CELSIUS,
+    "power": UnitOfPower.WATT,
+    "power_supply": UnitOfPower.WATT,
+    "pm25": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    "pm10": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
+    "remote_temperature": UnitOfTemperature.CELSIUS,
+    "rssi": SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    "temperature": UnitOfTemperature.CELSIUS,
+    "voltage": UnitOfElectricPotential.VOLT,
+    "water": UnitOfVolume.LITERS,
+}
+
+
+class XSensor(XEntity, SensorEntity):
+    """Class can convert string sensor value to float, multiply it and round if
+    needed. Also class can filter incoming values using zigbee-like reporting
+    logic: min report interval, max report interval, reportable change value.
+    """
+
+    multiply: float = None
+    round: int = None
+
+    report_ts = None
+    report_mint = None
+    report_maxt = None
+    report_delta = None
+    report_value = None
+
+    def __init__(self, ewelink: XRegistry, device: dict):
+        if self.param and self.uid is None:
+            self.uid = self.param
+
+        if device["params"].get(self.param) in ("on", "off"):
+            default_class = None
+        elif self.uid in DEVICE_CLASSES:
+            default_class = self.uid  # fix tailing co2, pm2.5, pm25
+        else:
+            default_class = self.uid.rstrip("_01234")  # remove tailing _1 _2 _3 _4
+
+        if device_class := DEVICE_CLASSES.get(default_class):
+            self._attr_device_class = device_class
+
+        if units := UNITS.get(default_class):
+            # by default all sensors with units is measurement sensors
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_native_unit_of_measurement = units
+
+        XEntity.__init__(self, ewelink, device)
+
+        reporting = device.get("reporting", {}).get(self.uid)
+        if reporting:
+            self.report_mint, self.report_maxt, self.report_delta = reporting
+            self.report_ts = time.time()
+            self._attr_should_poll = True
+
+    def set_state(self, params: dict = None, value: float = None):
+        if params:
+            value = params[self.param]
+            if self.native_unit_of_measurement and isinstance(value, str):
+                try:
+                    # https://github.com/AlexxIT/SonoffLAN/issues/1061
+                    value = float(value)
+                except Exception:
+                    return
+            if self.multiply:
+                value *= self.multiply
+            if self.round is not None:
+                # convert to int when round is zero
+                value = round(value, self.round or None)
+
+        if self.state_class == SensorStateClass.TOTAL_INCREASING:
+            if (
+                value is not None
+                and self.native_value is not None
+                and -0.1 <= value - self.native_value <= 0
+            ):
+                return  # skip small value decreasing
+
+        if self.report_ts is not None:
+            ts = time.time()
+
+            try:
+                if (ts - self.report_ts < self.report_mint) or (
+                    ts - self.report_ts < self.report_maxt
+                    and abs(value - self.native_value) <= self.report_delta
+                ):
+                    self.report_value = value
+                    return
+
+                self.report_value = None
+            except Exception:
+                pass
+
+            self.report_ts = ts
+
+        self._attr_native_value = value
+
+    async def async_update(self):
+        if self.report_value is not None:
+            XSensor.set_state(self, value=self.report_value)
+
+
+class XTemperatureTH(XSensor):
+    params = {"currentTemperature", "temperature"}
+    uid = "temperature"
+
+    def set_state(self, params: dict = None, value: float = None):
+        try:
+            # can be int, float, str or undefined
+            value = params.get("currentTemperature") or params["temperature"]
+            value = float(value)
+            # filter zero values
+            # https://github.com/AlexxIT/SonoffLAN/issues/110
+            # filter wrong values
+            # https://github.com/AlexxIT/SonoffLAN/issues/683
+            if value != 0 and -270 < value < 270:
+                XSensor.set_state(self, value=round(value, 1))
+        except Exception:
+            XSensor.set_state(self)
+
+
+class XHumidityTH(XSensor):
+    params = {"currentHumidity", "humidity"}
+    uid = "humidity"
+
+    def set_state(self, params: dict = None, value: float = None):
+        try:
+            value = params.get("currentHumidity") or params["humidity"]
+            value = float(value)
+            # filter zero values
+            # https://github.com/AlexxIT/SonoffLAN/issues/110
+            if value != 0:
+                XSensor.set_state(self, value=value)
+        except Exception:
+            XSensor.set_state(self)
+
+
+class XCloudEnergy(XEntity, SensorEntity):
+    get_params = None
+    next_ts = 0
+
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_entity_registry_enabled_default = False
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_should_poll = True
+
+    def __init__(self, ewelink: XRegistry, device: dict):
+        XEntity.__init__(self, ewelink, device)
+        reporting = device.get("reporting", {})
+        self.report_dt, self.report_history = reporting.get(self.uid) or (3600, 0)
+
+    @staticmethod
+    def decode_energy(value: str) -> Optional[list]:
+        try:
+            return [
+                round(
+                    int(value[i : i + 2], 16)
+                    + int(value[i + 3], 10) * 0.1
+                    + int(value[i + 5], 10) * 0.01,
+                    2,
+                )
+                for i in range(0, len(value), 6)
+            ]
+        except Exception:
+            return None
+
+    def set_state(self, params: dict):
+        history = self.decode_energy(params[self.param])
+        if not history:
+            return
+
+        self._attr_native_value = history[0]
+
+        if self.report_history:
+            self._attr_extra_state_attributes = {
+                "history": history[0 : self.report_history]
+            }
+
+    def can_update(self) -> bool:
+        return self.available and self.ewelink.cloud.online
+
+    async def get_update(self) -> bool:
+        ok = await self.ewelink.send_cloud(self.device, self.get_params, query=False)
+        return ok == "online"
+
+    async def async_update(self):
+        ts = time.time()
+        if ts > self.next_ts and self.can_update() and await self.get_update():
+            self.next_ts = ts + self.report_dt
+
+
+class XCloudEnergyDualR3(XCloudEnergy, SensorEntity):
+    def __init__(self, ewelink: XRegistry, device: dict):
+        XCloudEnergy.__init__(self, ewelink, device)
+        device.setdefault("active_energy", []).append(self.uid)
+
+    @staticmethod
+    def decode_energy(value: str) -> Optional[list]:
+        try:
+            return [
+                round(
+                    int(value[i : i + 2], 16) + int(value[i + 2 : i + 4], 10) * 0.01, 2
+                )
+                for i in range(0, len(value), 4)
+            ]
+        except Exception:
+            return None
+
+    def can_update(self) -> bool:
+        if XCloudEnergy.can_update(self):
+            # Allow only one sensor update at a time
+            return self.device["active_energy"][0] == self.uid
+        return False
+
+    async def get_update(self) -> bool:
+        if await XCloudEnergy.get_update(self):
+            active = self.device["active_energy"]
+            active.append(active.pop(0))
+            return True
+        return False
+
+
+class XCloudEnergyPOWR3(XCloudEnergy, SensorEntity):
+    @staticmethod
+    def decode_energy(value: str) -> Optional[list]:
+        try:
+            return [
+                round(int(value[i], 16) + int(value[i + 1 : i + 3], 10) * 0.01, 2)
+                for i in range(0, len(value), 3)
+            ]
+        except Exception:
+            return None
+
+    def can_update(self) -> bool:
+        return self.available
+
+    async def get_update(self) -> bool:
+        # POWR3 support LAN energy request (POST /zeroconf/getHoursKwh)
+        ok = await self.ewelink.send(self.device, self.get_params, timeout_lan=5)
+        return ok == "online"
+
+
+class XEnergyTotal(XSensor):
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+
+def parse_float(v: int | float | str):
+    return float(v) if isinstance(v, str) else v
+
+
+class XTempCorrection(XSensor):
+    params = {"temperature", "tempCorrection"}
+    uid = "temperature"
+
+    def set_state(self, params: dict = None, value: float = None):
+        try:
+            if (cache := self.device["params"]) != params:
+                cache.update(params)
+            value = parse_float(cache["temperature"])
+            if self.multiply:
+                value *= self.multiply
+            if v := cache.get("tempCorrection"):
+                value += parse_float(v)
+            XSensor.set_state(self, value=value)
+        except:
+            pass
+
+
+class XHumCorrection(XSensor):
+    params = {"humidity", "humCorrection"}
+    uid = "humidity"
+
+    def set_state(self, params: dict = None, value: float = None):
+        try:
+            if (cache := self.device["params"]) != params:
+                cache.update(params)
+            value = parse_float(cache["humidity"])
+            if self.multiply:
+                value *= self.multiply
+            if v := cache.get("humCorrection"):
+                value += parse_float(v)
+            XSensor.set_state(self, value=value)
+        except:
+            pass
+
+
+class XOutdoorTempNS(XSensor):
+    param = "HMI_outdoorTemp"
+    uid = "outdoor_temp"
+
+    # noinspection PyMethodOverriding
+    def set_state(self, params: dict):
+        try:
+            value = params[self.param]
+            self._attr_native_value = value["current"]
+
+            mint, maxt = value["range"].split(",")
+            self._attr_extra_state_attributes = {
+                "temp_min": int(mint),
+                "temp_max": int(maxt),
+            }
+        except Exception:
+            pass
+
+
+class XWiFiDoorBattery(XSensor):
+    param = "battery"
+    uid = "battery_voltage"
+
+    def internal_available(self) -> bool:
+        # device with buggy online status
+        return self.ewelink.cloud.online
+
+
+BUTTON_STATES = ["single", "double", "hold", "triple"]
+
+
+class XEventSesor(XEntity, SensorEntity):
+    event = True
+    _attr_native_value = ""
+
+    async def clear_state(self):
+        await asyncio.sleep(0.5)
+        self._attr_native_value = ""
+        if self.hass:
+            self._async_write_ha_state()
+
+
+class XButtonBase(XEventSesor):
+    def set_state(self, params: dict):
+        button = params.get("outlet")
+        key = BUTTON_STATES[params["key"]]
+        self._attr_native_value = (
+            f"button_{button + 1}_{key}" if button is not None else key
+        )
+        asyncio.create_task(self.clear_state())
+
+
+class XButtonKey(XButtonBase):
+    params = {"key"}
+
+    def __init__(self, ewelink: XRegistry, device: dict):
+        # remember initial trigTime so stale replays after reconnect are skipped
+        params = device["params"]
+        self.last_trig_time = params.get("trigTime") or params.get("actionTime")
+        super().__init__(ewelink, device)
+
+    def set_state(self, params: dict):
+        # skip stale events replayed after device reconnect
+        # https://github.com/AlexxIT/SonoffLAN/issues/1669
+        if trig_time := (params.get("trigTime") or params.get("actionTime")):
+            if trig_time == self.last_trig_time:
+                return
+            self.last_trig_time = trig_time
+
+        XButtonBase.set_state(self, params)
+
+
+class XButtonLocalKey(XButtonBase):
+    params = {"localKeyPass"}
+
+    def __init__(self, ewelink: XRegistry, device: dict):
+        super().__init__(ewelink, device)
+        self.last_seq = None
+
+    def set_state(self, params: dict):
+        if seq := self.device.get("local_seq"):
+            # Skip clicks from first local message, because it's just device discovery
+            if self.last_seq is None:
+                self.last_seq = seq
+
+        # skip multiple clicks (from cloud and local)
+        if self._attr_native_value:
+            return
+
+        # cloud click: {'localKeyPass': {'outlet': 0, 'key': 0}}
+        if len(params) == 1:
+            pass
+        # local click: {'triggerType': 11, 'localKeyPass': {'outlet': 0, 'key': 0}}
+        # local trash: {'triggerType': 0, 'localKeyPass': {'outlet': 0, 'key': 0}}
+        # local trash: {'triggerType': 2, 'localKeyPass': {'outlet': 0, 'key': 0}}
+        # based on https://github.com/AlexxIT/SonoffLAN/issues/1789
+        elif params.get("triggerType") == 11:
+            # Fix duplicates from mDNS https://github.com/AlexxIT/SonoffLAN/issues/1769
+            if seq == self.last_seq:
+                return
+            self.last_seq = seq
+        else:
+            return
+
+        # MINI-2GS https://github.com/AlexxIT/SonoffLAN/issues/1694
+        # MINI-ZB2GS-L https://github.com/AlexxIT/SonoffLAN/issues/1701
+        XButtonBase.set_state(self, params["localKeyPass"])
+
+
+class XT5Action(XEventSesor):
+    params = {"triggerType", "slide"}
+    uid = "action"
+
+    def set_state(self, params: dict):
+        # https://github.com/AlexxIT/SonoffLAN/issues/1373
+        if "switches" in params and params.get("triggerType") == 2:
+            self._attr_native_value = "touch"
+            asyncio.create_task(self.clear_state())
+
+        # fix https://github.com/AlexxIT/SonoffLAN/issues/1252
+        if (slide := params.get("slide")) and len(params) == 1:
+            self._attr_native_value = f"slide_{slide}"
+            asyncio.create_task(self.clear_state())
+
+
+class XUnknown(XEntity, SensorEntity):
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def internal_update(self, params: dict = None):
+        self._attr_native_value = dt.utcnow()
+
+        if params is not None:
+            params.pop("bindInfos", None)
+            self._attr_extra_state_attributes = params
+
+        if self.hass:
+            self._async_write_ha_state()
+
+
+class XHexVoltageTRVZB(XSensor):
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
+
+    def set_state(self, params: dict = None, value: float = None):
+        try:
+            raw = params[self.param]
+            if isinstance(raw, str):
+                # Old firmware: hex string representing millivolts
+                value = int(raw, 16) * 0.001
+            elif isinstance(raw, (int, float)):
+                # FW 1.4.0+: numeric value (centivolts)
+                value = raw * 0.01
+        except:
+            pass
+
+        # default value=None (from func params)
+        XSensor.set_state(self, value=value)
+
+
+class XTodayWaterUsage(XSensor):
+    params = {"todayWaterUsage", "TodayWaterUsage"}
+    uid = "water"
+
+    def set_state(self, params: dict = None, value: float = None):
+        # https://github.com/AlexxIT/SonoffLAN/issues/1497
+        # https://github.com/AlexxIT/SonoffLAN/issues/1608
+        value = next(params[k] for k in self.params if k in params)
+        XSensor.set_state(self, value=value)
+
+
+class XCPUTemperature(XSensor):
+    params = {"cpuInfo"}
+    uid = "cpu_temperature"
+
+    _attr_entity_registry_enabled_default = False
+
+    def set_state(self, params: dict = None, value: float = None):
+        value = params.get("cpuInfo", {}).get("temperature")
+        XSensor.set_state(self, value=value)
+
+
+class XConnection(XEntity, SensorEntity):
+    uid = "connection"
+
+    _attr_available = True
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_entity_registry_enabled_default = False
+
+    def internal_update(self, params: dict = None):
+        cloud = self.ewelink.can_cloud(self.device)
+        local = self.ewelink.can_local(self.device)
+
+        if cloud:
+            value = "duplex" if local else "cloud"
+        else:
+            value = "local" if local else "none"
+
+        if self._attr_native_value != value:
+            self._attr_native_value = value
+            if self.hass:
+                self._async_write_ha_state()

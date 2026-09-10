@@ -1,0 +1,159 @@
+"""Spook - Your homie."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from homeassistant.components import script
+from homeassistant.const import EVENT_COMPONENT_LOADED
+from homeassistant.helpers import entity_registry as er
+
+from ....entity_filtering import async_get_all_entity_ids
+from ....repairs import AbstractSpookEntityComponentUnknownReferencesRepair
+from ....template_extraction import (
+    async_extract_entities_from_config,
+    async_filter_known_entity_ids_with_templates,
+)
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
+
+def extract_entities_from_trigger_config(config: dict[str, Any] | list) -> set[str]:
+    """Extract entity IDs from a trigger config."""
+    entities = set()
+
+    if not config:
+        return entities
+
+    if isinstance(config, list):
+        for item in config:
+            entities.update(extract_entities_from_trigger_config(item))
+        return entities
+
+    if not isinstance(config, dict):
+        return entities
+
+    # Extract entity_id from trigger config
+    if "entity_id" in config:
+        entity_id = config["entity_id"]
+        if isinstance(entity_id, str):
+            entities.add(entity_id)
+        elif isinstance(entity_id, list):
+            entities.update([e for e in entity_id if isinstance(e, str)])
+
+    # Recursively process nested configs
+    for value in config.values():
+        if isinstance(value, (dict, list)):
+            entities.update(extract_entities_from_trigger_config(value))
+
+    return entities
+
+
+def extract_referenced_entities_from_script(entity: script.ScriptEntity) -> set[str]:
+    """Return entity references from a script entity."""
+    try:
+        return set(entity.script.referenced_entities)
+    except TypeError as err:
+        if str(err) != "unhashable type: 'dict'":
+            raise
+        return set()
+
+
+async def extract_template_entities_from_script_entity(
+    hass: HomeAssistant, entity: Any
+) -> set[str]:
+    """Extract entities from script configuration using Template analysis.
+
+    This function finds template strings in script configuration and creates
+    Template objects to extract entity references using Template.async_render_to_info().
+    This provides more comprehensive entity detection than regex-based parsing alone.
+    """
+    # Get the script configuration
+    config = None
+    if hasattr(entity, "script"):
+        # Try to get configuration safely
+        if hasattr(entity.script, "config"):
+            config = entity.script.config
+        elif hasattr(entity.script, "_config"):
+            # Fallback to _config if needed
+            config = getattr(entity.script, "_config", None)
+
+    if not config:
+        return set()
+
+    return await async_extract_entities_from_config(hass, config)
+
+
+class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
+    """Spook repair tries to find unknown referenced entity in scripts."""
+
+    domain = script.DOMAIN
+    repair = "script_unknown_entity_references"
+    inspect_events = {
+        EVENT_COMPONENT_LOADED,
+        er.EVENT_ENTITY_REGISTRY_UPDATED,
+    }
+    inspect_config_entry_changed = True
+    inspect_on_reload = True
+
+    unavailable_entity_class = script.UnavailableScriptEntity
+    entity_label = "script"
+    reference_label = "entities"
+    references_are_entities = True
+    edit_url_pattern = "/config/script/edit/{unique_id}"
+
+    _known_entity_ids: set[str]
+
+    def _get_blueprint_trigger_entities(self, entity: script.ScriptEntity) -> set[str]:
+        """Extract entity references from blueprint trigger inputs."""
+        entities = set()
+
+        if (
+            not hasattr(entity, "referenced_blueprint")
+            or not entity.referenced_blueprint
+        ):
+            return entities
+
+        config = getattr(entity, "_config", None)
+        if not config or not isinstance(config, dict) or "use_blueprint" not in config:
+            return entities
+
+        blueprint_config = config["use_blueprint"]
+        if "input" not in blueprint_config:
+            return entities
+
+        input_config = blueprint_config["input"]
+        # Look for inputs that might contain triggers (like discard_when)
+        for value in input_config.values():
+            if isinstance(value, (dict, list)) and "trigger" in str(value):
+                trigger_entities = extract_entities_from_trigger_config(value)
+                if trigger_entities:
+                    entities.update(trigger_entities)
+
+        return entities
+
+    async def _async_setup_inspection(self) -> None:
+        """Cache known entity IDs (including ALL/NONE) for this inspection cycle."""
+        self._known_entity_ids = async_get_all_entity_ids(
+            self.hass, include_all_none=True
+        )
+
+    async def _async_compute_unknown_references(self, entity: Any) -> set[str]:
+        """Return unknown entity IDs referenced by ``entity`` (incl. templates)."""
+        # Get all referenced entities from the script
+        all_entities = extract_referenced_entities_from_script(entity)
+
+        # Check for blueprint trigger inputs
+        all_entities.update(self._get_blueprint_trigger_entities(entity))
+
+        # Extract entities from Template objects within the script entity
+        all_entities.update(
+            await extract_template_entities_from_script_entity(self.hass, entity)
+        )
+
+        return await async_filter_known_entity_ids_with_templates(
+            self.hass,
+            entity_ids=all_entities,
+            known_entity_ids=self._known_entity_ids,
+        )
