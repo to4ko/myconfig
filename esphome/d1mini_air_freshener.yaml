@@ -37,17 +37,6 @@ ota:
 web_server:
   port: 80
 
-globals:
-  - id: last_canister_replace
-    type: unsigned long
-    restore_value: yes
-    initial_value: '0'
-
-  - id: g_new_canister_sensor
-    type: unsigned long
-    restore_value: true
-    initial_value: '0'
-
 binary_sensor:
   - platform: status
     name: "Status"
@@ -178,9 +167,10 @@ text_sensor:
     id: id_new_canister_time_text
     lambda: |-
       char str[30];
-      time_t t = id(last_canister_replace);
-      if (t == 0)
+      float replace_time = id(id_canister_replace).state;
+      if (std::isnan(replace_time) || replace_time <= 0)
         return {};  // означает "нет значения"
+      time_t t = (time_t) replace_time;
       strftime(str, sizeof(str), "%Y-%m-%d %H:%M", localtime(&t));
       return std::string(str);
 
@@ -216,13 +206,18 @@ sensor:
           - light.turn_off: id_red_led
 
   - platform: template
-    name: "New Canister Sensor"
+    name: "Seconds Since Replace"
     id: id_new_canister_sensor
     unit_of_measurement: "s"
     accuracy_decimals: 0
     update_interval: 60s
     lambda: |-
-      return (float) id(g_new_canister_sensor);
+      auto time = id(sntp_time).now();
+      float replace_time = id(id_canister_replace).state;
+      if (!time.is_valid() || std::isnan(replace_time) || replace_time <= 0) {
+        return {};
+      }
+      return (float) (time.timestamp - replace_time);
 
 
   - platform: template
@@ -303,15 +298,16 @@ button:
           value: 0
       - number.set:
           id: id_days_in_use_adjustment
-          value: 0          
-      - lambda: |-
-          id(last_canister_replace) = id(sntp_time).now().timestamp;
+          value: 0
       - number.set:
           id: id_canister_replace
           value: !lambda 'return int(id(sntp_time).now().timestamp);'
-      - globals.set:
-          id: g_new_canister_sensor
-          value: !lambda 'return (unsigned long) id(sntp_time).now().timestamp;'
+      - lambda: |-
+          // Баллон меняют редко - можно себе позволить принудительный
+          // немедленный commit во flash вместо ожидания планового
+          // flash_write_interval, чтобы momент замены не терялся при
+          // ребуте/просадке питания сразу после нажатия кнопки.
+          global_preferences->sync();
       - component.update: id_new_canister_sensor
       - component.update: id_days_in_use
       - component.update: id_puffs_remaining
