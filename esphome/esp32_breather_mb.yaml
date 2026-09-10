@@ -151,19 +151,18 @@ sensor:
   - platform: duty_time
     id: breather_fan_work_time
     name: Fan Work Time
-    sensor: fan_active_status
+    #sensor: fan_active_status
+    lambda: |-
+      if (id(tion_fan).state || id(tion_heater).state) {
+        return true;
     restore: true
-    last_time:
-      name: Fan Last Turn-On Time
-
+    
   - platform: duty_time
     id: breather_heater_work_time
     name: Heater Work Time
-    sensor: heater_active_status
+    #sensor: heater_active_status
+    lambda: "return id(tion_heater).state;"    
     restore: true
-    last_time:
-      name: Heater Last Turn-On Time
-
       
 fan:
   - platform: tion
@@ -196,16 +195,6 @@ binary_sensor:
     id: tion_state_problem
     type: state
     name: State Problem
-
-  - platform: template
-    id: fan_active_status
-    lambda: |-
-      return id(tion_fan).state;
-
-  - platform: template
-    id: heater_active_status
-    lambda: |-
-      return id(tion_heater).state;      
     
 text_sensor:
   - platform: template
