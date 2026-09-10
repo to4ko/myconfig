@@ -38,11 +38,6 @@ web_server:
   port: 80
 
 globals:
-  - id: puffs_per_day_avg
-    type: float
-    restore_value: yes
-    initial_value: '0.0'
-
   - id: last_canister_replace
     type: unsigned long
     restore_value: yes
@@ -94,6 +89,8 @@ number:
     on_value:
       then:
         - component.update: id_canister_left
+        - component.update: id_puffs_remaining
+        - component.update: id_days_remaining
 
   - platform: template
     name: "Canister Resource"
@@ -108,6 +105,8 @@ number:
     on_value:
       then:
         - component.update: id_canister_left
+        - component.update: id_puffs_remaining
+        - component.update: id_days_remaining
 
   - platform: template
     name: "Days in Use Adjustment"
@@ -249,6 +248,18 @@ sensor:
       return (time.timestamp - replace_time) / 86400.0 + adjustment;
 
   - platform: template
+    name: "Puffs Remaining"
+    icon: mdi:spray-bottle
+    id: id_puffs_remaining
+    unit_of_measurement: "puffs"
+    update_interval: 60s
+    accuracy_decimals: 0
+    lambda: |-
+      float remaining = id(id_canister_resource).state - id(id_counter).state;
+      if (remaining < 0) remaining = 0;
+      return remaining;
+
+  - platform: template
     name: "Days Remaining"
     icon: mdi:calendar-clock
     id: id_days_remaining
@@ -259,32 +270,25 @@ sensor:
       float days_in_use = id(id_days_in_use).state;
       float total_puffs = id(id_counter).state;
       float canister_total = id(id_canister_resource).state;
+      float remaining_puffs = id(id_puffs_remaining).state;
 
-      if (days_in_use <= 0 || total_puffs <= 0) {
-        // Если ещё не было использования — вернём приблизительный срок
+      // Пока не накопилось данных для честного расчёта (баллон только что
+      // заменили, пшиков ещё не было, или время не синхронизировано) -
+      // грубая оценка по усреднённой скорости расхода 83 пшика/день.
+      if (std::isnan(days_in_use) || days_in_use < (1.0 / 24.0) || total_puffs <= 0) {
         if (canister_total > 0) {
-          return canister_total / 83.0;  // оценка по 83 пшика в день
+          return canister_total / 83.0;
         }
         return 0.0;
       }
 
-      // среднее число пшиков в день
-      float current_puffs_per_day = total_puffs / days_in_use;
-      if (std::isnan(current_puffs_per_day) || current_puffs_per_day <= 0) {
-        current_puffs_per_day = 1.0;  // защита от деления на ноль
-      }
+      // Средняя скорость расхода с момента установки текущего баллона:
+      // всего пшиков / дней с замены. Пересчитывается заново каждый раз
+      // из накопленных total_puffs/days_in_use, без экспоненциального
+      // сглаживания - оно и было источником скачков сразу после замены.
+      float puffs_per_day = total_puffs / days_in_use;
 
-      // скользящее среднее для сглаживания
-      id(puffs_per_day_avg) = id(puffs_per_day_avg) * 0.8 + current_puffs_per_day * 0.2;
-
-      float remaining_puffs = canister_total - total_puffs;
-      if (remaining_puffs < 0) remaining_puffs = 0;
-
-      if (std::isnan(id(puffs_per_day_avg)) || id(puffs_per_day_avg) <= 0) {
-        return remaining_puffs;  // пока нет среднего — просто пшики
-      }
-
-      return remaining_puffs / id(puffs_per_day_avg);
+      return remaining_puffs / puffs_per_day;
 
 button:
   - platform: restart
@@ -308,8 +312,10 @@ button:
       - globals.set:
           id: g_new_canister_sensor
           value: !lambda 'return (unsigned long) id(sntp_time).now().timestamp;'
-      - component.update: id_new_canister_sensor          
+      - component.update: id_new_canister_sensor
       - component.update: id_days_in_use
+      - component.update: id_puffs_remaining
+      - component.update: id_days_remaining
       - component.update: id_new_canister_time_text
 
   - platform: template
@@ -421,5 +427,6 @@ time:
 interval:
   - interval: 1min
     then:
-      - component.update: id_days_remaining
       - component.update: id_days_in_use
+      - component.update: id_puffs_remaining
+      - component.update: id_days_remaining
