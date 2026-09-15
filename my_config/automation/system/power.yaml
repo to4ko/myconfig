@@ -57,6 +57,8 @@
 - alias: house_power_outage_ended
   id: house_power_outage_ended
   initial_state: true
+  mode: single
+  max_exceeded: silent
   triggers:
     - trigger: state
       entity_id:
@@ -75,7 +77,15 @@
              states('sensor.ippon_1500_status_data'), states('sensor.ippon_650_hs_status_data'),
              states('sensor.ippon_650_s_status_data')] | select('eq', 'OB') | list | length) == 0 }}
   actions:
+    # ждём немного - если это несколько ИБП разом (общая авария/просадка),
+    # остальные догонят почти сразу, а mode:single съест их лишние срабатывания
+    - variables:
+        was_boost: "{{ trigger.from_state.state == 'OL BOOST' }}"
+    - delay: "00:00:05"
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima
-        message: "\U0001f50c Электричество восстановлено во всём доме."
+        message: >-
+          {{ '🔌 Напряжение сети нормализовалось (AVR-буст снят) во всём доме, батареи не разряжались.'
+             if was_boost
+             else '🔌 Электричество восстановлено во всём доме.' }}
