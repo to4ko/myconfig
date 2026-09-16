@@ -13,7 +13,7 @@ esphome:
     priority: 800
     then:
       - ble.disable:
-      - delay: 91s
+      - delay: 21601s
       - lambda: |-
           if (!id(bsh_wm_powered).state) {
             id(bsh_wm_invalidate_all).execute();
@@ -91,7 +91,7 @@ binary_sensor:
     name: "Washer Powered"
     device_class: power
     lambda: |-
-      return id(bsh_last_frame_ms) != 0 && (millis() - id(bsh_last_frame_ms)) < 90000;
+      return id(bsh_last_frame_ms) != 0 && (millis() - id(bsh_last_frame_ms)) < 21600000;
     on_release:
       - script.execute: bsh_wm_invalidate_all
 
@@ -472,15 +472,13 @@ script:
     mode: single
     then:
       - lambda: |-
-          id(bsh_wm_feat_waterplus).invalidate_state();
-          id(bsh_wm_feat_speedplus).invalidate_state();
-          id(bsh_wm_feat_stains).invalidate_state();
-          id(bsh_wm_feat_prewash).invalidate_state();
-          id(bsh_wm_feat_anticrease).invalidate_state();
-          id(bsh_wm_feat_nospin).invalidate_state();
-          id(bsh_wm_door_open).invalidate_state();
-          id(bsh_wm_door_lock).invalidate_state();
+          // Only "live" metrics that are meaningless once the machine has
+          // gone quiet get cleared. Everything else (last program/mode/
+          // temperature/door/options) is left as last-known-value forever,
+          // per explicit request: after a finished wash the panel can sit
+          // idle for hours while still genuinely on.
           id(bsh_wm_running).invalidate_state();
+          id(bsh_wm_door_open).invalidate_state();
 
           id(bsh_wm_rpm).publish_state(NAN);
           id(bsh_wm_rpm_ontime).publish_state(NAN);
@@ -488,15 +486,8 @@ script:
           id(bsh_wm_unbalance_y).publish_state(NAN);
           id(bsh_wm_unbalance_z).publish_state(NAN);
           id(bsh_wm_remain).publish_state(NAN);
-          id(bsh_wm_temperature).publish_state(NAN);
-          id(bsh_wm_extra_rinse).publish_state(NAN);
 
-          id(bsh_wm_program).publish_state("");
-          id(bsh_wm_wash_mode).publish_state("");
           id(bsh_wm_curr_rotdirection).publish_state("");
-          id(bsh_wm_door).publish_state("");
-          id(bsh_wm_washmodule).publish_state("");
-          id(bsh_wm_state).publish_state("");
 
 button:
   - platform: restart
