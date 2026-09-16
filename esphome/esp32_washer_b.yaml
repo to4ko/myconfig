@@ -63,6 +63,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: bsh_last_frame_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
 
 bshdbus:
   uart_id: dbus_uart
@@ -70,11 +74,28 @@ bshdbus:
     - logger.log:
         format: "Received frame dest 0x%02x cmd 0x%04x: 0x%s"
         args: [dest, command, format_hex(message).c_str()]
+    - lambda: id(bsh_last_frame_ms) = millis();
 
 binary_sensor:
   - platform: status
     name: "Status"
-    
+
+  - platform: template
+    id: bsh_wm_powered
+    name: "Washer Powered"
+    device_class: power
+    update_interval: 15s
+    lambda: |-
+      return id(bsh_last_frame_ms) != 0 && (millis() - id(bsh_last_frame_ms)) < 90000;
+    on_release:
+      - lambda: |-
+          id(bsh_wm_program).publish_state("");
+          id(bsh_wm_wash_mode).publish_state("");
+          id(bsh_wm_curr_rotdirection).publish_state("");
+          id(bsh_wm_door).publish_state("");
+          id(bsh_wm_washmodule).publish_state("");
+          id(bsh_wm_state).publish_state("");
+
   - platform: bshdbus
     dest: 0x14
     command: 0x1007
@@ -83,6 +104,8 @@ binary_sensor:
         name: "Water Plus"
         icon: mdi:water-plus
         lambda: return (x[0] >> 1) & 0x01;
+        filters:
+          - timeout: 90s
       - id: bsh_wm_feat_speedplus
         name: "Speed Perfect"
         icon: mdi:clock-fast
@@ -96,18 +119,26 @@ binary_sensor:
                 // At least one of the bits is set to 1
                 return 0;
             }
+        filters:
+          - timeout: 90s
       - id: bsh_wm_feat_stains
         name: "Stain Selection"
         icon: mdi:water-alert-outline
         lambda: return (x[0] >> 5) & 0x01;
+        filters:
+          - timeout: 90s
       - id: bsh_wm_feat_prewash
         name: "Pre-wash"
         icon: mdi:rotate-orbit
         lambda: return (x[0] >> 7) & 0x01;
+        filters:
+          - timeout: 90s
       - id: bsh_wm_feat_anticrease
         name: "Anti-crease"
         icon: mdi:iron
         lambda: return (x[1] >> 7) & 0x01;
+        filters:
+          - timeout: 90s
   - platform: bshdbus
     dest: 0x14
     command: 0x1008
@@ -116,6 +147,8 @@ binary_sensor:
         name: "No Spin"
         icon: mdi:rotate-3d-variant
         lambda: return x[0] & 0x01;
+        filters:
+          - timeout: 90s
   - platform: bshdbus
     dest: 0x15
     command: 0x1100
@@ -151,11 +184,15 @@ binary_sensor:
         lambda: return x[0] == 2;
         on_press:
           - lambda: id(wm_start_latch) = false;
+        filters:
+          - timeout: 90s
       - id: bsh_wm_door_lock
         name: "Door Lock"
         device_class: lock
         icon: mdi:lock
         lambda: return x[0] != 1;
+        filters:
+          - timeout: 90s
   - platform: bshdbus
     dest: 0x26
     command: 0x1101
@@ -165,6 +202,8 @@ binary_sensor:
         device_class: running
         icon: mdi:washing-machine
         lambda: return x[0] == 2;
+        filters:
+          - timeout: 90s
 
   - platform: template
     id: bsh_wm_running_derived
@@ -197,6 +236,7 @@ sensor:
           - lambda: |
               if (x > 1300) return 1400; //the 'marketing' max speed is higher than what the machine is actual capable of
               else return x;
+          - timeout: 90s
 
   - platform: bshdbus
     dest: 0x16
@@ -209,6 +249,8 @@ sensor:
         device_class: speed
         unit_of_measurement: rpm
         lambda: return (((int16_t) x[3] << 8 | x[4])/16);
+        filters:
+          - timeout: 90s
     #  - id: bsh_wm_rpm_median
     #    name: Drum Speed (averaged)
     #    entity_category: diagnostic
@@ -259,6 +301,8 @@ sensor:
         unit_of_measurement: min
         accuracy_decimals: 0
         lambda: return x[0];
+        filters:
+          - timeout: 90s
   - platform: bshdbus
     dest: 0x14
     command: 0x1004
