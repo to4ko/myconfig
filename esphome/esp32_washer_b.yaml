@@ -84,7 +84,6 @@ binary_sensor:
     id: bsh_wm_powered
     name: "Washer Powered"
     device_class: power
-    update_interval: 15s
     lambda: |-
       return id(bsh_last_frame_ms) != 0 && (millis() - id(bsh_last_frame_ms)) < 90000;
     on_release:
@@ -220,6 +219,23 @@ binary_sensor:
       return door_locked && (time_left || id(wm_start_latch));
 
 sensor:
+  - platform: uptime
+    name: "Uptime s"
+    id: uptime_sensor
+    update_interval: 60s
+
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    update_interval: 60s
+
+  - platform: internal_temperature
+    name: "ESP Internal Temperature"
+    device_class: "temperature"
+    state_class: "measurement"
+    accuracy_decimals: 1
+    update_interval: 60s    
+  
+  
   - platform: bshdbus
     dest: 0x14
     command: 0x1006
@@ -327,6 +343,7 @@ sensor:
                 - 5 -> 70.0
                 - 6 -> 80.0
                 - 7 -> 90.0
+          - timeout: 90s
   - platform: bshdbus
     dest: 0x14
     command: 0x1007
@@ -337,16 +354,9 @@ sensor:
         accuracy_decimals: 0
         lambda: |-
           return ((x[0] >> 4) & 0x01) + ((x[0] >> 3) & 0x01) + ((x[0] >> 2) & 0x01);
-
-  - platform: uptime
-    name: "Uptime s"
-    id: uptime_sensor
-    update_interval: 60s
-
-  - platform: wifi_signal
-    name: "WiFi RSSI"
-    update_interval: 60s
-
+        filters:
+          - timeout: 90s
+    
 text_sensor:
   - platform: bshdbus
     dest: 0x14
