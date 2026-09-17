@@ -73,6 +73,14 @@ globals:
     type: uint32_t
     restore_value: no
     initial_value: '0'
+  - id: wm_local_remain_min_start
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+  - id: wm_local_start_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
 
 bshdbus:
   uart_id: dbus_uart
@@ -176,6 +184,8 @@ binary_sensor:
         device_class: lock
         icon: mdi:lock
         lambda: return x[0] != 1;
+        on_release:
+          - script.execute: bsh_wm_remain_resync
   - platform: bshdbus
     dest: 0x26
     command: 0x1101
@@ -199,8 +209,26 @@ binary_sensor:
       bool door_locked = !id(bsh_wm_door_lock).state;
       bool time_left = !std::isnan(id(bsh_wm_remain).state) && id(bsh_wm_remain).state > 0;
       return door_locked && (time_left || id(wm_start_latch));
+    on_press:
+      - script.execute: bsh_wm_remain_resync
 
 sensor:
+  - platform: template
+    id: bsh_wm_remain_smooth
+    name: "Remaining Time (Smoothed)"
+    device_class: duration
+    state_class: measurement
+    unit_of_measurement: min
+    accuracy_decimals: 0
+    update_interval: 30s
+    lambda: |-
+      if (!id(bsh_wm_running_derived).state || std::isnan(id(wm_local_remain_min_start))) {
+        return NAN;
+      }
+      float elapsed_min = (millis() - id(wm_local_start_ms)) / 60000.0f;
+      float remaining = id(wm_local_remain_min_start) - elapsed_min;
+      return remaining > 0 ? remaining : 0;
+
   - platform: uptime
     name: "Uptime s"
     id: uptime_sensor
@@ -296,6 +324,12 @@ sensor:
         unit_of_measurement: min
         accuracy_decimals: 0
         lambda: return x[0];
+        on_value:
+          - if:
+              condition:
+                binary_sensor.is_on: bsh_wm_running_derived
+              then:
+                - script.execute: bsh_wm_remain_resync
   - platform: bshdbus
     dest: 0x14
     command: 0x1004
@@ -489,6 +523,13 @@ script:
           id(bsh_wm_remain).publish_state(NAN);
 
           id(bsh_wm_curr_rotdirection).publish_state("");
+
+  - id: bsh_wm_remain_resync
+    mode: restart
+    then:
+      - lambda: |-
+          id(wm_local_remain_min_start) = id(bsh_wm_remain).state;
+          id(wm_local_start_ms) = millis();
 
 button:
   - platform: restart
