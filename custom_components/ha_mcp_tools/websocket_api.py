@@ -37,7 +37,7 @@ the info handshake carries no capability entry:
   is byte-identical to the REST ``/api/states/<id>`` serialization by
   construction; the server maps found/missing onto its per-id error contract.
 * ``ha_mcp_tools/blueprint_get`` — the full body of one installed blueprint
-  (``{metadata, config}``), which core's ``blueprint/list`` never returns (it
+  (``{metadata, config, yaml}``), which core's ``blueprint/list`` never returns (it
   serves only ``{metadata}``). The path is jailed under
   ``<config>/blueprints/<domain>/`` (symlink-safe containment, mirroring the
   file-tool jail) and the file read + parse run off the event loop in the async
@@ -335,6 +335,7 @@ WS_ENTITY_LOOKUP = f"{WS_API_PREFIX}/entity_lookup"
 WS_BACKUP_PREP = f"{WS_API_PREFIX}/backup_prep"
 WS_REGISTRIES = f"{WS_API_PREFIX}/registries"
 WS_DASHBOARDS = f"{WS_API_PREFIX}/dashboards"
+WS_DASHBOARD_EDIT = f"{WS_API_PREFIX}/dashboard_edit"
 WS_SERVICES_LIST = f"{WS_API_PREFIX}/services_list"
 WS_REFERENCE_DATA = f"{WS_API_PREFIX}/reference_data"
 WS_SERVER_ENTRY = f"{WS_API_PREFIX}/server_entry"
@@ -360,6 +361,11 @@ CAPABILITIES: list[str] = [
     "helpers_list",
     "states",
     "blueprint_get",
+    # A flag on blueprint_get: gates its additive ``yaml`` result field (the raw
+    # on-disk blueprint text). The server only asks for the text when this is
+    # advertised, so an older build simply serves the parsed body and the server
+    # looks for the text elsewhere.
+    "blueprint_text",
     "device_get",
     "device_list",
     # A semantic flag shared by every device-registry-backed read. Components
@@ -377,6 +383,7 @@ CAPABILITIES: list[str] = [
     "backup_prep",
     "registries",
     "dashboards",
+    "dashboard_edit",
     # A flag, not a standalone command: gates the additive whole-document
     # search-result keys on ``ha_mcp_tools/dashboards`` mode=search
     # (``document_matches`` + ``yaml_skipped`` + ``load_failed``, issue #2008).
@@ -570,9 +577,12 @@ def async_register_commands(hass: HomeAssistant) -> None:
     HA-core state rather than anything the unloaded entry cached, HA core
     authenticates the connection, and ``@require_admin`` gates each command — so
     a caller reaching it can already do the same through HA's own WS API. The
-    write commands are no exception: their D1 domain block refuses
-    ``domain == "ha_mcp_tools"`` unconditionally, so the leftover surface can
-    never reach the privileged filesystem/YAML services, which
+    service-dispatching writes enforce D1: they refuse
+    ``domain == "ha_mcp_tools"`` unconditionally. Dashboard edits do not dispatch
+    services: they use Core's Lovelace storage API under the same admin gate as
+    ``lovelace/config/save``. Server-entry updates retain their own live-entry
+    and option validation. These commands do not grant access to the privileged
+    filesystem/YAML services, which
     :func:`~custom_components.ha_mcp_tools._async_unload_tools_entry` does remove
     on unload. Admin-gated commands answering from live core state until the
     next restart is the trade this makes.
@@ -613,6 +623,7 @@ def _command_specs() -> list[tuple[dict[Any, Any], Any, Any]]:
         (_backup_prep_schema(), _do_backup_prep, None),
         (_registries_schema(), _do_registries, None),
         (_dashboards_schema(), _do_dashboards, _dashboards_prep),
+        (_dashboard_edit_schema(), _do_dashboard_edit, _dashboard_edit_prep),
         (_services_list_schema(), _do_services_list, _services_list_prep),
         (_reference_data_schema(), _do_reference_data, None),
         (_server_entry_schema(), _do_server_entry, None),
@@ -625,7 +636,7 @@ def _command_specs() -> list[tuple[dict[Any, Any], Any, Any]]:
             _do_server_entry_update,
             _server_entry_update_prep,
         ),
-        # The first WRITE command: the dispatch + the bounded confirmation wait are
+        # The service WRITE command: dispatch + the bounded confirmation wait are
         # inherently async, so ALL of the work lives in the ``_call_service_prep``
         # async pre-step and ``_do_call_service`` is a pure response formatter.
         (_call_service_schema(), _do_call_service, _call_service_prep),
@@ -3205,27 +3216,31 @@ def _do_blueprint_get(
     params: dict[str, Any],
     *,
     body: dict[str, Any] | None = None,
+    text: str | None = None,
 ) -> dict[str, Any]:
-    """Return one installed blueprint's full body as ``{metadata, config}``.
+    """Return one installed blueprint as ``{metadata, config, yaml}``.
 
     core's ``blueprint/list`` returns only ``{metadata}`` (no triggers /
-    conditions / actions / sequence), so the server can otherwise serve metadata
-    only. This reads the on-disk blueprint file and returns the parsed body:
-    ``config`` is the full file (the server merges it additively over the
-    ``blueprint/list`` metadata) and ``metadata`` is its ``blueprint:`` section.
-    When the file is missing, unparseable, or the requested path escapes the jail,
-    both come back ``None`` (the server keeps metadata-only) — see
-    :func:`_read_blueprint_file`.
+    conditions / actions / sequence, and never the file text), so the server can
+    otherwise serve metadata only. This reads the on-disk blueprint file once and
+    returns both views of it: ``config`` is the parsed file (the server merges it
+    additively over the ``blueprint/list`` metadata), ``metadata`` is its
+    ``blueprint:`` section, and ``yaml`` is the raw text the server hands back for
+    a round trip through ``blueprint/save``. Each is ``None`` when it could not be
+    produced — a file that reads but does not parse still yields its ``yaml`` —
+    and all three are ``None`` when the file is missing or the requested path
+    escapes the jail (see :func:`_read_blueprint_file`).
 
     Pure: the blocking jail-resolve + file read + YAML parse run in the executor
-    via :func:`_blueprint_get_prep`, which passes the parsed ``body`` in.
+    via :func:`_blueprint_get_prep`, which passes both views in.
     """
     if not isinstance(body, dict):
-        return {"metadata": None, "config": None}
+        return {"metadata": None, "config": None, "yaml": text}
     metadata = body.get("blueprint")
     return {
         "metadata": _plainify(metadata) if isinstance(metadata, dict) else None,
         "config": _plainify(body),
+        "yaml": text,
     }
 
 
@@ -3237,27 +3252,41 @@ async def _blueprint_get_prep(
     The path jail (symlink-safe ``Path.resolve`` containment), the ``open()`` and
     the YAML parse are all blocking filesystem work, so they run in the executor
     via :meth:`hass.async_add_executor_job` — keeping :func:`_do_blueprint_get` a
-    pure assembler over the parsed ``body`` this returns (``None`` on any failure).
+    pure assembler over the raw text and parsed body this returns (both ``None``
+    on a failed read).
     """
     domain = msg["domain"]
     path = msg["path"]
-    body = await hass.async_add_executor_job(_read_blueprint_file, hass, domain, path)
-    return {"body": body}
+    read = await hass.async_add_executor_job(_read_blueprint_file, hass, domain, path)
+    return {"body": read.body, "text": read.text}
 
 
-def _read_blueprint_file(
-    hass: HomeAssistant, domain: str, path: str
-) -> dict[str, Any] | None:
-    """Resolve + jail + read + parse one blueprint YAML file. ``None`` on failure.
+class _BlueprintFile(NamedTuple):
+    """One blueprint file read once: its raw ``text`` and its parsed ``body``.
+
+    ``text`` is ``None`` when the file could not be read at all; ``body`` is
+    additionally ``None`` when it read but did not parse into a mapping.
+    """
+
+    text: str | None
+    body: dict[str, Any] | None
+
+
+_UNREADABLE_BLUEPRINT = _BlueprintFile(None, None)
+
+
+def _read_blueprint_file(hass: HomeAssistant, domain: str, path: str) -> _BlueprintFile:
+    """Resolve + jail + read + parse one blueprint YAML file, reading it once.
 
     Blueprint files live under ``<config>/blueprints/<domain>/``. The requested
     ``path`` is joined under that root and resolved symlink-safe (mirrors the
     file-tool jail's ``_resolves_within`` — resolve the RAW input, following
     symlinks, THEN check containment, so ``<root>/<symlink>/..`` cannot escape). A
     path escaping the root — via ``..``, an absolute path, or a symlink — yields
-    ``None`` (rejected, never opened). A missing file, a non-file target, a read
-    error, or a YAML parse error also yields ``None``. Only a valid, contained,
-    parseable blueprint returns its full parsed body.
+    an empty result (rejected, never opened), as does a missing file, a non-file
+    target, or a read error. A file that reads but does not parse into a mapping
+    keeps its ``text`` and drops its ``body``, so the caller can still round-trip
+    the exact bytes it holds.
 
     Parsed with :class:`_BlueprintLoader`: ``!input`` markers are preserved and
     every other custom tag (``!secret`` / ``!include`` / …) is neutralized to
@@ -3267,29 +3296,32 @@ def _read_blueprint_file(
     config = getattr(hass, "config", None)
     path_fn = getattr(config, "path", None)
     if not callable(path_fn):
-        return None
+        return _UNREADABLE_BLUEPRINT
     try:
         base = Path(path_fn("blueprints", domain))
         candidate = Path(path) if path.startswith("/") else base / path
         real = candidate.resolve()
         base_real = base.resolve()
     except (OSError, ValueError):
-        return None
+        return _UNREADABLE_BLUEPRINT
     if not (real == base_real or real.is_relative_to(base_real)):
-        return None
+        return _UNREADABLE_BLUEPRINT
     try:
-        with open(real, encoding="utf-8") as handle:
-            # Instance form (not yaml.load) mirrors the component's existing
-            # _PackagesDirLoader usage; _BlueprintLoader is a SafeLoader subclass,
-            # so no !!python/object can construct arbitrary types.
-            loader = _BlueprintLoader(handle)
-            try:
-                parsed = loader.get_single_data()
-            finally:
-                loader.dispose()
-    except (OSError, ValueError, yaml.YAMLError):
-        return None
-    return parsed if isinstance(parsed, dict) else None
+        text = real.read_text(encoding="utf-8")
+    except (OSError, ValueError):
+        return _UNREADABLE_BLUEPRINT
+    try:
+        # Instance form (not yaml.load) mirrors the component's existing
+        # _PackagesDirLoader usage; _BlueprintLoader is a SafeLoader subclass,
+        # so no !!python/object can construct arbitrary types.
+        loader = _BlueprintLoader(text)
+        try:
+            parsed = loader.get_single_data()
+        finally:
+            loader.dispose()
+    except (ValueError, yaml.YAMLError):
+        return _BlueprintFile(text, None)
+    return _BlueprintFile(text, parsed if isinstance(parsed, dict) else None)
 
 
 def _construct_blueprint_input(loader: Any, node: Any) -> dict[str, str]:
@@ -6803,3 +6835,29 @@ def _dispatched_unconfirmed_bulk_result(
         "dispatched": sum(1 for r in op_results if r["dispatched"]),
         "failed": sum(1 for r in op_results if r.get("error") is not None),
     }
+
+
+def _dashboard_edit_schema() -> dict[Any, Any]:
+    """The additive edit command; cross-field validation precedes any save."""
+    return {
+        vol.Required("type"): WS_DASHBOARD_EDIT,
+        vol.Optional("url_path"): vol.Any(str, None),
+        vol.Optional("expected_hash"): vol.Any(str, None),
+        vol.Optional("config"): dict,
+        vol.Optional("patch"): list,
+    }
+
+
+async def _dashboard_edit_prep(
+    hass: HomeAssistant, msg: dict[str, Any]
+) -> dict[str, Any]:
+    from .dashboard_edit import async_edit_dashboard
+
+    return {"result": await async_edit_dashboard(hass, msg)}
+
+
+def _do_dashboard_edit(
+    hass: HomeAssistant, msg: dict[str, Any], *, result: dict[str, Any]
+) -> dict[str, Any]:
+    """Preserve the write outcome assembled by the async edit lifecycle."""
+    return result
