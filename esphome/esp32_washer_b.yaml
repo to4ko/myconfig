@@ -211,6 +211,8 @@ binary_sensor:
       return door_locked && (time_left || id(wm_start_latch));
     on_press:
       - script.execute: bsh_wm_remain_resync
+    on_release:
+      - lambda: id(wm_local_remain_min_start) = NAN;
 
 sensor:
   - platform: template
@@ -528,8 +530,17 @@ script:
     mode: restart
     then:
       - lambda: |-
-          id(wm_local_remain_min_start) = id(bsh_wm_remain).state;
-          id(wm_local_start_ms) = millis();
+          // Resync triggers (on_press/on_release) can misfire on a bare
+          // API reconnect blip even though the underlying boolean never
+          // actually changed. Only actually rebase the countdown if the
+          // raw D-Bus value genuinely differs from what we last anchored
+          // to, otherwise a spurious refire would snap the timer back to
+          // a stale raw reading mid-cycle.
+          float raw = id(bsh_wm_remain).state;
+          if (!std::isnan(raw) && raw != id(wm_local_remain_min_start)) {
+            id(wm_local_remain_min_start) = raw;
+            id(wm_local_start_ms) = millis();
+          }
 
 button:
   - platform: restart
