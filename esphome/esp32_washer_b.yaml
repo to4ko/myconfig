@@ -179,6 +179,7 @@ binary_sensor:
         lambda: return x[0] == 2;
         on_press:
           - lambda: id(wm_start_latch) = false;
+          - script.execute: bsh_wm_invalidate_all
       - id: bsh_wm_door_lock
         name: "Door Lock"
         device_class: lock
@@ -394,6 +395,12 @@ text_sensor:
             - 13 -> Shirts/Blouses
             - 14 -> Down/Duvets
             - 15 -> My Program
+        on_value:
+          - if:
+              condition:
+                lambda: 'return x == "Off";'
+              then:
+                - script.execute: bsh_wm_invalidate_all
   - platform: bshdbus
     dest: 0x14
     command: 0x1007
