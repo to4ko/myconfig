@@ -27,20 +27,23 @@ class UpsHidButton : public button::Button, public Component {
   void set_ups_hid_parent(UpsHidComponent *parent) { parent_ = parent; }
   void set_beeper_action(const std::string &action) { beeper_action_ = action; button_type_ = BUTTON_TYPE_BEEPER; }
   void set_test_action(const std::string &action) { test_action_ = action; button_type_ = BUTTON_TYPE_TEST; }
-  
+  void set_usb_action(const std::string &action) { usb_action_ = action; button_type_ = BUTTON_TYPE_USB; }
+
   void dump_config() override;
 
  protected:
   void press_action() override;
-  
+
   enum ButtonType {
     BUTTON_TYPE_BEEPER,
-    BUTTON_TYPE_TEST
+    BUTTON_TYPE_TEST,
+    BUTTON_TYPE_USB
   };
-  
+
   UpsHidComponent *parent_{nullptr};
   std::string beeper_action_{};
   std::string test_action_{};
+  std::string usb_action_{};
   ButtonType button_type_{BUTTON_TYPE_BEEPER};
 };
 

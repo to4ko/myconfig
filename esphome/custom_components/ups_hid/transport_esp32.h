@@ -45,9 +45,11 @@ public:
     esp_err_t hid_interrupt_read(uint8_t* data, size_t* data_len,
                                uint32_t timeout_ms = 1000) override;
     
-    esp_err_t get_string_descriptor(uint8_t string_index, 
+    esp_err_t get_string_descriptor(uint8_t string_index,
                                   std::string& result) override;
-    
+
+    esp_err_t reset_usb_power() override;
+
     std::string get_last_error() const override;
 
 private:

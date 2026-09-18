@@ -541,6 +541,33 @@ esp_err_t Esp32UsbTransport::get_string_descriptor(uint8_t string_index,
     return ret;
 }
 
+esp_err_t Esp32UsbTransport::reset_usb_power() {
+    // Cuts VBUS to the root port, then restores it - a real electrical
+    // power-cycle of whatever's downstream (not just a bus reset signal),
+    // equivalent to physically unplugging and reinserting the USB cable.
+    // The resulting disconnect is picked up by the normal client event
+    // callback (handle_device_gone()), so no extra device-state cleanup is
+    // needed here.
+    ESP_LOGW(ESP32_USB_TAG, "Power-cycling USB root port");
+
+    esp_err_t ret = usb_host_lib_set_root_port_power(false);
+    if (ret != ESP_OK) {
+        set_last_error("Failed to power off USB root port: " + std::string(esp_err_to_name(ret)));
+        return ret;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(500));  // let the downstream device fully lose power
+
+    ret = usb_host_lib_set_root_port_power(true);
+    if (ret != ESP_OK) {
+        set_last_error("Failed to power on USB root port: " + std::string(esp_err_to_name(ret)));
+        return ret;
+    }
+
+    ESP_LOGI(ESP32_USB_TAG, "USB root port power-cycled");
+    return ESP_OK;
+}
+
 std::string Esp32UsbTransport::get_last_error() const {
     std::lock_guard<std::mutex> lock(error_mutex_);
     return last_error_;

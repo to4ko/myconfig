@@ -22,8 +22,15 @@ namespace timing {
     
     // USB operation timeouts
     static constexpr uint32_t USB_CONTROL_TRANSFER_TIMEOUT_MS = 1000;  // 1 second
-    static constexpr uint32_t USB_SEMAPHORE_TIMEOUT_MS = 1000;         // 1 second  
+    static constexpr uint32_t USB_SEMAPHORE_TIMEOUT_MS = 1000;         // 1 second
     static constexpr uint32_t USB_CLIENT_EVENT_TIMEOUT_MS = 100;       // 100ms for event polling
+
+    // If the USB transport stays disconnected this long, automatically
+    // power-cycle the USB port (see UpsHidComponent::check_usb_disconnect_timeout()).
+    // Long enough to not trip on a normal boot-time enumeration delay, short
+    // enough to recover within a couple of minutes if the downstream USB
+    // bridge chip (e.g. the Cypress one in Megatec/Q1 UPS units) has hung.
+    static constexpr uint32_t USB_AUTO_RESET_AFTER_MS = 120000;  // 2 minutes
 }
 
 // ==================== Protocol Limits ====================

@@ -13,12 +13,30 @@ void UpsHidButton::dump_config() {
     ESP_LOGCONFIG(BUTTON_TAG, "  Beeper action: %s", beeper_action_.c_str());
   } else if (button_type_ == BUTTON_TYPE_TEST) {
     ESP_LOGCONFIG(BUTTON_TAG, "  Test action: %s", test_action_.c_str());
+  } else if (button_type_ == BUTTON_TYPE_USB) {
+    ESP_LOGCONFIG(BUTTON_TAG, "  USB action: %s", usb_action_.c_str());
   }
 }
 
 void UpsHidButton::press_action() {
   if (!parent_) {
     ESP_LOGE(BUTTON_TAG, log_messages::NO_PARENT_COMPONENT);
+    return;
+  }
+
+  if (button_type_ == BUTTON_TYPE_USB) {
+    // Deliberately runs regardless of parent_->is_connected() - this is
+    // exactly the recovery path for when the UPS is stuck NOT connected.
+    ESP_LOGI(BUTTON_TAG, "Executing USB action: %s", usb_action_.c_str());
+    if (usb_action_ == "reset_power") {
+      if (parent_->reset_usb_power()) {
+        ESP_LOGI(BUTTON_TAG, "USB power-cycle triggered successfully");
+      } else {
+        ESP_LOGW(BUTTON_TAG, "Failed to trigger USB power-cycle");
+      }
+    } else {
+      ESP_LOGE(BUTTON_TAG, "Unknown USB action: %s", usb_action_.c_str());
+    }
     return;
   }
 

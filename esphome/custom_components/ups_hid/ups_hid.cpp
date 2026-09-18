@@ -62,9 +62,11 @@ void UpsHidComponent::update() {
   if (!transport_ || !transport_->is_connected()) {
     // Device not connected yet - normal during startup or after disconnection
     ESP_LOGD(TAG, log_messages::WAITING_FOR_DEVICE);
+    check_usb_disconnect_timeout();
     return;
   }
-  
+  usb_disconnected_since_ = 0;  // reconnected - clear the stuck-disconnected timer
+
   // Check if protocol detection is needed
   if (!active_protocol_) {
     ESP_LOGI(TAG, log_messages::ATTEMPTING_DETECTION);
@@ -590,6 +592,45 @@ bool UpsHidComponent::set_reboot_delay(int seconds) {
     return false;
   }
   return active_protocol_->set_reboot_delay(seconds);
+}
+
+bool UpsHidComponent::reset_usb_power() {
+  if (!transport_) {
+    ESP_LOGW(TAG, "No transport available to power-cycle");
+    return false;
+  }
+
+  esp_err_t ret = transport_->reset_usb_power();
+  if (ret != ESP_OK) {
+    ESP_LOGW(TAG, "USB power-cycle not performed: %s", esp_err_to_name(ret));
+    return false;
+  }
+
+  // The device is about to (or already did) drop off the bus - force a
+  // fresh protocol detection once it comes back, same as after any other
+  // disconnect.
+  active_protocol_.reset();
+  consecutive_failures_ = 0;
+  usb_disconnected_since_ = 0;
+  return true;
+}
+
+void UpsHidComponent::check_usb_disconnect_timeout() {
+  uint32_t now = millis();
+  if (usb_disconnected_since_ == 0) {
+    usb_disconnected_since_ = now;
+    return;
+  }
+
+  if (now - usb_disconnected_since_ >= timing::USB_AUTO_RESET_AFTER_MS) {
+    ESP_LOGW(TAG, "USB transport stuck disconnected for over %u s - power-cycling USB port",
+             static_cast<unsigned int>(timing::USB_AUTO_RESET_AFTER_MS / 1000));
+    reset_usb_power();
+    // Restart the timer regardless of outcome, so a still-stuck device
+    // (or a transport that doesn't support power-cycling) gets retried
+    // again after another full timeout instead of spinning immediately.
+    usb_disconnected_since_ = now;
+  }
 }
 
 // Additional protocol access method

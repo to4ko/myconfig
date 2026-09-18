@@ -52,9 +52,16 @@ public:
                                        uint32_t timeout_ms = 1000) = 0;
     
     // String descriptors
-    virtual esp_err_t get_string_descriptor(uint8_t string_index, 
+    virtual esp_err_t get_string_descriptor(uint8_t string_index,
                                           std::string& result) = 0;
-    
+
+    // Power-cycles the USB port (where supported), forcing a full electrical
+    // disconnect/reconnect of the downstream device - the same recovery a
+    // physical cable unplug/replug gives, without touching anything. Useful
+    // when the downstream device's own USB bridge chip has hung and stopped
+    // responding, since a bus reset alone wouldn't power-cycle it.
+    virtual esp_err_t reset_usb_power() = 0;
+
     // Error information
     virtual std::string get_last_error() const = 0;
 };

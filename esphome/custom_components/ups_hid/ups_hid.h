@@ -143,6 +143,11 @@ namespace esphome
       bool set_reboot_delay(int seconds);
       void request_delay_refresh() { /* No-op for now - could trigger update if needed */ }
 
+      // Power-cycles the USB port (button-triggered or automatic recovery -
+      // see check_usb_disconnect_timeout()). Forces re-detection of the
+      // protocol once the device reconnects.
+      bool reset_usb_power();
+
       // Sensor registration methods (conditional on platform availability)
 #ifdef USE_SENSOR      
       void register_sensor(sensor::Sensor *sens, const std::string &type);
@@ -172,6 +177,11 @@ namespace esphome
       uint32_t last_successful_read_{0};
       uint32_t consecutive_failures_{0};
       uint32_t max_consecutive_failures_{5};  // Limit re-detection attempts
+
+      // millis() timestamp of when the transport was first observed
+      // disconnected in this stretch; 0 while connected. Drives the
+      // automatic USB power-cycle in check_usb_disconnect_timeout().
+      uint32_t usb_disconnected_since_{0};
       UpsData ups_data_;
       mutable std::mutex data_mutex_;  // Protect ups_data_ access
       
@@ -212,6 +222,10 @@ namespace esphome
       bool detect_protocol();
       bool read_ups_data();
       void update_sensors();
+
+      // If the transport has been disconnected for too long, power-cycles
+      // the USB port automatically (see UsbHidComponent::reset_usb_power()).
+      void check_usb_disconnect_timeout();
       
       // Timer polling methods
       void check_and_update_timers();

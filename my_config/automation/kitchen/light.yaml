@@ -191,7 +191,6 @@
     - trigger: state
       entity_id: light.round_led_k
       from: "unavailable"
-      to: "on"
   conditions:
     - condition: state
       entity_id: binary_sensor.tod_day
@@ -200,12 +199,19 @@
       entity_id: binary_sensor.presence_k
       state: "off"
   actions:
-    - action: notify.send_message
-      data:
-        entity_id: notify.telegram_dima
-        message: "\U0001f6a8 Кухонная лампа сама включилась после сбоя питания, гашу!"
-    - action: light.turn_off
-      entity_id: light.round_led_k
+    - delay:
+        seconds: 5
+    - if:
+        - condition: state
+          entity_id: light.round_led_k
+          state: "on"
+      then:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6a8 Кухонная лампа сама включилась после сбоя питания, гашу!"
+        - action: light.turn_off
+          entity_id: light.round_led_k
 
 # ##################################
 # Kitchen - Round Led K restart

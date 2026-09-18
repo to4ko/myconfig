@@ -187,6 +187,12 @@ esp_err_t SimulatedTransport::hid_interrupt_read(uint8_t* data, size_t* data_len
     return ESP_ERR_NOT_SUPPORTED;
 }
 
+esp_err_t SimulatedTransport::reset_usb_power() {
+    // No real USB bus to power-cycle in simulation mode.
+    ESP_LOGV(SIM_TRANSPORT_TAG, "reset_usb_power() not simulated");
+    return ESP_ERR_NOT_SUPPORTED;
+}
+
 esp_err_t SimulatedTransport::get_string_descriptor(uint8_t string_index, 
                                                   std::string& result) {
     if (!is_connected()) {
