@@ -44,6 +44,7 @@ esphome:
           id(bsh_wm_state).publish_state(id(wm_persist_status));
           id(bsh_wm_door).publish_state(id(wm_persist_door));
           id(bsh_wm_washmodule).publish_state(id(wm_persist_program_step));
+          id(bsh_wm_door_lock).publish_state(id(wm_persist_door_lock));
       - delay: 21601s
       - lambda: |-
           if (!id(bsh_wm_powered).state) {
@@ -278,8 +279,21 @@ binary_sensor:
       return door_locked && (time_left || id(wm_start_latch));
     on_press:
       - script.execute: bsh_wm_remain_resync
+      - lambda: |-
+          if (!std::isnan(id(bsh_wm_remain).state)) {
+            id(wm_persist_remain_start_min) = id(bsh_wm_remain).state;
+            auto now = id(sntp_time).now();
+            if (now.is_valid()) {
+              id(wm_persist_remain_start_epoch) = now.timestamp;
+              std::string ts = now.strftime("%Y-%m-%d %H:%M:%S");
+              id(wm_persist_last_wash_start) = ts;
+              id(bsh_wm_last_start).publish_state(ts);
+            }
+          }
     on_release:
-      - lambda: id(wm_local_remain_min_start) = NAN;
+      - lambda: |-
+          id(wm_local_remain_min_start) = NAN;
+          id(wm_persist_remain_start_epoch) = 0;
 
 sensor:
   - platform: template
@@ -593,6 +607,12 @@ text_sensor:
     entity_category: diagnostic
     icon: mdi:restart-alert
 
+  - platform: template
+    id: bsh_wm_last_start
+    name: "Last Wash Started"
+    entity_category: diagnostic
+    icon: mdi:clock-start
+
 script:
   - id: bsh_wm_invalidate_all
     mode: single
@@ -640,3 +660,17 @@ time:
   - platform: sntp
     id: sntp_time
     timezone: Europe/Moscow
+    on_time_sync:
+      - lambda: |-
+          id(bsh_wm_last_start).publish_state(id(wm_persist_last_wash_start));
+          if (id(wm_persist_remain_start_epoch) != 0 && !std::isnan(id(wm_persist_remain_start_min))) {
+            auto now = id(sntp_time).now();
+            if (now.is_valid()) {
+              float elapsed_min = (now.timestamp - (time_t) id(wm_persist_remain_start_epoch)) / 60.0f;
+              float remaining = id(wm_persist_remain_start_min) - elapsed_min;
+              if (remaining > 0) {
+                id(wm_local_remain_min_start) = remaining;
+                id(wm_local_start_ms) = millis();
+              }
+            }
+          }
