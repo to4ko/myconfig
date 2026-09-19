@@ -9,6 +9,8 @@ esphome:
   friendly_name: ${friendly_name}
   comment: "Washer monitor (Bosch Logixx 8)"
   area: "Bathroom"
+  includes:
+    - esp_reset_helper.h
   on_boot:
     priority: 800
     then:
@@ -129,6 +131,20 @@ globals:
   - id: wm_persist_program_step
     type: std::string
     restore_value: yes
+  - id: wm_persist_door_lock
+    type: bool
+    restore_value: yes
+  - id: wm_persist_remain_start_min
+    type: float
+    restore_value: yes
+    initial_value: 'NAN'
+  - id: wm_persist_remain_start_epoch
+    type: uint32_t
+    restore_value: yes
+    initial_value: '0'
+  - id: wm_persist_last_wash_start
+    type: std::string
+    restore_value: yes
 
 bshdbus:
   uart_id: dbus_uart
@@ -235,6 +251,8 @@ binary_sensor:
         lambda: return x[0] != 1;
         on_release:
           - script.execute: bsh_wm_remain_resync
+        on_state:
+          - lambda: id(wm_persist_door_lock) = x;
   - platform: bshdbus
     dest: 0x26
     command: 0x1101
