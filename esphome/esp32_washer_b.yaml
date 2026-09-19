@@ -13,6 +13,35 @@ esphome:
     priority: 800
     then:
       - ble.disable:
+      - lambda: |-
+          int reset_reason = (int) esp_reset_reason();
+          std::string reason_str;
+          switch (reset_reason) {
+            case 0: reason_str = "Unknown"; break;
+            case 1: reason_str = "Power-on"; break;
+            case 2: reason_str = "External pin"; break;
+            case 3: reason_str = "Software reset"; break;
+            case 4: reason_str = "Panic/exception"; break;
+            case 5: reason_str = "Interrupt watchdog"; break;
+            case 6: reason_str = "Task watchdog"; break;
+            case 7: reason_str = "Other watchdog"; break;
+            case 8: reason_str = "Deep sleep wake"; break;
+            case 9: reason_str = "Brownout"; break;
+            case 10: reason_str = "SDIO"; break;
+            default: reason_str = "Other (" + std::to_string(reset_reason) + ")"; break;
+          }
+          id(bsh_reset_reason).publish_state(reason_str);
+
+          // Restore the "keep forever" status fields across a reboot, since
+          // the bshdbus component has no restore_value support of its own
+          // and these are event-driven (won't refresh until the machine's
+          // state actually changes again).
+          id(bsh_wm_program).publish_state(id(wm_persist_program));
+          id(bsh_wm_wash_mode).publish_state(id(wm_persist_wash_mode));
+          id(bsh_wm_temperature).publish_state(id(wm_persist_temperature));
+          id(bsh_wm_state).publish_state(id(wm_persist_status));
+          id(bsh_wm_door).publish_state(id(wm_persist_door));
+          id(bsh_wm_washmodule).publish_state(id(wm_persist_program_step));
       - delay: 21601s
       - lambda: |-
           if (!id(bsh_wm_powered).state) {
@@ -81,6 +110,25 @@ globals:
     type: uint32_t
     restore_value: no
     initial_value: '0'
+  - id: wm_persist_program
+    type: std::string
+    restore_value: yes
+  - id: wm_persist_wash_mode
+    type: std::string
+    restore_value: yes
+  - id: wm_persist_temperature
+    type: float
+    restore_value: yes
+    initial_value: 'NAN'
+  - id: wm_persist_status
+    type: std::string
+    restore_value: yes
+  - id: wm_persist_door
+    type: std::string
+    restore_value: yes
+  - id: wm_persist_program_step
+    type: std::string
+    restore_value: yes
 
 bshdbus:
   uart_id: dbus_uart
@@ -345,6 +393,8 @@ sensor:
         unit_of_measurement: °C
         accuracy_decimals: 0
         lambda: return x[0];
+        on_value:
+          - lambda: id(wm_persist_temperature) = x;
         filters:
           - calibrate_linear:
               method: exact
@@ -396,6 +446,7 @@ text_sensor:
             - 14 -> Down/Duvets
             - 15 -> My Program
         on_value:
+          - lambda: id(wm_persist_program) = x;
           - if:
               condition:
                 lambda: 'return x == "Off";'
@@ -414,6 +465,8 @@ text_sensor:
             - 1 -> Standard
             - 2 -> Eco
             - 3 -> Speed
+        on_value:
+          - lambda: id(wm_persist_wash_mode) = x;
   - platform: bshdbus
     dest: 0x16
     command: 0x3015
@@ -440,6 +493,8 @@ text_sensor:
             - 0 -> Closed, unlocked
             - 1 -> Closed, locked
             - 2 -> Open
+        on_value:
+          - lambda: id(wm_persist_door) = x;
   - platform: bshdbus
     dest: 0x26
     command: 0x1020
@@ -463,6 +518,8 @@ text_sensor:
             - 23 -> Rinsing (23)
             - 26 -> Final spin (26)
             - 28 -> Fluffing (28)
+        on_value:
+          - lambda: id(wm_persist_program_step) = x;
   - platform: bshdbus
     dest: 0x26
     command: 0x1101
@@ -476,6 +533,8 @@ text_sensor:
           - 0 -> Stopped/Ready
           - 1 -> Finished
           - 2 -> Running
+        on_value:
+          - lambda: id(wm_persist_status) = x;
 
   - platform: template
     name: "Uptime"
@@ -509,6 +568,12 @@ text_sensor:
   - platform: version
     name: "ESPHome Version"
     hide_timestamp: true
+
+  - platform: template
+    id: bsh_reset_reason
+    name: "Last Reset Reason"
+    entity_category: diagnostic
+    icon: mdi:restart-alert
 
 script:
   - id: bsh_wm_invalidate_all
