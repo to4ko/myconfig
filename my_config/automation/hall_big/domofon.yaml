@@ -323,3 +323,57 @@
 #         caption: "\U0001f518 Домофон открыт вручную!"
 #         chat_id: !secret tel_chat_id
 #         #timeout: 180
+
+# ##################################
+# Hall Big - Kiosk Screen Stay On While Presence
+# ##################################
+- alias: hall_big_kiosk_screen_stay_on_presence
+  id: hall_big_kiosk_screen_stay_on_presence
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.fc4d6a1edb36_occupancy
+      to: "on"
+    - trigger: time_pattern
+      seconds: "/20"
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.fc4d6a1edb36_occupancy
+      state: "on"
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "on"
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+    - condition: state
+      entity_id: switch.kiosk_screen
+      state: "on"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.kiosk_screen
+
+# ##################################
+# Hall Big - Kiosk Screen Wake On Door Motion
+# ##################################
+- alias: hall_big_kiosk_screen_wake_on_door_motion
+  id: hall_big_kiosk_screen_wake_on_door_motion
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.0x00158d0001e05856_motion
+      to: "on"
+  conditions:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: "on"
+    - condition: state
+      entity_id: switch.system_security_mode
+      state: "off"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.kiosk_screen

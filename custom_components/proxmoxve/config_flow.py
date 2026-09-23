@@ -1,3 +1,5 @@
+# Copyright (c) 2019-2026
+# SPDX-License-Identifier: MIT
 """Config Flow for ProxmoxVE."""
 
 from __future__ import annotations
@@ -24,26 +26,45 @@ from requests.exceptions import ConnectTimeout, SSLError
 
 from .api import ProxmoxClient, get_api
 from .const import (
+    CONF_AUTO_DISCOVERY,
+    CONF_BACKUP_STORAGE,
     CONF_CONTAINERS,
     CONF_DISKS_ENABLE,
+    CONF_ENTITY_ID_PREFIX,
+    CONF_ENTITY_ID_SCHEME,
+    CONF_GUEST_FILE_PATH,
+    CONF_HA_ADMIN_PASSWORD,
+    CONF_HA_ADMIN_REALM,
+    CONF_HA_ADMIN_TOKEN_NAME,
+    CONF_HA_ADMIN_USERNAME,
     CONF_LXC,
     CONF_NODE,
     CONF_NODES,
     CONF_QEMU,
     CONF_REALM,
     CONF_STORAGE,
+    CONF_TASKS_ENABLE,
     CONF_TOKEN_NAME,
+    CONF_UPDATE_INTERVAL,
+    CONF_UPDATES_ENABLE,
     CONF_VMS,
     COORDINATORS,
+    DEFAULT_ENTITY_ID_PREFIX,
     DEFAULT_PORT,
     DEFAULT_REALM,
     DEFAULT_VERIFY_SSL,
     DOMAIN,
     INTEGRATION_TITLE,
     LOGGER,
+    SCHEME_EXTENDED,
+    SCHEME_STANDARD,
+    UPDATE_INTERVAL,
+    UPDATE_INTERVAL_CHOICES,
     VERSION_REMOVE_YAML,
     ProxmoxType,
 )
+from .issues import NONEXISTENT, note_resource
+from .storage import backup_storage_options, storage_choices
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -61,17 +82,58 @@ SCHEMA_HOST_SSL: vol.Schema = vol.Schema(
         vol.Required(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): bool,
     }
 )
+# The two realms every installation has, offered as a pick-list; anything
+# else - an LDAP, Active Directory or OpenID realm - can still be typed in.
+# Guessing the realm was the most common way a first setup went wrong.
+REALM_SELECTOR = selector.SelectSelector(
+    selector.SelectSelectorConfig(
+        options=["pam", "pve"],
+        custom_value=True,
+        mode=selector.SelectSelectorMode.DROPDOWN,
+        translation_key="realm",
+    )
+)
 SCHEMA_HOST_AUTH: vol.Schema = vol.Schema(
     {
         vol.Required(CONF_USERNAME): str,
         vol.Optional(CONF_TOKEN_NAME, default=""): str,
         vol.Required(CONF_PASSWORD): str,
-        vol.Optional(CONF_REALM, default=DEFAULT_REALM): str,
+        vol.Optional(CONF_REALM, default=DEFAULT_REALM): REALM_SELECTOR,
     }
 )
 SCHEMA_HOST_FULL: vol.Schema = SCHEMA_HOST_BASE.extend(SCHEMA_HOST_SSL.schema).extend(
     SCHEMA_HOST_AUTH.schema
 )
+SCHEMA_CLUSTER_HA_AUTH: vol.Schema = vol.Schema(
+    {
+        vol.Optional(CONF_HA_ADMIN_USERNAME, default=""): str,
+        vol.Optional(CONF_HA_ADMIN_TOKEN_NAME, default=""): str,
+        vol.Optional(CONF_HA_ADMIN_PASSWORD, default=""): str,
+        vol.Optional(CONF_HA_ADMIN_REALM, default=DEFAULT_REALM): REALM_SELECTOR,
+    }
+)
+
+
+def _update_interval_selector() -> selector.SelectSelector:
+    """Offer the polling interval as a pick-list of seconds."""
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=[str(seconds) for seconds in UPDATE_INTERVAL_CHOICES],
+            translation_key=CONF_UPDATE_INTERVAL,
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
+
+
+def _entity_id_scheme_selector() -> selector.SelectSelector:
+    """Offer standard or extended entity ids as a translated pick-list."""
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=[SCHEME_STANDARD, SCHEME_EXTENDED],
+            translation_key=CONF_ENTITY_ID_SCHEME,
+            mode=selector.SelectSelectorMode.DROPDOWN,
+        )
+    )
 
 
 class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
@@ -96,6 +158,8 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
             menu_options=[
                 "host_auth",
                 "change_expose",
+                "advanced",
+                "cluster_ha_auth",
             ],
         )
 
@@ -161,6 +225,82 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="host_auth",
             data_schema=self.add_suggested_values_to_schema(
                 (SCHEMA_HOST_AUTH.extend(SCHEMA_HOST_SSL.schema)),
+                self.config_entry.data or user_input,
+            ),
+            errors=errors,
+        )
+
+    async def async_step_cluster_ha_auth(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """
+        Manage optional, separate credentials for cluster-wide HA features.
+
+        These unlock the Arm/Disarm HA buttons and the per-guest "HA
+        managed" sensor, which need `Sys.Console`/`Sys.Audit` on the
+        Proxmox root path ('/') — broader than anything else this
+        integration needs. Kept as a fully optional, separate user/token so
+        the main credentials can stay least-privilege. Leaving every field
+        empty disables these features.
+        """
+        errors = {}
+
+        if user_input is not None:
+            host: str = str(self.config_entry.data[CONF_HOST])
+            port: int = int(str(self.config_entry.data[CONF_PORT]))
+            user = str(user_input.get(CONF_HA_ADMIN_USERNAME, "")).strip()
+            token_name = str(user_input.get(CONF_HA_ADMIN_TOKEN_NAME, "")).strip()
+            realm = str(user_input.get(CONF_HA_ADMIN_REALM, DEFAULT_REALM))
+            password = str(user_input.get(CONF_HA_ADMIN_PASSWORD, "")).strip()
+            verify_ssl = self.config_entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
+
+            if user and password:
+                try:
+                    cluster_client = ProxmoxClient(
+                        host=host,
+                        port=port,
+                        user=user,
+                        token_name=token_name,
+                        realm=realm,
+                        password=password,
+                        verify_ssl=verify_ssl,
+                    )
+
+                    await self.hass.async_add_executor_job(cluster_client.build_client)
+
+                except proxmoxer.AuthenticationError:
+                    errors[CONF_HA_ADMIN_USERNAME] = "auth_error"
+                except SSLError:
+                    errors[CONF_BASE] = "ssl_rejection"
+                except ConnectTimeout:
+                    errors[CONF_BASE] = "cant_connect"
+                except Exception:  # pylint: disable=broad-except
+                    errors[CONF_BASE] = "general_error"
+
+            if not errors:
+                config_data: dict[str, Any] = (
+                    self.config_entry.data.copy()
+                    if self.config_entry.data is not None
+                    else {}
+                )
+                config_data[CONF_HA_ADMIN_USERNAME] = user
+                config_data[CONF_HA_ADMIN_TOKEN_NAME] = token_name
+                config_data[CONF_HA_ADMIN_PASSWORD] = password
+                config_data[CONF_HA_ADMIN_REALM] = realm
+
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data=config_data,
+                )
+
+                await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+
+                return self.async_abort(reason="changes_successful")
+
+        return self.async_show_form(
+            step_id="cluster_ha_auth",
+            data_schema=self.add_suggested_values_to_schema(
+                SCHEMA_CLUSTER_HA_AUTH,
                 self.config_entry.data or user_input,
             ),
             errors=errors,
@@ -253,9 +393,7 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
                         )
                     else:
                         resource_lxc[str(resource["vmid"])] = f"{resource['vmid']}"
-                if ("type" in resource) and (resource["type"] == ProxmoxType.Storage):
-                    if "storage" in resource:
-                        resource_storage[str(resource["id"])] = resource["id"]
+            resource_storage.update(storage_choices(resources))
 
             return self.async_show_form(
                 step_id="change_expose",
@@ -285,9 +423,9 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
                             }
                         ),
                         vol.Optional(
-                            CONF_DISKS_ENABLE,
+                            CONF_AUTO_DISCOVERY,
                             default=self.config_entry.options.get(
-                                CONF_DISKS_ENABLE, True
+                                CONF_AUTO_DISCOVERY, False
                             ),
                         ): selector.BooleanSelector(),
                     }
@@ -309,7 +447,10 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
             }
         )
 
-        options_data = {CONF_DISKS_ENABLE: user_input.get(CONF_DISKS_ENABLE)}
+        options_data = {
+            **self.config_entry.options,
+            CONF_AUTO_DISCOVERY: user_input.get(CONF_AUTO_DISCOVERY, False),
+        }
 
         self.hass.config_entries.async_update_entry(
             self.config_entry, data=config_data, options=options_data
@@ -318,6 +459,132 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
         await self.hass.config_entries.async_reload(self.config_entry.entry_id)
 
         return self.async_abort(reason="changes_successful")
+
+    async def async_step_advanced(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> FlowResult:
+        """
+        Handle the advanced options: what to read, how often, how to name it.
+
+        Kept apart from the selection so neither form is a wall of fields.
+        Everything here has a default a setup runs fine on.
+        """
+        if user_input is None:
+            resources = await self._async_cluster_resources()
+            if not isinstance(resources, list):
+                return resources
+            options = self.config_entry.options
+            return self.async_show_form(
+                step_id="advanced",
+                data_schema=vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_DISKS_ENABLE,
+                            default=options.get(CONF_DISKS_ENABLE, True),
+                        ): selector.BooleanSelector(),
+                        vol.Optional(
+                            CONF_TASKS_ENABLE,
+                            default=options.get(CONF_TASKS_ENABLE, True),
+                        ): selector.BooleanSelector(),
+                        vol.Optional(
+                            CONF_UPDATES_ENABLE,
+                            default=options.get(CONF_UPDATES_ENABLE, True),
+                        ): selector.BooleanSelector(),
+                        vol.Required(
+                            CONF_UPDATE_INTERVAL,
+                            default=str(
+                                options.get(CONF_UPDATE_INTERVAL, UPDATE_INTERVAL)
+                            ),
+                        ): _update_interval_selector(),
+                        vol.Optional(
+                            CONF_GUEST_FILE_PATH,
+                            description={
+                                "suggested_value": options.get(CONF_GUEST_FILE_PATH, "")
+                            },
+                        ): selector.TextSelector(),
+                        vol.Optional(
+                            CONF_BACKUP_STORAGE,
+                            description={
+                                "suggested_value": options.get(CONF_BACKUP_STORAGE, "")
+                            },
+                        ): selector.SelectSelector(
+                            selector.SelectSelectorConfig(
+                                options=backup_storage_options(resources),
+                                custom_value=True,
+                                mode=selector.SelectSelectorMode.DROPDOWN,
+                            )
+                        ),
+                        vol.Required(
+                            CONF_ENTITY_ID_SCHEME,
+                            default=options.get(CONF_ENTITY_ID_SCHEME, SCHEME_STANDARD),
+                        ): _entity_id_scheme_selector(),
+                        vol.Optional(
+                            CONF_ENTITY_ID_PREFIX,
+                            description={
+                                "suggested_value": options.get(
+                                    CONF_ENTITY_ID_PREFIX, DEFAULT_ENTITY_ID_PREFIX
+                                )
+                            },
+                        ): selector.TextSelector(),
+                    }
+                ),
+            )
+
+        options_data = {
+            **self.config_entry.options,
+            CONF_DISKS_ENABLE: user_input.get(CONF_DISKS_ENABLE, True),
+            CONF_TASKS_ENABLE: user_input.get(CONF_TASKS_ENABLE, True),
+            CONF_UPDATES_ENABLE: user_input.get(CONF_UPDATES_ENABLE, True),
+            CONF_UPDATE_INTERVAL: int(
+                user_input.get(CONF_UPDATE_INTERVAL, UPDATE_INTERVAL)
+            ),
+            CONF_GUEST_FILE_PATH: (user_input.get(CONF_GUEST_FILE_PATH) or "").strip(),
+            CONF_BACKUP_STORAGE: (user_input.get(CONF_BACKUP_STORAGE) or "").strip(),
+            CONF_ENTITY_ID_SCHEME: user_input.get(
+                CONF_ENTITY_ID_SCHEME, SCHEME_STANDARD
+            ),
+            CONF_ENTITY_ID_PREFIX: (user_input.get(CONF_ENTITY_ID_PREFIX) or "").strip()
+            or DEFAULT_ENTITY_ID_PREFIX,
+        }
+        self.hass.config_entries.async_update_entry(
+            self.config_entry, options=options_data
+        )
+        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+        return self.async_abort(reason="changes_successful")
+
+    async def _async_cluster_resources(self) -> list[dict[str, Any]] | FlowResult:
+        """
+        Connect with the entry's credentials and read the cluster's resources.
+
+        Returns the rows, or the abort result to hand back when connecting
+        failed - the same outcomes the selection step has always had.
+        """
+        data = self.config_entry.data
+        try:
+            self._proxmox_client = ProxmoxClient(
+                host=data[CONF_HOST],
+                port=data[CONF_PORT],
+                user=data[CONF_USERNAME],
+                token_name=data[CONF_TOKEN_NAME],
+                realm=data[CONF_REALM],
+                password=data[CONF_PASSWORD],
+                verify_ssl=data[CONF_VERIFY_SSL],
+            )
+            await self.hass.async_add_executor_job(self._proxmox_client.build_client)
+        except proxmoxer.backends.https.AuthenticationError:
+            return self.async_abort(reason="auth_error")
+        except SSLError:
+            return self.async_abort(reason="ssl_rejection")
+        except ConnectTimeout:
+            return self.async_abort(reason="cant_connect")
+        except Exception:  # pylint: disable=broad-except
+            return self.async_abort(reason="general_error")
+        proxmox = self._proxmox_client.get_api_client()
+        resources = await self.hass.async_add_executor_job(
+            get_api, proxmox, "cluster/resources"
+        )
+        return resources if isinstance(resources, list) else []
 
     async def async_remove_device(
         self,
@@ -332,10 +599,7 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
             identifiers=device_identifiers,
         )
 
-        dev_reg.async_update_device(
-            device_id=device.id,
-            remove_config_entry_id=entry_id,
-        )
+        dev_reg.async_remove_device(device.id)
         LOGGER.debug("Device %s (%s) removed", device.name, device.id)
         return True
 
@@ -362,10 +626,8 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
                     entry_id=self.config_entry.entry_id,
                     device_identifier=identifier,
                 )
-                ir.async_delete_issue(
-                    self.hass,
-                    DOMAIN,
-                    f"{self.config_entry.entry_id}_{node}_resource_nonexistent",
+                note_resource(
+                    self.hass, self.config_entry, NONEXISTENT, str(node), listed=False
                 )
 
             if node not in (
@@ -387,7 +649,10 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
                         if (coordinator_data := coordinator_zfs.data) is None:
                             continue
 
-                        identifier = f"{self.config_entry.entry_id}_{ProxmoxType.ZFS.upper()}_{node}_{coordinator_data.path}"
+                        # The pool device is registered under the data's
+                        # display name, "ZFS Pool <pool>", by the sensor
+                        # platform; there is no `path` on pool data.
+                        identifier = f"{self.config_entry.entry_id}_{ProxmoxType.ZFS.upper()}_{node}_{coordinator_data.name}"
                         await self.async_remove_device(
                             entry_id=self.config_entry.entry_id,
                             device_identifier=identifier,
@@ -411,10 +676,12 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
                     entry_id=self.config_entry.entry_id,
                     device_identifier=identifier,
                 )
-                ir.async_delete_issue(
+                note_resource(
                     self.hass,
-                    DOMAIN,
-                    f"{self.config_entry.entry_id}_{qemu_id}_resource_nonexistent",
+                    self.config_entry,
+                    NONEXISTENT,
+                    str(qemu_id),
+                    listed=False,
                 )
 
         lxc_selecition = []
@@ -435,10 +702,8 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
                     entry_id=self.config_entry.entry_id,
                     device_identifier=identifier,
                 )
-                ir.async_delete_issue(
-                    self.hass,
-                    DOMAIN,
-                    f"{self.config_entry.entry_id}_{lxc_id}_resource_nonexistent",
+                note_resource(
+                    self.hass, self.config_entry, NONEXISTENT, str(lxc_id), listed=False
                 )
 
         storage_selecition = []
@@ -452,15 +717,17 @@ class ProxmoxOptionsFlowHandler(config_entries.OptionsFlow):
         for storage_id in self.config_entry.data[CONF_STORAGE]:
             if storage_id not in storage_selecition:
                 # Remove device
-                identifier = f"{self.config_entry.entry_id}_{ProxmoxType.Storage.upper()}_{storage_id}"
+                identifier = f"{self.config_entry.entry_id}_{ProxmoxType.Storage.upper()}_{storage_id.replace('storage/', '')}"
                 await self.async_remove_device(
                     entry_id=self.config_entry.entry_id,
                     device_identifier=identifier,
                 )
-                ir.async_delete_issue(
+                note_resource(
                     self.hass,
-                    DOMAIN,
-                    f"{self.config_entry.entry_id}_{storage_id}_resource_nonexistent",
+                    self.config_entry,
+                    NONEXISTENT,
+                    str(storage_id),
+                    listed=False,
                 )
 
         return {
@@ -484,6 +751,7 @@ class ProxmoxVEConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._config: dict[str, Any] = {}
         self._nodes: dict[str, Any] = {}
+        self._expose_schema: vol.Schema | None = None
         self._host: str
         self._proxmox_client: ProxmoxClient | None = None
 
@@ -617,6 +885,9 @@ class ProxmoxVEConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             and (import_nodes := import_config.get(CONF_NODES)) is not None
         ):
             config = import_config.copy()
+            # The UI always stores a token name, empty for password logins;
+            # setup reads it the same way for both.
+            config.setdefault(CONF_TOKEN_NAME, "")
             config[CONF_NODES] = []
             for node_data in import_nodes:
                 node = node_data[CONF_NODE]
@@ -688,7 +959,7 @@ class ProxmoxVEConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             try:
                 self._proxmox_client = ProxmoxClient(
-                    host,
+                    host=host,
                     port=port,
                     user=user,
                     token_name=token_name,
@@ -852,7 +1123,7 @@ class ProxmoxVEConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not errors:
                 try:
                     self._proxmox_client = ProxmoxClient(
-                        host,
+                        host=host,
                         port=port,
                         user=username,
                         token_name=token_name,
@@ -893,11 +1164,67 @@ class ProxmoxVEConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    @staticmethod
+    def _build_expose_schema(resources: list[dict[str, Any]]) -> vol.Schema:
+        """Build the selection form from what the cluster lists."""
+        resource_nodes = []
+        resource_qemu = {}
+        resource_lxc = {}
+        for resource in resources:
+            if ("type" in resource) and (resource["type"] == ProxmoxType.Node):
+                if resource["node"] not in resource_nodes:
+                    resource_nodes.append(resource["node"])
+            if ("type" in resource) and (resource["type"] == ProxmoxType.QEMU):
+                if "name" in resource:
+                    resource_qemu[str(resource["vmid"])] = (
+                        f"{resource['vmid']} {resource['name']}"
+                    )
+                else:
+                    resource_qemu[str(resource["vmid"])] = f"{resource['vmid']}"
+            if ("type" in resource) and (resource["type"] == ProxmoxType.LXC):
+                if "name" in resource:
+                    resource_lxc[str(resource["vmid"])] = (
+                        f"{resource['vmid']} {resource['name']}"
+                    )
+                else:
+                    resource_lxc[str(resource["vmid"])] = f"{resource['vmid']}"
+
+        return vol.Schema(
+            {
+                vol.Optional(CONF_NODES, default=[]): cv.multi_select(resource_nodes),
+                vol.Optional(CONF_QEMU): cv.multi_select(resource_qemu),
+                vol.Optional(CONF_LXC): cv.multi_select(resource_lxc),
+                vol.Optional(CONF_STORAGE): cv.multi_select(storage_choices(resources)),
+                vol.Optional(
+                    CONF_DISKS_ENABLE,
+                    default=True,
+                ): selector.BooleanSelector(),
+                vol.Optional(
+                    CONF_AUTO_DISCOVERY,
+                    default=False,
+                ): selector.BooleanSelector(),
+                # No default on purpose: the ids are set for good once the
+                # entities exist, so the choice is made here, knowingly.
+                vol.Required(CONF_ENTITY_ID_SCHEME): _entity_id_scheme_selector(),
+                vol.Optional(
+                    CONF_ENTITY_ID_PREFIX,
+                    description={"suggested_value": DEFAULT_ENTITY_ID_PREFIX},
+                ): selector.TextSelector(),
+            }
+        )
+
     async def async_step_expose(
         self,
         user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
-        """Handle the Node/QEMU/LXC selection step."""
+        """
+        Handle the Node/QEMU/LXC selection step.
+
+        Nothing on the form is required as such: with **Track everything
+        automatically** on, the selection is ignored, so an empty form is a
+        valid answer. Without it at least one node has to be picked, which
+        is checked here rather than by the form.
+        """
         if user_input is None:
             if (proxmox_cliente := self._proxmox_client) is not None:
                 proxmox = proxmox_cliente.get_api_client()
@@ -905,48 +1232,24 @@ class ProxmoxVEConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             resources = await self.hass.async_add_executor_job(
                 get_api, proxmox, "cluster/resources"
             )
-
-            resource_nodes = []
-            resource_qemu = {}
-            resource_lxc = {}
-            resource_storage = {}
             if resources is None:
                 return self.async_abort(reason="no_resources")
-            for resource in resources:
-                if ("type" in resource) and (resource["type"] == ProxmoxType.Node):
-                    if resource["node"] not in resource_nodes:
-                        resource_nodes.append(resource["node"])
-                if ("type" in resource) and (resource["type"] == ProxmoxType.QEMU):
-                    if "name" in resource:
-                        resource_qemu[str(resource["vmid"])] = (
-                            f"{resource['vmid']} {resource['name']}"
-                        )
-                    else:
-                        resource_qemu[str(resource["vmid"])] = f"{resource['vmid']}"
-                if ("type" in resource) and (resource["type"] == ProxmoxType.LXC):
-                    if "name" in resource:
-                        resource_lxc[str(resource["vmid"])] = (
-                            f"{resource['vmid']} {resource['name']}"
-                        )
-                    else:
-                        resource_lxc[str(resource["vmid"])] = f"{resource['vmid']}"
-                if ("type" in resource) and (resource["type"] == ProxmoxType.Storage):
-                    resource_storage[str(resource["id"])] = f"{resource['id']}"
+            self._expose_schema = self._build_expose_schema(resources)
+            return self.async_show_form(
+                step_id="expose", data_schema=self._expose_schema
+            )
 
+        if (
+            not user_input.get(CONF_AUTO_DISCOVERY)
+            and not user_input.get(CONF_NODES)
+            and self._expose_schema is not None
+        ):
             return self.async_show_form(
                 step_id="expose",
-                data_schema=vol.Schema(
-                    {
-                        vol.Required(CONF_NODES): cv.multi_select(resource_nodes),
-                        vol.Optional(CONF_QEMU): cv.multi_select(resource_qemu),
-                        vol.Optional(CONF_LXC): cv.multi_select(resource_lxc),
-                        vol.Optional(CONF_STORAGE): cv.multi_select(resource_storage),
-                        vol.Optional(
-                            CONF_DISKS_ENABLE,
-                            default=True,
-                        ): selector.BooleanSelector(),
-                    }
+                data_schema=self.add_suggested_values_to_schema(
+                    self._expose_schema, user_input
                 ),
+                errors={CONF_NODES: "nodes_required"},
             )
 
         if CONF_NODES not in self._config:
@@ -988,7 +1291,21 @@ class ProxmoxVEConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(
             title=(f"{self._config[CONF_HOST]}:{self._config[CONF_PORT]}"),
             data=self._config,
-            options={CONF_DISKS_ENABLE: user_input.get(CONF_DISKS_ENABLE)},
+            options={
+                CONF_DISKS_ENABLE: user_input.get(CONF_DISKS_ENABLE),
+                # Defaults for what the advanced options offer later.
+                CONF_TASKS_ENABLE: True,
+                CONF_UPDATES_ENABLE: True,
+                CONF_UPDATE_INTERVAL: UPDATE_INTERVAL,
+                CONF_AUTO_DISCOVERY: user_input.get(CONF_AUTO_DISCOVERY, False),
+                CONF_ENTITY_ID_SCHEME: user_input.get(
+                    CONF_ENTITY_ID_SCHEME, SCHEME_STANDARD
+                ),
+                CONF_ENTITY_ID_PREFIX: (
+                    user_input.get(CONF_ENTITY_ID_PREFIX) or ""
+                ).strip()
+                or DEFAULT_ENTITY_ID_PREFIX,
+            },
         )
 
     @staticmethod

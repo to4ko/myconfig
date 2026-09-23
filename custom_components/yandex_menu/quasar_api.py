@@ -12,6 +12,7 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
+from .accounts import station_entries, station_entry
 from .const import API, YS_DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,17 +32,30 @@ class QuasarApi:
 
     @property
     def session(self):
-        """Сессия из yandex_station. Без неё работать не можем."""
+        """Сессия выбранного аккаунта из yandex_station. Без неё работать не можем."""
         data = self.hass.data.get(YS_DOMAIN)
-        if not data:
+        entries = station_entries(self.hass)
+        if not data or not entries:
             raise QuasarError(
                 "Не найдена интеграция Яндекс.Станция — через неё берётся доступ к "
                 "Яндекс-дому. Настройте её и перезапустите Home Assistant."
             )
-        for value in data.values():
-            session = getattr(value, "session", None)
-            if session is not None:
-                return session
+        entry = station_entry(self.hass)
+        if entry is None:
+            raise QuasarError(
+                "Аккаунт Яндекса, выбранный в настройках, больше не подключён. "
+                "Выберите другой: Настройки → Устройства и службы → Яндекс меню → Настроить."
+            )
+        # Яндекс.Станция хранит аккаунты по логину — это unique_id записи
+        session = getattr(data.get(entry.unique_id), "session", None)
+        if session is None and len(entries) == 1:
+            # Другая версия Станции могла сменить ключ; с одним аккаунтом ошибиться негде
+            for value in data.values():
+                session = getattr(value, "session", None)
+                if session is not None:
+                    break
+        if session is not None:
+            return session
         raise QuasarError(
             "Интеграция Яндекс.Станция есть, но её сессия не готова. "
             "Попробуйте перезагрузить интеграцию Яндекс.Станция."
@@ -70,12 +84,20 @@ class QuasarApi:
     # ------------------------------------------------------------------ чтение
 
     async def devices(self) -> dict[str, Any]:
-        """Комнаты, устройства, сценарии и колонки одним ответом."""
-        return await self._request("get", "/m/user/devices")
+        """Дома, их комнаты и устройства одним ответом.
+
+        Старый /m/user/devices сваливает комнаты всех домов в один список и не
+        говорит, где чья, поэтому берём v3 — там всё разложено по домам.
+        """
+        return await self._request("get", "/m/v3/user/devices")
 
     async def device_config(self, device_id: str) -> dict[str, Any]:
         """Карточка устройства: имена, комната, роль, привязанная сущность HA."""
         return await self._request("get", f"/m/user/devices/{device_id}/configuration")
+
+    async def device(self, device_id: str) -> dict[str, Any]:
+        """Умения устройства с названиями: цвета, режимы, диапазоны, датчики."""
+        return await self._request("get", f"/m/user/devices/{device_id}")
 
     async def device_types(self, device_id: str) -> dict[str, Any]:
         """Типы и роли, доступные конкретному устройству."""

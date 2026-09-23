@@ -1,7 +1,8 @@
-"""Настройка интеграции: одна кнопка при установке и пункт меню в настройках."""
+"""Настройка интеграции: установка в одну кнопку, в настройках — аккаунт и пункт меню."""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
@@ -12,9 +13,46 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
-from .const import CONF_SHOW_IN_SIDEBAR, DOMAIN, PANEL_TITLE, YS_DOMAIN
+from .accounts import station_entries, yaha_entries
+from .const import (
+    CONF_SHOW_IN_SIDEBAR,
+    CONF_YAHA_ENTRY,
+    CONF_YANDEX_ACCOUNT,
+    DOMAIN,
+    PANEL_TITLE,
+    YS_DOMAIN,
+)
+
+
+def _account_fields(hass: HomeAssistant, current: Mapping[str, Any]) -> dict[Any, Any]:
+    """Выбор аккаунта и записи Yandex Smart Home — только когда есть из чего выбирать."""
+    fields: dict[Any, Any] = {}
+    for key, entries in (
+        (CONF_YANDEX_ACCOUNT, station_entries(hass)),
+        (CONF_YAHA_ENTRY, yaha_entries(hass)),
+    ):
+        if len(entries) < 2:
+            continue
+        ids = [entry.entry_id for entry in entries]
+        default = current.get(key) if current.get(key) in ids else ids[0]
+        fields[vol.Required(key, default=default)] = SelectSelector(
+            SelectSelectorConfig(
+                options=[
+                    SelectOptionDict(value=entry.entry_id, label=entry.title)
+                    for entry in entries
+                ],
+                mode=SelectSelectorMode.DROPDOWN,
+            )
+        )
+    return fields
 
 
 class YandexDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -37,13 +75,15 @@ class YandexDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="no_yandex_station")
 
         if user_input is not None:
-            return self.async_create_entry(title=PANEL_TITLE, data={})
+            return self.async_create_entry(title=PANEL_TITLE, data={}, options=user_input)
 
-        return self.async_show_form(step_id="user")
+        return self.async_show_form(
+            step_id="user", data_schema=vol.Schema(_account_fields(self.hass, {}))
+        )
 
 
 class YandexMenuOptionsFlow(OptionsFlow):
-    """Показывать ли «Яндекс меню» в левом меню."""
+    """Аккаунт Яндекса (если их несколько) и пункт в левом меню."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -53,10 +93,16 @@ class YandexMenuOptionsFlow(OptionsFlow):
 
         # handler у настроек — id записи; так работает и на старых версиях HA
         entry = self.hass.config_entries.async_get_entry(self.handler)
-        current = entry.options.get(CONF_SHOW_IN_SIDEBAR, True) if entry else True
+        options = entry.options if entry else {}
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
-                {vol.Required(CONF_SHOW_IN_SIDEBAR, default=current): bool}
+                {
+                    **_account_fields(self.hass, options),
+                    vol.Required(
+                        CONF_SHOW_IN_SIDEBAR,
+                        default=options.get(CONF_SHOW_IN_SIDEBAR, True),
+                    ): bool,
+                }
             ),
         )

@@ -1,5 +1,43 @@
 {
   "triggers": {
+    "debounce": {
+      "name": "Once it settles",
+      "description": "Fires once a trigger has stopped firing for a while, so a burst of them arrives as one. A motion sensor does not report motion once, it reports it twenty times.",
+      "fields": {
+        "triggers": {
+          "name": "Triggers",
+          "description": "The triggers to wait out. Any of them firing starts a burst and any of them firing again keeps it going, so several triggers are collapsed together rather than one at a time."
+        },
+        "for": {
+          "name": "For",
+          "description": "How long it has to have been quiet before this fires. Every firing starts that wait over, so something that never stops firing never gets reported."
+        }
+      }
+    },
+    "all_of": {
+      "name": "All of these happened",
+      "description": "Fires when every one of several triggers has fired inside the same window of time, in any order. Home Assistant's own triggers are a list where any one of them is enough; this is the other one.",
+      "fields": {
+        "triggers": {
+          "name": "Triggers",
+          "description": "The triggers that all have to have fired. Order does not matter, and a trigger firing again replaces its earlier turn rather than counting twice."
+        },
+        "within": {
+          "name": "Within",
+          "description": "How close together they have to be. The window slides, so a trigger that fired longer ago than this is forgotten while the others carry on counting."
+        }
+      }
+    },
+    "recovered": {
+      "name": "Entity came back",
+      "description": "Fires when an entity comes back after having been unavailable for a while, so a router rebooting does not read as everything in the house recovering.",
+      "fields": {
+        "for": {
+          "name": "For",
+          "description": "How long the entity has to have been away before coming back counts. Anything shorter is a flicker: reloading an integration takes every one of its entities through unavailable and back inside a second."
+        }
+      }
+    },
     "sequence": {
       "name": "Triggers in order",
       "description": "Fires when several triggers happen one after another, in the order given.",
@@ -564,7 +602,11 @@
       }
     },
     "lovelace_missing_resources": {
-      "description": "Spook has found a ghost in your dashboards 👻\n\nThe following dashboard resources point at files that do not exist:\n\n{resources}\n\n\n\nThis usually happens when a custom card or its files were removed but the resource stayed behind. To fix this error, open Settings > Dashboards > Resources and remove or correct these resources.\n\nSpook 👻 Your homie.",
+      "description": "Spook has found a ghost in your dashboards 👻\n\nThe following dashboard resources point at files that do not exist:\n\n{resources}\n\n\n\nThis usually happens when a custom card or its files were removed but the resource stayed behind. To fix this error, open the [Resources page](/config/lovelace/resources) and remove or correct these resources. It has no tab of its own: on the Dashboards page it is behind the three dots, top right.\n\nSpook 👻 Your homie.",
+      "title": "Dashboard resources point at missing files"
+    },
+    "lovelace_missing_resources_yaml": {
+      "description": "Spook has found a ghost in your dashboards 👻\n\nThe following dashboard resources point at files that do not exist:\n\n{resources}\n\n\n\nThis usually happens when a custom card or its files were removed but the resource stayed behind.\n\nThese resources are listed in your YAML configuration, so the Resources page cannot change them. Edit the `resources:` section of your Lovelace configuration and remove or correct these entries.\n\nSpook 👻 Your homie.",
       "title": "Dashboard resources point at missing files"
     },
     "lovelace_duplicate_resources": {
@@ -790,6 +832,48 @@
     }
   },
   "services": {
+    "group_add_members": {
+      "name": "Add members to a group",
+      "description": "Adds entities to a group made through the interface, while Home Assistant is running. Entities already in the group are left where they are.",
+      "fields": {
+        "group": {
+          "name": "Group",
+          "description": "The group to add to."
+        },
+        "members": {
+          "name": "Members",
+          "description": "The entities to add to the group."
+        }
+      }
+    },
+    "group_remove_members": {
+      "name": "Remove members from a group",
+      "description": "Takes entities out of a group made through the interface, while Home Assistant is running. Naming something that is not in the group does nothing, so this is also how you clear out a member that no longer exists.",
+      "fields": {
+        "group": {
+          "name": "Group",
+          "description": "The group to take them out of."
+        },
+        "members": {
+          "name": "Members",
+          "description": "The entities to remove from the group."
+        }
+      }
+    },
+    "group_set_members": {
+      "name": "Set the members of a group",
+      "description": "Replaces the members of a group made through the interface with the ones given, while Home Assistant is running.",
+      "fields": {
+        "group": {
+          "name": "Group",
+          "description": "The group to change."
+        },
+        "members": {
+          "name": "Members",
+          "description": "The entities the group should hold from now on."
+        }
+      }
+    },
     "wait_for_condition": {
       "name": "Wait for a condition",
       "description": "Wait until a condition is true. Returns straight away if it already is.",

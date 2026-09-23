@@ -33,7 +33,10 @@ from homeassistant.components.blueprint.const import (
     CONF_MIN_VERSION,
     CONF_SOURCE_URL,
 )
-from homeassistant.components.blueprint.importer import fetch_blueprint_from_url
+from homeassistant.components.blueprint.importer import (
+    COMMUNITY_TOPIC_PATTERN,
+    fetch_blueprint_from_url,
+)
 from homeassistant.components.script import (
     config as script_config,
     scripts_with_blueprint,
@@ -42,9 +45,11 @@ from homeassistant.components.update import (
     UpdateEntity,
     UpdateEntityDescription,
     UpdateEntityFeature,
+    UpdateEntityStateAttribute,
 )
 from homeassistant.const import (
     CONF_NAME,
+    CONF_SELECTOR,
     EVENT_HOMEASSISTANT_STARTED,
     STATE_ON,
     Platform,
@@ -137,6 +142,10 @@ _CHECK_INTERVAL = timedelta(hours=24)
 _SPREAD = timedelta(hours=4)
 
 _FETCH_TIMEOUT = 30
+
+# The one kind of address the importer recognises by prefix rather than by
+# pattern. It has no constant for it to borrow.
+_GIST = "https://gist.github.com/"
 
 # What goes in the dialog before somebody presses install. Home Assistant
 # renders `ha-alert` in release notes, which Matter and ZHA both lean on to put
@@ -312,6 +321,18 @@ def _copies_of(file: Path) -> list[Path]:
     return sorted(copies, reverse=True)
 
 
+def _holds_more_than_one(source_url: str) -> bool:
+    """Return whether this kind of address can hold several blueprints.
+
+    A community topic is a post with any number of code blocks in it, and a
+    gist is a folder of files. Home Assistant's importer takes the first
+    blueprint it finds in either. Everything else it can import from is a
+    single file.
+    """
+    a_topic = COMMUNITY_TOPIC_PATTERN.match(source_url) is not None
+    return a_topic or source_url.startswith(_GIST)
+
+
 def _unique_id(blueprint_domain: str, blueprint_path: str) -> str:
     """Return the unique ID of the entity following a blueprint."""
     return f"blueprint_{blueprint_domain}_{blueprint_path}"
@@ -406,6 +427,10 @@ def _canonical(value: Any) -> Any:
 
     The loader's own string and mapping classes go too. They carry the line
     they came from, which says nothing about what the blueprint does.
+
+    The one place where the order of a mapping is not the author's, the
+    settings inside a selector, is put in order before it gets here. See
+    `_settled`.
     """
     if isinstance(value, Input):
         return ["input", str(value.name)]
@@ -443,19 +468,78 @@ def _canonical_scalar(value: Any) -> Any:
 def _compared(item: blueprint.Blueprint) -> dict[str, Any]:
     """Return the part of a blueprint that two versions are judged on.
 
-    Which is all of it bar the source URL. That one is put in by whoever
-    imported the blueprint rather than by its author, it is the address this
-    was fetched from in the first place, and an author who moves their
-    blueprint has not changed it.
+    Which is all of it bar the source URL, with the settings of every selector
+    put in one fixed order.
+
+    The source URL is put in by whoever imported the blueprint rather than by
+    its author, it is the address this was fetched from in the first place,
+    and an author who moves their blueprint has not changed it.
+
+    The order inside a selector is not the author's either. See `_settled`.
     """
     data = dict(item.data)
 
     if isinstance(metadata := data.get(CONF_BLUEPRINT), Mapping):
         metadata = dict(metadata)
         metadata.pop(CONF_SOURCE_URL, None)
+        metadata[CONF_INPUT] = _settled(metadata[CONF_INPUT])
         data[CONF_BLUEPRINT] = metadata
 
     return data
+
+
+def _settled(inputs: Mapping[Any, Any]) -> dict[Any, Any]:
+    """Return the inputs with the settings of every selector in one fixed order.
+
+    Home Assistant fills in the settings an author left out of a selector:
+    `multiple`, `reorder`, `sort` and the rest. Where those land in the mapping
+    is decided by the validator and not by the blueprint. Voluptuous put them
+    wherever the hash seed of the process said, so a file written by one run
+    of Home Assistant read back differently in the next. Probatio keeps
+    whatever order a file already has and puts them in schema order on a fresh
+    fetch, so a file written before it arrived never agrees with the source it
+    came from. Either way the same blueprint fingerprinted differently on the
+    two sides of the comparison, and every one of those was offered as an
+    update: twelve "changed" settings on a blueprint nobody had touched.
+
+    Sorting the keys of each selector takes the validator's hand out of it.
+    Nothing else is reordered. The inputs stay in the order the author gave
+    them, which is the order somebody sees them in, and so does everything
+    inside a selector, the options of a `select` among them.
+
+    A section is told from an input the same way Home Assistant does it.
+    """
+    settled: dict[Any, Any] = {}
+
+    for key, definition in inputs.items():
+        if isinstance(definition, Mapping) and CONF_INPUT in definition:
+            section = dict(definition)
+            section[CONF_INPUT] = _settled(section[CONF_INPUT])
+            settled[key] = section
+            continue
+
+        settled[key] = _settled_input(definition)
+
+    return settled
+
+
+def _settled_input(definition: Any) -> Any:
+    """Return one input with the settings of its selector in one fixed order."""
+    if not isinstance(definition, Mapping):
+        return definition
+
+    if not isinstance(selector := definition.get(CONF_SELECTOR), Mapping):
+        return definition
+
+    # Sorted by spelling rather than by value, so two keys of different kinds
+    # cannot end the round with a comparison Python refuses to make.
+    definition = dict(definition)
+    definition[CONF_SELECTOR] = {
+        kind: dict(sorted(settings.items(), key=lambda pair: str(pair[0])))
+        for kind, settings in selector.items()
+    }
+
+    return definition
 
 
 class _LeftShort(NamedTuple):
@@ -618,6 +702,10 @@ def _settings_apart(
 
     Read through Home Assistant's own flattened view, so an input inside a
     section counts as an input rather than as part of the section.
+
+    Each setting is measured with its selector in the same fixed order the
+    fingerprint uses, so the order Home Assistant happened to fill a selector
+    in cannot be reported as the author changing it.
     """
     here, there = before.inputs, after.inputs
 
@@ -626,7 +714,9 @@ def _settings_apart(
     changed = [
         (_called(key, there[key]), key)
         for key in here
-        if key in there and _canonical(here[key]) != _canonical(there[key])
+        if key in there
+        and _canonical(_settled_input(here[key]))
+        != _canonical(_settled_input(there[key]))
     ]
 
     # An author who renames the key and keeps the label leaves two settings
@@ -692,18 +782,19 @@ def _calling_apart(
     }
 
 
-def _arranged_apart(
-    before: blueprint.Blueprint,
-    after: blueprint.Blueprint,
-) -> bool:
+def _arranged_apart(was: Mapping[str, Any], now: Mapping[str, Any]) -> bool:
     """Return whether the settings were moved about without changing.
 
     Home Assistant hands back the settings of a blueprint flattened, so an
     author gathering them into sections, or simply putting them in another
     order, comes out as no difference at all. It is a real change and it is
     the one somebody sees first when they open the thing.
+
+    Read off the compared form rather than the blueprint, so the order
+    Home Assistant filled a selector in does not pass for the author moving
+    things about.
     """
-    return _moved(before.metadata, after.metadata, CONF_INPUT)
+    return _moved(was[CONF_BLUEPRINT], now[CONF_BLUEPRINT], CONF_INPUT)
 
 
 def _asked_for(metadata: Mapping[str, Any]) -> str | None:
@@ -755,7 +846,7 @@ def _changes(before: blueprint.Blueprint, after: blueprint.Blueprint) -> _Change
 
     changes = _Changes(
         settings=settings,
-        arranged=_arranged_apart(before, after) and not any(settings),
+        arranged=_arranged_apart(was, now) and not any(settings),
         doing=_doing_apart(was, now),
         calling=_calling_apart(before, after),
         requirement=_requirement_apart(before, after),
@@ -821,10 +912,16 @@ def _diffed(here: blueprint.Blueprint, there: blueprint.Blueprint) -> str:
     changed at all, and hundreds of hunks on a real one. Dumping both puts
     them in the same handwriting first, which leaves only what actually moved.
 
+    The compared form of both, so the source URL and the order Home Assistant
+    filled a selector in do not turn up as lines that moved either. Those are
+    left out of the fingerprint, and a difference that shows what never made
+    the update appear is a difference somebody has to read past.
+
     In the executor: dumping half a megabyte of YAML twice is not something to
     do on the event loop.
     """
-    was, now = here.yaml().splitlines(), there.yaml().splitlines()
+    was = yaml_util.dump(_compared(here)).splitlines()
+    now = yaml_util.dump(_compared(there)).splitlines()
 
     # Comparing two sequences costs roughly the square of their length, and
     # blueprints get big: measured at ten seconds on a real one of 36,000
@@ -903,6 +1000,11 @@ def _fingerprint(item: blueprint.Blueprint) -> str:
     from is not part of what it does, and Home Assistant writes it into the
     data on the way in, so leaving it in made a trailing slash on the URL look
     like a new version.
+
+    And the settings of each selector go in sorted. Home Assistant fills in
+    the ones an author left out, in an order that is the validator's rather
+    than the blueprint's, and that order used to be hashed along with the rest.
+    See `_settled`.
     """
     return hashlib.sha256(
         json.dumps(_canonical(_compared(item)), ensure_ascii=True).encode()
@@ -1270,6 +1372,13 @@ class _BlueprintUpdates:  # pylint: disable=too-few-public-methods
                 if self._stopped:
                     return
 
+                # Somebody disabling one of these is asking not to be told
+                # about that blueprint. Home Assistant never adds a disabled
+                # entity, so it has no hass to fetch with either, and asking
+                # anyway fell over every round (#1602, #1624).
+                if entity.hass is None:
+                    continue
+
                 try:
                     await entity.async_check()
                 # One blueprint pointing somewhere strange must not take the
@@ -1351,6 +1460,33 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
         # admin only, so the address belongs with the release notes, which are
         # admin only too, and not in the states.
 
+    async def async_added_to_hass(self) -> None:
+        """Pick up what the last round before the restart had to say.
+
+        Home Assistant restores a skipped version, then drops it on the first
+        state write unless it matches what is on offer. The first round is
+        minutes away, so with nothing on offer yet, the skip went, and the
+        next round offered the very same update again (#1641). Bringing the
+        last offer back with it keeps the two in step.
+
+        Only when the file is the one that offer was measured against. A
+        blueprint edited or re-imported while Home Assistant was off is a
+        different file, and the old offer says nothing about it.
+        """
+        await super().async_added_to_hass()
+
+        if (last := await self.async_get_last_state()) is None:
+            return
+
+        attributes = last.attributes
+        if (
+            attributes.get(UpdateEntityStateAttribute.INSTALLED_VERSION)
+            == self._attr_installed_version
+            and (offered := attributes.get(UpdateEntityStateAttribute.LATEST_VERSION))
+            is not None
+        ):
+            self._attr_latest_version = offered
+
     @callback
     def async_seen(self, said: _OnDisk) -> None:
         """Take in a blueprint file that has been read again.
@@ -1376,7 +1512,11 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
         self._attr_name = said.name
         self._attr_title = said.name
         self._attr_installed_version = said.fingerprint
-        self.async_write_ha_state()
+
+        # A disabled entity was never added, so there is no state to write.
+        # The reading is still kept, for the check that follows.
+        if self.hass is not None:
+            self.async_write_ha_state()
 
     def version_is_newer(self, latest_version: str, installed_version: str) -> bool:
         """Return whether the source says something other than what is here.
@@ -1685,18 +1825,29 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
 
         fetched = imported.blueprint
 
-        # A community topic can hold more than one blueprint, and the importer
-        # takes the first it comes across. Every blueprint in a topic was given
-        # the same source URL on the way in, so following one can land on
-        # another. The domain and the name together are the most that can be
-        # asked of a format that carries no identity of its own: an author
-        # renaming their blueprint costs an update, writing somebody else's
-        # blueprint into this file costs a lot more.
-        if fetched.domain != self.blueprint_domain or fetched.name != self._said.name:
+        if fetched.domain != self.blueprint_domain:
             msg = (
                 f"{source_url} leads to '{fetched.name}', a {fetched.domain} "
                 f"blueprint, and not to '{self._said.name}'. Spook will not "
                 f"put one over the other."
+            )
+            raise HomeAssistantError(msg)
+
+        # A community topic or a gist can hold more than one blueprint, and
+        # the importer takes the first it comes across. Every blueprint in one
+        # was given the same source URL on the way in, so following it can
+        # land on another. The name is the most that can be asked of a format
+        # that carries no identity of its own: an author renaming their
+        # blueprint costs an update, writing somebody else's blueprint into
+        # this file costs a lot more.
+        #
+        # A file of its own is a different matter. One address holds one
+        # blueprint there, so a changed name can only be a rename, and that is
+        # an update like any other (#1601).
+        if _holds_more_than_one(source_url) and fetched.name != self._said.name:
+            msg = (
+                f"{source_url} now leads with '{fetched.name}' rather than "
+                f"'{self._said.name}'. Spook will not put one over the other."
             )
             raise HomeAssistantError(msg)
 
