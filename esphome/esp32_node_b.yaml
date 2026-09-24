@@ -208,6 +208,27 @@ number:
     step: 1
     optimistic: true
 
+  - platform: template
+    name: "Fan B Manual Duration"
+    id: id_fan_b_manual_duration
+    icon: mdi:timer-cog-outline
+    unit_of_measurement: min
+    restore_value: true
+    initial_value: 60
+    min_value: 5
+    max_value: 180
+    step: 5
+    mode: box
+    optimistic: true
+
+script:
+  - id: fan_b_manual_timer
+    mode: restart
+    then:
+      - delay: !lambda "return (uint32_t) id(id_fan_b_manual_duration).state * 60000;"
+      - logger.log: "Manual Mode - timeout!"
+      - switch.turn_off: id_fan_b_manual_mode
+
 sensor:
   - platform: uptime
     name: "Uptime s"
@@ -438,8 +459,10 @@ switch:
             - switch.turn_off: id_auto_mode_prev
       - switch.turn_off: id_fan_b_auto_mode
       - fan.turn_on: fan_b
+      - script.execute: fan_b_manual_timer
     on_turn_off:
       - logger.log: "Manual Mode - switched off!"
+      - script.stop: fan_b_manual_timer
       - fan.turn_off: fan_b
       - if:
           condition:
@@ -523,12 +546,14 @@ time:
                 - fan.turn_off: fan_t 
           - if:
               condition:
-                - for:
-                    time: 60min
-                    condition:
-                      fan.is_on: fan_b
+                - and:
+                  - for:
+                      time: 60min
+                      condition:
+                        fan.is_on: fan_b
+                  - switch.is_off: id_fan_b_manual_mode
               then:
-                - fan.turn_off: fan_b 
+                - fan.turn_off: fan_b
 
 interval:
   - interval: 5s
@@ -590,15 +615,3 @@ interval:
           then:
               - logger.log: "Force Mode - switched off!"
               - switch.turn_off: id_fan_b_force_mode
-
-      - if:
-          condition:
-            - and:
-              - for:
-                  time: 10min
-                  condition:
-                    fan.is_on: fan_b
-              - switch.is_on: id_fan_b_manual_mode
-          then:
-              - logger.log: "Manual Mode - switched off!"
-              - switch.turn_off: id_fan_b_manual_mode
