@@ -424,9 +424,12 @@
       # - platform: state
       #   entity_id: fan.esp32_node_b_fan_b
       #   to: 'off'
-    # conditions:
-    #   - condition: template
-    #     value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+    conditions:
+      # ручной режим держит время сам в прошивке ESP. Проверяем при окончании таймера, а не при
+      # старте: прошивка публикует fan=on раньше manual_mode=on, и таймер успевает стартовать
+      - condition: state
+        entity_id: switch.esp32_node_b_fan_b_manual_mode
+        state: 'off'
     actions:
       - action: fan.turn_off
         entity_id: fan.esp32_node_b_fan_b
