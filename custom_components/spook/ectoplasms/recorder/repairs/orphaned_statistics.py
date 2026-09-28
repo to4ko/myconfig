@@ -2,20 +2,15 @@
 
 from __future__ import annotations
 
-from homeassistant.components.recorder.statistics import validate_statistics
+from datetime import timedelta
+
 from homeassistant.const import EVENT_COMPONENT_LOADED
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.recorder import DATA_INSTANCE, get_instance
+from homeassistant.helpers.recorder import DATA_INSTANCE
 
 from ....const import LOGGER
 from ....repairs import AbstractSpookRepair
-from ....statistics_sources import async_known_to_home_assistant
-
-# The recorder validation issue type for a statistic ID that has recorded
-# statistics but no matching sensor state at all. Other issue types (unit or
-# state-class changes, intentionally excluded entities) are either handled
-# by Home Assistant itself or expected.
-_ORPHAN_ISSUE_TYPE = "no_state"
+from ....statistics_sources import async_settled_orphaned_statistic_ids
 
 
 class SpookRepair(AbstractSpookRepair):
@@ -36,6 +31,14 @@ class SpookRepair(AbstractSpookRepair):
         EVENT_COMPONENT_LOADED,
         er.EVENT_ENTITY_REGISTRY_UPDATED,
     }
+
+    # A statistic has to keep looking abandoned to be reported, so something
+    # has to come back and look again. Nothing fires an event when a sensor
+    # finally turns up, and on a quiet system the next registry change can be
+    # days away, which would leave a first sighting waiting that long for its
+    # second.
+    inspect_interval = timedelta(minutes=5)
+
     automatically_clean_up_issues = True
 
     async def async_inspect(self) -> None:
@@ -47,29 +50,18 @@ class SpookRepair(AbstractSpookRepair):
 
         self.possible_issue_ids.add(self.repair)
 
-        validation = await get_instance(self.hass).async_add_executor_job(
-            validate_statistics,
-            self.hass,
-        )
-        candidates = {
-            statistic_id
-            for statistic_id, issues in validation.items()
-            if any(issue.type == _ORPHAN_ISSUE_TYPE for issue in issues)
-        }
-
-        # Having no state is not the same as being left behind. A registered
-        # entity that is disabled or not set up yet has statistics waiting for
-        # it, and an integration can publish statistics straight into the
-        # recorder with no entity ever existing; the energy dashboard draws
-        # those perfectly happily. Following the repair on either would delete
-        # working history. #1625.
-        orphaned = sorted(
-            candidates - await async_known_to_home_assistant(self.hass, candidates)
-        )
+        orphaned = sorted(await async_settled_orphaned_statistic_ids(self.hass))
 
         if orphaned:
             self.async_create_issue(
                 issue_id=self.repair,
+                references=orphaned,
+                is_fixable=True,
+                # Handed to the fix so it knows what was offered. It looks
+                # again before clearing anything and keeps the two answers
+                # in common, so nothing goes that somebody was not shown and
+                # nothing goes that has since come back.
+                data={"orphaned_statistic_ids": ",".join(orphaned)},
                 translation_placeholders={
                     "statistics": "\n".join(
                         f"- `{statistic_id}`" for statistic_id in orphaned

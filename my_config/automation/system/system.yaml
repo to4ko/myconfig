@@ -1060,13 +1060,13 @@
         message: "\U00002705 ZB: Все устройства онлайн!"
 
 # ##################################
-# System - ESP Devices Status to Off
+# System - ESP Devices Status (Off / On)
 # ##################################
 - alias: system_esp_devices_status
   id: system_esp_devices_status
   initial_state: true
   mode: queued
-  max: 15
+  max: 30
   max_exceeded: silent
   triggers:
     - trigger: state
@@ -1093,7 +1093,6 @@
         - binary_sensor.sonoff_mini_4_status
         - binary_sensor.sonoff_pow_r2_1_status
         - binary_sensor.esp32_node_b_status
-        - binary_sensor.esp32_node_b_valve_status
         - binary_sensor.sonoff_pow_r2_2_status
         - binary_sensor.esp32_node_s_status
         - binary_sensor.esp32_node_s_ha_connect_status
@@ -1108,86 +1107,185 @@
         #- binary_sensor.s26_socket_1_status
         - binary_sensor.sp111_socket_1_status
         - binary_sensor.sonoff_basic_4_status
-        #- binary_sensor.shp6_socket_1_status
+        - binary_sensor.shp6_socket_1_status
+        - binary_sensor.shp6_socket_2_status
         - binary_sensor.esp32_strip_1s_entrance_hb_status
         - binary_sensor.esp32_strip_1s_wadrobe_hb_status
         #- binary_sensor.light_bar_status
-      from: "on"
-      to: "off"
-      for:
-        minutes: 2
-  actions:
-    - action: notify.send_message
-      data:
-        entity_id: notify.telegram_dima
-        message: "\U0001f534 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
-
-# ##################################
-# System - ESP Devices Status to On
-# ##################################
-- alias: system_esp_devices_status_to_on
-  id: system_esp_devices_status_to_on
-  initial_state: true
-  mode: queued
-  max: 15
-  max_exceeded: silent
-  triggers:
-    - trigger: state
-      entity_id:
-        - binary_sensor.esp32_strip_1s_bookshelf_mb_status
-        - binary_sensor.digma_ir_k_status
-        - binary_sensor.digma_ir_mb_status
-        - binary_sensor.d1mini_light_l_status
-        - binary_sensor.digma_strip_hb_status
-        - binary_sensor.digma_ir_s_status
-        - binary_sensor.digma_ir_v_status
-        #- binary_sensor.esp01_weight_pad_status
-        - binary_sensor.esp32_node_v_status
-        - binary_sensor.esp32_node_k_status
-        - binary_sensor.esp32_node_hs_status
-        - binary_sensor.esp32_node_mb_status
-        - binary_sensor.esp8266_oven_temp_k_status
-        - binary_sensor.esp32_pzem_hb_status
-        - binary_sensor.esp8266_hood_k_status
-        - binary_sensor.esp32_strip_1s_wadrobe_mb_status
-        - binary_sensor.sonoff_mini_1_status
-        - binary_sensor.sonoff_mini_r4_kiosk_charger_status
-        - binary_sensor.mono_strip_1_status
-        - binary_sensor.sonoff_mini_4_status
-        - binary_sensor.sonoff_pow_r2_1_status
-        - binary_sensor.esp32_node_b_status
-        - binary_sensor.esp32_node_b_valve_status
-        - binary_sensor.sonoff_pow_r2_2_status
-        - binary_sensor.esp32_node_s_status
-        - binary_sensor.esp32_node_s_ha_connect_status
-        - binary_sensor.esp32_domofon_status
-        - binary_sensor.esp32_poe_ble_s_status
-        - binary_sensor.d1mini_distance_sensor_status
-        - binary_sensor.esp32_poe_ble_hs_status
-        - binary_sensor.esp32_poe_ble_mb_status
-        - binary_sensor.sonoff_pow_r2_3_status
-        - binary_sensor.d1mini_bed_leds_status
-        - binary_sensor.d1mini_air_freshener_status
-        #- binary_sensor.s26_socket_1_status
-        - binary_sensor.sp111_socket_1_status
-        - binary_sensor.sonoff_basic_4_status
-        #- binary_sensor.shp6_socket_1_status
-        - binary_sensor.esp32_strip_1s_entrance_hb_status
-        - binary_sensor.esp32_strip_1s_wadrobe_hb_status
-        #- binary_sensor.light_bar_status
-      from: "off"
-      to: "on"
-      for:
-        seconds: 5
+        - binary_sensor.esp32_breather_mb_status
+        - binary_sensor.esp32_breather_s_status
+        - binary_sensor.esp32_breather_v_status
+        - binary_sensor.esp32_nut_server_hs_status
+        - binary_sensor.esp32_nut_server_mb_status
+        - binary_sensor.esp32_nut_server_s_status
+        - binary_sensor.esp32_washer_b_status
+        - binary_sensor.sonoff_basic_2_status
+        - binary_sensor.sp111_socket_2_status
+        #- binary_sensor.esp32_intercom_status
+      from: ["on", "off"]
+      to: ["on", "off"]
+      for: "{{ '00:02:00' if trigger.to_state.state == 'off' else '00:00:05' }}"
   conditions:
-    - condition: numeric_state
-      entity_id: sensor.ha_uptime
-      above: 0
+    - or:
+        - "{{ trigger.to_state.state == 'off' }}"
+        - condition: numeric_state
+          entity_id: sensor.ha_uptime
+          above: 0
   actions:
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima
-        message: "\U0001f7e2 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+        message: "{{ '\U0001f534' if trigger.to_state.state == 'off' else '\U0001f7e2' }} ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+
+# # ##################################
+# # System - ESP Devices Status to Off
+# # ##################################
+# - alias: system_esp_devices_status
+#   id: system_esp_devices_status
+#   initial_state: true
+#   mode: queued
+#   max: 15
+#   max_exceeded: silent
+#   triggers:
+#     - trigger: state
+#       entity_id:
+#         - binary_sensor.esp32_strip_1s_bookshelf_mb_status
+#         - binary_sensor.digma_ir_k_status
+#         - binary_sensor.digma_ir_mb_status
+#         - binary_sensor.d1mini_light_l_status
+#         - binary_sensor.digma_strip_hb_status
+#         - binary_sensor.digma_ir_s_status
+#         - binary_sensor.digma_ir_v_status
+#         #- binary_sensor.esp01_weight_pad_status
+#         - binary_sensor.esp32_node_v_status
+#         - binary_sensor.esp32_node_k_status
+#         - binary_sensor.esp32_node_hs_status
+#         - binary_sensor.esp32_node_mb_status
+#         - binary_sensor.esp8266_oven_temp_k_status
+#         - binary_sensor.esp32_pzem_hb_status
+#         - binary_sensor.esp8266_hood_k_status
+#         - binary_sensor.esp32_strip_1s_wadrobe_mb_status
+#         - binary_sensor.sonoff_mini_1_status
+#         - binary_sensor.sonoff_mini_r4_kiosk_charger_status
+#         - binary_sensor.mono_strip_1_status
+#         - binary_sensor.sonoff_mini_4_status
+#         - binary_sensor.sonoff_pow_r2_1_status
+#         - binary_sensor.esp32_node_b_status
+#         - binary_sensor.sonoff_pow_r2_2_status
+#         - binary_sensor.esp32_node_s_status
+#         - binary_sensor.esp32_node_s_ha_connect_status
+#         - binary_sensor.esp32_domofon_status
+#         - binary_sensor.esp32_poe_ble_s_status
+#         - binary_sensor.d1mini_distance_sensor_status
+#         - binary_sensor.esp32_poe_ble_hs_status
+#         - binary_sensor.esp32_poe_ble_mb_status
+#         - binary_sensor.sonoff_pow_r2_3_status
+#         - binary_sensor.d1mini_bed_leds_status
+#         - binary_sensor.d1mini_air_freshener_status
+#         #- binary_sensor.s26_socket_1_status
+#         - binary_sensor.sp111_socket_1_status
+#         - binary_sensor.sonoff_basic_4_status
+#         - binary_sensor.shp6_socket_1_status
+#         - binary_sensor.shp6_socket_2_status
+#         - binary_sensor.esp32_strip_1s_entrance_hb_status
+#         - binary_sensor.esp32_strip_1s_wadrobe_hb_status
+#         #- binary_sensor.light_bar_status
+#         - binary_sensor.esp32_breather_mb_status
+#         - binary_sensor.esp32_breather_s_status
+#         - binary_sensor.esp32_breather_v_status
+#         - binary_sensor.esp32_nut_server_hs_status
+#         - binary_sensor.esp32_nut_server_mb_status
+#         - binary_sensor.esp32_nut_server_s_status
+#         - binary_sensor.esp32_washer_b_status
+#         - binary_sensor.sonoff_basic_2_status
+#         - binary_sensor.sp111_socket_2_status
+#         - binary_sensor.esp32_intercom_status
+#       from: "on"
+#       to: "off"
+#       for:
+#         minutes: 2
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima
+#         message: "\U0001f534 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
+#
+# # ##################################
+# # System - ESP Devices Status to On
+# # ##################################
+# - alias: system_esp_devices_status_to_on
+#   id: system_esp_devices_status_to_on
+#   initial_state: true
+#   mode: queued
+#   max: 15
+#   max_exceeded: silent
+#   triggers:
+#     - trigger: state
+#       entity_id:
+#         - binary_sensor.esp32_strip_1s_bookshelf_mb_status
+#         - binary_sensor.digma_ir_k_status
+#         - binary_sensor.digma_ir_mb_status
+#         - binary_sensor.d1mini_light_l_status
+#         - binary_sensor.digma_strip_hb_status
+#         - binary_sensor.digma_ir_s_status
+#         - binary_sensor.digma_ir_v_status
+#         #- binary_sensor.esp01_weight_pad_status
+#         - binary_sensor.esp32_node_v_status
+#         - binary_sensor.esp32_node_k_status
+#         - binary_sensor.esp32_node_hs_status
+#         - binary_sensor.esp32_node_mb_status
+#         - binary_sensor.esp8266_oven_temp_k_status
+#         - binary_sensor.esp32_pzem_hb_status
+#         - binary_sensor.esp8266_hood_k_status
+#         - binary_sensor.esp32_strip_1s_wadrobe_mb_status
+#         - binary_sensor.sonoff_mini_1_status
+#         - binary_sensor.sonoff_mini_r4_kiosk_charger_status
+#         - binary_sensor.mono_strip_1_status
+#         - binary_sensor.sonoff_mini_4_status
+#         - binary_sensor.sonoff_pow_r2_1_status
+#         - binary_sensor.esp32_node_b_status
+#         - binary_sensor.sonoff_pow_r2_2_status
+#         - binary_sensor.esp32_node_s_status
+#         - binary_sensor.esp32_node_s_ha_connect_status
+#         - binary_sensor.esp32_domofon_status
+#         - binary_sensor.esp32_poe_ble_s_status
+#         - binary_sensor.d1mini_distance_sensor_status
+#         - binary_sensor.esp32_poe_ble_hs_status
+#         - binary_sensor.esp32_poe_ble_mb_status
+#         - binary_sensor.sonoff_pow_r2_3_status
+#         - binary_sensor.d1mini_bed_leds_status
+#         - binary_sensor.d1mini_air_freshener_status
+#         #- binary_sensor.s26_socket_1_status
+#         - binary_sensor.sp111_socket_1_status
+#         - binary_sensor.sonoff_basic_4_status
+#         - binary_sensor.shp6_socket_1_status
+#         - binary_sensor.shp6_socket_2_status
+#         - binary_sensor.esp32_strip_1s_entrance_hb_status
+#         - binary_sensor.esp32_strip_1s_wadrobe_hb_status
+#         #- binary_sensor.light_bar_status
+#         - binary_sensor.esp32_breather_mb_status
+#         - binary_sensor.esp32_breather_s_status
+#         - binary_sensor.esp32_breather_v_status
+#         - binary_sensor.esp32_nut_server_hs_status
+#         - binary_sensor.esp32_nut_server_mb_status
+#         - binary_sensor.esp32_nut_server_s_status
+#         - binary_sensor.esp32_washer_b_status
+#         - binary_sensor.sonoff_basic_2_status
+#         - binary_sensor.sp111_socket_2_status
+#         - binary_sensor.esp32_intercom_status
+#       from: "off"
+#       to: "on"
+#       for:
+#         seconds: 5
+#   conditions:
+#     - condition: numeric_state
+#       entity_id: sensor.ha_uptime
+#       above: 0
+#   actions:
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima
+#         message: "\U0001f7e2 ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}: {{trigger.from_state.state}} -> {{trigger.to_state.state}}"
 # {%-for state in states.binary_sensor
 # if  state.entity_id.endswith("_status") and state.entity_id in integration_entities('esphome')%}
 # - {{ state.entity_id}}
@@ -2136,7 +2234,7 @@
 #   actions:
 #     - action: notify.send_message
 #       data:
-#         message: "\U0001f578️ Внимание! Обнаружены перезагрузки zigbee устройств: {{ states('sensor.zigbee_devices_last_resets') }}."
+#         message: "\U0001f578\ufe0f Внимание! Обнаружены перезагрузки zigbee устройств: {{ states('sensor.zigbee_devices_last_resets') }}."
 
 # ##################################
 # System - Ya Station Mode

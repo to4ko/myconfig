@@ -1019,6 +1019,9 @@ class SharedResources:
         self._read_at: float = -RESOURCES_TTL
         self._rows: list[dict[str, Any]] | None = None
         self._failure: str | None = None
+        # The nodes the cluster last reported as anything but online.
+        # Read from another thread, so it is replaced, never edited.
+        self.nodes_off: frozenset[str] = frozenset()
 
     async def get(
         self,
@@ -1054,6 +1057,7 @@ class SharedResources:
                     self._failure = (
                         None if isinstance(rows, list) or rows is None else ""
                     )
+                    self.nodes_off = nodes_not_online(self._rows)
                 self._read_at = time.monotonic()
         if self._failure is not None:
             raise UpdateFailed(self._failure or "Cluster resources are not available")
@@ -1064,6 +1068,22 @@ class SharedResources:
     def forget(self) -> None:
         """Make the next caller read again - after something changed the cluster."""
         self._read_at = -RESOURCES_TTL
+
+
+def nodes_not_online(rows: list[dict[str, Any]] | None) -> frozenset[str]:
+    """
+    Return the nodes `cluster/resources` lists as anything but online.
+
+    A node with no status at all is not counted: unknown is not off, and
+    refusing to read from it would be worse than trying.
+    """
+    return frozenset(
+        str(row.get(CONF_NODE))
+        for row in rows or []
+        if row.get("type") == "node"
+        and row.get(CONF_NODE)
+        and str(row.get("status", "")) not in ("", "online")
+    )
 
 
 def shared_resources(hass: HomeAssistant, config_entry: ConfigEntry) -> SharedResources:
@@ -2180,7 +2200,7 @@ class ProxmoxQEMUCoordinator(ProxmoxCoordinator):
 
         snapshots = await poll_snapshots(self, ProxmoxType.QEMU, node_name)
 
-        update_device_via(self, ProxmoxType.QEMU, node_name)
+        update_guest_device(self, ProxmoxType.QEMU, node_name, api_status.get("name"))
 
         memory_total = api_status.get("maxmem", UNDEFINED)
         memory_used = qemu_memory_used(api_status)
@@ -2323,7 +2343,7 @@ class ProxmoxLXCCoordinator(ProxmoxCoordinator):
                 interfaces = None
             addresses = parse_guest_addresses(ProxmoxType.LXC, interfaces)
 
-        update_device_via(self, ProxmoxType.LXC, node_name)
+        update_guest_device(self, ProxmoxType.LXC, node_name, api_status.get("name"))
 
         return ProxmoxLXCData(
             type=ProxmoxType.LXC,
@@ -2982,12 +3002,13 @@ class ProxmoxTaskCoordinator(ProxmoxCoordinator):
         )
 
 
-def update_device_via(
+def update_guest_device(
     self,
     api_category: ProxmoxType,
     node_name: str,
+    guest_name: str | None = None,
 ) -> None:
-    """Point the guest's device at the node it currently runs on."""
+    """Keep the guest's device on its node, and under the name Proxmox has."""
     dev_reg = dr.async_get(self.hass)
     # Scoped to this config entry: identifiers are only unique within one, so
     # async_get_device can resolve to a device belonging to a different
@@ -3005,6 +3026,19 @@ def update_device_via(
         # after the config entry, with no model and no entities, should
         # nothing come along to fill it in.
         return
+    if guest_name is not None:
+        # A guest renamed in Proxmox keeps its id, so this is the same device
+        # under a new name. A name given in Home Assistant is kept: it lives
+        # in `name_by_user` and is what the interface shows either way.
+        name = f"{api_category.upper()} {guest_name} ({self.resource_id})"
+        if device.name != name:
+            LOGGER.debug(
+                "Update device %s - name: old=%s, new=%s",
+                self.resource_id,
+                device.name,
+                name,
+            )
+            dev_reg.async_update_device(device.id, name=name)
     via_device = dev_reg.async_get_device_by_identifier(
         (
             DOMAIN,
@@ -3156,6 +3190,17 @@ def poll_api(  # noqa: PLR0917
             case _:
                 return "Unmapped"
 
+    # Everything goes to one host, which forwards what belongs to another
+    # node. With that node down, pveproxy waits and then answers 595 'No
+    # route to host' - once per guest, storage and node read, every poll,
+    # seconds at a time. The cluster already said the node is off, so
+    # take that answer instead of asking after it.
+    if (node := node_of_path(None)) and node in shared_resources(
+        hass, config_entry
+    ).nodes_off:
+        msg = f"Node {node} is offline"
+        raise UpdateFailed(msg)
+
     client = _client_for(config_entry, proxmox)
     generation = client.generation if client is not None else 0
     try:
@@ -3204,7 +3249,7 @@ def poll_api(  # noqa: PLR0917
                 f"Error get API path {api_path}: User not allowed to access the resource, check user permissions as per the documentation, see details in the repair created by the integration."
             )
             return None
-        raise UpdateFailed from error
+        raise UpdateFailed(str(error)) from error
     note_resource_threadsafe(
         hass, config_entry, FORBIDDEN, f"{api_category}_{resource_id}", listed=False
     )

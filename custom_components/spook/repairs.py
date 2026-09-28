@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import asyncio
 from contextlib import suppress
 from dataclasses import dataclass, field
+import hashlib
 import importlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, final
@@ -36,15 +37,24 @@ from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_component import DATA_INSTANCES
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.recorder import get_instance
 from homeassistant.util.async_ import create_eager_task
 
 from .const import DOMAIN, LOGGER
 from .dashboard_resources import is_yaml_managed, redundant_item_ids
-from .entity_filtering import async_filter_known_entity_ids, async_get_all_entity_ids
-from .entity_suggestions import async_describe_unknown_entities
+from .entity_filtering import (
+    async_filter_known_entity_ids,
+    async_get_all_entity_ids,
+    async_name_helper_in_the_registry,
+)
+from .entity_suggestions import (
+    async_describe_unknown_entities,
+    async_warm_rename_suggestions,
+)
+from .statistics_sources import async_settled_orphaned_statistic_ids
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine, Mapping, Sized
+    from collections.abc import Callable, Coroutine, Iterable, Mapping, Sized
     from datetime import datetime, timedelta
     from types import ModuleType
 
@@ -57,6 +67,18 @@ if TYPE_CHECKING:
 # large installations.
 INSPECTION_YIELD_INTERVAL = 50
 
+# How long to give the recorder to say it has cleared what it was asked to.
+# The same as Home Assistant allows its own Statistics page, which asks the
+# recorder the same question the same way.
+_CLEARING_TAKES_AT_MOST = 10
+
+# Enough of a digest to tell two sets of findings apart. A collision would
+# mean one dismissal covering a different finding in the same place, which is
+# the thing this exists to prevent, and eight hex characters make that four
+# billion to one.
+_FINGERPRINT_LENGTH = 8
+
+
 # A min/max helper needs at least this many members to function; Spook must
 # not prune it below this.
 _MIN_MAX_MINIMUM_MEMBERS = 2
@@ -65,6 +87,34 @@ _MIN_MAX_MINIMUM_MEMBERS = 2
 def _plural(items: Sized) -> str:
     """Return the plural suffix for a sized collection."""
     return "" if len(items) == 1 else "s"
+
+
+def _bulleted(items: Iterable[str]) -> str:
+    """Return the markdown list a repair puts its findings in."""
+    return "\n".join(f"- `{item}`" for item in items)
+
+
+def _fingerprint(references: Iterable[str]) -> str:
+    r"""Return a short digest of what a finding is about.
+
+    Sorted first, because the same findings in a different order are the same
+    findings, and an ID that moved would resurface an issue somebody had
+    already dealt with.
+
+    Each one is written down with its length in front of it, so that the
+    digest reads two different sets two different ways. Joining them with a
+    separator does not: a reference holding that separator borrows the one
+    next to it, and `{"a\nb", "c"}` and `{"a", "b\nc"}` come out identical.
+    Entity IDs cannot do that, but resource URLs, notifier names and
+    customize keys are whatever somebody typed.
+    """
+    digest = hashlib.sha256()
+    for reference in sorted(references):
+        encoded = reference.encode()
+        digest.update(f"{len(encoded)}:".encode())
+        digest.update(encoded)
+
+    return digest.hexdigest()[:_FINGERPRINT_LENGTH]
 
 
 class AbstractSpookRepairBase(ABC):
@@ -103,6 +153,7 @@ class AbstractSpookRepairBase(ABC):
         issue_domain: str | None = None,
         issue_id: str,
         learn_more_url: str | None = None,
+        references: Iterable[str] | None = None,
         severity: ir.IssueSeverity = ir.IssueSeverity.WARNING,
         translation_key: str | None = None,
         translation_placeholders: dict[str, str] | None = None,
@@ -114,7 +165,18 @@ class AbstractSpookRepairBase(ABC):
         worded differently depending on what the house looks like, so that the
         alternative is a translated string of its own rather than a sentence
         smuggled in through a placeholder.
+
+        `references` is what the issue is reporting, when that is a list of
+        things rather than the one place they were found in. Pass it and the
+        ID follows the findings, so that pressing "ignore" means "not these"
+        rather than "nothing here, ever". Without it an issue keyed to a
+        script keeps its dismissal while its text is quietly rewritten
+        underneath, and the next genuinely broken thing in that script is
+        hidden by a decision somebody made about something else. #1395.
         """
+        if references is not None:
+            issue_id = f"{issue_id}_{_fingerprint(references)}"
+
         self.issue_ids.add(issue_id)
         ir.async_create_issue(
             self.hass,
@@ -356,10 +418,9 @@ class AbstractSpookEntityComponentUnknownReferencesRepair(AbstractSpookRepair, A
     automatically_clean_up_issues = True
 
     #: Entity class representing an unavailable/broken instance. Entities of
-    #: this type are still tracked in ``possible_issue_ids`` but skipped during
-    #: issue creation. ``None`` inspects every entity, including unavailable
-    #: ones; repairs that diagnose *why* an entity is broken need exactly
-    #: those.
+    #: this type are skipped during issue creation. ``None`` inspects every
+    #: entity, including unavailable ones; repairs that diagnose *why* an
+    #: entity is broken need exactly those.
     unavailable_entity_class: type | None = None
 
     #: Translation placeholder key holding the entity's display name (e.g.
@@ -415,9 +476,14 @@ class AbstractSpookEntityComponentUnknownReferencesRepair(AbstractSpookRepair, A
         return self.edit_url_pattern.format(unique_id=entity.unique_id)
 
     async def async_inspect(self) -> None:
-        """Trigger an inspection."""
-        self.possible_issue_ids.clear()
+        """Trigger an inspection.
 
+        Nothing goes into ``possible_issue_ids`` here. An issue raised by this
+        repair is keyed to its findings rather than to the entity they were
+        found in, so a list of inspected entities no longer names anything
+        that could be in the registry. What this repair left behind is read
+        back out of the registry instead, which finds all of it.
+        """
         if self.domain not in (instances := self.hass.data.get(DATA_INSTANCES, {})):
             return
 
@@ -439,13 +505,18 @@ class AbstractSpookEntityComponentUnknownReferencesRepair(AbstractSpookRepair, A
         # after the round finished.
         entities = list(entity_component.entities)
 
+        # Collected first and reported afterwards, rather than an issue raised
+        # the moment one is found. Describing a broken entity reference means
+        # working out what it was probably meant to say, which is the most
+        # expensive thing in the whole inspection, and gathering the round's
+        # findings first lets all of that happen in one go. #1667.
+        findings: list[tuple[Any, list[str]]] = []
+
         for index, entity in enumerate(entities):
             if index and index % INSPECTION_YIELD_INTERVAL == 0:
                 # Inspections are CPU-bound; periodically yield to the event
                 # loop so large installations do not stall it.
                 await asyncio.sleep(0)
-
-            self.possible_issue_ids.add(entity.entity_id)
 
             unavailable_class = self.unavailable_entity_class
             # pylint: disable-next=isinstance-second-argument-not-valid-type
@@ -459,10 +530,18 @@ class AbstractSpookEntityComponentUnknownReferencesRepair(AbstractSpookRepair, A
             if not unknown:
                 continue
 
-            sorted_unknown = sorted(unknown)
+            findings.append((entity, sorted(unknown)))
 
+        if self.references_are_entities and findings:
+            await async_warm_rename_suggestions(
+                self.hass,
+                {reference for _, references in findings for reference in references},
+            )
+
+        for entity, sorted_unknown in findings:
             self.async_create_issue(
                 issue_id=entity.entity_id,
+                references=sorted_unknown,
                 translation_placeholders={
                     self.reference_label: self._format_references(sorted_unknown),
                     self.entity_label: entity.name,
@@ -982,6 +1061,9 @@ class MinMaxUnknownSourcesFixFlow(_RemoveOrIgnoreFixFlow):
         data = self.data or {}
         return {
             "helper": str(data.get("helper", "")),
+            "entity_id": async_name_helper_in_the_registry(
+                self.hass, str(data.get(self._id_key, ""))
+            ),
             "sources": str(data.get("sources", "")),
         }
 
@@ -1040,6 +1122,9 @@ class HelperUnknownSourcesFixFlow(_RemoveOrIgnoreFixFlow):
         return {
             "helper": str(data.get("helper", "")),
             "domain": str(data.get("domain", "")),
+            "entity_id": async_name_helper_in_the_registry(
+                self.hass, str(data.get(self._id_key, ""))
+            ),
             "sources": str(data.get("sources", "")),
             "usage": self._usage_text(str(data.get("helper_config_entry_id", ""))),
         }
@@ -1078,6 +1163,89 @@ class HelperUnknownSourcesFixFlow(_RemoveOrIgnoreFixFlow):
         return self.async_create_entry(data={})
 
 
+class OrphanedStatisticsFixFlow(_RemoveOrIgnoreFixFlow):
+    """Handler for long-term statistics with no entity left behind them.
+
+    Clearing them is a websocket command the Statistics page calls and no
+    action anybody can reach, so without this the only way to act on the
+    report is to open that page and work through it by hand, which on a list
+    of a couple of hundred is not really an offer at all. #1613.
+    """
+
+    _key = "statistics"
+    _id_key = "orphaned_statistic_ids"
+
+    def _menu_placeholders(self) -> dict[str, str]:
+        """List what the report named, the way the report listed it."""
+        return {"statistics": _bulleted(self._offered())}
+
+    def _offered(self) -> list[str]:
+        """Return the statistic IDs the report put in front of somebody."""
+        written = str((self.data or {}).get(self._id_key, ""))
+        return [statistic_id for statistic_id in written.split(",") if statistic_id]
+
+    async def async_step_remove(
+        self,
+        _: dict[str, str] | None = None,
+    ) -> FlowResult:
+        """Clear the statistics, after looking again to see if they still go.
+
+        Looked up again rather than taken from the issue, and then kept in
+        common with it. An issue sits there until somebody opens it, which
+        may be days, and this deletes history: nothing goes that was not on
+        the list they read, and nothing goes that has come back since.
+
+        Asked the same way the report asked it, settling time and all. A
+        glance would say yes to a sensor that came back long ago and happens
+        to be between two brief windows right now, which is the case the
+        wait exists for.
+        """
+        offered = set(self._offered())
+        if not offered:
+            return self.async_abort(reason="nothing_to_clear")
+
+        still_gone = await async_settled_orphaned_statistic_ids(self.hass)
+        clearing = sorted(offered & still_gone)
+        if not clearing:
+            # Nothing on the list still needs clearing. They may have an
+            # entity behind them again, or somebody may have cleared them by
+            # hand while the issue sat there. Either way there is nothing to
+            # do, and which of the two it was is not worth guessing at.
+            return self.async_abort(reason="nothing_to_clear")
+
+        # Queued rather than done: the recorder takes the work on its own
+        # thread and says when it has landed. Answering before that would
+        # close the issue on the strength of having asked, and a recorder
+        # that is wedged would look like a job well done. Home Assistant's
+        # own Statistics page waits on exactly this, for exactly this long.
+        cleared = asyncio.Event()
+
+        def _done() -> None:
+            """Say so from the recorder's thread."""
+            self.hass.loop.call_soon_threadsafe(cleared.set)
+
+        get_instance(self.hass).async_clear_statistics(clearing, on_done=_done)
+
+        try:
+            async with asyncio.timeout(_CLEARING_TAKES_AT_MOST):
+                await cleared.wait()
+        except TimeoutError:
+            # The work is still queued and will most likely land. Saying it
+            # is done would be a guess, and leaving the issue up costs
+            # nothing: the next round clears it if the statistics went, and
+            # reports them again if they did not.
+            LOGGER.debug(
+                "Spook asked for %s to be cleared and the recorder has not "
+                "said it is done",
+                ", ".join(clearing),
+            )
+            return self.async_abort(reason="clearing_took_too_long")
+
+        LOGGER.debug("Spook cleared orphaned statistics: %s", ", ".join(clearing))
+
+        return self.async_create_entry(data={})
+
+
 # Remove-or-ignore fix flows, keyed by the data field that identifies their
 # leftover registry thing.
 _REMOVE_OR_IGNORE_FLOWS: dict[str, type[_RemoveOrIgnoreFixFlow]] = {
@@ -1090,6 +1258,7 @@ _REMOVE_OR_IGNORE_FLOWS: dict[str, type[_RemoveOrIgnoreFixFlow]] = {
     "group_entity_id": GroupUnknownMembersFixFlow,
     "min_max_config_entry_id": MinMaxUnknownSourcesFixFlow,
     "helper_config_entry_id": HelperUnknownSourcesFixFlow,
+    "orphaned_statistic_ids": OrphanedStatisticsFixFlow,
 }
 
 
