@@ -1,20 +1,32 @@
   tv_v_turn_on:
     alias: TV V Turn On with Plug
+    mode: single
     sequence:
-      - action: switch.turn_on
-        entity_id: switch.0x00158d000290a093_plug
-      - delay: 
-          seconds: 2
       - if:
-          - alias: "if tv is off"
+          - alias: "if plug is off"
             condition: state
-            entity_id: media_player.tv_v
+            entity_id: switch.0x00158d000290a093_plug
             state: 'off'
         then:
-          - action: button.press
-            data:
-              entity_id: button.digma_ir_v_tv_pwr
-          
+          - action: switch.turn_on
+            entity_id: switch.0x00158d000290a093_plug
+          - delay: 8
+      - repeat:
+          count: 3
+          sequence:
+            - if:
+                - alias: "if tv is in standby"
+                  condition: numeric_state
+                  entity_id: sensor.0x00158d000290a093_power
+                  below: 10
+              then:
+                - action: button.press
+                  data:
+                    entity_id: button.digma_ir_v_tv_pwr
+                - delay: 5
+              else:
+                - stop: "TV is on"
+
   tv_k_turn_on:
     alias: TV K Turn On with Plug
     sequence:

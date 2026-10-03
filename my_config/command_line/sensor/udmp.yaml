@@ -2,46 +2,76 @@
       name: UnifiOS State
       command: !secret udmp_unifios
       unique_id: unifios_state
+      # Never raises: every field is read with .get() and falls back to "unknown".
+      # Field order is consumed by index in template/sensor/udmp.yaml and template/bi-sensor/udmp.yaml - do not reorder.
       value_template: |-
-          {% set ns = namespace(lowest = 0) %}
-          {% for x in range(0,value_json["data"]|count) %}
-            {% if value_json["data"][x].model == "UDMPROMAX" %}
-              {% set ns.lowest = x %}
-            {% endif %}
-          {% endfor %}
-          {% set udm = value_json["data"][ns.lowest] %}
-          {% set ns = namespace(lowest = 0) %}
-          {% for x in range(0,value_json["data"]|count) %}
-            {% if value_json["data"][x].model == "US624P" %}
-              {% set ns.lowest = x %}
-            {% endif %}
-          {% endfor %}
-          {% set usw = value_json["data"][ns.lowest] %}
-          {{ udm["system-stats"].cpu }}|
-          {{ udm.temperatures[0].value | float(0) | round (1) }}|
-          {{ udm["system-stats"].mem }}|
-          {{ udm.overheating }}|
-          {{ udm.startup_timestamp | timestamp_custom('%Y-%m-%dT%H:%M:%S') }}|
-          {{ usw["system-stats"].cpu }}|
-          {{ usw["system-stats"].mem }}|
-          {{ usw.fan_level }}|
-          {{ usw.general_temperature }}|
-          {{ usw.startup_timestamp | timestamp_custom('%Y-%m-%dT%H:%M:%S') }}|
-          {{ usw.overheating }}|
-          {{ udm["sys_stats"].loadavg_1 }}|
-          {{ udm["sys_stats"].loadavg_5 }}|
-          {{ udm["sys_stats"].loadavg_15 }}|
-          {{ udm["sys_stats"].mem_total }}|
-          {{ udm["sys_stats"].mem_used }}|
-          {{ udm["sys_stats"].mem_buffer }}|
-          {{ udm.storage[1].used }}|
-          {{ udm.wan1.up }}|
-          {{ udm.wan2.up }}|
-          {{ udm.wan1.is_uplink }}|
-          {{ udm.wan2.is_uplink }}|
-          {{ udm.uplink.name }}|
-          {{ udm.uplink.ip }}|
-          {{ udm.temperatures[1].value | float(0) | round (1) }}|
-          {{ udm.temperatures[2].value | float(0) | round (1) }}|
-          {{ udm.temperatures[3].value | float(0) | round (1) }}
+          {% set devs = value_json.get("data", []) if value_json is defined and value_json is mapping else [] %}
+          {% set udms = devs | selectattr("model", "eq", "UDMPROMAX") | list %}
+          {% set usws = devs | selectattr("model", "eq", "US624P") | list %}
+          {% if not udms and not usws %}
+          unknown
+          {% else %}
+          {% set u = udms[-1] if udms else {} %}
+          {% set w = usws[-1] if usws else {} %}
+          {% set us = u.get("system-stats", {}) %}
+          {% set ws = w.get("system-stats", {}) %}
+          {% set uy = u.get("sys_stats", {}) %}
+          {% set w1 = u.get("wan1", {}) %}
+          {% set w2 = u.get("wan2", {}) %}
+          {% set up = u.get("uplink", {}) %}
+          {% set ut = u.get("temperatures", []) %}
+          {% set tmp = dict(zip(ut | map(attribute="name") | list, ut | map(attribute="value") | list)) %}
+          {% set per = u.get("storage", []) | selectattr("mount_point", "eq", "/persistent") | list %}
+          {% macro v(x) %}{{ "unknown" if x is undefined or x is none else x }}{% endmacro %}
+          {% macro t(n) %}{{ (tmp[n] | float(0) | round(1)) if n in tmp else "unknown" }}{% endmacro %}
+          {% macro ts(x) %}{{ (x | timestamp_custom("%Y-%m-%dT%H:%M:%S")) if x else "unknown" }}{% endmacro %}
+          {{ v(us.get("cpu")) }}|
+          {{ t("CPU") }}|
+          {{ v(us.get("mem")) }}|
+          {{ v(u.get("overheating")) }}|
+          {{ ts(u.get("startup_timestamp")) }}|
+          {{ v(ws.get("cpu")) }}|
+          {{ v(ws.get("mem")) }}|
+          {{ v(w.get("fan_level")) }}|
+          {{ v(w.get("general_temperature")) }}|
+          {{ ts(w.get("startup_timestamp")) }}|
+          {{ v(w.get("overheating")) }}|
+          {{ v(uy.get("loadavg_1")) }}|
+          {{ v(uy.get("loadavg_5")) }}|
+          {{ v(uy.get("loadavg_15")) }}|
+          {{ v(uy.get("mem_total")) }}|
+          {{ v(uy.get("mem_used")) }}|
+          {{ v(uy.get("mem_buffer")) }}|
+          {{ v(per[0].get("used")) if per else "unknown" }}|
+          {{ v(w1.get("up")) }}|
+          {{ v(w2.get("up")) }}|
+          {{ v(w1.get("is_uplink")) }}|
+          {{ v(w2.get("is_uplink")) }}|
+          {{ v(up.get("name")) }}|
+          {{ v(up.get("ip")) }}|
+          {{ t("HDD1") }}|
+          {{ t("FLASH") }}|
+          {{ t("HDD2") }}
+          {% endif %}
       scan_interval: 60
+
+  # Built-in UDM storage (eMMC /persistent, tmpfs /tmp, ...), hard disks excluded.
+  # Kept out of sensor.unifios_state: state is capped at 255 chars.
+  # State format: mount,type,size,used;mount,type,size,used
+  - sensor:
+      name: UnifiOS Storage
+      command: !secret udmp_unifios
+      unique_id: unifios_storage
+      value_template: |-
+          {% set devs = value_json.get("data", []) if value_json is defined and value_json is mapping else [] %}
+          {% set udms = devs | selectattr("model", "eq", "UDMPROMAX") | list %}
+          {% set ns = namespace(l=[]) %}
+          {% if udms %}
+          {% for s in udms[-1].get("storage", []) %}
+          {% if s.get("type", "") | lower not in ["hdd", "ssd", "disk", "nvme"] %}
+          {% set ns.l = ns.l + [ s.get("mount_point", "?") ~ "," ~ s.get("type", "?") ~ "," ~ s.get("size", 0) ~ "," ~ s.get("used", 0) ] %}
+          {% endif %}
+          {% endfor %}
+          {% endif %}
+          {{ ns.l | join(";") if ns.l else "unknown" }}
+      scan_interval: 300

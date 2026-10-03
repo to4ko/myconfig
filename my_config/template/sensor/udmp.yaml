@@ -72,6 +72,44 @@
           icon: mdi:chip
           unit_of_measurement: '%'
 
+      - name: UDM Persistent Storage Used
+        unique_id: udm_persistent_storage_used
+        unit_of_measurement: '%'
+        state_class: measurement
+        icon: mdi:usb-flash-drive
+        availability: >
+          {{ states('sensor.unifios_storage').split(';') | select('match', '^/persistent,') | list | count > 0 }}
+        state: >
+          {% set m = states('sensor.unifios_storage').split(';') | select('match', '^/persistent,') | list %}
+          {% set p = m[0].split(',') if m else [] %}
+          {{ ((p[3] | float(0) / p[2] | float(0)) * 100) | round(1) if p and p[2] | float(0) > 0 else 'unknown' }}
+        attributes:
+          type: >
+            {{ (states('sensor.unifios_storage').split(';') | select('match', '^/persistent,') | list | first | default(',,,')).split(',')[1] }}
+          size_bytes: >
+            {{ (states('sensor.unifios_storage').split(';') | select('match', '^/persistent,') | list | first | default(',,,')).split(',')[2] }}
+          used_bytes: >
+            {{ (states('sensor.unifios_storage').split(';') | select('match', '^/persistent,') | list | first | default(',,,')).split(',')[3] }}
+
+      - name: UDM Temp Storage Used
+        unique_id: udm_temp_storage_used
+        unit_of_measurement: '%'
+        state_class: measurement
+        icon: mdi:memory
+        availability: >
+          {{ states('sensor.unifios_storage').split(';') | select('match', '^/tmp,') | list | count > 0 }}
+        state: >
+          {% set m = states('sensor.unifios_storage').split(';') | select('match', '^/tmp,') | list %}
+          {% set p = m[0].split(',') if m else [] %}
+          {{ ((p[3] | float(0) / p[2] | float(0)) * 100) | round(2) if p and p[2] | float(0) > 0 else 'unknown' }}
+        attributes:
+          type: >
+            {{ (states('sensor.unifios_storage').split(';') | select('match', '^/tmp,') | list | first | default(',,,')).split(',')[1] }}
+          size_bytes: >
+            {{ (states('sensor.unifios_storage').split(';') | select('match', '^/tmp,') | list | first | default(',,,')).split(',')[2] }}
+          used_bytes: >
+            {{ (states('sensor.unifios_storage').split(';') | select('match', '^/tmp,') | list | first | default(',,,')).split(',')[3] }}
+
       # - name: UDM eMMC Used
       #   unique_id: udm_emmc_used
       #   availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
