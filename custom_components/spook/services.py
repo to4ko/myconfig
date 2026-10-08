@@ -6,11 +6,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import importlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, final
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, final
 
 import voluptuous as vol
 
-from homeassistant.const import EVENT_CORE_CONFIG_UPDATE
+from homeassistant.const import EVENT_COMPONENT_LOADED, EVENT_CORE_CONFIG_UPDATE
 from homeassistant.core import (
     Event,
     HomeAssistant,
@@ -20,12 +20,12 @@ from homeassistant.core import (
     SupportsResponse,
     callback,
 )
+from homeassistant.exceptions import Unauthorized, UnknownUser
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import DATA_INSTANCES, EntityComponent
 from homeassistant.helpers.entity_platform import DATA_ENTITY_PLATFORM
 from homeassistant.helpers.service import (
     SERVICE_DESCRIPTION_CACHE,
-    _load_services_file,
     async_register_admin_service,
     async_set_service_schema,
 )
@@ -35,10 +35,13 @@ from homeassistant.helpers.translation import (
     async_get_translations,
 )
 from homeassistant.loader import async_get_integration
+from homeassistant.setup import ATTR_COMPONENT
 
 from .const import DOMAIN, LOGGER
+from .core_compat import load_service_descriptions
 
 if TYPE_CHECKING:
+    import asyncio
     from collections.abc import Callable
     from types import ModuleType
 
@@ -46,6 +49,7 @@ if TYPE_CHECKING:
 _EntityT = TypeVar("_EntityT", bound=Entity, default=Entity)
 GHOST = "👻"
 SERVICE_TRANSLATION_CATEGORY = "services"
+SELECTOR_TRANSLATION_CATEGORY = "selector"
 
 
 class AbstractSpookServiceBase(ABC):
@@ -232,6 +236,9 @@ class AbstractSpookEntityComponentService(AbstractSpookServiceBase, Generic[_Ent
 
     required_features: list[int] | None = None
     supports_response: SupportsResponse = SupportsResponse.NONE
+    #: For an action that changes how something is set up rather than what it
+    #: is doing, which Home Assistant keeps to admins. Automations still pass.
+    admin_only: bool = False
 
     @final
     @callback
@@ -243,24 +250,55 @@ class AbstractSpookEntityComponentService(AbstractSpookServiceBase, Generic[_Ent
             self.service,
         )
 
+        # Not every component is there when Spook is. Home Assistant loads
+        # calendar and todo only once an integration brings a calendar or a
+        # to-do list along, which can be well after Spook, or never. The
+        # manager waits for it and registers the action then.
         if self.domain not in self.hass.data.get(DATA_INSTANCES, {}):
-            msg = (
-                f"Could not find entity component {self.domain} to register "
-                f"service: {self.domain}.{self.service}"
+            LOGGER.debug(
+                "Not registering Spook %s.%s service yet, %s is not loaded",
+                self.domain,
+                self.service,
+                self.domain,
             )
-            raise RuntimeError(msg)
+            return False
 
         component: EntityComponent[Entity] = self.hass.data[DATA_INSTANCES][self.domain]
 
         component.async_register_entity_service(
             name=self.service,
-            func=self.async_handle_service,
+            func=(
+                self._async_handle_service_as_admin
+                if self.admin_only
+                else self.async_handle_service
+            ),
             schema=self.schema,
             required_features=self.required_features,
             supports_response=self.supports_response,
         )
 
         return True
+
+    async def _async_handle_service_as_admin(
+        self,
+        entity: _EntityT,
+        call: ServiceCall,
+    ) -> ServiceResponse:
+        """Handle the call, if whoever made it may change how things are set up.
+
+        The same check Home Assistant does for an admin-only entity action. It
+        is done here rather than asked of Home Assistant, because the option
+        to ask arrived in a later version than the oldest one Spook runs on,
+        and passing it there fails registering every one of these actions.
+        """
+        if call.context.user_id:
+            user = await self.hass.auth.async_get_user(call.context.user_id)
+            if user is None:
+                raise UnknownUser(context=call.context)
+            if not user.is_admin:
+                raise Unauthorized(context=call.context)
+
+        return await self.async_handle_service(entity, call)
 
     @abstractmethod
     async def async_handle_service(
@@ -283,7 +321,17 @@ class SpookServiceManager:
     _service_translation_overrides: dict[tuple[str, str, str], str | None] = field(
         default_factory=dict
     )
-    _translation_listener: Callable[[], None] | None = None
+    # The same, for the option labels of the selectors those actions use.
+    _selector_translation_overrides: dict[tuple[str, str, str], str | None] = field(
+        default_factory=dict
+    )
+    # Services for a domain that was not loaded yet, by that domain.
+    _waiting_for_domain: dict[str, list[AbstractSpookService]] = field(
+        default_factory=dict
+    )
+    # Everything to undo on unload: the listeners, and any translation
+    # injection still on its way.
+    _on_unload: list[Callable[[], None]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         """Post initialization."""
@@ -295,12 +343,9 @@ class SpookServiceManager:
 
         # Load service schemas
         integration = await async_get_integration(self.hass, DOMAIN)
-        self._service_schemas = cast(
-            dict[str, Any],
-            await self.hass.async_add_executor_job(
-                _load_services_file,
-                integration,
-            ),
+        self._service_schemas = await self.hass.async_add_executor_job(
+            load_service_descriptions,
+            integration,
         )
 
         modules: list[ModuleType] = []
@@ -319,14 +364,25 @@ class SpookServiceManager:
 
         await self.hass.async_add_import_executor_job(_load_all_service_modules)
 
+        # Listening starts before anything is parked, and nothing between here
+        # and the end of the loop below waits on anything. A domain that loads
+        # in the meantime is either there for the loop to register straight
+        # away, or loads afterwards with the listener already in place.
+        self._on_unload = [
+            self.hass.bus.async_listen(
+                EVENT_COMPONENT_LOADED,
+                self._async_component_loaded,
+            ),
+            self.hass.bus.async_listen(
+                EVENT_CORE_CONFIG_UPDATE,
+                self._async_core_config_updated,
+            ),
+        ]
+
         for module in modules:
             self._async_setup_service_module(module)
 
         await self.async_inject_service_translations()
-        self._translation_listener = self.hass.bus.async_listen(
-            EVENT_CORE_CONFIG_UPDATE,
-            self._async_core_config_updated,
-        )
 
     @callback
     def _async_setup_service_module(self, module: ModuleType) -> None:
@@ -335,9 +391,28 @@ class SpookServiceManager:
         A service that fails to set up must not prevent the rest of Spook
         from loading.
         """
-        service: AbstractSpookServiceBase | None = None
         try:
             service = module.SpookService(self.hass)
+        # pylint: disable-next=broad-exception-caught
+        except Exception:  # noqa: BLE001
+            LOGGER.exception(
+                "Spook service %s failed to set up and has been skipped; "
+                "please report this issue at "
+                "https://github.com/frenck/spook/issues",
+                module.__name__,
+            )
+            return
+
+        self._async_setup_service(service, module.__name__)
+
+    @callback
+    def _async_setup_service(self, service: AbstractSpookService, name: str) -> None:
+        """Register one service, isolating failures.
+
+        One for a domain that is not loaded yet waits for it, and is set up
+        through here again once it is.
+        """
+        try:
             if isinstance(
                 service,
                 ReplaceExistingService,
@@ -352,7 +427,8 @@ class SpookServiceManager:
                     self.hass.services._services[service.domain]  # noqa: SLF001
                 ).pop(service.service)
 
-            self.async_register_service(service)
+            if not self.async_register_service(service):
+                self._waiting_for_domain.setdefault(service.domain, []).append(service)
         # pylint: disable-next=broad-exception-caught
         except Exception:  # noqa: BLE001
             # If the service this one overrides was already unregistered,
@@ -371,17 +447,58 @@ class SpookServiceManager:
                 "Spook service %s failed to set up and has been skipped; "
                 "please report this issue at "
                 "https://github.com/frenck/spook/issues",
-                module.__name__,
+                name,
             )
 
     @callback
-    def async_register_service(self, service: AbstractSpookService) -> None:
-        """Register a Spook service."""
+    def _async_component_loaded(self, event: Event) -> None:
+        """Register the services that were waiting for this domain."""
+        if not (
+            waiting := self._waiting_for_domain.pop(event.data[ATTR_COMPONENT], [])
+        ):
+            return
+
+        for service in waiting:
+            self._async_setup_service(service, type(service).__module__)
+
+        # The descriptions went in with the registration, the translations did
+        # not: those are injected for every registered service in one go.
+        self._async_reinject_service_translations()
+
+    @callback
+    def _async_reinject_service_translations(self) -> None:
+        """Inject the translations again, in a task unloading cancels.
+
+        Injecting waits on loading translations before it writes anything.
+        Left running through an unload, it would write Spook's strings back
+        for actions that were just taken away, after unload put the originals
+        back.
+        """
+        task = self.hass.async_create_task(
+            self.async_inject_service_translations(),
+            "Inject Spook service translations",
+        )
+        self._on_unload.append(task.cancel)
+
+        @callback
+        def _finished(_task: asyncio.Task[None]) -> None:
+            # Already gone when unloading cleared the list and cancelled it.
+            if task.cancel in self._on_unload:
+                self._on_unload.remove(task.cancel)
+
+        task.add_done_callback(_finished)
+
+    @callback
+    def async_register_service(self, service: AbstractSpookService) -> bool:
+        """Register a Spook service.
+
+        Returns False when the domain it belongs to is not loaded (yet).
+        """
         # A service aimed at an integration that is not set up never lands in
         # Home Assistant. Injecting a description for it would then describe
         # an action that does not exist, which core refuses with a KeyError.
         if not service.async_register():
-            return
+            return False
 
         self._services.add(service)
 
@@ -403,6 +520,8 @@ class SpookServiceManager:
                 service=service.service,
                 schema=service_schema,
             )
+
+        return True
 
     @callback
     def _service_schema_key(self, service: AbstractSpookService) -> str:
@@ -439,6 +558,7 @@ class SpookServiceManager:
         domain: str,
         *,
         create: bool = False,
+        category: str = SERVICE_TRANSLATION_CATEGORY,
     ) -> dict[str, str] | None:
         """Return the Home Assistant translation cache for a component."""
         translations_cache = _async_get_translations_cache(self.hass)
@@ -462,14 +582,11 @@ class SpookServiceManager:
         if create:
             return (
                 cache.setdefault(language, {})
-                .setdefault(
-                    SERVICE_TRANSLATION_CATEGORY,
-                    {},
-                )
+                .setdefault(category, {})
                 .setdefault(domain, {})
             )
 
-        return cache.get(language, {}).get(SERVICE_TRANSLATION_CATEGORY, {}).get(domain)
+        return cache.get(language, {}).get(category, {}).get(domain)
 
     @callback
     def _inject_service_translation_strings(
@@ -503,6 +620,67 @@ class SpookServiceManager:
             )
             component_cache[key] = value
 
+    @callback
+    def _selector_translation_keys(self, service: AbstractSpookService) -> set[str]:
+        """Return the selector translation keys a Spook service's fields use."""
+        schema = self._service_schemas.get(self._service_schema_key(service)) or {}
+        keys: set[str] = set()
+        for field_schema in (schema.get("fields") or {}).values():
+            for selector_config in (
+                (field_schema or {}).get("selector") or {}
+            ).values():
+                if isinstance(selector_config, dict) and (
+                    key := selector_config.get("translation_key")
+                ):
+                    keys.add(key)
+        return keys
+
+    @callback
+    def _inject_selector_translation_strings(
+        self,
+        service: AbstractSpookService,
+        cached_spook_translations: dict[str, str],
+    ) -> None:
+        """Inject the option labels of a Spook service's selectors.
+
+        Home Assistant looks a selector's labels up under the domain the action
+        belongs to, `component.todo.selector...` for a `todo` action, and Spook
+        keeps them under its own. Without this, the options show as their raw
+        values.
+        """
+        if not (keys := self._selector_translation_keys(service)):
+            return
+
+        language = self.hass.config.language
+        component_cache = self._translation_component_cache(
+            language,
+            service.domain,
+            create=True,
+            category=SELECTOR_TRANSLATION_CATEGORY,
+        )
+        if component_cache is None:
+            return
+
+        cached_translations = async_get_cached_translations(
+            self.hass,
+            language,
+            SELECTOR_TRANSLATION_CATEGORY,
+            service.domain,
+        )
+
+        for key in keys:
+            spook_prefix = f"component.{DOMAIN}.selector.{key}."
+            target_prefix = f"component.{service.domain}.selector.{key}."
+            for spook_key, value in cached_spook_translations.items():
+                if not spook_key.startswith(spook_prefix):
+                    continue
+                target_key = f"{target_prefix}{spook_key.removeprefix(spook_prefix)}"
+                self._selector_translation_overrides.setdefault(
+                    (language, service.domain, target_key),
+                    cached_translations.get(target_key),
+                )
+                component_cache[target_key] = value
+
     async def async_inject_service_translations(self) -> None:
         """Inject Spook service strings into Home Assistant translations."""
         services = [
@@ -533,21 +711,51 @@ class SpookServiceManager:
                 cached_spook_translations,
             )
 
-    async def _async_core_config_updated(self, event: Event) -> None:
+        domains = {DOMAIN, *(service.domain for service in services)}
+        await async_get_translations(
+            self.hass,
+            self.hass.config.language,
+            SELECTOR_TRANSLATION_CATEGORY,
+            domains,
+        )
+        cached_spook_selector_translations = async_get_cached_translations(
+            self.hass,
+            self.hass.config.language,
+            SELECTOR_TRANSLATION_CATEGORY,
+            DOMAIN,
+        )
+        for service in services:
+            self._inject_selector_translation_strings(
+                service,
+                cached_spook_selector_translations,
+            )
+
+    @callback
+    def _async_core_config_updated(self, event: Event) -> None:
         """Re-inject service translations when the language changes."""
         if "language" not in event.data:
             return
-        await self.async_inject_service_translations()
+        self._async_reinject_service_translations()
 
     @callback
     def async_clear_service_translation_overrides(self) -> None:
         """Restore translation strings that were overridden by Spook."""
-        for (
-            language,
-            domain,
-            key,
-        ), original_value in self._service_translation_overrides.items():
-            component_cache = self._translation_component_cache(language, domain)
+        self._restore(self._service_translation_overrides, SERVICE_TRANSLATION_CATEGORY)
+        self._restore(
+            self._selector_translation_overrides, SELECTOR_TRANSLATION_CATEGORY
+        )
+
+    @callback
+    def _restore(
+        self,
+        overrides: dict[tuple[str, str, str], str | None],
+        category: str,
+    ) -> None:
+        """Put back what Spook overrode, and take away what it only added."""
+        for (language, domain, key), original_value in overrides.items():
+            component_cache = self._translation_component_cache(
+                language, domain, category=category
+            )
             if component_cache is None:
                 continue
 
@@ -556,15 +764,17 @@ class SpookServiceManager:
             else:
                 component_cache[key] = original_value
 
-        self._service_translation_overrides.clear()
+        overrides.clear()
 
     @callback
     def async_on_unload(self) -> None:
         """Tear down the Spook services."""
         LOGGER.debug("Tearing down Spook services")
-        if self._translation_listener:
-            self._translation_listener()
-            self._translation_listener = None
+        # A copy, as cancelling a finished injection takes it off the list.
+        for undo in list(self._on_unload):
+            undo()
+        self._on_unload.clear()
+        self._waiting_for_domain.clear()
 
         for service in self._services:
             LOGGER.debug(

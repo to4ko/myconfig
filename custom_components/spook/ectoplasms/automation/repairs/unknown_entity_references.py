@@ -5,8 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components import automation
-from homeassistant.const import EVENT_COMPONENT_LOADED, EVENT_STATE_CHANGED
-from homeassistant.core import Event, callback
+from homeassistant.const import EVENT_COMPONENT_LOADED
 from homeassistant.helpers import entity_registry as er
 
 from ....action_extraction import (
@@ -14,16 +13,15 @@ from ....action_extraction import (
     async_extract_entities_from_value,
 )
 from ....entity_filtering import async_get_all_entity_ids, async_get_all_services
-from ....repairs import AbstractSpookEntityComponentUnknownReferencesRepair
+from ....reference_extraction import without_disabled_steps
 from ....template_extraction import (
     KNOWN_DOMAINS,
     async_extract_entities_from_config,
     async_filter_known_entity_ids_with_templates,
 )
+from . import AbstractSpookAutomationReferencesRepair
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from homeassistant.core import HomeAssistant
 
 
@@ -260,7 +258,7 @@ async def extract_entities_from_condition_config(
     return entities
 
 
-class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
+class SpookRepair(AbstractSpookAutomationReferencesRepair):
     """Spook repair tries to find unknown referenced entity in automations."""
 
     domain = automation.DOMAIN
@@ -271,6 +269,7 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
     }
     inspect_config_entry_changed = True
     inspect_on_reload = True
+    inspect_on_entity_added_or_removed = True
 
     unavailable_entity_class = automation.UnavailableAutomationEntity
     entity_label = "automation"
@@ -280,31 +279,6 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
 
     _known_entity_ids: set[str]
     _known_services: set[str]
-
-    async def async_activate(self) -> None:
-        """Activate the repair."""
-        await super().async_activate()
-
-        @callback
-        def _state_entity_changed(event_data: Mapping[str, Any]) -> bool:
-            """Return if a state entity was added or removed."""
-            return (
-                event_data.get("old_state") is None
-                or event_data.get("new_state") is None
-            )
-
-        @callback
-        def _async_call_inspect_debouncer(_: Event) -> None:
-            """Trigger an inspection when a state entity is added or removed."""
-            self.inspect_debouncer.async_schedule_call()
-
-        self._event_subs.add(
-            self.hass.bus.async_listen(
-                EVENT_STATE_CHANGED,
-                _async_call_inspect_debouncer,
-                event_filter=_state_entity_changed,
-            ),
-        )
 
     async def _async_setup_inspection(self) -> None:
         """Cache what every automation in this cycle needs looked up.
@@ -318,9 +292,20 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
         )
         self._known_services = async_get_all_services(self.hass)
 
-    def _should_inspect_entity(self, entity: Any) -> bool:
-        """Skip disabled automations."""
-        return entity.enabled
+    async def _async_named_in(self, config: dict[str, Any]) -> set[str]:
+        """Return the entities a configuration names, the way this repair reads it.
+
+        The same reading the report is built from, structure and templates
+        alike, so comparing it with and without the disabled steps leaves out
+        exactly what only those name.
+        """
+        named = await extract_entities_from_automation_config(
+            self.hass, config, self._known_services
+        )
+        named |= await async_extract_entities_from_config(
+            self.hass, config, self._known_services
+        )
+        return named
 
     async def _async_compute_unknown_references(self, entity: Any) -> set[str]:
         """Return unknown entity IDs referenced by ``entity`` (incl. templates)."""
@@ -344,6 +329,15 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
                 self.hass, entity, self._known_services
             )
         )
+
+        # Home Assistant's own list includes disabled steps, triggers and
+        # conditions too. Something parked that way does nothing, so what only
+        # it names is left out of the report: whatever this repair finds in
+        # the configuration, and no longer finds once those are pruned.
+        if isinstance(raw_config := getattr(entity, "raw_config", None), dict):
+            named = await self._async_named_in(raw_config)
+            still_named = await self._async_named_in(without_disabled_steps(raw_config))
+            all_entities -= named - still_named
 
         return await async_filter_known_entity_ids_with_templates(
             self.hass,

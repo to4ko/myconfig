@@ -188,8 +188,13 @@ class QuasarApi:
             },
         )
 
-    async def blink(self, device_id: str, seconds: float = 3.0) -> None:
-        """Включить и через несколько секунд выключить — проверка «то ли это»."""
-        await self.switch(device_id, True)
+    async def blink(
+        self, device_id: str, seconds: float = 3.0, was_on: bool = False
+    ) -> None:
+        """Мигнуть для проверки «то ли это» и оставить как было.
+
+        Выключенное включаем на несколько секунд, горящее — на те же секунды гасим.
+        """
+        await self.switch(device_id, not was_on)
         await asyncio.sleep(seconds)
-        await self.switch(device_id, False)
+        await self.switch(device_id, was_on)

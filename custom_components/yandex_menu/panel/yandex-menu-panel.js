@@ -178,6 +178,44 @@ const ASK_WORDS = {
 const CHIPS_COLLAPSED = 6;
 const STATION_KEY = "yandex_menu.station";
 const HOUSE_KEY = "yandex_menu.house";
+const VIEW_KEY = "yandex_menu.view";
+
+/* Блок «Только что»: сколько последних переключений помнить и как долго. */
+const RECENT_MAX = 3;
+const RECENT_MS = 2 * 60 * 1000;
+
+/* Поиск не различает регистр и «ё/е», лишние пробелы не считает. */
+const norm = (text) =>
+  String(text === null || text === undefined ? "" : text)
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/* Комната во фразе: «в зале», «на кухне». Склоняем только то, в чём уверены:
+   одно слово с обычным окончанием. Остальное остаётся как написано. */
+const ROOM_ON = new Set([
+  "кухня", "балкон", "лоджия", "веранда", "терраса", "улица", "чердак", "мансарда", "этаж",
+  "лестница", "крыша", "дача", "склад", "площадка", "парковка", "стоянка",
+]);
+const ROOM_FORMS = {
+  санузел: "в санузле", двор: "во дворе", сад: "в саду", угол: "в углу", шкаф: "в шкафу",
+  большая: "в большой", подъезд: "в подъезде",
+};
+const inRoom = (room) => {
+  const word = String(room || "").trim().toLowerCase();
+  if (ROOM_FORMS[word]) return ROOM_FORMS[word];
+  let form = word;
+  if (/^[а-яё]+$/.test(word)) {
+    if (/[жшчщ]ая$/.test(word)) form = word.slice(0, -2) + "ей";
+    else if (/ая$/.test(word)) form = word.slice(0, -2) + "ой";
+    else if (/яя$/.test(word)) form = word.slice(0, -2) + "ей";
+    else if (/ия$/.test(word)) form = word.slice(0, -1) + "и";
+    else if (/[ая]$/.test(word)) form = word.slice(0, -1) + "е";
+    else if (/[бвгджзклмнпрстфхцчшщ]$/.test(word) && !/(ок|ек|ёк|ец)$/.test(word)) form = word + "е";
+  }
+  return `${ROOM_ON.has(word) ? "на" : "в"} ${form}`;
+};
 
 const STYLES = `
   :host {
@@ -269,6 +307,9 @@ const STYLES = `
   .btn[disabled] { opacity: .45; cursor: default; }
 
   .body { flex: 1; display: flex; min-height: 0; }
+  .main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+  .views { display: flex; padding: 12px 16px 0; }
+  .views[hidden] { display: none; }
   .list {
     flex: 1; overflow-y: auto; padding: 16px 16px calc(16px + var(--safe-bottom));
     display: flex; flex-direction: column; gap: 22px;
@@ -309,6 +350,37 @@ const STYLES = `
   .chips { display: flex; flex-wrap: wrap; gap: 5px; }
   .chip { font-size: 11.5px; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
   .chip.primary { background: rgba(3,169,244,.16); color: var(--accent); font-weight: 500; }
+  /* строка черновика: настройки ещё читаются — по ней пробегает блик */
+  .row.pending .chip.ghost {
+    width: 64px; height: 1.5em; padding: 0;
+    background: linear-gradient(90deg, var(--surface-2) 25%, color-mix(in srgb, var(--surface-2) 40%, var(--primary-text-color) 12%) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .row.pending .entity { font-family: inherit; font-style: italic; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  /* дочитанная строка проявляется */
+  .row.fresh .chips, .row.fresh .meta, .row.fresh .entity { animation: appear .6s ease-out; }
+  @keyframes appear { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .row.pending .chip.ghost { animation: none; }
+    .row.fresh .chips, .row.fresh .meta, .row.fresh .entity { animation: none; }
+  }
+  .reading {
+    margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; background: var(--surface);
+    font-size: 13px; color: var(--muted); line-height: 1.45;
+  }
+  .reading b { color: var(--primary-text-color); font-weight: 500; }
+  .reading .bar { height: 4px; margin-top: 8px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+  .reading .bar i { display: block; height: 100%; background: var(--accent); transition: width .4s ease; }
+  .note { font-size: 11.5px; color: var(--muted); }
+  .note.now { color: var(--accent); }
+  .act { margin-left: auto; font-size: 12.5px; color: var(--accent); white-space: nowrap; }
+  .row[disabled] { cursor: default; opacity: .5; }
+  .row[disabled]:hover { background: transparent; }
+  .row[disabled] .act { color: var(--muted); }
+  .lead { padding: 12px 14px; font-size: 13px; color: var(--muted); }
+  .lead b { color: var(--primary-text-color); font-weight: 500; }
+  .tip { margin: 0; font-size: 12.5px; color: var(--muted); }
   .role { font-size: 11.5px; color: var(--muted); }
   .role b { color: var(--primary-text-color); font-weight: 500; }
   .meta { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -396,6 +468,7 @@ const STYLES = `
   }
 
   .empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+  .empty .btn { margin-top: 12px; }
   .loader { padding: 40px 16px; text-align: center; color: var(--muted); }
   .loader .what { color: var(--primary-text-color); }
   .loader .left { margin-top: 4px; font-size: 13px; }
@@ -413,6 +486,7 @@ const STYLES = `
     max-width: 90vw;
   }
   .toast[hidden] { display: none; }
+  .toast.error { background: var(--danger); color: #fff; border-radius: 14px; }
   .busy { opacity: .55; pointer-events: none; }
 
   @media (max-width: 900px) {
@@ -442,6 +516,8 @@ class YandexMenuPanel extends HTMLElement {
     this._query = "";
     this._message = null;
     this._busy = false;
+    this._refreshing = false; // идёт «Обновить список» — список при этом рабочий
+    this._edits = 0; // сколько правок учёл список на экране (счёт сервера)
     this._loaded = false;
     // Список приходит из трёх мест: сохранённый, свежий и ответ на действие.
     // Каждый запрос получает номер, и на экране остаётся ответ самого позднего.
@@ -450,6 +526,8 @@ class YandexMenuPanel extends HTMLElement {
     this._loading = 0; // сколько обновлений списка сейчас в пути
     this._savedAt = null; // на экране сохранённый список — когда его прочитали
     this._progress = null; // как далеко зашла сборка списка: дом, сколько прочитано
+    this._fresh = new Set(); // строки, дочитанные к этой отрисовке, — они проявляются
+    this._listTimer = null;
     this._unsubProgress = null;
     this._room = null; // открыта карточка комнаты вместо устройства
     // Карточка открывалась сменой поля и следа в истории браузера не оставляла:
@@ -464,6 +542,16 @@ class YandexMenuPanel extends HTMLElement {
     this._expanded = {}; // строки, где показаны все значения
     this._sayRows = {}; // строки фраз последней отрисовки, для кнопки «проверить»
     this._scrollToSkills = false;
+    this._view = "all"; // что показывает список: всё или только включённое
+    this._seen = new Map(); // устройство → было ли включено: так ловим переключения
+    this._states = null; // состояния HA прошлого раза: не сменились — считать нечего
+    this._onSig = ""; // какие устройства открытого дома включены
+    this._onCount = 0;
+    this._recent = []; // последние переключения, свежие первыми
+    this._recentTimer = null;
+    this._draft = null; // недописанное имя: карточка переписывается целиком, поле — нет
+    this._confirm = null; // о пересечении имён уже предупредили — второе нажатие добавит
+    this._focusName = false;
     // Выбранная Станция — своя в каждом доме. Раньше хранилась одной строкой.
     this._stationByHouse = {};
     this._house = null;
@@ -477,6 +565,11 @@ class YandexMenuPanel extends HTMLElement {
       this._house = localStorage.getItem(HOUSE_KEY);
     } catch (err) {
       this._house = null;
+    }
+    try {
+      if (localStorage.getItem(VIEW_KEY) === "on") this._view = "on";
+    } catch (err) {
+      this._view = "all";
     }
   }
 
@@ -493,6 +586,13 @@ class YandexMenuPanel extends HTMLElement {
     }
     this._syncMenu();
     this._refreshLit();
+    // Состояния в HA меняются постоянно, а нам нужны только вкл/выкл устройств
+    // из списка: объект состояний тот же — ничего не случилось.
+    if (hass.states === this._states) return;
+    const before = this._onSig;
+    const moved = this._trackOn();
+    this._renderViews();
+    if (this._view === "on" && this._data && (moved || before !== this._onSig)) this._renderList();
   }
 
   set narrow(value) {
@@ -515,6 +615,7 @@ class YandexMenuPanel extends HTMLElement {
     else if (card) this._render();
     window.addEventListener("popstate", this._onPop);
     if (this._loaded) this._watchProgress();
+    this._armRecent();
   }
 
   disconnectedCallback() {
@@ -524,6 +625,10 @@ class YandexMenuPanel extends HTMLElement {
       this._unsubProgress = null;
     }
     clearTimeout(this._toastTimer);
+    clearTimeout(this._listTimer);
+    this._listTimer = null;
+    clearTimeout(this._recentTimer);
+    this._recentTimer = null;
     // Свою запись здесь не снимаем: history.back() посреди чужой навигации
     // отменил бы переход, который пользователь только что сделал.
   }
@@ -559,6 +664,8 @@ class YandexMenuPanel extends HTMLElement {
     this._room = null;
     this._backRoom = null;
     this._message = null;
+    this._draft = null;
+    this._confirm = null;
     this._dropCardHistory();
   }
 
@@ -642,6 +749,27 @@ class YandexMenuPanel extends HTMLElement {
     return true;
   }
 
+  /** Долгая сборка шла минутами, а правки отвечали по ходу — ответ сборки
+      пришёл «старым» номером. Брать его можно, если он учёл все правки,
+      которые уже на экране: сервер считает их и пишет счёт в список. */
+  _covers(data) {
+    return Boolean(data) && typeof data.edits === "number" && data.edits >= this._edits;
+  }
+
+  /** На экране неполный список, а сборка уже кончилась — дочитывать его некому.
+      Так бывает, когда ответ на правку пришёл позже конца долгой сборки или
+      её ответ не взяли. Просим список ещё раз: всё прочитанное уже в памяти. */
+  _healPartial() {
+    if (!this._data || !this._data.partial || this._progress || this._loading > 0) return;
+    this._load(false);
+  }
+
+  _setData(data) {
+    this._data = data;
+    // не максимум: после перезапуска HA счёт сервера начинается с нуля
+    if (data && typeof data.edits === "number") this._edits = data.edits;
+  }
+
   /** Ход сборки списка. В большом доме первая сборка идёт минутами: Яндекс
       отдаёт настройки каждого устройства отдельно, и видно должно быть, что
       работа идёт, а не зависла. */
@@ -650,8 +778,18 @@ class YandexMenuPanel extends HTMLElement {
     this._unsubProgress = this._hass.connection.subscribeMessage(
       (state) => {
         this._progress = state || null;
+        if (state && state.preview) this._takePreview(state.preview);
+        if (state && state.ready) this._takeReady(state.ready);
+        if (!state) this._healPartial();
         this._renderStatus();
-        if (!this._data && !this._error) this._renderList();
+        if (!this._data) {
+          if (!this._error) this._renderList();
+        } else if (state && (state.ready || state.preview)) {
+          this._scheduleList();
+        } else {
+          // Список целиком не трогаем: перерисовка съедала бы нажатия и прокрутку
+          this._renderReading();
+        }
       },
       { type: "yandex_menu/progress" }
     );
@@ -660,6 +798,61 @@ class YandexMenuPanel extends HTMLElement {
       // без прогресса панель работает как раньше
       if (this._unsubProgress === mine) this._unsubProgress = null;
     });
+  }
+
+  /** Черновик списка: дома, комнаты и основные имена пришли одним запросом,
+      остальное дочитывается. Берём его, только когда показать нечего: сохранённый
+      список полнее черновика. */
+  _takePreview(preview) {
+    // свежий черновик заменяет и прежний — например, после обрыва связи
+    if (this._data && !this._data.partial) return;
+    this._data = preview;
+    this._syncHouse();
+    this._render();
+  }
+
+  /** Дочитанные строки — на место черновых (или поверх сохранённого списка). */
+  _takeReady(rows) {
+    const data = this._data;
+    if (!data || !data.devices) return;
+    const index = new Map(data.devices.map((device, position) => [device.id, position]));
+    for (const row of rows) {
+      const position = index.get(row.id);
+      if (position === undefined) {
+        if (!data.partial) continue; // в сохранённом списке такого нет — придёт с полным
+        index.set(row.id, data.devices.length);
+        data.devices.push(row);
+      } else {
+        if (data.devices[position].pending) this._fresh.add(row.id);
+        data.devices[position] = row;
+      }
+    }
+  }
+
+  /** Строки дочитываются пачками — перерисовываем не чаще раза в полсекунды. */
+  _scheduleList() {
+    if (this._listTimer || !this.isConnected) return;
+    this._listTimer = setTimeout(() => {
+      this._listTimer = null;
+      this._renderList();
+      this._renderHouses();
+      this._renderPanel(); // открытая карточка комнаты или дочитанного устройства
+      this._fresh.clear();
+    }, 500);
+  }
+
+  /** Только полоска над черновым списком. */
+  _renderReading() {
+    const box = this.shadowRoot.querySelector(".reading");
+    const html = this._readingHtml();
+    if (!box || !html) {
+      // полоски ещё нет или пора её убрать — это уже перерисовка списка
+      if (box || html) this._scheduleList();
+      return;
+    }
+    const holder = document.createElement("div");
+    holder.innerHTML = html;
+    box.replaceWith(holder.firstElementChild);
   }
 
   /** «около 3 минут» по оценке сервера. */
@@ -706,8 +899,8 @@ class YandexMenuPanel extends HTMLElement {
     this._renderStatus();
     try {
       const data = await this._call("yandex_menu/list", { force });
-      if (this._take(seq)) {
-        this._data = data;
+      if (this._take(seq) || this._covers(data)) {
+        this._setData(data);
         this._savedAt = null;
         this._error = null;
         this._syncHouse();
@@ -717,47 +910,110 @@ class YandexMenuPanel extends HTMLElement {
       // На экране список новее этого запроса — ошибка к нему уже не относится.
       // Иначе она видна: без списка — во весь экран, при старом — значком в шапке.
       if (seq >= this._shown) this._error = err && err.message ? err.message : String(err);
-    } finally {
       this._loading -= 1;
+      this._render();
+      return; // при ошибке не повторяем — иначе без связи запросы шли бы по кругу
     }
+    this._loading -= 1;
     this._render();
+    // ответ не взяли, а на экране черновик — полный список сервер уже собрал
+    this._healPartial();
   }
 
-  async _act(type, payload, successText) {
+  /** Правка: запрос, новый список в ответ.
+
+      options.field: "name" — правка из поля имени: ошибку показываем под ним.
+      options.failed — ошибку показываем всплывашкой с этим началом: так её видно
+      и из списка, и когда раздел имён уехал за край карточки.
+      options.gone — устройство, которое после правки исчезает: карточку закрываем.
+      options.done — что сделать после удачи, до перерисовки. */
+  async _act(type, payload, successText, options = {}) {
+    if (this._busy) return;
     const seq = ++this._seq;
     this._busy = true;
-    this._render();
+    // Карточку здесь не перерисовываем: поле имени потеряло бы фокус
+    const layout = this.shadowRoot.querySelector(".layout");
+    if (layout) layout.classList.add("busy");
+    this._renderStatus();
     try {
       const data = await this._call(type, payload);
       if (this._take(seq)) {
-        this._data = data;
+        this._setData(data);
         this._savedAt = null;
         this._error = null;
       }
       this._syncHouse();
       this._dropGoneCard();
+      if (options.gone && this._selected === options.gone) this._closeCard();
       this._message = null;
+      if (options.done) options.done();
       const notice = this._data && this._data.notice;
       if (notice) this._toast(notice);
       else if (successText) this._toast(successText);
+      this._healPartial();
     } catch (err) {
       const text = err && err.message ? err.message : String(err);
-      this._message = { level: "error", text };
+      if (options.failed) this._toast(`${options.failed}: ${text}`, true);
+      else this._message = { level: "error", text, typed: options.field === "name" };
     } finally {
       this._busy = false;
+      if (options.field === "name") this._focusName = true;
       this._render();
     }
   }
 
-  _toast(text) {
+  /** «Обновить список». В большом доме Яндекс перечитывается минутами, поэтому
+      экран не блокируем: список остаётся рабочим, строки обновляются на месте,
+      ход виден в шапке. Правки по ходу отвечают сразу, не дожидаясь конца. */
+  async _refresh() {
+    if (this._refreshing) return;
+    const seq = ++this._seq;
+    this._refreshing = true;
+    this._loading += 1;
+    this._message = null;
+    this._render();
+    try {
+      const data = await this._call("yandex_menu/discovery", {});
+      // Правки по ходу отвечали сами. Перечитанное берём, если оно их учло;
+      // иначе на экране и так свежее, а строки уже обновились по ходу.
+      if (this._take(seq) || this._covers(data)) {
+        this._setData(data);
+        this._savedAt = null;
+        this._error = null;
+        this._syncHouse();
+        this._dropGoneCard();
+      } else {
+        // перечитанное учло не все правки — просим список ещё раз, он соберётся из памяти
+        setTimeout(() => this._load(false), 0);
+      }
+      // об удаче не сообщаем: кнопка сама вернулась из «Обновляю…»
+      if (data && data.notice) this._toast(data.notice);
+    } catch (err) {
+      // список на экране остаётся прежним: ошибка — жёлтым значком в шапке и всплывашкой
+      this._error = err && err.message ? err.message : String(err);
+      this._toast(`Список не обновился: ${this._error}`);
+    } finally {
+      this._refreshing = false;
+      this._loading -= 1;
+      this._render();
+    }
+  }
+
+  /** Всплывашка. Ошибка висит дольше и выглядит иначе: её нельзя пропустить. */
+  _toast(text, failed = false) {
     const toast = this.shadowRoot.getElementById("toast");
     if (!toast) return;
     toast.textContent = text;
+    toast.classList.toggle("error", failed);
+    toast.setAttribute("role", failed ? "alert" : "status");
     toast.hidden = false;
     clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => {
-      toast.hidden = true;
-    }, 3200);
+    this._toastTimer = setTimeout(
+      () => {
+        toast.hidden = true;
+      },
+      failed ? 8000 : 3200
+    );
   }
 
   /* ---------------------------------------------------------------- данные */
@@ -854,6 +1110,122 @@ class YandexMenuPanel extends HTMLElement {
     const entity = device.external_id ? states[device.external_id] : null;
     if (entity) return ON_STATES.has(entity.state);
     return device.on === true;
+  }
+
+  /** Есть ли у устройства живая сущность в Home Assistant. У остальных состояние
+      известно только на момент чтения списка. */
+  _live(device) {
+    const states = (this._hass && this._hass.states) || {};
+    return Boolean(device.external_id && states[device.external_id]);
+  }
+
+  /** Сверяем, что включено, с прошлым разом. Возвращает true, если поймали
+      переключение — оно попадает в «Только что».
+
+      Переключением считаем только смену состояния сущности HA у того же самого
+      объекта устройства: перечитанный список приносит новые объекты, и разница
+      между двумя чтениями Яндекса — не «только что». */
+  _trackOn() {
+    this._states = (this._hass && this._hass.states) || null;
+    const seen = new Map();
+    const lit = [];
+    const now = Date.now();
+    let moved = false;
+    for (const device of this._devices) {
+      const on = this._isOn(device);
+      const before = this._seen.get(device.id);
+      // «недоступно» — не выключение: после перезапуска Zigbee лампы «включаются»
+      // сами, и никто их при этом не трогал
+      const entity = device.external_id && this._states ? this._states[device.external_id] : null;
+      const known = Boolean(entity) && entity.state !== "unavailable" && entity.state !== "unknown";
+      if (before && before.device === device && before.known && known && before.on !== on) {
+        this._recent = this._recent.filter((item) => item.id !== device.id);
+        this._recent.unshift({ id: device.id, on, at: now });
+        moved = true;
+      }
+      seen.set(device.id, { device, on, known });
+      if (on && this._inHouse(device)) lit.push(device.id);
+    }
+    this._seen = seen;
+    this._onSig = lit.join("|");
+    this._onCount = lit.length;
+    if (moved) {
+      this._recent = this._recent.slice(0, RECENT_MAX * 4); // с запасом: часть может быть из другого дома
+      this._armRecent();
+    }
+    return moved;
+  }
+
+  /** Последние переключения открытого дома — пока им меньше пары минут. */
+  _recentRows() {
+    const now = Date.now();
+    return this._recent
+      .filter((item) => now - item.at < RECENT_MS)
+      .map((item) => [item, this._device(item.id)])
+      .filter(([, device]) => device && !device.pending && this._inHouse(device))
+      .slice(0, RECENT_MAX);
+  }
+
+  /** Один таймер на срок годности самой старой записи «Только что». */
+  _armRecent() {
+    clearTimeout(this._recentTimer);
+    this._recentTimer = null;
+    const now = Date.now();
+    this._recent = this._recent.filter((item) => now - item.at < RECENT_MS);
+    if (!this._recent.length || !this.isConnected) return;
+    const oldest = this._recent[this._recent.length - 1];
+    this._recentTimer = setTimeout(() => {
+      this._armRecent();
+      if (this._view === "on" && this._data && !this._query.trim()) this._renderList();
+    }, oldest.at + RECENT_MS - now + 50);
+  }
+
+  _setView(view) {
+    if (view === this._view) return;
+    this._view = view;
+    try {
+      localStorage.setItem(VIEW_KEY, view);
+    } catch (err) {
+      // без localStorage выбор проживёт до перезагрузки страницы
+    }
+    this._renderViews();
+    this._renderList();
+  }
+
+  /** Переключатель «Все / Включено». Число обновляется на месте. */
+  _renderViews() {
+    const host = this.shadowRoot.getElementById("views");
+    if (!host) return;
+    host.hidden = !this._data;
+    for (const button of host.querySelectorAll("[data-view]")) {
+      const on = button.getAttribute("data-view") === this._view;
+      button.classList.toggle("on", on);
+      button.setAttribute("aria-pressed", String(on));
+    }
+    const count = host.querySelector(".n");
+    const text = `· ${this._onCount}`;
+    if (count && count.textContent !== text) count.textContent = text;
+  }
+
+  /** Слова запроса: искать можно в любом порядке, найтись должны все. */
+  _words() {
+    return norm(this._query).split(" ").filter(Boolean);
+  }
+
+  _hit(text, words) {
+    const where = norm(text);
+    return words.every((word) => where.includes(word));
+  }
+
+  /** По чему ищется устройство: имена, сущность и комната. */
+  _deviceText(device) {
+    return `${device.names.join(" ")} ${device.external_id || ""} ${device.room || "Без комнаты"}`;
+  }
+
+  /** Запрос, который можно сделать именем: Яндекс принимает кириллицу и цифры. */
+  _nameWord() {
+    const word = this._query.trim().replace(/\s+/g, " ");
+    return word.length >= 2 && /^[а-яё0-9 -]+$/i.test(word) && /[а-яё]/i.test(word) ? word : "";
   }
 
   /** Состояния в HA меняются постоянно — обновляем только подсветку, без перерисовки. */
@@ -973,7 +1345,7 @@ class YandexMenuPanel extends HTMLElement {
     for (const prop of skills.properties || []) {
       if (prop.kind === "float") {
         const [question, aboutRoom] = ASK_WORDS[prop.instance] || [`какой ${prop.name || prop.instance}`, false];
-        const phrase = aboutRoom && room ? `${question} в ${room}` : `${question} у ${name}`;
+        const phrase = aboutRoom && room ? `${question} ${inRoom(room)}` : `${question} у ${name}`;
         if (!asks.some(([word]) => word === question)) asks.push([question, phrase]);
       } else if (prop.kind === "event") {
         for (const event of prop.events || []) if (!events.includes(event)) events.push(event);
@@ -992,7 +1364,7 @@ class YandexMenuPanel extends HTMLElement {
 
   /** Команды на комнату: свет по ролям и весь дом. */
   _roomWords(room, devices) {
-    const where = room.toLowerCase();
+    const where = inRoom(room);
     const lights = devices.filter((device) => /light/.test(device.current_type || device.type || ""));
     const main = lights.filter((device) => !device.role || device.role.endsWith("main"));
     const rows = [];
@@ -1001,8 +1373,8 @@ class YandexMenuPanel extends HTMLElement {
         id: "room-light",
         label: "Свет в комнате",
         chips: [
-          ["включи свет", `включи свет в ${where}`],
-          ["выключи свет", `выключи свет в ${where}`],
+          ["включи свет", `включи свет ${where}`],
+          ["выключи свет", `выключи свет ${where}`],
         ],
       });
     }
@@ -1011,8 +1383,8 @@ class YandexMenuPanel extends HTMLElement {
         id: "room-brightness",
         label: "Яркость в комнате",
         chips: [
-          ["ярче", `сделай свет в ${where} ярче`],
-          ["темнее", `сделай свет в ${where} темнее`],
+          ["ярче", `сделай свет ${where} ярче`],
+          ["темнее", `сделай свет ${where} темнее`],
         ],
       });
     }
@@ -1232,7 +1604,15 @@ class YandexMenuPanel extends HTMLElement {
           <button class="btn" id="discover">Обновить список</button>
         </header>
         <div class="body">
-          <div class="list" id="list"></div>
+          <div class="main">
+            <nav class="views" id="views" aria-label="Что показывать" hidden>
+              <div class="houses">
+                <button data-view="all">Все</button>
+                <button data-view="on" title="Только то, что сейчас включено">Включено<span class="n"></span></button>
+              </div>
+            </nav>
+            <div class="list" id="list"></div>
+          </div>
           <aside class="panel" id="panel" hidden></aside>
         </div>
         <div class="toast" id="toast" hidden></div>
@@ -1250,6 +1630,7 @@ class YandexMenuPanel extends HTMLElement {
       account.textContent = info && info.name ? info.name : "";
     }
     this._renderHouses();
+    this._renderViews();
     this._renderStatus();
     this._syncMenu();
     const layout = root.querySelector(".layout");
@@ -1289,9 +1670,15 @@ class YandexMenuPanel extends HTMLElement {
     sync.classList.toggle("spin", loading || Boolean(progress));
     sync.classList.toggle("warn", failed);
     // Поверх списка — только счётчик: подробности в подсказке значка
+    const discover = this.shadowRoot.getElementById("discover");
+    if (discover) {
+      discover.disabled = this._refreshing;
+      discover.textContent = this._refreshing ? "Обновляю…" : "Обновить список";
+    }
     const note = this.shadowRoot.getElementById("syncnote");
     if (note) {
-      const text = progress && this._data ? `${progress.done} из ${progress.total}` : "";
+      // над черновым списком своя полоска — счётчик в шапке её только дублировал бы
+      const text = progress && this._data && !this._data.partial ? `${progress.done} из ${progress.total}` : "";
       note.hidden = !text;
       if (note.textContent !== text) note.textContent = text;
     }
@@ -1346,6 +1733,25 @@ class YandexMenuPanel extends HTMLElement {
     );
   }
 
+  /** Полоска над черновым списком: что читаю и сколько осталось. */
+  _readingHtml() {
+    if (!this._data || !this._data.partial) return "";
+    const progress = this._progressText();
+    if (!progress) {
+      return this._error
+        ? `<div class="reading">Список дочитан не до конца: ${this._esc(this._error)}</div>`
+        : "";
+    }
+    const percent = Math.round((progress.done / progress.total) * 100);
+    const hint =
+      progress.total > 100
+        ? `<br>Яндекс отдаёт настройки каждого устройства по отдельности, поэтому первый раз это долго. Дальше панель будет открываться сразу.`
+        : "";
+    return `<div class="reading" role="status"><b>${this._esc(progress.what)}</b> · ${this._esc(
+      progress.left
+    )}. Строки с бликом ещё дочитываются.${hint}<div class="bar"><i style="width:${percent}%"></i></div></div>`;
+  }
+
   _loaderHtml() {
     const progress = this._progressText();
     if (!progress) return `<div class="loader"><div class="what">Читаю Яндекс-дом…</div></div>`;
@@ -1364,13 +1770,85 @@ class YandexMenuPanel extends HTMLElement {
     </div>`;
   }
 
+  /** Строка устройства. extra: note — пометка под именем, now — она про «только что»,
+      place — вместо сущности показать комнату, act — подпись действия справа,
+      nameit — нажатие назовёт устройство словом из поиска. */
+  _rowHtml(device, extra = {}) {
+    const chips = device.names
+      .map((name, index) => `<span class="chip${index === 0 ? " primary" : ""}">${this._esc(name)}</span>`)
+      .join("");
+    const classes = ["row"];
+    if (device.id === this._selected) classes.push("selected");
+    if (this._isOn(device)) classes.push("lit");
+    if (device.pending) classes.push("pending");
+    if (this._fresh.has(device.id)) classes.push("fresh");
+    const entity = device.pending ? "дочитываю настройки…" : device.external_id || "устройство Яндекса";
+    const under = extra.place
+      ? `<span class="note">${this._esc(device.room || "Без комнаты")}</span>`
+      : `<span class="entity">${this._esc(entity)}</span>`;
+    const note = extra.note
+      ? `<br><span class="note${extra.now ? " now" : ""}"${
+          extra.noteTitle ? ` title="${this._esc(extra.noteTitle)}"` : ""
+        }>${this._esc(extra.note)}</span>`
+      : "";
+    const meta = extra.act
+      ? `<span class="act">${this._esc(extra.act)}</span>`
+      : `<span class="skills">${this._skillIcons(device)}</span>
+            <span class="role" title="${this._roleWord(device)}">${
+              this._roleShort(device) ? `<b>${this._roleShort(device)}</b>` : ""
+            }</span>`;
+    return `<button class="${classes.join(" ")}" data-id="${this._esc(device.id)}"${
+      extra.nameit ? " data-nameit" : ""
+    }${extra.disabled ? " disabled" : ""}>
+          <span class="avatar">${this._svg(this._iconFor(device), 18)}</span>
+          <span><span class="title">${this._esc(device.names[0])}</span><br>
+            ${under}${note}</span>
+          <span class="chips">${chips}${device.pending ? `<span class="chip ghost" aria-hidden="true"></span>` : ""}</span>
+          <span class="meta">${meta}</span>
+        </button>`;
+  }
+
+  /** «Только что»: щёлкнули выключателем — и видно, как это устройство зовут. */
+  _recentHtml() {
+    const rows = this._recentRows();
+    if (!rows.length) return "";
+    let html = `<section><div class="room-head"><h2>Только что</h2></div><div class="card">`;
+    for (const [item, device] of rows) {
+      const opens = /openable|curtain/.test(device.current_type || device.type || "");
+      const what = opens ? (item.on ? "открылось" : "закрылось") : item.on ? "включилось" : "выключилось";
+      html += this._rowHtml(device, { note: `только что ${what}`, now: true });
+    }
+    return `${html}</div></section>`;
+  }
+
+  /** Поиск ничего не нашёл: предлагаем сделать слово именем устройства. */
+  _nameItHtml(devices, word) {
+    const limit = (this._data && this._data.max_names) || LIMIT_FALLBACK;
+    const taken = `уже ${limit} ${this._plural(limit, "имя", "имени", "имён")}`;
+    // включённые первыми: чаще всего ищут то, что сейчас горит
+    const order = [...devices].sort((left, right) => Number(this._isOn(right)) - Number(this._isOn(left)));
+    let html = `<section><div class="room-head"><h2>Назвать так</h2></div><div class="card">
+      <div class="lead">${
+        this._houseId ? "В этом доме" : "В Яндекс-доме"
+      } так ничего не называется. Выберите, что вы так зовёте, — добавлю имя <b>«${this._esc(
+        word
+      )}»</b>.</div>`;
+    for (const device of order) {
+      const full = device.names.length >= limit;
+      html += this._rowHtml(device, { place: true, nameit: true, disabled: full, act: full ? taken : "назвать так" });
+    }
+    return `${html}</div></section>`;
+  }
+
   _renderList() {
     const host = this.shadowRoot.getElementById("list");
     if (!host) return;
+    this._trackOn();
+    this._renderViews();
     // Список переписывается целиком, поэтому прокрутку держим руками: закрыв
     // карточку, человек должен оказаться там, где нажал на лампу. А вот при
-    // смене дома или поиска список уже другой — его правильно показать сверху.
-    const shape = `${this._houseId || ""}|${this._query}`;
+    // смене дома, вида или поиска список уже другой — его правильно показать сверху.
+    const shape = `${this._houseId || ""}|${this._query}|${this._view}`;
     const keepScroll = shape === this._listShape ? host.scrollTop : 0;
 
     if (!this._data) {
@@ -1380,10 +1858,12 @@ class YandexMenuPanel extends HTMLElement {
       return;
     }
 
-    const query = this._query.trim().toLowerCase();
-    const match = (device) =>
-      !query ||
-      (device.names.join(" ") + " " + (device.external_id || "")).toLowerCase().includes(query);
+    const words = this._words();
+    const query = words.length > 0;
+    const onView = this._view === "on";
+    const match = (device) => this._hit(this._deviceText(device), words);
+    // вид «Включено» работает вместе с поиском: нужно и то и другое
+    const shown = (device) => match(device) && (!onView || this._isOn(device));
 
     const houseId = this._houseId;
     const devices = this._houseDevices;
@@ -1397,14 +1877,14 @@ class YandexMenuPanel extends HTMLElement {
       }
     }
 
-    let html = "";
+    let html = this._readingHtml();
     if (query && houseId) {
       // поиск идёт по открытому дому, но находки в других домах не прячем
       const elsewhere = this._houses
         .filter((house) => house.id !== houseId)
         .map((house) => [
           house,
-          this._devices.filter((device) => device.household_id === house.id && match(device)).length,
+          this._devices.filter((device) => device.household_id === house.id && shown(device)).length,
         ])
         .filter(([, count]) => count);
       if (elsewhere.length)
@@ -1419,10 +1899,30 @@ class YandexMenuPanel extends HTMLElement {
       const house = this._houses.find((item) => item.id === houseId);
       html += `<div class="empty">В доме «${this._esc(house.name)}» пока нет устройств.</div>`;
     }
+
+    const matched = devices.filter(match);
+    const visible = onView ? matched.filter((device) => this._isOn(device)) : matched;
+    const allScenarios = (this._data.scenarios || []).filter(
+      (item) =>
+        (!houseId || !(item.households || []).length || item.households.includes(houseId)) &&
+        this._hit(`${item.name} ${item.phrases.join(" ")}`, words)
+    );
+    // Слово не нашлось нигде — возможно, так устройство зовут дома. В черновике
+    // не предлагаем: вторые имена недочитанных устройств ещё не известны.
+    const word =
+      query && devices.length && !matched.length && !allScenarios.length && !this._data.partial
+        ? this._nameWord()
+        : "";
+
+    if (onView && !query && devices.length) {
+      const recent = this._recentHtml();
+      if (recent) html += recent;
+      else if (devices.some((device) => this._live(device)))
+        html += `<p class="tip">Переключите что-нибудь — покажу, как это зовут.</p>`;
+    }
+
     for (const room of rooms) {
-      const items = devices.filter(
-        (device) => (device.room || "Без комнаты") === room && match(device)
-      );
+      const items = visible.filter((device) => (device.room || "Без комнаты") === room);
       if (!items.length) continue;
       const roomButton =
         room === "Без комнаты"
@@ -1433,37 +1933,37 @@ class YandexMenuPanel extends HTMLElement {
       html += `<section><div class="room-head"><h2>${this._esc(room)}</h2><span class="count">${
         items.length
       }</span>${roomButton}</div><div class="card">`;
-      for (const device of items) {
-        const chips = device.names
-          .map(
-            (name, index) =>
-              `<span class="chip${index === 0 ? " primary" : ""}">${this._esc(name)}</span>`
-          )
-          .join("");
-        const classes = ["row"];
-        if (device.id === this._selected) classes.push("selected");
-        if (this._isOn(device)) classes.push("lit");
-        html += `<button class="${classes.join(" ")}" data-id="${device.id}">
-          <span class="avatar">${this._svg(this._iconFor(device), 18)}</span>
-          <span><span class="title">${this._esc(device.names[0])}</span><br>
-            <span class="entity">${this._esc(device.external_id || "устройство Яндекса")}</span></span>
-          <span class="chips">${chips}</span>
-          <span class="meta">
-            <span class="skills">${this._skillIcons(device)}</span>
-            <span class="role" title="${this._roleWord(device)}">${
-              this._roleShort(device) ? `<b>${this._roleShort(device)}</b>` : ""
-            }</span>
-          </span>
-        </button>`;
-      }
+      for (const device of items)
+        html += this._rowHtml(
+          device,
+          onView && !this._live(device)
+            ? { note: "по данным Яндекса", noteTitle: "Состояние на момент, когда читался список" }
+            : {}
+        );
       html += `</div></section>`;
     }
 
-    const scenarios = (this._data.scenarios || []).filter(
-      (item) =>
-        (!houseId || !(item.households || []).length || item.households.includes(houseId)) &&
-        (!query || (item.name + " " + item.phrases.join(" ")).toLowerCase().includes(query))
-    );
+    if (onView) {
+      const off = matched.length - visible.length;
+      if (query && off)
+        html += `<div class="elsewhere">Среди выключенных нашлось ${off}<button class="chip go" data-view="all">Показать</button></div>`;
+      else if (!visible.length && !query && devices.length)
+        html += `<div class="empty">Сейчас ничего не включено.<br><button class="btn" data-view="all">Показать всё</button></div>`;
+      else if (!visible.length && query && !word)
+        html += `<div class="empty">Среди включённого ничего не нашлось.<br><button class="btn" data-view="all">Показать всё</button></div>`;
+    }
+
+    if (word) html += this._nameItHtml(devices, word);
+
+    if (onView && !word) {
+      // сценарии и «Отдать в Алису» в этом виде не показываем: он про то, что горит
+      host.innerHTML = html;
+      host.scrollTop = keepScroll;
+      this._listShape = shape;
+      return;
+    }
+
+    const scenarios = allScenarios;
     if (scenarios.length) {
       const station = this._stationFor(null);
       html += `<section><div class="room-head"><h2>Сценарии</h2><span class="count">${scenarios.length}</span></div><div class="card">`;
@@ -1494,9 +1994,21 @@ class YandexMenuPanel extends HTMLElement {
       html += `</div></section>`;
     }
 
+    if (this._data.partial) {
+      if (query && !html.includes('class="row')) html += `<div class="empty">Ничего не нашлось.</div>`;
+      // сущности HA у части устройств ещё не известны — предлагать отдать рано
+      html += `<section><div class="room-head"><h2>Отдать в Алису</h2></div><div class="card"><div class="empty">
+        Появится, когда список дочитается: пока не видно, какие сущности Home Assistant уже в Алисе.
+      </div></div></section>`;
+      host.innerHTML = html;
+      host.scrollTop = keepScroll;
+      this._listShape = shape;
+      return;
+    }
+
     const offer = this._offerHere();
-    const matching = (this._data.unexposed || []).filter(
-      (item) => !query || (item.name + " " + item.entity_id).toLowerCase().includes(query)
+    const matching = (this._data.unexposed || []).filter((item) =>
+      this._hit(`${item.name} ${item.entity_id}`, words)
     );
     const unexposed = offer ? matching : [];
     // Сущности Home Assistant приезжают в один дом — тот, где живёт навык. В остальных
@@ -1552,8 +2064,14 @@ class YandexMenuPanel extends HTMLElement {
     // Карточку восстановили из истории, а список ещё в пути: Яндекс отвечает
     // секунды. Без заглушки человек видел бы пустой экран и не понимал, что
     // «назад» ему закрывать.
-    if (!this._data && (this._selected || this._room)) {
-      if (this._error) {
+    // Устройство из черновика: без настроек карточка показала бы не те кнопки —
+    // например, «Удалить» вместо «Убрать из Алисы» у устройства из Home Assistant
+    const reading = !this._room && Boolean(this._device(this._selected)?.pending);
+    // недописанное имя и «фокус в поле» относятся к одной карточке — в другую не переезжают
+    if (this._draft && this._draft.id !== this._selected) this._draft = null;
+    if (!this._selected) this._focusName = false;
+    if ((!this._data && (this._selected || this._room)) || reading) {
+      if (this._error && !reading) {
         // список не пришёл вовсе — ошибку видно в самом списке, карточке нечего показать
         host.hidden = true;
         host.innerHTML = "";
@@ -1565,8 +2083,10 @@ class YandexMenuPanel extends HTMLElement {
       host.innerHTML = `
         <div class="panel-head">
           <div>
-            <h3>Читаю Яндекс-дом…</h3>
-            <div class="entity">карточка откроется, как придёт список</div>
+            <h3>${reading ? this._esc(this._device(this._selected).names[0]) : "Читаю Яндекс-дом…"}</h3>
+            <div class="entity">${
+              reading ? "дочитываю настройки — карточка откроется сама" : "карточка откроется, как придёт список"
+            }</div>
           </div>
           <button class="icon-only" id="close" title="Закрыть" style="margin-left:auto">${this._svg(
             "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
@@ -1587,6 +2107,14 @@ class YandexMenuPanel extends HTMLElement {
     const fresh = host.querySelector(".panel-body");
     if (!fresh) return;
     fresh.scrollTop = keepScroll;
+    if (this._focusName) {
+      this._focusName = false;
+      const input = host.querySelector("#newname");
+      if (input && !input.disabled) {
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+    }
     const section = host.querySelector("#skills");
     if (this._scrollToSkills && section) {
       fresh.scrollTop += section.getBoundingClientRect().top - fresh.getBoundingClientRect().top;
@@ -1610,14 +2138,24 @@ class YandexMenuPanel extends HTMLElement {
     }
     host.hidden = false;
 
-    const lights = devices.filter((device) => /light/.test(device.current_type || device.type || ""));
+    const allLights = devices.filter((device) => /light/.test(device.current_type || device.type || ""));
+    // у недочитанных роль ещё не известна — в «основной свет» их не записываем
+    const lights = allLights.filter((device) => !device.pending);
+    const unread = allLights.length - lights.length;
     const main = lights.filter((device) => !device.role || device.role.endsWith("main"));
     const secondary = lights.filter((device) => device.role && device.role.endsWith("secondary"));
     const openChips = (items) =>
       items
         .map((device) => `<button class="chip" data-open="${device.id}">${this._esc(device.names[0])}</button>`)
         .join("");
-    const who = lights.length
+    const who = unread
+      ? `<p class="who">Кто откликнется на «включи свет», будет видно, когда дочитаю настройки: осталось ${unread} ${this._plural(
+          unread,
+          "лампа",
+          "лампы",
+          "ламп"
+        )}.</p>`
+      : lights.length
       ? `<p class="who">На «включи свет» откликнется основной свет:</p>
          <div class="chips">${
            main.length ? openChips(main) : `<span class="role">никто, у всего света роль «доп»</span>`
@@ -1692,14 +2230,22 @@ class YandexMenuPanel extends HTMLElement {
       )
       .join("");
 
+    const draft = !full && this._draft && this._draft.id === device.id ? this._draft.value : "";
+    // «Всё равно добавить» — только пока предупреждение на экране
+    if (!(this._message && this._message.typed && this._message.level === "warn")) this._confirm = null;
+    const sure = Boolean(draft) && this._confirm === `${device.id}|${draft.trim()}`;
     const message = this._message
-      ? `<div class="msg ${this._message.level}">${this._esc(this._message.text)}</div>`
+      ? `<div class="msg ${this._message.level}"${this._message.typed ? " data-typed" : ""} role="${
+          this._message.level === "error" ? "alert" : "status"
+        }">${this._esc(this._message.text)}</div>`
       : full
       ? `<div class="msg info">Занято ${limit} имён из ${limit} — это потолок Яндекса.</div>`
       : "";
 
     // Переносить можно только в комнату своего дома
-    const rooms = (this._data.rooms || [])
+    // у устройства без комнаты список не должен показывать первую комнату как выбранную
+    const nowhere = device.room_id ? "" : `<option value="" selected disabled>Без комнаты</option>`;
+    const rooms = nowhere + (this._data.rooms || [])
       .filter((room) => this._inHouse(room, device.household_id))
       .map(
         (room) =>
@@ -1731,8 +2277,10 @@ class YandexMenuPanel extends HTMLElement {
           <div class="add">
             <input id="newname" type="text" ${full ? "disabled" : ""} placeholder="${
       full ? "Достигнут предел имён" : "Ещё одно имя, например «люстра»"
-    }" autocomplete="off">
-            <button class="btn btn-primary" id="add" ${full ? "disabled" : ""}>Добавить</button>
+    }" value="${this._esc(draft)}" autocomplete="off">
+            <button class="btn btn-primary" id="add" ${full ? "disabled" : ""}>${
+              sure ? "Всё равно добавить" : "Добавить"
+            }</button>
           </div>
           ${message}
         </div>
@@ -1834,13 +2382,18 @@ class YandexMenuPanel extends HTMLElement {
       if (house) this._openHouse(house.getAttribute("data-house"));
     });
 
+    root.getElementById("views").addEventListener("click", (event) => {
+      const view = event.target.closest("[data-view]");
+      if (view) this._setView(view.getAttribute("data-view"));
+    });
+
     root.getElementById("q").addEventListener("input", (event) => {
       this._query = event.target.value;
       this._renderList();
     });
 
     root.getElementById("discover").addEventListener("click", () => {
-      this._act("yandex_menu/discovery", {}, "Яндекс перечитывает список устройств");
+      this._refresh();
     });
 
     root.getElementById("list").addEventListener("click", (event) => {
@@ -1848,6 +2401,29 @@ class YandexMenuPanel extends HTMLElement {
       const house = event.target.closest("[data-house]");
       if (house) {
         this._openHouse(house.getAttribute("data-house"));
+        return;
+      }
+      const view = event.target.closest("[data-view]");
+      if (view) {
+        this._setView(view.getAttribute("data-view"));
+        return;
+      }
+      const nameit = event.target.closest("[data-nameit]");
+      if (nameit) {
+        const device = this._device(nameit.getAttribute("data-id"));
+        const word = this._nameWord();
+        if (!device || !word || nameit.disabled) return;
+        // обычная карточка, только слово уже в поле и проверено
+        const verdict = this._checkName(word, device);
+        this._selected = device.id;
+        this._room = null;
+        this._backRoom = null;
+        this._draft = { id: device.id, value: word };
+        this._message = verdict ? { ...verdict, typed: true } : null;
+        this._confirm = verdict && verdict.level === "warn" ? `${device.id}|${word}` : null;
+        this._focusName = true;
+        this._openCard();
+        this._render();
         return;
       }
       const roomButton = event.target.closest("[data-room]");
@@ -1866,6 +2442,10 @@ class YandexMenuPanel extends HTMLElement {
         return;
       }
       const row = event.target.closest("[data-id]");
+      if (row && row.classList.contains("pending")) {
+        this._toast("Настройки этого устройства ещё читаются — откроется, как дочитаю");
+        return;
+      }
       if (row) {
         this._selected = row.getAttribute("data-id");
         this._room = null;
@@ -1881,7 +2461,8 @@ class YandexMenuPanel extends HTMLElement {
         this._act(
           "yandex_menu/expose",
           { entity_id: expose.getAttribute("data-expose"), expose: true },
-          "Отдал в Алису и обновил список устройств"
+          "Отдал в Алису и обновил список устройств",
+          { failed: "Не получилось отдать в Алису" }
         );
       }
     });
@@ -1916,7 +2497,8 @@ class YandexMenuPanel extends HTMLElement {
         this._act(
           "yandex_menu/name_delete",
           { device_id: device.id, name: remove.getAttribute("data-remove") },
-          "Имя удалено"
+          "Имя удалено",
+          { failed: "Имя не удалилось" }
         );
         return;
       }
@@ -1926,7 +2508,8 @@ class YandexMenuPanel extends HTMLElement {
         this._act(
           "yandex_menu/name_primary",
           { device_id: device.id, name: primary.getAttribute("data-primary") },
-          "Основное имя изменено"
+          "Основное имя изменено",
+          { failed: "Основное имя не сменилось" }
         );
         return;
       }
@@ -1936,7 +2519,8 @@ class YandexMenuPanel extends HTMLElement {
         this._act(
           "yandex_menu/set_role",
           { device_id: device.id, role: role.getAttribute("data-role") },
-          "Роль изменена"
+          "Роль изменена",
+          { failed: "Роль не сменилась" }
         );
         return;
       }
@@ -1945,24 +2529,46 @@ class YandexMenuPanel extends HTMLElement {
         const input = panel.querySelector("#newname");
         const value = input.value.trim();
         const verdict = this._checkName(value, device);
-        if (verdict && verdict.level === "error") {
-          this._message = verdict;
+        const key = `${device.id}|${value}`;
+        // Ошибка останавливает всегда, пересечение с чужим именем — один раз:
+        // предупреждение остаётся на экране, и второе нажатие добавляет имя.
+        if (verdict && (verdict.level === "error" || this._confirm !== key)) {
+          this._draft = { id: device.id, value: input.value };
+          this._message = { ...verdict, typed: true };
+          this._confirm = verdict.level === "warn" ? key : null;
+          this._focusName = true;
           this._renderPanel();
           return;
         }
-        this._message = verdict;
-        this._act("yandex_menu/name_add", { device_id: device.id, name: value }, "Имя добавлено");
+        this._draft = { id: device.id, value: input.value };
+        this._act("yandex_menu/name_add", { device_id: device.id, name: value }, "Имя добавлено", {
+          field: "name",
+          done: () => {
+            // пока шёл запрос, в поле могли начать следующее имя — его не трогаем
+            if (this._draft && this._draft.value.trim() === value) this._draft = null;
+          },
+        });
         return;
       }
 
       if (event.target.closest("#blink")) {
-        this._call("yandex_menu/blink", { device_id: device.id });
-        this._toast("Включаю на три секунды");
+        // Горящее гасим и включаем снова — но только когда точно знаем, что оно
+        // горит: без сущности HA состояние известно лишь на момент чтения списка.
+        const on = this._live(device) && this._isOn(device);
+        const failed = (err) =>
+          this._toast(`Не получилось мигнуть: ${err && err.message ? err.message : String(err)}`, true);
+        this._call("yandex_menu/blink", { device_id: device.id, on }).catch(() =>
+          // интеграцию обновили, а Home Assistant ещё не перезапустили: прежняя не знает про «on»
+          this._call("yandex_menu/blink", { device_id: device.id }).catch(failed)
+        );
+        this._toast(on ? "Гашу на три секунды" : "Включаю на три секунды");
         return;
       }
 
       if (event.target.closest("#restore")) {
-        this._act("yandex_menu/restore", { device_id: device.id }, "Вернул имена из слепка");
+        this._act("yandex_menu/restore", { device_id: device.id }, "Вернул имена из слепка", {
+          failed: "Слепок не вернулся",
+        });
         return;
       }
 
@@ -1974,15 +2580,20 @@ class YandexMenuPanel extends HTMLElement {
           )
         )
           return;
-        this._closeCard();
-        this._act("yandex_menu/withdraw", { device_id: device.id });
+        // карточку закроет удача: при ошибке человек остаётся там, где был
+        this._act("yandex_menu/withdraw", { device_id: device.id }, undefined, {
+          failed: "Не получилось убрать из Алисы",
+          gone: device.id,
+        });
         return;
       }
 
       if (event.target.closest("#delete")) {
         if (!confirm(`Удалить «${device.names[0]}» из Яндекс-дома? Это необратимо.`)) return;
-        this._closeCard();
-        this._act("yandex_menu/delete_device", { device_id: device.id }, "Устройство удалено");
+        this._act("yandex_menu/delete_device", { device_id: device.id }, "Устройство удалено", {
+          failed: "Не получилось удалить",
+          gone: device.id,
+        });
       }
     });
 
@@ -2002,14 +2613,31 @@ class YandexMenuPanel extends HTMLElement {
         this._act(
           "yandex_menu/set_room",
           { device_id: device.id, room_id: event.target.value },
-          "Комната изменена"
+          "Комната изменена",
+          { failed: "Комната не сменилась" }
         );
+      }
+    });
+
+    panel.addEventListener("input", (event) => {
+      if (event.target.id !== "newname") return;
+      this._draft = { id: this._selected, value: event.target.value };
+      // сообщение было про прежний текст поля — с новым оно уже неправда
+      if (this._message && this._message.typed) {
+        this._message = null;
+        const shown = panel.querySelector(".msg[data-typed]");
+        if (shown) shown.remove();
+      }
+      if (this._confirm) {
+        this._confirm = null;
+        panel.querySelector("#add").textContent = "Добавить";
       }
     });
 
     panel.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && event.target.id === "newname") {
         event.preventDefault();
+        if (event.repeat) return; // удержанный Enter проскочил бы предупреждение
         panel.querySelector("#add").click();
       }
     });

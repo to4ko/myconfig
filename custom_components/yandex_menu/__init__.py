@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
 from homeassistant.components import frontend
@@ -17,6 +18,7 @@ from .const import (
     CONF_SHOW_IN_SIDEBAR,
     DATA_API,
     DATA_BUILD,
+    DATA_REFRESH,
     DATA_CACHE,
     DATA_CACHE_OWNER,
     DATA_CACHE_STORE,
@@ -105,6 +107,10 @@ async def _async_load_devices(hass: HomeAssistant, data: dict) -> None:
             data[DATA_CONFIGS] = _entries(stored.get("configs"))
             data[DATA_DETAILS] = _entries(stored.get("details"))
             data[DATA_CACHE_OWNER] = owner
+            # перезапуск посреди «Обновить список»: недочитанное остаётся старым
+            refresh = stored.get("refresh")
+            if isinstance(refresh, (int, float)) and refresh <= time.time():
+                data.setdefault(DATA_REFRESH, refresh)
     if data.get(DATA_CACHE_OWNER) != owner:
         data[DATA_CONFIGS] = {}
         data[DATA_DETAILS] = {}

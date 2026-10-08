@@ -9,6 +9,7 @@ import logging
 import re
 import sys
 import time
+from types import SimpleNamespace
 from typing import Any
 
 import voluptuous as vol
@@ -39,8 +40,12 @@ from .const import (
     DATA_CACHE_STORE,
     DATA_CONFIGS,
     DATA_DETAILS,
+    DATA_EDITS,
+    DATA_PREVIEW,
     DATA_PROGRESS,
     DATA_PROGRESS_LISTENERS,
+    DATA_REFRESH,
+    DATA_REFRESHING,
     DATA_SAVED,
     DATA_SAVED_STORE,
     DATA_SAVED_TURN,
@@ -59,6 +64,8 @@ from .quasar_api import QuasarApi, QuasarError
 _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_CONFIG_REQUESTS = 6
+# быстрый ответ на правку читает сам не больше стольких устройств
+QUICK_READS = 10
 
 # Служебные сценарии Яндекс.Станции: через них она шлёт команды из облака
 HELPER_SCENARIO = re.compile(r"^ХА [0-9a-f-]{36}$")
@@ -85,6 +92,9 @@ DETAIL_KEYS = ("capabilities", "properties")
 
 # Прогресс сборки панели шлём не чаще, чем раз в полсекунды
 PROGRESS_EVERY = 0.5
+# Черновик списка шлём, только когда читать по одному есть что: правка одной
+# лампы гоняла бы весь список всем открытым панелям
+PREVIEW_FROM = 20
 # Прочитанное долгой сборкой кладём на диск раз в минуту (запись идёт через 30 с)
 SAVE_EVERY = 60
 
@@ -437,13 +447,18 @@ def _stop_build(hass: HomeAssistant) -> None:
     for task in list(data.get(DATA_BUILDS) or ()):
         task.cancel()
     data[DATA_BUILD] = None
+    data[DATA_PREVIEW] = None
     _publish_progress(hass, None)
 
 
 def _forget_devices(hass: HomeAssistant) -> None:
-    """«Обновить список»: всё, что помним об устройствах, читаем заново."""
-    data = hass.data[DOMAIN]
-    _touch(hass, *set(data.get(DATA_CONFIGS) or ()) | set(data.get(DATA_DETAILS) or ()))
+    """«Обновить список»: всё, что помним об устройствах, читаем заново.
+
+    Прочитанное не стираем, а только помечаем старым: пока идёт долгое
+    перечитывание, правка из панели отвечает по нему, а не ждёт конца.
+    """
+    hass.data[DOMAIN][DATA_REFRESH] = time.time()
+    _save_devices(hass, account_key(hass))
 
 
 def _known_skill_id(hass: HomeAssistant) -> str | None:
@@ -470,6 +485,7 @@ def _save_devices(hass: HomeAssistant, owner: str) -> None:
             "account": data.get(DATA_CACHE_OWNER),
             "configs": data.get(DATA_CONFIGS) or {},
             "details": data.get(DATA_DETAILS) or {},
+            "refresh": data.get(DATA_REFRESH),
         },
         30,
     )
@@ -491,15 +507,41 @@ def _touch(hass: HomeAssistant, *device_ids: str) -> None:
         _save_devices(hass, account_key(hass))
 
 
-def _publish_progress(hass: HomeAssistant, state: dict[str, Any] | None) -> None:
+def _publish_progress(
+    hass: HomeAssistant,
+    state: dict[str, Any] | None,
+    preview: dict[str, Any] | None = None,
+    ready: list[dict[str, Any]] | None = None,
+) -> None:
+    """Ход сборки — всем открытым панелям.
+
+    `preview` — черновик списка (уходит один раз, в начале), `ready` — строки,
+    дочитанные с прошлой отправки. Запоминаем только сам ход: опоздавшая панель
+    получит черновик целиком, уже с дочитанным.
+    """
     data = hass.data[DOMAIN]
     data[DATA_PROGRESS] = state
+    message = state
+    if state is not None and preview is not None:
+        message = {**state, "preview": preview}
+    elif state is not None and ready:
+        message = {**state, "ready": ready}
     for send in list(data.get(DATA_PROGRESS_LISTENERS) or ()):
-        send(state)
+        send(message)
 
 
-async def _build(hass: HomeAssistant) -> dict[str, Any]:
-    """Собирает всё, что нужно панели, за один заход."""
+async def _build(
+    hass: HomeAssistant, quick: bool = False, changed: tuple[str, ...] = ()
+) -> dict[str, Any]:
+    """Собирает всё, что нужно панели, за один заход.
+
+    `quick` — ответ на правку, пока идёт долгая сборка («Обновить список»).
+    Такой ответ берёт всё, что помнит, даже старое, и читает только то, чего
+    не помнит совсем: изменённое устройство и новые. Ход он не показывает и
+    список не запоминает — это дело долгой сборки. Если не помнит почти ничего
+    (первая сборка ещё идёт), читает только изменённое, остальное отдаёт
+    черновыми строками — их дочитает долгая сборка.
+    """
     store_data = hass.data[DOMAIN]
     turn = next(_TURNS)
     owner = account_key(hass)
@@ -507,6 +549,7 @@ async def _build(hass: HomeAssistant) -> dict[str, Any]:
     # слепки тоже берём в начале: сменят аккаунт — чужие устройства в них не попадут
     snapshots: dict[str, Any] = store_data[DATA_SNAPSHOTS]
     api = _api(hass)
+    edits = store_data.get(DATA_EDITS, 0)
     raw = await api.devices()
 
     households, rooms, flat = _households_of(raw)
@@ -529,9 +572,11 @@ async def _build(hass: HomeAssistant) -> dict[str, Any]:
     configs: dict[str, tuple[float, dict]] = store_data.setdefault(DATA_CONFIGS, {})
     stale: dict[str, int] = store_data.setdefault(DATA_STALE, {})
 
+    refreshed = store_data.get(DATA_REFRESH) or 0
+
     def cached(store: dict[str, tuple[float, dict]], device_id: str, ttl: int) -> dict | None:
         hit = store.get(device_id)
-        if hit and time.time() - hit[0] < ttl:
+        if hit and (quick or (time.time() - hit[0] < ttl and hit[0] > refreshed)):
             return hit[1]
         return None
 
@@ -575,97 +620,9 @@ async def _build(hass: HomeAssistant) -> dict[str, Any]:
             store[device_id] = (time.time(), {})
         return result
 
-    house_names = {house["id"]: house["name"] for house in households}
-    todo = [
-        placed
-        for placed in flat
-        if config_hit(placed[0]) is None
-        or (needs_detail(placed[0]) and detail_hit(placed[0]) is None)
-    ]
-    started = time.monotonic()
-    progress = {"house": None, "done": 0, "total": len(todo), "left": None}
-    sent = 0.0
-    published = False
-    saved = time.monotonic()
-
-    def step(household_id: str | None, done: bool) -> None:
-        nonlocal sent, published, saved
-        now = time.monotonic()
-        if done and now - saved > SAVE_EVERY:
-            # долгая сборка сохраняет прочитанное по ходу: перезапуск HA посреди
-            # неё не должен начинать всё с нуля
-            saved = now
-            _save_devices(hass, owner)
-        if done:
-            progress["done"] += 1
-            # устройство могли поменять из панели уже после подсчёта — оно сверх плана
-            progress["total"] = max(progress["total"], progress["done"])
-        else:
-            progress["house"] = house_names.get(household_id)
-        count, total = progress["done"], progress["total"]
-        if count < total and now - sent < PROGRESS_EVERY:
-            return
-        sent = now
-        # Скорость упирается в паузу Станции, так что оценка по первым
-        # устройствам держится до конца
-        pace = (now - started) / count if count >= PARALLEL_CONFIG_REQUESTS else 0.3
-        progress["left"] = round(pace * (total - count))
-        published = True
-        _publish_progress(hass, dict(progress))
-
-    async def load(placed: Placed) -> tuple[dict | None, dict | None]:
-        device, _room, _room_id, household_id = placed
-        config = config_hit(device)
-        detail = detail_hit(device) if needs_detail(device) else None
-        if config is not None and (detail is not None or not needs_detail(device)):
-            return config, detail
-        async with semaphore:
-            step(household_id, done=False)
-            config, detail = await asyncio.gather(
-                remember(
-                    configs,
-                    device["id"],
-                    api.device_config(device["id"]),
-                    "Настройки",
-                    CONFIG_KEYS,
-                    household_id,
-                )
-                if config is None
-                else nothing(config),
-                remember(
-                    details,
-                    device["id"],
-                    api.device(device["id"]),
-                    "Карточка",
-                    DETAIL_KEYS,
-                    household_id,
-                )
-                if needs_detail(device) and detail is None
-                else nothing(detail),
-            )
-            step(household_id, done=True)
-        return config, detail
-
-    loads = [asyncio.ensure_future(load(placed)) for placed in flat]
-    try:
-        loaded = await asyncio.gather(*loads)
-    except BaseException:
-        # сборку отменили или она упала — остальным устройствам в Яндекс ходить незачем
-        for pending in loads:
-            pending.cancel()
-        raise
-    finally:
-        if published:
-            _publish_progress(hass, None)
-    if todo:
-        _save_devices(hass, owner)
-
-    devices: list[dict[str, Any]] = []
-    skill_id: str | None = None
-
-    for (device, room_name, room_id, household_id), (config, detail) in zip(
-        flat, loaded, strict=True
-    ):
+    def entry_of(placed: Placed, config: dict | None, detail: dict | None) -> dict[str, Any]:
+        device, room_name, room_id, household_id = placed
+        pending = config is None
         config = config or {}
         skills = _skills_of({**device, **(detail or {})})
         device_type = config.get("device_type") or {}
@@ -696,36 +653,24 @@ async def _build(hass: HomeAssistant) -> dict[str, Any]:
         }
         if from_ha:
             entry["ha_state"] = hass.states.get(external_id) is not None
-            _remember(snapshots, external_id, entry)
-            if not skill_id and config.get("skill_id"):
-                skill_id = config["skill_id"]
-        devices.append(entry)
+        if pending:
+            # настройки ещё не прочитаны: имена, роль и сущность HA придут позже
+            entry["pending"] = True
+        return entry
 
-    hass.data[DOMAIN][DATA_STORE].async_delay_save(
-        lambda: hass.data[DOMAIN][DATA_STORE_DATA], 5
-    )
-
-    label = _label_info(hass)
-    exposed = {
-        device["external_id"] for device in devices if device.get("external_id")
-    }
-    unexposed = _unexposed_entities(hass, exposed)
-
+    # Сценарии — один запрос, читаем до устройств: черновик списка ниже без них неполон
     try:
         scenarios = _scenarios_of(await api.scenarios())
     except QuasarError as err:
         _LOGGER.debug("Сценарии не прочитались: %s", err)
         scenarios = None
 
-    payload = {
-        "devices": devices,
+    common = {
         "households": households,
         "rooms": rooms,
-        "unexposed": unexposed,
-        "label": label,
+        "label": _label_info(hass),
         "snapshots": snapshots,
         "max_names": MAX_NAMES,
-        "skill_id": skill_id,
         "scenarios": scenarios,
         "stations": _stations(hass, flat),
         "account": {
@@ -733,11 +678,215 @@ async def _build(hass: HomeAssistant) -> dict[str, Any]:
             "several": len(station_entries(hass)) > 1,
         },
     }
+
+    house_names = {house["id"]: house["name"] for house in households}
+    todo = [
+        placed
+        for placed in flat
+        if config_hit(placed[0]) is None
+        or (needs_detail(placed[0]) and detail_hit(placed[0]) is None)
+    ]
+    # Быстрый ответ с пустой памятью читал бы весь дом рядом с долгой сборкой
+    skip: set[str] = set()
+    if quick and len(todo) > QUICK_READS:
+        skip = {placed[0]["id"] for placed in todo} - set(changed)
+
+    started = time.monotonic()
+    progress = {
+        "house": house_names.get(todo[0][3]) if todo else None,
+        "done": 0,
+        "total": len(todo),
+        "left": None,
+    }
+    sent = 0.0
+    published = False
+    saved = time.monotonic()
+    ready: list[dict[str, Any]] = []  # дочитанные устройства, ещё не отправленные панели
+    preview: dict[str, Any] | None = None
+
+    if len(todo) >= PREVIEW_FROM and not quick:
+        # Черновик: общий список Яндекс отдал одним запросом, в нём дома, комнаты
+        # и основные имена. Панель показывает его сразу и дочитывает по строкам.
+        preview = {
+            **common,
+            "devices": [
+                entry_of(
+                    placed,
+                    config_hit(placed[0]),
+                    detail_hit(placed[0]) if needs_detail(placed[0]) else None,
+                )
+                for placed in flat
+            ],
+            # пока сущности HA у части устройств не известны, предлагать отдать нечего
+            "unexposed": [],
+            "skill_id": _known_skill_id(hass),
+            "partial": True,
+        }
+        positions = {item["id"]: index for index, item in enumerate(preview["devices"])}
+        store_data[DATA_PREVIEW] = preview
+        published = True
+        _publish_progress(hass, {**progress, "left": round(0.3 * len(todo))}, preview=preview)
+
+    def step(household_id: str | None, entry: dict[str, Any] | None = None) -> None:
+        nonlocal sent, published, saved
+        if quick:
+            return  # ход показывает долгая сборка, быстрый ответ его не перебивает
+        now = time.monotonic()
+        done = entry is not None
+        if done and now - saved > SAVE_EVERY:
+            # долгая сборка сохраняет прочитанное по ходу: перезапуск HA посреди
+            # неё не должен начинать всё с нуля
+            saved = now
+            _save_devices(hass, owner)
+        if done:
+            progress["done"] += 1
+            # устройство могли поменять из панели уже после подсчёта — оно сверх плана
+            progress["total"] = max(progress["total"], progress["done"])
+            ready.append(entry)
+            if preview is not None and entry["id"] in positions:
+                # опоздавшая панель получит черновик уже с дочитанным
+                preview["devices"][positions[entry["id"]]] = entry
+        else:
+            progress["house"] = house_names.get(household_id)
+        count, total = progress["done"], progress["total"]
+        if count < total and now - sent < PROGRESS_EVERY:
+            return
+        sent = now
+        # Скорость упирается в паузу Станции, так что оценка по первым
+        # устройствам держится до конца
+        pace = (now - started) / count if count >= PARALLEL_CONFIG_REQUESTS else 0.3
+        progress["left"] = round(pace * (total - count))
+        published = True
+        _publish_progress(hass, dict(progress), ready=list(ready))
+        ready.clear()
+
+    async def load(placed: Placed) -> tuple[dict | None, dict | None]:
+        device, _room, _room_id, household_id = placed
+        if device["id"] in skip:
+            return config_hit(device), detail_hit(device) if needs_detail(device) else None
+        read_any = False
+        for _attempt in range(3):
+            mark = stale.get(device["id"], 0)
+            config = config_hit(device)
+            detail = detail_hit(device) if needs_detail(device) else None
+            if config is not None and (detail is not None or not needs_detail(device)):
+                break
+            read_any = True
+            async with semaphore:
+                step(household_id)
+                config, detail = await asyncio.gather(
+                    remember(
+                        configs,
+                        device["id"],
+                        api.device_config(device["id"]),
+                        "Настройки",
+                        CONFIG_KEYS,
+                        household_id,
+                    )
+                    if config is None
+                    else nothing(config),
+                    remember(
+                        details,
+                        device["id"],
+                        api.device(device["id"]),
+                        "Карточка",
+                        DETAIL_KEYS,
+                        household_id,
+                    )
+                    if needs_detail(device) and detail is None
+                    else nothing(detail),
+                )
+            # Пока читали, устройство поменяли из панели — прочитанное уже старое
+            if stale.get(device["id"], 0) == mark:
+                break
+        if read_any:
+            # не прочиталось — строка всё равно готова: лучше уже не будет
+            step(household_id, entry_of(placed, config or {}, detail))
+        return config, detail
+
+    async def load_all() -> list[tuple[dict | None, dict | None]]:
+        loads = [asyncio.ensure_future(load(placed)) for placed in flat]
+        try:
+            return await asyncio.gather(*loads)
+        except BaseException:
+            # сборку отменили или она упала — остальным устройствам в Яндекс ходить незачем
+            for pending in loads:
+                pending.cancel()
+            raise
+
+    try:
+        loaded = await load_all()
+        for _round in range(3):
+            now_edits = store_data.get(DATA_EDITS, 0)
+            if now_edits == edits:
+                break
+            # Пока шла сборка, список правили из панели: комнаты, удаление,
+            # новые устройства видны только в общем списке — берём его заново.
+            # Устройства почти все уже в памяти, дочитываются только изменённые.
+            try:
+                raw = await api.devices()
+            except QuasarError as err:
+                # прочитанное за минуты не выбрасываем: отдадим без последних правок
+                _LOGGER.debug("Список после правок не перечитался: %s", err)
+                break
+            edits = now_edits
+            households, rooms, flat = _households_of(raw)
+            shared_houses = {house["id"] for house in households if house["shared"]}
+            house_names = {house["id"]: house["name"] for house in households}
+            common.update(households=households, rooms=rooms, stations=_stations(hass, flat))
+            loaded = await load_all()
+    finally:
+        if store_data.get(DATA_PREVIEW) is preview:
+            store_data[DATA_PREVIEW] = None
+        if published:
+            _publish_progress(hass, None)
+    if todo:
+        _save_devices(hass, owner)
+
+    devices: list[dict[str, Any]] = []
+    skill_id: str | None = None
+    for placed, (config, detail) in zip(flat, loaded, strict=True):
+        if placed[0]["id"] in skip:
+            # Не читанное быстрым ответом: пока он ждал своё устройство, долгая
+            # сборка могла его дочитать. Нет — черновая строка, дочитает она.
+            config = config_hit(placed[0])
+            if needs_detail(placed[0]):
+                detail = detail_hit(placed[0])
+            entry = entry_of(placed, config, detail)
+        else:
+            entry = entry_of(placed, config or {}, detail)
+        if entry["from_ha"]:
+            _remember(snapshots, entry["external_id"], entry)
+            if not skill_id and entry["skill_id"]:
+                skill_id = entry["skill_id"]
+        devices.append(entry)
+
+    hass.data[DOMAIN][DATA_STORE].async_delay_save(
+        lambda: hass.data[DOMAIN][DATA_STORE_DATA], 5
+    )
+
+    exposed = {
+        device["external_id"] for device in devices if device.get("external_id")
+    }
+    partial = any(device.get("pending") for device in devices)
+    payload = {
+        **common,
+        "devices": devices,
+        # пока сущности HA у части устройств не известны, предлагать отдать нечего
+        "unexposed": [] if partial else _unexposed_entities(hass, exposed),
+        "skill_id": skill_id or (_known_skill_id(hass) if partial else None),
+        # сколько правок из панели этот список учёл: панель не откатит им более свежий
+        "edits": edits,
+    }
+    if partial:
+        payload["partial"] = True
+    # правили уже после последней сверки — такой список не запоминаем
+    if quick or store_data.get(DATA_EDITS, 0) != edits:
+        return payload
     if owner == account_key(hass):
         hass.data[DOMAIN][DATA_CACHE] = {"ts": time.time(), "payload": payload}
     _save_list(hass, payload, turn, owner)
     return payload
-
 
 def _save_list(
     hass: HomeAssistant, payload: dict[str, Any], turn: int, owner: str
@@ -790,6 +939,63 @@ def _yaha_can_export(hass: HomeAssistant) -> Callable[[str, State | None], bool]
             return by_device_class(entity_id, state)
 
     return by_yaha
+
+
+def _yaha_misreads_own_name(hass: HomeAssistant, entity_id: str, marker: Any) -> bool:
+    """Испортит ли служебная отметка псевдонимов имя устройства в Яндексе.
+
+    Спрашиваем у самого Yandex Smart Home, как он назовёт устройство с отметкой
+    и без неё: его версии читают отметку по-разному — одни пропускают, другие
+    на ней спотыкаются или принимают её за имя. Если его внутренности
+    недоступны, считаем, что испортит, — так устройство точно не получит
+    в Яндексе чужое имя.
+    """
+    module = sys.modules.get(f"custom_components.{YAHA_DOMAIN}.device")
+    component = hass.data.get(YAHA_DOMAIN)
+    entry = yaha_entry(hass)
+    if module is None or component is None or entry is None:
+        return True
+    try:
+        state = hass.states.get(entity_id) or State(entity_id, "unknown")
+        device = module.Device(hass, component.get_entry_data(entry), entity_id, state)
+        plain = device._get_name(SimpleNamespace(aliases=[]))  # noqa: SLF001
+        marked = device._get_name(SimpleNamespace(aliases=[marker]))  # noqa: SLF001
+    except Exception:  # noqa: BLE001 — споткнулся на отметке или устроен иначе
+        return True
+    return marked != plain
+
+
+def _fix_aliases(hass: HomeAssistant, registry: er.EntityRegistry, entity_id: str) -> None:
+    """Псевдонимы перед выдачей в Алису.
+
+    С Home Assistant 2026 в псевдонимах лежит служебная отметка «собственное
+    имя сущности» (в файле реестра — null). Старые версии Yandex Smart Home
+    её не понимают: устройство не уходит в Яндекс или получает имя «0».
+    Отметку убираем, только когда она и правда мешает: без неё голосовой
+    помощник Home Assistant перестаёт узнавать сущность по собственному имени.
+    Остальные псевдонимы и их порядок не трогаем.
+    """
+    entity = registry.async_get(entity_id)
+    aliases = entity.aliases if entity else None
+    if not aliases:
+        return
+    marker = getattr(er, "COMPUTED_NAME", None)
+    drop_marker: bool | None = None
+    clean = []
+    for alias in aliases:
+        if isinstance(alias, str):
+            if alias.strip():
+                clean.append(alias)
+        elif marker is not None and alias is marker:
+            if drop_marker is None:
+                drop_marker = _yaha_misreads_own_name(hass, entity_id, marker)
+            if not drop_marker:
+                clean.append(alias)
+    if len(clean) == len(aliases):
+        return
+    # до Home Assistant 2026 псевдонимы были множеством, теперь это список
+    registry.async_update_entity(entity_id, aliases=type(aliases)(clean))
+    _LOGGER.debug("Почистил псевдонимы %s: теперь %s", entity_id, clean)
 
 
 def _unexposed_entities(
@@ -845,6 +1051,7 @@ async def _reply(
     coro,
     remember: str | None = None,
     touch: str | None = None,
+    wait: bool = False,
 ) -> None:
     """Выполняет действие и отвечает свежим списком.
 
@@ -852,6 +1059,8 @@ async def _reply(
     `remember` — id устройства, чей слепок надо освежить принудительно.
     `touch` — устройство, которое действие меняет: его перечитаем, остальные
     возьмём из кэша.
+    `wait` — ответ ждёт полной сборки, даже если до него идёт другая долгая
+    («Обновить список» ждёт своего перечитывания, правка — нет).
     """
     notice: str | None = None
     changed = [device_id for device_id in (remember, touch) if device_id]
@@ -869,9 +1078,27 @@ async def _reply(
     finally:
         # и при ошибке: правка могла пройти наполовину
         _touch(hass, *changed)
+        data = hass.data[DOMAIN]
+        data[DATA_EDITS] = data.get(DATA_EDITS, 0) + 1
     _drop_cache(hass)
+    running: asyncio.Task | None = hass.data[DOMAIN].get(DATA_BUILD)
     try:
-        payload = await _collect(hass, use_cache=False, fresh=True)
+        refreshing = hass.data[DOMAIN].get(DATA_REFRESHING, 0) > 0
+        if not wait and (refreshing or (running is not None and not running.done())):
+            # Идёт долгая сборка — правка не ждёт её минутами: отвечаем тем, что
+            # помним, а изменённое устройство читаем сразу. Долгая сборка
+            # увидит правку сама: в конце она сверяет счётчик правок.
+            task = hass.async_create_background_task(
+                _build(hass, quick=True, changed=tuple(changed)),
+                "yandex_menu: ответ на правку",
+            )
+            # в общем списке сборок: перезапуск интеграции остановит и его
+            builds: set[asyncio.Task] = hass.data[DOMAIN].setdefault(DATA_BUILDS, set())
+            builds.add(task)
+            task.add_done_callback(builds.discard)
+            payload = await _wait_build(task)
+        else:
+            payload = await _collect(hass, use_cache=False, fresh=True)
     except QuasarError as err:
         connection.send_error(msg["id"], "quasar_error", str(err))
         return
@@ -1065,7 +1292,14 @@ async def ws_discovery(hass: HomeAssistant, connection, msg) -> None:
             )
         await _api(hass).discovery(skill_id)
 
-    await _reply(hass, connection, msg, run())
+    # Пока Яндекс ищет устройства, долгой сборки ещё нет, а метка уже стоит:
+    # правка в это окно тоже должна отвечать сразу, а не перечитывать дом
+    data = hass.data[DOMAIN]
+    data[DATA_REFRESHING] = data.get(DATA_REFRESHING, 0) + 1
+    try:
+        await _reply(hass, connection, msg, run(), wait=True)
+    finally:
+        data[DATA_REFRESHING] -= 1
 
 
 @websocket_api.require_admin
@@ -1087,22 +1321,9 @@ async def ws_expose(hass: HomeAssistant, connection, msg) -> None:
         if not entity:
             raise QuasarError(f"Сущности {msg['entity_id']} нет в реестре.")
 
-        # В реестре встречается мусорный псевдоним [null]: Yaha берёт его как
-        # имя и Яндекс заводит устройство под названием «0». Чистим до выдачи.
         if msg["expose"]:
-            clean = {
-                alias
-                for alias in (entity.aliases or set())
-                if isinstance(alias, str) and alias.strip()
-            }
-            if clean != set(entity.aliases or set()):
-                registry.async_update_entity(msg["entity_id"], aliases=clean)
-                entity = registry.async_get(msg["entity_id"])
-                _LOGGER.debug(
-                    "Почистил псевдонимы %s: теперь %s",
-                    msg["entity_id"],
-                    entity.aliases,
-                )
+            _fix_aliases(hass, registry, msg["entity_id"])
+            entity = registry.async_get(msg["entity_id"])
 
         labels = set(entity.labels)
         if msg["expose"]:
@@ -1110,9 +1331,13 @@ async def ws_expose(hass: HomeAssistant, connection, msg) -> None:
         else:
             labels.discard(label["label_id"])
         registry.async_update_entity(msg["entity_id"], labels=labels)
-        payload = await _collect(hass, use_cache=True)
-        if payload.get("skill_id"):
-            await _api(hass).discovery(payload["skill_id"])
+        # Навык обычно уже известен из прочитанного. Собирать ради него список
+        # значило бы ждать идущее «Обновить список» минутами.
+        skill_id = _known_skill_id(hass)
+        if not skill_id:
+            skill_id = (await _collect(hass, use_cache=True)).get("skill_id")
+        if skill_id:
+            await _api(hass).discovery(skill_id)
 
         if not msg["expose"]:
             return "Метка снята. Устройство останется в Яндексе, пока его не удалить."
@@ -1158,20 +1383,43 @@ async def ws_withdraw(hass: HomeAssistant, connection, msg) -> None:
     await _reply(hass, connection, msg, run(), touch=msg["device_id"])
 
 
+_BLINKING: set[str] = set()  # устройства, которые мигают прямо сейчас
+
+
+async def _blink(api: QuasarApi, device_id: str, on: bool | None) -> None:
+    """Мигнуть и вернуть как было. Ответа панель не ждёт — ошибку пишем в журнал."""
+    # Второе нажатие, пока устройство мигает, застало бы его в перевёрнутом
+    # состоянии и в нём же оставило.
+    if device_id in _BLINKING:
+        return
+    _BLINKING.add(device_id)
+    try:
+        await api.blink(device_id, was_on=bool(on))
+    except QuasarError as err:
+        _LOGGER.warning("Не получилось мигнуть устройством %s: %s", device_id, err)
+    finally:
+        _BLINKING.discard(device_id)
+
+
 @websocket_api.require_admin
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "yandex_menu/blink",
         vol.Required("device_id"): str,
+        # горит ли устройство сейчас; панель шлёт это, только когда знает наверняка
+        vol.Optional("on"): bool,
     }
 )
 @websocket_api.async_response
 async def ws_blink(hass: HomeAssistant, connection, msg) -> None:
     try:
-        hass.async_create_task(_api(hass).blink(msg["device_id"]))
+        api = _api(hass)
     except QuasarError as err:
         connection.send_error(msg["id"], "quasar_error", str(err))
         return
+    hass.async_create_background_task(
+        _blink(api, msg["device_id"], msg.get("on")), "yandex_menu blink"
+    )
     connection.send_result(msg["id"], {"ok": True})
 
 
@@ -1266,7 +1514,9 @@ def ws_progress(hass: HomeAssistant, connection, msg) -> None:
     listeners.add(send)
     connection.subscriptions[msg["id"]] = lambda: listeners.discard(send)
     connection.send_result(msg["id"])
-    send(hass.data[DOMAIN].get(DATA_PROGRESS))
+    state = hass.data[DOMAIN].get(DATA_PROGRESS)
+    preview = hass.data[DOMAIN].get(DATA_PREVIEW)
+    send({**state, "preview": preview} if state and preview else state)
 
 
 @callback

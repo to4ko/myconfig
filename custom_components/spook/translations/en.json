@@ -1,5 +1,9 @@
 {
   "triggers": {
+    "automation_turned_off": {
+      "name": "Automation turned off",
+      "description": "Fires when somebody, or something, turns an automation off. Leave the target empty to watch every automation."
+    },
     "debounce": {
       "name": "Once it settles",
       "description": "Fires once a trigger has stopped firing for a while, so a burst of them arrives as one. A motion sensor does not report motion once, it reports it twenty times.",
@@ -37,6 +41,10 @@
           "description": "How long the entity has to have been away before coming back counts. Anything shorter is a flicker: reloading an integration takes every one of its entities through unavailable and back inside a second."
         }
       }
+    },
+    "device_added": {
+      "name": "Device added",
+      "description": "Fires when a new device is added to Home Assistant, like a plug that was just paired."
     },
     "sequence": {
       "name": "Triggers in order",
@@ -122,6 +130,14 @@
         }
       }
     },
+    "device_discovered": {
+      "name": "Device discovered",
+      "description": "Fires when Home Assistant discovers something new it could set up, like a device that just turned up on your network."
+    },
+    "integration_added": {
+      "name": "Integration added",
+      "description": "Fires when an integration is added to Home Assistant, whoever or whatever added it."
+    },
     "integration_failed": {
       "name": "Integration failed to set up",
       "description": "Fires when a configuration entry has been unable to set itself up for a while, past the point where Home Assistant's own retries would have sorted it out.",
@@ -169,6 +185,38 @@
           "description": "How long an entity has to stay silent before this fires. An entity that keeps reporting the same value is not silent."
         }
       }
+    },
+    "target_temperature_reached": {
+      "name": "Target temperature reached",
+      "description": "Fires when the temperature of a thermostat or water heater reaches its target, or jumps past it. Changing the target does not count, and neither does a device that is off.",
+      "fields": {
+        "tolerance": {
+          "name": "Tolerance",
+          "description": "How close to the target still counts as there, in the device's unit. For a thermostat that settles just short of its setpoint. Zero means the target itself."
+        }
+      }
+    },
+    "update_installed": {
+      "name": "Update installed",
+      "description": "Fires when an update entity reports a different installed version, whether somebody pressed install, the device updated itself, or it was updated outside of Home Assistant."
+    },
+    "position_reached": {
+      "name": "Position reached",
+      "description": "Fires when a cover or valve gets to a position, or moves past it. One that is already there, or comes back from unavailable at it, does not count.",
+      "fields": {
+        "position": {
+          "name": "Position",
+          "description": "The position to reach, from 0 (closed) to 100 (open)."
+        }
+      }
+    },
+    "script_started": {
+      "name": "Script started",
+      "description": "Fires when a script starts a run. A run the script refuses, because it is already running, does not count. Leave the target empty to watch every script."
+    },
+    "user_added": {
+      "name": "User added",
+      "description": "Fires when somebody is given a login to Home Assistant. Users Home Assistant creates for its own integrations are left out."
     }
   },
   "selector": {
@@ -178,9 +226,29 @@
         "error": "Error",
         "warning": "Warning"
       }
+    },
+    "todo_move_position": {
+      "options": {
+        "bottom": "Bottom",
+        "top": "Top"
+      }
     }
   },
   "conditions": {
+    "is_at_target_temperature": {
+      "name": "Temperature at its target",
+      "description": "Passes when the temperature of a thermostat or water heater is at its target. A device that is off is not at its target, and one that is unavailable is left out.",
+      "fields": {
+        "behavior": {
+          "name": "Behavior",
+          "description": "Whether any of the devices being there is enough, or all of them have to be."
+        },
+        "tolerance": {
+          "name": "Tolerance",
+          "description": "How close to the target still counts as there, in the device's unit. For a thermostat that settles just short of its setpoint. Zero means the target itself."
+        }
+      }
+    },
     "repair_issue_present": {
       "name": "Repair issue outstanding",
       "description": "Passes while a repair issue is outstanding. Issues somebody has ignored do not count.",
@@ -552,7 +620,8 @@
         },
         "abort": {
           "issue_ignored": "Spook will keep quiet about this area from now on.",
-          "manage": "You can manage this area yourself on the [Areas page](/config/areas/dashboard)."
+          "manage": "You can manage this area yourself on the [Areas page](/config/areas/dashboard).",
+          "changed": "This area is in use again since Spook looked: something is in it, or an automation or script uses it. So it has been left alone. Spook looks again on its own and updates this repair."
         }
       }
     },
@@ -572,7 +641,8 @@
         },
         "abort": {
           "issue_ignored": "Spook will keep quiet about this floor from now on.",
-          "manage": "You can manage this floor yourself on the [Areas page](/config/areas/dashboard)."
+          "manage": "You can manage this floor yourself on the [Areas page](/config/areas/dashboard).",
+          "changed": "This floor is in use again since Spook looked: an area is on it, or an automation or script uses it. So it has been left alone. Spook looks again on its own and updates this repair."
         }
       }
     },
@@ -597,9 +667,18 @@
         "abort": {
           "issue_ignored": "Spook will keep quiet about this group from now on.",
           "not_editable": "This group is set up in YAML, so Spook cannot edit it. Update the group in your configuration instead.",
-          "manage": "You can manage this group yourself on the [Helpers page](/config/helpers)."
+          "manage": "You can manage this group yourself on the [Helpers page](/config/helpers).",
+          "changed": "The members this repair listed are back, or have changed, since Spook looked, so nothing has been removed from the group. Spook looks again on its own and updates this repair."
         }
       }
+    },
+    "homekit_unknown_entity_references": {
+      "description": "Spook has found a ghost in your HomeKit bridge 👻\n\nWhile floating around, Spook crossed path with the following HomeKit bridge:\n\n{bridge}\n\nThis bridge names the following entities, which are unknown to Home Assistant:\n\n{entities}\n\n\n\nHomeKit does not follow an entity that is renamed. An included entity that was renamed or removed is gone from the Home app; an excluded entity that was renamed shows up in it again.\n\nTo fix this error, go to [the HomeKit Bridge integration](/config/integrations/integration/homekit), select **Configure** on this bridge, and pick the entities again.\n\nSpook 👻 Your homie.",
+      "title": "Unknown entities used in HomeKit bridge: {bridge}"
+    },
+    "homekit_unknown_entity_references_yaml": {
+      "description": "Spook has found a ghost in your HomeKit bridge 👻\n\nWhile floating around, Spook crossed path with the following HomeKit bridge:\n\n{bridge}\n\nThis bridge names the following entities, which are unknown to Home Assistant:\n\n{entities}\n\n\n\nHomeKit does not follow an entity that is renamed. An included entity that was renamed or removed is gone from the Home app; an excluded entity that was renamed shows up in it again.\n\nThis bridge is set up in your YAML configuration. To fix this error, edit the `filter` of this bridge under `homekit:` and remove or correct these entities.\n\nSpook 👻 Your homie.",
+      "title": "Unknown entities used in HomeKit bridge: {bridge}"
     },
     "lovelace_missing_resources": {
       "description": "Spook has found a ghost in your dashboards 👻\n\nThe following dashboard resources point at files that do not exist:\n\n{resources}\n\n\n\nThis usually happens when a custom card or its files were removed but the resource stayed behind. To fix this error, open the [Resources page](/config/lovelace/resources) and remove or correct these resources. It has no tab of its own: on the Dashboards page it is behind the three dots, top right.\n\nSpook 👻 Your homie.",
@@ -638,6 +717,10 @@
       "description": "Spook has found a ghost in your dashboards 👻\n\nWhile floating around, Spook crossed path with the following dashboard:\n\n[{dashboard}]({edit})\n\nThis dashboard references the following entities, which are unknown to Home Assistant:\n\n{entities}\n\n\n\nTo fix this error, [edit the dashboard]({edit}) and remove the use of these non-existing entities.\n\nSpook 👻 Your homie.",
       "title": "Unknown entities used in: {dashboard}"
     },
+    "lovelace_unknown_service_references": {
+      "description": "Spook has found a ghost in your dashboards 👻\n\nWhile floating around, Spook crossed path with the following dashboard:\n\n[{dashboard}]({edit})\n\nThis dashboard performs the following actions, which are unknown to Home Assistant:\n\n{services}\n\n\n\nA button or card using one of these does nothing when tapped. This often happens when a script was renamed or removed, or an integration was removed. To fix this error, [edit the dashboard]({edit}) and remove or replace these non-existing actions.\n\nSpook 👻 Your homie.",
+      "title": "Unknown actions used in dashboard: {dashboard}"
+    },
     "min_max_unknown_sources": {
       "title": "Unknown members used in min/max helper: {helper}",
       "fix_flow": {
@@ -655,6 +738,7 @@
         "abort": {
           "issue_ignored": "Spook will keep quiet about this helper from now on.",
           "manage": "You can manage this helper yourself on the [Helpers page](/config/helpers).",
+          "changed": "The members this repair listed are back, or have changed, since Spook looked, so nothing has been removed from the helper. Spook looks again on its own and updates this repair.",
           "too_few_members": "A min/max helper needs at least two members, so removing the missing ones would leave too few. Reconfigure or remove the helper yourself on the [Helpers page](/config/helpers)."
         }
       }
@@ -789,7 +873,8 @@
         },
         "abort": {
           "issue_ignored": "Spook will keep quiet about this area from now on.",
-          "manage": "You can pick a different sensor in the settings of this area on the [Areas page](/config/areas/dashboard)."
+          "manage": "You can pick a different sensor in the settings of this area on the [Areas page](/config/areas/dashboard).",
+          "changed": "These sensors are back, or the settings now point somewhere else, since Spook looked. So nothing has been cleared. Spook looks again on its own and updates this repair."
         }
       }
     },
@@ -817,7 +902,8 @@
         },
         "abort": {
           "issue_ignored": "Spook will keep quiet about this helper from now on.",
-          "manage": "You can manage this helper yourself on the [Helpers page](/config/helpers)."
+          "manage": "You can manage this helper yourself on the [Helpers page](/config/helpers).",
+          "changed": "The sources of this helper have changed since Spook looked, so the helper has been left alone. Spook looks again on its own and updates this repair."
         }
       }
     },
@@ -857,7 +943,8 @@
         },
         "abort": {
           "issue_ignored": "Spook will keep quiet about this label from now on.",
-          "manage": "You can manage this label yourself on the [Labels page](/config/labels)."
+          "manage": "You can manage this label yourself on the [Labels page](/config/labels).",
+          "changed": "This label is in use again since Spook looked: something carries it, or an automation or script uses it. So it has been left alone. Spook looks again on its own and updates this repair."
         }
       }
     },
@@ -1048,6 +1135,106 @@
         }
       }
     },
+    "calendar_delete_event": {
+      "name": "Delete event",
+      "description": "Deletes events from a calendar, found by their title or uid in a stretch of time. Hands back what it deleted, uid included.",
+      "fields": {
+        "summary": {
+          "name": "Summary",
+          "description": "The title of the events to delete, exactly as it is in the calendar."
+        },
+        "uid": {
+          "name": "UID",
+          "description": "The identifier of the event to delete, for when you have it."
+        },
+        "start_date_time": {
+          "name": "Start date and time",
+          "description": "Where to start looking. Defaults to now."
+        },
+        "end_date_time": {
+          "name": "End date and time",
+          "description": "Where to stop looking. Give this or a duration."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "How far to look from the start. Give this or an end date and time."
+        },
+        "whole_series": {
+          "name": "Whole series",
+          "description": "For a recurring event, delete the whole series rather than only the occurrence that was found."
+        }
+      }
+    },
+    "calendar_update_event": {
+      "name": "Update event",
+      "description": "Changes events in a calendar, found by their title or uid in a stretch of time. Hands back what it changed, uid included.",
+      "fields": {
+        "summary": {
+          "name": "Summary",
+          "description": "The title of the events to change, exactly as it is in the calendar."
+        },
+        "uid": {
+          "name": "UID",
+          "description": "The identifier of the event to change, for when you have it."
+        },
+        "start_date_time": {
+          "name": "Start date and time",
+          "description": "Where to start looking. Defaults to now."
+        },
+        "end_date_time": {
+          "name": "End date and time",
+          "description": "Where to stop looking. Give this or a duration."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "How far to look from the start. Give this or an end date and time."
+        },
+        "new_summary": {
+          "name": "New summary",
+          "description": "The title to give the events."
+        },
+        "description": {
+          "name": "Description",
+          "description": "The description to give the events."
+        },
+        "location": {
+          "name": "Location",
+          "description": "The location to give the events."
+        },
+        "new_start": {
+          "name": "New start",
+          "description": "When the events start instead. They keep their length, unless a new end is given too."
+        },
+        "new_end": {
+          "name": "New end",
+          "description": "When the events end instead."
+        },
+        "shift": {
+          "name": "Shift",
+          "description": "Move the events by this much, later, or earlier when negative. Instead of a new start or end."
+        }
+      }
+    },
+    "climate_increase_temperature": {
+      "name": "Increase temperature",
+      "description": "Turns a thermostat's setpoint up a step, both setpoints for one that heats and cools. A thermostat that is off stays off.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How much to change it by. Leave it out to use the thermostat's own step, or half a degree (one in Fahrenheit) when it has none."
+        }
+      }
+    },
+    "climate_decrease_temperature": {
+      "name": "Decrease temperature",
+      "description": "Turns a thermostat's setpoint down a step, both setpoints for one that heats and cools. A thermostat that is off stays off.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How much to change it by. Leave it out to use the thermostat's own step, or half a degree (one in Fahrenheit) when it has none."
+        }
+      }
+    },
     "homeassistant_create_area": {
       "name": "Create an area",
       "description": "Creates a new area on the fly.",
@@ -1168,21 +1355,29 @@
     },
     "homeassistant_disable_config_entry": {
       "name": "Disable an integration",
-      "description": "Disables an integration entry.",
+      "description": "Disables integration entries, by entry or every entry of an integration.",
       "fields": {
         "config_entry_id": {
           "name": "Integration entry",
           "description": "The integration entry to disable."
+        },
+        "domain": {
+          "name": "Integration",
+          "description": "Disable every entry of these integrations, the ones added later included."
         }
       }
     },
     "homeassistant_enable_config_entry": {
       "name": "Enable an integration",
-      "description": "Enables an integration entry.",
+      "description": "Enables integration entries, by entry or every entry of an integration.",
       "fields": {
         "config_entry_id": {
           "name": "Integration entry",
           "description": "The integration entry to enable."
+        },
+        "domain": {
+          "name": "Integration",
+          "description": "Enable every entry of these integrations, the ones added later included."
         }
       }
     },
@@ -1842,6 +2037,10 @@
         }
       }
     },
+    "input_select_reverse": {
+      "name": "Reverse options",
+      "description": "Reverses the order of the selectable options for an `input_select` entity, back to front. This is not persistent and will be undone once reloaded or Home Assistant restarts."
+    },
     "input_select_shuffle": {
       "name": "Shuffle options",
       "description": "Shuffles the list of selectable options for an `input_select` entity. This is not persistent and will be undone once reloaded or Home Assistant restarts."
@@ -1913,6 +2112,24 @@
     "input_number_min": {
       "name": "Set minimum value",
       "description": "Set an input number entity to its minimum value."
+    },
+    "input_number_set_range": {
+      "name": "Set range",
+      "description": "Changes the minimum, maximum or step of an input number made in the UI, the same as editing it. A value outside the new range is moved inside it.",
+      "fields": {
+        "min": {
+          "name": "Minimum",
+          "description": "The new minimum value."
+        },
+        "max": {
+          "name": "Maximum",
+          "description": "The new maximum value."
+        },
+        "step": {
+          "name": "Step",
+          "description": "The new step size."
+        }
+      }
     },
     "counter_create": {
       "name": "Create a counter",
@@ -2226,7 +2443,13 @@
     },
     "repairs_ignore_all": {
       "name": "Ignore all issues",
-      "description": "Ignore all issues currently raised in Home Assistant Repairs."
+      "description": "Ignore all issues currently raised in Home Assistant Repairs, or only those raised by particular integrations.",
+      "fields": {
+        "domain": {
+          "name": "Domain",
+          "description": "Only ignore the issues raised by these integrations."
+        }
+      }
     },
     "repairs_list": {
       "name": "List issues",
@@ -2258,7 +2481,13 @@
     },
     "repairs_unignore_all": {
       "name": "Unignore all issues",
-      "description": "Unignore all issues currently raised in Home Assistant Repairs."
+      "description": "Unignore all issues currently raised in Home Assistant Repairs, or only those raised by particular integrations.",
+      "fields": {
+        "domain": {
+          "name": "Domain",
+          "description": "Only unignore the issues raised by these integrations."
+        }
+      }
     },
     "sensor_set_display_precision": {
       "name": "Set display precision",
@@ -2343,6 +2572,10 @@
         "radius": {
           "name": "Radius",
           "description": "Radius of the zone"
+        },
+        "passive": {
+          "name": "Passive",
+          "description": "A passive zone is only there for automations: it is not shown on the map, and does not change where people and device trackers are."
         }
       }
     },
@@ -2373,6 +2606,10 @@
         "radius": {
           "name": "Radius",
           "description": "Radius of the zone"
+        },
+        "passive": {
+          "name": "Passive",
+          "description": "A passive zone is only there for automations: it is not shown on the map, and does not change where people and device trackers are."
         }
       }
     },
@@ -2383,6 +2620,124 @@
         "entity_id": {
           "name": "Entity ID",
           "description": "The ID of the entity (or entities) to remove."
+        }
+      }
+    },
+    "water_heater_increase_temperature": {
+      "name": "Increase temperature",
+      "description": "Turns a water heater's setpoint up a step, within its limits.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How much to change it by. Leave it out to use the water heater's own step, or half a degree (one in Fahrenheit) when it has none."
+        }
+      }
+    },
+    "water_heater_decrease_temperature": {
+      "name": "Decrease temperature",
+      "description": "Turns a water heater's setpoint down a step, within its limits.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How much to change it by. Leave it out to use the water heater's own step, or half a degree (one in Fahrenheit) when it has none."
+        }
+      }
+    },
+    "humidifier_increase_humidity": {
+      "name": "Increase humidity",
+      "description": "Turns a humidifier's target humidity up a step, within its limits.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to change it by. Leave it out to use the humidifier's own step, or one percent when it has none."
+        }
+      }
+    },
+    "humidifier_decrease_humidity": {
+      "name": "Decrease humidity",
+      "description": "Turns a humidifier's target humidity down a step, within its limits.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to change it by. Leave it out to use the humidifier's own step, or one percent when it has none."
+        }
+      }
+    },
+    "cover_increase_position": {
+      "name": "Increase position",
+      "description": "Moves a cover a step further open, stopping at fully open.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to move it by. Ten percent when left out."
+        }
+      }
+    },
+    "cover_decrease_position": {
+      "name": "Decrease position",
+      "description": "Moves a cover a step further closed, stopping at fully closed.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to move it by. Ten percent when left out."
+        }
+      }
+    },
+    "valve_increase_position": {
+      "name": "Increase position",
+      "description": "Moves a valve a step further open, stopping at fully open.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to move it by. Ten percent when left out."
+        }
+      }
+    },
+    "valve_decrease_position": {
+      "name": "Decrease position",
+      "description": "Moves a valve a step further closed, stopping at fully closed.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to move it by. Ten percent when left out."
+        }
+      }
+    },
+    "media_player_increase_volume": {
+      "name": "Increase volume",
+      "description": "Turns a media player's volume up by the step you give, stopping at full volume.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to change the volume by."
+        }
+      }
+    },
+    "media_player_decrease_volume": {
+      "name": "Decrease volume",
+      "description": "Turns a media player's volume down by the step you give, stopping at silent.",
+      "fields": {
+        "step": {
+          "name": "Step",
+          "description": "How many percent to change the volume by."
+        }
+      }
+    },
+    "todo_move_item": {
+      "name": "Move item",
+      "description": "Moves an item in a to-do list to the top, the bottom, or after another item.",
+      "fields": {
+        "item": {
+          "name": "Item",
+          "description": "The title or uid of the item to move."
+        },
+        "after": {
+          "name": "After",
+          "description": "The title or uid of the item to put it after. Give this or a position."
+        },
+        "position": {
+          "name": "Position",
+          "description": "Move it to the top or the bottom of the list. Give this or an item to put it after."
         }
       }
     }

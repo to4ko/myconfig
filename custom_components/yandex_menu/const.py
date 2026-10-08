@@ -83,8 +83,12 @@ DATA_CACHE_OWNER = "cache_owner"  # чей аккаунт в кэше настр
 DATA_STALE = "stale"  # сколько раз устройство меняли из панели: старые ответы не кэшируем
 DATA_BUILD = "build"  # идущая сборка списка: новые запросы ждут её, а не запускают свою
 DATA_BUILDS = "builds"  # все сборки очереди — при выгрузке останавливаем каждую
+DATA_REFRESH = "refresh"  # когда нажали «Обновить список»: прочитанное раньше читаем заново
+DATA_EDITS = "edits"  # сколько правок сделано из панели — сборка сверяет, не было ли их по ходу
+DATA_REFRESHING = "refreshing"  # сколько «Обновить список» сейчас идёт, ещё до начала сборки
 DATA_PROGRESS = "progress"  # как далеко зашла сборка — для панели
 DATA_PROGRESS_LISTENERS = "progress_listeners"
+DATA_PREVIEW = "preview"  # черновик списка идущей сборки — для панели, открытой посреди неё
 DATA_CACHE = "cache"
 DATA_SAVED = "saved"  # последний прочитанный список и когда он прочитан
 DATA_SAVED_STORE = "saved_store"
@@ -93,4 +97,4 @@ DATA_WS_REGISTERED = "ws_registered"
 
 CACHE_TTL = 15  # секунд, чтобы повторное открытие панели не дёргало Яндекс заново
 
-VERSION = "0.2.3"
+VERSION = "0.4.0"
