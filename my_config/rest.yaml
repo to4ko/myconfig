@@ -515,3 +515,25 @@
         device_class: problem
         value_template: >-
           {{ value_json | selectattr('installationCode','eq','ru') | selectattr('slug','eq','ydb') | map(attribute='incidents') | sum(start=[]) | rejectattr('status','eq','draft') | selectattr('endDate','none') | list | count > 0 }}
+
+  # UniFi proxy on aeza: suspicious clients (static.ui.com loop / the same firmware re-downloaded hourly), found by the
+  # proxy itself (/root/proxyadmin/proxyadmin.py, suspects()). State: comma-separated IPs or "none"; attribute items:
+  # [{ip, detail, score}], new: IPs not handed to HA before (the proxy remembers them, so an outage or an HA restart
+  # neither loses nor repeats a notification). Used by automation system_proxy_suspects_notify (Telegram).
+  # Decisions: unifi.to4ko.ru/admin/. Proxy unreachable: unavailable (errors muted by a logger filter in
+  # configuration.yaml, one Telegram message after 1 h instead - automation system_proxy_link_notify).
+  - resource: "https://unifi.to4ko.ru/api/suspects"
+    headers:
+      X-Site-Token: !secret proxy_sites_token
+    scan_interval: 900
+    timeout: 30
+    sensor:
+      - name: proxy_suspects
+        unique_id: proxy_suspects
+        icon: mdi:account-alert
+        # HTTP errors (502 when proxyadmin is down, 403, 429) come with an HTML body: unavailable, not an empty state
+        availability: "{{ value_json is mapping and value_json.ips is defined }}"
+        value_template: "{{ value_json.ips }}"
+        json_attributes:
+          - items
+          - new

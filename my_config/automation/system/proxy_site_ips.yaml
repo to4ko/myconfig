@@ -6,6 +6,8 @@
 # Send the public addresses of the sites (Site Magic tunnels on the home UDM, sensor.site_magic_ips)
 # to the UniFi proxy on aeza, so its whitelist follows address changes of Dacha / Parents / Lena / Vova.
 # On change of the sensor and every 15 min (the proxy reloads only when an address really changed).
+# Not while the proxy is unreachable (sensor.proxy_suspects unavailable): no errors every 15 min, the proxy keeps the
+# last addresses meanwhile and gets the current ones on the first run after it is back.
 # ##################################
 - alias: system_proxy_site_ips
   id: system_proxy_site_ips
@@ -21,6 +23,8 @@
   conditions:
     - condition: template
       value_template: "{{ '=' in states('sensor.site_magic_ips') }}"
+    - condition: template
+      value_template: "{{ has_value('sensor.proxy_suspects') }}"
   actions:
     - action: rest_command.proxy_site_ips
       data:

@@ -1,0 +1,35 @@
+# #####################################################################################
+#
+# SYSTEM - UniFi proxy suspicious clients
+#
+# #####################################################################################
+# Telegram message when the UniFi proxy on aeza reports a NEW suspicious client
+# (sensor.proxy_suspects: static.ui.com loop or the same firmware re-downloaded hourly).
+# "New" is decided by the proxy itself (attribute new: addresses it has not handed to HA before), so nothing is lost
+# or repeated after an outage of the proxy or an HA restart.
+# The proxy never bans by itself: decide at https://unifi.to4ko.ru/admin/
+# ##################################
+- alias: system_proxy_suspects_notify
+  id: system_proxy_suspects_notify
+  initial_state: true
+  mode: queued
+  max: 5
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: sensor.proxy_suspects
+  variables:
+    new_ips: >-
+      {{ trigger.to_state.attributes.get('new') or [] }}
+  conditions:
+    - condition: template
+      value_template: "{{ new_ips | count > 0 }}"
+  actions:
+    - action: notify.telegram_dima
+      data:
+        message: >-
+          Прокси UniFi: подозрительный адрес.
+          {% for it in trigger.to_state.attributes.get('items') or [] if it.ip in new_ips %}
+          {{ it.ip }} — {{ it.detail }}
+          {% endfor %}
+          Решить: https://unifi.to4ko.ru/admin/

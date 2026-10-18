@@ -1,0 +1,45 @@
+# #####################################################################################
+#
+# SYSTEM - UniFi proxy link
+#
+# #####################################################################################
+# One Telegram message when the UniFi proxy on aeza (https://unifi.to4ko.ru) has not answered for 1 h
+# (sensor.proxy_suspects unavailable: no connection, or an HTTP error from the proxy) and one when it is back
+# after such an outage. Its own fetch errors are muted by a logger filter in configuration.yaml.
+# A failure of the home internet looks the same; the message then goes out when the internet is back.
+# ##################################
+- alias: system_proxy_link_notify
+  id: system_proxy_link_notify
+  initial_state: true
+  mode: queued
+  max: 3
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: sensor.proxy_suspects
+      to: unavailable
+      for: "01:00:00"
+      id: down
+    - trigger: state
+      entity_id: sensor.proxy_suspects
+      from: unavailable
+      not_to:
+        - unavailable
+        - unknown
+      id: up
+  conditions:
+    # "up" only after an outage long enough to have sent "down"
+    - condition: template
+      value_template: >-
+        {{ trigger.id == 'down'
+           or (trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() >= 3600 }}
+  actions:
+    - action: notify.telegram_dima
+      data:
+        message: >-
+          {% if trigger.id == 'down' %}
+          Прокси UniFi (unifi.to4ko.ru) не отвечает больше часа.
+          {% else %}
+          {% set m = ((trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() // 60) | int %}
+          Прокси UniFi (unifi.to4ko.ru) снова отвечает, не отвечал {{ m // 60 }} ч {{ m % 60 }} мин.
+          {% endif %}
