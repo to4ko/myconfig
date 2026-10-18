@@ -115,7 +115,7 @@ class YandexSource(BrowseMediaSource):
             extra = kwargs.pop("extra")
             query["volume_level"] = extra["volume_level"]
         if query:
-            kwargs["identifier"] = utils.encode_media_source(query)
+            kwargs["identifier"] = DOMAIN + "/" + utils.encode_media_source(query)
 
         kwargs = {
             "domain": "tts",  # will show message/say dialog
@@ -852,8 +852,8 @@ class YandexStationBase(MediaBrowser, RestoreEntity):
         self.debug(f"play_media: {media_type} {media_id} {extra}")
 
         # Format:  media-source://{domain}/{identifier}?message={user_input}
-        # Example: media-source://tts/747970653d74657874?message=123
-        if media_id.startswith(f"media-source://tts/"):
+        # Example: media-source://tts/yandex_station/747970653d74657874?message=123
+        if media_id.startswith(f"media-source://tts/{DOMAIN}/"):
             # starting from HA v2025.5, "media_type" will always be "audio/mp3"
             query = utils.decode_media_source(media_id)
             if template := query.pop("template", ""):
@@ -1121,13 +1121,12 @@ class YandexStation(YandexStationBase):
                 # останавливаем, если ничего не играет
                 self.sync_service_call("media_pause")
 
-        if self.sync_id != player_state["id"]:
+        # Состояние проверяем для исправления бага Станция Макс 2020
+        # https://github.com/AlexxIT/YandexStation/issues/819
+        # https://github.com/AlexxIT/YandexStation/issues/835
+        if self.sync_id != player_state["id"] and data["state"]["playing"]:
             self.sync_id = player_state["id"]
-            # Запускаем новую песню, если ID изменился.
-            # Для Станции Макс 2020 важна проверка, что она в состоянии playing
-            # https://github.com/AlexxIT/YandexStation/issues/819
-            if data["state"]["playing"]:
-                self.hass.create_task(self.sync_play_media(data))
+            self.hass.create_task(self.sync_play_media(data))
 
         if state["volume"] and self.sync_volume != state["volume"]:
             self.sync_volume = state["volume"]
@@ -1276,4 +1275,4 @@ class YandexModule(YandexStationBase):
         if self.support_on:
             await self.quasar.device_actions(self.device, on=False)
         else:
-            await super().async_turn_on()
+            await super().async_turn_off()

@@ -1521,6 +1521,10 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
         # survives the file changing underneath it. #1653.
         self._latest_from_source = False
 
+        # Whether that word was only remembered from before a restart, and the
+        # source has not said it again since. #1817.
+        self._offer_restored = False
+
         # Deliberately no `release_url`. Home Assistant would put it in the
         # state attributes, which every signed-in person can read, and it lets
         # a blueprint be imported from an address carrying a token or a
@@ -1558,6 +1562,7 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
             # answers, the file is written down as both versions, so the same
             # value on both sides says nothing about where it came from.
             self._latest_from_source = offered != self._attr_installed_version
+            self._offer_restored = self._latest_from_source
 
     @callback
     def async_seen(self, said: _OnDisk) -> None:
@@ -1602,6 +1607,7 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
             self._fetched = None
             self._set_aside = None
             self._latest_from_source = False
+            self._offer_restored = False
             self._attr_latest_version = said.fingerprint
         elif offer_installed:
             # Keep the source's word, but not a payload installed elsewhere.
@@ -1673,6 +1679,17 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
                 self.blueprint_path,
                 err,
             )
+
+            # An offer only remembered from before a restart is not the
+            # source's word until the source says it again. Kept standing, an
+            # offer saved by an older Spook, for a source that never answers,
+            # came back after every restart with nothing to install it from.
+            if self._offer_restored:
+                self._offer_restored = False
+                self._latest_from_source = False
+                self._fetched = None
+                self._attr_latest_version = self._attr_installed_version
+                self.async_write_ha_state()
             return True
 
         if said != self._said:
@@ -1682,6 +1699,7 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
         self._fetched = fetched
         self._attr_latest_version = _fingerprint(fetched)
         self._latest_from_source = True
+        self._offer_restored = False
         self.async_write_ha_state()
         return True
 
@@ -1713,8 +1731,13 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
             {},
         )
         if (domain_blueprint := domain_blueprints.get(self.blueprint_domain)) is None:
-            msg = f"{self.blueprint_domain} blueprints are not loaded right now"
-            raise HomeAssistantError(msg)
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="blueprints_not_loaded",
+                translation_placeholders={
+                    "domain": self.blueprint_domain,
+                },
+            )
 
         # Installing over a blueprint that is not there any more would write
         # it back, which is Spook restoring a file somebody deleted on
@@ -1735,11 +1758,13 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
             if self._gone is not None:
                 await self._gone(self.blueprint_domain, self.blueprint_path)
 
-            msg = (
-                f"{self._said.name} is no longer here, so there is nothing to "
-                f"update. Nothing has been written."
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="blueprint_gone",
+                translation_placeholders={
+                    "name": self._said.name,
+                },
             )
-            raise HomeAssistantError(msg)
 
         fetched = (
             self._fetched if self._fetched is not None else await self._async_fetch()
@@ -1749,11 +1774,14 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
         # Writing it anyway would break every consumer on a version that is
         # never going to work.
         if errors := fetched.validate():
-            msg = (
-                f"{self._said.name} cannot run here: {'; '.join(errors)}. "
-                f"Nothing has been written."
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="blueprint_cannot_run",
+                translation_placeholders={
+                    "name": self._said.name,
+                    "errors": "; ".join(errors),
+                },
             )
-            raise HomeAssistantError(msg)
 
         if backup:
             try:
@@ -1762,11 +1790,14 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
                 # Asked for a copy and did not get one. Writing anyway would
                 # take the version that works with nothing to fall back on,
                 # which is the opposite of what was asked for.
-                msg = (
-                    f"Could not put a copy of {self.blueprint_path} aside: "
-                    f"{err}. Nothing has been written."
-                )
-                raise HomeAssistantError(msg) from err
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="blueprint_backup_failed",
+                    translation_placeholders={
+                        "path": self.blueprint_path,
+                        "error": str(err),
+                    },
+                ) from err
 
         try:
             await domain_blueprint.async_add_blueprint(
@@ -1775,8 +1806,13 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
                 allow_override=True,
             )
         except OSError as err:
-            msg = f"Could not write {self.blueprint_path}"
-            raise HomeAssistantError(msg) from err
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="blueprint_could_not_write",
+                translation_placeholders={
+                    "path": self.blueprint_path,
+                },
+            ) from err
 
         # A fetch that worked, so whatever the last one could not do is no
         # longer the news. Left standing, the dialog would go on saying the
@@ -1798,6 +1834,7 @@ class BlueprintUpdateEntity(  # pylint: disable=too-many-instance-attributes
         self._attr_installed_version = _fingerprint(fetched)
         self._attr_latest_version = self._attr_installed_version
         self._latest_from_source = True
+        self._offer_restored = False
         self.async_write_ha_state()
 
     @callback

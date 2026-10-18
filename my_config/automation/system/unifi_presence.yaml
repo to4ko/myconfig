@@ -1,0 +1,45 @@
+# ##################################
+# System - UniFi presence without ghost sessions
+# ##################################
+# After a UniFi Cloud reconnect the controller briefly reports offline phones as connected, without
+# ap_mac/essid. A real connection always has ap_mac. Only a real connection (home + ap_mac) or an
+# explicit not_home is published; home without ap_mac (ghost, or momentary attribute gap) is ignored.
+- alias: system_unifi_presence_publish
+  id: system_unifi_presence_publish
+  initial_state: true
+  mode: queued
+  max: 30
+  triggers:
+    - trigger: state
+      entity_id:
+        - device_tracker.iphone_16_pro_dima_unifi
+        - device_tracker.iphone_16_pro_sandra_unifi
+        - device_tracker.iphone_16e_sandra_unifi
+        - device_tracker.mi_17_vova_unifi
+        - device_tracker.poco_x8_sasha_unifi
+        - device_tracker.poco_m8_mama
+        - device_tracker.redmi_14c_vasya
+  variables:
+    topics:
+      device_tracker.iphone_16_pro_dima_unifi: ha/presence/dima/unifi
+      device_tracker.iphone_16_pro_sandra_unifi: ha/presence/sandra/unifi
+      device_tracker.iphone_16e_sandra_unifi: ha/presence/sandra2/unifi
+      device_tracker.mi_17_vova_unifi: ha/presence/vova/unifi
+      device_tracker.poco_x8_sasha_unifi: ha/presence/sasha/unifi
+      device_tracker.poco_m8_mama: ha/presence/natasha/unifi
+      device_tracker.redmi_14c_vasya: ha/presence/vasya/unifi
+    payload: >-
+      {% set s = trigger.to_state %}
+      {% if s is none %}
+      {% elif s.state == 'home' and s.attributes.get('ap_mac') %}home
+      {% elif s.state == 'not_home' %}not_home
+      {% endif %}
+  conditions:
+    - condition: template
+      value_template: "{{ payload | trim != '' }}"
+  actions:
+    - action: mqtt.publish
+      data:
+        topic: "{{ topics[trigger.entity_id] }}"
+        payload: "{{ payload | trim }}"
+        retain: true

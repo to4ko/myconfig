@@ -4,6 +4,22 @@
 
 const LIMIT_FALLBACK = 5;
 
+const VOICE_CONTROLS = {
+  next: { title: "Следующий трек", phrases: ["дальше", "следующий трек", "следующая песня", "следующая глава"], hint: "Следующий трек или глава книги." },
+  previous: { title: "Предыдущий трек", phrases: ["назад", "предыдущий трек", "предыдущая песня", "предыдущая глава"], hint: "Предыдущий трек. В книге — предыдущая глава." },
+  resume: { title: "Продолжить", phrases: ["продолжи", "продолжай", "играй дальше"], hint: "Продолжить воспроизведение после паузы." },
+  restart: { title: "Сначала", phrases: ["сначала", "с начала", "включи сначала"], hint: "Книга или текущий трек с самого начала." },
+  forward: { title: "Вперёд на 30 с", phrases: ["перемотай вперёд", "вперёд на 30 секунд", "промотай вперёд"], hint: "Перемотка на 30 секунд вперёд — в книге и в треке." },
+  back: { title: "Назад на 30 с", phrases: ["перемотай назад", "назад на 30 секунд", "промотай назад"], hint: "Перемотка на 30 секунд назад — в книге и в треке." },
+  shuffle_on: { title: "Перемешать", phrases: ["перемешай", "включи перемешивание", "в случайном порядке"], hint: "Случайный порядок треков." },
+  shuffle_off: { title: "По порядку", phrases: ["по порядку", "выключи перемешивание", "не перемешивай"], hint: "Воспроизведение треков по порядку." },
+  repeat_all: { title: "Повторять всё", phrases: ["повторяй", "повторяй всё", "включи повтор"], hint: "Повтор очереди по кругу." },
+  repeat_one: { title: "Повторять трек", phrases: ["повторяй трек", "повторяй эту песню"], hint: "Повтор текущего трека." },
+  repeat_off: { title: "Без повтора", phrases: ["не повторяй", "выключи повтор", "хватит повторять"], hint: "Воспроизведение без повтора." },
+  now_playing: { title: "Что играет", phrases: ["что играет", "что сейчас играет", "что это играет", "какая глава"], hint: "Алиса назовёт трек или книгу и главу." },
+  transfer: { title: "Перенести сюда", phrases: ["перенеси сюда", "играй здесь", "включи здесь", "перенеси музыку сюда"], hint: "Забрать музыку или книгу с другой колонки на эту — с того же места." },
+};
+
 /* Состояния сущностей HA, при которых значок устройства светится. */
 const ON_STATES = new Set([
   "on", "open", "opening", "closing", "playing", "cleaning", "returning",
@@ -305,6 +321,7 @@ const STYLES = `
   .btn-quiet { background: var(--surface-2); border-color: transparent; }
   .btn-danger { border-color: transparent; background: rgba(219,68,55,.12); color: var(--danger); }
   .btn[disabled] { opacity: .45; cursor: default; }
+  .btn[hidden] { display: none; }
 
   .body { flex: 1; display: flex; min-height: 0; }
   .main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
@@ -334,6 +351,11 @@ const STYLES = `
     border-top: 1px solid var(--line);
   }
   .row.offer { grid-template-columns: 36px minmax(150px, 1.4fr) minmax(140px, 1.6fr) auto; }
+  .row.voice-search-result { grid-template-columns: 36px minmax(0, 1fr); }
+  .row.voice-search-result .avatar { grid-column: 1; grid-row: 1 / 3; }
+  .row.voice-search-result .title, .row.voice-search-result .entity { grid-column: 2; min-width: 0; overflow-wrap: anywhere; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+  .row[hidden] { display: none; }
   .row:first-child { border-top: 0; }
   .row:hover { background: var(--surface-2); }
   .row.selected { background: rgba(3,169,244,.12); }
@@ -350,6 +372,8 @@ const STYLES = `
   .chips { display: flex; flex-wrap: wrap; gap: 5px; }
   .chip { font-size: 11.5px; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
   .chip.primary { background: rgba(3,169,244,.16); color: var(--accent); font-weight: 500; }
+  .row.media-inactive .avatar { opacity: .5; }
+  .row.media-inactive .title { color: var(--muted); }
   /* строка черновика: настройки ещё читаются — по ней пробегает блик */
   .row.pending .chip.ghost {
     width: 64px; height: 1.5em; padding: 0;
@@ -529,6 +553,11 @@ class YandexMenuPanel extends HTMLElement {
     this._fresh = new Set(); // строки, дочитанные к этой отрисовке, — они проявляются
     this._listTimer = null;
     this._unsubProgress = null;
+    this._voice = null;
+    this._voiceId = null;
+    this._voiceDraft = null;
+    this._voiceCardGeneration = 0;
+    this._voiceSeq = 0;
     this._room = null; // открыта карточка комнаты вместо устройства
     // Карточка открывалась сменой поля и следа в истории браузера не оставляла:
     // аппаратная «назад» на телефоне снимала запись входа в панель и уносила на
@@ -609,12 +638,14 @@ class YandexMenuPanel extends HTMLElement {
     if (card) {
       this._selected = card.device || null;
       this._room = card.room || null;
+      if (this._voiceId !== (card.voice || null)) this._voiceCardGeneration++;
+      this._voiceId = card.voice || null;
       this._backRoom = card.fromRoom || null;
     }
     if (!this.shadowRoot.firstChild) this._render();
     else if (card) this._render();
     window.addEventListener("popstate", this._onPop);
-    if (this._loaded) this._watchProgress();
+    if (this._loaded) { this._watchProgress(); this._loadVoice(true); }
     this._armRecent();
   }
 
@@ -624,6 +655,8 @@ class YandexMenuPanel extends HTMLElement {
       this._unsubProgress.then((unsub) => unsub()).catch(() => {});
       this._unsubProgress = null;
     }
+    clearTimeout(this._voiceTimer);
+    clearTimeout(this._voiceSearchTimer);
     clearTimeout(this._toastTimer);
     clearTimeout(this._listTimer);
     this._listTimer = null;
@@ -642,7 +675,7 @@ class YandexMenuPanel extends HTMLElement {
       opensDialog и dialogData заняты его диалог-менеджером, поэтому своё кладём
       под ymCard; from — то, чем он отличает «есть куда вернуться» от «некуда». */
   _openCard() {
-    const card = this._room
+    const card = this._voiceId ? { voice: this._voiceId } : this._room
       ? { room: this._room }
       : { device: this._selected, fromRoom: this._backRoom || null };
     // Вторая проверка — на случай, когда крестик уже отправил history.back(), а
@@ -660,6 +693,8 @@ class YandexMenuPanel extends HTMLElement {
 
   /** Закрытие не кнопкой «назад»: крестик, смена дома, удаление устройства. */
   _closeCard() {
+    this._voiceId = null;
+    this._voiceDraft = null;
     this._selected = null;
     this._room = null;
     this._backRoom = null;
@@ -706,9 +741,13 @@ class YandexMenuPanel extends HTMLElement {
       const card = history.state.ymCard;
       const device = card.device || null;
       const room = card.room || null;
+      const voice = card.voice || null;
       this._histCard = true;
       this._backRoom = card.fromRoom || null;
-      if (device !== this._selected || room !== this._room) {
+      if (device !== this._selected || room !== this._room || voice !== this._voiceId) {
+        this._voiceCardGeneration++;
+        this._voiceId = voice;
+        this._voiceDraft = null;
         this._selected = device;
         this._room = room;
         this._dropGoneCard(); // пока запись лежала, устройство могли удалить
@@ -718,6 +757,8 @@ class YandexMenuPanel extends HTMLElement {
     }
     if (!this._histCard) return; // ушли с чужой записи — это уход с панели
     this._histCard = false;
+    this._voiceId = null;
+    this._voiceDraft = null;
     this._message = null;
     if (this._backRoom) {
       // в устройство провалились из карточки комнаты: возвращаемся в неё, и под
@@ -1067,6 +1108,8 @@ class YandexMenuPanel extends HTMLElement {
   _openHouse(id) {
     if (id === this._houseId) return;
     this._house = id;
+    this._voice = null;
+    this._voiceHouse = undefined;
     this._closeCard(); // карточка была из прежнего дома — и запись под ней тоже
     try {
       localStorage.setItem(HOUSE_KEY, id);
@@ -1843,6 +1886,7 @@ class YandexMenuPanel extends HTMLElement {
   _renderList() {
     const host = this.shadowRoot.getElementById("list");
     if (!host) return;
+    if (this._deferVoiceRender("list")) return;
     this._trackOn();
     this._renderViews();
     // Список переписывается целиком, поэтому прокрутку держим руками: закрыв
@@ -1858,6 +1902,10 @@ class YandexMenuPanel extends HTMLElement {
       return;
     }
 
+    if (this._voiceHouse !== this._voiceHomeId) {
+      this._voiceHouse = this._voiceHomeId;
+      this._loadVoice();
+    }
     const words = this._words();
     const query = words.length > 0;
     const onView = this._view === "on";
@@ -1904,13 +1952,15 @@ class YandexMenuPanel extends HTMLElement {
     const visible = onView ? matched.filter((device) => this._isOn(device)) : matched;
     const allScenarios = (this._data.scenarios || []).filter(
       (item) =>
+        !this._voiceScenario(item) &&
         (!houseId || !(item.households || []).length || item.households.includes(houseId)) &&
         this._hit(`${item.name} ${item.phrases.join(" ")}`, words)
     );
     // Слово не нашлось нигде — возможно, так устройство зовут дома. В черновике
     // не предлагаем: вторые имена недочитанных устройств ещё не известны.
     const word =
-      query && devices.length && !matched.length && !allScenarios.length && !this._data.partial
+      query && devices.length && !matched.length && !allScenarios.length &&
+      (onView || !this._voiceLaunches().some((item) => this._voiceMatches(item, words))) && !this._data.partial
         ? this._nameWord()
         : "";
 
@@ -1958,11 +2008,14 @@ class YandexMenuPanel extends HTMLElement {
     if (onView && !word) {
       // сценарии и «Отдать в Алису» в этом виде не показываем: он про то, что горит
       host.innerHTML = html;
+      this._filterVoiceRows(host);
       host.scrollTop = keepScroll;
       this._listShape = shape;
       return;
     }
 
+    const voiceHtml = this._voiceHtml();
+    html += voiceHtml;
     const scenarios = allScenarios;
     if (scenarios.length) {
       const station = this._stationFor(null);
@@ -2001,6 +2054,7 @@ class YandexMenuPanel extends HTMLElement {
         Появится, когда список дочитается: пока не видно, какие сущности Home Assistant уже в Алисе.
       </div></div></section>`;
       host.innerHTML = html;
+      this._filterVoiceRows(host);
       host.scrollTop = keepScroll;
       this._listShape = shape;
       return;
@@ -2053,7 +2107,8 @@ class YandexMenuPanel extends HTMLElement {
       </div></div></section>`;
     }
 
-    host.innerHTML = html || `<div class="empty">Ничего не нашлось.</div>`;
+    host.innerHTML = (html || (voiceHtml ? "" : `<div class="empty">Ничего не нашлось.</div>`));
+    this._filterVoiceRows(host);
     host.scrollTop = keepScroll;
     this._listShape = shape;
   }
@@ -2061,6 +2116,8 @@ class YandexMenuPanel extends HTMLElement {
   _renderPanel() {
     const host = this.shadowRoot.getElementById("panel");
     if (!host) return;
+    if (this._deferVoiceRender("panel")) return;
+    if (this._voiceId) { this._renderVoicePanel(host); return; }
     // Карточку восстановили из истории, а список ещё в пути: Яндекс отвечает
     // секунды. Без заглушки человек видел бы пустой экран и не понимал, что
     // «назад» ему закрывать.
@@ -2336,6 +2393,596 @@ class YandexMenuPanel extends HTMLElement {
     `;
   }
 
+  /* --------------------------------------------------------- включить голосом */
+
+  _voiceControls() {
+    return Object.entries(VOICE_CONTROLS).map(([action, control]) =>
+      (this._voice?.launches || []).find((item) => item.source === "control" && item.media?.action === action) ||
+      { id: `control:${action}`, source: "control", title: control.title, media: { media_type: "control", action }, phrases: [...control.phrases], reply: "silent", state: "waiting", virtual: true }
+    );
+  }
+
+  _voiceLaunches() {
+    return [...(this._voice?.launches || []).filter((item) => item.source !== "control"), ...(this._voice?.health?.ma_available ? this._voiceControls() : [])];
+  }
+
+  _voiceCardId(item) {
+    return item.source === "control" ? `control:${item.media.action}` : item.id;
+  }
+
+  _voiceItem() {
+    return this._voiceControls().find((item) => this._voiceCardId(item) === this._voiceId) ||
+      (this._voice?.launches || []).find((item) => item.id === this._voiceId);
+  }
+
+  _filterVoiceRows(host = this.shadowRoot) {
+    const query = (this._voiceFilter || "").toLocaleLowerCase();
+    for (const row of host.querySelectorAll("#voice-library-rows [data-launch]"))
+      row.hidden = !!query && !row.textContent.toLocaleLowerCase().includes(query);
+  }
+
+  _voiceMediaType(type) {
+    return ({ album: "Альбом", audiobook: "Аудиокнига", folder_artist: "Папка исполнителя", playlist: "Плейлист", track: "Трек", artist: "Исполнитель", radio: "Радио", podcast: "Подкаст" })[type] || "Медиа";
+  }
+
+  _voiceMediaLabel(draft) {
+    if (!draft.media) return "Начните вводить название";
+    const count = draft.media.uris?.length;
+    return `${this._voiceMediaType(draft.media.media_type)} · ${draft.media.name || draft.title}${count ? ` · альбомов: ${count}` : ""}`;
+  }
+
+  _voiceImage(item) {
+    return typeof item?.image === "string" && item.image
+      ? `<img src="${this._esc(item.image)}" alt="" loading="lazy">`
+      : this._svg(ICONS.play, 18);
+  }
+
+  get _voiceHomeId() {
+    return this._houseId || this._houses[0]?.id || null;
+  }
+
+  _voiceScenario(item) {
+    return (this._voice?.launches || []).some((launch) => launch.scenario_id === item.id) ||
+      (this._voice?.orphans || []).some((scenario) => (scenario.id || scenario.scenario_id) === item.id) ||
+      (!this._voice && /· Яндекс меню$/.test(item.name || ""));
+  }
+
+  async _loadVoice(cached = false) {
+    const before = JSON.stringify([this._voice, this._voiceError]);
+    const seq = ++this._voiceSeq;
+    const house = this._voiceHomeId;
+    clearTimeout(this._voiceTimer);
+    try {
+      const state = await this._call("yandex_menu/voice/state", { ...(house ? { household_id: house } : {}), cached });
+      if (seq !== this._voiceSeq || house !== this._voiceHomeId || !this.isConnected) return;
+      this._voice = state;
+      this._voiceError = "";
+    } catch (err) {
+      if (seq !== this._voiceSeq || house !== this._voiceHomeId) return;
+      this._voiceError = err.message || String(err);
+    }
+    if (before !== JSON.stringify([this._voice, this._voiceError])) {
+      this._voiceListDirty = true;
+      this._voicePanelDirty = true;
+    }
+    this._renderVoiceUpdates();
+    if (this.isConnected) this._voiceTimer = setTimeout(() => this._loadVoice(true), this._voice?.library?.syncing ? 1500 : 30000);
+    return this._voiceError ? null : this._voice;
+  }
+
+  _deferVoiceRender(area) {
+    const context = area === "list"
+      ? JSON.stringify([this._voiceHomeId, this._query, this._view])
+      : JSON.stringify([this._voiceHomeId, !!this._voiceId, this._voiceCardGeneration, this._selected, this._room]);
+    const key = area === "list" ? "_voiceListContext" : "_voicePanelContext";
+    const dirty = area === "list" ? "_voiceListDirty" : "_voicePanelDirty";
+    const active = this.shadowRoot.activeElement;
+    // Общий вход всех перерисовок, включая ready, hass и _scheduleList.
+    // Смена карточки/дома — навигация: старое поле её не блокирует.
+    const editing = active?.matches("input, select, textarea") || (!!active && active === this._voiceClickPending);
+    if (this[key] === context && editing && active?.closest(`#${area}`)) {
+      this[dirty] = true;
+      return true;
+    }
+    this[key] = context;
+    this[dirty] = false;
+    return false;
+  }
+
+  _renderVoiceUpdates() {
+    const active = this.shadowRoot.activeElement;
+    const editing = active?.matches("input, select, textarea") || (!!active && active === this._voiceClickPending);
+    // Не заменяем DOM сфокусированного поля: нативный select иначе закроется.
+    if (this._voiceListDirty && !(editing && active.closest("#list"))) {
+      this._voiceListDirty = false;
+      this._renderList();
+    }
+    if (this._voicePanelDirty && !(editing && active.closest("#panel"))) {
+      this._voicePanelDirty = false;
+      this._renderPanel();
+    }
+  }
+
+  _voiceErrorText(error) {
+    if (!error) return "";
+    const message = typeof error === "string" ? error : error.message || "Не удалось выполнить операцию";
+    if (/Traceback|\n\s*at |File "/.test(message)) return "Не удалось выполнить операцию. Подробности — в журнале Home Assistant.";
+    return message;
+  }
+
+  _voiceResult(result) {
+    if (!result) return "ещё не запускался";
+    if (typeof result === "string") return result;
+    const time = result.time ? new Date(result.time * 1000).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : "";
+    return [time, result.speaker || result.entity_id, result.message || (result.success ? "играет" : "Не удалось запустить")].filter(Boolean).join(" · ");
+  }
+
+  _voiceStatus(item) {
+    if (item.state === "pending" && item.last_error) return `Не удалось сохранить: ${this._voiceErrorText(item.last_error)}. Повторите сохранение.`;
+    if (item.media_missing) return "Выбранное пропало из MA";
+    if (item.last_error) return `Ошибка: ${this._voiceErrorText(item.last_error)}`;
+    return ({ waiting: "Ждёт активации", pending: "Сохраняется…", active: "Активно", missing: "Папка пропала" })[item.state] ||
+      (item.last_error ? `Ошибка: ${typeof item.last_error === "string" ? item.last_error : item.last_error.message || "Не удалось сохранить"}` : "Ждёт активации");
+  }
+
+  _voiceButton(action, text, extra = "", disabled = false, primary = false) {
+    return `<button class="btn${primary ? " btn-primary" : ""}" data-voice-action="${action}" ${extra} ${disabled ? "disabled" : ""}>${text}</button>`;
+  }
+
+  _voiceMatches(item, words = this._words()) {
+    return this._hit(`${item.title || ""} ${(item.phrases || []).join(" ")} ${item.media?.name || ""} ${this._voiceMediaType(item.media?.media_type)} ${this._mediaKind(item)}`, words);
+  }
+
+  _mediaIcon(item) {
+    const type = item.media?.media_type;
+    if (item.source === "control" || type === "control") return ICONS.voice;
+    if (item.source === "manual") return "M15,6H3V8H15V6M15,10H3V12H15V10M3,16H11V14H3V16M17,6V14.18C16.69,14.07 16.35,14 16,14A3,3 0 0,0 13,17A3,3 0 0,0 16,20A3,3 0 0,0 19,17V8H22V6H17Z";
+    return ({ audiobook: "M21,4H14L12,6L10,4H3A1,1 0 0,0 2,5V19A1,1 0 0,0 3,20H10L12,22L14,20H21A1,1 0 0,0 22,19V5A1,1 0 0,0 21,4M11,18H4V6H9L11,8V18M20,18H13V8L15,6H20V18Z", album: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12A2,2 0 0,0 12,10Z", folder_artist: "M12,3A4,4 0 0,1 16,7A4,4 0 0,1 12,11A4,4 0 0,1 8,7A4,4 0 0,1 12,3M12,13C7.58,13 4,14.79 4,17V19H14V17C14,15.5 14.5,14.13 15.35,13.03L12,13M20,12V18.18C19.69,18.07 19.35,18 19,18A3,3 0 0,0 16,21A3,3 0 0,0 19,24A3,3 0 0,0 22,21V14H24V12H20Z" })[type] || ICONS.play;
+  }
+
+  _mediaKind(item) {
+    const type = item.media?.media_type;
+    if (item.source === "control") return "управление голосом";
+    const count = item.albums?.length || item.media?.uris?.length || 0;
+    const albumWord = count % 10 === 1 && count % 100 !== 11 ? "альбом" : count % 10 >= 2 && count % 10 <= 4 && !(count % 100 >= 12 && count % 100 <= 14) ? "альбома" : "альбомов";
+    return type === "audiobook" ? `книга${item.source_name ? ` · ${item.source_name}` : " · Аудиокниги"}` : type === "folder_artist" ? `исполнитель · ${count} ${albumWord}` : this._voiceMediaType(type).toLocaleLowerCase();
+  }
+
+  _mediaRowHtml(item) {
+    const esc = (value) => this._esc(String(value ?? ""));
+    const id = this._voiceCardId(item);
+    const active = !!item.scenario_id && item.state !== "missing" && !item.media_missing;
+    const note = item.state !== "active" || item.last_error || item.media_missing ? `<br><span class="note">${esc(this._voiceStatus(item))}</span>` : "";
+    return `<button class="row${active ? " lit" : " media-inactive"}${id === this._voiceId ? " selected" : ""}" data-voice-action="open" data-launch="${esc(id)}"><span class="avatar">${this._svg(this._mediaIcon(item), 18)}</span><span><span class="title">${esc(item.title)}</span><br><span class="entity">${esc(this._mediaKind(item))}</span>${note}</span><span class="chips">${(item.phrases || []).map((phrase, index) => `<span class="chip${index === 0 ? " primary" : ""}">${esc(phrase)}</span>`).join("")}</span><span class="meta"><span class="role">${active ? "активно" : ""}</span></span></button>`;
+  }
+
+  _voiceHtml() {
+    const esc = (value) => this._esc(String(value ?? ""));
+    const words = this._words();
+    const state = this._voice;
+    if (this._view === "on" || (words.length && !this._voiceLaunches().some((item) => this._voiceMatches(item, words)))) return "";
+    const health = state?.health || {};
+    const lib = state?.library || {};
+    let html = `<section id="voice-library"><div class="room-head"><h2>Медиатека</h2>`;
+    if (health.ma_available) html += `<button class="room-cmd" data-voice-action="refresh" ${lib.syncing || this._voiceBusy ? "disabled" : ""}>${lib.syncing ? "Обновляется…" : "Обновить библиотеку"}</button>`;
+    if (lib.syncing) html += `<span class="count" role="status">${esc(typeof lib.progress === "object" && lib.progress ? `Сканирую: ${lib.progress.tasks ?? 0} задач` : lib.progress || "Читаю…")}</span>${this._voiceButton("cancel", "Отменить")}`;
+    html += `</div><div class="card">`;
+    if (!state) return html + `<div class="lead"><div class="msg ${this._voiceError ? "error" : "info"}">${esc(this._voiceErrorText(this._voiceError) || "Читаю библиотеку…")}</div>${this._voiceButton("reload", "Обновить")}</div></div></section>`;
+    if (!health.ma_available) return html + `<div class="lead"><div class="msg warn">Нужен Music Assistant — сервер и интеграция в Home Assistant. <a href="https://github.com/busyava/yandex-menu-for-home-assistant#свои-файлы-на-колонке" target="_blank" rel="noopener noreferrer">Как подключить</a></div></div></div></section>`;
+    if (!health.cloud_updates || !health.updates_running || !(state.speakers || []).length || (state.speakers || []).some((speaker) => !speaker.ma_entity_id || speaker.reason) || health.manual_only || (state.orphans || []).length) html += `<div class="lead"><div class="msg warn">${health.manual_only ? "Библиотека недоступна. " : ""}Проверьте колонки и облачные обновления. ${this._voiceButton("columns", "Исправить")}</div></div>`;
+    if (lib.error) html += `<div class="lead"><div class="msg error">${esc(this._voiceErrorText(lib.error))}</div></div>`;
+    if (lib.scan_error) html += `<div class="lead"><div class="msg warn">${esc(lib.scan_error)}</div></div>`;
+    for (const warning of lib.warnings || []) html += `<div class="lead"><div class="msg warn">Пропущено: ‹${esc(warning.folder)}› — несколько книг/альбомов</div></div>`;
+    html += (state.launches || []).filter((item) => item.source !== "control" && this._voiceMatches(item, words)).map((item) => this._mediaRowHtml(item)).join("");
+    html += `<button class="row" data-voice-action="add"><span class="avatar">＋</span><span class="title">Добавить запуск</span></button>`;
+    const controls = this._voiceControls().filter((item) => this._voiceMatches(item, words));
+    if (controls.length) {
+      html += `<div class="lead"><div class="section-head"><h4>Управление голосом</h4></div><p class="hint">Фразы работают на любой колонке: управляют тем, что включил плагин. Пауза и стоп — встроенные у Алисы. Каждая команда — отдельный сценарий в Яндексе: включайте только нужные.</p></div>`;
+      for (const [title, actions] of [
+        ["Переходы", ["next", "previous", "resume", "restart", "forward", "back"]],
+        ["Режимы", ["shuffle_on", "shuffle_off", "repeat_all", "repeat_one", "repeat_off"]],
+        ["Прочее", ["now_playing", "transfer"]],
+      ]) {
+        const rows = controls.filter((item) => actions.includes(item.media.action));
+        if (rows.length) html += `<div class="lead"><div class="section-head"><h4>${title}</h4></div></div>${rows.map((item) => this._mediaRowHtml(item)).join("")}`;
+      }
+    }
+    return html + `</div></section>`;
+  }
+
+  _renderVoiceColumns(host) {
+    const esc = (value) => this._esc(String(value ?? ""));
+    const state = this._voice || {};
+    const health = state.health || {};
+    let html = `<div class="panel-head"><span class="avatar">${this._svg(ICONS.speaker, 20)}</span><h3>Колонки</h3>${this._voiceButton("close", "Назад")}</div><div class="panel-body">`;
+    if (!health.cloud_updates || !health.updates_running) html += `<div class="msg warn">Включите облачные обновления: Настройки → Устройства и службы → Яндекс.Станция → Настроить. Проверьте подключение Станции.</div>`;
+    for (const speaker of state.speakers || []) {
+      html += `<div class="section"><label>${esc(speaker.name || speaker.entity_id)} → ${esc(speaker.ma_entity_id || "игрок не найден")}</label>${speaker.reason ? `<div class="msg error">${esc(speaker.reason)}</div>` : ""}<select class="field" aria-label="Выбрать игрока для ${esc(speaker.name)}" data-voice-map="${esc(speaker.entity_id)}"><option value="">Автоматически / выбрать игрока</option>${(state.players || []).map((player) => `<option value="${esc(player.entity_id)}" ${speaker.ma_entity_id === player.entity_id ? "selected" : ""}>${esc(player.name || player.entity_id)}</option>`).join("")}</select></div>`;
+    }
+
+    const launches = state.launches || [];
+    const lib = state.library || {};
+    const missing = launches.filter((item) => item.source !== "control" && item.state === "missing" && item.scenario_id).length;
+    if (missing) html += this._voiceButton("delete-missing", `Удалить пропавшие (${missing})`, "", !lib.complete || !!lib.syncing);
+    const orphans = state.orphans || [];
+    if (orphans.length) {
+      html += `<div class="section"><h4>Сценарии без карточки</h4>`;
+      for (const orphan of orphans) {
+        const reason = orphan.reason || orphan.bind_reason || (!orphan.can_bind ? "Не удалось определить карточку для привязки." : "");
+        html += `<div class="section"><p>${esc(orphan.name || orphan.title || orphan.id)}</p>${reason ? `<p class="hint">${esc(this._voiceErrorText(reason))}</p>` : ""}${this._voiceButton("bind-orphan", "Привязать", `data-scenario="${esc(orphan.scenario_id || orphan.id)}"`, !orphan.can_bind)} ${this._voiceButton("delete-orphan", "Удалить", `data-scenario="${esc(orphan.scenario_id || orphan.id)}"`)}</div>`;
+      }
+      html += this._voiceButton("bind-orphans", "Привязать все", "", !orphans.some((orphan) => orphan.can_bind)) + this._voiceButton("delete-orphans", "Удалить все") + `</div>`;
+    }
+
+    html += `</div><div class="panel-foot">${launches.some((item) => item.scenario_id) ? this._voiceButton("disable-all", "Отключить все запуски") : ""}</div>`;
+    host.hidden = false;
+    host.dataset.owner = "voice:columns";
+    host.innerHTML = html;
+  }
+
+  _openVoice(id) {
+    this._selected = null;
+    this._room = null;
+    this._voiceCardGeneration = (this._voiceCardGeneration || 0) + 1;
+    this._voiceId = id;
+    this._voiceTestSpeaker = this._stationByHouse[this._voiceHomeId || ""] || this._voice?.speakers?.[0]?.entity_id || "";
+    this._voiceDraft = null;
+    this._voiceServerError = false;
+    this._voiceNotice = null;
+    this._voiceSearch = null;
+    this._voiceSearchQuery = "";
+    this._voiceNewPhrase = "";
+    this._voiceConfirmed = false;
+    this._openCard();
+    this._renderPanel();
+  }
+
+  _voiceValidate(draft) {
+    const phrases = draft.phrases.map((phrase) => phrase.trim()).filter(Boolean);
+    if (!draft.title.trim()) return "Введите название.";
+    if (draft.media?.media_type === "control") {
+      if (!Object.hasOwn(VOICE_CONTROLS, draft.media.action)) return "Неизвестная команда.";
+    } else if (!draft.media?.uri && !draft.media?.uris?.length) return "Выберите, что играть.";
+    if (!phrases.length) return "Введите хотя бы одну фразу.";
+    if (phrases.length > 4 || phrases.some((phrase) => phrase.length > 100)) return "Можно до 4 фраз, каждая не длиннее 100 знаков.";
+    const normalize = (text) => text.trim().toLocaleLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ");
+    if (new Set(phrases.map(normalize)).size !== phrases.length) return "Фразы повторяются.";
+    const item = this._voiceItem();
+    const others = (this._voice?.launches || []).filter((launch) => launch.id !== item?.id).flatMap((launch) => launch.phrases || []);
+    const scenarioId = item?.scenario_id;
+    for (const scenario of (Array.isArray(this._voice?.scenarios) ? this._voice.scenarios : this._data?.scenarios || [])) {
+      if (scenario.id !== scenarioId && (!scenario.households?.length || scenario.households.includes(this._voiceHomeId))) others.push(...(scenario.phrases || []));
+    }
+    if (phrases.some((phrase) => others.some((other) => normalize(other) === normalize(phrase)))) return "Фраза уже занята другим запуском или сценарием.";
+    return "";
+  }
+
+  _voiceFeedback() {
+    if (!this._voiceDraft) return;
+    const notice = this.shadowRoot.getElementById("voice-notice");
+    if (notice) {
+      notice.textContent = this._voiceNotice || "";
+      notice.hidden = !this._voiceNotice;
+      notice.className = `msg ${this._voiceServerError ? "error" : this._voiceNotice === "Сохранено" ? "info" : "warn"}`;
+    }
+    const saving = this.shadowRoot.getElementById("voice-saving");
+    if (saving) saving.hidden = !this._voiceBusy;
+    const save = this.shadowRoot.getElementById("voice-save");
+    const item = this._voiceItem();
+    if (save) {
+      save.disabled = !!this._voiceValidate(this._voiceDraft) || !!this._voiceServerError || !!this._voiceBusy || !this._voice?.health?.ma_available;
+      save.hidden = !!item?.scenario_id && this._voiceBaseline === this._voiceDraftKey(this._voiceDraft) && !this._voiceConfirmed && !this._voiceServerError && !item.cloud_error;
+      if (this._voiceConfirmed) save.textContent = "Всё равно сохранить";
+    }
+  }
+
+  _voiceDraftKey(draft) {
+    return JSON.stringify([draft.title, draft.media, draft.phrases, draft.reply]);
+  }
+
+  _renderVoicePanel(host) {
+    if (this._voiceId === "columns") { this._renderVoiceColumns(host); return; }
+    const item = this._voiceItem();
+    if (!this._voiceDraft) {
+      if (!item && this._voiceId !== "new") {
+        host.hidden = false;
+        host.innerHTML = `<div class="panel-head"><h3>Включить голосом</h3><button class="btn" data-voice-action="close">Назад</button></div><div class="panel-body"><p class="hint">${this._voice ? "Запуск больше не найден." : "Читаю запуск…"}</p></div>`;
+        return;
+      }
+      this._voiceDraft = { title: item?.title || "", media: item?.media || null, phrases: [...(item?.phrases || [])], reply: item?.source === "control" ? "silent" : item?.reply || "phrase" };
+      this._voiceBaseline = this._voiceDraftKey(this._voiceDraft);
+    }
+    const draft = this._voiceDraft;
+    const control = draft.media?.media_type === "control" ? VOICE_CONTROLS[draft.media.action] : null;
+    const esc = (value) => this._esc(String(value ?? ""));
+    const error = this._voiceValidate(draft);
+    host.hidden = false;
+    host.dataset.owner = `voice:${this._voiceId}`;
+    const scroll = host.querySelector(".panel-body")?.scrollTop || 0;
+    const full = draft.phrases.length >= 4;
+    const busy = !!this._voiceBusy;
+    const names = draft.phrases.map((phrase, index) => `<div class="name${index === 0 ? " primary" : ""}"><span class="value">${esc(phrase)}</span>${index === 0 ? `<span class="tag">основная</span>` : ""}<button class="mini danger" data-voice-action="remove-phrase" data-index="${index}" title="Удалить фразу" ${busy || (!!item?.scenario_id && draft.phrases.length < 2) ? "disabled" : ""}>${this._svg("M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z", 16)}</button></div>`).join("");
+    const dirty = this._voiceBaseline !== this._voiceDraftKey(draft);
+    const showSave = !item?.scenario_id || dirty || this._voiceConfirmed || this._voiceServerError || item?.cloud_error;
+    const saveLabel = this._voiceConfirmed ? "Всё равно сохранить" : item?.cloud_error ? (String(item.cloud_error).includes("удалён") ? "Создать заново" : "Вернуть мои фразы") : item?.scenario_id ? (this._voiceNotice && this._voiceNotice !== "Сохранено" ? "Повторить сохранение" : "Сохранить") : "Активировать";
+    host.innerHTML = `<div class="panel-head"><span class="avatar${item?.scenario_id ? " lit" : ""}">${this._svg(this._mediaIcon(item || draft), 20)}</span><div><h3>${esc(draft.title || "Новый запуск")}</h3><div class="entity">${esc(item ? this._voiceStatus(item) : "Ручной запуск")}</div></div>${this._voiceButton("close", "Назад")}</div>
+      <div class="panel-body">
+        ${item?.cloud_error ? `<div class="msg warn">${esc(this._voiceErrorText(item.cloud_error))}. Проверьте фразы и нажмите «${saveLabel}».</div>` : ""}
+        ${!item || item.source === "manual" ? `<div class="section"><label>Название<input class="field" id="voice-title" value="${esc(draft.title)}" ${busy ? "disabled" : ""}></label></div>` : ""}
+        <div class="section"><div class="section-head"><h4>${control ? "Фразы команды" : "Фразы запуска"}</h4><span class="counter">${draft.phrases.length} / 4</span></div><p class="hint">${control ? `${esc(control.hint)} Команда выполняется на колонке, которая услышала фразу.` : "Первая фраза — основная. Каждая запускает эту папку на Алисе."}</p><div class="names">${names}</div>
+          <div class="add"><input id="voice-new-phrase" type="text" maxlength="100" autocomplete="off" placeholder="Новая фраза" value="${esc(this._voiceNewPhrase || "")}" ${full || busy ? "disabled" : ""}>${this._voiceButton("add-phrase", "Добавить", 'id="voice-add-phrase"', full || busy, true)}</div>
+          ${full ? `<div class="msg info">Занято 4 фразы из 4 — это потолок Яндекса для сценария.</div>` : control ? "" : `<div class="chips">${["включи", "включи альбом", "почитай книгу"].map((prefix) => `<button class="chip" data-voice-action="suggest" data-prefix="${esc(prefix)}" data-phrase="${esc(`${prefix} ${draft.title}`)}" ${busy ? "disabled" : ""}>${esc(`${prefix} ${draft.title}`)}</button>`).join("")}</div>`}
+          <div id="voice-validation" class="msg error" ${error && draft.phrases.length ? "" : "hidden"}>${esc(error)}</div><div id="voice-notice" class="msg ${this._voiceServerError ? "error" : "warn"}" role="status" ${this._voiceNotice ? "" : "hidden"}>${esc(this._voiceNotice)}</div><p id="voice-saving" class="hint" role="status" ${busy ? "" : "hidden"}>Сохраняется…</p>
+        </div>
+        ${control ? "" : `<div class="section"><div class="section-head"><h4>Что играет</h4></div><p class="hint">${esc(this._voiceMediaLabel(draft))}${item?.source_name ? ` · ${esc(item.source_name)}` : ""}</p>${item?.albums?.length ? `<ol>${item.albums.map((album) => `<li>${esc(album.title)}</li>`).join("")}</ol>` : ""}${item?.state === "missing" || item?.media_missing ? `<div class="msg warn">Папка пропала из MA.</div>` : ""}${!item || item.source === "manual" ? `<label>Поиск Music Assistant<input class="field" id="voice-search" type="search" value="${esc(this._voiceSearchQuery)}" placeholder="Начните вводить название" ${busy ? "disabled" : ""}></label><div id="voice-search-results">${this._voiceSearchHtml()}</div>` : ""}</div>
+        <div class="section"><div class="section-head"><h4>Ответ Алисы</h4></div><select class="field" id="voice-reply" aria-label="Ответ Алисы" ${busy ? "disabled" : ""}><option value="phrase" ${draft.reply === "phrase" ? "selected" : ""}>${esc(`Включаю ${draft.title}`)}</option><option value="silent" ${draft.reply === "silent" ? "selected" : ""}>Тишина</option></select><p class="hint">Ошибки звучат и в режиме тишины.</p></div>`}
+        ${item && !item.virtual ? `<div class="section"><div class="section-head"><h4>Проверить</h4>${this._voiceButton("columns", "Колонки")}</div><label>Колонка<select class="field" id="voice-speaker" ${busy ? "disabled" : ""}>${(this._voice?.speakers || []).map((speaker) => `<option value="${esc(speaker.entity_id)}" ${this._voiceTestSpeaker === speaker.entity_id ? "selected" : ""}>${esc(speaker.name || speaker.entity_id)}</option>`).join("")}</select></label>${this._voiceButton("test", "▶ Проверить", "", busy || !this._voice?.speakers?.length || !this._voice?.health?.ma_available)}<p class="hint" role="status">Последний запуск: ${esc(this._voiceResult(item.last_result))}</p></div>` : ""}
+      </div><div class="panel-foot">${this._voiceButton("save", saveLabel, `id="voice-save" ${showSave ? "" : "hidden"}`, !!error || !!this._voiceServerError || busy || !this._voice?.health?.ma_available)}${item?.scenario_id ? this._voiceButton("deactivate", item.state === "missing" ? "Удалить сценарий" : "Отключить", "", busy) : ""}${item && !control ? this._voiceButton(item.source === "library" ? "exclude" : "delete", item.source === "library" ? "Не показывать" : "Удалить", "", busy) : ""}</div>`;
+    host.querySelector(".panel-body").scrollTop = scroll;
+  }
+
+  _voiceSearchHtml() {
+    const result = this._voiceSearch;
+    if (!result) return `<p class="hint">Начните вводить название.</p>`;
+    if (result.loading) return `<p class="hint" role="status">Ищу…</p>`;
+    if (result.error) return `<div class="msg error">${this._esc(this._voiceErrorText(result.error))}</div>`;
+    if (!result.items?.length) return `<p class="hint">Ничего не нашлось.</p>`;
+    return result.items.map((item, index) => `<button class="row scenario voice-search-result" data-voice-action="select-media" data-index="${index}"><span class="avatar">${this._voiceImage(item)}</span><span class="title">${this._esc(item.name)}</span><span class="entity">${this._esc(this._voiceMediaType(item.media_type))}</span></button>`).join("");
+  }
+
+  async _voiceInput(event) {
+    const target = event.target;
+    if (this._voiceBusy) return;
+    if (target.matches("[data-voice-map]") && event.type === "change") {
+      try { await this._voiceCommand("speaker_map", { entity_id: target.dataset.voiceMap, ma_entity_id: target.value || null }); } catch (err) { /* Уже показано. */ }
+      return;
+    }
+    if (target.id === "voice-filter") {
+      this._voiceFilter = target.value;
+      this._filterVoiceRows();
+      // Состав строк меняется только при чтении состояния; поиск не отбирает фокус.
+      return;
+    }
+    if (target.id === "voice-speaker") {
+      this._voiceTestSpeaker = target.value;
+      return;
+    }
+    const draft = this._voiceDraft;
+    if (!draft) return;
+    if (target.id === "voice-new-phrase") {
+      this._voiceNewPhrase = target.value;
+      this._voiceServerError = false;
+      this._voiceNotice = null;
+      const notice = this.shadowRoot.getElementById("voice-notice");
+      if (notice) notice.hidden = true;
+      const save = this.shadowRoot.getElementById("voice-save");
+      if (save) save.disabled = !!this._voiceValidate(draft) || !this._voice?.health?.ma_available;
+      return;
+    }
+    if (target.id === "voice-search" && event.type === "input") {
+      this._voiceSearchQuery = target.value;
+      clearTimeout(this._voiceSearchTimer);
+      const query = target.value.trim();
+      const id = this._voiceId;
+      this._voiceSearch = query ? { loading: true } : null;
+      this.shadowRoot.getElementById("voice-search-results").innerHTML = this._voiceSearchHtml();
+      if (query) this._voiceSearchTimer = setTimeout(async () => {
+        try {
+          const result = await this._call("yandex_menu/voice/search", { query, ...(this._voiceHomeId ? { household_id: this._voiceHomeId } : {}) });
+          if (id !== this._voiceId || query !== this._voiceSearchQuery?.trim()) return;
+          this._voiceSearch = result;
+        } catch (err) {
+          if (id !== this._voiceId || query !== this._voiceSearchQuery?.trim()) return;
+          this._voiceSearch = { error: err.message || String(err) };
+        }
+        const host = this.shadowRoot.getElementById("voice-search-results");
+        if (host) host.innerHTML = this._voiceSearchHtml();
+      }, 350);
+      return;
+    }
+    if (target.id === "voice-title") {
+      draft.title = target.value;
+      for (const chip of this.shadowRoot.querySelectorAll('[data-voice-action="suggest"]')) {
+        const phrase = `${chip.dataset.prefix} ${draft.title}`;
+        chip.dataset.phrase = phrase;
+        chip.textContent = phrase;
+      }
+      const reply = this.shadowRoot.querySelector('#voice-reply option[value="phrase"]');
+      if (reply) reply.textContent = `Включаю ${draft.title}`;
+      const heading = this.shadowRoot.querySelector("#panel .panel-head h3");
+      if (heading) heading.textContent = draft.title || "Новый запуск";
+    }
+    else if (target.id === "voice-reply") {
+      if (event.type !== "change" || draft.reply === target.value) return;
+      draft.reply = target.value;
+      this._voiceConfirmed = false;
+      this._voiceServerError = false;
+      this._voiceNotice = null;
+      if ((this._voice?.launches || []).some((item) => item.id === this._voiceId && item.scenario_id)) await this._voiceAction({ dataset: { voiceAction: "save" } });
+      return;
+    }
+    else if (target.matches("[data-voice-phrase]")) draft.phrases[Number(target.dataset.voicePhrase)] = target.value;
+    else return;
+    this._voiceConfirmed = false;
+    this._voiceServerError = false;
+    this._voiceNotice = null;
+    const error = this._voiceValidate(draft);
+    const message = this.shadowRoot.getElementById("voice-validation");
+    message.textContent = error;
+    message.hidden = !error;
+    this.shadowRoot.getElementById("voice-notice").hidden = true;
+    const save = this.shadowRoot.getElementById("voice-save");
+    save.disabled = !!error || !!this._voiceServerError || !!this._voiceBusy || !this._voice?.health?.ma_available;
+    save.hidden = false;
+  }
+
+  async _voiceCommand(command, payload = {}) {
+    const house = this._voiceHomeId;
+    const draft = this._voiceDraft;
+    const id = this._voiceId;
+    const generation = this._voiceCardGeneration;
+    const mediaKey = (media) => media?.uri || JSON.stringify(media?.uris || []);
+    const media = payload.media && JSON.parse(JSON.stringify(payload.media));
+    try {
+      const result = await this._call(`yandex_menu/voice/${command}`, { ...(house ? { household_id: house } : {}), ...payload });
+      if (house === this._voiceHomeId) await this._loadVoice();
+      return result;
+    } catch (err) {
+      if (command === "save" && house === this._voiceHomeId) {
+        const state = await this._loadVoice();
+        if (state && id === "new" && this._voiceId === id && this._voiceDraft === draft &&
+            generation === this._voiceCardGeneration && house === this._voiceHomeId &&
+            mediaKey(draft?.media) === mediaKey(media) && draft?.media?.media_type === media?.media_type) {
+          // manual_key сервера — URI либо упорядоченный список URI; не название/фразы.
+          const matches = (state.launches || []).filter((item) => item.source === "manual" &&
+            (!item.household_id || item.household_id === house) &&
+            item.media?.media_type === media?.media_type && mediaKey(item.media) === mediaKey(media));
+          if (matches.length === 1) {
+            this._voiceId = matches[0].id;
+            // Меняется серверный id той же карточки, а не поколение её DOM.
+            // Чужую верхнюю запись (например, диалог HA) не перезаписываем.
+            if (history.state?.ymCard?.voice === "new") {
+              history.replaceState({ ...history.state, ymCard: { ...history.state.ymCard, voice: this._voiceId } }, "");
+            }
+          }
+        }
+      }
+      this._toast(this._voiceErrorText(err), true);
+      throw err;
+    }
+  }
+
+  async _voiceAction(target) {
+    const action = target.dataset.voiceAction;
+    if (this._voiceBusy && action !== "cancel") return;
+    if (action === "close") { this._closeCard(); this._renderPanel(); return; }
+    if (action === "columns") { this._openVoice("columns"); return; }
+    if (action === "open" || action === "add") { this._openVoice(target.dataset.launch || "new"); return; }
+    if (action === "reload") { this._loadVoice(); return; }
+    if (action === "select-media") {
+      const media = this._voiceSearch?.items?.[Number(target.dataset.index)];
+      if (!media) return;
+      this._voiceDraft.media = { uri: media.uri, media_type: media.media_type, name: media.name, image: media.image };
+      if (!this._voiceDraft.title) this._voiceDraft.title = media.name;
+      this._voiceConfirmed = false;
+      this._voiceServerError = false;
+    this._voiceNotice = null;
+      this._renderPanel(); return;
+    }
+    if (action === "suggest") {
+      this._voiceNewPhrase = target.dataset.phrase || "";
+      const input = this.shadowRoot.getElementById("voice-new-phrase");
+      if (input) {
+        input.value = this._voiceNewPhrase;
+        this._voiceInput({ target: input, type: "input" });
+        input.focus();
+      }
+      return;
+    }
+    if (["add-phrase", "remove-phrase"].includes(action)) {
+      const draft = this._voiceDraft;
+      if (!draft) return;
+        if (action === "remove-phrase") {
+        const index = Number(target.dataset.index);
+        if (!Number.isInteger(index) || index < 0 || index >= draft.phrases.length) return;
+        if (draft.phrases.length === 1 && this._voiceItem()?.scenario_id) return;
+        draft.phrases.splice(index, 1);
+      } else {
+        const phrase = (this._voiceNewPhrase || "").trim();
+        const error = this._voiceValidate({ ...draft, phrases: [...draft.phrases, phrase] });
+        if (!phrase || error) {
+          this._voiceNotice = !phrase ? "Введите фразу." : error;
+          this._voiceServerError = true;
+          this._renderPanel();
+          return;
+        }
+        draft.phrases.push(phrase);
+      }
+      this._voiceNewPhrase = "";
+      this._voiceConfirmed = false;
+      this._voiceServerError = false;
+      this._voiceNotice = null;
+      const active = !!this._voiceItem()?.scenario_id;
+      if (active) await this._voiceAction({ dataset: { voiceAction: "save" } });
+      else this._renderPanel();
+      return;
+    }
+    if (["deactivate", "delete", "exclude", "delete-missing", "disable-all", "delete-orphan", "delete-orphans"].includes(action) && !confirm(({
+      "disable-all": "Отключить все запуски в этом доме и удалить их сценарии из Яндекса? Карточки останутся для повторной активации.",
+      "exclude": "Скрыть папку и удалить её сценарий из Яндекса? Папка попадёт в постоянные исключения и не появится при обновлении библиотеки. Вернуть её обычной активацией нельзя.",
+      "delete": "Удалить ручную карточку и её сценарий из Яндекса? Чтобы вернуть запуск, придётся создать карточку заново.",
+      "deactivate": "Удалить сценарий из Яндекса? Карточка останется, и её можно будет активировать снова.",
+      "delete-missing": "Удалить сценарии всех пропавших папок в этом доме из Яндекса?",
+      "delete-orphan": "Удалить этот сценарий без карточки из Яндекса?",
+      "delete-orphans": "Удалить все сценарии без карточки в этом доме из Яндекса?"
+    })[action])) return;
+    const operationHouse = this._voiceHomeId;
+    const operationDraft = this._voiceDraft;
+    const operationGeneration = this._voiceCardGeneration;
+    this._voiceBusy = true;
+    target.disabled = true;
+    const controls = [...(this.shadowRoot.querySelectorAll?.("#panel input, #panel select, #panel button") || [])].map((control) => [control, control.disabled]);
+    for (const [control] of controls) {
+      if (control.dataset?.voiceAction !== "close") control.disabled = true;
+    }
+    this._voiceFeedback();
+    this._renderPanel();
+    try {
+      if (action === "save") {
+        const draft = this._voiceDraft;
+        const error = this._voiceValidate(draft);
+        if (error) { this._voiceNotice = error; return; }
+        const house = this._voiceHomeId;
+        const generation = this._voiceCardGeneration;
+        const item = this._voiceItem();
+        const control = draft.media?.media_type === "control";
+        const result = await this._voiceCommand("save", { ...(item && !item.virtual ? { launch_id: item.id } : {}), ...(control ? { source: "control" } : {}), title: draft.title.trim(), media: draft.media, phrases: draft.phrases.map((phrase) => phrase.trim()).filter(Boolean), reply: control ? "silent" : draft.reply, confirm_warnings: !!this._voiceConfirmed });
+        if (house !== this._voiceHomeId || draft !== this._voiceDraft || generation !== this._voiceCardGeneration) return;
+        if (result?.errors?.length) {
+          this._voiceServerError = true;
+          this._voiceNotice = result.errors.map((error) => typeof error === "string" ? error : error.message || "Не удалось сохранить").join(" ");
+          this._voiceConfirmed = false;
+        } else if (result?.needs_confirmation) {
+          this._voiceNotice = (result.warnings || []).map((warn) => typeof warn === "string" ? warn : warn.message || "Проверьте фразы").join(" ") + " Нажмите ещё раз, чтобы сохранить.";
+          this._voiceConfirmed = true;
+        } else {
+          if (this._voiceId === "new" && result?.launch?.id) {
+            this._voiceId = result.launch.id;
+            if (history.state?.ymCard?.voice === "new") history.replaceState({ ...history.state, ymCard: { ...history.state.ymCard, voice: this._voiceId } }, "");
+          }
+          this._voiceBaseline = this._voiceDraftKey(draft);
+          this._voiceNotice = "Сохранено";
+          this._voiceServerError = false;
+          this._voiceConfirmed = false;
+        }
+      } else if (action === "refresh" || action === "cancel") {
+        await this._voiceCommand("refresh", action === "cancel" ? { cancel: true } : {});
+      } else if (action === "test") {
+        await this._voiceCommand("test", { launch_id: this._voiceItem()?.id, entity_id: this.shadowRoot.getElementById("voice-speaker").value });
+      } else if (["deactivate", "delete", "exclude"].includes(action)) {
+        await this._voiceCommand(action, { launch_id: this._voiceItem()?.id });
+        if (operationHouse === this._voiceHomeId && operationDraft === this._voiceDraft && operationGeneration === this._voiceCardGeneration) this._closeCard();
+      } else if (action === "delete-missing") {
+        await this._voiceCommand("delete_missing");
+      } else if (action === "disable-all") {
+        await this._voiceCommand("deactivate_all");
+      } else if (action.endsWith("orphan") || action.endsWith("orphans")) {
+        const result = await this._voiceCommand("orphans", { action: action.startsWith("bind") ? "bind" : "delete", ...(action.endsWith("orphans") ? { all: true } : { scenario_id: target.dataset.scenario }) });
+        const counts = [result?.bound != null ? `Привязано: ${result.bound}` : "", result?.deleted != null ? `Удалено: ${result.deleted}` : "", result?.skipped != null ? `Пропущено: ${result.skipped}` : "", result?.reason ? this._voiceErrorText(result.reason) : ""].filter(Boolean);
+        this._toast(counts.join(" · ") || "Операция завершена");
+      }
+    } catch (err) {
+      // Черновик остаётся для повторения; ответ старой карточки её не меняет.
+      if (action === "save" && operationHouse === this._voiceHomeId && operationDraft === this._voiceDraft && operationGeneration === this._voiceCardGeneration) this._voiceNotice = "Не удалось сохранить. Повторите сохранение.";
+    } finally {
+      this._voiceBusy = false;
+      for (const [control, disabled] of controls) if (control.isConnected) control.disabled = disabled;
+      if (target.isConnected) target.disabled = false;
+      if (operationHouse === this._voiceHomeId && operationDraft === this._voiceDraft && operationGeneration === this._voiceCardGeneration) this._voiceFeedback();
+      this._renderPanel();
+    }
+  }
+
   /* ---------------------------------------------------------------- события */
 
   /** Чипы и кнопка «проверить» — одинаково в списке и в карточке. */
@@ -2365,6 +3012,26 @@ class YandexMenuPanel extends HTMLElement {
 
   _bind() {
     const root = this.shadowRoot;
+    root.addEventListener("focusout", (event) => {
+      // focusout происходит ещё на mousedown: таймер может обогнать mouseup/click.
+      // Кнопку сохраняем до её клика либо следующего ухода фокуса.
+      this._voiceClickPending = event.relatedTarget?.closest("#list button, #panel button");
+      if (!this._voiceClickPending) setTimeout(() => this._renderVoiceUpdates(), 0);
+    });
+    root.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-voice-action]");
+      if (target) { event.stopPropagation(); this._voiceAction(target); }
+      setTimeout(() => {
+        this._voiceClickPending = null;
+        this._renderVoiceUpdates();
+      }, 0);
+    });
+    root.addEventListener("input", (event) => this._voiceInput(event));
+    root.addEventListener("change", (event) => this._voiceInput(event));
+    root.addEventListener("toggle", (event) => {
+      if (event.target.id === "voice-library") this._voiceExpanded = event.target.open;
+      if (event.target.id === "voice-health") this._voiceHealthOpen = event.target.open;
+    }, true);
 
     root.getElementById("menu").addEventListener("click", () => {
       this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true }));
@@ -2415,6 +3082,7 @@ class YandexMenuPanel extends HTMLElement {
         if (!device || !word || nameit.disabled) return;
         // обычная карточка, только слово уже в поле и проверено
         const verdict = this._checkName(word, device);
+        this._voiceId = null;
         this._selected = device.id;
         this._room = null;
         this._backRoom = null;
@@ -2432,6 +3100,7 @@ class YandexMenuPanel extends HTMLElement {
         if (this._room === room) {
           this._closeCard(); // повторный клик закрывает — парных записей не копим
         } else {
+          this._voiceId = null;
           this._room = room;
           this._selected = null;
           this._backRoom = null;
@@ -2447,6 +3116,7 @@ class YandexMenuPanel extends HTMLElement {
         return;
       }
       if (row) {
+        this._voiceId = null;
         this._selected = row.getAttribute("data-id");
         this._room = null;
         this._backRoom = null;

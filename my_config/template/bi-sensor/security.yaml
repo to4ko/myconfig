@@ -42,8 +42,13 @@
         unique_id: family_home
         device_class: presence
         state: >
-            {{ (states('zone.home')|int(0) - iif('person.sandra2' in state_attr('zone.home','persons'),1,0)|int) > 0 or 
-              (states('zone.home_extended')|int(0) -iif('person.sandra2' in state_attr('zone.home','persons'),1,0)|int) >0 }}
+          {% set ignore = ['person.sandra2'] %}
+          {% set by_state = states.person
+               | rejectattr('entity_id', 'in', ignore)
+               | selectattr('state', 'eq', 'home') | list | count %}
+          {% set by_zone = (state_attr('zone.home_extended', 'persons') or [])
+               | reject('in', ignore) | list | count %}
+          {{ by_state > 0 or by_zone > 0 }}
 
         # {{ states('zone.home')|int(0) > 0 or
         #      states('zone.home_extended')|int(0) > 0 }}

@@ -18,6 +18,9 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity_component import DATA_INSTANCES, EntityComponent
 
+from ....const import DOMAIN as SPOOK_DOMAIN
+from ....errors import entity_not_found
+from ....helper_collections import async_get_storage_collection
 from ....services import AbstractSpookAdminService
 
 if TYPE_CHECKING:
@@ -53,20 +56,12 @@ class SpookService(AbstractSpookAdminService):
         """Handle the service call."""
         entity_component: EntityComponent[Zone] = self.hass.data[DATA_INSTANCES][DOMAIN]
 
-        collection: ZoneStorageCollection
-        if DOMAIN in self.hass.data:
-            collection = self.hass.data[DOMAIN]
-        else:
-            # Home zone is set in YAML, as a result Home Assistant doesn't
-            # set the storage collection into hass data.
-            # Major hack to get around this. 👻
-            collection = self.hass.data["websocket_api"]["zone/list"][
-                0
-            ].__self__.storage_collection
+        collection: ZoneStorageCollection = async_get_storage_collection(
+            self.hass, DOMAIN
+        )
 
         if not (entity := entity_component.get_entity(call.data["entity_id"])):
-            message = f"Could not find entity_id: {call.data['entity_id']}"
-            raise HomeAssistantError(message)
+            raise entity_not_found(call.data["entity_id"])
 
         if _is_the_house(entity):
             await self._async_update_home(call)
@@ -74,8 +69,13 @@ class SpookService(AbstractSpookAdminService):
 
         # pylint: disable-next=protected-access
         if not entity.editable or "id" not in entity._config:  # noqa: SLF001
-            message = f"This zone is not editable: {call.data['entity_id']}"
-            raise HomeAssistantError(message)
+            raise HomeAssistantError(
+                translation_domain=SPOOK_DOMAIN,
+                translation_key="zone_not_editable",
+                translation_placeholders={
+                    "entity_id": call.data["entity_id"],
+                },
+            )
 
         data = call.data.copy()
         data.pop("entity_id")
@@ -98,11 +98,11 @@ class SpookService(AbstractSpookAdminService):
         data.pop("entity_id")
 
         if unsupported := set(data) - {CONF_LATITUDE, CONF_LONGITUDE, CONF_RADIUS}:
-            message = (
-                "The home zone only takes a latitude, longitude and radius, "
-                f"not: {', '.join(sorted(unsupported))}"
+            raise HomeAssistantError(
+                translation_domain=SPOOK_DOMAIN,
+                translation_key="home_zone_unsupported",
+                translation_placeholders={"fields": ", ".join(sorted(unsupported))},
             )
-            raise HomeAssistantError(message)
 
         # Home Assistant keeps the radius of the house in whole meters, and
         # never below zero. Cutting a fraction off quietly would be a
@@ -111,8 +111,10 @@ class SpookService(AbstractSpookAdminService):
         if CONF_RADIUS in data:
             radius = data[CONF_RADIUS]
             if radius != int(radius) or radius < 0:
-                message = "The home zone takes its radius in whole meters, zero or more"
-                raise HomeAssistantError(message)
+                raise HomeAssistantError(
+                    translation_domain=SPOOK_DOMAIN,
+                    translation_key="home_zone_radius",
+                )
             data[CONF_RADIUS] = int(radius)
 
         await self.hass.config.async_update(**data)

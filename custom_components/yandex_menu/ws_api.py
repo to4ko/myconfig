@@ -1519,6 +1519,59 @@ def ws_progress(hass: HomeAssistant, connection, msg) -> None:
     send({**state, "preview": preview} if state and preview else state)
 
 
+def _voice_command(action: str):
+    """Команды голоса: проверки и работа живут в менеджере, здесь только WS."""
+
+    @websocket_api.require_admin
+    @websocket_api.websocket_command(
+        {
+            vol.Required("type"): f"yandex_menu/voice/{action}",
+            vol.Optional("household_id"): str,
+            vol.Optional("launch_id"): str,
+            vol.Optional("title"): str,
+            vol.Optional("media"): dict,
+            vol.Optional("phrases"): [str],
+            vol.Optional("reply"): vol.In(("phrase", "silent")),
+            vol.Optional("confirm_warnings", default=False): bool,
+            vol.Optional("entity_id"): str,
+            vol.Optional("ma_entity_id"): vol.Any(str, None),
+            vol.Optional("query"): str,
+            vol.Optional("media_types"): [str],
+            vol.Optional("scenario_id"): str,
+            vol.Optional("action"): vol.In(("bind", "delete")),
+            vol.Optional("all", default=False): bool,
+            vol.Optional("cancel", default=False): bool,
+            vol.Optional("cached", default=False): bool,
+            vol.Optional("pinned"): bool,
+            vol.Optional("source"): vol.In(("control",)),
+        }
+    )
+    @websocket_api.async_response
+    async def command(hass: HomeAssistant, connection, msg) -> None:
+        manager = hass.data.get(DOMAIN, {}).get("voice")
+        if manager is None:
+            connection.send_error(msg["id"], "not_loaded", "Яндекс меню ещё не загружено")
+            return
+        try:
+            if action == "refresh":
+                payload = await manager.command(action, msg, user_id=connection.user.id)
+            else:
+                payload = await manager.command(action, msg)
+        except QuasarError as err:
+            connection.send_error(msg["id"], err.code or "quasar_error", str(err))
+            return
+        except (ValueError, KeyError) as err:
+            connection.send_error(msg["id"], "invalid_request", str(err))
+            return
+        except Exception:  # noqa: BLE001 — детали остаются в журнале HA
+            _LOGGER.exception("Ошибка команды «Включить голосом»: %s", action)
+            connection.send_error(msg["id"], "voice_error", "Не удалось выполнить команду")
+            return
+        connection.send_result(msg["id"], payload)
+
+    return command
+
+
 @callback
 def async_register(hass: HomeAssistant) -> None:
     for command in (
@@ -1539,3 +1592,8 @@ def async_register(hass: HomeAssistant) -> None:
         ws_say,
     ):
         websocket_api.async_register_command(hass, command)
+    for action in (
+        "state", "save", "deactivate", "delete", "exclude", "test", "refresh",
+        "search", "orphans", "delete_missing", "speaker_map", "deactivate_all",
+    ):
+        websocket_api.async_register_command(hass, _voice_command(action))

@@ -74,19 +74,29 @@
     - condition: state
       entity_id: group.lights_t
       state: "on"
-    - condition: state
-      entity_id: fan.esp32_node_b_fan_t
-      state: "off"
   actions:
     # - action: button.press
     #   entity_id: button.d1mini_air_freshener_spray
+    - action: timer.cancel
+      entity_id: timer.short_fan_t
     - if:
         - condition: state
-          entity_id: switch.esp32_node_b_fan_b_manual_mode
-          state: "off"
-      then:
-        - action: fan.turn_on
           entity_id: fan.esp32_node_b_fan_t
+          state: "on"
+      then:
+        # вытяжка уже работает после предыдущего человека: перезапускаем 20 минут
+        - action: timer.cancel
+          entity_id: timer.fan_t
+        - action: timer.start
+          entity_id: timer.fan_t
+      else:
+        - if:
+            - condition: state
+              entity_id: switch.esp32_node_b_fan_b_manual_mode
+              state: "off"
+          then:
+            - action: fan.turn_on
+              entity_id: fan.esp32_node_b_fan_t
     - wait_for_trigger:
         - trigger: state
           entity_id: binary_sensor.0x00158d000232ddd6_contact

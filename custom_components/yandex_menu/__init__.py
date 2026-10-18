@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from pathlib import Path
@@ -13,7 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from . import ws_api
-from .accounts import account_key
+from .accounts import account_key, station_entry
 from .const import (
     CONF_SHOW_IN_SIDEBAR,
     DATA_API,
@@ -43,6 +44,7 @@ from .const import (
     VERSION,
 )
 from .quasar_api import QuasarApi
+from .voice import VoiceManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,6 +54,23 @@ DATA_PANEL_REGISTERED = "panel_registered"
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Поднимаем панель и WebSocket-команды."""
     data = hass.data.setdefault(DOMAIN, {})
+    async with data.setdefault("voice_lifecycle_lock", asyncio.Lock()):
+        # Старый менеджер может ещё сохранять результат принятой WS-команды.
+        # Новое хранилище читаем только после его последней записи.
+        await _async_stop_voice(data)
+        return await _async_setup_entry(hass, entry)
+
+
+async def _async_stop_voice(data: dict) -> None:
+    voice = data.get("voice")
+    if voice is not None:
+        await voice.async_unload()
+        if data.get("voice") is voice:
+            data.pop("voice")
+
+
+async def _async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    data = hass.data[DOMAIN]
 
     store: Store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
     stored = await store.async_load() or {}
@@ -66,6 +85,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     data[DATA_CACHE] = None
     data[DATA_BUILD] = None
     await _async_load_devices(hass, data)
+
+    station = station_entry(hass)
+    voice_api = QuasarApi(hass, entry_id=station.entry_id if station else None)
+    voice = VoiceManager(hass, entry, voice_api)
+    data["voice"] = voice
+    await voice.async_setup()
 
     # Хранилище списка одно на всё время работы HA. После перезагрузки записи
     # память свежее диска: отложенная запись могла ещё не дойти до файла.
@@ -195,9 +220,12 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Убираем пункт из меню. Статический путь снять нельзя — он переживёт."""
-    frontend.async_remove_panel(hass, PANEL_URL_PATH)
-    ws_api._stop_build(hass)
-    store: Store | None = hass.data.get(DOMAIN, {}).get(DATA_STORE)
-    if store:
-        await store.async_save(hass.data[DOMAIN][DATA_STORE_DATA])
+    data = hass.data.setdefault(DOMAIN, {})
+    async with data.setdefault("voice_lifecycle_lock", asyncio.Lock()):
+        frontend.async_remove_panel(hass, PANEL_URL_PATH)
+        ws_api._stop_build(hass)
+        await _async_stop_voice(data)
+        store: Store | None = data.get(DATA_STORE)
+        if store:
+            await store.async_save(data[DATA_STORE_DATA])
     return True

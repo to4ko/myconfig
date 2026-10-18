@@ -8,3 +8,16 @@
     #value_template: "{{ ( value.split(' ')[0]|int / 1024 ) | round(0, 'common') }}"
     value_template: "{{ (value.split('\n')[1]|int / 1024 ) | round(0, 'common')  }}"
     unit_of_measurement: 'Mb'
+
+  # Public addresses of the sites as the home UDM sees them: Site Magic hub tunnels (WireGuard endpoints), found by the
+  # route to each site's LAN; empty when the tunnel had no handshake for 10 min. Read-only on the UDM.
+  # Sent to the UniFi proxy whitelist by automation system_proxy_site_ips. State: "dacha=1.2.3.4 parents=... lena=... vova=".
+  - platform: ssh
+    name: site_magic_ips
+    host: !secret udmp_ip
+    username: !secret udmp_usr
+    password: !secret udmp_passwd
+    scan_interval: 300
+    command: >-
+      now=$(date +%s); for s in dacha:192.168.110.0/24 parents:192.168.105.0/24 lena:192.168.135.0/24 vova:192.168.120.0/24; do n=${s%%:*}; i=$(ip route show ${s#*:} | sed -n 's/.* dev \([^ ]*\).*/\1/p' | head -1); a=; if [ -n "$i" ]; then h=$(wg show $i latest-handshakes | awk 'NR==1{print $2}'); e=$(wg show $i endpoints | awk 'NR==1{sub(/:[0-9]+$/,"",$2); print $2}'); [ -n "$h" ] && [ $((now-h)) -lt 600 ] && a=$e; fi; printf '@%s=%s@ ' $n "$a"; done; echo
+    value_template: "{{ value | regex_findall('@([a-z]+)=([0-9.]*)@') | map('join', '=') | join(' ') }}"

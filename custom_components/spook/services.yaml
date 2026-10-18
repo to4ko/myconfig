@@ -387,6 +387,82 @@ homeassistant_create_area:
       selector:
         object:
 
+homeassistant_update_area:
+  name: Update an area 👻
+  description: >-
+    Updates an existing area on the fly. Anything you leave out keeps the
+    value it already has. Aliases and labels replace the ones the area has.
+    The floor, icon, picture and sensors can be cleared by setting them to
+    null.
+  fields:
+    area_id:
+      name: Area ID
+      description: The ID of the area to update.
+      required: true
+      selector:
+        area:
+    name:
+      name: Name
+      description: New name for the area.
+      required: false
+      selector:
+        text:
+    aliases:
+      name: Aliases
+      description: >-
+        The aliases for the area. Replaces the ones it has, an empty list
+        removes them all.
+      required: false
+      selector:
+        text:
+          multiple: true
+    floor_id:
+      name: Floor ID
+      description: The ID of the floor the area is on.
+      required: false
+      selector:
+        floor:
+    icon:
+      name: Icon
+      description: New icon to use for the area.
+      required: false
+      selector:
+        icon:
+          placeholder: mdi:texture-box
+    picture:
+      name: Picture
+      description: The URL or path of a picture for the area.
+      required: false
+      selector:
+        text:
+    labels:
+      name: Labels
+      description: >-
+        The IDs of the labels for the area. Replaces the ones it has, an empty
+        list removes them all.
+      required: false
+      selector:
+        label:
+          multiple: true
+    temperature_entity_id:
+      name: Temperature sensor
+      description: The sensor that measures the temperature in the area.
+      required: false
+      selector:
+        entity:
+          filter:
+            domain: sensor
+            device_class: temperature
+    humidity_entity_id:
+      name: Humidity sensor
+      description: The sensor that measures the humidity in the area.
+      required: false
+      selector:
+        entity:
+          filter:
+            domain: sensor
+            device_class: humidity
+
 homeassistant_add_alias_to_area:
   name: Add an alias to an area 👻
   description: >-
@@ -594,6 +670,55 @@ homeassistant_enable_device:
       required: true
       selector:
         text:
+
+homeassistant_update_device:
+  name: Update a device 👻
+  description: >-
+    Updates an existing device on the fly. Anything you leave out keeps the
+    value it already has. Labels replace the ones the device has. The name
+    and area can be cleared by setting them to null, which gives the device
+    the name its integration gave it back.
+  fields:
+    device_id:
+      name: Device ID
+      description: >-
+        The ID of the device to update. Disabled devices are not shown by Home
+        Assistant's device selector, use YAML mode to give their ID.
+      required: true
+      selector:
+        device:
+    name_by_user:
+      name: Name
+      description: New name for the device.
+      required: false
+      selector:
+        text:
+    area_id:
+      name: Area ID
+      description: The ID of the area the device is in.
+      required: false
+      selector:
+        area:
+    labels:
+      name: Labels
+      description: >-
+        The IDs of the labels for the device. Replaces the ones it has, an
+        empty list removes them all.
+      required: false
+      selector:
+        label:
+          multiple: true
+    disabled_by:
+      name: Disabled by
+      description: >-
+        Set to user to disable the device, or to null to enable it again. This
+        works like the disable and enable device actions do.
+      required: false
+      selector:
+        select:
+          options:
+            - label: User
+              value: user
 
 homeassistant_disable_user:
   name: Disable a user 👻
@@ -875,6 +1000,49 @@ homeassistant_create_floor:
         floor in a different language or different nickname.
       selector:
         object:
+
+homeassistant_update_floor:
+  name: Update a floor 👻
+  description: >-
+    Updates an existing floor on the fly. Anything you leave out keeps the
+    value it already has. Aliases replace the ones the floor has. The icon
+    and level can be cleared by setting them to null.
+  fields:
+    floor_id:
+      name: Floor ID
+      description: The ID of the floor to update.
+      required: true
+      selector:
+        floor:
+    name:
+      name: Name
+      description: New name for the floor.
+      required: false
+      selector:
+        text:
+    aliases:
+      name: Aliases
+      description: >-
+        The aliases for the floor. Replaces the ones it has, an empty list
+        removes them all.
+      required: false
+      selector:
+        text:
+          multiple: true
+    icon:
+      name: Icon
+      description: New icon to use for the floor.
+      required: false
+      selector:
+        icon:
+          placeholder: mdi:texture-box
+    level:
+      name: Level
+      description: The level the floor is on in your home.
+      required: false
+      selector:
+        number:
+          mode: box
 
 homeassistant_add_alias_to_floor:
   name: Add an alias to a floor 👻
@@ -1493,7 +1661,7 @@ homeassistant_list_orphaned_database_entities:
 
 homeassistant_restart:
   name: Restart 👻
-  description: Restart the Home Assistant action.
+  description: Restarts Home Assistant.
   fields:
     safe_mode:
       name: Safe mode
@@ -2293,6 +2461,144 @@ input_number_delete:
           multiple: true
           filter:
             - domain: input_number
+
+schedule_create:
+  name: Create a schedule 👻
+  description: >-
+    Creates a new schedule helper on the fly, on during the time blocks given
+    for each day of the week. Returns the entity ID of the new schedule.
+  fields:
+    name:
+      name: Name
+      description: The name of the new schedule.
+      required: true
+      selector:
+        text:
+    schedule_id:
+      name: Schedule entity ID
+      description: >-
+        The entity ID for the new schedule. The schedule. prefix is added
+        automatically. If not provided, the entity ID will be generated based
+        on the name.
+      required: false
+      selector:
+        text:
+    icon:
+      name: Icon
+      description: The icon for the new schedule.
+      required: false
+      selector:
+        icon:
+          placeholder: mdi:calendar-clock
+    monday:
+      name: Monday
+      description: >-
+        When the schedule is on, on Mondays: a list of time blocks, each with a from and a to time, and optional data it shows as attributes while it is on. Left out, it is off all day.
+      required: false
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
+    tuesday:
+      name: Tuesday
+      description: >-
+        When the schedule is on, on Tuesdays: a list of time blocks, each with a from and a to time, and optional data it shows as attributes while it is on. Left out, it is off all day.
+      required: false
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
+    wednesday:
+      name: Wednesday
+      description: >-
+        When the schedule is on, on Wednesdays: a list of time blocks, each with a from and a to time, and optional data it shows as attributes while it is on. Left out, it is off all day.
+      required: false
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
+    thursday:
+      name: Thursday
+      description: >-
+        When the schedule is on, on Thursdays: a list of time blocks, each with a from and a to time, and optional data it shows as attributes while it is on. Left out, it is off all day.
+      required: false
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
+    friday:
+      name: Friday
+      description: >-
+        When the schedule is on, on Fridays: a list of time blocks, each with a from and a to time, and optional data it shows as attributes while it is on. Left out, it is off all day.
+      required: false
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
+    saturday:
+      name: Saturday
+      description: >-
+        When the schedule is on, on Saturdays: a list of time blocks, each with a from and a to time, and optional data it shows as attributes while it is on. Left out, it is off all day.
+      required: false
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
+    sunday:
+      name: Sunday
+      description: >-
+        When the schedule is on, on Sundays: a list of time blocks, each with a from and a to time, and optional data it shows as attributes while it is on. Left out, it is off all day.
+      required: false
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
+
+schedule_delete:
+  name: Delete a schedule 👻
+  description: >-
+    Deletes schedule helpers made in the UI. Schedules set up in YAML cannot be
+    deleted by Spook.
+  fields:
+    entity_id:
+      name: Entity ID
+      description: The schedule(s) to delete.
+      required: true
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - domain: schedule
+
+schedule_set_day:
+  name: Set the time blocks of a day 👻
+  description: >-
+    Replaces the time blocks of one or more days of a schedule helper made in
+    the UI. Schedules set up in YAML cannot be changed by Spook.
+  target:
+    entity:
+      domain: schedule
+  fields:
+    day:
+      name: Day
+      description: The day or days of the week to set the time blocks of.
+      required: true
+      selector:
+        select:
+          multiple: true
+          translation_key: schedule_day
+          options:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+    blocks:
+      name: Time blocks
+      description: >-
+        The time blocks the schedule is on during those days, each with a from
+        and a to time, and optional data it shows as attributes while it is
+        on. These replace the blocks the days had. An empty list leaves the
+        days off all day.
+      required: true
+      example: '[{"from": "07:00:00", "to": "09:00:00"}]'
+      selector:
+        object:
 
 person_add_device_tracker:
   name: Add a device tracker 👻

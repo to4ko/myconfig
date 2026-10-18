@@ -21,12 +21,22 @@ _LOGGER = logging.getLogger(__name__)
 class QuasarError(Exception):
     """Ошибка, которую можно показать пользователю."""
 
+    def __init__(
+        self, message: str, *, code: str | None = None, temporary: bool = False
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.temporary = temporary
+
 
 class QuasarApi:
     """Запросы к iot.quasar.yandex.ru поверх сессии yandex_station."""
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(self, hass: HomeAssistant, *, entry_id: str | None = None) -> None:
         self.hass = hass
+        # Голосовой менеджер заканчивает принятую команду в прежнем аккаунте,
+        # даже если настройки уже переключили на другой.
+        self.entry_id = entry_id
 
     # ------------------------------------------------------------------ сессия
 
@@ -40,7 +50,10 @@ class QuasarApi:
                 "Не найдена интеграция Яндекс.Станция — через неё берётся доступ к "
                 "Яндекс-дому. Настройте её и перезапустите Home Assistant."
             )
-        entry = station_entry(self.hass)
+        entry = (
+            next((item for item in entries if item.entry_id == self.entry_id), None)
+            if self.entry_id is not None else station_entry(self.hass)
+        )
         if entry is None:
             raise QuasarError(
                 "Аккаунт Яндекса, выбранный в настройках, больше не подключён. "
@@ -69,16 +82,23 @@ class QuasarApi:
             kwargs["json"] = payload
         try:
             response = await self.session.request(method, API + path, **kwargs)
+            status = getattr(response, "status", 200)
             data = await response.json()
         except QuasarError:
             raise
         except Exception as err:  # noqa: BLE001 — показываем причину пользователю
             _LOGGER.debug("Ошибка запроса %s %s: %s", method, path, err)
-            raise QuasarError(f"Яндекс не ответил: {err}") from err
+            raise QuasarError(f"Яндекс не ответил: {err}", temporary=True) from err
 
-        if data.get("status") != "ok":
+        if not isinstance(data, dict):
+            raise QuasarError("Яндекс вернул непонятный ответ", temporary=True)
+        if status >= 400 or data.get("status") != "ok":
             message = data.get("message") or data.get("code") or "неизвестная ошибка"
-            raise QuasarError(message)
+            raise QuasarError(
+                str(message),
+                code=data.get("code"),
+                temporary=status >= 500 or status in (401, 403),
+            )
         return data
 
     # ------------------------------------------------------------------ чтение
@@ -110,6 +130,36 @@ class QuasarApi:
     async def scenarios(self) -> list[dict[str, Any]]:
         data = await self._request("get", "/m/user/scenarios")
         return data.get("scenarios", [])
+
+    async def scenarios_list(self) -> list[dict[str, Any]]:
+        """Полный список сценариев с именами и триггерами, без шагов."""
+        data = await self._request("get", "/m/user/scenarios")
+        scenarios = data.get("scenarios")
+        if not isinstance(scenarios, list) or any(
+            not isinstance(scenario, dict) or not scenario.get("id")
+            for scenario in scenarios
+        ):
+            raise ValueError("Яндекс не вернул полный список сценариев")
+        return scenarios
+
+    async def scenario_get(self, scenario_id: str) -> dict[str, Any]:
+        """Полный сценарий из формы редактирования, включая шаги."""
+        data = await self._request("get", f"/m/v4/user/scenarios/{scenario_id}/edit")
+        scenario = data.get("scenario")
+        if not isinstance(scenario, dict):
+            raise ValueError("Яндекс не вернул полный сценарий")
+        return scenario
+
+    async def scenario_create(self, body: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("post", "/m/v4/user/scenarios", body)
+
+    async def scenario_update(
+        self, scenario_id: str, body: dict[str, Any]
+    ) -> dict[str, Any]:
+        return await self._request("put", f"/m/v4/user/scenarios/{scenario_id}", body)
+
+    async def scenario_delete(self, scenario_id: str) -> None:
+        await self._request("delete", f"/m/user/scenarios/{scenario_id}")
 
     # ------------------------------------------------------------------- имена
 

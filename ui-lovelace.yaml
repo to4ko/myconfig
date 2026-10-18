@@ -2783,6 +2783,7 @@ views:
   # Cameras PAGE
   ################################################################
   - title: Cameras
+    path: cameras
     icon: mdi:cctv
     cards:
       - type: vertical-stack
@@ -6840,17 +6841,6 @@ views:
           - input_boolean.settings_ble_gateway
           - input_boolean.settings_ble_gateway_discovery
           - input_text.settings_ble_gateway_add_device
-      - type: glance
-        columns: 4
-        entities:
-          - entity: binary_sensor.nut3_green_presence
-            name: Green
-          - entity: binary_sensor.nut3_pink_presence
-            name: Pink
-          - entity: binary_sensor.nut3_grey_presence
-            name: Grey
-          - entity: binary_sensor.nut3_white_presence
-            name: White
       - type: custom:stack-in-card
         mode: vertical
         cards:
@@ -7050,6 +7040,62 @@ views:
 
       # - type: custom:history-explorer-card
       #   recordedEntitiesOnly: true
+
+  - title: Я
+    icon: mdi:cloud-question
+    cards:
+      - type: custom:stack-in-card
+        mode: vertical
+        cards:
+          - type: entities
+            title: Я статус
+            entities:
+              - binary_sensor.yc_incident
+              - sensor.yc_open_incidents
+              #- sensor.yc_incident_titles
+              - type: divider
+              - binary_sensor.yc_services_list_changed
+              - sensor.yc_new_services
+              - sensor.yc_removed_services
+          - type: markdown
+            title: Инциденты Yandex Cloud
+            content: |
+              {% set t = states('sensor.yc_incident_titles') %}
+              {% if t in ['нет', 'unknown', 'unavailable'] %}
+              Открытых инцидентов нет
+              {% else %}
+              {% for x in t.split('; ') %}
+              - {{ x }}
+              {% endfor %}
+              {% endif %}
+      - type: custom:auto-entities
+        card:
+          show_header_toggle: false
+          type: entities
+          title: Я сервисы
+        filter:
+          include:
+            - entity_id: "binary_sensor.yandex_cloud_*"
+        sort:
+          method: state
+      # - type: custom:auto-entities
+      #   card:
+      #     type: grid
+      #     columns: 3
+      #     square: false
+      #     title: Я сервисы
+      #   card_param: cards
+      #   filter:
+      #     include:
+      #       - entity_id: "binary_sensor.yandex_cloud_*"
+      #         options:
+      #           type: tile
+      #           state_content: state
+      #           tap_action:
+      #             action: more-info
+      #   sort:
+      #     method: state
+
 
   - title: Testing
     icon: mdi:poll

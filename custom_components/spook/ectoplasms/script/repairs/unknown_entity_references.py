@@ -8,27 +8,23 @@ from homeassistant.components import script
 from homeassistant.const import EVENT_COMPONENT_LOADED
 from homeassistant.helpers import entity_registry as er
 
-from ....action_extraction import async_extract_entities_from_action_config
+from ....action_extraction import (
+    async_extract_entities_from_action_config,
+    async_unknown_entities_named,
+)
 from ....entity_filtering import async_get_all_entity_ids, async_get_all_services
-from ....reference_extraction import without_disabled_steps
+from ....reference_extraction import (
+    core_references,
+    names_given_to_templates,
+    without_never_rendered,
+)
 from ....repairs import AbstractSpookEntityComponentUnknownReferencesRepair
 from ....template_extraction import (
     async_extract_entities_from_config,
-    async_filter_known_entity_ids_with_templates,
 )
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-
-
-def extract_referenced_entities_from_script(entity: script.ScriptEntity) -> set[str]:
-    """Return entity references from a script entity."""
-    try:
-        return set(entity.script.referenced_entities)
-    except TypeError as err:
-        if str(err) != "unhashable type: 'dict'":
-            raise
-        return set()
 
 
 async def extract_template_entities_from_script_entity(
@@ -53,7 +49,14 @@ async def extract_template_entities_from_script_entity(
     if not (config := getattr(entity, "raw_config", None)):
         return set()
 
-    return await async_extract_entities_from_config(hass, config, known_services)
+    # A description, a name or a field example is shown, never rendered: an
+    # entity in an example template there is not one the script uses.
+    return await async_extract_entities_from_config(
+        hass,
+        without_never_rendered(config),
+        known_services,
+        names_given_to_templates(config),
+    )
 
 
 class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
@@ -89,12 +92,15 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
         )
         self._known_services = async_get_all_services(self.hass)
 
-    async def _async_named_in(self, config: dict[str, Any]) -> set[str]:
+    async def _async_named_in(
+        self, config: dict[str, Any], shadowed: frozenset[str]
+    ) -> set[str]:
         """Return the entities a configuration names, the way this repair reads it.
 
         The same reading the report is built from, the steps and templates
         alike, so comparing it with and without the disabled steps leaves out
-        exactly what only those name.
+        exactly what only those name. ``shadowed`` comes from the whole
+        configuration, as `config` can be one without its disabled steps.
         """
         steps = config.get("sequence") or []
         named = await async_extract_entities_from_action_config(
@@ -102,16 +108,20 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
             # A single step can be written without a list.
             [steps] if isinstance(steps, dict) else steps,
             known_services=self._known_services,
+            shadowed=shadowed,
         )
         named |= await async_extract_entities_from_config(
-            self.hass, config, self._known_services
+            self.hass,
+            without_never_rendered(config),
+            self._known_services,
+            shadowed,
         )
         return named
 
     async def _async_compute_unknown_references(self, entity: Any) -> set[str]:
         """Return unknown entity IDs referenced by ``entity`` (incl. templates)."""
         # Get all referenced entities from the script
-        all_entities = extract_referenced_entities_from_script(entity)
+        all_entities = core_references(entity, "entities")
 
         # Home Assistant's own list leaves out entities handed over as action
         # data, like `entity: light.kitchen` in a call to another script. The
@@ -123,6 +133,7 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
                     self.hass,
                     raw_config.get("sequence") or [],
                     known_services=self._known_services,
+                    shadowed=names_given_to_templates(raw_config),
                 )
             )
 
@@ -133,18 +144,11 @@ class SpookRepair(AbstractSpookEntityComponentUnknownReferencesRepair):
             )
         )
 
-        # Home Assistant's own list includes disabled steps too. A step parked
-        # that way does nothing, so what only it names is left out: whatever
-        # this repair finds in the configuration, and no longer finds once
-        # those are pruned.
-        if isinstance(raw_config, dict):
-            named = await self._async_named_in(raw_config)
-            still_named = await self._async_named_in(without_disabled_steps(raw_config))
-            all_entities -= named - still_named
-
-        return await async_filter_known_entity_ids_with_templates(
+        return await async_unknown_entities_named(
             self.hass,
-            entity_ids=all_entities,
+            all_entities,
+            raw_config,
+            named_in=self._async_named_in,
             known_entity_ids=self._known_entity_ids,
             known_services=self._known_services,
         )

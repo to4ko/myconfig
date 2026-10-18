@@ -97,4 +97,4 @@ DATA_WS_REGISTERED = "ws_registered"
 
 CACHE_TTL = 15  # секунд, чтобы повторное открытие панели не дёргало Яндекс заново
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"

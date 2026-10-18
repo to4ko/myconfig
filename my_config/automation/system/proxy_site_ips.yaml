@@ -1,0 +1,27 @@
+# #####################################################################################
+#
+# SYSTEM - UniFi proxy whitelist
+#
+# #####################################################################################
+# Send the public addresses of the sites (Site Magic tunnels on the home UDM, sensor.site_magic_ips)
+# to the UniFi proxy on aeza, so its whitelist follows address changes of Dacha / Parents / Lena / Vova.
+# On change of the sensor and every 15 min (the proxy reloads only when an address really changed).
+# ##################################
+- alias: system_proxy_site_ips
+  id: system_proxy_site_ips
+  initial_state: true
+  mode: queued
+  max: 3
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: sensor.site_magic_ips
+    - trigger: time_pattern
+      minutes: "/15"
+  conditions:
+    - condition: template
+      value_template: "{{ '=' in states('sensor.site_magic_ips') }}"
+  actions:
+    - action: rest_command.proxy_site_ips
+      data:
+        ips: "{{ states('sensor.site_magic_ips') }}"

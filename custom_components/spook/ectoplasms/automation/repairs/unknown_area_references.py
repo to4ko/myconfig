@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING
 
 from homeassistant.components import automation
@@ -9,7 +10,8 @@ from homeassistant.helpers import area_registry as ar
 
 from ....entity_filtering import async_filter_known_area_ids, async_get_all_area_ids
 from ....reference_extraction import (
-    extract_targets_from_config,
+    async_raw_config_references,
+    core_references,
     only_in_disabled_steps,
 )
 from . import AbstractSpookAutomationReferencesRepair
@@ -42,16 +44,17 @@ class SpookRepair(AbstractSpookAutomationReferencesRepair):
 
     async def _async_compute_unknown_references(self, entity: Any) -> set[str]:
         """Return unknown area IDs referenced by ``entity``."""
-        area_ids = set(entity.referenced_areas)
+        area_ids = core_references(entity, "areas")
 
         # Also walk the raw configuration; the built-in extraction misses
         # references nested in some step types, like repeat sequences.
         if raw_config := getattr(entity, "raw_config", None):
-            area_ids.update(extract_targets_from_config(raw_config).area_ids)
+            # Templates that look up an area that is not there are read too.
+            references = partial(async_raw_config_references, self.hass, kind="areas")
+            area_ids.update(references(raw_config))
             # A disabled step does nothing, so what only it names is left out.
-            area_ids -= only_in_disabled_steps(
-                raw_config, lambda found: extract_targets_from_config(found).area_ids
-            )
+            # Read the same way, or a template there still counts.
+            area_ids -= only_in_disabled_steps(raw_config, references)
 
         return async_filter_known_area_ids(
             self.hass,

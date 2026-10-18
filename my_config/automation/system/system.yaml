@@ -2361,7 +2361,7 @@
           entity_id: media_player.yandex_v
     - if:
         - condition: trigger
-          id: "on_state"
+          id: "by_state"
       then:
         - action: media_player.turn_off
           entity_id: media_player.yandex_s
@@ -2649,7 +2649,7 @@
   actions:
     - action: homeassistant.reload_config_entry
       data:
-        entry_id: 2eb872806bf50b75953836ae0584662b
+        entry_id: 6a03253cbc5dc500e3b578fac0b2aa24
 
 # ##################################
 # System - Fully tablet Charge on
@@ -2679,9 +2679,12 @@
   id: system_fully_browser_restart
   initial_state: true
   triggers:
-    - trigger: time_pattern
-      hours: "/2"
-      id: "auto"
+    # Scheduled restart every 2 hours disabled 2026-10-11: the doorbell page now
+    # recovers frozen players itself, and the restart made HA calls to Fully fail
+    # for a few seconds at HH:00. Uncomment to re-enable.
+    # - trigger: time_pattern
+    #   hours: "/2"
+    #   id: "auto"
     - trigger: event
       event_type: xiaomi_aqara.click
       event_data:
@@ -3117,15 +3120,27 @@
   max: 50
   max_exceeded: silent
   triggers:
+    # Streams dropped to 0 and stayed there (checked below: only matters while the screen is on).
     - trigger: state
       entity_id: sensor.1621_go2rtc_active_streams
       to:
       for:
         seconds: 30
+    # Screen turned on and there are still no streams after 20 s.
+    - trigger: state
+      entity_id: switch.kiosk_screen
+      to: "on"
+      for:
+        seconds: 20
   conditions:
     - condition: state
       entity_id: sensor.1621_go2rtc_active_streams
       state: "0"
+    # 2026-10-12: the doorbell page drops its streams when the screen goes off, so 0 streams
+    # is normal during sleep. Only a screen that is on without any stream means a stuck page.
+    - condition: state
+      entity_id: switch.kiosk_screen
+      state: "on"
   actions:
     # - action: notify.send_message
     #   data:
