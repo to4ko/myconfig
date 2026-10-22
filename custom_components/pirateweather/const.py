@@ -28,7 +28,7 @@ from homeassistant.const import (
 )
 
 DOMAIN = "pirateweather"
-DEFAULT_NAME = "PirateWeather"
+DEFAULT_NAME = "Pirate Weather"
 DEFAULT_LANGUAGE = "en"
 DEFAULT_UNITS = "us"
 DEFAULT_SCAN_INTERVAL = 1200
@@ -39,6 +39,7 @@ CONF_LANGUAGE = "language"
 CONF_UNITS = "units"
 CONF_ENDPOINT = "endpoint"
 CONF_MODELS = "models"
+CONF_INSTANCE_ID = "instance_id"
 CONFIG_FLOW_VERSION = 2
 ENTRY_NAME = "name"
 ENTRY_WEATHER_COORDINATOR = "weather_coordinator"

@@ -16,8 +16,10 @@
   max: 5
   max_exceeded: silent
   triggers:
+    # only when the list of new addresses changes, not on every poll (the details in items change each time)
     - trigger: state
       entity_id: sensor.proxy_suspects
+      attribute: new
   variables:
     new_ips: >-
       {{ trigger.to_state.attributes.get('new') or [] }}
@@ -25,8 +27,9 @@
     - condition: template
       value_template: "{{ new_ips | count > 0 }}"
   actions:
-    - action: notify.telegram_dima
+    - action: notify.send_message
       data:
+        entity_id: notify.telegram_dima
         message: >-
           Прокси UniFi: подозрительный адрес.
           {% for it in trigger.to_state.attributes.get('items') or [] if it.ip in new_ips %}
