@@ -15,6 +15,7 @@ from .bparasite import parse_bparasite
 from .bthome import parse_bthome
 from .chefiq import parse_chefiq
 from .const import JAALEE_TYPES, TILT_TYPES
+from .eddystone_tlm import parse_eddystone_tlm
 from .govee import parse_govee
 from .grundfos import parse_grundfos
 from .helpers import to_mac, to_unformatted_mac, to_uuid
@@ -31,6 +32,7 @@ from .kkm import parse_kkm
 from .laica import parse_laica
 from .michelin import parse_michelin_tms
 from .mikrotik import parse_mikrotik
+from .minew import parse_minew
 from .miscale import parse_miscale
 from .moat import parse_moat
 from .mocreo import parse_mocreo
@@ -319,7 +321,11 @@ class BleParser:
                         sensor_data = parse_xiaomi(self, service_data, mac)
                         break
                     elif uuid16 == 0xFEAA:
-                        if len(service_data) == 19:
+                        if len(service_data) == 18 and service_data[4] == 0x20:
+                            # UUID16 = Google (Eddystone-TLM)
+                            sensor_data = parse_eddystone_tlm(self, service_data, mac)
+                            break
+                        elif len(service_data) == 19:
                             # UUID16 = Google (used by KKM)
                             sensor_data = parse_kkm(self, service_data, mac)
                             break
@@ -327,6 +333,10 @@ class BleParser:
                             # UUID16 = Google (used by Ruuvitag V2/V4)
                             sensor_data = parse_ruuvitag(self, service_data, mac)
                             break
+                    elif uuid16 == 0xFFE1:
+                        # UUID16 = Minew
+                        sensor_data = parse_minew(self, service_data, mac)
+                        break
                     elif uuid16 == 0xFEE0:
                         # UUID16 = Anhui Huami Information Technology Co., Ltd. (Amazfit)
                         if man_spec_data_list:

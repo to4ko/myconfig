@@ -32,7 +32,7 @@ wifi:
   #output_power: 17.5dB
   #fast_connect: true
   #use_address: 192.168.1.164
-  #power_save_mode: none
+  power_save_mode: LIGHT
   # manual_ip:
   #   static_ip: 192.168.1.117
   #   gateway: 192.168.1.1
@@ -125,6 +125,19 @@ binary_sensor:
     name: "ToD"
     id: id_tod
     icon: mdi:chart-timeline
+    # night starts: one decision for the whole night (relay is not switched until morning)
+    on_release:
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_on: id_auto_mode
+              - lambda: "return std::isnan(id(id_battery).state) || id(id_battery).state < 45;"
+          then:
+            - logger.log: "------> Night start: Battery Level < 45 or unknown -> Relay ON for the night"
+            - switch.turn_on: relay
+          else:
+            - logger.log: "------> Night start: Battery Level >= 45 -> Relay OFF for the night"
+            - switch.turn_off: relay
 
   - platform: homeassistant
     name: "Security"
@@ -181,7 +194,7 @@ sensor:
 
   - platform: homeassistant
     name: "Battery Level"
-    entity_id: sensor.kiosk_battery    
+    entity_id: sensor.kiosk_battery
     id: id_battery
     device_class: battery
     state_class: measurement
@@ -233,6 +246,16 @@ sensor:
 
 text_sensor:
   - platform: template
+    name: "Charge Mode"
+    icon: mdi:battery-clock
+    update_interval: 15s
+    lambda: |-
+        if (!id(id_auto_mode).state) return std::string("Always On");
+        if (id(api_offline_min) >= 10) return std::string("HA Offline");
+        if (!id(id_tod).state) return std::string("Night");
+        return std::string("Normal");
+
+  - platform: template
     name: "Uptime"
     lambda: |-
         int seconds = round(id(uptime_sensor).get_raw_state());
@@ -276,7 +299,32 @@ time:
     id: sntp_time
     timezone: Europe/Moscow
 
+globals:
+  # minutes without connection to HA; battery level is then stale and the relay must not stay off
+  - id: api_offline_min
+    type: int
+    restore_value: no
+    initial_value: '0'
+
 interval:
+  - interval: 1min
+    then:
+      - if:
+          condition:
+            api.connected:
+          then:
+            - lambda: "id(api_offline_min) = 0;"
+          else:
+            - lambda: "id(api_offline_min)++;"
+      - if:
+          condition:
+            and:
+              - lambda: "return id(api_offline_min) >= 10;"
+              - switch.is_off: relay
+          then:
+            - logger.log: "------> No connection to HA for 10+ min -> Turn Relay ON"
+            - switch.turn_on: relay
+
   - interval: 15s
     then:
       - logger.log: "------> Interval 15s - Check for Mode"
@@ -355,6 +403,16 @@ interval:
   - interval: 1min
     then:
       - logger.log: "------> Interval 10s - Battery Level"
+      # battery level unknown (no data from HA yet / sensor unavailable): charge, comparisons with NaN below are always false
+      - if:
+          condition:
+            and:
+              - binary_sensor.is_on: id_auto_mode
+              - lambda: "return std::isnan(id(id_battery).state);"
+              - switch.is_off: relay
+          then:
+            - logger.log: "------> Battery Level unknown -> Turn Relay ON"
+            - switch.turn_on: relay
       - if:
           condition:
               - binary_sensor.is_on: id_auto_mode
@@ -378,7 +436,7 @@ interval:
                         - if:
                             condition:
                               and:
-                                - lambda: "return id(id_battery).state >= id(id_max_level).state ;"
+                                - lambda: "return id(id_battery).state >= id(id_max_level).state && id(api_offline_min) < 10;"
                                 - switch.is_on: relay
                             then:
                               - logger.log: "------> Battery Level - Battery Level > Max! Turn Relay OFF"
@@ -386,8 +444,16 @@ interval:
                             else:
                               - logger.log: "------> Battery Level - Battery Level NOT lower than Min and Not Higher than Max"
                 else:
-                  - logger.log: "------> Auto ON and TOD OFF"
-                  - switch.turn_on: relay
+                  # night: no relay switching (it wakes the tablet screen), only an emergency charge
+                  - logger.log: "------> Auto ON and TOD OFF - night, relay is not switched"
+                  - if:
+                      condition:
+                        and:
+                          - lambda: "return id(id_battery).state < 15;"
+                          - switch.is_off: relay
+                      then:
+                        - logger.log: "------> Night: Battery Level < 15! Turn Relay ON"
+                        - switch.turn_on: relay
           else:
             - logger.log: "------> Battery Level - Auto Mode Off"
             - if: 

@@ -1,0 +1,181 @@
+substitutions:
+  board_name: esp32_s60plug_2
+  host_name: esp32-s60plug-2
+  max_power: "3500"
+
+esphome:
+  name: ${host_name}
+  comment: "Plug S60 Ya V"
+  friendly_name: "S60 Plug V"
+  area: "Vova's room"
+
+safe_mode:
+  disabled: False
+  num_attempts: 5
+  reboot_timeout: 15min
+
+esp32:
+  variant: esp32c3
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+
+wifi:
+  ssid: !secret wifi_ssid_iot
+  password: !secret wifi_pass
+  domain: !secret my_domain
+  reboot_timeout: 15min
+  min_auth_mode: WPA2
+  #output_power: 17.5dB
+  #fast_connect: true
+  # first OTA: plug still named esphome-67ce10, fixed IP in UniFi
+  use_address: 192.168.200.82
+  power_save_mode: LIGHT
+
+logger:
+  baud_rate: 0
+
+uart:
+  rx_pin: GPIO7
+  baud_rate: 4800
+  parity: EVEN
+
+api:
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+
+web_server:
+  port: 80
+
+status_led:
+  pin:
+    number: GPIO5
+    inverted: false
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO9
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Button"
+    internal: true
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      - switch.toggle: relay
+
+  - platform: status
+    name: "Status"
+
+switch:
+  - platform: gpio
+    pin: GPIO4
+    restore_mode: RESTORE_DEFAULT_ON
+    icon: mdi:power-socket-eu
+    id: relay
+    name: "Relay"
+
+sensor:
+  - platform: cse7766
+    current:
+      name: "Current"
+      accuracy_decimals: 2
+      device_class: current
+      id: id_current
+      filters:
+        - throttle_average: 10s
+    voltage:
+      name: "Voltage"
+      accuracy_decimals: 1
+      device_class: voltage
+      id: id_voltage
+      filters:
+        - throttle_average: 10s
+    power:
+      name: "Power"
+      accuracy_decimals: 0
+      id: id_power
+      unit_of_measurement: W
+      device_class: power
+      filters:
+        - throttle_average: 10s
+      on_value_range:
+        - above: ${max_power}
+          then:
+            - switch.turn_off: relay
+
+  - platform: integration
+    name: "Energy"
+    sensor: id_power
+    time_unit: h
+    accuracy_decimals: 3
+    unit_of_measurement: 'kWh'
+    device_class: energy
+    state_class: total_increasing
+    filters:
+      - multiply: 0.001
+    id: id_energy
+    restore: true
+
+  - platform: internal_temperature
+    name: "ESP Internal Temperature"
+    device_class: "temperature"
+    state_class: "measurement"
+    accuracy_decimals: 1
+    update_interval: 60s
+
+  - platform: uptime
+    name: "Uptime s"
+    id: uptime_sensor
+    #disabled_by_default: true
+
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    update_interval: 60s
+
+text_sensor:
+  - platform: template
+    name: "Uptime"
+    lambda: |-
+        int seconds = round(id(uptime_sensor).get_raw_state());
+        int days = seconds / (24 * 3600);
+        seconds = seconds % (24 * 3600);
+        int hours = seconds / 3600;
+        seconds = seconds % 3600;
+        int minutes = seconds /  60;
+        seconds = seconds % 60;
+        return (
+          (days ? to_string(days) + "d " : "00d ") +
+          (hours ? to_string(hours) + "h " : "00h ") +
+          (minutes ? to_string(minutes) + "m " : "00m ") +
+          (to_string(seconds) + "s")
+        );
+    icon: mdi:clock-start
+    update_interval: 60s
+
+  - platform: wifi_info
+    ip_address:
+      name: "IP"
+    ssid:
+      name: "SSID"
+    bssid:
+      name: "BSSID"
+    mac_address:
+      name: "MAC"
+
+  - platform: version
+    name: "ESPHome Version"
+    hide_timestamp: true
+
+button:
+  - platform: restart
+    name: "Restart"
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
