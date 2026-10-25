@@ -250,6 +250,7 @@ text_sensor:
     icon: mdi:battery-clock
     update_interval: 15s
     lambda: |-
+        if (!id(id_auto_mode).has_state()) return std::string("Starting");
         if (!id(id_auto_mode).state) return std::string("Always On");
         if (id(api_offline_min) >= 10) return std::string("HA Offline");
         if (!id(id_tod).state) return std::string("Night");
@@ -305,10 +306,18 @@ globals:
     type: int
     restore_value: no
     initial_value: '0'
+  # minutes in a row with unknown battery level; short API reconnects must not trigger a charge
+  - id: battery_unknown_min
+    type: int
+    restore_value: no
+    initial_value: '0'
 
 interval:
   - interval: 1min
     then:
+      - lambda: |-
+          if (std::isnan(id(id_battery).state)) id(battery_unknown_min)++;
+          else id(battery_unknown_min) = 0;
       - if:
           condition:
             api.connected:
@@ -403,12 +412,12 @@ interval:
   - interval: 1min
     then:
       - logger.log: "------> Interval 10s - Battery Level"
-      # battery level unknown (no data from HA yet / sensor unavailable): charge, comparisons with NaN below are always false
+      # battery level unknown for 5+ min (sensor unavailable): charge, comparisons with NaN below are always false
       - if:
           condition:
             and:
               - binary_sensor.is_on: id_auto_mode
-              - lambda: "return std::isnan(id(id_battery).state);"
+              - lambda: "return id(battery_unknown_min) >= 5;"
               - switch.is_off: relay
           then:
             - logger.log: "------> Battery Level unknown -> Turn Relay ON"
