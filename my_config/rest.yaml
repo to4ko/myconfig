@@ -73,3 +73,27 @@
         json_attributes:
           - items
           - new
+
+  # DeepSeek platform balance: GET https://api.deepseek.com/user/balance with a Bearer API key (platform.deepseek.com/api_keys).
+  # The balance is in the account currency (USD here), so there is just one sensor: the API returns only the currency the account
+  # holds (the platform's CNY figure is "Total cost", i.e. spend, not a balance). Attributes carry granted_balance /
+  # topped_up_balance. Apply with the rest.reload action, no HA restart needed. No binary_sensor here on purpose: inside `rest`
+  # it does not survive reload (with unique_id it logs "does not generate unique IDs ... ignoring", without one it is not
+  # re-created) - use a numeric_state trigger on this sensor instead.
+  - resource: "https://api.deepseek.com/user/balance"
+    headers:
+      Authorization: !secret deepseek_api_key
+    scan_interval: 3600
+    timeout: 20
+    sensor:
+      - name: DeepSeek Balance USD
+        unique_id: deepseek_balance_usd
+        icon: mdi:cash-multiple
+        device_class: monetary
+        state_class: measurement
+        unit_of_measurement: USD
+        availability: >-
+          {{ value_json is mapping and value_json.balance_infos is iterable
+             and value_json.balance_infos | selectattr('currency', 'eq', 'USD') | list | count > 0 }}
+        value_template: >-
+          {{ (value_json.balance_infos | selectattr('currency', 'eq', 'USD') | list | first | default({})).get('total_balance') | float(0) }}

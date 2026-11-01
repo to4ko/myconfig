@@ -1,0 +1,33 @@
+# #####################################################################################
+#
+# SYSTEM - DeepSeek platform balance
+#
+# #####################################################################################
+# Telegram alert when the DeepSeek platform balance drops below 5 USD. The balance is
+# sensor.deepseek_balance_usd from my_config/rest.yaml, polled once an hour, so a crossing is
+# noticed within an hour.
+# A restart, a failed poll or a Wi-Fi blip leaves the sensor in unavailable, which re-arms the
+# numeric_state trigger: it then fires again on the same unchanged value. The condition below
+# drops those fires by rejecting a non-numeric from_state. Its cost: a real crossing that happens
+# to pass through unavailable (6 -> unavailable -> 4.9) is dropped too and will not repeat until
+# the balance goes back above 5. Pick the other side of the trade-off by replacing the condition
+# with a cooldown on this.attributes.last_triggered.
+# ##################################
+- alias: system_deepseek_balance_low
+  id: system_deepseek_balance_low
+  initial_state: true
+  mode: single
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.deepseek_balance_usd
+      below: 5
+  conditions:
+    - condition: template
+      value_template: >-
+        {{ trigger.from_state is not none
+           and trigger.from_state.state not in ['unavailable', 'unknown'] }}
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f4b0 DeepSeek: баланс {{ states('sensor.deepseek_balance_usd') }} USD — ниже порога. Пополни: https://platform.deepseek.com/"

@@ -462,3 +462,60 @@
   actions:
     - action: "fan.turn_{{ trigger.id }}"
       entity_id: fan.esp8266_hood_k_fan
+
+# ##################################
+# Kitchen - Midi K restart by socket
+# ##################################
+- alias: kitchen_midi_k_restart
+  id: kitchen_midi_k_restart
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: media_player.yandex_k
+      to: "unavailable"
+      for:
+        minutes: 5
+  conditions:
+    # не чаще одного раза в 30 минут — защита от циклов при мигании связи
+    - condition: template
+      value_template: >-
+        {{ this.attributes.last_triggered is none
+           or (now() - this.attributes.last_triggered).total_seconds() > 1800 }}
+    # сама розетка должна быть на связи, иначе дёргать нечего
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: switch.s60_plug_k_relay
+          state:
+            - "unavailable"
+            - "unknown"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U0001f50c MIDI K недоступна 5 минут — передёргиваю розетку S60 K"
+    - action: switch.turn_off
+      target:
+        entity_id: switch.s60_plug_k_relay
+    - delay: "00:00:15"
+    - action: switch.turn_on
+      target:
+        entity_id: switch.s60_plug_k_relay
+    # ждём возврата колонки, максимум 3 минуты
+    - wait_template: "{{ states('media_player.yandex_k') not in ['unavailable', 'unknown'] }}"
+      timeout: "00:03:00"
+      continue_on_timeout: true
+    - if:
+        - "{{ not wait.completed }}"
+      then:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6a8 MIDI K не поднялась за 3 минуты после передёргивания розетки"
+      else:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f7e2 MIDI K на связи: {{ states('media_player.yandex_k') }}"

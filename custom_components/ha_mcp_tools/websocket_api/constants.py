@@ -6,7 +6,9 @@ import re
 
 from homeassistant.generated.config_flows import FLOWS
 
-from .. import card_definitions, core_contract, helper_collections
+from .. import card_definitions, core_contract, entity_restore, helper_collections
+from ..const import MAX_OAUTH_CALLBACK_LENGTH, MAX_OAUTH_CALLBACKS
+from . import logbook as _logbook
 
 __all__ = [
     "ALL_SEARCH_TYPES",
@@ -23,6 +25,8 @@ __all__ = [
     "HELPERS_LIST_COLLECTION_DOMAINS",
     "HIDDEN_SCORE_PENALTY",
     "LIMITS",
+    "MAX_OAUTH_CALLBACK_LENGTH",
+    "MAX_OAUTH_CALLBACKS",
     "MAX_BODY_BYTES",
     "MAX_RESULTS",
     "REGISTRY_KINDS",
@@ -35,7 +39,6 @@ __all__ = [
     "SERVER_ENTRY_UPDATE_FLUSH_DELAY_S",
     "SERVER_ENTRY_UPDATE_MAX_PIP_SPEC",
     "WS_API_PREFIX",
-    "WS_BACKUP_PREP",
     "WS_BLUEPRINT_GET",
     "WS_BULK_CALL_SERVICE",
     "WS_CALL_SERVICE",
@@ -49,6 +52,9 @@ __all__ = [
     "WS_EXPOSURE",
     "WS_HELPERS_LIST",
     "WS_INFO",
+    "WS_LOGBOOK_EVENTS",
+    "WS_OAUTH_CALLBACKS",
+    "WS_OAUTH_CALLBACKS_UPDATE",
     "WS_OVERVIEW",
     "WS_REFERENCE_DATA",
     "WS_REGISTRIES",
@@ -79,17 +85,19 @@ WS_CONFIG_ENTRIES = f"{WS_API_PREFIX}/config_entries"
 WS_REGISTRY_LOOKUP = f"{WS_API_PREFIX}/registry_lookup"
 WS_SYSTEM_SNAPSHOT = f"{WS_API_PREFIX}/system_snapshot"
 WS_ENTITY_LOOKUP = f"{WS_API_PREFIX}/entity_lookup"
-WS_BACKUP_PREP = f"{WS_API_PREFIX}/backup_prep"
 WS_REGISTRIES = f"{WS_API_PREFIX}/registries"
 WS_DASHBOARDS = f"{WS_API_PREFIX}/dashboards"
 WS_DASHBOARD_EDIT = f"{WS_API_PREFIX}/dashboard_edit"
 WS_SERVICES_LIST = f"{WS_API_PREFIX}/services_list"
 WS_REFERENCE_DATA = f"{WS_API_PREFIX}/reference_data"
+WS_LOGBOOK_EVENTS = f"{WS_API_PREFIX}/logbook_events"
 WS_SERVER_ENTRY = f"{WS_API_PREFIX}/server_entry"
 WS_SERVER_ENTRY_UPDATE = f"{WS_API_PREFIX}/server_entry_update"
 WS_CALL_SERVICE = f"{WS_API_PREFIX}/call_service"
 WS_BULK_CALL_SERVICE = f"{WS_API_PREFIX}/bulk_call_service"
 WS_TEMPLATE_DIAGNOSE = f"{WS_API_PREFIX}/template_diagnose"
+WS_OAUTH_CALLBACKS = f"{WS_API_PREFIX}/oauth_callbacks"
+WS_OAUTH_CALLBACKS_UPDATE = f"{WS_API_PREFIX}/oauth_callbacks_update"
 
 # Wire-format generation of the request/response envelopes. Bumped only on an
 # *incompatible* shape change to an existing command; additive fields do not
@@ -133,7 +141,6 @@ CAPABILITIES: list[str] = [
     "registry_lookup",
     "system_snapshot",
     "entity_lookup",
-    "backup_prep",
     "registries",
     "dashboards",
     "dashboard_edit",
@@ -149,6 +156,10 @@ CAPABILITIES: list[str] = [
     "dashboards_docs",
     "services_list",
     "reference_data",
+    # Core's own logbook processor run in-process (REST flags: ISO ``when``,
+    # entity names) with the entity/device/context filter set; the server's
+    # ``ha_get_logs`` logbook source prefers it and falls back to REST/WS.
+    *_logbook.CAPABILITIES,
     # A flag, not a standalone command: gates the optional ``visibility`` param
     # the server may pass to ``ha_mcp_tools/search`` so an old component that
     # would ignore the param is never sent it (param-sniffing is banned for
@@ -176,7 +187,11 @@ CAPABILITIES: list[str] = [
     # The server's ha_eval_template asks for a failed template's line only when
     # this is advertised; without it the error is returned as Core reported it.
     "template_diagnose",
+    # Read and replace the none-mode OAuth callback allowlist (#2427); the
+    # settings panel offers the editor only when this is advertised.
+    "oauth_callbacks",
     *helper_collections.CAPABILITIES,
+    *entity_restore.CAPABILITIES,
     core_contract.CAPABILITY,
     *card_definitions.CAPABILITIES,
 ]
@@ -197,6 +212,7 @@ MAX_BODY_BYTES = 1_000_000
 LIMITS = {"max_results": MAX_RESULTS, "max_body_bytes": MAX_BODY_BYTES}
 
 DEFAULT_LIMIT = 10
+
 
 # ``call_service`` confirmation-wait bounds. The default mirrors the legacy
 # ``ha_call_service`` 10s subscribe-and-sample window; the cap bounds a

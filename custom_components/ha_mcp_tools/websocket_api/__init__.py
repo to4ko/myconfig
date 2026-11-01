@@ -110,6 +110,15 @@ the info handshake carries no capability entry:
   entity_ids: [...]}``. The ``services`` shape is the REST ``/api/services`` list
   ``build_service_index`` reads (bodies are empty dicts — the index only reads
   keys); ``entity_ids`` is every ``hass.states.async_all()`` id. Pure, no prep.
+* ``ha_mcp_tools/logbook_events`` — Core's own logbook query run in-process:
+  ``EventProcessor`` with the REST flags (``timestamp=False`` ISO ``when``,
+  ``include_entity_name=True``) and the ``logbook/get_events`` filter set
+  (``entity_ids`` / ``device_ids`` / ``context_id``), so names, context fields
+  and row shape come from Core itself. The recorder read AND the result
+  encoding run in the async prep (Core's own approach for this command), so
+  the handler sends finished bytes instead of encoding on the event loop; the
+  server's ``ha_get_logs`` logbook source prefers this command and keeps
+  ``/api/logbook`` + ``logbook/get_events`` as its fallbacks.
 * ``ha_mcp_tools/search`` (``search_visibility`` capability) — the search command
   additionally accepts a raw ``visibility`` config dict; when present it excludes
   the server's opt-in hidden entities before counts/pagination (the pure
@@ -224,14 +233,6 @@ the info handshake carries no capability entry:
   categories, disabled_by, hidden_by}]}``. Multiple matches across platforms are
   all returned; the server picks. The in-process read is authoritative
   immediately (no registry-write settle retry).
-* ``ha_mcp_tools/backup_prep`` — the backup identity the server needs before a
-  create: ``{agent_ids, local_agent_id, default_password}`` read from the backup
-  integration's in-process ``DATA_MANAGER``. ``local_agent_id`` uses the SAME
-  preference the server's ``_get_local_backup_agent_id`` does (``hassio.local``
-  over ``backup.local``). A missing backup integration / manager raises
-  ``HomeAssistantError`` so the server's command-error fallback fires. The
-  password is sensitive but the legacy ``backup/config/info`` already serves it
-  to the same admin connection — parity, not new exposure.
 * ``ha_mcp_tools/registries`` — the area / floor / label / category registries as
   the FULL-FIELD ``config/<x>_registry/list`` shapes (byte-compatible with the
   legacy WS list responses; timestamps as ``created_at`` / ``modified_at``
@@ -282,15 +283,21 @@ Module layout. This package's ``__init__`` holds the registration seam
 code lives in the submodules:
 
 * ``constants`` and ``schemas``: the wire contract, capability list and request schemas.
+* ``seam``: the pre-serialized result wrapper for commands whose payload is encoded off the loop.
 * ``registry``, ``secrets``, ``assist`` and ``flow_domains``: shared registry, secret-scrub, Assist exposure and flow-helper domain helpers.
 * ``search``, ``search_config``, ``search_score`` and ``visibility``: ``ha_mcp_tools/search``.
-* ``overview``, ``services``, ``lookups``, ``config_entries``, ``registries`` and ``dashboards``: the read commands.
-* ``system``: ``info``, ``system_snapshot``, ``backup_prep``, ``server_entry``, ``server_entry_update`` and ``template_diagnose``.
+* ``overview``, ``services``, ``lookups``, ``config_entries``, ``registries``,
+  ``dashboards`` and ``logbook``: the read commands.
+* ``system``: ``info``, ``system_snapshot``, ``server_entry``, ``server_entry_update`` and ``template_diagnose``.
 * ``call_service`` and ``bulk``: the write commands.
+* ``oauth_callbacks``: read and replace the none-mode OAuth callback allowlist.
 
 Extension point — to add another command later: write ``_do_<name>(hass,
 params)``, append its capability to :data:`CAPABILITIES`, and add one row to
-:func:`_command_specs`. ``info`` enumerates the rest.
+:func:`_command_specs`. ``info`` enumerates the rest. Return
+:class:`seam.PreSerializedResult` from a formatter when the payload was already
+encoded off the loop (``logbook_events`` does): the shared handler sends those
+bytes instead of running ``connection.send_result``'s synchronous encode.
 """
 
 from __future__ import annotations
@@ -303,7 +310,7 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from .. import card_definitions, core_contract, helper_collections
+from .. import core_contract, dashboard_cards_ws, entity_restore, helper_collections
 from .bulk import _bulk_call_service_prep, _do_bulk_call_service
 from .call_service import _call_service_prep, _do_call_service
 from .config_entries import _config_entries_prep, _do_config_entries
@@ -314,6 +321,7 @@ from .dashboards import (
     _do_dashboard_edit,
     _do_dashboards,
 )
+from .logbook import _do_logbook_events, _logbook_events_prep
 from .lookups import (
     _blueprint_get_prep,
     _do_blueprint_get,
@@ -324,10 +332,10 @@ from .lookups import (
     _do_exposure,
     _do_registry_lookup,
 )
+from .oauth_callbacks import command_specs as _oauth_callback_specs
 from .overview import _do_helpers_list, _do_overview, _do_states, _helpers_list_prep
 from .registries import _do_registries
 from .schemas import (
-    _backup_prep_schema,
     _blueprint_get_schema,
     _bulk_call_service_schema,
     _call_service_schema,
@@ -341,6 +349,7 @@ from .schemas import (
     _exposure_schema,
     _helpers_list_schema,
     _info_schema,
+    _logbook_events_schema,
     _overview_schema,
     _reference_data_schema,
     _registries_schema,
@@ -353,10 +362,10 @@ from .schemas import (
     _system_snapshot_schema,
     _template_diagnose_schema,
 )
+from .seam import PreSerializedResult
 from .search import _do_search, _search_prep
 from .services import _do_reference_data, _do_services_list, _services_list_prep
 from .system import (
-    _do_backup_prep,
     _do_info,
     _do_server_entry,
     _do_server_entry_update,
@@ -437,12 +446,15 @@ def _command_specs() -> list[tuple[dict[Any, Any], Any, Any]]:
         (_registry_lookup_schema(), _do_registry_lookup, None),
         (_system_snapshot_schema(), _do_system_snapshot, None),
         (_entity_lookup_schema(), _do_entity_lookup, None),
-        (_backup_prep_schema(), _do_backup_prep, None),
         (_registries_schema(), _do_registries, None),
         (_dashboards_schema(), _do_dashboards, _dashboards_prep),
         (_dashboard_edit_schema(), _do_dashboard_edit, _dashboard_edit_prep),
         (_services_list_schema(), _do_services_list, _services_list_prep),
         (_reference_data_schema(), _do_reference_data, None),
+        # Core's own logbook query (EventProcessor with the REST flags) run in
+        # the live process: the recorder read lives in the async prep, the
+        # pure formatter only wraps the rows.
+        (_logbook_events_schema(), _do_logbook_events, _logbook_events_prep),
         (_server_entry_schema(), _do_server_entry, None),
         # The WRITE counterpart of server_entry: the deferred ``async_update_entry``
         # scheduling is inherently async, so it lives in ``_server_entry_update_prep``
@@ -467,8 +479,10 @@ def _command_specs() -> list[tuple[dict[Any, Any], Any, Any]]:
         ),
         (_template_diagnose_schema(), _do_template_diagnose, _template_diagnose_prep),
         *helper_collections.command_specs(vol, er),
+        *entity_restore.command_specs(vol, er),
         *core_contract.command_specs(vol),
-        *card_definitions.command_specs(vol),
+        *dashboard_cards_ws.command_specs(vol),
+        *_oauth_callback_specs(),
     ]
 
 
@@ -487,6 +501,13 @@ def _build_handler(schema: dict[Any, Any], do_fn: Any, prep: Any = None) -> Any:
     ) -> None:
         msg["ha_mcp_context"] = connection.context(msg)
         extra = await prep(hass, msg) if prep is not None else {}
-        connection.send_result(msg["id"], do_fn(hass, msg, **extra))
+        result = do_fn(hass, msg, **extra)
+        if isinstance(result, PreSerializedResult):
+            # Already encoded off the event loop (large payloads): sending the
+            # bytes skips the synchronous encode ``send_result`` would run on
+            # the loop. See ``seam.PreSerializedResult``.
+            connection.send_message(result.payload)
+        else:
+            connection.send_result(msg["id"], result)
 
     return _handler

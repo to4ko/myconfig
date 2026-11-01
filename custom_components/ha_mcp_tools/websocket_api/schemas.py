@@ -15,7 +15,6 @@ from .constants import (
     DEFAULT_LIMIT,
     REGISTRY_KINDS,
     SERVER_ENTRY_UPDATE_MAX_PIP_SPEC,
-    WS_BACKUP_PREP,
     WS_BLUEPRINT_GET,
     WS_BULK_CALL_SERVICE,
     WS_CALL_SERVICE,
@@ -29,6 +28,7 @@ from .constants import (
     WS_EXPOSURE,
     WS_HELPERS_LIST,
     WS_INFO,
+    WS_LOGBOOK_EVENTS,
     WS_OVERVIEW,
     WS_REFERENCE_DATA,
     WS_REGISTRIES,
@@ -231,10 +231,6 @@ def _entity_lookup_schema() -> dict[Any, Any]:
     }
 
 
-def _backup_prep_schema() -> dict[Any, Any]:
-    return {vol.Required("type"): WS_BACKUP_PREP}
-
-
 def _registries_schema() -> dict[Any, Any]:
     return {
         vol.Required("type"): WS_REGISTRIES,
@@ -280,11 +276,10 @@ def _single_line_pip_spec(value: str) -> str:
 
 
 def _server_entry_update_schema() -> dict[Any, Any]:
-    # Both fields are optional at the schema level (voluptuous cannot cleanly express
-    # "at least one of"); ``_server_entry_update_prep`` raises when NEITHER is present.
-    # ``channel`` is gated to the known set and ``pip_spec`` gets the length +
-    # single-line cap — schema-level defence-in-depth over (and symmetric with) the
-    # server's own channel validation (D6) and pip-spec normalization.
+    # ``_server_entry_update_prep`` requires ``pip_spec``. ``channel`` stays
+    # accepted (and ignored) because servers released before the paired-release
+    # change still send it; tightening the schema would reject their frames
+    # outright. ``pip_spec`` gets the length + single-line cap.
     return {
         vol.Required("type"): WS_SERVER_ENTRY_UPDATE,
         vol.Optional("channel"): vol.In((CHANNEL_STABLE, CHANNEL_DEV)),
@@ -353,6 +348,22 @@ def _bulk_call_service_schema() -> dict[Any, Any]:
         vol.Optional("timeout", default=CALL_SERVICE_DEFAULT_TIMEOUT): vol.All(
             vol.Any(int, float), vol.Range(min=0, max=CALL_SERVICE_MAX_TIMEOUT)
         ),
+    }
+
+
+def _logbook_events_schema() -> dict[Any, Any]:
+    # Core's own entity-id validator (the REST logbook view's ``cv.entity_ids``
+    # equivalent): a malformed id is rejected as ``invalid_format`` with a
+    # message instead of raising inside Core's processor.
+    from homeassistant.helpers import config_validation as cv
+
+    return {
+        vol.Required("type"): WS_LOGBOOK_EVENTS,
+        vol.Required("start_time"): str,
+        vol.Optional("end_time"): str,
+        vol.Optional("entity_ids"): [cv.entity_id],
+        vol.Optional("device_ids"): [str],
+        vol.Optional("context_id"): str,
     }
 
 

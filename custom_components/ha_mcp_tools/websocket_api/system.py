@@ -1,4 +1,4 @@
-"""System commands: info, system snapshot, backup prep, server entry, diagnose."""
+"""System commands: info, system snapshot, server entry, diagnose."""
 
 from __future__ import annotations
 
@@ -12,11 +12,14 @@ from .. import template_diagnose
 from ..const import (
     COMPONENT_VERSION,
     CONF_ENTRY_TYPE,
+    DATA_WEBHOOK,
     DEFAULT_PIP_SPEC,
     DOMAIN,
     ENTRY_TYPE_SERVER,
-    OPT_CHANNEL,
+    OPT_ENABLE_WEBHOOK,
     OPT_PIP_SPEC,
+    OPT_WEBHOOK_AUTH,
+    WEBHOOK_AUTH_NONE,
 )
 from .constants import (
     CAPABILITIES,
@@ -74,13 +77,16 @@ def _do_info(hass: HomeAssistant | None = None) -> dict[str, Any]:
     detect by presence — they carry NO capability entry and do NOT bump
     ``schema_version``. ``hass`` is optional (defaulting to ``None`` so a direct
     ``_do_info()`` still works for callers that only need the static handshake);
-    when absent, both degrade to ``None``.
+    when absent, they and ``webhook_auth`` degrade to ``None``.
 
     ``tools_services`` exists because 2.1.0 registers this command surface from
     BOTH entry types (#2289): ``info`` answering no longer implies the tools
     entry — and its filesystem/YAML services — are present (#2292). The server's
     filesystem/YAML gate reads this field to keep raising its actionable
     "tools entry not set up" error on server-entry-only installs.
+
+    ``webhook_auth`` (#2584) is the server entry's webhook auth mode, shown by
+    ``ha_report_issue``; same additive contract.
     """
     return {
         "schema_version": SCHEMA_VERSION,
@@ -89,6 +95,7 @@ def _do_info(hass: HomeAssistant | None = None) -> dict[str, Any]:
         "limits": dict(LIMITS),
         "timezone": _config_time_zone(hass),
         "tools_services": _tools_services_loaded(hass),
+        "webhook_auth": _server_webhook_auth(hass),
     }
 
 
@@ -114,6 +121,33 @@ def _tools_services_loaded(hass: HomeAssistant | None) -> bool | None:
     # Literal matches SERVICE_READ_FILE in __init__.py (importing it here would
     # be circular).
     return bool(services.has_service(DOMAIN, "read_file"))
+
+
+def _server_webhook_auth(hass: HomeAssistant | None) -> str | None:
+    """The server entry's ``webhook_auth`` option, ``None`` without that entry.
+
+    Looked up via the server config entry, not the entry that registered
+    ``info``, because either entry type may answer it. Options are read as
+    bring-up reads them. ``disabled`` when the webhook is turned off (local-only
+    mode): no webhook request is authenticated then, and a reader of ``none``
+    would assume an open webhook. ``None`` as well while no webhook
+    registration exists (``DATA_WEBHOOK``, stored by bring-up once the server
+    has started and removed by teardown): the entry is disabled or unloaded,
+    or its bring-up has not got that far or failed, which leaves it loaded.
+    """
+    if hass is None:
+        return None
+    entry = _find_server_config_entry(hass)
+    if entry is None:
+        return None
+    domain_data = _hass_data_get(hass, DOMAIN)
+    if not isinstance(domain_data, Mapping) or domain_data.get(DATA_WEBHOOK) is None:
+        return None
+    options = getattr(entry, "options", None)
+    opts = options if isinstance(options, Mapping) else {}
+    if not bool(opts.get(OPT_ENABLE_WEBHOOK, True)):
+        return "disabled"
+    return str(opts.get(OPT_WEBHOOK_AUTH, WEBHOOK_AUTH_NONE))
 
 
 # =============================================================================
@@ -187,60 +221,6 @@ def _snapshot_states(hass: HomeAssistant) -> list[dict[str, Any]]:
     return out
 
 
-# =============================================================================
-# ha_mcp_tools/backup_prep
-# =============================================================================
-def _do_backup_prep(hass: HomeAssistant, params: dict[str, Any]) -> dict[str, Any]:
-    """Return the backup identity the server needs before a create.
-
-    ``{agent_ids: [...], local_agent_id: <str|None>, default_password:
-    <str|None>}`` read from the backup integration's in-process manager
-    (``hass.data[DATA_MANAGER]``). ``local_agent_id`` uses the SAME preference the
-    server's ``_get_local_backup_agent_id`` does — an agent whose ``name`` is
-    ``"local"``, preferring ``hassio.local`` (Supervised) over ``backup.local``
-    (Core). ``default_password`` is getattr-chained off
-    ``manager.config.data.create_backup.password``.
-
-    A missing backup integration (``ImportError``) or an uninitialized manager
-    raises ``HomeAssistantError`` so the server's command-error path falls back to
-    its legacy WS reads — NOT a silent empty result the server could mistake for
-    "no agents". The password is sensitive, but the legacy ``backup/config/info``
-    already serves it to the same admin connection (parity, not new exposure).
-
-    STRUCTURAL core drift raises for the same reason, rather than degrading to a
-    well-formed authoritative negative: a non-Mapping ``manager.backup_agents``
-    (below) or a broken config→data→create_backup chain
-    (:func:`_backup_default_password`) would otherwise produce a "no agents" / "no
-    password" answer the server trusts and hard-fails on (or, for the password,
-    silently drops the restore safety backup) with no fallback. Value-level reads
-    (an id string, a genuinely-``None`` password on an intact chain) stay
-    getattr-guarded and pass through.
-    """
-    try:
-        from homeassistant.components.backup import DATA_MANAGER
-    except ImportError as exc:
-        raise _backup_unavailable("backup integration is not available") from exc
-    manager = _hass_data_get(hass, DATA_MANAGER)
-    if manager is None:
-        raise _backup_unavailable("backup manager is not initialized")
-    agents = getattr(manager, "backup_agents", None)
-    if not isinstance(agents, Mapping):
-        raise _backup_unavailable("backup manager exposes no agent mapping")
-    return {
-        "agent_ids": [str(a) for a in agents],
-        "local_agent_id": _preferred_local_agent_id(agents),
-        "default_password": _backup_default_password(manager),
-    }
-
-
-def _backup_unavailable(message: str) -> Exception:
-    """Build a ``HomeAssistantError`` (imported function-locally — test-stubbable)."""
-    from homeassistant.exceptions import HomeAssistantError
-
-    err: Exception = HomeAssistantError(message)
-    return err
-
-
 def _hass_data_get(hass: HomeAssistant, key: Any) -> Any:
     """``hass.data.get(key)`` guarded against a non-mapping / drift."""
     data = getattr(hass, "data", None)
@@ -250,46 +230,6 @@ def _hass_data_get(hass: HomeAssistant, key: Any) -> Any:
         return data.get(key)
     except Exception:  # pragma: no cover - defensive  # noqa: BLE001
         return None
-
-
-def _preferred_local_agent_id(agents: Any) -> str | None:
-    """The local backup agent id, mirroring the server's hassio-over-core preference.
-
-    Collects agent ids whose agent ``name`` is exactly ``"local"``
-    (``hassio.local`` on Supervised, ``backup.local`` on Core both use that
-    name), prefers ``hassio.local`` then ``backup.local``, else the first local
-    agent, else ``None``.
-    """
-    if not isinstance(agents, Mapping):
-        return None
-    local_ids: list[str] = [
-        str(agent_id)
-        for agent_id, agent in agents.items()
-        if getattr(agent, "name", None) == "local"
-    ]
-    for preferred in ("hassio.local", "backup.local"):
-        if preferred in local_ids:
-            return preferred
-    return local_ids[0] if local_ids else None
-
-
-def _backup_default_password(manager: Any) -> str | None:
-    """``manager.config.data.create_backup.password`` (getattr-chained; ``str``/None).
-
-    A STRUCTURALLY broken chain (a missing ``config`` / ``data`` / ``create_backup``
-    link — core drift) RAISES ``HomeAssistantError`` so the server falls back to its
-    legacy ``backup/config/info`` read, rather than returning ``None`` the server
-    reads as "no default password configured" — which on restore silently drops the
-    safety backup while telling the user the password is unset. Only a genuine
-    ``None`` ``password`` on an INTACT chain is the authoritative "not configured".
-    """
-    config = getattr(manager, "config", None)
-    data = getattr(config, "data", None)
-    create_backup = getattr(data, "create_backup", None)
-    if config is None or data is None or create_backup is None:
-        raise _backup_unavailable("backup manager config chain is unavailable")
-    password = getattr(create_backup, "password", None)
-    return password if isinstance(password, str) else None
 
 
 # =============================================================================
@@ -318,18 +258,18 @@ def _do_server_entry(hass: HomeAssistant, params: dict[str, Any]) -> dict[str, A
     """Locate the component's OWN server config entry and return its identity.
 
     Discriminates the server-type entry via :func:`_find_server_config_entry`
-    (the ``entry.data[CONF_ENTRY_TYPE] == ENTRY_TYPE_SERVER`` marker). ``channel`` /
-    ``pip_spec`` come from ``entry.options`` (``None`` when absent); ``entry_id`` is
-    ``None`` when no server entry exists.
+    (the ``entry.data[CONF_ENTRY_TYPE] == ENTRY_TYPE_SERVER`` marker). ``pip_spec``
+    comes from ``entry.options`` (``None`` when absent); ``entry_id`` is ``None``
+    when no server entry exists. The retired ``channel`` option is not reported:
+    an entry saved before paired releases may still carry it, but nothing reads it.
     """
     entry = _find_server_config_entry(hass)
     if entry is None:
-        return {"entry_id": None, "channel": None, "pip_spec": None}
+        return {"entry_id": None, "pip_spec": None}
     options = getattr(entry, "options", None)
     opts = options if isinstance(options, Mapping) else {}
     return {
         "entry_id": getattr(entry, "entry_id", None),
-        "channel": opts.get(OPT_CHANNEL),
         "pip_spec": opts.get(OPT_PIP_SPEC),
     }
 
@@ -363,15 +303,17 @@ def _do_server_entry_update(
 async def _server_entry_update_prep(
     hass: HomeAssistant, msg: dict[str, Any]
 ) -> dict[str, Any]:
-    """Apply a ``channel`` / ``pip_spec`` delta to the server entry, DEFERRED.
+    """Apply a ``pip_spec`` delta to the server entry, DEFERRED.
 
     Returns ``{"result": <envelope>}``. The order is load-bearing:
 
     1. Locate the server entry (:func:`_find_server_config_entry`); a missing entry
        raises ``HomeAssistantError`` so the server's command-error path falls back to
        its legacy options-flow submit.
-    2. Require at least one of ``channel`` / ``pip_spec`` (the server always sends
-       one — this is defence-in-depth).
+    2. Require ``pip_spec``. ``channel`` is still accepted (servers before the
+       paired-release change send it) but ignored: each component release pins
+       its server, and development builds come from HACS's Pre-release switch.
+       A frame carrying ONLY ``channel`` is refused with that explanation.
     3. Snapshot the ``delta`` (the provided fields, keyed by the OPT_* option keys)
        and the CURRENT ``entry.options`` — used ONLY for the no-op check and the
        ``previous``/``applying`` response envelope. Every UNtouched key is preserved
@@ -397,8 +339,8 @@ async def _server_entry_update_prep(
     get its confirmation. It is therefore scheduled after a flush delay. The task is
     created with :func:`hass.async_create_background_task` (hass-owned), NOT
     ``entry.async_create_background_task``: an entry-owned task is cancelled by the
-    unload the reload performs, so it could cancel itself before firing — the exact
-    trap ``embedded_entry._on_version_update`` documents. Being hass-owned, the task
+    unload the reload performs, so it would cancel itself before
+    ``async_update_entry`` runs. Being hass-owned, the task
     survives to invoke ``async_update_entry`` (a synchronous ``@callback`` that
     returns as soon as it schedules the listener), then completes; the reload it
     triggers runs as its own hass task after the response has flushed.
@@ -413,11 +355,13 @@ async def _server_entry_update_prep(
             "no ha_mcp_tools in-process server config entry to update"
         )
 
-    has_channel = "channel" in msg
     has_pip_spec = "pip_spec" in msg
-    if not has_channel and not has_pip_spec:
+    if not has_pip_spec:
         raise HomeAssistantError(
-            "server_entry_update needs at least one of channel / pip_spec"
+            "server_entry_update needs pip_spec. The release channel can no "
+            "longer be chosen here: each HA-MCP component release installs the "
+            "server it was released with, and development builds come from "
+            "the HACS Pre-release switch for this repository."
         )
 
     options = getattr(entry, "options", None)
@@ -427,15 +371,12 @@ async def _server_entry_update_prep(
     # snapshot used ONLY for the no-op check below, never for the write.
     delta: dict[str, Any] = {}
     applying: dict[str, Any] = {}
-    if has_channel:
-        delta[OPT_CHANNEL] = msg["channel"]
-        applying["channel"] = msg["channel"]
     if has_pip_spec:
         # Normalize like the options flow's ``_normalize`` (config_flow.py): a
-        # whitespace-only value OR the default unpinned dist (``DEFAULT_PIP_SPEC``)
-        # means "no override" — collapse it to "" so the channel keeps
-        # auto-updating. Persisting it verbatim would read as an intentional
-        # override and disable auto-updates. This keeps the no-op check honest: a
+        # whitespace-only value OR the bare dist (``DEFAULT_PIP_SPEC``) means
+        # "no override" — collapse it to "" so the paired server runs.
+        # Persisting it verbatim would read as an intentional override of the
+        # server this component release pins. This keeps the no-op check honest: a
         # frame that normalizes to the stored value is unchanged, not a schedule.
         # 'clear' (case-insensitive) is the empty string's mangling-proof
         # alias (see ha_dev_manage_server): recognize it here too so raw WS
@@ -451,10 +392,7 @@ async def _server_entry_update_prep(
     new_options = {**current, **delta}
 
     entry_id = getattr(entry, "entry_id", None)
-    previous = {
-        "channel": current.get(OPT_CHANNEL),
-        "pip_spec": current.get(OPT_PIP_SPEC),
-    }
+    previous = {"pip_spec": current.get(OPT_PIP_SPEC)}
 
     if new_options == current:
         return {

@@ -651,14 +651,15 @@
   mode: single
   max_exceeded: silent
   triggers:
-    - trigger: numeric_state
-      entity_id: sensor.error_counter_hourly
-      above: 100
+    # ложное->истинное срабатывание только на порогах: 100, 150, 200 ошибок в час
+    - trigger: template
+      value_template: >-
+        {{ (states('sensor.error_counter_hourly')|int(0) >= 100)
+           and (states('sensor.error_counter_hourly')|int(0) % 50 == 0) }}
   conditions:
+    # антифлуд Telegram: не чаще одного сообщения в 15 секунд
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'), 0)|int(0) ,0) > 15 }}"
-    - condition: template
-      value_template: "{{ (states('sensor.error_counter_hourly')|int(0) % 50) == 0 }}"
+      value_template: "{{ (as_timestamp(now()) - (as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'), 0) | int(0))) > 15 }}"
   actions:
     - action: notify.send_message
       data:
@@ -674,14 +675,15 @@
   mode: single
   max_exceeded: silent
   triggers:
-    - trigger: numeric_state
-      entity_id: sensor.warning_counter_hourly
-      above: 100
+    # ложное->истинное срабатывание только на порогах: 100, 150, 200 предупреждений в час
+    - trigger: template
+      value_template: >-
+        {{ (states('sensor.warning_counter_hourly')|int(0) >= 100)
+           and (states('sensor.warning_counter_hourly')|int(0) % 50 == 0) }}
   conditions:
+    # антифлуд Telegram: не чаще одного сообщения в 15 секунд
     - condition: template
-      value_template: "{{(as_timestamp(now())-as_timestamp(state_attr('automation.system_warning_per_hour', 'last_triggered'), 0)|int(0) ,0) > 15 }}"
-    - condition: template
-      value_template: "{{ (states('sensor.warning_counter_hourly')|int(0) % 50) == 0 }}"
+      value_template: "{{ (as_timestamp(now()) - (as_timestamp(state_attr('automation.system_warning_per_hour', 'last_triggered'), 0) | int(0))) > 15 }}"
   actions:
     - action: notify.send_message
       data:
@@ -1010,6 +1012,11 @@
     - trigger: event
       event_type: state_changed
   conditions:
+    # Cheap filter first: fires on every state_changed, expand() below runs only for real unavailable transitions
+    - condition: template
+      value_template: >-
+        {% set o = trigger.event.data.old_state %}{% set n = trigger.event.data.new_state %}
+        {{ o is not none and n is not none and o.state != n.state and 'unavailable' in [o.state, n.state] }}
     - condition: state
       entity_id: input_boolean.ha_shutdown
       state: "off"
@@ -1019,12 +1026,6 @@
     - condition: template
       value_template: >-
         {{ trigger.event.data.entity_id in expand('group.zigbee_devices') | map(attribute='entity_id') | list }}
-    - condition: template
-      value_template: >-
-        {{ trigger.event.data.new_state.state != trigger.event.data.old_state.state }}
-    - condition: template
-      value_template: >-
-        {{ trigger.event.data.new_state.state in ['unavailable'] or trigger.event.data.old_state.state in ['unavailable'] }}
   actions:
     - if:
         - condition: template
@@ -2965,11 +2966,11 @@
   triggers:
     - trigger: state
       entity_id: sensor.plex_12
-      to: "unavalable"
+      to: "unavailable"
       id: "id_to"
     - trigger: state
       entity_id: sensor.plex_12
-      from: "unavalable"
+      from: "unavailable"
       id: "id_from"
   actions:
     - choose:
@@ -3061,10 +3062,10 @@
 #       entity_id: button.qemu_vm_owrt_228_start
 
 # ##################################
-# System - googlevideo unavalable
+# System - googlevideo unavailable
 # ##################################
-- alias: system_googlevideo_unavalable
-  id: system_googlevideo_unavalable
+- alias: system_googlevideo_unavailable
+  id: system_googlevideo_unavailable
   initial_state: false
   mode: queued
   max: 50
