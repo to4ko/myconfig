@@ -2,8 +2,6 @@
       name: UnifiOS State
       command: !secret udmp_unifios
       unique_id: unifios_state
-      # Never raises: every field is read with .get() and falls back to "unknown".
-      # Field order is consumed by index in template/sensor/udmp.yaml and template/bi-sensor/udmp.yaml - do not reorder.
       value_template: |-
           {% set devs = value_json.get("data", []) if value_json is defined and value_json is mapping else [] %}
           {% set udms = devs | selectattr("model", "eq", "UDMPROMAX") | list %}
@@ -55,9 +53,6 @@
           {% endif %}
       scan_interval: 60
 
-  # Built-in UDM storage (eMMC /persistent, tmpfs /tmp, ...), hard disks excluded.
-  # Kept out of sensor.unifios_state: state is capped at 255 chars.
-  # State format: mount,type,size,used;mount,type,size,used
   - sensor:
       name: UnifiOS Storage
       command: !secret udmp_unifios

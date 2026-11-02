@@ -544,21 +544,19 @@
   id: system_database_purge
   initial_state: true
   triggers:
-    - trigger: time
-      at: "02:00:00"
+  - trigger: time
+    at: 02:00:00
   actions:
-    - action: recorder.purge
-      data:
-        keep_days: 15
-        repack: true
-    - action: notify.send_message
-      data:
-        entity_id: notify.telegram_dima
-        message: "\U0001f4ab Очистка базы"
+  - action: recorder.purge
+    data:
+      keep_days: 15
+      repack: '{{ now().weekday() == 6 and 8 <= now().day <= 14 }}'
+  - action: notify.send_message
+    data:
+      entity_id: notify.telegram_dima
+      message: "\U0001F4AB Очистка базы"
+  description: Очистка за 15 дней ежедневно; переупаковка базы только во второе воскресенье месяца.
 
-# ##################################
-# System - Transmission completed Torrent
-# ##################################
 - alias: system_transmission_completed_torrent
   id: system_transmission_completed_torrent
   initial_state: true
@@ -632,6 +630,18 @@
         }}
     - condition: template
       value_template: "{{ trigger.event.data.name is not search(this.entity_id, ignorecase=True) }}"
+    - condition: template
+      value_template: >-
+        {% set source = trigger.event.data.name | default('') %}
+        {% set message = trigger.event.data.message | string | lower %}
+        {{ not (
+             source == 'homeassistant.components.automation.system_proxy_site_ips'
+             and '"https://unifi.to4ko.ru/api/sites"' in message
+             and (
+               'client error occurred when calling resource' in message
+               or ('timeout' in message and 'calling resource' in message)
+             )
+        ) }}
   actions:
     - action: notify.send_message
       data:
@@ -1536,122 +1546,73 @@
   max: 15
   max_exceeded: silent
   triggers:
-    - trigger: state
-      entity_id:
-        - sensor.esp32_strip_1s_bookshelf_mb_uptime_s
-        - sensor.digma_ir_k_uptime_s
-        - sensor.digma_ir_mb_uptime_s
-        - sensor.d1mini_light_l_uptime_s
-        - sensor.digma_strip_hb_uptime_s
-        - sensor.digma_ir_s_uptime_s
-        - sensor.digma_ir_v_uptime_s
-        #- sensor.esp01_weight_pad_uptime_s
-        - sensor.esp32_node_v_uptime_s
-        - sensor.esp32_node_k_uptime_s
-        - sensor.esp32_node_hs_uptime_s
-        - sensor.esp32_node_mb_uptime_s
-        - sensor.esp8266_oven_temp_k_uptime_s
-        - sensor.esp32_pzem_hb_uptime_s
-        - sensor.esp8266_hood_k_uptime_s
-        - sensor.esp32_strip_1s_wadrobe_mb_uptime_s
-        - sensor.sonoff_mini_1_uptime_s
-        - sensor.sonoff_mini_r4_kiosk_charger_uptime_s
-        - sensor.mono_strip_1_uptime_s
-        - sensor.sonoff_mini_4_uptime_s
-        - sensor.sonoff_pow_r2_1_uptime_s
-        - sensor.esp32_node_b_uptime_s
-        - sensor.sonoff_pow_r2_2_uptime_s
-        - sensor.esp32_node_s_uptime_s
-        #- sensor.esp32_node_st_uptime_s
-        - sensor.esp32_domofon_uptime_s
-        - sensor.esp32_poe_ble_s_uptime_s
-        - sensor.d1mini_distance_sensor_uptime_s
-        - sensor.esp32_poe_ble_hs_uptime_s
-        - sensor.esp32_poe_ble_mb_uptime_s
-        - sensor.sonoff_pow_r2_3_uptime_s
-        - sensor.d1mini_bed_leds_uptime_s
-        - sensor.d1mini_air_freshener_uptime_s
-        #- sensor.s26_socket_1_uptime_s
-        - sensor.sp111_socket_1_uptime_s
-        - sensor.sonoff_basic_4_uptime_s
-        #- sensor.shp6_socket_1_uptime_s
-      from: "unavailable"
-      for:
-        seconds: 10
+  - trigger: state
+    entity_id:
+    - sensor.esp32_strip_1s_bookshelf_mb_uptime
+    - sensor.digma_ir_k_uptime
+    - sensor.digma_ir_mb_uptime
+    - sensor.d1mini_light_l_uptime
+    - sensor.digma_strip_hb_uptime
+    - sensor.digma_ir_s_uptime
+    - sensor.digma_ir_v_uptime
+    - sensor.esp32_node_v_uptime
+    - sensor.esp32_node_k_uptime
+    - sensor.esp32_node_hs_uptime
+    - sensor.esp32_node_mb_uptime
+    - sensor.esp8266_oven_temp_k_uptime
+    - sensor.esp32_pzem_hb_uptime
+    - sensor.esp8266_hood_k_uptime
+    - sensor.esp32_strip_1s_wadrobe_mb_uptime
+    - sensor.sonoff_mini_1_uptime
+    - sensor.sonoff_mini_r4_kiosk_charger_uptime
+    - sensor.mono_strip_1_uptime
+    - sensor.sonoff_mini_4_uptime
+    - sensor.sonoff_pow_r2_1_uptime
+    - sensor.esp32_node_b_uptime
+    - sensor.sonoff_pow_r2_2_uptime
+    - sensor.esp32_node_s_uptime
+    - sensor.esp32_domofon_uptime
+    - sensor.esp32_poe_ble_s_uptime
+    - sensor.d1mini_distance_sensor_uptime
+    - sensor.esp32_poe_ble_hs_uptime
+    - sensor.esp32_poe_ble_mb_uptime
+    - sensor.sonoff_pow_r2_3_uptime
+    - sensor.d1mini_bed_leds_uptime
+    - sensor.d1mini_air_freshener_uptime
+    - sensor.sp111_socket_1_uptime
+    - sensor.sonoff_basic_4_uptime
+    to: null
   conditions:
-    - condition: template
-      value_template: "{{ 0 <= states(trigger.entity_id)|int(-1) < 30 }}"
+  - '{{ 0 <= uptime_ages[1] < 120 and (uptime_ages[0] < 0 or uptime_ages[1] < uptime_ages[0]) }}'
   actions:
-    - action: notify.send_message
-      data:
-        entity_id: notify.telegram_dima
-        message: "\U0000267b ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id, 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}} перезапустился, аптайм {{states(trigger.entity_id)|int(0)}}с!"
-# {%-for state in states.sensor
-# if  state.entity_id.endswith("_uptime_s")%}
-# - {{ state.entity_id}}
-# {%-endfor%}
+  - action: notify.send_message
+    data:
+      entity_id: notify.telegram_dima
+      message: "\U0000267b ESP: {{iif(device_attr(trigger.entity_id, 'name_by_user') != none, device_attr(trigger.entity_id,\
+        \ 'name_by_user'), device_attr(trigger.entity_id, 'name'), device_attr(trigger.entity_id, 'name'))}}\
+        \ перезапустился, аптайм {{uptime_ages[1] | int(0)}}с!"
+  description: Перезагрузка — малый uptime после недоступности или уменьшение uptime; обычное переподключение
+    не считается перезагрузкой.
+  variables:
+    uptime_ages: |-
+      {% set ns = namespace(values=[]) %}
+      {% for s in [trigger.from_state, trigger.to_state] %}
+        {% set value = s.state | lower | trim if s is not none else 'unknown' %}
+        {% set parts = value | regex_findall('([0-9]+)\s*([dhms])') %}
+        {% set age = namespace(seconds=0) %}
+        {% if is_number(value) %}
+          {% set ns.values = ns.values + [value | float] %}
+        {% elif parts | count > 0 and (value | regex_replace('[0-9]+\s*[dhms]', '') | trim) == '' %}
+          {% for count, unit in parts %}
+            {% set age.seconds = age.seconds + count | int * {'d':86400, 'h':3600, 'm':60, 's':1}[unit] %}
+          {% endfor %}
+          {% set ns.values = ns.values + [age.seconds] %}
+        {% else %}
+          {% set ns.values = ns.values + [-1] %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.values }}
 
-# # ##################################
-# # System - Air Quality pm25
-# # ##################################
-# - alias: system_air_quality_pm25
-#   id: system_air_quality_pm25
-#   initial_state: true
-#   triggers:
-#     - trigger: numeric_state
-#       entity_id: sensor.waqi_pm25
-#       above: 100
-#       for:
-#         hours: 3
-#   actions:
-#     - action: notify.send_message
-#       data:
-#         message: "\U0001f32a Внимание! Уровень PM2.5 высокий! {{states('sensor.waqi_pm25')}}aqi!"
-
-# # ##################################
-# # System - Air Quality pm10
-# # ##################################
-# - alias: system_air_quality_pm10
-#   id: system_air_quality_pm10
-#   initial_state: true
-#   triggers:
-#     - trigger: numeric_state
-#       entity_id: sensor.waqi_pm10
-#       above: 100
-#       for:
-#         hours: 3
-#   actions:
-#     - action: notify.send_message
-#       data:
-#         message: "\U0001f32a Внимание! Уровень PM10 высокий! {{state_attr('sensor.waqi_pm10')}}aqi!"
-
-# ##################################
-# System - State to Unavailable
-# ##################################
-# - alias: system_state_to_unavailable
-#   id:  system_state_to_unavailable
-#   mode: queued
-#   max: 50
-#   max_exceeded: silent
-#   initial_state: true
-#   triggers:
-#     - trigger: event
-#       event_type: state_changed
-#   conditions:
-#     - condition: template
-#       value_template: "{{ trigger.event.data.new_state.state in ['unavailable'] }}"
-#     - condition: template
-#       value_template: "{{ 'esp01_air_freshener' not in trigger.event.data.entity_id }}"
-#     - condition: template
-#       value_template: "{{ 'i5_' not in trigger.event.data.entity_id }}"
-#   actions:
-#     - action: notify.send_message
-#       data:
-#         message: "{{trigger.event.data.entity_id}}: {{trigger.event.data.old_state.state}} -> {{trigger.event.data.new_state.state}}"
-
-# ##################################
-# System - Briefing Entities Force Update
-# ##################################
 - alias: system_briefing_entities_force_update
   id: system_briefing_entities_force_update
   initial_state: true
@@ -2680,9 +2641,6 @@
   id: system_fully_browser_restart
   initial_state: true
   triggers:
-    # Scheduled restart every 2 hours disabled 2026-10-11: the doorbell page now
-    # recovers frozen players itself, and the restart made HA calls to Fully fail
-    # for a few seconds at HH:00. Uncomment to re-enable.
     # - trigger: time_pattern
     #   hours: "/2"
     #   id: "auto"

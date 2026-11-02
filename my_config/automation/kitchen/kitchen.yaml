@@ -260,55 +260,57 @@
   id: kitchen_oven_notify_target_temp
   initial_state: true
   triggers:
-    - trigger: event
-      event_type: automation_reloaded
-    - trigger: state
-      entity_id: binary_sensor.esp8266_oven_temp_k_oven_state
-      to: "on"
+  - trigger: event
+    event_type: automation_reloaded
+  - trigger: state
+    entity_id: binary_sensor.esp8266_oven_temp_k_oven_state
+    to: 'on'
   conditions:
-    - condition: template
-      value_template: "{{ states('sensor.oven_target_temperature')|int(0) > 100 }}"
-    - condition: template
-      value_template: "{{as_timestamp(now()) - as_timestamp(state_attr('automation.kitchen_oven_notify_target_temp', 'last_triggered'),0) > 60*60 }}"
-    - condition: state
-      entity_id: binary_sensor.esp8266_oven_temp_k_oven_state
-      state: "on"
+  - condition: template
+    value_template: '{{ states(''sensor.oven_target_temperature'')|int(0) > 100 }}'
+  - condition: template
+    value_template: '{{as_timestamp(now()) - as_timestamp(state_attr(''automation.kitchen_oven_notify_target_temp'',
+      ''last_triggered''),0) > 60*60 }}'
+  - condition: state
+    entity_id: binary_sensor.esp8266_oven_temp_k_oven_state
+    state: 'on'
   actions:
-    - wait_for_trigger:
-        - trigger: template
-          value_template: "{{ states('sensor.esp8266_oven_temp_k_temperature')|int(0) >= states('sensor.oven_target_temperature')|int(0) }}"
-      timeout:
-        minutes: 60
-      continue_on_timeout: false
-    - action: notify.send_message
+  - wait_template: '{{ is_state(''binary_sensor.esp8266_oven_temp_k_oven_state'', ''off'') or (is_state(''binary_sensor.esp8266_oven_temp_k_oven_state'',
+      ''on'') and is_number(states(''sensor.esp8266_oven_temp_k_temperature'')) and is_number(states(''sensor.oven_target_temperature''))
+      and states(''sensor.oven_target_temperature'') | float(0) > 100 and states(''sensor.esp8266_oven_temp_k_temperature'')
+      | float(0) >= states(''sensor.oven_target_temperature'') | float(0)) }}'
+    timeout:
+      minutes: 60
+    continue_on_timeout: false
+  - condition: state
+    entity_id: binary_sensor.esp8266_oven_temp_k_oven_state
+    state: 'on'
+  - condition: template
+    value_template: '{{ is_number(states(''sensor.esp8266_oven_temp_k_temperature'')) and is_number(states(''sensor.oven_target_temperature''))
+      and states(''sensor.oven_target_temperature'') | float(0) > 100 and states(''sensor.esp8266_oven_temp_k_temperature'')
+      | float(0) >= states(''sensor.oven_target_temperature'') | float(0) }}'
+  - action: notify.send_message
+    data:
+      entity_id: notify.telegram_dima
+      message: "\U0001F321 Духовка нагрелась до {{states('sensor.esp8266_oven_temp_k_temperature')|int(0)}}°C!"
+  - if:
+    - condition: state
+      entity_id: binary_sensor.tod_day
+      state: 'on'
+    - condition: state
+      entity_id: switch.system_dark_mode
+      state: 'off'
+    then:
+    - action: media_player.volume_set
       data:
-        entity_id: notify.telegram_dima
-        message: "\U0001f321 Духовка нагрелась до {{states('sensor.esp8266_oven_temp_k_temperature')|int(0)}}°C!"
-    - if:
-        - condition: state
-          entity_id: binary_sensor.tod_day
-          state: "on"
-        - condition: state
-          entity_id: switch.system_dark_mode
-          state: "off"
-      then:
-        - action: media_player.volume_set
-          data:
-            entity_id: media_player.yandex_k
-            volume_level: '{{states("input_number.main_volume")|float(0)}}'
-        # - action: tts.yandextts_say
-        #   data:
-        #     entity_id: media_player.home_mini_k
-        #     message: "Температура духовки ({{states('sensor.esp8266_oven_temp_k_temperature')|int(0)}}°C"
-        - action: media_player.play_media
-          data:
-            media_content_type: "{{ states('input_select.alice_mode') }}"
-            entity_id: media_player.yandex_k
-            media_content_id: "Температура в духовке ({{states('sensor.esp8266_oven_temp_k_temperature')|int(0)}}°C"
+        entity_id: media_player.yandex_k
+        volume_level: '{{states("input_number.main_volume")|float(0)}}'
+    - action: media_player.play_media
+      data:
+        media_content_type: '{{ states(''input_select.alice_mode'') }}'
+        entity_id: media_player.yandex_k
+        media_content_id: Температура в духовке ({{states('sensor.esp8266_oven_temp_k_temperature')|int(0)}}°C
 
-# ##################################
-# Kitchen - Oven Target Temp to Alice
-# ##################################
 - alias: kitchen_oven_notify_to_alice
   id: kitchen_oven_notify_to_alice
   initial_state: true

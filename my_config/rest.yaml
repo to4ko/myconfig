@@ -52,13 +52,7 @@
           {% endfor %}
           {{ active.count }}
 
-  # UniFi proxy on aeza: suspicious clients (static.ui.com loop / the same firmware re-downloaded hourly), found by the
-  # proxy itself (/root/proxyadmin/proxyadmin.py, suspects()). State: comma-separated IPs or "none"; attribute items:
-  # [{ip, detail, score}], new: IPs not handed to HA before (the proxy remembers them, so an outage or an HA restart
-  # neither loses nor repeats a notification). Used by automation system_proxy_suspects_notify (Telegram).
-  # Decisions: unifi.to4ko.ru/admin/. Proxy unreachable: unavailable (errors muted by a logger filter in
-  # configuration.yaml, one Telegram message after 1 h instead - automation system_proxy_link_notify).
-  - resource: "https://unifi.to4ko.ru/api/suspects"
+  - resource: !secret proxy_suspects_url
     headers:
       X-Site-Token: !secret proxy_sites_token
     scan_interval: 900
@@ -74,12 +68,6 @@
           - items
           - new
 
-  # DeepSeek platform balance: GET https://api.deepseek.com/user/balance with a Bearer API key (platform.deepseek.com/api_keys).
-  # The balance is in the account currency (USD here), so there is just one sensor: the API returns only the currency the account
-  # holds (the platform's CNY figure is "Total cost", i.e. spend, not a balance). Attributes carry granted_balance /
-  # topped_up_balance. Apply with the rest.reload action, no HA restart needed. No binary_sensor here on purpose: inside `rest`
-  # it does not survive reload (with unique_id it logs "does not generate unique IDs ... ignoring", without one it is not
-  # re-created) - use a numeric_state trigger on this sensor instead.
   - resource: "https://api.deepseek.com/user/balance"
     headers:
       Authorization: !secret deepseek_api_key

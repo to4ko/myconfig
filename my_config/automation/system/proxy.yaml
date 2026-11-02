@@ -1,0 +1,123 @@
+# #####################################################################################
+#
+# SYSTEM - UniFi proxy
+#
+# #####################################################################################
+- alias: system_proxy_suspects_notify
+  id: system_proxy_suspects_notify
+  initial_state: true
+  mode: queued
+  max: 5
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: sensor.proxy_suspects
+      attribute: new
+  variables:
+    new_ips: >-
+      {{ trigger.to_state.attributes.get('new') or [] }}
+  conditions:
+    - condition: template
+      value_template: "{{ new_ips | count > 0 }}"
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: >-
+          Прокси UniFi: подозрительный адрес.
+          {% for it in trigger.to_state.attributes.get('items') or [] if it.ip in new_ips %}
+          {{ it.ip }} — {{ it.detail }}
+          {% endfor %}
+
+# #####################################################################################
+# SYSTEM - UniFi proxy foreign report
+# #####################################################################################
+- alias: system_proxy_foreign_report
+  id: system_proxy_foreign_report
+  initial_state: true
+  mode: single
+  triggers:
+    - trigger: time
+      at: "10:00:00"
+  actions:
+    - action: rest_command.proxy_foreign_report
+      response_variable: rep
+      continue_on_error: true
+    - condition: template
+      value_template: >-
+        {{ rep is defined and rep.status == 200 and rep.content is defined
+           and rep.content is mapping and rep.content.text is defined and rep.content.text | length > 20 }}
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: "{{ rep.content.text }}"
+
+# #####################################################################################
+# SYSTEM - UniFi proxy link
+# #####################################################################################
+- alias: system_proxy_link_notify
+  id: system_proxy_link_notify
+  initial_state: true
+  mode: queued
+  max: 3
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: sensor.proxy_suspects
+      to: unavailable
+      for: "01:00:00"
+      id: down
+    - trigger: state
+      entity_id: sensor.proxy_suspects
+      from: unavailable
+      not_to:
+        - unavailable
+        - unknown
+      id: up
+  conditions:
+    - condition: template
+      value_template: >-
+        {{ trigger.id == 'down'
+           or (trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() >= 3600 }}
+  actions:
+    - action: notify.send_message
+      data:
+        entity_id: notify.telegram_dima
+        message: >-
+          {% if trigger.id == 'down' %}
+          Прокси UniFi не отвечает больше часа.
+          {% else %}
+          {% set m = ((trigger.to_state.last_changed - trigger.from_state.last_changed).total_seconds() // 60) | int %}
+          Прокси UniFi снова отвечает, не отвечал {{ m // 60 }} ч {{ m % 60 }} мин.
+          {% endif %}
+
+# #####################################################################################
+# SYSTEM - UniFi proxy whitelist
+# #####################################################################################
+- alias: system_proxy_site_ips
+  id: system_proxy_site_ips
+  initial_state: true
+  mode: queued
+  max: 3
+  max_exceeded: silent
+  triggers:
+    - trigger: state
+      entity_id: sensor.site_magic_ips
+    - trigger: time_pattern
+      minutes: "/15"
+    - trigger: state
+      entity_id: sensor.proxy_suspects
+      from: unavailable
+      not_to:
+        - unavailable
+        - unknown
+  conditions:
+    - condition: template
+      value_template: "{{ '=' in states('sensor.site_magic_ips') }}"
+    - condition: template
+      value_template: "{{ has_value('sensor.proxy_suspects') }}"
+  actions:
+    - action: rest_command.proxy_site_ips
+      continue_on_error: true
+      data:
+        ips: "{{ states('sensor.site_magic_ips') }}"

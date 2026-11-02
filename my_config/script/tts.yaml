@@ -22,82 +22,77 @@
   text_to_tts:
     alias: Text To TTS
     sequence:
-      - choose:
-          - conditions: 
-              - condition: state
-                entity_id: input_select.tts_audio_mode
-                state: 'Текст'
-            sequence:
-              - action: media_player.play_media
-                data:
-                  media_content_type: dialog
-                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  media_content_id: >-
-                    {%- if states('sensor.tts_audio_effect') != 'none' %}<speaker effect="{{states('sensor.tts_audio_effect')}}">{%endif%}{{ states('input_text.text_to_tts') }}
-                  extra:
-                    volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-          - conditions: 
-              - condition: state
-                entity_id: input_select.tts_audio_mode
-                state: 'Команда'
-            sequence:
-              - action: media_player.play_media
-                data:
-                  media_content_type: command
-                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  media_content_id: "{{ states('input_text.text_to_tts') }}"
-                  extra:
-                    volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-          - conditions:
-              - condition: state
-                entity_id: input_select.tts_audio_mode
-                state: 'Вопрос'
-            sequence:
-              - action: input_number.set_value
-                data:
-                  entity_id: input_number.temp_volume
-                  value: >
-                    {% set ent_id = 'media_player.' + states('input_select.tts_audio_out')|lower %}
-                    {% set vol = state_attr(ent_id,'volume_level') %}
-                    {{ vol }}
-              - action: input_number.set_value
-                data:
-                  entity_id: input_number.tts_volume
-                  value: 0
-              - action: media_player.volume_set
-                data:
-                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-              - action: media_player.play_media
-                data:
-                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  media_content_id: "{{ states('input_text.text_to_tts') }}"
-                  media_content_type: "question:tts_reply"
-              - delay:
-                  seconds: 1
-              - wait_template: >
-                  {% set ent_id = 'sensor.' + states('input_select.tts_audio_out')|lower + '_alice_state' %}
-                  {{ is_state(ent_id,'idle') }}
-              - delay:
-                  seconds: 1
-              - action: media_player.play_media
-                data:
-                  media_content_type: command
-                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  media_content_id: "Алиса, Стоп"
-                  extra:
-                    volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-              - delay:
-                  seconds: 3
-              - action: input_number.set_value
-                data:
-                  entity_id: input_number.tts_volume
-                  value: '{{states("input_number.temp_volume")|float(0)}}'
-              - action: media_player.volume_set
-                data:
-                  entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: input_select.tts_audio_mode
+          state: Текст
+        sequence:
+        - action: media_player.play_media
+          data:
+            media_content_type: dialog
+            entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+            media_content_id: '{%- if states(''sensor.tts_audio_effect'') != ''none'' %}<speaker effect="{{states(''sensor.tts_audio_effect'')}}">{%endif%}{{
+              states(''input_text.text_to_tts'') }}'
+            extra:
+              volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+      - conditions:
+        - condition: state
+          entity_id: input_select.tts_audio_mode
+          state: Команда
+        sequence:
+        - action: media_player.play_media
+          data:
+            media_content_type: command
+            entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
+            media_content_id: '{{ states(''input_text.text_to_tts'') }}'
+            extra:
+              volume_level: '{{states("input_number.tts_volume")|float(0)}}'
+      - conditions:
+        - condition: state
+          entity_id: input_select.tts_audio_mode
+          state: Вопрос
+        sequence:
+        - variables:
+            question_player: '{{ ''media_player.'' ~ states(''input_select.tts_audio_out'') | lower }}'
+            question_idle_sensor: '{{ ''sensor.'' ~ states(''input_select.tts_audio_out'') | lower ~ ''_alice_state''
+              }}'
+            question_saved_volume: '{{ state_attr(question_player, ''volume_level'') }}'
+        - condition: template
+          value_template: '{{ is_number(question_saved_volume) }}'
+        - action: media_player.volume_set
+          continue_on_error: true
+          data:
+            entity_id: '{{ question_player }}'
+            volume_level: 0
+        - action: media_player.play_media
+          continue_on_error: true
+          data:
+            entity_id: '{{ question_player }}'
+            media_content_id: '{{ states(''input_text.text_to_tts'') }}'
+            media_content_type: question:tts_reply
+        - delay:
+            seconds: 1
+        - wait_template: '{{ is_state(question_idle_sensor, ''idle'') or not has_value(question_player) }}'
+          timeout: 00:02:00
+          continue_on_timeout: true
+        - action: media_player.play_media
+          continue_on_error: true
+          data:
+            entity_id: '{{ question_player }}'
+            media_content_type: command
+            media_content_id: Алиса, Стоп
+            extra:
+              volume_level: 0
+        - delay:
+            seconds: 3
+        - action: media_player.volume_set
+          continue_on_error: true
+          data:
+            entity_id: '{{ question_player }}'
+            volume_level: '{{ question_saved_volume | float }}'
+    description: В режиме вопроса громкость сохраняется локально; ожидание ограничено и возврат громкости выполняется
+      после таймаута.
 
   alice_question:
     alias: Question to Alice

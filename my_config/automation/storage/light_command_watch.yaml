@@ -1,0 +1,89 @@
+# Round LED St: контроль команды и самопроизвольного отката состояния.
+- alias: storage_round_led_command_watch
+  id: storage_round_led_command_watch
+  initial_state: true
+  description: 'Контроль ON/OFF без повторных команд лампе: ждать нужное состояние, затем 30 с следить за откатом. Новая значимая
+    команда заменяет проверку; служебная команда к уже достигнутому состоянию её не отменяет.'
+  mode: restart
+  max_exceeded: silent
+  trace:
+    stored_traces: 20
+  triggers:
+  - trigger: event
+    event_type: call_service
+    event_data:
+      domain: light
+      service: turn_on
+  - trigger: event
+    event_type: call_service
+    event_data:
+      domain: light
+      service: turn_off
+  - trigger: event
+    event_type: call_service
+    event_data:
+      domain: light
+      service: toggle
+  variables:
+    command_data: '{{ trigger.event.data.get(''service_data'', {}) }}'
+    observed_state: '{{ states(''light.round_led_st'') }}'
+    lamp_brightness: '{{ state_attr(''light.round_led_st'', ''brightness'') }}'
+    update_from_this_call: '{{ states.light.round_led_st is not none and states.light.round_led_st.context.id == trigger.event.context.id
+      and as_timestamp(states.light.round_led_st.last_changed, 0) >= as_timestamp(trigger.event.time_fired, 0) }}'
+    targets_lamp: "{% set ns = namespace(entities=[], all=false) %}\n{% for key in ['entity_id', 'device_id', 'area_id', 'floor_id',\
+      \ 'label_id'] %}\n  {% set raw = command_data.get(key, []) or [] %}\n  {% set values = raw.split(',') | map('trim')\
+      \ | list if raw is string else raw %}\n  {% for value in values %}\n    {% if key == 'entity_id' %}\n      {% if value\
+      \ == 'all' %}{% set ns.all = true %}\n      {% elif value is string and value | regex_match('^(light|group)\\.[a-z0-9_]+$')\
+      \ %}\n        {% set ns.entities = ns.entities + [value] %}\n      {% endif %}\n    {% elif key == 'device_id' %}\n\
+      \      {% set ns.entities = ns.entities + device_entities(value) %}\n    {% elif key == 'area_id' %}\n      {% set ns.entities\
+      \ = ns.entities + area_entities(value) %}\n    {% elif key == 'floor_id' %}\n      {% set ns.entities = ns.entities\
+      \ + floor_entities(value) %}\n    {% elif key == 'label_id' %}\n      {% set ns.entities = ns.entities + label_entities(value)\
+      \ %}\n      {% for device in label_devices(value) %}\n        {% set ns.entities = ns.entities + device_entities(device)\
+      \ %}\n      {% endfor %}\n      {% for area in label_areas(value) %}\n        {% set ns.entities = ns.entities + area_entities(area)\
+      \ %}\n      {% endfor %}\n    {% endif %}\n  {% endfor %}\n{% endfor %}\n{{ ns.all or 'light.round_led_st' in (expand(ns.entities)\
+      \ | map(attribute='entity_id') | list) }}"
+    expected_state: "{% set service = trigger.event.data.service %}\n{% if service == 'turn_off' %}off\n{% elif service ==\
+      \ 'turn_on' %}\n  {% if (command_data.get('brightness') is not none and command_data.get('brightness') | float(1) ==\
+      \ 0)\n      or (command_data.get('brightness_pct') is not none and command_data.get('brightness_pct') | float(1) ==\
+      \ 0)\n      or (command_data.get('brightness_step') is not none and lamp_brightness is number and lamp_brightness +\
+      \ command_data.get('brightness_step') | float(0) <= 0)\n      or (command_data.get('brightness_step_pct') is not none\
+      \ and lamp_brightness is number and lamp_brightness + command_data.get('brightness_step_pct') | float(0) * 255 / 100\
+      \ <= 0) %}off\n  {% else %}on{% endif %}\n{% elif service == 'toggle' and observed_state in ['on','off'] %}\n  {% if\
+      \ update_from_this_call %}{{ observed_state }}\n  {% else %}{{ 'off' if observed_state == 'on' else 'on' }}{% endif\
+      \ %}\n{% else %}unknown{% endif %}"
+    settle_timeout: '{{ 4 + ([0, command_data.get(''transition'', 0) | float(0)] | max) }}'
+  conditions:
+  - '{{ targets_lamp }}'
+  - '{{ expected_state in [''on'', ''off''] }}'
+  - '{{ command_data.get(''flash'') not in [''short'', ''long''] }}'
+  - '{{ observed_state != expected_state or update_from_this_call or trigger.event.context.user_id is not none }}'
+  actions:
+  - wait_template: '{{ is_state(''light.round_led_st'', expected_state) }}'
+    timeout:
+      seconds: '{{ settle_timeout }}'
+    continue_on_timeout: true
+  - if: '{{ not wait.completed }}'
+    then:
+    - delay:
+        milliseconds: 250
+    - if: '{{ not is_state(''light.round_led_st'', expected_state) }}'
+      then:
+      - action: notify.send_message
+        data:
+          entity_id: notify.telegram_dima
+          message: '{{ ''\U0001f6a8'' }} Round LED St: после команды {{ expected_state | upper }} HA не получил состояние
+            {{ expected_state }} за {{ settle_timeout | round(1) }} с. Сейчас {{ states(''light.round_led_st'') }}. Возможна
+            проблема связи с лампой.'
+    - stop: Ожидание исходной команды завершилось по таймауту
+  - wait_template: '{{ states(''light.round_led_st'') in [''on'', ''off''] and not is_state(''light.round_led_st'', expected_state)
+      }}'
+    timeout: 00:00:30
+    continue_on_timeout: false
+  - delay:
+      milliseconds: 250
+  - action: notify.send_message
+    data:
+      entity_id: notify.telegram_dima
+      message: '{{ ''\U0001f6a8'' }} Round LED St: после команды {{ expected_state | upper }} индикатор откатился {{ expected_state
+        | upper }} -> {{ ''OFF'' if expected_state == ''on'' else ''ON'' }} без новой команды HA на переключение. Возможна
+        проблема связи с лампой.'

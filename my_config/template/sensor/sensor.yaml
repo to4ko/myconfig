@@ -1,4 +1,23 @@
   - sensor:
+    - name: "DeepSeek Days Remaining"
+      unique_id: deepseek_days_remaining
+      unit_of_measurement: "days"
+      state: >
+        {% set balance = states('sensor.deepseek_balance_usd') | float(0) %}
+        {% set change_7d = states('sensor.deepseek_balance_change_7d') | float(0) %}
+        
+        {% if change_7d >= 0 %}
+          unknown
+        {% else %}
+          {% set daily_cost = (-change_7d) / 7 %}
+          {% if daily_cost > 0 %}
+            {{ (balance / daily_cost) | round(1) }}
+          {% else %}
+            unknown
+          {% endif %}
+        {% endif %}
+      icon: mdi:calendar-clock
+
     # - name: Bus 22 to Work
     #   state: "{{state_attr('sensor.bus_to_work','22')[0]}}"
 

@@ -9,39 +9,114 @@
   id: bathroom_water_valves_test
   initial_state: true
   triggers:
-    - trigger: time
-      at: "00:01:00"
+  - trigger: time
+    at: 00:01:00
   conditions:
-    - "{{ now().timestamp() | timestamp_custom('%d') | int(0) == 15 }}"
+  - '{{ now().timestamp() | timestamp_custom(''%d'') | int(0) == 15 }}'
+  - condition: state
+    entity_id:
+    - binary_sensor.0x00158d00023297e7_moisture
+    - binary_sensor.0x00158d00023684c2_moisture
+    - binary_sensor.0x00158d0002373a67_moisture
+    - binary_sensor.0x00158d0002349f5b_moisture
+    - binary_sensor.54ef44c335f4_water_leak
+    state: 'off'
+  - condition: state
+    entity_id: binary_sensor.esp32_node_b_valve_status
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.esp32_node_b_valve_active
+    state: 'off'
+  - '{{ states[''button.esp32_node_b_close_valve''] is not none and not is_state(''button.esp32_node_b_close_valve'', ''unavailable'') }}'
+  - '{{ states[''button.esp32_node_b_open_valve''] is not none and not is_state(''button.esp32_node_b_open_valve'', ''unavailable'') }}'
   actions:
-    - action: notify.send_message
-      data:
-        entity_id: notify.telegram_dima
-        message: "\U0001f6b0 Проверка кранов - закрываем!"
-    # - action: switch.turn_off
-    #   entity_id: switch.0x00158d00039258de_plug
-    # - action: switch.turn_on
-    #   entity_id: switch.esp32_node_b_relay_1
-    - action: button.press
+  - action: notify.send_message
+    continue_on_error: true
+    data:
+      entity_id: notify.telegram_dima
+      message: "\U0001F6B0 Проверка кранов — закрываем."
+  - action: button.press
+    target:
       entity_id: button.esp32_node_b_close_valve
-    - delay: "00:00:25"
-    - action: switch.turn_off
+  - delay: 00:00:25
+  - action: switch.turn_off
+    target:
       entity_id: switch.esp32_node_b_relay_1
-    - delay: "00:00:05"
+  - wait_template: '{{ is_state(''binary_sensor.esp32_node_b_valve_active'', ''off'') and is_state(''binary_sensor.esp32_node_b_valve_status'',
+      ''off'') }}'
+    timeout: 00:00:20
+    continue_on_timeout: true
+  - if: '{{ not wait.completed }}'
+    then:
     - action: notify.send_message
+      continue_on_error: true
       data:
         entity_id: notify.telegram_dima
-        message: "\U0001f6b0 Проверка кранов - открываем!"
-    # - action: switch.turn_on
-    #   entity_id: switch.esp32_node_b_relay_2
-    - action: button.press
+        message: "\U000026a0 Проверка кранов остановлена: ESP не сообщил об окончании команды закрытия."
+    - stop: Контроллер не завершил команду закрытия
+  - action: notify.send_message
+    continue_on_error: true
+    data:
+      entity_id: notify.telegram_dima
+      message: "\U0001F6B0 Проверка кранов: закрытие завершено, проверяем возможность открытия."
+  - if:
+      condition: not
+      conditions:
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id:
+          - binary_sensor.0x00158d00023297e7_moisture
+          - binary_sensor.0x00158d00023684c2_moisture
+          - binary_sensor.0x00158d0002373a67_moisture
+          - binary_sensor.0x00158d0002349f5b_moisture
+          - binary_sensor.54ef44c335f4_water_leak
+          state: 'off'
+        - condition: state
+          entity_id: binary_sensor.esp32_node_b_valve_status
+          state: 'off'
+        - condition: state
+          entity_id: binary_sensor.esp32_node_b_valve_active
+          state: 'off'
+        - '{{ as_timestamp(state_attr(''automation.system_water_leak_detected'', ''last_triggered''), 0) ==
+          leak_close_stamp and as_timestamp(state_attr(''automation.system_water_leak_turn_water_off'', ''last_triggered''),
+          0) == manual_close_stamp }}'
+    then:
+    - action: notify.send_message
+      continue_on_error: true
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U000026a0 Проверка кранов остановлена: датчики недоступны, обнаружена протечка или поступила команда\
+          \ закрытия. Воду не открываем."
+    - stop: Открытие воды запрещено
+  - action: button.press
+    target:
       entity_id: button.esp32_node_b_open_valve
-    - delay: "00:00:25"
-    - action: switch.turn_off
+  - delay: 00:00:25
+  - action: switch.turn_off
+    target:
       entity_id: switch.esp32_node_b_relay_2
-    # - action: switch.turn_on
-    #   entity_id: switch.0x00158d00039258de_plug
+  - wait_template: '{{ is_state(''binary_sensor.esp32_node_b_valve_active'', ''off'') and is_state(''binary_sensor.esp32_node_b_valve_status'',
+      ''on'') }}'
+    timeout: 00:00:20
+    continue_on_timeout: true
+  - if: '{{ wait.completed }}'
+    then:
     - action: notify.send_message
+      continue_on_error: true
       data:
         entity_id: notify.telegram_dima
-        message: "\U00002705 Проверка кранов завершена!"
+        message: "\U00002705 Цикл проверки кранов завершён."
+    else:
+    - action: notify.send_message
+      continue_on_error: true
+      data:
+        entity_id: notify.telegram_dima
+        message: "\U000026a0 Проверка кранов: ESP не сообщил об окончании команды открытия. Проверь связь и воду."
+  description: Проверять только открытые краны; при протечке или команде закрытия во время теста воду не открывать.
+  variables:
+    leak_close_stamp: '{{ as_timestamp(state_attr(''automation.system_water_leak_detected'', ''last_triggered''),
+      0) }}'
+    manual_close_stamp: '{{ as_timestamp(state_attr(''automation.system_water_leak_turn_water_off'', ''last_triggered''),
+      0) }}'
+
