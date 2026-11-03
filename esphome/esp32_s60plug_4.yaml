@@ -3,11 +3,21 @@ substitutions:
   host_name: esp32-s60plug-4
   max_power: "3500"
 
+  # Резерв калибровки из заводского дампа этой розетки, MAC 58:8C:81:8C:19:20.
+  # SHA-256 дампа: dc0f47a4b4c0574059a1952bd8e9f9eda304aa413db882e511a16f9e195f20e1
+  s60_factory_calibration: "{0, 1000000, 0, 0, 1000000, 0, 0, 1000000, 0, 0, 1002228, -1372307, 0, 1000000, 204443448, -0.01974, 997830, -491025521}"
+
 esphome:
   name: ${host_name}
   comment: "Plug S60 LED Bed V"
   friendly_name: "S60 Plug LED Bed V"
+  includes:
+    - s60_calibration.h
   area: "Vova's room"
+  on_boot:
+    - priority: 600
+      then:
+        - lambda: sonoff_s60::calibration.setup(std::array<double, 18>${s60_factory_calibration});
 
 safe_mode:
   disabled: False
@@ -87,6 +97,7 @@ sensor:
       device_class: current
       id: id_current
       filters:
+        - lambda: return sonoff_s60::calibration.current(x);
         - throttle_average: 10s
     voltage:
       name: "Voltage"
@@ -94,6 +105,7 @@ sensor:
       device_class: voltage
       id: id_voltage
       filters:
+        - lambda: return sonoff_s60::calibration.voltage(x);
         - throttle_average: 10s
     power:
       name: "Power"
@@ -102,6 +114,7 @@ sensor:
       unit_of_measurement: W
       device_class: power
       filters:
+        - lambda: return sonoff_s60::calibration.power(x);
         - throttle_average: 10s
       on_value_range:
         - above: ${max_power}
@@ -138,6 +151,12 @@ sensor:
     update_interval: 60s
 
 text_sensor:
+  - platform: template
+    name: "Calibration"
+    entity_category: diagnostic
+    lambda: return sonoff_s60::calibration.status();
+    update_interval: 60s
+
   - platform: template
     name: "Uptime"
     lambda: |-

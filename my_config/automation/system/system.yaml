@@ -661,12 +661,22 @@
   mode: single
   max_exceeded: silent
   triggers:
-    # ложное->истинное срабатывание только на порогах: 100, 150, 200 ошибок в час
-    - trigger: template
-      value_template: >-
-        {{ (states('sensor.error_counter_hourly')|int(0) >= 100)
-           and (states('sensor.error_counter_hourly')|int(0) % 50 == 0) }}
+    - trigger: state
+      entity_id: sensor.error_counter_hourly
+      not_from:
+        - unknown
+        - unavailable
+      not_to:
+        - unknown
+        - unavailable
   conditions:
+    - condition: template
+      value_template: >-
+        {{ trigger.from_state is not none and trigger.to_state is not none
+           and is_number(trigger.from_state.state) and is_number(trigger.to_state.state)
+           and trigger.to_state.state | float(0) >= 100
+           and (trigger.to_state.state | float(0) // 50)
+             > (trigger.from_state.state | float(0) // 50) }}
     # антифлуд Telegram: не чаще одного сообщения в 15 секунд
     - condition: template
       value_template: "{{ (as_timestamp(now()) - (as_timestamp(state_attr('automation.system_error_per_hour', 'last_triggered'), 0) | int(0))) > 15 }}"
@@ -674,7 +684,7 @@
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima
-        message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{states('sensor.error_counter_hourly')|int(0)}}"
+        message: "\U000026a0 Внимание! Количество ошибок в час выросло до {{ trigger.to_state.state | int(0) }}"
 
 # ##################################
 # System - System Warinings per hour
