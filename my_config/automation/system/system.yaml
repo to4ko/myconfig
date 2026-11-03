@@ -3223,3 +3223,70 @@
       data:
         entity_id: notify.telegram_dima
         message: "\U0001f50b {{trigger.to_state.name}} зарядка зввершена"
+
+# ##################################
+# System - Bathroom / Toilet - Indicator off watch
+# ##################################
+- alias: system_bathroom_toilet_indicators_off_watch
+  id: system_bathroom_toilet_indicators_off_watch
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+  - trigger: time_pattern
+    minutes: /1
+  - trigger: state
+    entity_id:
+    - light.esp32_node_hs_toilet
+    - light.esp32_node_hs_bathroom
+    from:
+    - unavailable
+    - unknown
+    not_to:
+    - unavailable
+    - unknown
+  actions:
+  - parallel:
+    - sequence:
+      - if:
+        - condition: state
+          entity_id: binary_sensor.0x00158d000232ddd6_contact
+          state: 'off'
+          for:
+            seconds: 15
+        - condition: state
+          entity_id: binary_sensor.0x00158d00023684c2_moisture
+          state: 'off'
+        - condition: state
+          entity_id: light.esp32_node_hs_toilet
+          state:
+          - 'on'
+          - 'off'
+        then:
+        - action: light.turn_off
+          target:
+            entity_id: light.esp32_node_hs_toilet
+          continue_on_error: true
+    - sequence:
+      - if:
+        - condition: state
+          entity_id: input_boolean.bathroom_occupancy
+          state: 'off'
+          for:
+            seconds: 15
+        - condition: state
+          entity_id: binary_sensor.0x00158d0002373a67_moisture
+          state: 'off'
+        - condition: state
+          entity_id: binary_sensor.0x00158d0002349f5b_moisture
+          state: 'off'
+        - condition: state
+          entity_id: light.esp32_node_hs_bathroom
+          state:
+          - 'on'
+          - 'off'
+        then:
+        - action: light.turn_off
+          target:
+            entity_id: light.esp32_node_hs_bathroom
+          continue_on_error: true
