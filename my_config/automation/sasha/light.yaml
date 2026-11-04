@@ -779,3 +779,66 @@
 #     actions:
 #       - action: switch.turn_on
 #         entity_id: switch.system_led_white_s_restart_key
+
+# ##################################
+# Sasha - LED White 2 control
+# ##################################
+- alias: sasha_led_white_2_control
+  id: sasha_led_white_2_control
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+  - trigger: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: sensor.0x00158d00023d3206_action
+      click_type: single
+    id: single
+  - trigger: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: sensor.0x00158d00023d3206_action
+      click_type: double
+    id: double
+  - trigger: event
+    event_type: xiaomi_aqara.click
+    event_data:
+      entity_id: sensor.0x00158d00023d3206_action
+      click_type: hold
+    id: hold
+  conditions:
+  - condition: state
+    entity_id: light.0x54ef4410000ea59b_light
+    state:
+    - 'on'
+    - 'off'
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: single
+      sequence:
+      - action: light.toggle
+        target:
+          entity_id: light.0x54ef4410000ea59b_light
+    - conditions:
+      - condition: trigger
+        id: double
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.0x54ef4410000ea59b_light
+        data:
+          brightness: 230
+          color_temp_kelvin: 5000
+    - conditions:
+      - condition: trigger
+        id: hold
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.0x54ef4410000ea59b_light
+        data:
+          brightness: 14
+          color_temp_kelvin: 3000

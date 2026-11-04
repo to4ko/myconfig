@@ -23,14 +23,15 @@ the info handshake carries no capability entry:
   services, entity/device/area registries, ``hass.config``, persistent
   notifications, repairs issues) in one call, so the server builds its existing
   overview envelope with no extra HA round-trips.
-* ``ha_mcp_tools/helpers_list`` — collection helpers (live state-attribute
-  bodies) AND flow helpers (``ConfigEntry.options``/``title``/``entry_id`` —
+* ``ha_mcp_tools/helpers_list`` — collection helpers (the stored items
+  ``<type>/list`` returns) AND flow helpers (``ConfigEntry.options``/``title``/``entry_id`` —
   never ``entry.data``), each with the CURRENT entity_id + display name from the
   registry (renamed helpers show current values — issue #1794), closing the
   documented "flow helpers cannot be listed" gap with no OptionsFlow dance. The
   response's ``covered_types`` names which helper_type values were authoritatively
   enumerated, so the server falls back to its legacy ``<type>/list`` path for an
-  uncovered type (e.g. ``tag``, which has no state entity) instead of trusting an
+  uncovered type (``person`` and ``tag``, whose lists add more than the stored
+  items) instead of trusting an
   empty result. A custom-only helper integration is listed with ``options: None``
   and ``options_withheld`` (see ``flow_domains._flow_helper_domains``).
 * ``ha_mcp_tools/states`` — a bulk state read: ``State.as_dict()`` for each
@@ -87,9 +88,10 @@ the info handshake carries no capability entry:
   ``hass.states.get(id)`` omits the live-state fields (friendly_name/state) rather
   than crashing.
 * ``ha_mcp_tools/dashboards`` — Lovelace dashboards read in-process, four modes.
-  ``list`` mirrors the ``lovelace/dashboards/list`` row shape (id/url_path/title/
-  icon/show_in_sidebar/require_admin) with an additive per-row ``mode`` so the
-  server can exclude YAML dashboards; ``get`` returns one dashboard's config body
+  ``list`` returns each dashboard's ``LovelaceConfig.config`` as Core's
+  ``lovelace/dashboards/list`` sends it, with an additive per-row ``mode`` so the
+  server can exclude YAML dashboards, and ``update_fields``, the keys Core's
+  dashboard update schema accepts (omitted when unreadable); ``get`` returns one dashboard's config body
   (``await store.async_load`` in the async prep) with a structured
   ``yaml_excluded`` status for YAML-mode dashboards (the server falls back to
   legacy for those — a YAML body may carry resolved ``!secret`` plaintext);
@@ -109,7 +111,15 @@ the info handshake carries no capability entry:
   config-reference validator consumes: ``{services: [{domain, services:{name:{}}}],
   entity_ids: [...]}``. The ``services`` shape is the REST ``/api/services`` list
   ``build_service_index`` reads (bodies are empty dicts — the index only reads
-  keys); ``entity_ids`` is every ``hass.states.async_all()`` id. Pure, no prep.
+  keys); ``entity_ids`` is every ``hass.states.async_all()`` id. With
+  ``include_targets`` (flag ``reference_data_targets``) it adds the device,
+  area, floor and label registry ids, for the validator's target checks. Pure,
+  no prep.
+* ``ha_mcp_tools/automation_config`` — Core's automation validator run on a
+  proposed config (``validate``: Core's ``validation_status`` and humanized
+  error), Core's trigger/condition descriptions (``describe``), and an
+  automation's registry row, validation repair issue and references
+  (``lookup``). See ``automation_config.py``.
 * ``ha_mcp_tools/logbook_events`` — Core's own logbook query run in-process:
   ``EventProcessor`` with the REST flags (``timestamp=False`` ISO ``when``,
   ``include_entity_name=True``) and the ``logbook/get_events`` filter set
@@ -160,6 +170,13 @@ the info handshake carries no capability entry:
   raises ``HomeAssistantError`` (→ the server's command-error fallback to its legacy
   options-flow path). All awaiting-adjacent work (the deferred apply) lives in
   :func:`_server_entry_update_prep`; :func:`_do_server_entry_update` is a pure formatter.
+* ``ha_mcp_tools/call_event`` — fire a custom event on Core's own bus in-process
+  and return the event's ``context`` plus the exact-event and ``MATCH_ALL``
+  listener counts, read in the same synchronous pass, so the server's
+  ``ha_call_event`` needs no separate ``GET /api/events`` before a fire. The
+  event type travels in the message body, so Core accepts the same names its
+  WebSocket ``fire_event`` command does; the server keeps ``state_changed`` on
+  its REST path because ``APIEventView`` rebuilds that payload's state dicts.
 * ``ha_mcp_tools/call_service`` — the FIRST write capability. Fires exactly one
   ``hass.services.async_call`` in-process and returns the REAL pre→post state
   transition for the target ``entity_ids`` — event-confirmed via an
@@ -310,8 +327,16 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from .. import core_contract, dashboard_cards_ws, entity_restore, helper_collections
+from .. import (
+    automation_config,
+    core_contract,
+    dashboard_cards_ws,
+    entity_restore,
+    helper_collections,
+    todo_items,
+)
 from .bulk import _bulk_call_service_prep, _do_bulk_call_service
+from .call_event import _do_call_event
 from .call_service import _call_service_prep, _do_call_service
 from .config_entries import _config_entries_prep, _do_config_entries
 from .constants import CAPABILITIES, SCHEMA_VERSION
@@ -338,6 +363,7 @@ from .registries import _do_registries
 from .schemas import (
     _blueprint_get_schema,
     _bulk_call_service_schema,
+    _call_event_schema,
     _call_service_schema,
     _config_entries_schema,
     _dashboard_edit_schema,
@@ -465,6 +491,9 @@ def _command_specs() -> list[tuple[dict[Any, Any], Any, Any]]:
             _do_server_entry_update,
             _server_entry_update_prep,
         ),
+        # The event WRITE command: listeners are read and the event fires in one
+        # synchronous pass, so no async prep is needed.
+        (_call_event_schema(), _do_call_event, None),
         # The service WRITE command: dispatch + the bounded confirmation wait are
         # inherently async, so ALL of the work lives in the ``_call_service_prep``
         # async pre-step and ``_do_call_service`` is a pure response formatter.
@@ -481,6 +510,8 @@ def _command_specs() -> list[tuple[dict[Any, Any], Any, Any]]:
         *helper_collections.command_specs(vol, er),
         *entity_restore.command_specs(vol, er),
         *core_contract.command_specs(vol),
+        *todo_items.command_specs(vol),
+        *automation_config.command_specs(vol),
         *dashboard_cards_ws.command_specs(vol),
         *_oauth_callback_specs(),
     ]

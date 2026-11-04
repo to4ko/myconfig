@@ -96,9 +96,16 @@ class XRegistryLocal(XRegistryBase):
         deviceid = name[8:18]
         try:
             info = AsyncServiceInfo(service_type, name)
-            if not await info.async_request(zeroconf, 3000) or not info.properties:
-                _LOGGER.debug(f"{deviceid} <= Local0 | Can't get zeroconf info")
-                return
+
+            # TXT is usually already in the cache from the announcement itself;
+            # some S60TPF units never send an A record, so async_request() fails
+            # https://github.com/AlexxIT/SonoffLAN/issues/1871
+            info.load_from_cache(zeroconf)
+            if not info.properties:
+                await info.async_request(zeroconf, 3000)
+                if not info.properties:
+                    _LOGGER.debug(f"{deviceid} <= Local0 | Can't get zeroconf info")
+                    return
 
             # support update with empty host and host without port
             for addr in info.addresses:
@@ -216,8 +223,8 @@ class XRegistryLocal(XRegistryBase):
                 # some devices don't support getState command
                 # https://github.com/AlexxIT/SonoffLAN/issues/1442
                 # https://github.com/AlexxIT/SonoffLAN/issues/1907
-                if command == "getState" and isinstance(e, ContentTypeError):
-                    _LOGGER.debug(f"{log} <= {e.message}")
+                if command == "getState":
+                    _LOGGER.debug(f"{log} <= OK, but: {e}")
                     return "online"
 
                 _LOGGER.debug(f"{log} !! Error: {e}")

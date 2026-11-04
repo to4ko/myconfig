@@ -72,8 +72,10 @@ class XEntity(Entity):
             self._attr_unique_id = f"{device['deviceid']}_{self.uid}"
 
             if not self.uid.isdigit():
-                self._attr_entity_category = ENTITY_CATEGORIES.get(self.uid)
-                self._attr_icon = ICONS.get(self.uid)
+                if self.uid in  ENTITY_CATEGORIES and not self.entity_category:
+                    self._attr_entity_category = ENTITY_CATEGORIES.get(self.uid)
+                if self.uid in ICONS and not self.icon:
+                    self._attr_icon = ICONS.get(self.uid)
 
                 s = NAMES.get(self.uid) or self.uid.title().replace("_", " ")
                 self._attr_name = f"{device['name']} {s}"
@@ -87,23 +89,19 @@ class XEntity(Entity):
         deviceid: str = device["deviceid"]
         params: dict = device["params"]
 
-        connections = (
-            {(CONNECTION_NETWORK_MAC, params["staMac"])} if "staMac" in params else None
-        )
-
-        hw_version = device.get("extra", {}).get("uiid")
-        if hw_version is not None:
-            hw_version = str(hw_version)
-
         self._attr_device_info = DeviceInfo(
-            connections=connections,
             identifiers={(DOMAIN, deviceid)},
             manufacturer=device.get("brandName"),
             model=device.get("productModel"),
             name=device["name"],
             sw_version=params.get("fwVersion"),
-            hw_version=hw_version,
         )
+
+        if hw_version := device.get("extra", {}).get("uiid"):
+            self._attr_device_info["hw_version"] = str(hw_version)
+
+        if mac := params.get("staMac"):
+            self._attr_device_info["connections"] = {(CONNECTION_NETWORK_MAC, mac)}
 
         try:
             self.internal_update(None if self.event else params)
