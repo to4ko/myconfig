@@ -7,7 +7,7 @@ import uuid
 from asyncio import Future
 from typing import Callable, Dict, Optional
 
-from aiohttp import ClientConnectorError, ClientWebSocketResponse, ServerTimeoutError
+from aiohttp import ClientError, ClientWebSocketResponse, WSMsgType
 from zeroconf import ServiceBrowser, ServiceStateChange, Zeroconf
 
 from .yandex_session import YandexSession
@@ -22,8 +22,6 @@ class YandexGlagol:
     url: Optional[str] = None
     ws: Optional[ClientWebSocketResponse] = None
 
-    # next_ping_ts = 0
-    # keep_task: Task = None
     update_handler: Callable = None
 
     waiters: Dict[str, Future] = {}
@@ -86,32 +84,51 @@ class YandexGlagol:
         self.debug("Локальное подключение")
 
         fails += 1  # will be reset with first msg from station
+        ws = None
+        connection_token = None
+        connected_at = time.monotonic()
+        last_message_at = None
+        close_reason = ""
+        error_type = None
+        player = {}
+        keep_task = None
+        keep_state = {"sent": 0}
 
         try:
             if not self.device_token:
                 self.device_token = await self.get_device_token()
 
-            self.ws = await self.session.ws_connect(self.url, heartbeat=55, ssl=False)
+            connection_token = self.device_token
+            ws = await self.session.ws_connect(self.url, heartbeat=55, ssl=False)
+            self.ws = ws
+            connected_at = time.monotonic()
             await self.ping(command="softwareVersion")
+            if self.name == "Yandex S":
+                keep_task = self.loop.create_task(self._keep_connection(ws, keep_state))
 
-            # if not self.keep_task or self.keep_task.done():
-            #     self.keep_task = self.loop.create_task(self._keep_connection())
 
-            async for msg in self.ws:
-                # Большая станция в режиме idle шлёт статус раз в 5 секунд,
-                # в режиме playing шлёт чаще раза в 1 секунду
-                # self.next_ping_ts = time.time() + 6
-
-                if isinstance(msg.data, ServerTimeoutError):
-                    raise msg.data
+            while True:
+                msg = await ws.receive()
+                if msg.type in (WSMsgType.CLOSE, WSMsgType.CLOSING, WSMsgType.CLOSED):
+                    close_reason = str(msg.extra or "")
+                    break
+                if msg.type == WSMsgType.ERROR:
+                    error = ws.exception() or msg.data
+                    if isinstance(error, BaseException):
+                        raise error
+                    raise ConnectionError("WebSocket error without an exception")
+                if msg.type not in (WSMsgType.TEXT, WSMsgType.BINARY):
+                    continue
 
                 data = json.loads(msg.data)
+                last_message_at = time.monotonic()
+                state = data.get("state") or {}
+                player = state.get("playerState") or {}
                 fails = 0  # any message - reset fails
 
-                # debug(msg.data)
-
                 request_id = data.get("requestId")
-                if request_id in self.waiters:
+                waiter = self.waiters.get(request_id)
+                if waiter is not None and not waiter.done():
                     result = {"status": data["status"]}
 
                     if vinsResponse := data.get("vinsResponse"):
@@ -134,14 +151,15 @@ class YandexGlagol:
                         except Exception as e:
                             _LOGGER.debug(f"Response error: {e}")
 
-                    self.waiters[request_id].set_result(result)
+                    waiter.set_result(result)
 
                 self.update_handler(data)
 
             # TODO: find better place
             self.device_token = None
 
-        except (ClientConnectorError, ConnectionResetError, ServerTimeoutError) as e:
+        except (ClientError, ConnectionResetError, TimeoutError) as e:
+            error_type = type(e).__name__
             self.debug(f"Ошибка подключения: {repr(e)}")
 
         except (asyncio.CancelledError, RuntimeError) as e:
@@ -155,7 +173,46 @@ class YandexGlagol:
             return
 
         except Exception as e:
+            error_type = type(e).__name__
             _LOGGER.error(f"{self.name} => local | {repr(e)}")
+
+        finally:
+            if keep_task is not None:
+                keep_task.cancel()
+                try:
+                    await keep_task
+                except asyncio.CancelledError:
+                    pass
+            if ws is not None:
+                close_code = ws.close_code
+                ws_error = ws.exception()
+                if self.url:
+                    reason = close_reason
+                    if connection_token:
+                        reason = reason.replace(connection_token, "[redacted]")
+                    _LOGGER.info(
+                        "%s | Local WS disconnected: code=%s reason=%r error=%s "
+                        "lifetime=%.1fs last_message_age=%s track_id=%s position=%s duration=%s keepalive_sent=%s",
+                        self.name,
+                        close_code,
+                        reason[:160],
+                        error_type or (type(ws_error).__name__ if ws_error else None),
+                        time.monotonic() - connected_at,
+                        round(time.monotonic() - last_message_at, 1)
+                        if last_message_at is not None else None,
+                        player.get("id"),
+                        player.get("progress"),
+                        player.get("duration"),
+                        keep_state["sent"],
+                    )
+                try:
+                    if not ws.closed:
+                        await asyncio.wait_for(ws.close(), timeout=5)
+                except Exception as close_error:
+                    self.debug(f"WebSocket cleanup: {type(close_error).__name__}")
+                finally:
+                    if self.ws is ws:
+                        self.ws = None
 
         # возвращаемся в облачный режим
         self.update_handler(None)
@@ -172,12 +229,29 @@ class YandexGlagol:
 
         _ = asyncio.create_task(self._connect(fails))
 
-    # async def _keep_connection(self):
-    #     _LOGGER.debug("Start keep connection task")
-    #     while not self.ws.closed:
-    #         await asyncio.sleep(1)
-    #         if time.time() > self.next_ping_ts:
-    #             await self.ping()
+    async def _keep_connection(self, ws, state):
+        try:
+            while self.url and self.ws is ws and not ws.closed:
+                await asyncio.sleep(5)
+                if not self.url or self.ws is not ws or ws.closed:
+                    return
+                await asyncio.wait_for(ws.send_json({
+                    "conversationToken": self.device_token,
+                    "id": str(uuid.uuid4()),
+                    "payload": {"command": "ping"},
+                    "sentTime": int(round(time.time() * 1000)),
+                }), timeout=5)
+                state["sent"] += 1
+                if state["sent"] == 1 or state["sent"] % 12 == 0:
+                    _LOGGER.info("%s | Local keepalive ping sent: count=%s", self.name, state["sent"])
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            _LOGGER.warning("%s | Local keepalive failed: %s", self.name, type(error).__name__)
+            try:
+                await asyncio.wait_for(ws.close(), timeout=5)
+            except Exception:
+                pass
 
     async def ping(self, command="ping"):
         # _LOGGER.debug("ping")
@@ -213,7 +287,6 @@ class YandexGlagol:
             # limit future wait time
             await asyncio.wait_for(self.waiters[request_id], 5)
 
-            # self.next_ping_ts = time.time() + 0.5
 
             return self.waiters.pop(request_id).result()
 

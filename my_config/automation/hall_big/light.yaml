@@ -784,11 +784,23 @@
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
         {{ states('switch.0x00158d00039bd56d_plug') not in ignore }}
   actions:
+    - action: homeassistant.reload_config_entry
+      data:
+        entry_id: eb1be257fb7b11eab1bfe3c1f79ae678
+      continue_on_error: true
+    - wait_template: "{{ states('light.bedside') in ['on', 'off'] }}"
+      timeout:
+        seconds: 30
+      continue_on_timeout: true
+    - if:
+        - condition: template
+          value_template: "{{ states('light.bedside') in ['on', 'off'] }}"
+      then:
+        - stop: "light.bedside: связь восстановлена после reload"
     - repeat:
         while:
-          - condition: state
-            entity_id: light.bedside
-            state: "unavailable"
+          - condition: template
+            value_template: "{{ states('light.bedside') not in ['on', 'off'] }}"
           - condition: template
             value_template: "{{ repeat.index <= 5 }}"
         sequence:
@@ -804,9 +816,8 @@
               message: "\U0001f6a8 Bedside restart done({{repeat.index}})!"
           - delay:
               seconds: 30
-    - condition: state
-      entity_id: light.bedside
-      state: "unavailable"
+    - condition: template
+      value_template: "{{ states('light.bedside') not in ['on', 'off'] }}"
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima

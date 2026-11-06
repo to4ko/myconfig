@@ -268,11 +268,23 @@
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
         {{ states('switch.shelly_1_led_s') not in ignore }}
   actions:
+    - action: homeassistant.reload_config_entry
+      data:
+        entry_id: e0185fd40f2511ebadc3cd22d7cc0ea8
+      continue_on_error: true
+    - wait_template: "{{ states('light.square_led_s') in ['on', 'off'] }}"
+      timeout:
+        seconds: 30
+      continue_on_timeout: true
+    - if:
+        - condition: template
+          value_template: "{{ states('light.square_led_s') in ['on', 'off'] }}"
+      then:
+        - stop: "light.square_led_s: связь восстановлена после reload"
     - repeat:
         while:
-          - condition: state
-            entity_id: light.square_led_s
-            state: "unavailable"
+          - condition: template
+            value_template: "{{ states('light.square_led_s') not in ['on', 'off'] }}"
           - condition: template
             value_template: "{{ repeat.index <= 5 }}"
         sequence:
@@ -288,9 +300,8 @@
               message: "\U0001f6a8 Square LED S restart done({{repeat.index}})!"
           - delay:
               seconds: 30
-    - condition: state
-      entity_id: light.square_led_s
-      state: "unavailable"
+    - condition: template
+      value_template: "{{ states('light.square_led_s') not in ['on', 'off'] }}"
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima

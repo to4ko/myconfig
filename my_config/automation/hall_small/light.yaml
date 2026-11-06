@@ -168,11 +168,23 @@
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
         {{ states('switch.0x00158d0002a36433_channel_1') not in ignore }}
   actions:
+    - action: homeassistant.reload_config_entry
+      data:
+        entry_id: 1e7291780fa711ebab82817eab91320e
+      continue_on_error: true
+    - wait_template: "{{ states('light.round_led_hs') in ['on', 'off'] }}"
+      timeout:
+        seconds: 30
+      continue_on_timeout: true
+    - if:
+        - condition: template
+          value_template: "{{ states('light.round_led_hs') in ['on', 'off'] }}"
+      then:
+        - stop: "light.round_led_hs: связь восстановлена после reload"
     - repeat:
         while:
-          - condition: state
-            entity_id: light.round_led_hs
-            state: "unavailable"
+          - condition: template
+            value_template: "{{ states('light.round_led_hs') not in ['on', 'off'] }}"
           - condition: template
             value_template: "{{ repeat.index <= 5 }}"
         sequence:
@@ -188,9 +200,8 @@
               message: "\U0001f6a8 Round LED HS restart done({{repeat.index}})!"
           - delay:
               seconds: 30
-    - condition: state
-      entity_id: light.round_led_hs
-      state: "unavailable"
+    - condition: template
+      value_template: "{{ states('light.round_led_hs') not in ['on', 'off'] }}"
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima

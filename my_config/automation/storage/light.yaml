@@ -426,11 +426,23 @@
         {% set ignore = ['unknown', 'unavailable', 'none'] %}
         {{ states('switch.sonoff_basic_2_relay') not in ignore }}
   actions:
+    - action: homeassistant.reload_config_entry
+      data:
+        entry_id: 01JT33VYMRFMWGDFEPYYNQE6EV
+      continue_on_error: true
+    - wait_template: "{{ states('light.round_led_st') in ['on', 'off'] }}"
+      timeout:
+        seconds: 30
+      continue_on_timeout: true
+    - if:
+        - condition: template
+          value_template: "{{ states('light.round_led_st') in ['on', 'off'] }}"
+      then:
+        - stop: "light.round_led_st: связь восстановлена после reload"
     - repeat:
         while:
-          - condition: state
-            entity_id: light.round_led_st
-            state: "unavailable"
+          - condition: template
+            value_template: "{{ states('light.round_led_st') not in ['on', 'off'] }}"
           - condition: template
             value_template: "{{ repeat.index <= 5 }}"
         sequence:
@@ -446,9 +458,8 @@
               message: "\U0001f6a8 Round LED St restart done({{repeat.index}})!"
           - delay:
               seconds: 30
-    - condition: state
-      entity_id: light.round_led_st
-      state: "unavailable"
+    - condition: template
+      value_template: "{{ states('light.round_led_st') not in ['on', 'off'] }}"
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima
