@@ -4,7 +4,7 @@
       unique_id: unifios_state
       value_template: |-
           {% set devs = value_json.get("data", []) if value_json is defined and value_json is mapping else [] %}
-          {% set udms = devs | selectattr("model", "eq", "UDMPROMAX") | list %}
+          {% set udms = devs | selectattr("model", "in", ["UDMPROMAX", "UDMEA4C"]) | list %}
           {% set usws = devs | selectattr("model", "eq", "US624P") | list %}
           {% if not udms and not usws %}
           unknown
@@ -59,7 +59,7 @@
       unique_id: unifios_storage
       value_template: |-
           {% set devs = value_json.get("data", []) if value_json is defined and value_json is mapping else [] %}
-          {% set udms = devs | selectattr("model", "eq", "UDMPROMAX") | list %}
+          {% set udms = devs | selectattr("model", "in", ["UDMPROMAX", "UDMEA4C"]) | list %}
           {% set ns = namespace(l=[]) %}
           {% if udms %}
           {% for s in udms[-1].get("storage", []) %}
@@ -70,3 +70,18 @@
           {% endif %}
           {{ ns.l | join(";") if ns.l else "unknown" }}
       scan_interval: 300
+
+  - sensor:
+      name: Unifi Protect HDD Temperatures
+      unique_id: unifi_protect_hdd_temperatures
+      command: !secret udmp_protect_bootstrap
+      value_template: >-
+          {% set disks = value_json.get('nvr', {}).get('systemInfo', {}).get('ustorage', {}).get('disks', []) if value_json is defined and value_json is mapping else [] %}
+          {% set ns = namespace(temps=[]) %}
+          {% for slot in [1, 2] %}
+          {% set disk = disks | selectattr('slot', 'eq', slot) | list %}
+          {% set temp = disk[0].get('temperature') if disk else none %}
+          {% set ns.temps = ns.temps + [temp | string if temp is not none else 'unknown'] %}
+          {% endfor %}
+          {{ ns.temps | join('|') }}
+      scan_interval: 60

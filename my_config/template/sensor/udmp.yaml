@@ -2,7 +2,9 @@
       - trigger: time_pattern
         minutes: "/1"
       - trigger: state
-        entity_id: sensor.unifios_state
+        entity_id:
+          - sensor.unifios_state
+          - sensor.unifi_protect_hdd_temperatures
         to:
       - trigger: homeassistant
         event: start
@@ -43,9 +45,9 @@
 
       - name: UDM HDD1 Temp
         unique_id: udm_hdd1_temp
-        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
+        availability: "{{ is_number(states('sensor.unifi_protect_hdd_temperatures').split('|')[0] | default('unknown')) }}"
         state: >
-          {{ states('sensor.unifios_state').split('|\n')[24] | default }}
+          {{ states('sensor.unifi_protect_hdd_temperatures').split('|')[0] | default('unknown') }}
         attributes:
           friendly_name: UDM HDD1 Temperature
           icon: mdi:thermometer
@@ -53,9 +55,9 @@
 
       - name: UDM HDD2 Temp
         unique_id: udm_hdd2_temp
-        availability: "{{ not states('sensor.unifios_state')|lower in ['unavailable','unknown'] }}"
+        availability: "{{ is_number(states('sensor.unifi_protect_hdd_temperatures').split('|')[1] | default('unknown')) }}"
         state: >
-          {{ states('sensor.unifios_state').split('|\n')[26] | default }}
+          {{ states('sensor.unifi_protect_hdd_temperatures').split('|')[1] | default('unknown') }}
         attributes:
           friendly_name: UDM HDD2 Temperature
           icon: mdi:thermometer

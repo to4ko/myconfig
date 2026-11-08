@@ -119,7 +119,7 @@
 
 # Networking
   - [Ubiquiti U-fiber Loco](https://store.ui.com/us/en/pro/category/all-fiber/products/ufiber-loco)
-  - [Ubiquiti Unifi Dream Machine Pro Max, WAN1 1Gb\s + WAN2 500Mb\s](https://store.ui.com/us/en/pro/category/all-unifi-cloud-gateways/products/udm-pro-max)
+  - [Ubiquiti Unifi Dream Machine BEast, WAN1 1Gb\s + WAN2 500Mb\s](https://store.ui.com/us/en/category/cloud-gateways-large-scale/products/udm-beast)
   - [Ubiquiti Unifi Hi-Capacity Aggregation Switch](https://store.ui.com/us/en/pro/category/all-switching/products/usw-pro-aggregation)
   - [Ubiquiti Unifi Enterprise Switch 24 PoE](https://store.ui.com/us/en/pro/category/all-switching/products/usw-enterprise-24-poe)
   - [Ubiquiti Unifi Switch 10Gbe XG](https://store.ui.com/us/en/pro/category/all-switching/products/usw-flex-xg)

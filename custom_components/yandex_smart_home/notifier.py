@@ -14,7 +14,7 @@ from random import randint
 from typing import TYPE_CHECKING, Any, Protocol, Self
 
 from aiohttp import ClientTimeout, JsonPayload, hdrs
-from aiohttp.client_exceptions import ClientConnectionError
+from aiohttp.client_exceptions import ClientConnectionError, ClientConnectorError
 from homeassistant.const import ATTR_ENTITY_ID, EVENT_STATE_CHANGED
 from homeassistant.core import CALLBACK_TYPE, Event, HassJob, HomeAssistant, State
 from homeassistant.exceptions import TemplateError
@@ -183,6 +183,7 @@ class Notifier(ABC):
         self._config = config
         self._session = async_create_clientsession(hass)
 
+        self._notification_versions: dict[str, object] = {}
         self._pending = PendingStates()
 
         self._track_entity_states = track_entity_states
@@ -322,12 +323,9 @@ class Notifier(ABC):
         try:
             self._debug_log(f"Request: {url} (POST data: {request.as_json()})")
 
-            r = await self._session.post(
-                url,
-                headers=self._request_headers,
-                data=JsonPayload(request.as_json(), dumps=lambda p: p),
-                timeout=ClientTimeout(total=5),
-            )
+            r = await self._async_post_request(url, request)
+            if r is None:
+                return
 
             response_body, error_message = await r.read(), ""
             try:
@@ -349,6 +347,41 @@ class Notifier(ABC):
             self._debug_log(f"State notification request failed: {e!r}")
         except Exception:
             _LOGGER.exception(self._format_log_message("Unexpected exception"))
+
+    async def _async_post_request(self, url: str, request: CallbackRequest):
+        """Retry connection setup failures without replaying stale device states."""
+        version = object()
+        is_state_request = isinstance(request, CallbackStatesRequest)
+        if is_state_request:
+            for device in request.payload.devices:
+                self._notification_versions[device.id] = version
+
+        for attempt in range(3):
+            if attempt and is_state_request:
+                devices = [
+                    device for device in request.payload.devices
+                    if self._notification_versions.get(device.id) is version
+                ]
+                if not devices:
+                    self._debug_log("Skipping superseded state notification retry")
+                    return None
+                request = request.model_copy(update={
+                    "payload": request.payload.model_copy(update={"devices": devices})
+                })
+            try:
+                return await self._session.post(
+                    url,
+                    headers=self._request_headers,
+                    data=JsonPayload(request.as_json(), dumps=lambda p: p),
+                    timeout=ClientTimeout(total=5),
+                )
+            except ClientConnectorError as error:
+                # Exclude subclasses such as certificate/SSL and DNS errors.
+                if type(error) is not ClientConnectorError or attempt == 2:
+                    raise
+                delay = attempt + 1
+                self._debug_log(f"Notification connection failed; retry {attempt + 1}/2 in {delay}s")
+                await asyncio.sleep(delay)
 
     async def _async_template_result_changed(
         self,
