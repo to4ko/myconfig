@@ -153,6 +153,7 @@
 <details><summary>Click me...</summary>
 
 ![map](images/networkmap.jpg)
+![infrastructure](images/infrastructure.jpg)
 
 </details>
 
