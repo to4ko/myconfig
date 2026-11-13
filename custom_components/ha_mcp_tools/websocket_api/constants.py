@@ -12,6 +12,8 @@ from .. import (
     config_references,
     core_contract,
     entity_restore,
+    flow_outline,
+    flow_record,
     helper_collections,
     todo_items,
 )
@@ -125,6 +127,10 @@ CAPABILITIES: list[str] = [
     # A flag on search: gates its additive result_fields request and generic
     # is_group/member_entity_ids response fields.
     "search_entity_membership",
+    # A flag on search and overview: an entity row carries the name Core
+    # composes (``name`` on a search record, ``full_name`` on an overview
+    # registry row) and search matches on it.
+    "entity_composed_name",
     "overview",
     "helpers_list",
     "states",
@@ -134,6 +140,10 @@ CAPABILITIES: list[str] = [
     # advertised, so an older build simply serves the parsed body and the server
     # looks for the text elsewhere.
     "blueprint_text",
+    # A flag on the read_file service: gates its ``keep_line_endings`` field,
+    # which returns CRLF as stored. The server's file auto-backup asks for it
+    # only when this is advertised; an older build rejects the unknown field.
+    "read_file_line_endings",
     "device_get",
     "device_list",
     # A semantic flag shared by every device-registry-backed read. Components
@@ -216,6 +226,8 @@ CAPABILITIES: list[str] = [
     core_contract.CAPABILITY,
     core_contract.INTEGRATION_CAPABILITY,
     todo_items.CAPABILITY,
+    flow_record.CAPABILITY,
+    flow_outline.CAPABILITY,
     automation_config.CAPABILITY,
     config_references.CAPABILITY,
     *card_definitions.CAPABILITIES,

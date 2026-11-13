@@ -9,6 +9,7 @@ from dataclasses import field as dataclass_field
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -25,13 +26,15 @@ _LOGGER = logging.getLogger(__package__)
 # =============================================================================
 @dataclass
 class _RegistryView:
-    """Bundle of the five HA registries (any may be ``None`` if unavailable)."""
+    """Bundle of the five HA registries (any may be ``None`` if unavailable) and ``hass``."""
 
     entity: Any = None
     area: Any = None
     floor: Any = None
     label: Any = None
     device: Any = None
+    # Core's naming helper needs it; a view built without one names nothing.
+    hass: HomeAssistant | None = None
     _access_failures: set[str] = dataclass_field(
         default_factory=set, init=False, repr=False, compare=False
     )
@@ -58,6 +61,7 @@ def _resolve_registries(hass: HomeAssistant) -> _RegistryView:
         floor=_safe(fr.async_get, hass),
         label=_safe(lr.async_get, hass),
         device=_safe(dr.async_get, hass),
+        hass=hass,
     )
 
 
@@ -84,8 +88,6 @@ def _substrate_unavailable(name: str) -> Exception:
     keeps returning its empty result — the guards below key off unavailability
     (``None`` / non-``Mapping``), never off an empty-but-valid collection.
     """
-    from homeassistant.exceptions import HomeAssistantError
-
     err: Exception = HomeAssistantError(
         f"ha_mcp_tools: the {name} is unavailable (core drift); the server should "
         "fall back to its legacy read"
@@ -449,6 +451,20 @@ def _reg_name(reg: Any) -> str | None:
         return None
     name = getattr(reg, "name", None) or getattr(reg, "original_name", None)
     return str(name) if name else None
+
+
+def _composed_entity_name(view: _RegistryView, reg: Any) -> str | None:
+    """Return the name Home Assistant shows for a registry entry, composed by Core.
+
+    Core builds it from the parent device, device and entity names. The
+    ``friendly_name`` state attribute is the legacy name: since 2026.11 the two
+    differ for an entity on a child device, one with its own area, and one whose
+    name from before 2026.11 did not start with its device name (Core keeps
+    that one as ``compat_name``). ``None`` without a registry entry.
+    """
+    if reg is None or view.hass is None:
+        return None
+    return er.async_get_full_entity_name(view.hass, reg) or None
 
 
 def _current_friendly_name(

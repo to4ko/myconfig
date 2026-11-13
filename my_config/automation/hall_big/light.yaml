@@ -751,92 +751,92 @@
 # ##################################
 # Hall Big - Bedside Lamp Restart
 # ##################################
-- alias: hall_big_bedside_lamp_restart
-  id: hall_big_bedside_lamp_restart
-  mode: single
-  max_exceeded: silent
-  initial_state: true
-  triggers:
-    - trigger: time_pattern
-      minutes: "/1"
-    # - platform: state
-    #   entity_id: light.bedside_mb
-    #   to: 'unavailable'
-    #   for:
-    #     minutes: 2
-    # - platform: numeric_state
-    #   entity_id: sensor.ha_uptime
-    #   above: 0
-    #   below: 2
-  conditions:
-    - condition: state
-      entity_id: light.bedside
-      state: "unavailable"
-      for:
-        minutes: 2
-    - condition: state
-      entity_id: switch.system_bedside_restart_key
-      state: "on"
-    # - condition: template
-    #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
-    - condition: template
-      value_template: >
-        {% set ignore = ['unknown', 'unavailable', 'none'] %}
-        {{ states('switch.0x00158d00039bd56d_plug') not in ignore }}
-  actions:
-    - action: homeassistant.reload_config_entry
-      data:
-        entry_id: eb1be257fb7b11eab1bfe3c1f79ae678
-      continue_on_error: true
-    - wait_template: "{{ states('light.bedside') in ['on', 'off'] }}"
-      timeout:
-        seconds: 30
-      continue_on_timeout: true
-    - if:
-        - condition: template
-          value_template: "{{ states('light.bedside') in ['on', 'off'] }}"
-      then:
-        - stop: "light.bedside: связь восстановлена после reload"
-    - repeat:
-        while:
-          - condition: template
-            value_template: "{{ states('light.bedside') not in ['on', 'off'] }}"
-          - condition: template
-            value_template: "{{ repeat.index <= 5 }}"
-        sequence:
-          - action: switch.turn_off
-            entity_id: switch.0x00158d00039bd56d_plug
-          - delay:
-              seconds: 15
-          - action: switch.turn_on
-            entity_id: switch.0x00158d00039bd56d_plug
-          - action: notify.send_message
-            data:
-              entity_id: notify.telegram_dima
-              message: "\U0001f6a8 Bedside restart done({{repeat.index}})!"
-          - delay:
-              seconds: 30
-    - condition: template
-      value_template: "{{ states('light.bedside') not in ['on', 'off'] }}"
-    - action: notify.send_message
-      data:
-        entity_id: notify.telegram_dima
-        message: "\U0001f6a8 Bedside restart unsuccessful!"
-    - action: switch.turn_off
-      entity_id: switch.system_bedside_restart_key
+# - alias: hall_big_bedside_lamp_restart
+#   id: hall_big_bedside_lamp_restart
+#   mode: single
+#   max_exceeded: silent
+#   initial_state: true
+#   triggers:
+#     - trigger: time_pattern
+#       minutes: "/1"
+#     # - platform: state
+#     #   entity_id: light.bedside_mb
+#     #   to: 'unavailable'
+#     #   for:
+#     #     minutes: 2
+#     # - platform: numeric_state
+#     #   entity_id: sensor.ha_uptime
+#     #   above: 0
+#     #   below: 2
+#   conditions:
+#     - condition: state
+#       entity_id: light.bedside
+#       state: "unavailable"
+#       for:
+#         minutes: 2
+#     - condition: state
+#       entity_id: switch.system_bedside_restart_key
+#       state: "on"
+#     # - condition: template
+#     #   value_template: "{{ is_state_attr(this.entity_id, 'current',0) }}"
+#     - condition: template
+#       value_template: >
+#         {% set ignore = ['unknown', 'unavailable', 'none'] %}
+#         {{ states('switch.0x00158d00039bd56d_plug') not in ignore }}
+#   actions:
+#     - action: homeassistant.reload_config_entry
+#       data:
+#         entry_id: eb1be257fb7b11eab1bfe3c1f79ae678
+#       continue_on_error: true
+#     - wait_template: "{{ states('light.bedside') in ['on', 'off'] }}"
+#       timeout:
+#         seconds: 30
+#       continue_on_timeout: true
+#     - if:
+#         - condition: template
+#           value_template: "{{ states('light.bedside') in ['on', 'off'] }}"
+#       then:
+#         - stop: "light.bedside: связь восстановлена после reload"
+#     - repeat:
+#         while:
+#           - condition: template
+#             value_template: "{{ states('light.bedside') not in ['on', 'off'] }}"
+#           - condition: template
+#             value_template: "{{ repeat.index <= 5 }}"
+#         sequence:
+#           - action: switch.turn_off
+#             entity_id: switch.0x00158d00039bd56d_plug
+#           - delay:
+#               seconds: 15
+#           - action: switch.turn_on
+#             entity_id: switch.0x00158d00039bd56d_plug
+#           - action: notify.send_message
+#             data:
+#               entity_id: notify.telegram_dima
+#               message: "\U0001f6a8 Bedside restart done({{repeat.index}})!"
+#           - delay:
+#               seconds: 30
+#     - condition: template
+#       value_template: "{{ states('light.bedside') not in ['on', 'off'] }}"
+#     - action: notify.send_message
+#       data:
+#         entity_id: notify.telegram_dima
+#         message: "\U0001f6a8 Bedside restart unsuccessful!"
+#     - action: switch.turn_off
+#       entity_id: switch.system_bedside_restart_key
 
-# ##################################
-# Hall Big - Bedside Auto Restart Key Toggle
-# ##################################
-- alias: hall_big_bedside_restart_key_toggle
-  id: hall_big_bedside_restart_key_toggle
-  initial_state: true
-  mode: single
-  max_exceeded: silent
-  triggers:
-    - trigger: state
-      entity_id: light.bedside
-      from: "unavailable"
-  actions:
-    - action: switch.turn_on
-      entity_id: switch.system_bedside_restart_key
+# # ##################################
+# # Hall Big - Bedside Auto Restart Key Toggle
+# # ##################################
+# - alias: hall_big_bedside_restart_key_toggle
+#   id: hall_big_bedside_restart_key_toggle
+#   initial_state: true
+#   mode: single
+#   max_exceeded: silent
+#   triggers:
+#     - trigger: state
+#       entity_id: light.bedside
+#       from: "unavailable"
+#   actions:
+#     - action: switch.turn_on
+#       entity_id: switch.system_bedside_restart_key
