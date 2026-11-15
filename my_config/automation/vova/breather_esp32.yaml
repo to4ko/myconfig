@@ -7,7 +7,7 @@
 # ##################################
 - alias: vova_breather_auto_co2_esp32
   id: vova_breather_auto_co2_esp32
-  initial_state: true
+  initial_state: false
   triggers:
     - trigger: time_pattern
       minutes: "/3"
@@ -131,12 +131,6 @@
       event_data:
         text: Включи вентиляцию
       id: "to_on_alice"
-    - trigger: time
-      at: "21:00:00"
-      id: "time_trigger_night"
-    - trigger: time
-      at: "09:00:00"
-      id: "time_trigger_day"
   actions:
     - choose:
         - conditions: # choice 5
@@ -154,8 +148,6 @@
                 - action: fan.turn_off
                   target:
                     entity_id: fan.esp32_breather_v
-            - action: switch.turn_on
-              entity_id: switch.system_breather_auto_v
 
         - conditions: # choice 6
             - condition: trigger
@@ -174,34 +166,6 @@
                 - action: fan.turn_on
                   target:
                     entity_id: fan.esp32_breather_v
-
-        - conditions: # choice 8
-            - condition: trigger
-              id: "time_trigger_night"
-          sequence:
-            - action: switch.turn_on
-              entity_id: switch.system_breather_manual_v
-            - action: fan.turn_on
-              target:
-                entity_id: fan.esp32_breather_v
-            - action: fan.set_percentage
-              target:
-                entity_id: fan.esp32_breather_v
-              data:
-                percentage: "50"
-
-        - conditions: # choice 9
-            - condition: trigger
-              id: "time_trigger_day"
-          sequence:
-            - action: fan.turn_off
-              target:
-                entity_id: fan.esp32_breather_v
-            - action: timer.cancel
-              entity_id: timer.breather_v
-            - action: switch.turn_on
-              entity_id: switch.system_breather_auto_v
-
 # ##################################
 # Vova - Breather Plug Toggle  (unchanged — role vs. new ESP32 controller unclear)
 # ##################################
@@ -261,7 +225,7 @@
   id: vova_breather_switches_default_esp32
   mode: single
   max_exceeded: silent
-  initial_state: true
+  initial_state: false
   triggers:
     - trigger: template
       value_template:
