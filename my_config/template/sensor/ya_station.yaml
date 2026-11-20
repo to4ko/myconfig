@@ -402,6 +402,50 @@
           origin: "{{ trigger.event.origin }}"
           context: "{{ trigger.event.context.user_id }}"
 
+  - triggers:
+      - trigger: event
+        event_type: yandex_station_response
+        event_data:
+          entity_id: media_player.yandex_st
+        id: response
+      - trigger: homeassistant
+        event: start
+        id: initialize
+      - trigger: event
+        event_type: event_template_reloaded
+        id: initialize
+    conditions:
+      - condition: template
+        value_template: >-
+          {% if trigger.id == 'initialize' %}
+            {{ true }}
+          {% else %}
+            {% set parts = (trigger.event.data.get('request_id') or '').split(':') %}
+            {% set text = trigger.event.data.get('text') | default('', true) | trim %}
+            {{ parts | length == 4 and parts[0] == 'briefing_weather'
+               and parts[1] in ['today', 'tomorrow']
+               and 0 <= as_timestamp(trigger.event.time_fired) - (parts[3] | float(0)) <= 10
+               and text != ''
+               and not (text | regex_search('не (удалось|могу|получилось|знаю)|попробуйте позже|ошибка', ignorecase=true)) }}
+          {% endif %}
+    sensor:
+      - name: Ответ Алисы на запрос прогноза
+        unique_id: briefing_alice_weather
+        default_entity_id: sensor.briefing_alice_weather
+        state: >-
+          {{ trigger.event.data.request_id if trigger.id == 'response'
+             else (this.state if this is defined and this is not none else 'unknown') }}
+        attributes:
+          text: >-
+            {{ trigger.event.data.text | trim if trigger.id == 'response'
+               else (this.attributes.get('text', '') if this is defined and this is not none else '') }}
+          period: >-
+            {{ trigger.event.data.request_id.split(':')[1] if trigger.id == 'response'
+               else (this.attributes.get('period', '') if this is defined and this is not none else '') }}
+          forecast_date: >-
+            {{ trigger.event.data.request_id.split(':')[2] if trigger.id == 'response'
+               else (this.attributes.get('forecast_date', '') if this is defined and this is not none else '') }}
+
 # event_type: yandex_station_response
 # data:
 #   entity_id: media_player.yandex_k

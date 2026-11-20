@@ -1633,149 +1633,80 @@
     - trigger: time
       at: "20:50:00"
       id: "id_evening"
-  # condition:
-  #   - condition: template
-  #     value_template: >-
-  #       {%- set sensors = expand('group.weather_fcst_entities') %}
-  #       {%- set act_time = as_timestamp(now()) %}
-  #       {%- for sensor in sensors %}
-  #         {%- if as_timestamp(sensor.last_updated) == as_timestamp(sensors | map(attribute='last_updated') | min ) %}
-  #         {{ (act_time|int(0)-as_timestamp(sensor.last_updated)|int(0))>30*60 }}
-  #         {%- endif %}
-  #       {%- endfor %}
   actions:
     - action: hassio.addon_restart
       data:
         addon: a0d7b954_appdaemon
-    - condition: template
-      value_template: >-
-        {%- set sensors = expand('group.weather_fcst_entities') %}
-        {%- set act_time = as_timestamp(now()) %} 
-        {%- for sensor in sensors %}
-          {%- if as_timestamp(sensor.last_updated) == as_timestamp(sensors | map(attribute='last_updated') | min ) %}
-          {{ (act_time|int(0)-as_timestamp(sensor.last_updated)|int(0))>30*60 }}
-          {%- endif %}
-        {%- endfor %}
-    - action: homeassistant.update_entity
-      entity_id:
-        - sensor.pirateweather_summary_0d
-        - sensor.pirateweather_daytime_high_temperature_0d
-        - sensor.pirateweather_precip_probability_0d
-        - sensor.pirateweather_precip_0d
-        - sensor.pirateweather_summary_1d
-        - sensor.pirateweather_daytime_high_temperature_1d
-        - sensor.pirateweather_precip_probability_1d
-        - sensor.pirateweather_precip_1d
-    - delay:
-        seconds: 5
-    - action: input_number.set_value
-      data:
-        entity_id: input_number.temp_volume
-        value: >
-          {% set ent_id = 'media_player.yandex_st' %}          
-          {% set vol = state_attr(ent_id,'volume_level') %}
-          {{ vol }}
-    #{% set ent_id = 'media_player.' + states('input_select.tts_audio_out')|lower %}
-    - action: input_number.set_value
-      data:
-        entity_id: input_number.tts_volume
-        value: 0
-    - action: media_player.volume_set
-      data:
-        #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-        entity_id: media_player.yandex_st
-        volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-    - action: media_player.volume_set
-      data:
-        #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-        entity_id: media_player.yandex_st
-        volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-    - action: media_player.volume_set
-      data:
-        #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-        entity_id: media_player.yandex_st
-        volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-    - repeat:
-        while:
-          - condition: template
-            value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) ) > 10 }}"
-          - condition: template
-            value_template: "{{ repeat.index <= 10 }}"
-        sequence:
-          - if:
-              - condition: trigger
-                id: "id_morning"
-            then:
-              - action: media_player.play_media
-                data:
-                  #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  entity_id: media_player.yandex_st
-                  media_content_id: "какая сегодня погода"
-                  media_content_type: "question:tts_reply"
-                  extra:
-                    volume_level: 0
-            else:
-              - action: media_player.play_media
-                data:
-                  #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-                  entity_id: media_player.yandex_st
-                  media_content_id: "какая завтра погода"
-                  media_content_type: "question:tts_reply"
-                  extra:
-                    volume_level: 0
-          - delay:
-              seconds: 3
-    - delay:
-        seconds: 2
-
-    # - action: notify.send_message
-    #   data:
-    #     message: "now - {{ as_timestamp(now()) }} "
-
-    # - action: notify.send_message
-    #   data:
-    #     message: "fired - {{ as_timestamp(state_attr('sensor.yandex_response','time_fired')) }} "
-
-    # - action: notify.send_message
-    #   data:
-    #     message: "delta - {{as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired'))}}"
+    - variables:
+        period: >-
+          {% set trigger_id = trigger.id | default('') if trigger is defined else '' %}
+          {{ 'tomorrow' if trigger_id == 'id_evening' or (not trigger_id and now().hour >= 17) else 'today' }}
+        forecast_date: "{{ (now().date() + timedelta(days=1 if period == 'tomorrow' else 0)) | string }}"
+        saved_volume: "{{ state_attr('media_player.yandex_st', 'volume_level') }}"
+        ask_alice: "{{ is_number(saved_volume) and has_value('media_player.yandex_st') }}"
     - if:
         - condition: template
-          value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) + 0 ) > 30 }}"
+          value_template: "{{ ask_alice }}"
       then:
-        - action: notify.send_message
-          data:
-            entity_id: notify.telegram_dima
-            message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{as_timestamp(state_attr('sensor.yandex_response','time_fired'))  | timestamp_custom('%d-%m-%Y %H:%M:%S',true,0)}}"
-        - action: input_boolean.turn_on
+        - action: media_player.volume_set
+          continue_on_error: true
           target:
-            entity_id: input_boolean.ya_weather_error
-      else:
+            entity_id: media_player.yandex_st
+          data:
+            volume_level: 0
+    - variables:
+        request_id: "briefing_weather:{{ period }}:{{ forecast_date }}:{{ as_timestamp(now()) }}"
+    - if:
+        - condition: template
+          value_template: "{{ ask_alice }}"
+      then:
+        - action: script.turn_on
+          continue_on_error: true
+          target:
+            entity_id: script.briefing_request_alice_weather
+          data:
+            variables:
+              period: "{{ period }}"
+              request_id: "{{ request_id }}"
+        - wait_template: "{{ is_state('sensor.briefing_alice_weather', request_id) }}"
+          timeout: "00:00:10"
+          continue_on_timeout: true
+        - action: media_player.volume_set
+          continue_on_error: true
+          target:
+            entity_id: media_player.yandex_st
+          data:
+            volume_level: "{{ saved_volume | float }}"
+    - if:
+        - condition: template
+          value_template: "{{ is_state('sensor.briefing_alice_weather', request_id) }}"
+      then:
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.ya_weather_error
-    - wait_template: "{{ is_state('sensor.yandex_st_alice_state','idle') }}"
-      timeout:
-        minutes: 5
-    # {% set ent_id = 'sensor.yandex_st' + '_alice_state' %}
-    # {{ is_state(ent_id,'idle') }}
-
-    - action: input_number.set_value
-      data:
-        entity_id: input_number.tts_volume
-        value: '{{states("input_number.temp_volume")|float(0)}}'
-    - action: media_player.volume_set
-      data:
-        #entity_id: media_player.{{states('input_select.tts_audio_out')|lower}}
-        entity_id: media_player.yandex_st
-        volume_level: '{{states("input_number.tts_volume")|float(0)}}'
-    # - if:
-    #     - condition: template
-    #       value_template: "{{ (as_timestamp(now()) - as_timestamp(state_attr('sensor.yandex_response','time_fired')) ) > 10 }}"
-    #   then:
-    #     - action: notify.send_message
-    #       data:
-    #         message: "\U0001f324 Ошибка получения погоды. Последний апдейт - {{state_attr('sensor.yandex_response','time_fired')}}"
+      else:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.ya_weather_error
+    - if:
+        - condition: template
+          value_template: >-
+            {% set forecasts = expand('group.weather_fcst_entities') %}
+            {% set oldest = forecasts | map(attribute='last_reported') | min if forecasts else none %}
+            {{ oldest is none or (now() - oldest).total_seconds() > 30 * 60
+               or (forecasts | selectattr('state', 'in', ['unknown', 'unavailable']) | list | count) > 0 }}
+      then:
+        - action: homeassistant.update_entity
+          target:
+            entity_id:
+              - sensor.pirateweather_summary_0d
+              - sensor.pirateweather_daytime_high_temperature_0d
+              - sensor.pirateweather_precip_probability_0d
+              - sensor.pirateweather_precip_0d
+              - sensor.pirateweather_summary_1d
+              - sensor.pirateweather_daytime_high_temperature_1d
+              - sensor.pirateweather_precip_probability_1d
+              - sensor.pirateweather_precip_1d
 
 # ##################################
 # System - Hot Water Boolean Change

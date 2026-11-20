@@ -1,6 +1,48 @@
+briefing_request_alice_weather:
+  alias: Запрос прогноза у Алисы
+  mode: single
+  sequence:
+    - action: media_player.play_media
+      target:
+        entity_id: media_player.yandex_st
+      data:
+        media_content_id: "{{ 'какая завтра погода' if period == 'tomorrow' else 'какая сегодня погода' }}"
+        media_content_type: "question:{{ request_id }}"
+
+briefing_weather_text:
+  alias: Выбор прогноза для сводки
+  mode: parallel
+  sequence:
+    - variables:
+        day_offset: "{{ 1 if period == 'tomorrow' else 0 }}"
+        forecast_date: "{{ (now().date() + timedelta(days=day_offset)) | string }}"
+        alice_text: "{{ state_attr('sensor.briefing_alice_weather', 'text') | default('', true) | trim }}"
+        pirate_summary: "{{ states('sensor.pirateweather_summary_' ~ day_offset ~ 'd') | trim }}"
+        pirate_temperature: "{{ states('sensor.pirateweather_daytime_high_temperature_' ~ day_offset ~ 'd') | float(none) }}"
+        weather_text: >-
+          {% if alice_text and is_state('input_boolean.ya_weather_error', 'off')
+                and state_attr('sensor.briefing_alice_weather', 'period') == period
+                and state_attr('sensor.briefing_alice_weather', 'forecast_date') == forecast_date %}
+            {{ alice_text }}
+          {% elif pirate_summary not in ['', 'unknown', 'unavailable'] or pirate_temperature is not none %}
+            Прогноз {{ 'на завтра' if day_offset else 'на сегодня' }}.
+            {%- if pirate_summary not in ['', 'unknown', 'unavailable'] %} {{ pirate_summary }}{% endif %}
+            {%- if pirate_temperature is not none %} Максимальная температура днём {{ pirate_temperature | round(0) | int }} °C.{% endif %}
+          {% else %}
+            Прогноз погоды получить не удалось.
+          {% endif %}
+        result:
+          text: "{{ weather_text | trim }}"
+    - stop: Прогноз подготовлен
+      response_variable: result
+
 briefing_telegram:
   alias: Briefing to Telegram
   sequence:
+    - action: script.briefing_weather_text
+      data:
+        period: "{{ 'tomorrow' if now().hour >= 17 else 'today' }}"
+      response_variable: briefing_weather
     - action: notify.send_message
       data:
         entity_id: notify.telegram_dima
@@ -20,12 +62,12 @@ briefing_telegram:
           {%- if (now().weekday() <= 4 and is_state('binary_sensor.workday','off')) or (now().weekday() > 4 and is_state('binary_sensor.workday','on')) %}
           Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
           {% endif %}
-          {% if is_state('input_boolean.ya_weather_error','off') %}{{ states('sensor.yandex_response') }}{%endif%}
+          {{ briefing_weather.text }}
           {% if is_state('binary_sensor.ice_alarm_0d','on')%}Внимание! Возможен гололед!{% endif%}
           {%- if has_value('sensor.birthday_0') %}{%- if 0 < states('sensor.birthday_0')|int(99) <= 30 %}{{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}} отмечает день рождения через {{states('sensor.birthday_0')|int(0)|format(morph='день',as_text=false)}}.{% elif states('sensor.birthday_0')|int(0) == 0 %}Сегодня отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}!{%endif %}{%endif%}
           {%- endif %}
           {%- if hour_num >= 17 and hour_num <= 23 %}
-          {% if is_state('input_boolean.ya_weather_error','off') %}{{ states('sensor.yandex_response') }}{%endif%}
+          {{ briefing_weather.text }}
           {%if is_state('binary_sensor.ice_alarm_1d','on')%}Внимание! Возможен гололед!{%endif%}
           {%- if ((now()+timedelta(days=1)).weekday()|int(0) <= 4 and is_state('binary_sensor.workday_tomorrow','off')) or ((now()+timedelta(days=1)).weekday()|int(0) > 4 and is_state('binary_sensor.workday_tomorrow','on')) %}
           Обратите внимание - завтра {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][(now()+timedelta(days=1)).weekday()|int(0)]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday_tomorrow','on') else 'не рабочий'}} день.{%endif%}
@@ -34,6 +76,10 @@ briefing_telegram:
 briefing_tts:
   alias: Briefing to TTS
   sequence:
+    - action: script.briefing_weather_text
+      data:
+        period: "{{ 'tomorrow' if now().hour >= 17 else 'today' }}"
+      response_variable: briefing_weather
     # - action: media_player.volume_set
     #   data:
     #     entity_id: "{{ entity_id }}"
@@ -67,13 +113,7 @@ briefing_tts:
           {%- if (now().weekday() <= 4 and is_state('binary_sensor.workday','off')) or (now().weekday() > 4 and is_state('binary_sensor.workday','on')) %}
           Обратите внимание - сегодня {{['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'][now().weekday()]|lower}} {{ 'рабочий' if is_state('binary_sensor.workday','on') else 'не рабочий'}} день.
           {% endif %}
-          {% if is_state('input_boolean.ya_weather_error','off') %}{{ states('sensor.yandex_response') }}{%endif%}
+          {{ briefing_weather.text }}
           {%- if is_state('binary_sensor.ice_alarm_0d','on')%}Вним+ание! Возм+ожен голол+ёд!{%endif%}
           {%- if ((0 < states('sensor.birthday_0')|int(0) <= 30) and (states('sensor.birthday_0')|int(0) % 5 == 0)) or (states('sensor.birthday_0')|int(0) in [3, 5]) %}{{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}} отмечает день рождения через {{states('sensor.birthday_0')|int(0)|format(morph='день')}}.{% elif states('sensor.birthday_0')|int(0) == 0 %}Сегодня отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}{% elif states('sensor.birthday_0')|int == 1 %}Завтра отмечает день рождения {{state_attr('sensor.birthday_0','friendly_name').split(' – ')[0]}}!{%endif %}
-          {%- if hour_num > 17 and hour_num < 6 %}
-          Краткий прогноз погоды на завтра - {{ states('sensor.pirateweather_summary_1d') }}
-          Максимальная температура днём {{states('sensor.pirateweather_daytime_high_temperature_1d')|int(0)}} °C. 
-          {%- if states('sensor.pirateweather_precip_probability_1d')|int(0) == 0 %}Осадков не ожидается.{%else%}Веро+ятность ос+адков {{states('sensor.pirateweather_precip_probability_1d')|int(0)}} %. В+ид ос+адков - {% if states('sensor.pirateweather_precip_1d') == "snow" %}сн+ег.{% elif states('sensor.pirateweather_precip_1d') == "rain" %}д+ождь.{% elif states('sensor.pirateweather_precip_1d') == "sleet" %}сн+ег с дожд+ем.{% else %}неизв+естно.{% endif %}{%endif%}
-          {%- if is_state('binary_sensor.ice_alarm_1d','on')%}Вним+ание! Возм+ожен голол+ёд!{%endif%}
-          {% endif %}
           {{['Пускай принесет день сиянье успеха!','Пусть день сегодня твой будет просто замечательный!','Пусть этот день будет самым добрым, веселым и удачным в череде счастливых дней!','Пусть этот день прекрасным будет и все сбываются мечты!','Мой дорогой, любимый человек — хорошего тебе дня!','Удачного дня!','Пусть все, что есть сегодня в твоих планах, обязательно осуществится!','Пусть везение сегодня так и ходит за тобой!','Хорошего дня тебе!','Пусть солнышко принесет тебе заряд бодрости, придаст уверенности, наполнит радостью.','Пусть этот день порадует чудесными открытиями, приятными встречами и незабываемыми сюрпризами, а успех сегодня сопровождает тебя повсюду!','Желаю дня хорошего, прекрасного, удачным чтобы каждый был момент!','От души желаю приятного, успешного и хорошего дня','Пусть этот день принесет только радость, удачу и добрые эмоции.','Хочу вам пожелать хорошего, удачного, доброго, яркого, весёлого, интересного, удивительного и счастливого дня.','Пусть будет этот день хорошим, распрекрасным и погожим, и пусть начнется полоса удачных дней, любви, добра!','Желаю тебе дня самого классного, во всем сегодня успеха прекрасного!','Желаю тебе отличного дня! Пускай все получается!','Желаю Вам счастливого дня, пусть сегодня всё будет удаваться и гармонично складываться.','Желаю хорошего дня, который вам подарит радость и счастье!','Начни день с улыбки, и все вокруг тебя изменится!','Хорошего дня тебе, добрых новостей и радостных событий.','Желаю тебе отлично провести этот день','Желаю хорошего дня']|random}}
