@@ -33,12 +33,42 @@
             #       photo:
             #         - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
             #           caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-            - action: telegram_bot.send_photo
-              data:
-                url: http://localhost:1984/api/frame.jpeg?src=g5_window
-                caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-                chat_id: !secret tel_chat_id_cam
-                #timeout: 180
+            - alias: "Снимок в Telegram (чат камер)"
+              sequence:
+                - variables:
+                    snapshot_url_camera_chat: http://localhost:1984/api/frame.jpeg?src=g5_window
+                    snapshot_caption_camera_chat: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+                    snapshot_chat_id_camera_chat: !secret tel_chat_id_cam
+                    snapshot_photo_result_camera_chat: null
+                - action: telegram_bot.send_photo
+                  continue_on_error: true
+                  response_variable: snapshot_photo_result_camera_chat
+                  data:
+                    url: "{{ snapshot_url_camera_chat }}&width=2560"
+                    caption: "{{ snapshot_caption_camera_chat }}"
+                    chat_id: "{{ snapshot_chat_id_camera_chat }}"
+                    #timeout: 180
+                - enabled: false
+                  if:
+                    - condition: template
+                      value_template: "{{ not (snapshot_photo_result_camera_chat or {}).get('chats') }}"
+                  then:
+                    - alias: "Повтор снимка в Telegram (1920)"
+                      sequence:
+                        - action: telegram_bot.send_photo
+                          continue_on_error: true
+                          response_variable: snapshot_photo_result_camera_chat
+                          data:
+                            url: "{{ snapshot_url_camera_chat }}&width=1920"
+                            caption: "{{ snapshot_caption_camera_chat }}"
+                            chat_id: "{{ snapshot_chat_id_camera_chat }}"
+                    - condition: template
+                      value_template: "{{ not (snapshot_photo_result_camera_chat or {}).get('chats') }}"
+                    - action: telegram_bot.send_photo
+                      data:
+                        url: "{{ snapshot_url_camera_chat }}&width=1280"
+                        caption: "{{ snapshot_caption_camera_chat }}"
+                        chat_id: "{{ snapshot_chat_id_camera_chat }}"
 
 
 
@@ -62,12 +92,42 @@
             #       photo:
             #         - url: http://localhost:1984/api/frame.jpeg?src=g5_window #!secret window_snap
             #           caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-            - action: telegram_bot.send_photo
-              data:
-                url: http://localhost:1984/api/frame.jpeg?src=g5_window
-                caption: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
-                chat_id: !secret tel_chat_id
-                #timeout: 180
+            - alias: "Снимок в Telegram (личный чат)"
+              sequence:
+                - variables:
+                    snapshot_url_personal_chat: http://localhost:1984/api/frame.jpeg?src=g5_window
+                    snapshot_caption_personal_chat: "\U0001f4e3 Звонок в домофон {{states('sensor.time')}} {{states('sensor.date')}}"
+                    snapshot_chat_id_personal_chat: !secret tel_chat_id
+                    snapshot_photo_result_personal_chat: null
+                - action: telegram_bot.send_photo
+                  continue_on_error: true
+                  response_variable: snapshot_photo_result_personal_chat
+                  data:
+                    url: "{{ snapshot_url_personal_chat }}&width=2560"
+                    caption: "{{ snapshot_caption_personal_chat }}"
+                    chat_id: "{{ snapshot_chat_id_personal_chat }}"
+                    #timeout: 180
+                - enabled: false
+                  if:
+                    - condition: template
+                      value_template: "{{ not (snapshot_photo_result_personal_chat or {}).get('chats') }}"
+                  then:
+                    - alias: "Повтор снимка в Telegram (1920)"
+                      sequence:
+                        - action: telegram_bot.send_photo
+                          continue_on_error: true
+                          response_variable: snapshot_photo_result_personal_chat
+                          data:
+                            url: "{{ snapshot_url_personal_chat }}&width=1920"
+                            caption: "{{ snapshot_caption_personal_chat }}"
+                            chat_id: "{{ snapshot_chat_id_personal_chat }}"
+                    - condition: template
+                      value_template: "{{ not (snapshot_photo_result_personal_chat or {}).get('chats') }}"
+                    - action: telegram_bot.send_photo
+                      data:
+                        url: "{{ snapshot_url_personal_chat }}&width=1280"
+                        caption: "{{ snapshot_caption_personal_chat }}"
+                        chat_id: "{{ snapshot_chat_id_personal_chat }}"
 
             - if:
                 - condition: state

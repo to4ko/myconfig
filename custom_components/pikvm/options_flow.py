@@ -9,11 +9,10 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_SCAN_INTERVAL
 
+from .const import DEFAULT_SCAN_INTERVAL, MAX_SCAN_INTERVAL, MIN_SCAN_INTERVAL
+
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_SCAN_INTERVAL = 30
-MIN_SCAN_INTERVAL = 5
-MAX_SCAN_INTERVAL = 300
 
 
 class PiKVMOptionsFlowHandler(config_entries.OptionsFlow):

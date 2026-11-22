@@ -1,0 +1,11 @@
+  - platform: ssh
+    name: udmp_mdns_rate
+    host: !secret udmp_ip
+    username: !secret udmp_usr
+    password: !secret udmp_passwd
+    scan_interval: 60
+    command: >-
+      grep -v ALERT /data/mdns-flood-guard/rate.log | tail -n 1 | cut -f2
+    value_template: >-
+      {{ (value.split('\n') | select('is_number') | list | last) | default('0') | trim | int(0) }}
+    unit_of_measurement: 'pkt/s'

@@ -1,0 +1,20 @@
+  - trigger:
+      - trigger: state
+        entity_id: sensor.udmp_mdns_rate
+        to:
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: event_template_reloaded
+      - trigger: event
+        event_type: automation_reloaded
+    binary_sensor:
+      - name: MDNS Storm
+        unique_id: mdns_storm
+        availability: "{{ is_number(states('sensor.udmp_mdns_rate')) }}"
+        state: "{{ 'on' if states('sensor.udmp_mdns_rate')|int(0) >= 150 else 'off' }}"
+        attributes:
+          friendly_name: MDNS Storm
+          icon: mdi:message-alert
+          threshold: 150
+          rate: "{{ states('sensor.udmp_mdns_rate') }}"

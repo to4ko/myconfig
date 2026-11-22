@@ -1,0 +1,42 @@
+# #####################################################################################
+#
+# HALL BIG
+#
+# #####################################################################################
+# Hall Big - Domofon Planned Reboot
+# ##################################
+- alias: hall_big_domofon_planned_reboot
+  id: hall_big_domofon_planned_reboot
+  initial_state: true
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: time
+      at: "04:00:00"
+  conditions:
+    - condition: template
+      value_template: >-
+        {{ this.attributes.last_triggered is none or
+           (now() - this.attributes.last_triggered).days >= 3
+        }}
+    - condition: state
+      entity_id: binary_sensor.smartintercom_ru_vkhodiashchii_zvonok
+      state: "off"
+  actions:
+    - action: switch.turn_on
+      entity_id: switch.smartintercom_ru_perezagruzka_ustroistva
+    - delay: "00:03:00"
+    - if:
+        - condition: template
+          value_template: >-
+            {{ (now() - states.sensor.smartintercom_ru_uroven_signala.last_updated).total_seconds() > 180 }}
+      then:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: "\U0001f6a8 Домофон: плановая перезагрузка не подтвердилась, плата не выходит на связь больше 3 минут!"
+        - action: persistent_notification.create
+          data:
+            title: Домофон не вернулся после перезагрузки
+            notification_id: hall_big_domofon_planned_reboot
+            message: Плановая перезагрузка в 04:00 не подтвердилась — нет данных с платы более 3 минут.

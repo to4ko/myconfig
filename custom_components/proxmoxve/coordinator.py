@@ -33,6 +33,7 @@ from requests.exceptions import (
     RetryError,
     SSLError,
 )
+from urllib3.exceptions import ProtocolError
 
 from .api import ProxmoxClient, get_api
 from .const import (
@@ -60,7 +61,12 @@ from .discovery import (
     resource_changes,
 )
 from .disk import disk_matches_id
-from .issues import FORBIDDEN, ResourceLine, note_resource_threadsafe
+from .issues import (
+    FORBIDDEN,
+    ResourceLine,
+    note_resource,
+    note_resource_threadsafe,
+)
 from .models import (
     ProxmoxBackupData,
     ProxmoxBackupInfoData,
@@ -1747,6 +1753,52 @@ def parse_mac_addresses(interfaces: Any) -> tuple[str, ...]:
     return tuple(found)
 
 
+def node_is_invisible(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    node: str,
+    listing: Any,
+) -> bool:
+    """
+    Note the credentials as the reason a node is not in the listing.
+
+    Proxmox filters `GET /nodes` by privilege rather than refusing it, so
+    credentials that may audit nothing get an empty list and a node that
+    is running reads as missing. Reported upstream in #712 by someone
+    whose API token had Privilege Separation on and no ACL of its own: the
+    integration said the node could not be found, which sounds like the
+    node is gone, and created no repair because nothing was refused.
+
+    An empty listing is the case this covers. A listing that names other
+    nodes but not this one is a different matter - that node really is not
+    in the cluster, and the repair for a resource that does not exist says
+    so already.
+    """
+    if listing:
+        return False
+    note_resource(
+        hass,
+        config_entry,
+        FORBIDDEN,
+        f"{ProxmoxType.Node}_{node}",
+        ResourceLine(
+            label=f"{ProxmoxType.Node.capitalize()} {node}",
+            permission=f"['perm','/nodes/{node}',['Sys.Audit']]",
+            tracked_as=node,
+        ),
+        listed=True,
+    )
+    LOGGER.warning(
+        "The node listing came back empty, so node %s cannot be read. Proxmox "
+        "filters that listing by privilege, so this is what credentials that "
+        "may not audit the node look like - an API token created with "
+        "Privilege Separation holds only what is granted to the token itself. "
+        "See the repair the integration created",
+        node,
+    )
+    return True
+
+
 class ProxmoxNodeCoordinator(ProxmoxCoordinator):
     """Proxmox VE Node data update coordinator."""
 
@@ -1849,6 +1901,14 @@ class ProxmoxNodeCoordinator(ProxmoxCoordinator):
             if node_status == "":
                 LOGGER.debug("Node %s status is %s", self.resource_id, node_status)
                 node_status = "offline"
+        elif node_is_invisible(
+            self.hass, self.config_entry, self.resource_id, nodes_api
+        ):
+            msg = (
+                f"The node listing is empty, so node {self.resource_id} cannot be "
+                "read - the credentials may not be allowed to see it"
+            )
+            raise UpdateFailed(msg)
 
         if node_status == "online":
             api_path = f"nodes/{self.resource_id}/status"
@@ -1862,7 +1922,17 @@ class ProxmoxNodeCoordinator(ProxmoxCoordinator):
                 self.resource_id,
             )
             if api_status is None:
-                msg = f"Node {self.resource_id} unable to be found in host {self.config_entry.data[CONF_HOST]}"
+                # poll_api hands back None for a read Proxmox refused, and
+                # has already put the privilege it wanted into a repair.
+                # "Unable to be found" read as "the node is gone", which
+                # sent a reporter looking for a renamed node while his API
+                # token simply held no privileges - #712.
+                msg = (
+                    f"Node {self.resource_id} could not be read on "
+                    f"{self.config_entry.data[CONF_HOST]}: the read was refused, so "
+                    "the credentials may not be allowed to see it - see the repair "
+                    "the integration created"
+                )
                 raise UpdateFailed(msg)
 
             api_status["status"] = node_api["status"]
@@ -2064,7 +2134,11 @@ class ProxmoxNodeCoordinator(ProxmoxCoordinator):
                 sensors_raw=sensors_raw,
                 mac_addresses=self._mac_addresses or (),
             )
-        msg = f"Node {self.resource_id} unable to be found in host {self.config_entry.data[CONF_HOST]}"
+        msg = (
+            f"Node {self.resource_id} is not in the node listing of "
+            f"{self.config_entry.data[CONF_HOST]} - it was removed from the cluster, "
+            "or the credentials may not see it"
+        )
         raise UpdateFailed(msg)
 
 
@@ -3177,6 +3251,24 @@ def _client_for(config_entry: ConfigEntry, proxmox: ProxmoxAPI) -> ProxmoxClient
     return None
 
 
+def _closed_before_answering(error: connError) -> bool:
+    """
+    Return whether the host closed the connection before it answered.
+
+    pveproxy closes a connection that has been idle for five seconds.
+    A read that goes out on it just then finds it closed under the
+    request, and requests reports `ConnectionError(ProtocolError(
+    'Connection aborted.', RemoteDisconnected(...)))` - or the same with
+    ConnectionResetError, which RemoteDisconnected is one of, when the
+    close came as a reset. A connection that was refused or timed out
+    carries a different reason, and is not taken for this.
+    """
+    reason = error.args[0] if error.args else None
+    return isinstance(reason, ProtocolError) and any(
+        isinstance(arg, ConnectionResetError) for arg in reason.args
+    )
+
+
 def _retry_on_another_node(
     client: ProxmoxClient | None,
     generation: int,
@@ -3316,6 +3408,15 @@ def poll_api(  # noqa: PLR0917
                 # One such moment used to take an entity out for a whole
                 # polling interval; asked again, the node usually answers.
                 LOGGER.debug("Read %s came back %s, asking once more", api_path, error)
+                api_data = get_api(proxmox, api_path)
+            except connError as error:
+                if not _closed_before_answering(error):
+                    raise
+                # The host is there; only the kept-alive connection was
+                # not. A new one gets the answer. Failing over finds the
+                # host answering, or has no other host, and the read fails
+                # for a whole polling interval (#723).
+                LOGGER.debug("Read %s lost its connection, asking once more", api_path)
                 api_data = get_api(proxmox, api_path)
         except AuthenticationError as error:
             api_data = _retry_after_relogin(config_entry, proxmox, api_path, error)

@@ -32,14 +32,13 @@ from pikvm_aio import (
     format_url,
     parse_host_port,
 )
+from pikvm_aio.models import ThrottlingInfo
 
 from .cert_handler import _DEFAULT_NO_VERIFY_SSL_CONTEXT
-from .const import DOMAIN
-from .utils import get_nested_value
+from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from .utils import ensure_device_info
 
 _LOGGER = logging.getLogger(__name__)
-
-DEFAULT_SCAN_INTERVAL = 30
 
 
 class PiKVMDataUpdateCoordinator(DataUpdateCoordinator[PiKVMDeviceInfo]):
@@ -70,7 +69,9 @@ class PiKVMDataUpdateCoordinator(DataUpdateCoordinator[PiKVMDeviceInfo]):
         try:
             self.clean_host = parse_host_port(self.url)[0]
         except Exception:  # noqa: BLE001
-            self.clean_host = self.url.replace("https://", "").replace("http://", "").split("/")[0]
+            self.clean_host = (
+                self.url.replace("https://", "").replace("http://", "").split("/")[0]
+            )
 
         scan_interval = DEFAULT_SCAN_INTERVAL
         if entry is not None:
@@ -87,6 +88,14 @@ class PiKVMDataUpdateCoordinator(DataUpdateCoordinator[PiKVMDeviceInfo]):
             config_entry=entry,
         )
 
+        # WARNING (Non-Compliant Hardware Certificates):
+        # Stock PiKVM hardware generates a self-signed X.509 certificate at first boot
+        # (via kvmd-gencert) with CN="localhost", no IP Subject Alternative Names (SANs),
+        # and no CA BasicConstraints. OpenSSL 3.x / RFC 5280 strictly rejects these certs
+        # during standard CA/hostname verification. We therefore store the certificate to
+        # detect new clients/appliances and keep TLS transport encryption active, while
+        # explicitly setting verify_ssl=False and check_hostname=False and injecting
+        # Home Assistant's shared aiohttp ClientSession (Platinum rule `inject-websession`).
         self.client = PiKVMClient(
             host=self.url,
             username=self.username,
@@ -105,8 +114,9 @@ class PiKVMDataUpdateCoordinator(DataUpdateCoordinator[PiKVMDeviceInfo]):
         raw_name: str | None = None
         if self.config_entry:
             dev_reg = dr.async_get(self.hass)
-            devices = dr.async_entries_for_config_entry(dev_reg, self.config_entry.entry_id)
-            for dev in devices:
+            for dev in dr.async_entries_for_config_entry(
+                dev_reg, self.config_entry.entry_id
+            ):
                 if dev.name_by_user:
                     return dev.name_by_user
                 if dev.name:
@@ -118,98 +128,95 @@ class PiKVMDataUpdateCoordinator(DataUpdateCoordinator[PiKVMDeviceInfo]):
         if not raw_name and self.device_info and self.device_info.get("name"):
             raw_name = str(self.device_info["name"])
 
-        if not raw_name and self.data and getattr(self.data, "name", None):
-            data_name = self.data.name
-            if data_name and data_name not in ("localhost", "localhost.localdomain"):
-                raw_name = str(data_name)
+        if (
+            not raw_name
+            and self.data
+            and getattr(self.data, "name", None)
+            and (data_name := str(self.data.name))
+            not in ("localhost", "localhost.localdomain")
+        ):
+            raw_name = data_name
 
         if not raw_name:
             return "PiKVM"
 
-        # Strip legacy clean_host suffix if present (e.g. "PiKVM (192.168.1.50)" -> "PiKVM")
         host_suffix = f" ({self.clean_host})"
-        if self.clean_host and raw_name.endswith(host_suffix):
-            cleaned = raw_name[: -len(host_suffix)].strip()
-            if cleaned:
-                return cleaned
-
+        if (
+            self.clean_host
+            and raw_name.endswith(host_suffix)
+            and (cleaned := raw_name[: -len(host_suffix)].strip())
+        ):
+            return cleaned
         return raw_name
 
+    def _sync_repair_issue(
+        self,
+        issue_id: str,
+        is_active: bool,
+        severity: IssueSeverity,
+        translation_key: str,
+        learn_more_url: str,
+    ) -> None:
+        """Create or delete a Home Assistant Repairs issue."""
+        if is_active:
+            async_create_issue(
+                self.hass,
+                DOMAIN,
+                issue_id,
+                is_fixable=False,
+                is_persistent=False,
+                severity=severity,
+                translation_key=translation_key,
+                translation_placeholders={"device_name": self.device_name},
+                learn_more_url=learn_more_url,
+            )
+        else:
+            async_delete_issue(self.hass, DOMAIN, issue_id)
+
     def _async_check_hardware_health(self, data: Any) -> None:
-        """Monitor hardware undervoltage and throttling issues."""
-        entry_id = self.config_entry.entry_id if self.config_entry else self.clean_host
+        """Monitor hardware undervoltage and throttling issues using ThrottlingInfo."""
+        entry_id = (
+            self.config_entry.entry_id if self.config_entry else self.clean_host
+        )
         if not entry_id:
             return
 
-        raw_data = getattr(data, "raw", None)
-        if not isinstance(raw_data, dict):
-            raw_data = data if isinstance(data, dict) else {}
+        info = ensure_device_info(data)
+        throttling = info.hw.health.throttling if info else ThrottlingInfo()
 
-        throttling = get_nested_value(raw_data, ["hw", "health", "throttling"], {})
-        if not isinstance(throttling, dict):
-            throttling = {}
-        raw_flags = get_nested_value(throttling, ["raw_flags"], 0) or 0
-        text_flags = get_nested_value(throttling, ["text_flags"], [])
-        if not isinstance(text_flags, (list, tuple, set)):
-            text_flags = []
-        voltage_core = get_nested_value(throttling, ["voltage", "core"], {})
-        if not isinstance(voltage_core, dict):
-            voltage_core = {}
+        flags = throttling.raw_flags
+        text_flags = throttling.text_flags
 
         is_under_voltage_now = bool(
-            voltage_core.get("now")
-            or (isinstance(raw_flags, int) and (raw_flags & 0x1))
+            throttling.undervoltage_now
+            or (flags & 0x1)
             or ("under-voltage" in text_flags)
         )
-        is_under_voltage_past = bool(
-            voltage_core.get("past")
-            or (isinstance(raw_flags, int) and (raw_flags & 0x10000))
+        has_under_voltage = bool(
+            is_under_voltage_now
+            or throttling.undervoltage_past
+            or (flags & 0x10000)
         )
-        has_under_voltage = is_under_voltage_now or is_under_voltage_past
-
-        is_throttled_now = bool(
-            (isinstance(raw_flags, int) and (raw_flags & 0x6))
+        has_throttling = bool(
+            (flags & 0x60006)
             or ("throttled" in text_flags)
             or ("arm-frequency-capped" in text_flags)
         )
-        is_throttled_past = bool(
-            isinstance(raw_flags, int) and (raw_flags & 0x60000)
+
+        self._sync_repair_issue(
+            f"undervoltage_{entry_id}",
+            has_under_voltage,
+            IssueSeverity.CRITICAL if is_under_voltage_now else IssueSeverity.WARNING,
+            "undervoltage",
+            "https://docs.pikvm.org/power/",
         )
-        has_throttling = is_throttled_now or is_throttled_past
-
-        # Undervoltage Issue Management
-        uv_issue_id = f"undervoltage_{entry_id}"
-        if has_under_voltage:
-            async_create_issue(
-                self.hass,
-                DOMAIN,
-                uv_issue_id,
-                is_fixable=False,
-                is_persistent=False,
-                severity=IssueSeverity.CRITICAL if is_under_voltage_now else IssueSeverity.WARNING,
-                translation_key="undervoltage",
-                translation_placeholders={"device_name": self.device_name},
-                learn_more_url="https://docs.pikvm.org/power/",
-            )
-        else:
-            async_delete_issue(self.hass, DOMAIN, uv_issue_id)
-
-        # Throttling Issue Management
-        th_issue_id = f"throttling_{entry_id}"
-        if has_throttling:
-            async_create_issue(
-                self.hass,
-                DOMAIN,
-                th_issue_id,
-                is_fixable=False,
-                is_persistent=False,
-                severity=IssueSeverity.WARNING,
-                translation_key="throttling",
-                translation_placeholders={"device_name": self.device_name},
-                learn_more_url="https://docs.pikvm.org/",
-            )
-        else:
-            async_delete_issue(self.hass, DOMAIN, th_issue_id)
+        self._sync_repair_issue(
+            f"throttling_{entry_id}",
+            has_throttling,
+            IssueSeverity.WARNING,
+            "throttling",
+            "https://docs.pikvm.org/",
+        )
 
     async def _async_update_data(self) -> PiKVMDeviceInfo:
         """Fetch data from PiKVM API."""
@@ -219,7 +226,9 @@ class PiKVMDataUpdateCoordinator(DataUpdateCoordinator[PiKVMDeviceInfo]):
             self._async_check_hardware_health(data)
             return data
         except PiKVMAuthenticationError as auth_err:
-            _LOGGER.debug("Authentication failed for PiKVM at %s: %s", self.url, auth_err)
+            _LOGGER.debug(
+                "Authentication failed for PiKVM at %s: %s", self.url, auth_err
+            )
             raise ConfigEntryAuthFailed(
                 "Invalid credentials or 2FA TOTP token required",
                 translation_domain=DOMAIN,

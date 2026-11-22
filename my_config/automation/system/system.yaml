@@ -643,11 +643,42 @@
              )
         ) }}
   actions:
-    - action: notify.send_message
-      data:
-        entity_id: notify.telegram_dima
-        message: |
-          {{ '\U0000274C' }} Ошибка выполнения автоматизации: {{ trigger.event.data.message | e }}
+    - if:
+        - condition: template
+          value_template: >-
+            {% set photo_steps = {
+              'homeassistant.components.automation.system_snapshot_window': '2',
+              'homeassistant.components.automation.system_snapshot_yard': '2',
+              'homeassistant.components.automation.system_snapshot_dixy': '2',
+              'homeassistant.components.automation.system_snapshot_street': '2',
+              'homeassistant.components.automation.system_snaphot_outside': '2',
+              'homeassistant.components.script.open_door_photo': '3|6'
+            } %}
+            {% set step = photo_steps.get(trigger.event.data.name, '') %}
+            {% set message = trigger.event.data.message %}
+            {% set message = message if message is string else (message | first | default('')) %}
+            {% set entry_photo_wrappers = {
+              'homeassistant.components.automation.hall_big_domofon_incoming_call':
+                '^hall_big_domofon_incoming_call: (?:Parallel action at step 1: parallel 2: )?Error executing script[.].* for parallel at pos 1:',
+              'homeassistant.components.automation.hall_big_doorbell':
+                '^hall_big_doorbell: Error executing script[.].* for parallel at pos 2:',
+              'homeassistant.components.automation.hall_big_main_door_closed':
+                '^hall_big_main_door_closed: Error executing script[.].* for sequence at pos 1:'
+            } %}
+            {% set wrapper = entry_photo_wrappers.get(trigger.event.data.name, '') %}
+            {% set entry_photo_detail = wrapper and (
+              ': Снимок в Telegram' in message or message | regex_search(wrapper)) %}
+            {% set resized_photo_detail = step and
+              ': Повтор снимка в Telegram (1920): Error executing script.' in message %}
+            {{ not (entry_photo_detail or resized_photo_detail or (step and message | regex_search(
+              'Error executing script[.] Error for call_service at pos (?:' ~ step ~
+              '): Action failed[.] Image_process_failed$', ignorecase=true))) }}
+      then:
+        - action: notify.send_message
+          data:
+            entity_id: notify.telegram_dima
+            message: |
+              {{ '\U0000274C' }} Ошибка выполнения автоматизации: {{ trigger.event.data.message | e }}
     - action: counter.increment
       data:
         entity_id: counter.automation_error_counter

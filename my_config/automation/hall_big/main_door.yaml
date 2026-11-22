@@ -76,11 +76,30 @@
     #       photo:
     #         - url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell #!secret doorbell_snap #door_snap
     #           caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
-    - action: telegram_bot.send_photo
-      data:
-        url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell
-        caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
-        chat_id: !secret tel_chat_id
+    - alias: "Снимок в Telegram"
+      sequence:
+        - variables:
+            snapshot_url: http://localhost:1984/api/frame.jpeg?src=g4_doorbell
+            snapshot_caption: "\U0001F6AA Входная дверь закрыта {{ states('sensor.time') }}, была открыта {{(as_timestamp(now())|int(0)-states('input_number.main_door_open')|int(0)) | timestamp_custom('%H:%M:%S',false,0)}}"
+            snapshot_chat_id: !secret tel_chat_id
+            snapshot_photo_result: null
+        - action: telegram_bot.send_photo
+          continue_on_error: true
+          response_variable: snapshot_photo_result
+          data:
+            url: "{{ snapshot_url }}"
+            caption: "{{ snapshot_caption }}"
+            chat_id: "{{ snapshot_chat_id }}"
+        - enabled: false
+          if:
+            - condition: template
+              value_template: "{{ not (snapshot_photo_result or {}).get('chats') }}"
+          then:
+            - action: telegram_bot.send_photo
+              data:
+                url: "{{ snapshot_url }}&width=1280"
+                caption: "{{ snapshot_caption }}"
+                chat_id: "{{ snapshot_chat_id }}"
               
     - action: timer.cancel
       entity_id: timer.main_door_open_hb

@@ -1,0 +1,24 @@
+- id: system_mdns_flood_guard
+  alias: system_mdns_flood_guard
+  mode: single
+  triggers:
+    - trigger: webhook
+      webhook_id: mdns-flood-2f7c91
+      allowed_methods:
+        - POST
+      local_only: true
+  actions:
+    - action: persistent_notification.create
+      data:
+        title: Шторм мультикаста в LAN
+        notification_id: mdns_flood_guard
+        message: >-
+          {{ trigger.json.rate | default('?') }} пакетов/с на
+          {{ trigger.json.iface | default('br0') }} в {{ trigger.json.ts | default('—') }}.
+          Источники (MAC): {{ trigger.json.top | default('не определены') }}
+    - action: notify.mobile_app_iphone_16_pro_dima
+      data:
+        title: Шторм мультикаста в LAN
+        message: >-
+          {{ trigger.json.rate | default('?') }} пакетов/с в
+          {{ trigger.json.ts | default('—') }}. Источники: {{ trigger.json.top | default('не определены') }}
