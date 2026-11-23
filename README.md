@@ -139,7 +139,7 @@
   - [Ubiquiti Unifi Express 7](https://store.ui.com/us/en/category/cloud-gateways-wifi-integrated/products/ux7)
 
 # Surveillance
-  - Ubiquiti Unifi Dream Machine Pro Max with 12Tb WD Purple
+  - Ubiquiti Unifi Dream Machine Beast with 12Tb WD Purple
   - [Ubiquiti Unifi G4 Instant (2ea)](https://store.ui.com/us/en/pro/category/all-cameras-nvrs/products/camera-g4-instant)
   - [Ubiquiti Unifi G5 Dome](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-dome)
   - [Ubiquiti Unifi G5 Turret Ultra (2ea)](https://store.ui.com/us/en/category/all-cameras-nvrs/products/uvc-g5-turret-ultra)
